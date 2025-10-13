@@ -1,0 +1,11 @@
+{
+  "name": "Проста Біографія",
+  "componentName": "SimpleBioTemplate",
+  "editComponent": "EditSitePage",
+  "description": "Шаблон для простої сторінки-візитки із заголовком та текстом.",
+  "thumbnailUrl": "/previews/simple-bio.png",
+  "defaultContent": [
+    { "key": "headerTitle", "value": "Заголовок вашого сайту" },
+    { "key": "aboutText", "value": "Розкажіть тут щось про себе." }
+  ]
+}
