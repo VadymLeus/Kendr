@@ -2,6 +2,7 @@
 import React, { useContext } from 'react';
 import { CartContext } from './CartContext';
 import { Link, useNavigate } from 'react-router-dom';
+import apiClient from '../../services/api';
 
 const API_URL = 'http://localhost:5000';
 
@@ -11,10 +12,16 @@ const CartPage = () => {
 
     const total = cartItems.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
     
-    const handleCheckout = () => {
-        alert('Дякуємо за покупку! Ваше замовлення "оформлено".');
-        clearCart();
-        navigate('/');
+    const handleCheckout = async () => {
+        try {
+            await apiClient.post('/orders/checkout', { cartItems });
+            
+            alert('Дякуємо за покупку! Ваше замовлення успішно оформлено.');
+            clearCart();
+            navigate('/');
+        } catch (error) {
+            alert(error.response?.data?.message || 'Під час оформлення замовлення сталася помилка.');
+        }
     };
 
     return (
@@ -30,7 +37,6 @@ const CartPage = () => {
                     <div className="cart-items-list">
                         {cartItems.map(item => (
                             <div key={item.id} className="cart-item">
-                                {/* Додано посилання на зображення */}
                                 <Link to={`/product/${item.id}`}>
                                     <img 
                                         src={item.image_url ? `${API_URL}${item.image_url}` : 'https://placehold.co/100x100'} 
@@ -39,7 +45,6 @@ const CartPage = () => {
                                     />
                                 </Link>
                                 <div className="cart-item-details">
-                                    {/* Додано посилання на назву */}
                                     <Link to={`/product/${item.id}`} className="cart-item-title-link">
                                         <h4>{item.name}</h4>
                                     </Link>

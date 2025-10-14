@@ -107,6 +107,10 @@ const ShopContentTab = ({ siteData }) => {
             formData.append('category_id', product.category_id);
         }
 
+        if (product.stock_quantity !== null && product.stock_quantity !== '') {
+            formData.append('stock_quantity', product.stock_quantity);
+        }
+
         if (product.imageFile) {
             formData.append('productImage', product.imageFile);
         }
@@ -134,7 +138,8 @@ const ShopContentTab = ({ siteData }) => {
             image_url: '', 
             imageFile: null, 
             imagePreview: null, 
-            category_id: null 
+            category_id: null,
+            stock_quantity: null
         }, ...products]);
     };
 
@@ -251,6 +256,15 @@ const ShopContentTab = ({ siteData }) => {
                                 placeholder="Ціна" 
                                 value={product.price} 
                                 onChange={(e) => handleProductChange(index, 'price', e.target.value)}
+                                style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
+                            />
+                            
+                            <input 
+                                type="number" 
+                                placeholder="Кількість на складі" 
+                                value={product.stock_quantity || ''} 
+                                onChange={(e) => handleProductChange(index, 'stock_quantity', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                                min="0"
                                 style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
                             />
                             
