@@ -9,14 +9,25 @@ const TEMPLATE_COMPONENTS = {
 
 // Динамічно імпортуємо всі компоненти шаблонів для РЕДАГУВАННЯ
 const EDIT_COMPONENTS = {
-    EditSitePage: lazy(() => import('./SimpleBio/EditSitePage')),
-    EditShopPage: lazy(() => import('./Shop/EditShopPage')),
+    // Видаляємо старі компоненти редагування, оскільки вони більше не використовуються
+    // EditSitePage: lazy(() => import('./SimpleBio/EditSitePage')), // <-- ВИДАЛИТИ
+    // EditShopPage: lazy(() => import('./Shop/EditShopPage')), // <-- ВИДАЛИТИ
 };
 
 // Цей компонент є обгорткою, яка вирішує, який шаблон завантажити
 const TemplateLoader = ({ componentName, isEditMode = false, ...props }) => {
-    const componentsMap = isEditMode ? EDIT_COMPONENTS : TEMPLATE_COMPONENTS;
-    const ComponentToRender = componentsMap[componentName];
+    // Якщо режим редагування, але компоненти редагування видалені - показуємо повідомлення
+    if (isEditMode) {
+        return (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+                <h3>Режим редагування</h3>
+                <p>Функціонал редагування тепер доступний в панелі управління сайтом.</p>
+                <p>Перейдіть до <strong>/dashboard/назва-сайту</strong> для редагування.</p>
+            </div>
+        );
+    }
+
+    const ComponentToRender = TEMPLATE_COMPONENTS[componentName];
 
     if (!ComponentToRender) {
         return <div>Помилка: Невідомий компонент шаблону '{componentName}'.</div>;

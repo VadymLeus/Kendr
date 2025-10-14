@@ -1,12 +1,14 @@
 // frontend/src/components/SiteHeader.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import apiClient from '../services/api';
+import { AuthContext } from '../features/auth/AuthContext';
 
 const API_URL = 'http://localhost:5000';
 
 // Додано проп `sidebarWidth` для динамічної адаптації шапки
 const SiteHeader = ({ pathParam, sidebarWidth }) => {
+    const { user } = useContext(AuthContext); // Отримуємо поточного користувача
     const [siteData, setSiteData] = useState(null);
     const [loading, setLoading] = useState(true);
     const location = useLocation();
@@ -67,6 +69,8 @@ const SiteHeader = ({ pathParam, sidebarWidth }) => {
         return <header style={headerStyle} />;
     }
 
+    const isOwner = user && siteData && user.id === siteData.user_id;
+
     return (
         <header style={headerStyle}>
             <Link 
@@ -95,7 +99,16 @@ const SiteHeader = ({ pathParam, sidebarWidth }) => {
                     {siteData.title}
                 </span>
             </Link>
-            {/* Меню користувача видалено, оскільки тепер воно знаходиться в бічній панелі */}
+
+            {/* Кнопка переходу до панелі керування сайтом, видима лише для власника */}
+            {isOwner && (
+                <Link to={`/dashboard/${pathParam}`} title="Панель управління" style={{color: 'black'}}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </Link>
+            )}
         </header>
     );
 };

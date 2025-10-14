@@ -73,13 +73,26 @@ exports.createSite = async (req, res, next) => {
     }
 };
 
-// Отримати дані сайту за його шляхом (site_path)
+// Отримати дані сайту за його шляхом (site_path) та опціонально збільшити лічильник переглядів
 exports.getSiteByPath = async (req, res, next) => {
-    const site = await Site.findByPath(req.params.site_path);
-    if (!site) {
-        return res.status(404).json({ message: 'Сайт не знайдено.' });
+    try {
+        const { increment_view } = req.query; // Отримуємо параметр для збільшення лічильника
+        const site = await Site.findByPath(req.params.site_path);
+        
+        if (!site) {
+            return res.status(404).json({ message: 'Сайт не знайдено.' });
+        }
+
+        // Збільшуємо лічильник, тільки якщо отримали відповідний прапорець
+        if (increment_view === 'true') {
+            // Не чекаємо (await), щоб не сповільнювати відповідь користувачу
+            Site.incrementViewCount(site.id);
+        }
+
+        res.json(site);
+    } catch (error) {
+        next(error);
     }
-    res.json(site);
 };
 
 // Оновити контент сайту (наприклад, заголовки, опис)
@@ -99,6 +112,32 @@ exports.updateSiteContent = async (req, res, next) => {
     
     await Site.updateContent(site.id, contentKey, contentValue);
     res.json({ message: 'Контент успішно оновлено.' });
+};
+
+// Оновити загальні налаштування сайту (назву, статус, теги)
+exports.updateSiteSettings = async (req, res, next) => {
+    try {
+        const { site_path } = req.params;
+        const { title, status, tags } = req.body; // Отримуємо дані з тіла запиту
+        const userId = req.user.id;
+
+        const site = await Site.findByPath(site_path);
+        if (!site || site.user_id !== userId) {
+            return res.status(403).json({ message: 'У вас немає прав на редагування цього сайту.' });
+        }
+
+        // Оновлюємо основні налаштування (назву, статус)
+        await Site.updateSettings(site.id, { title, status });
+        
+        // Оновлюємо теги, якщо вони були передані
+        if (Array.isArray(tags)) {
+            await Site.updateTags(site.id, tags);
+        }
+
+        res.json({ message: 'Налаштування сайту успішно оновлено.' });
+    } catch (error) {
+        next(error);
+    }
 };
 
 // Видалити сайт користувачем

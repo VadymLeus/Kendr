@@ -6,7 +6,7 @@ import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import AdminLayout from './admin/AdminLayout';
 
-// Імпортуємо "Гарди" (Guards)
+// Імпортуємо Guards
 import AdminRouteGuard from './guards/AdminRouteGuard';
 import UserAreaGuard from './guards/UserAreaGuard';
 import PublicOnlyRouteGuard from './guards/PublicOnlyRouteGuard';
@@ -18,8 +18,7 @@ import LoginPage from './features/auth/LoginPage';
 import RegisterPage from './features/auth/RegisterPage';
 import CreateSitePage from './features/sites/CreateSitePage';
 import SiteDisplayPage from './features/sites/SiteDisplayPage';
-import EditSitePage from './templates/SimpleBio/EditSitePage';
-import EditShopPage from './templates/Shop/EditShopPage';
+import SiteDashboardPage from './features/sites/SiteDashboardPage'; // Універсальна панель керування сайтом
 import CatalogPage from './features/sites/CatalogPage';
 import MySitesPage from './features/sites/MySitesPage';
 import ProfilePage from './features/profile/ProfilePage';
@@ -40,7 +39,6 @@ function App() {
             </Route>
 
             {/* === ГРУПА ПУБЛІЧНИХ МАРШРУТІВ (LOGIN / REGISTER) === */}
-            {/* Сюди зможуть зайти лише НЕавторизовані користувачі */}
             <Route element={<PublicOnlyRouteGuard />}>
                 <Route element={<Layout />}>
                     <Route path="/login" element={<LoginPage />} />
@@ -49,11 +47,9 @@ function App() {
             </Route>
 
             {/* === ГРУПА МАРШРУТІВ ДЛЯ ЗВИЧАЙНИХ КОРИСТУВАЧІВ ТА ГОСТЕЙ === */}
-            {/* Сюди не зможе зайти авторизований адміністратор */}
             <Route element={<UserAreaGuard />}>
                 <Route element={<Layout />}>
                     <Route path="/" element={<HomePage />} />
-                    {/* Усі інші маршрути, крім /login та /register */}
                     <Route path="/create-site" element={<CreateSitePage />} />
                     <Route path="/rules" element={<RulesPage />} />
                     <Route path="/catalog" element={<CatalogPage />} />
@@ -63,8 +59,9 @@ function App() {
                     <Route path="/user/:username" element={<PublicProfilePage />} />
                     <Route path="/product/:productId" element={<ProductDetailPage />} />
                     <Route path="/site/:site_path" element={<SiteDisplayPage />} />
-                    <Route path="/edit-site/:site_path" element={<EditSitePage />} />
-                    <Route path="/edit-shop/:site_path" element={<EditShopPage />} />
+                    
+                    {/* Уніфікований маршрут для керування сайтом */}
+                    <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />
                 </Route>
             </Route>
 

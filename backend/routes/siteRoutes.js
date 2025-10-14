@@ -27,8 +27,11 @@ router.post(
     siteController.createSite
 );
 
-// Оновити контент сайту
+// Оновити контент сайту (текстові блоки)
 router.put('/:site_path/update', verifyToken, siteController.updateSiteContent);
+
+// Оновити основні налаштування сайту (назву, статус, теги)
+router.put('/:site_path/settings', verifyToken, siteController.updateSiteSettings);
 
 // Видалити сайт
 router.delete('/:site_path', verifyToken, siteController.deleteSite);
