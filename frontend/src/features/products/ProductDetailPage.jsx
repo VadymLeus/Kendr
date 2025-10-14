@@ -1,6 +1,6 @@
 // frontend/src/features/products/ProductDetailPage.jsx
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom'; // Хук для перенаправлення
+import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../../services/api';
 import { CartContext } from '../cart/CartContext';
 import { AuthContext } from '../auth/AuthContext';
@@ -14,7 +14,7 @@ const ProductDetailPage = () => {
     const [error, setError] = useState('');
     const { addToCart } = useContext(CartContext);
     const { user } = useContext(AuthContext);
-    const navigate = useNavigate(); // Ініціалізуємо хук для навігації
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -31,16 +31,14 @@ const ProductDetailPage = () => {
         fetchProduct();
     }, [productId]);
 
-    // Обробник додавання товару до кошика
-    const handleAddToCart = (product) => {
-        // Якщо користувач не авторизований, пропонуємо увійти
+    const handleAddToCart = (productToAdd) => {
         if (!user) {
-            if (window.confirm("Щоб додати товар у кошик, необхідно увійти до акаунту. Перейти на сторінку входу?")) {
+            if (window.confirm("Щоб додати товар до кошика, необхідно увійти до акаунту. Перейти на сторінку входу?")) {
                 navigate('/login');
             }
             return;
         }
-        addToCart(product);
+        addToCart(productToAdd);
     };
 
     if (loading) return <div>Завантаження товару...</div>;
@@ -65,18 +63,18 @@ const ProductDetailPage = () => {
                 <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1.5rem 0' }}>{product.price} грн.</p>
                 <button
                     onClick={() => handleAddToCart(product)}
-                    disabled={isOwner}
+                    disabled={isOwner} // Блокуємо кнопку, якщо власник
                     style={{
                         padding: '1rem 2rem',
                         fontSize: '1.2rem',
-                        backgroundColor: isOwner ? '#ccc' : (user ? '#28a745' : '#ffc107'),
-                        color: isOwner ? '#666' : 'white',
+                        backgroundColor: isOwner ? '#ccc' : '#28a745',
+                        color: 'white',
                         border: 'none',
                         borderRadius: '4px',
                         cursor: isOwner ? 'not-allowed' : 'pointer'
                     }}
                 >
-                    {isOwner ? 'Це ваш товар' : (user ? 'Додати в кошик' : 'Увійдіть, щоб купити')}
+                    {isOwner ? 'Це ваш товар' : (user ? 'Додати у кошик' : 'Увійдіть, щоб купити')}
                 </button>
             </div>
         </div>

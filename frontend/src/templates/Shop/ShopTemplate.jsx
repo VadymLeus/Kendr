@@ -1,6 +1,6 @@
 // frontend/src/templates/Shop/ShopTemplate.jsx
 import React, { useContext, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Хук для навігації
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../features/auth/AuthContext';
 import { CartContext } from '../../features/cart/CartContext';
 
@@ -9,29 +9,26 @@ const API_URL = 'http://localhost:5000';
 const ShopTemplate = ({ content, products, siteOwnerId }) => {
     const { user } = useContext(AuthContext);
     const { addToCart } = useContext(CartContext);
-    const navigate = useNavigate(); // Ініціалізуємо useNavigate
+    const navigate = useNavigate();
 
     const headerTitle = content?.headerTitle || 'Назва магазину';
     const footerText = content?.footerText || `© ${new Date().getFullYear()} Мій Магазин`;
     const productList = Array.isArray(products) ? products : [];
 
-    // Обробник додавання товару до кошика
-    const handleAddToCart = (product) => {
+    const handleAddToCart = (productToAdd) => {
         if (!user) {
-            if (window.confirm("Щоб додати товар у кошик, необхідно увійти до акаунту. Перейти на сторінку входу?")) {
+            if (window.confirm("Щоб додати товар до кошика, необхідно увійти до акаунту. Перейти на сторінку входу?")) {
                 navigate('/login');
             }
             return;
         }
-        addToCart(product);
+        addToCart(productToAdd);
     };
 
-    // Групуємо товари за категоріями за допомогою useMemo для оптимізації
     const groupedProducts = useMemo(() => {
         if (!productList.length) return {};
 
         return productList.reduce((acc, product) => {
-            // Товари без категорії потрапляють до спеціальної групи
             const categoryName = product.category_name || 'Різне';
             if (!acc[categoryName]) {
                 acc[categoryName] = [];
@@ -41,7 +38,6 @@ const ShopTemplate = ({ content, products, siteOwnerId }) => {
         }, {});
     }, [productList]);
     
-    // Отримуємо відсортований список назв категорій
     const categoryNames = Object.keys(groupedProducts).sort();
 
     return (
@@ -51,14 +47,13 @@ const ShopTemplate = ({ content, products, siteOwnerId }) => {
             </header>
             <main style={{ padding: '2rem' }}>
                 {productList.length > 0 ? (
-                    // Проходимося по згрупованих товарах
                     categoryNames.map(categoryName => (
                         <div key={categoryName} style={{ marginBottom: '3rem' }}>
                             <h2 style={{ borderBottom: '2px solid #007BFF', paddingBottom: '0.5rem' }}>{categoryName}</h2>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
                                 {groupedProducts[categoryName].map((product) => {
+                                    // Перевірка, чи є поточний користувач власником сайту
                                     const isOwner = user && user.id === siteOwnerId;
-                                    const isProductOwner = user && user.id === product.user_id; // Власник конкретного товару
 
                                     return (
                                         <div key={product.id} style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 8px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
@@ -80,19 +75,19 @@ const ShopTemplate = ({ content, products, siteOwnerId }) => {
                                                     </button>
                                                  </Link>
                                                 <button
-                                                    onClick={() => handleAddToCart(product)} // Використовуємо новий обробник
-                                                    disabled={isProductOwner} // Блокуємо, якщо користувач - власник товару
+                                                    onClick={() => handleAddToCart(product)}
+                                                    disabled={isOwner}
                                                     style={{
                                                         flex: 1,
                                                         padding: '0.5rem',
-                                                        backgroundColor: isProductOwner ? '#ccc' : (user ? '#28a745' : '#ffc107'),
-                                                        color: isProductOwner ? '#666' : 'white',
+                                                        backgroundColor: isOwner ? '#ccc' : '#28a745',
+                                                        color: 'white',
                                                         border: 'none',
                                                         borderRadius: '4px',
-                                                        cursor: isProductOwner ? 'not-allowed' : 'pointer'
+                                                        cursor: isOwner ? 'not-allowed' : 'pointer'
                                                     }}
                                                 >
-                                                    {isProductOwner ? 'Ваш товар' : (user ? 'В кошик' : 'Купити')}
+                                                    {isOwner ? 'Ваш товар' : (user ? 'У кошик' : 'Увійти')}
                                                 </button>
                                             </div>
                                         </div>
