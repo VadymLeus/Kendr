@@ -3,28 +3,44 @@ const TemplateService = require('../utils/templateService');
 const { deleteFile } = require('../utils/fileUtils');
 
 class Site {
-    // Отримати список публічних сайтів з можливістю пошуку та фільтрації за автором
+    /**
+     * Отримує список сайтів.
+     * Якщо передано `userId`, повертає всі сайти цього користувача (включаючи чернетки).
+     * Якщо `userId` не передано, повертає тільки опубліковані сайти для загального каталогу.
+     */
     static async getPublic(searchTerm = '', userId = null) {
         let query = `
             SELECT
-                s.id, s.site_path, s.title, s.logo_url,
+                s.id, s.site_path, s.title, s.logo_url, s.status,
                 t.name AS templateName,
                 t.thumbnail_url AS templateThumbnail,
                 u.username AS author
             FROM sites s
             JOIN templates t ON s.template_id = t.id
             JOIN users u ON s.user_id = u.id
-            WHERE s.status = 'published'
         `;
         const params = [];
-        if (searchTerm) {
-            query += ' AND s.title LIKE ?';
-            params.push(`%${searchTerm}%`);
-        }
+
+        // Запит для конкретного користувача ("Мої сайти")
         if (userId) {
-            query += ' AND s.user_id = ?';
+            query += ' WHERE s.user_id = ?';
             params.push(userId);
+            if (searchTerm) {
+                query += ' AND s.title LIKE ?';
+                params.push(`%${searchTerm}%`);
+            }
+        } 
+        // Запит для загального каталогу
+        else {
+            query += " WHERE s.status = 'published'";
+            if (searchTerm) {
+                query += ' AND s.title LIKE ?';
+                params.push(`%${searchTerm}%`);
+            }
         }
+
+        query += ' ORDER BY s.created_at DESC';
+
         const [rows] = await db.query(query, params);
         return rows;
     }
@@ -89,7 +105,7 @@ class Site {
         const variables = {
             title: title,
             year: new Date().getFullYear(),
-            date: new Date().toLocaleDateString('uk-UA') // Локалізація дати
+            date: new Date().toLocaleDateString('uk-UA')
         };
         const contentValues = defaultContent.map(contentItem => {
             const value = this._replacePlaceholders(contentItem.value, variables);
@@ -104,7 +120,7 @@ class Site {
         }
     }
 
-    // Внутрішній метод для заміни плейсхолдерів (наприклад, {year}) на реальні значення
+    // Внутрішній метод для заміни плейсхолдерів (наприклад, {year})
     static _replacePlaceholders(value, variables = {}) {
         return value.replace(/\{(\w+)\}/g, (match, key) => {
             return variables[key] !== undefined ? variables[key] : match;
@@ -116,7 +132,7 @@ class Site {
         const [sites] = await db.query(`
             SELECT
                 s.id, s.user_id, s.title, s.template_id, s.status, s.logo_url,
-                s.site_path, 
+                s.site_path, s.view_count,
                 t.component_name
             FROM sites s
             JOIN templates t ON s.template_id = t.id
@@ -148,6 +164,14 @@ class Site {
         return { ...site, content, products };
     }
 
+    // Збільшує лічильник переглядів сайту на 1
+    static async incrementViewCount(siteId) {
+        await db.query(
+            'UPDATE sites SET view_count = view_count + 1 WHERE id = ?',
+            [siteId]
+        );
+    }
+
     // Оновити або додати новий елемент контенту сайту
     static async updateContent(siteId, contentKey, contentValue) {
         const [rows] = await db.query(
@@ -177,12 +201,35 @@ class Site {
     }
 
     // Оновлює назву та статус сайту (наприклад, 'published' або 'draft')
-    static async updateSettings(siteId, title, status) {
+    static async updateSettings(siteId, data) {
+        const { title, status } = data;
         const [result] = await db.query(
             'UPDATE sites SET title = ?, status = ? WHERE id = ?',
             [title, status, siteId]
         );
         return result;
+    }
+
+    // Оновлює теги, прив'язані до сайту
+    static async updateTags(siteId, tagIds = []) {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+            // 1. Видаляємо всі старі теги для цього сайту
+            await connection.query('DELETE FROM site_tags WHERE site_id = ?', [siteId]);
+            
+            // 2. Якщо є нові теги, додаємо їх
+            if (tagIds.length > 0) {
+                const values = tagIds.map(tagId => [siteId, tagId]);
+                await connection.query('INSERT INTO site_tags (site_id, tag_id) VALUES ?', [values]);
+            }
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     // Видалити сайт за його ID

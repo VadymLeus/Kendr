@@ -68,6 +68,16 @@ class User {
         await db.query(query, params);
         return this.findById(userId);
     }
+
+    // НОВИЙ МЕТОД
+    // Оновлює час останнього входу для користувача
+    static async updateLastLogin(userId) {
+        const [result] = await db.query(
+            'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [userId]
+        );
+        return result;
+    }
 }
 
 module.exports = User;

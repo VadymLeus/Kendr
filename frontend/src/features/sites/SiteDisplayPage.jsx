@@ -14,7 +14,10 @@ const SiteDisplayPage = () => {
         const fetchSiteData = async () => {
             try {
                 setLoading(true);
-                const response = await apiClient.get(`/sites/${site_path}`);
+                // Додаємо параметр increment_view=true до основного запиту
+                const response = await apiClient.get(`/sites/${site_path}`, {
+                    params: { increment_view: true }
+                });
                 setSiteData(response.data);
             } catch (err) {
                 setError('Не вдалося завантажити сайт. Можливо, він не існує.');

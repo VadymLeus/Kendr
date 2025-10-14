@@ -40,29 +40,35 @@ exports.register = async (req, res, next) => {
 };
 
 exports.login = async (req, res, next) => {
-    const { email, password } = req.body;
-    const user = await User.findByEmail(email);
+    try {
+        const { email, password } = req.body;
+        const user = await User.findByEmail(email);
 
-    if (!user) {
-        return res.status(401).json({ message: 'Невірний email або пароль.' });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
-        return res.status(401).json({ message: 'Невірний email або пароль.' });
-    }
-
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    
-    // Відправляємо на фронтенд токен та основну інформацію про користувача, включаючи його роль
-    res.json({
-        token,
-        user: { 
-            id: user.id, 
-            username: user.username, 
-            email: user.email, 
-            avatar_url: user.avatar_url,
-            role: user.role // Поле role потрібне для розмежування доступу на клієнті
+        if (!user) {
+            return res.status(401).json({ message: 'Невірний email або пароль.' });
         }
-    });
+
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Невірний email або пароль.' });
+        }
+
+        // Оновлюємо час останнього входу
+        await User.updateLastLogin(user.id);
+
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        
+        res.json({
+            token,
+            user: { 
+                id: user.id, 
+                username: user.username, 
+                email: user.email, 
+                avatar_url: user.avatar_url,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
 };
