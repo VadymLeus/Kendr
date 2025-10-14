@@ -5,14 +5,16 @@ import App from './App.jsx';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './features/auth/AuthContext.jsx';
 import { CartProvider } from './features/cart/CartContext.jsx';
+import { FavoritesProvider } from './features/favorites/FavoritesContext.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <BrowserRouter>
             <AuthProvider>
-                {/* Огортаємо додаток у CartProvider, щоб кошик був доступний глобально */}
                 <CartProvider>
-                    <App />
+                    <FavoritesProvider>
+                        <App />
+                    </FavoritesProvider>
                 </CartProvider>
             </AuthProvider>
         </BrowserRouter>
