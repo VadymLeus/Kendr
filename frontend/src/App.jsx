@@ -26,6 +26,7 @@ import PublicProfilePage from './features/profile/PublicProfilePage';
 import CartPage from './features/cart/CartPage';
 import ProductDetailPage from './features/products/ProductDetailPage';
 import DashboardPage from './admin/DashboardPage';
+import FavoritesPage from './features/favorites/FavoritesPage';
 
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
                     <Route path="/rules" element={<RulesPage />} />
                     <Route path="/catalog" element={<CatalogPage />} />
                     <Route path="/my-sites" element={<MySitesPage />} />
+                    <Route path="/favorites" element={<FavoritesPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/user/:username" element={<PublicProfilePage />} />

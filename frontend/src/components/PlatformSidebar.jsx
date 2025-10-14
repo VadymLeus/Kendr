@@ -107,6 +107,9 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 <Link to="/my-sites" style={navLinkStyle} onClick={(e) => handleProtectedLinkClick(e, '/my-sites')}>
                     <span>{isCollapsed ? '💻' : 'Мої сайти'}</span>
                 </Link>
+                <Link to="/favorites" style={navLinkStyle} onClick={(e) => handleProtectedLinkClick(e, '/favorites')}>
+                    <span>{isCollapsed ? '⭐' : 'Обране'}</span>
+                </Link>
                 <Link to="/create-site" style={navLinkStyle} onClick={(e) => handleProtectedLinkClick(e, '/create-site')}>
                     <span>{isCollapsed ? '➕' : 'Створити сайт'}</span>
                 </Link>

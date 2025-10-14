@@ -3,12 +3,14 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import apiClient from '../services/api';
 import { AuthContext } from '../features/auth/AuthContext';
+import { FavoritesContext } from '../features/favorites/FavoritesContext';
 
 const API_URL = 'http://localhost:5000';
 
 // Додано проп `sidebarWidth` для динамічної адаптації шапки
 const SiteHeader = ({ pathParam, sidebarWidth }) => {
     const { user } = useContext(AuthContext); // Отримуємо поточного користувача
+    const { favoriteSiteIds, addFavorite, removeFavorite } = useContext(FavoritesContext);
     const [siteData, setSiteData] = useState(null);
     const [loading, setLoading] = useState(true);
     const location = useLocation();
@@ -70,6 +72,12 @@ const SiteHeader = ({ pathParam, sidebarWidth }) => {
     }
 
     const isOwner = user && siteData && user.id === siteData.user_id;
+    const isFavorite = siteData && favoriteSiteIds.has(siteData.id);
+
+    const handleToggleFavorite = () => {
+        if (!user) return; // Гість не може додавати в обране
+        isFavorite ? removeFavorite(siteData.id) : addFavorite(siteData.id);
+    };
 
     return (
         <header style={headerStyle}>
@@ -100,15 +108,25 @@ const SiteHeader = ({ pathParam, sidebarWidth }) => {
                 </span>
             </Link>
 
-            {/* Кнопка переходу до панелі керування сайтом, видима лише для власника */}
-            {isOwner && (
-                <Link to={`/dashboard/${pathParam}`} title="Панель управління" style={{color: 'black'}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                </Link>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                {/* Кнопка "В обране" - не для власника і тільки для авторизованих */}
+                {user && !isOwner && siteData && (
+                    <button onClick={handleToggleFavorite} title={isFavorite ? "Видалити з обраних" : "Додати в обрані"} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={isFavorite ? "gold" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </button>
+                )}
+                {/* Кнопка переходу до панелі керування сайтом, видима лише для власника */}
+                {isOwner && (
+                    <Link to={`/dashboard/${pathParam}`} title="Панель управління" style={{color: 'black'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </Link>
+                )}
+            </div>
         </header>
     );
 };

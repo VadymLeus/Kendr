@@ -16,6 +16,7 @@ const errorHandler = require('./middleware/errorHandler');
 const adminRoutes = require('./routes/adminRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -37,6 +38,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 app.get('/', (req, res) => {
     res.send('Ласкаво просимо до GreenKendr API!');
