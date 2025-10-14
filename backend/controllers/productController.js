@@ -14,7 +14,7 @@ exports.getProductById = async (req, res, next) => {
 
 // Додати новий товар до сайту
 exports.addProduct = async (req, res, next) => {
-    const { site_id, name, description, price, category_id } = req.body;
+    const { site_id, name, description, price, category_id, stock_quantity } = req.body;
     const userId = req.user.id;
     const image_url = req.file ? req.file.path : null;
 
@@ -26,7 +26,7 @@ exports.addProduct = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для додавання товарів на цей сайт.' });
         }
         
-        const newProduct = await Product.create({ site_id, name, description, price, image_url, category_id });
+        const newProduct = await Product.create({ site_id, name, description, price, image_url, category_id, stock_quantity });
         res.status(201).json(newProduct);
     } catch (error) {
         if (image_url) await deleteFile(image_url); // Видаляємо зображення у разі іншої помилки
@@ -37,7 +37,7 @@ exports.addProduct = async (req, res, next) => {
 // Оновити дані існуючого товару
 exports.updateProduct = async (req, res, next) => {
     const { productId } = req.params;
-    const { name, description, price, category_id } = req.body;
+    const { name, description, price, category_id, stock_quantity } = req.body;
     const userId = req.user.id;
     let newImagePath = req.file ? req.file.path : null;
 
@@ -55,7 +55,7 @@ exports.updateProduct = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для зміни цього товару.' });
         }
 
-        const updateData = { name, description, price, category_id };
+        const updateData = { name, description, price, category_id, stock_quantity };
         updateData.image_url = newImagePath || product.image_url;
 
         await Product.update(productId, updateData);

@@ -45,8 +45,8 @@ const ProductDetailPage = () => {
     if (error) return <div style={{ color: 'red' }}>{error}</div>;
     if (!product) return <div>Товар не знайдено.</div>;
 
-    // Перевіряємо, чи є поточний користувач власником товару
     const isOwner = user && user.id === product.user_id;
+    const isSoldOut = product.stock_quantity === 0;
 
     return (
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
@@ -54,7 +54,7 @@ const ProductDetailPage = () => {
                 <img
                     src={product.image_url ? `${API_URL}${product.image_url}` : 'https://placehold.co/600x400'}
                     alt={product.name}
-                    style={{ width: '100%', borderRadius: '8px' }}
+                    style={{ width: '100%', borderRadius: '8px', filter: isSoldOut ? 'grayscale(100%)' : 'none' }}
                 />
             </div>
             <div style={{ flex: '1 1 400px' }}>
@@ -63,18 +63,18 @@ const ProductDetailPage = () => {
                 <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1.5rem 0' }}>{product.price} грн.</p>
                 <button
                     onClick={() => handleAddToCart(product)}
-                    disabled={isOwner} // Блокуємо кнопку, якщо власник
+                    disabled={isOwner || isSoldOut}
                     style={{
                         padding: '1rem 2rem',
                         fontSize: '1.2rem',
-                        backgroundColor: isOwner ? '#ccc' : '#28a745',
+                        backgroundColor: isOwner ? '#ccc' : (isSoldOut ? '#888' : '#28a745'),
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
-                        cursor: isOwner ? 'not-allowed' : 'pointer'
+                        cursor: isOwner || isSoldOut ? 'not-allowed' : 'pointer'
                     }}
                 >
-                    {isOwner ? 'Це ваш товар' : (user ? 'Додати у кошик' : 'Увійдіть, щоб купити')}
+                    {isOwner ? 'Це ваш товар' : (isSoldOut ? 'Товар закінчився' : (user ? 'Додати у кошик' : 'Увійдіть, щоб купити'))}
                 </button>
             </div>
         </div>

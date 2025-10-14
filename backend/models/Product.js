@@ -16,10 +16,10 @@ class Product {
 
     // Створити новий товар для сайту
     static async create(productData) {
-        const { site_id, name, description, price, image_url, category_id } = productData;
+        const { site_id, name, description, price, image_url, category_id, stock_quantity } = productData;
         const [result] = await db.query(
-            'INSERT INTO products (site_id, name, description, price, image_url, category_id) VALUES (?, ?, ?, ?, ?, ?)',
-            [site_id, name, description, price || 0, image_url, category_id || null]
+            'INSERT INTO products (site_id, name, description, price, image_url, category_id, stock_quantity) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [site_id, name, description, price || 0, image_url, category_id || null, stock_quantity || null]
         );
         const newProduct = await this.findById(result.insertId);
         return newProduct;
@@ -27,10 +27,10 @@ class Product {
 
     // Оновити існуючий товар
     static async update(productId, productData) {
-        const { name, description, price, image_url, category_id = null } = productData;
+        const { name, description, price, image_url, category_id = null, stock_quantity } = productData;
         const [result] = await db.query(
-            'UPDATE products SET name = ?, description = ?, price = ?, image_url = ?, category_id = ? WHERE id = ?',
-            [name, description, price, image_url, category_id, productId]
+            'UPDATE products SET name = ?, description = ?, price = ?, image_url = ?, category_id = ?, stock_quantity = ? WHERE id = ?',
+            [name, description, price, image_url, category_id, stock_quantity, productId]
         );
         return result;
     }

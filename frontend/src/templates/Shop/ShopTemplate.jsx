@@ -52,8 +52,8 @@ const ShopTemplate = ({ content, products, siteOwnerId }) => {
                             <h2 style={{ borderBottom: '2px solid #007BFF', paddingBottom: '0.5rem' }}>{categoryName}</h2>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
                                 {groupedProducts[categoryName].map((product) => {
-                                    // Перевірка, чи є поточний користувач власником сайту
                                     const isOwner = user && user.id === siteOwnerId;
+                                    const isSoldOut = product.stock_quantity === 0;
 
                                     return (
                                         <div key={product.id} style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 8px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
@@ -61,7 +61,7 @@ const ShopTemplate = ({ content, products, siteOwnerId }) => {
                                                 <img
                                                     src={product.image_url ? `${API_URL}${product.image_url}` : 'https://placehold.co/300x200'}
                                                     alt={product.name}
-                                                    style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block' }}
+                                                    style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block', filter: isSoldOut ? 'grayscale(100%)' : 'none' }}
                                                 />
                                             </Link>
                                             <div style={{ padding: '1rem', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -76,18 +76,18 @@ const ShopTemplate = ({ content, products, siteOwnerId }) => {
                                                  </Link>
                                                 <button
                                                     onClick={() => handleAddToCart(product)}
-                                                    disabled={isOwner}
+                                                    disabled={isOwner || isSoldOut}
                                                     style={{
                                                         flex: 1,
                                                         padding: '0.5rem',
-                                                        backgroundColor: isOwner ? '#ccc' : '#28a745',
+                                                        backgroundColor: isOwner ? '#ccc' : (isSoldOut ? '#888' : '#28a745'),
                                                         color: 'white',
                                                         border: 'none',
                                                         borderRadius: '4px',
-                                                        cursor: isOwner ? 'not-allowed' : 'pointer'
+                                                        cursor: isOwner || isSoldOut ? 'not-allowed' : 'pointer'
                                                     }}
                                                 >
-                                                    {isOwner ? 'Ваш товар' : (user ? 'У кошик' : 'Увійти')}
+                                                    {isOwner ? 'Ваш товар' : (isSoldOut ? 'Товар закінчився' : (user ? 'У кошик' : 'Увійти'))}
                                                 </button>
                                             </div>
                                         </div>
