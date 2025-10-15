@@ -98,7 +98,8 @@ const UserMenu = ({ isCollapsed }) => {
                                 <strong style={{ display: 'block', color: 'white' }}>{user.username}</strong>
                                 <small style={{ color: '#a0aec0' }}>{user.email}</small>
                             </div>
-                            <Link to="/profile" onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Профіль</Link>
+                            <Link to={`/profile/${user.username}`} onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Мій профіль</Link>
+                            <Link to="/settings" onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Налаштування</Link>
                             <Link to="/my-sites" onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Мої Сайти</Link>
                             <hr style={{ margin: '0.25rem 0', border: 'none', borderTop: '1px solid #4a5568' }}/>
                             <div onClick={handleLogout} style={{...dropdownItemStyles, color: '#f56565' }}>Вийти</div>

@@ -1,147 +1,75 @@
 // frontend/src/features/profile/ProfilePage.jsx
-import React, { useState, useContext, useEffect } from 'react';
-import { AuthContext } from '../auth/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import apiClient from '../../services/api';
-import AvatarModal from './AvatarModal';
+import { AuthContext } from '../auth/AuthContext';
 
 const API_URL = 'http://localhost:5000';
 
 const ProfilePage = () => {
-    const { user, updateUser } = useContext(AuthContext);
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({ username: '', newPassword: '', currentPassword: '' });
-    const [siteCount, setSiteCount] = useState(0);
+    const { username } = useParams();
+    const { user } = useContext(AuthContext);
+    const [profileData, setProfileData] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        if (user) {
-            setFormData(prev => ({ ...prev, username: user.username, newPassword: '', currentPassword: '' }));
-            const fetchProfileData = async () => {
-                try {
-                    const response = await apiClient.get(`/users/${user.username}`);
-                    setSiteCount(response.data.siteCount);
-                } catch (err) {
-                    console.error("Помилка під час завантаження даних профілю:", err);
-                }
-            };
-            fetchProfileData();
-        } else {
-            navigate('/login');
-        }
-    }, [user, navigate]);
-
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    const handleUpdateProfile = async (e) => {
-        e.preventDefault();
-        setError('');
-        setSuccess('');
-        setIsLoading(true);
-        
-        try {
-            if (!formData.currentPassword) {
-                throw new Error('Для внесення змін необхідно ввести поточний пароль.');
+        const fetchProfile = async () => {
+            try {
+                setLoading(true);
+                const response = await apiClient.get(`/users/${username}`);
+                setProfileData(response.data);
+            } catch (err) {
+                setError('Користувача не знайдено або сталася помилка.');
+            } finally {
+                setLoading(false);
             }
+        };
+        fetchProfile();
+    }, [username]);
 
-            const profileUpdateData = {
-                username: formData.username,
-                newPassword: formData.newPassword || undefined,
-                currentPassword: formData.currentPassword
-            };
+    const isOwner = user && user.username === username;
 
-            const response = await apiClient.put('/users/profile/update', profileUpdateData);
-            updateUser(response.data.user);
-            setSuccess('Профіль успішно оновлено!');
-        } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Сталася невідома помилка.');
-        } finally {
-            setIsLoading(false);
-            setFormData(prev => ({...prev, newPassword: '', currentPassword: ''}));
-        }
+    if (loading) return <div>Завантаження профілю...</div>;
+    if (error) return <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>;
+
+    const settingsButtonStyle = {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginTop: '1.5rem',
+        padding: '10px 20px',
+        background: '#242060',
+        color: 'white',
+        textDecoration: 'none',
+        borderRadius: '8px',
+        border: 'none',
+        cursor: 'pointer'
     };
-    
-    const handleAvatarUpdate = async (update) => {
-        setError('');
-        setSuccess('');
-        setIsLoading(true);
-        try {
-            if (update.type === 'file_upload') {
-                updateUser(update.user);
-                setSuccess('Аватар успішно оновлено!');
-            } 
-            else if (update.type === 'default_url') {
-                const response = await apiClient.put('/users/profile/avatar-url', { avatar_url: update.url });
-                updateUser(response.data.user);
-                setSuccess('Аватар успішно оновлено!');
-            }
-        } catch (err) {
-            setError(err.response?.data?.message || 'Не вдалося оновити аватар.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    if (!user) return null;
-
-    const gridContainerStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' };
-    const tileStyle = { background: 'white', padding: '1.5rem 2rem', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0' };
-    const inputStyle = { width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' };
-    const primaryButtonStyle = { padding: '12px', background: '#242060', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginTop: '1rem', width: '100%' };
 
     return (
-        <div>
-            {isModalOpen && <AvatarModal onClose={() => setIsModalOpen(false)} onAvatarUpdate={handleAvatarUpdate} />}
+        <div style={{ padding: '2rem', border: '1px solid #ddd', borderRadius: '8px', maxWidth: '700px', margin: '2rem auto', textAlign: 'center', background: '#f8f9fa' }}>
+            {profileData.avatar_url && (
+                <img src={`${API_URL}${profileData.avatar_url}`} alt="avatar" style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }} />
+            )}
+            <h1 style={{ marginBottom: '0.5rem' }}>{profileData.username}</h1>
+            <p style={{ color: '#555', marginTop: 0 }}>На платформі з: <strong>{new Date(profileData.createdAt).toLocaleDateString()}</strong></p>
             
-            <div style={gridContainerStyle}>
-                <div style={{ ...tileStyle, gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '1.5rem', background: '#f8f9fa' }}>
-                    <div style={{ position: 'relative' }}>
-                        <img src={`${API_URL}${user.avatar_url}`} alt="avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', cursor: 'pointer' }} onClick={() => setIsModalOpen(true)} />
-                    </div>
-                    <div>
-                        <h2 style={{ margin: 0 }}>{user.username}</h2>
-                        <p style={{ margin: 0, color: '#555' }}>{user.email}</p>
-                    </div>
-                </div>
+            {isOwner && (
+                <Link to="/settings" style={settingsButtonStyle}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span>Налаштування профілю</span>
+                </Link>
+            )}
 
-                <div style={tileStyle}>
-                    <h3>Дані профілю</h3>
-                    <p style={{color: '#555'}}>Змініть ім'я користувача, яке бачать інші.</p>
-                    <form onSubmit={handleUpdateProfile}>
-                        <div>
-                            <label>Ім'я користувача</label>
-                            <input type="text" name="username" value={formData.username} onChange={handleChange} style={inputStyle} />
-                        </div>
-                        <div style={{marginTop: '1rem'}}>
-                            <label>Поточний пароль</label>
-                            <input type="password" name="currentPassword" value={formData.currentPassword} onChange={handleChange} style={inputStyle} required placeholder="Обов'язково для змін"/>
-                        </div>
-                        <button type="submit" style={primaryButtonStyle} disabled={isLoading}>{isLoading ? 'Збереження...' : 'Оновити дані'}</button>
-                    </form>
-                </div>
-
-                <div style={tileStyle}>
-                    <h3>Змінити пароль</h3>
-                    <p style={{color: '#555'}}>Зробіть пароль надійнішим або змініть його.</p>
-                    <form onSubmit={handleUpdateProfile}>
-                        <div>
-                            <label>Новий пароль</label>
-                            <input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} style={inputStyle} placeholder="Залиште порожнім, якщо не змінюєте" />
-                        </div>
-                         <div style={{marginTop: '1rem'}}>
-                            <label>Поточний пароль</label>
-                            <input type="password" name="currentPassword" value={formData.currentPassword} onChange={handleChange} style={inputStyle} required placeholder="Обов'язково для змін"/>
-                        </div>
-                        <button type="submit" style={primaryButtonStyle} disabled={isLoading}>{isLoading ? 'Збереження...' : 'Змінити пароль'}</button>
-                    </form>
-                </div>
+            <hr style={{ margin: '1.5rem 0' }}/>
+            <div>
+                <h3>Статистика</h3>
+                <p>Створено сайтів: <strong>{profileData.siteCount}</strong></p>
             </div>
-            
-            {error && <p style={{ color: 'red', background: '#ffebee', padding: '1rem', borderRadius: '8px', marginTop: '1.5rem', textAlign: 'center' }}>{error}</p>}
-            {success && <p style={{ color: 'green', background: '#e8f5e9', padding: '1rem', borderRadius: '8px', marginTop: '1.5rem', textAlign: 'center' }}>{success}</p>}
         </div>
     );
 };

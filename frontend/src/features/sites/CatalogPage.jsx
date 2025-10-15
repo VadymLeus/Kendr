@@ -71,7 +71,7 @@ const CatalogPage = () => {
                             />
                             <h3 style={{ marginTop: '1rem' }}>{site.title}</h3>
                             <p style={{ color: '#666', margin: '0.25rem 0' }}>
-                                Автор: <Link to={`/user/${site.author}`}>{site.author}</Link>
+                                Автор: <Link to={`/profile/${site.author}`}>{site.author}</Link>
                             </p>
                             <p style={{ color: '#666', margin: '0.25rem 0', flexGrow: 1 }}>Шаблон: {site.templateName}</p>
                             <Link to={`/site/${site.site_path}`} style={{ marginTop: '1rem' }}>

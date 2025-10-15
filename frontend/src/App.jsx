@@ -22,11 +22,11 @@ import SiteDashboardPage from './features/sites/SiteDashboardPage'; // Унів�
 import CatalogPage from './features/sites/CatalogPage';
 import MySitesPage from './features/sites/MySitesPage';
 import ProfilePage from './features/profile/ProfilePage';
-import PublicProfilePage from './features/profile/PublicProfilePage';
 import CartPage from './features/cart/CartPage';
 import ProductDetailPage from './features/products/ProductDetailPage';
 import DashboardPage from './admin/DashboardPage';
 import FavoritesPage from './features/favorites/FavoritesPage';
+import SettingsPage from './pages/SettingsPage';
 
 
 function App() {
@@ -57,8 +57,8 @@ function App() {
                     <Route path="/my-sites" element={<MySitesPage />} />
                     <Route path="/favorites" element={<FavoritesPage />} />
                     <Route path="/cart" element={<CartPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/user/:username" element={<PublicProfilePage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/profile/:username" element={<ProfilePage />} />
                     <Route path="/product/:productId" element={<ProductDetailPage />} />
                     <Route path="/site/:site_path" element={<SiteDisplayPage />} />
                     
