@@ -4,7 +4,6 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-// Імпортуємо сервіс для роботи з шаблонами
 const TemplateService = require('./utils/templateService');
 
 const authRoutes = require('./routes/authRoutes');
@@ -17,11 +16,11 @@ const adminRoutes = require('./routes/adminRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Проміжне ПЗ (Middleware)
 app.use(cors({
     origin: 'http://localhost:5173',
     credentials: true
@@ -29,7 +28,6 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Маршрути (Routes)
 app.use('/api/auth', authRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/products', productRoutes);
@@ -39,13 +37,13 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/support', supportRoutes);
 
 app.get('/', (req, res) => {
     res.send('Ласкаво просимо до GreenKendr API!');
 });
 
 app.listen(PORT, async () => {
-    // Запускаємо синхронізацію шаблонів під час старту сервера
     await TemplateService.syncWithDB();
     console.log(`Сервер запущено на порті ${PORT}`);
 });

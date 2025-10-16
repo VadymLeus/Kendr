@@ -3,23 +3,20 @@ import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserMenu from './UserMenu';
 import { CartContext } from '../features/cart/CartContext';
-import { AuthContext } from '../features/auth/AuthContext'; // Імпортуємо AuthContext
+import { AuthContext } from '../features/auth/AuthContext';
 
-// ДОДАНО ПРОПСИ: isCollapsed та onToggle для керування станом ззовні
 const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     const { cartItems } = useContext(CartContext);
-    const { user } = useContext(AuthContext); // Отримуємо дані користувача
-    const navigate = useNavigate(); // Для перенаправлення
+    const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
 
-    // Обробник для посилань, що вимагають авторизації
     const handleProtectedLinkClick = (e, path) => {
         if (!user) {
-            e.preventDefault(); // Скасовуємо стандартний перехід
+            e.preventDefault();
             navigate('/login');
         }
     };
 
-    // ОНОВЛЕНИЙ СТИЛЬ: Адаптивна ширина з анімацією
     const sidebarStyle = {
         position: 'fixed',
         left: 0,
@@ -31,7 +28,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1100,
-        transition: 'width 0.3s ease', // Плавна анімація
+        transition: 'width 0.3s ease',
         boxSizing: 'border-box'
     };
 
@@ -46,7 +43,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         marginTop: '1.5rem'
     };
 
-    // ОНОВЛЕНИЙ СТИЛЬ: Адаптивне вирівнювання тексту та іконок
     const navLinkStyle = {
         display: 'flex',
         alignItems: 'center',
@@ -57,10 +53,9 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         borderRadius: '8px',
         margin: '0 0.5rem 0.5rem',
         transition: 'background 0.2s, color 0.2s',
-        justifyContent: isCollapsed ? 'center' : 'flex-start', // Центруємо, якщо панель згорнута
+        justifyContent: isCollapsed ? 'center' : 'flex-start',
     };
     
-    // СТИЛЬ: Кнопка перемикання стану панелі
     const toggleButtonStyle = {
         position: 'absolute',
         top: '87px',
@@ -80,12 +75,10 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
 
     return (
         <div style={sidebarStyle}>
-            {/* Кнопка для згортання/розгортання панелі */}
             <button onClick={onToggle} style={toggleButtonStyle}>
                 {isCollapsed ? '»' : '«'}
             </button>
 
-            {/* Логотип */}
             <div style={logoContainerStyle}>
                 <Link to="/">
                     <img 
@@ -99,7 +92,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 </Link>
             </div>
 
-            {/* Навігація з адаптивним текстом */}
             <nav style={navStyle}>
                 <Link to="/catalog" style={navLinkStyle}>
                     <span>{isCollapsed ? '📖' : 'Каталог'}</span>
@@ -113,7 +105,9 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 <Link to="/create-site" style={navLinkStyle} onClick={(e) => handleProtectedLinkClick(e, '/create-site')}>
                     <span>{isCollapsed ? '➕' : 'Створити сайт'}</span>
                 </Link>
-                {/* Кошик відображається лише для авторизованих користувачів */}
+                <Link to="/support" style={navLinkStyle}>
+                    <span>{isCollapsed ? '❓' : 'Підтримка'}</span>
+                </Link>
                 {user && (
                     <Link to="/cart" style={navLinkStyle}>
                         <span>{isCollapsed ? `🛒` : `Кошик (${cartItems.length})`}</span>
@@ -121,7 +115,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 )}
             </nav>
 
-            {/* Меню користувача, якому також передається стан панелі */}
             <div style={{ borderTop: '1px solid #4a5568', padding: '1rem 0' }}>
                 <UserMenu isCollapsed={isCollapsed} />
             </div>

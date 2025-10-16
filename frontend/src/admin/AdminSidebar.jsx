@@ -77,10 +77,12 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
                 <Link to="/admin" style={navLinkStyle}>
                     <span>{isCollapsed ? '📊' : 'Усі сайти'}</span>
                 </Link>
+                <Link to="/admin/support" style={navLinkStyle}>
+                    <span>{isCollapsed ? '📩' : 'Підтримка'}</span>
+                </Link>
                 <Link to="/" style={navLinkStyle}>
                     <span>{isCollapsed ? '🏠' : 'На головний сайт'}</span>
                 </Link>
-                {/* Тут можна додати посилання на інші розділи, наприклад, "Користувачі" */}
             </nav>
 
             <div style={{ borderTop: '1px solid #4a5568', padding: '1rem 0' }}>
