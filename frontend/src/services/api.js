@@ -1,30 +1,36 @@
 // frontend/src/services/api.js
 import axios from 'axios';
 
-// Створюємо екземпляр axios з попередньо налаштованою конфігурацією
 const apiClient = axios.create({
-    baseURL: 'http://localhost:5000/api', // Базова URL-адреса для всіх запитів
+  baseURL: 'http://localhost:5000/api',
 });
 
-// Додаємо перехоплювач (interceptor) запитів. Ця функція буде виконуватися
-// ПЕРЕД кожним запитом, надісланим через apiClient.
 apiClient.interceptors.request.use(
-    (config) => {
-        // Отримуємо токен з localStorage
-        const token = localStorage.getItem('token');
-        
-        // Якщо токен існує, додаємо його до заголовка Authorization
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        
-        // Повертаємо змінену конфігурацію, щоб запит міг продовжитись
-        return config;
-    },
-    (error) => {
-        // Якщо під час налаштування запиту виникла помилка, відхиляємо проміс
-        return Promise.reject(error);
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      console.error("Термін дії сесії вийшов або токен недійсний. Виконується вихід.");
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default apiClient;
