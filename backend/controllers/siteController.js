@@ -1,9 +1,9 @@
 // backend/controllers/siteController.js
 const Site = require('../models/Site');
+const User = require('../models/User');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Отримати список сайтів (всіх або лише користувача)
 exports.getSites = async (req, res, next) => {
     const { search, scope } = req.query;
     let userId = null;
@@ -19,19 +19,15 @@ exports.getSites = async (req, res, next) => {
     res.json(sites);
 };
 
-// Отримати список доступних шаблонів сайтів
 exports.getTemplates = async (req, res, next) => {
     const templates = await Site.getTemplates();
     res.json(templates);
 };
 
-// Отримання списку стандартних логотипів
 exports.getDefaultLogos = async (req, res, next) => {
     try {
-        // Шлях до каталогу зі стандартними логотипами
         const defaultLogosDir = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'default');
         const files = await fs.readdir(defaultLogosDir);
-        // Формуємо повні URL-адреси для кожного файлу
         const logoUrls = files.map(file => `/uploads/shops/logos/default/${file}`);
         res.json(logoUrls);
     } catch (error) {
@@ -40,7 +36,6 @@ exports.getDefaultLogos = async (req, res, next) => {
     }
 };
 
-// Створення нового сайту
 exports.createSite = async (req, res, next) => {
     const { templateId, sitePath, title, selected_logo_url } = req.body;
     const userId = req.user.id;
@@ -57,14 +52,12 @@ exports.createSite = async (req, res, next) => {
         } else if (selected_logo_url) {
             logoUrl = selected_logo_url;
         } else {
-            // Логотип за замовчуванням, якщо інший не було надано
             logoUrl = '/uploads/shops/logos/default/default-logo.webp';
         }
 
         const newSite = await Site.create(userId, templateId, sitePath, title, logoUrl);
         res.status(201).json({ message: 'Сайт успішно створено!', site: newSite });
     } catch (error) {
-        // Якщо сталася помилка, видаляємо завантажений файл логотипа
         if (req.file) {
             const { deleteFile } = require('../utils/fileUtils');
             await deleteFile(req.file.path);
@@ -73,19 +66,29 @@ exports.createSite = async (req, res, next) => {
     }
 };
 
-// Отримати дані сайту за його шляхом (site_path) та опціонально збільшити лічильник переглядів
 exports.getSiteByPath = async (req, res, next) => {
     try {
-        const { increment_view } = req.query; // Отримуємо параметр для збільшення лічильника
+        const { increment_view } = req.query;
         const site = await Site.findByPath(req.params.site_path);
         
         if (!site) {
             return res.status(404).json({ message: 'Сайт не знайдено.' });
         }
 
-        // Збільшуємо лічильник, тільки якщо отримали відповідний прапорець
+        if (site.status === 'suspended') {
+            let isAdmin = false;
+            if (req.user) {
+                const currentUser = await User.findById(req.user.id);
+                if (currentUser && currentUser.role === 'admin') {
+                    isAdmin = true;
+                }
+            }
+            if (!isAdmin) {
+                return res.status(403).json({ message: 'Цей сайт тимчасово заблоковано адміністрацією.' });
+            }
+        }
+
         if (increment_view === 'true') {
-            // Не чекаємо (await), щоб не сповільнювати відповідь користувачу
             Site.incrementViewCount(site.id);
         }
 
@@ -95,7 +98,6 @@ exports.getSiteByPath = async (req, res, next) => {
     }
 };
 
-// Оновити контент сайту (наприклад, заголовки, опис)
 exports.updateSiteContent = async (req, res, next) => {
     const { site_path } = req.params;
     const { contentKey, contentValue } = req.body;
@@ -114,11 +116,10 @@ exports.updateSiteContent = async (req, res, next) => {
     res.json({ message: 'Контент успішно оновлено.' });
 };
 
-// Оновити загальні налаштування сайту (назву, статус, теги)
 exports.updateSiteSettings = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const { title, status, tags } = req.body; // Отримуємо дані з тіла запиту
+        const { title, status, tags } = req.body;
         const userId = req.user.id;
 
         const site = await Site.findByPath(site_path);
@@ -126,10 +127,8 @@ exports.updateSiteSettings = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав на редагування цього сайту.' });
         }
 
-        // Оновлюємо основні налаштування (назву, статус)
         await Site.updateSettings(site.id, { title, status });
         
-        // Оновлюємо теги, якщо вони були передані
         if (Array.isArray(tags)) {
             await Site.updateTags(site.id, tags);
         }
@@ -140,7 +139,6 @@ exports.updateSiteSettings = async (req, res, next) => {
     }
 };
 
-// Видалити сайт користувачем
 exports.deleteSite = async (req, res, next) => {
     try {
         const { site_path } = req.params;
@@ -153,6 +151,15 @@ exports.deleteSite = async (req, res, next) => {
         }
 
         res.json({ message: 'Сайт та всі пов\'язані з ним дані було успішно видалено.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getMySuspendedSites = async (req, res, next) => {
+    try {
+        const sites = await Site.findSuspendedForUser(req.user.id);
+        res.json(sites);
     } catch (error) {
         next(error);
     }

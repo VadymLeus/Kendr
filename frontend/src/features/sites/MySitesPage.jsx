@@ -35,14 +35,12 @@ const MySitesPage = () => {
         fetchMySites();
     }, [user, navigate]);
 
-    // Функція для видалення сайту
     const handleDeleteSite = async (sitePath, siteTitle) => {
         const confirmation = window.confirm(`Ви впевнені, що хочете видалити сайт "${siteTitle}"? Ця дія є незворотною і видалить усі пов'язані з ним товари та категорії.`);
         
         if (confirmation) {
             try {
                 await apiClient.delete(`/sites/${sitePath}`);
-                // Оновлюємо стан, щоб сайт зник зі списку
                 setSites(sites.filter(site => site.site_path !== sitePath));
                 alert('Сайт успішно видалено!');
             } catch (err) {
@@ -67,25 +65,27 @@ const MySitesPage = () => {
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {sites.map(site => {
-                        const editLink = site.templateName === 'Магазин' 
-                            ? `/edit-shop/${site.site_path}` 
-                            : `/edit-site/${site.site_path}`;
-
+                        const isSuspended = site.status === 'suspended';
+                        
                         return (
-                            <div key={site.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
+                            <div key={site.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `2px solid ${isSuspended ? '#dd6b20' : '#ddd'}`, padding: '1rem', borderRadius: '8px', background: isSuspended ? '#fffaf0' : 'white' }}>
                                 <div>
                                     <h4>{site.title}</h4>
                                     <p style={{ color: '#666', margin: 0 }}>
-                                        Адреса: <Link to={`/site/${site.site_path}`}>{`/site/${site.site_path}`}</Link>
+                                        Адреса: <a href={`/site/${site.site_path}`} target="_blank" rel="noopener noreferrer">{`/site/${site.site_path}`}</a>
                                     </p>
+                                    {isSuspended && <p style={{ color: '#dd6b20', fontWeight: 'bold', margin: '5px 0 0 0' }}>Сайт призупинено</p>}
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <Link to={editLink}>
-                                        <button>Редагувати</button>
-                                    </Link>
-                                    <Link to={`/site/${site.site_path}`}>
-                                        <button>Перегляд</button>
-                                    </Link>
+                                    {isSuspended ? (
+                                        <Link to="/support/appeal">
+                                            <button style={{ backgroundColor: '#dd6b20', color: 'white' }}>Оскаржити</button>
+                                        </Link>
+                                    ) : (
+                                        <Link to={`/dashboard/${site.site_path}`}>
+                                            <button>Редагувати</button>
+                                        </Link>
+                                    )}
                                     <button 
                                         onClick={() => handleDeleteSite(site.site_path, site.title)}
                                         style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }}

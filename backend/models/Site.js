@@ -3,11 +3,6 @@ const TemplateService = require('../utils/templateService');
 const { deleteFile } = require('../utils/fileUtils');
 
 class Site {
-    /**
-     * Отримує список сайтів.
-     * Якщо передано `userId`, повертає всі сайти цього користувача (включаючи чернетки).
-     * Якщо `userId` не передано, повертає тільки опубліковані сайти для загального каталогу.
-     */
     static async getPublic(searchTerm = '', userId = null) {
         let query = `
             SELECT
@@ -21,7 +16,6 @@ class Site {
         `;
         const params = [];
 
-        // Запит для конкретного користувача ("Мої сайти")
         if (userId) {
             query += ' WHERE s.user_id = ?';
             params.push(userId);
@@ -30,7 +24,6 @@ class Site {
                 params.push(`%${searchTerm}%`);
             }
         } 
-        // Запит для загального каталогу
         else {
             query += " WHERE s.status = 'published'";
             if (searchTerm) {
@@ -45,13 +38,11 @@ class Site {
         return rows;
     }
 
-    // Отримати список усіх доступних шаблонів
     static async getTemplates() {
         const [rows] = await db.query('SELECT * FROM templates');
         return rows;
     }
 
-    // Створити новий сайт
     static async create(userId, templateId, sitePath, title, logoUrl) {
         try {
             if (!userId || !templateId || !sitePath || !title) {
@@ -89,7 +80,6 @@ class Site {
             );
             const siteId = result.insertId;
 
-            // Створення контенту за замовчуванням для нового сайту
             if (templateConfig && templateConfig.defaultContent) {
                 await this._createDefaultContent(siteId, templateConfig.defaultContent, title);
             }
@@ -100,7 +90,6 @@ class Site {
         }
     }
 
-    // Внутрішній метод для створення початкового контенту сайту
     static async _createDefaultContent(siteId, defaultContent, title) {
         const variables = {
             title: title,
@@ -120,14 +109,12 @@ class Site {
         }
     }
 
-    // Внутрішній метод для заміни плейсхолдерів (наприклад, {year})
     static _replacePlaceholders(value, variables = {}) {
         return value.replace(/\{(\w+)\}/g, (match, key) => {
             return variables[key] !== undefined ? variables[key] : match;
         });
     }
 
-    // Знайти сайт за його унікальним шляхом (site_path)
     static async findByPath(sitePath) {
         const [sites] = await db.query(`
             SELECT
@@ -149,7 +136,6 @@ class Site {
         }, {});
         
         let products = [];
-        // Якщо ID шаблону = 2 (магазин), завантажуємо також товари
         if (site.template_id == 2) { 
             const [productRows] = await db.query(`
                 SELECT p.*, c.name as category_name
@@ -164,7 +150,6 @@ class Site {
         return { ...site, content, products };
     }
 
-    // Збільшує лічильник переглядів сайту на 1
     static async incrementViewCount(siteId) {
         await db.query(
             'UPDATE sites SET view_count = view_count + 1 WHERE id = ?',
@@ -172,7 +157,6 @@ class Site {
         );
     }
 
-    // Оновити або додати новий елемент контенту сайту
     static async updateContent(siteId, contentKey, contentValue) {
         const [rows] = await db.query(
             'SELECT id FROM site_content WHERE site_id = ? AND content_key = ?',
@@ -191,7 +175,6 @@ class Site {
         }
     }
 
-    // Знайти сайт за ID та ID власника
     static async findByIdAndUserId(siteId, userId) {
         const [rows] = await db.query(
             'SELECT * FROM sites WHERE id = ? AND user_id = ?',
@@ -200,7 +183,6 @@ class Site {
         return rows[0];
     }
 
-    // Оновлює назву та статус сайту (наприклад, 'published' або 'draft')
     static async updateSettings(siteId, data) {
         const { title, status } = data;
         const [result] = await db.query(
@@ -210,15 +192,12 @@ class Site {
         return result;
     }
 
-    // Оновлює теги, прив'язані до сайту
     static async updateTags(siteId, tagIds = []) {
         const connection = await db.getConnection();
         try {
             await connection.beginTransaction();
-            // 1. Видаляємо всі старі теги для цього сайту
             await connection.query('DELETE FROM site_tags WHERE site_id = ?', [siteId]);
             
-            // 2. Якщо є нові теги, додаємо їх
             if (tagIds.length > 0) {
                 const values = tagIds.map(tagId => [siteId, tagId]);
                 await connection.query('INSERT INTO site_tags (site_id, tag_id) VALUES ?', [values]);
@@ -232,13 +211,11 @@ class Site {
         }
     }
 
-    // Видалити сайт за його ID
     static async delete(siteId) {
         const [result] = await db.query('DELETE FROM sites WHERE id = ?', [siteId]);
         return result;
     }
 
-    // Видалити сайт за його шляхом та ID власника
     static async deleteByPathAndUserId(sitePath, userId) {
         const [sites] = await db.query(
             'SELECT id, logo_url FROM sites WHERE site_path = ? AND user_id = ?',
@@ -254,7 +231,6 @@ class Site {
 
         const result = await this.delete(siteId);
 
-        // Якщо логотип не стандартний, видаляємо його файл
         if (logoUrl && !logoUrl.includes('/default/')) {
             await deleteFile(logoUrl);
         }
@@ -262,7 +238,6 @@ class Site {
         return result;
     }
 
-    // Отримати всі сайти, що належать конкретному користувачу
     static async getUserSites(userId) {
         const [rows] = await db.query(`
             SELECT s.*, t.name as template_name, t.thumbnail_url
@@ -271,6 +246,45 @@ class Site {
             WHERE s.user_id = ? 
             ORDER BY s.created_at DESC
         `, [userId]);
+        return rows;
+    }
+
+    static async findAllForAdmin(searchTerm = '') {
+        let query = `
+            SELECT
+                s.id, s.site_path, s.title, s.logo_url, s.status, s.deletion_scheduled_for,
+                t.name AS templateName,
+                u.username AS author
+            FROM sites s
+            JOIN templates t ON s.template_id = t.id
+            JOIN users u ON s.user_id = u.id
+        `;
+        const params = [];
+
+        if (searchTerm) {
+            query += ' WHERE s.title LIKE ?';
+            params.push(`%${searchTerm}%`);
+        }
+
+        query += ' ORDER BY s.created_at DESC';
+
+        const [rows] = await db.query(query, params);
+        return rows;
+    }
+
+    static async updateStatus(siteId, status, deletionDate = null) {
+        const [result] = await db.query(
+            'UPDATE sites SET status = ?, deletion_scheduled_for = ? WHERE id = ?',
+            [status, deletionDate, siteId]
+        );
+        return result;
+    }
+
+    static async findSuspendedForUser(userId) {
+        const [rows] = await db.query(
+            "SELECT id, site_path, title, deletion_scheduled_for FROM sites WHERE user_id = ? AND status = 'suspended'",
+            [userId]
+        );
         return rows;
     }
 }

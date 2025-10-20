@@ -1,12 +1,21 @@
 // frontend/src/features/support/NewTicketPage.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../../services/api';
 
 const NewTicketPage = () => {
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.site) {
+            const { site } = location.state;
+            setSubject(`Оскарження блокування сайту: ${site.site_path}`);
+            setBody(`Я, власник сайту "${site.title}" (${site.site_path}), хочу оскаржити рішення про його блокування. \n\nБудь ласка, опишіть, чому ви вважаєте, що блокування було помилковим:\n\n`);
+        }
+    }, [location.state]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

@@ -26,6 +26,10 @@ const SupportPage = () => {
                     <button style={{ padding: '12px 24px', fontSize: '1rem' }}>Створити звернення</button>
                 </Link>
                 <br/>
+                <Link to="/support/appeal" style={{ marginTop: '1rem', display: 'inline-block' }}>
+                    Оскаржити блокування
+                </Link>
+                <br/>
                 <Link to="/support/my-tickets" style={{ marginTop: '1rem', display: 'inline-block' }}>
                     Переглянути мої звернення
                 </Link>
