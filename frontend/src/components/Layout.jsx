@@ -1,59 +1,52 @@
 // frontend/src/components/Layout.jsx
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useLocation, Outlet } from 'react-router-dom';
-import Footer from './Footer';
-import SiteHeader from './SiteHeader';
+import { AuthContext } from '../features/auth/AuthContext';
 import PlatformSidebar from './PlatformSidebar';
-
-// КОНСТАНТИ: Ширина для різних станів бічної панелі
-const EXPANDED_SIDEBAR_WIDTH = '220px';
-const COLLAPSED_SIDEBAR_WIDTH = '80px';
+import AdminSidebar from '../admin/AdminSidebar';
+import SiteHeader from './SiteHeader';
+import Footer from './Footer';
 
 const Layout = () => {
-    // СТАН: Керування згорнутим/розгорнутим станом бічної панелі
+    const { user, isAdmin, isLoading } = useContext(AuthContext);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const location = useLocation();
 
-    // Логіка для визначення, чи є поточна сторінка сторінкою сайту
-    const sitePageMatch = location.pathname.match(/^\/(site|edit-site|edit-shop|product)\/([^/]+)/);
-    const isSiteSpecificPage = !!sitePageMatch;
-    const pathParam = isSiteSpecificPage ? sitePageMatch[2] : null;
-
-    // ПОТОЧНА ШИРИНА: Динамічно визначається на основі стану панелі
-    const currentSidebarWidth = isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
-
-    // ОБРОБНИК: Функція для перемикання стану бічної панелі
+    const currentSidebarWidth = isCollapsed ? '80px' : '220px';
     const handleToggleSidebar = () => setIsCollapsed(prev => !prev);
+
+    const sitePageMatch = location.pathname.match(/^\/site\/([^/]+)/);
+    const isSiteViewingPage = !!sitePageMatch;
+    const pathParam = isSiteViewingPage ? sitePageMatch[1] : null;
+
+    const shouldShowFooter = !isAdmin && !isSiteViewingPage;
+
+    if (isLoading) {
+        return <div>Завантаження...</div>;
+    }
 
     return (
         <div>
-            {/* Бічна панель з переданими пропсами для керування станом */}
-            <PlatformSidebar 
-                isCollapsed={isCollapsed} 
-                onToggle={handleToggleSidebar} 
-            />
+            {isAdmin ? (
+                <AdminSidebar isCollapsed={isCollapsed} onToggle={handleToggleSidebar} />
+            ) : (
+                <PlatformSidebar isCollapsed={isCollapsed} onToggle={handleToggleSidebar} />
+            )}
 
-            {/* Основний контент з динамічним відступом зліва */}
             <div style={{ 
                 marginLeft: currentSidebarWidth, 
                 transition: 'margin-left 0.3s ease' 
             }}>
-                
-                {/* Шапка сайту відображається лише на відповідних сторінках */}
-                {isSiteSpecificPage && (
+                {isSiteViewingPage && (
                     <SiteHeader 
                         pathParam={pathParam} 
-                        sidebarWidth={currentSidebarWidth} // Передаємо поточну ширину
+                        sidebarWidth={currentSidebarWidth}
                     />
                 )}
-
-                {/* Головний вміст сторінки */}
-                <main style={{ padding: '2rem' }}>
+                <main style={{ padding: '2rem', minHeight: 'calc(100vh - 150px)' }}>
                     <Outlet />
                 </main>
-                
-                {/* Футер відображається лише на сторінках платформи, а не сайту */}
-                {!isSiteSpecificPage && <Footer />}
+                {shouldShowFooter && <Footer />}
             </div>
         </div>
     );

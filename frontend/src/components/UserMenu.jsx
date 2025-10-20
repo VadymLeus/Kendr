@@ -5,9 +5,8 @@ import { AuthContext } from '../features/auth/AuthContext';
 
 const API_URL = 'http://localhost:5000';
 
-// Додано проп `isCollapsed` для адаптації меню до стану бічної панелі
 const UserMenu = ({ isCollapsed }) => {
-    const { user, logout } = useContext(AuthContext);
+    const { user, logout, isAdmin } = useContext(AuthContext);
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -28,7 +27,6 @@ const UserMenu = ({ isCollapsed }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Стилі
     const linkStyles = { 
         textDecoration: 'none', 
         color: '#cbd5e0', 
@@ -47,11 +45,10 @@ const UserMenu = ({ isCollapsed }) => {
         border: '2px solid #4299e1' 
     };
     
-    // СТИЛЬ: Позиціонування випадаючого меню адаптується до стану бічної панелі
     const dropdownMenuStyles = { 
         position: 'absolute', 
         bottom: '70px', 
-        right: isCollapsed ? '-130px' : 0, // Динамічне позиціонування
+        right: isCollapsed ? '-130px' : 0,
         background: '#2d3748', 
         border: '1px solid #4a5568', 
         borderRadius: '8px', 
@@ -73,7 +70,6 @@ const UserMenu = ({ isCollapsed }) => {
         textAlign: 'left' 
     };
     
-    // СТИЛЬ: Вертикальне розташування елементів у блоці користувача
     const userBlockStyle = { 
         display: 'flex', 
         flexDirection: 'column', 
@@ -100,22 +96,23 @@ const UserMenu = ({ isCollapsed }) => {
                             </div>
                             <Link to={`/profile/${user.username}`} onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Мій профіль</Link>
                             <Link to="/settings" onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Налаштування</Link>
-                            <Link to="/my-sites" onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Мої Сайти</Link>
+                            
+                            {!isAdmin && (
+                                <Link to="/my-sites" onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Мої Сайти</Link>
+                            )}
+
                             <hr style={{ margin: '0.25rem 0', border: 'none', borderTop: '1px solid #4a5568' }}/>
                             <div onClick={handleLogout} style={{...dropdownItemStyles, color: '#f56565' }}>Вийти</div>
                         </div>
                     )}
                 </div>
             ) : (
-                // АДАПТИВНИЙ РЕНДЕРИНГ: Для згорнутого та розгорнутого стану
                 isCollapsed ? (
-                    // Згорнутий стан: лише перші літери
                     <>
                         <Link to="/login" style={linkStyles}>В</Link>
                         <Link to="/register" style={linkStyles}>Р</Link>
                     </>
                 ) : (
-                    // Розгорнутий стан: повний текст
                     <>
                         <Link to="/login" style={linkStyles}>Увійти</Link>
                         <Link to="/register" style={linkStyles}>Реєстрація</Link>

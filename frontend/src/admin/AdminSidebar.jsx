@@ -69,19 +69,16 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
 
             <div style={logoContainerStyle}>
                 <Link to="/admin">
-                    <img src="/admin.webp" alt="Admin Logo" style={{ height: '70px', transition: 'height 0.3s ease' }} />
+                    <img src="/admin.webp" alt="Admin Logo" style={{ height: '70px' }} />
                 </Link>
             </div>
 
             <nav style={navStyle}>
                 <Link to="/admin" style={navLinkStyle}>
-                    <span>{isCollapsed ? '📊' : 'Усі сайти'}</span>
+                    <span>{isCollapsed ? '📊' : 'Всі Сайти'}</span>
                 </Link>
                 <Link to="/admin/support" style={navLinkStyle}>
                     <span>{isCollapsed ? '📩' : 'Підтримка'}</span>
-                </Link>
-                <Link to="/" style={navLinkStyle}>
-                    <span>{isCollapsed ? '🏠' : 'На головний сайт'}</span>
                 </Link>
             </nav>
 
