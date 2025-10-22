@@ -1,10 +1,11 @@
 // backend/controllers/adminController.js
 const Site = require('../models/Site');
 const User = require('../models/User');
+const Warning = require('../models/Warning');
 
 exports.getAllSites = async (req, res, next) => {
     try {
-        const allSites = await Site.getPublic();
+        const allSites = await Site.findAllForAdmin();
         res.json(allSites);
     } catch (error) {
         next(error);
@@ -49,14 +50,27 @@ exports.updateSiteStatus = async (req, res, next) => {
         }
 
         let deletionDate = null;
-        if (status === 'suspended') {
+
+        if (status === 'suspended' && site.status !== 'suspended') {
             const date = new Date();
             date.setDate(date.getDate() + 3);
             deletionDate = date;
+
+            await Warning.create(site.user_id, site.id, `Сайт "${site.title}" призупинено адміністратором.`);
+
+            const warningCount = await Warning.countForUser(site.user_id);
+
+            if (warningCount >= 3) {
+                await User.deleteById(site.user_id);
+                return res.json({ message: `Користувач отримав третє попередження. Акаунт та всі його дані були автоматично видалені.` });
+            }
+        }
+
+        if (status !== 'suspended' && site.status === 'suspended') {
+            await Warning.removeBySiteId(site.id);
         }
 
         await Site.updateStatus(site.id, status, deletionDate);
-
         res.json({ message: `Статус сайту "${site.title}" оновлено.` });
     } catch (error) {
         next(error);

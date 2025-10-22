@@ -65,6 +65,25 @@ const ProfilePage = () => {
                 </Link>
             )}
 
+            <div style={{ padding: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', marginTop: '1.5rem' }}>
+                <h3 style={{ marginTop: 0 }}>Статус акаунту</h3>
+                {profileData.warnings && profileData.warnings.length > 0 ? (
+                    <div>
+                        <p style={{ color: '#c53030', fontWeight: 'bold' }}>Є активні попередження!</p>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            {profileData.warnings.map(warning => (
+                                <div key={warning.id} title={`Попередження від ${new Date(warning.created_at).toLocaleDateString()}`}>
+                                    <span style={{ fontSize: '2rem', color: '#c53030' }}>❌</span>
+                                </div>
+                            ))}
+                        </div>
+                        <small>Попередження автоматично знімаються через рік, якщо ви не отримуєте нових.</small>
+                    </div>
+                ) : (
+                    <p style={{ color: '#38a169', fontWeight: 'bold' }}>У вас все добре, активних попереджень немає. 👍</p>
+                )}
+            </div>
+
             <hr style={{ margin: '1.5rem 0' }}/>
             <div>
                 <h3>Статистика</h3>

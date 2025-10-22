@@ -1,11 +1,11 @@
 // backend/controllers/userController.js
 const User = require('../models/User');
+const Warning = require('../models/Warning');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 
-// Отримати публічну інформацію про профіль користувача
 exports.getPublicProfile = async (req, res, next) => {
     const user = await User.findByUsername(req.params.username);
     if (!user) {
@@ -13,16 +13,18 @@ exports.getPublicProfile = async (req, res, next) => {
     }
     
     const siteCount = await User.getSiteCount(user.id);
+    const warnings = await Warning.findForUser(user.id);
+
     const publicData = {
         username: user.username,
         createdAt: user.created_at,
         siteCount: siteCount,
-        avatar_url: user.avatar_url
+        avatar_url: user.avatar_url,
+        warnings: warnings
     };
     res.json(publicData);
 };
 
-// Оновити дані профілю (ім'я користувача, пароль)
 exports.updateProfile = async (req, res, next) => {
     const { username, newPassword, currentPassword } = req.body;
     const userId = req.user.id;
@@ -51,12 +53,10 @@ exports.updateProfile = async (req, res, next) => {
     res.json({ message: 'Профіль успішно оновлено!', user: updatedUser });
 };
 
-// Оновити аватар, вибравши один зі стандартних
 exports.updateAvatarUrl = async (req, res, next) => {
     const { avatar_url } = req.body;
     const userId = req.user.id;
 
-    // Проста валідація, щоб переконатися, що URL веде до стандартних аватарів
     if (!avatar_url || !avatar_url.startsWith('/uploads/avatars/default/')) {
         return res.status(400).json({ message: 'Неприпустима URL-адреса аватара.' });
     }
@@ -67,7 +67,6 @@ exports.updateAvatarUrl = async (req, res, next) => {
             return res.status(404).json({ message: 'Користувача не знайдено.' });
         }
 
-        // Видаляємо старий кастомний аватар, якщо він був
         const oldAvatarUrl = currentUser.avatar_url;
         if (oldAvatarUrl && oldAvatarUrl.includes('/avatars/custom/')) {
             await deleteFile(oldAvatarUrl);
@@ -80,7 +79,6 @@ exports.updateAvatarUrl = async (req, res, next) => {
     }
 };
 
-// Отримати список URL-адрес стандартних аватарів
 exports.getDefaultAvatars = (req, res, next) => {
     const defaultAvatarsDir = path.join(__dirname, '..', 'uploads', 'avatars', 'default');
     const files = fs.readdirSync(defaultAvatarsDir);
@@ -88,7 +86,6 @@ exports.getDefaultAvatars = (req, res, next) => {
     res.json(avatarUrls);
 };
 
-// Завантажити та встановити новий кастомний аватар
 exports.uploadAvatar = async (req, res, next) => {
     if (!req.file) {
         return res.status(400).json({ message: 'Файл не було завантажено.' });
@@ -106,7 +103,6 @@ exports.uploadAvatar = async (req, res, next) => {
         const oldAvatarUrl = currentUser.avatar_url;
         const updatedUser = await User.update(userId, { avatar_url: newAvatarUrl });
 
-        // Видаляємо старий аватар, тільки якщо він був кастомним
         if (oldAvatarUrl && oldAvatarUrl.includes('/avatars/custom/')) {
             await deleteFile(oldAvatarUrl);
         }

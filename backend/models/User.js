@@ -3,7 +3,6 @@ const db = require('../db');
 const bcrypt = require('bcryptjs');
 
 class User {
-    // Створити нового користувача
     static async create({ username, email, password, avatar_url }) {
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
@@ -14,31 +13,26 @@ class User {
         return { id: result.insertId, username, email, avatar_url };
     }
 
-    // Знайти користувача за email
     static async findByEmail(email) {
         const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         return rows[0];
     }
 
-    // Знайти користувача за ID
     static async findById(id) {
         const [rows] = await db.query('SELECT id, username, email, role, created_at, avatar_url FROM users WHERE id = ?', [id]);
         return rows[0];
     }
     
-    // Знайти користувача за іменем (username)
     static async findByUsername(username) {
         const [rows] = await db.query('SELECT id, username, email, role, created_at, avatar_url FROM users WHERE username = ?', [username]);
         return rows[0];
     }
 
-    // Отримати кількість сайтів, створених користувачем
     static async getSiteCount(userId) {
         const [rows] = await db.query('SELECT COUNT(id) as siteCount FROM sites WHERE user_id = ?', [userId]);
         return rows[0].siteCount;
     }
 
-    // Оновити дані користувача (ім'я, пароль, аватар)
     static async update(userId, { username, password, avatar_url }) {
         let queryParts = [];
         const params = [];
@@ -59,7 +53,7 @@ class User {
         }
 
         if (queryParts.length === 0) {
-            return this.findById(userId); // Повертаємо поточні дані, якщо нічого не змінюється
+            return this.findById(userId);
         }
 
         let query = `UPDATE users SET ${queryParts.join(', ')} WHERE id = ?`;
@@ -69,13 +63,16 @@ class User {
         return this.findById(userId);
     }
 
-    // НОВИЙ МЕТОД
-    // Оновлює час останнього входу для користувача
     static async updateLastLogin(userId) {
         const [result] = await db.query(
             'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?',
             [userId]
         );
+        return result;
+    }
+
+    static async deleteById(userId) {
+        const [result] = await db.query('DELETE FROM users WHERE id = ?', [userId]);
         return result;
     }
 }
