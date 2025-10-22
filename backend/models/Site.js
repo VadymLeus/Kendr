@@ -249,8 +249,8 @@ class Site {
         return rows;
     }
 
-    static async findAllForAdmin(searchTerm = '') {
-        let query = `
+    static async findAllForAdmin() {
+        const [rows] = await db.query(`
             SELECT
                 s.id, s.site_path, s.title, s.logo_url, s.status, s.deletion_scheduled_for,
                 t.name AS templateName,
@@ -258,17 +258,8 @@ class Site {
             FROM sites s
             JOIN templates t ON s.template_id = t.id
             JOIN users u ON s.user_id = u.id
-        `;
-        const params = [];
-
-        if (searchTerm) {
-            query += ' WHERE s.title LIKE ?';
-            params.push(`%${searchTerm}%`);
-        }
-
-        query += ' ORDER BY s.created_at DESC';
-
-        const [rows] = await db.query(query, params);
+            ORDER BY s.updated_at DESC
+        `);
         return rows;
     }
 
