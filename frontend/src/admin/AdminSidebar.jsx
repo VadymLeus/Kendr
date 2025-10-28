@@ -1,6 +1,6 @@
 // frontend/src/admin/AdminSidebar.jsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import UserMenu from '../components/UserMenu';
 
 const AdminSidebar = ({ isCollapsed, onToggle }) => {
@@ -10,20 +10,20 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
         top: 0,
         height: '100vh',
         width: isCollapsed ? '80px' : '220px',
-        background: '#0e0d0d',
-        color: 'white',
+        background: 'var(--platform-sidebar-bg)',
+        color: 'var(--platform-text-secondary)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1100,
         transition: 'width 0.3s ease',
         boxSizing: 'border-box',
-        borderRight: '2px solid #e53e3e'
+        borderRight: '1px solid var(--platform-border-color)'
     };
 
     const logoContainerStyle = {
-        padding: '1rem 0',
+        padding: '1.5rem 0',
         textAlign: 'center',
-        borderBottom: '1px solid #4a5568'
+        borderBottom: '1px solid var(--platform-border-color)'
     };
 
     const navStyle = {
@@ -31,34 +31,31 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
         marginTop: '1.5rem'
     };
 
-    const navLinkStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-        color: '#cbd5e0',
-        textDecoration: 'none',
-        padding: '1rem',
-        borderRadius: '8px',
-        margin: '0 0.5rem 0.5rem',
-        transition: 'background 0.2s, color 0.2s',
-        justifyContent: isCollapsed ? 'center' : 'flex-start',
-    };
-    
     const toggleButtonStyle = {
         position: 'absolute',
-        top: '87px',
+        top: '75px',
         right: '-15px',
         width: '30px',
         height: '30px',
         borderRadius: '50%',
-        background: '#2d3748',
-        border: '1px solid #e53e3e',
-        color: 'white',
+        background: 'var(--platform-sidebar-bg)',
+        border: '1px solid var(--platform-border-color)',
+        color: 'var(--platform-text-secondary)',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1300
+    };
+
+    // Базовий клас для посилань (аналогічно PlatformSidebar)
+    const navLinkBaseClass = `flex items-center gap-4 text-decoration-none py-3 px-4 rounded-md mx-2 mb-2 transition-colors duration-200 ${isCollapsed ? 'justify-center' : 'justify-start'} text-[var(--platform-text-secondary)] hover:bg-[rgba(0,0,0,0.05)] hover:text-[var(--platform-text-primary)]`;
+
+    // Стиль активного посилання
+    const activeStyle = {
+        backgroundColor: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)',
+        fontWeight: '500'
     };
 
     return (
@@ -69,20 +66,62 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
 
             <div style={logoContainerStyle}>
                 <Link to="/admin">
-                    <img src="/admin.webp" alt="Admin Logo" style={{ height: '70px' }} />
+                    {/* Адмінське лого не залежить від теми */}
+                    <img 
+                        src="/admin.webp" 
+                        alt="Admin Logo" 
+                        style={{ 
+                            height: '70px', 
+                            transition: 'height 0.3s ease' 
+                        }} 
+                    />
                 </Link>
             </div>
 
             <nav style={navStyle}>
-                <Link to="/admin" style={navLinkStyle}>
+                <NavLink 
+                    to="/admin" 
+                    end 
+                    className={navLinkBaseClass}
+                    style={({ isActive }) => isActive ? activeStyle : undefined}
+                >
                     <span>{isCollapsed ? '📊' : 'Всі Сайти'}</span>
-                </Link>
-                <Link to="/admin/support" style={navLinkStyle}>
+                </NavLink>
+                
+                <NavLink 
+                    to="/admin/support" 
+                    className={navLinkBaseClass}
+                    style={({ isActive }) => isActive ? activeStyle : undefined}
+                >
                     <span>{isCollapsed ? '📩' : 'Підтримка'}</span>
-                </Link>
+                </NavLink>
+                
+                <NavLink 
+                    to="/admin/users" 
+                    className={navLinkBaseClass}
+                    style={({ isActive }) => isActive ? activeStyle : undefined}
+                >
+                    <span>{isCollapsed ? '👥' : 'Користувачі'}</span>
+                </NavLink>
+                
+                <NavLink 
+                    to="/admin/templates" 
+                    className={navLinkBaseClass}
+                    style={({ isActive }) => isActive ? activeStyle : undefined}
+                >
+                    <span>{isCollapsed ? '🎨' : 'Шаблони'}</span>
+                </NavLink>
+                
+                <NavLink 
+                    to="/admin/analytics" 
+                    className={navLinkBaseClass}
+                    style={({ isActive }) => isActive ? activeStyle : undefined}
+                >
+                    <span>{isCollapsed ? '📈' : 'Аналітика'}</span>
+                </NavLink>
             </nav>
 
-            <div style={{ borderTop: '1px solid #4a5568', padding: '1rem 0' }}>
+            <div style={{ borderTop: '1px solid var(--platform-border-color)', padding: '1rem 0' }}>
                 <UserMenu isCollapsed={isCollapsed} />
             </div>
         </div>

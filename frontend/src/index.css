@@ -1,0 +1,251 @@
+/* frontend/src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* --- Змінні теми платформи (за замовчуванням - системна, синій акцент) --- */
+  --platform-bg: #f8f9fa;            /* Світло-сірий */
+  --platform-sidebar-bg: #ffffff;   /* Білий для світлої теми */
+  --platform-card-bg: #ffffff;      /* Білий */
+  --platform-text-primary: #1a202c; /* Дуже темний (майже чорний) */
+  --platform-text-secondary: #4a5568; /* Темніший сірий для кращого контрасту */
+  --platform-border-color: #e2e8f0; /* Світло-сірий для рамок */
+  --platform-accent: #4299e1;       /* Синій */
+  --platform-accent-hover: #2b6cb0; /* Темніший синій */
+  --platform-accent-text: #ffffff; /* Текст на акцентному фоні */
+  --platform-danger: #e53e3e;       /* Червоний */
+  --platform-success: #38a169;     /* Зелений */
+  --platform-warning: #dd6b20;     /* Помаранчевий */
+
+  /* --- Змінні для логотипів --- */
+  --platform-logo-url: url('/icon-dark.webp'); /* Лого для світлої теми */
+  --sidebar-width: 220px; /* Ширина бічної панелі за замовчуванням */
+
+  /* --- Змінні теми сайту (за замовчуванням - світла, помаранчевий акцент) --- */
+  --site-bg: #ffffff;
+  --site-header-bg: #f7fafc;
+  --site-card-bg: #ffffff;
+  --site-text-primary: #1a202c;
+  --site-text-secondary: #718096;
+  --site-border-color: #e2e8f0;
+  --site-accent: #dd6b20;
+  --site-accent-hover: #c05621;
+  --site-accent-text: #ffffff;
+}
+
+/* --- Тема платформи: Темний режим --- */
+body[data-platform-mode="dark"] {
+  --platform-bg: #1a202c;
+  --platform-sidebar-bg: #111827; /* Темний фон для темної теми */
+  --platform-card-bg: #2d3748;
+  --platform-text-primary: #f7fafc;
+  --platform-text-secondary: #a0aec0; /* Світліший сірий для темної теми */
+  --platform-border-color: #4a5568;
+
+  --platform-logo-url: url('/icon-light.webp'); /* Лого для темної теми */
+}
+
+/* --- Стилі для згорнутої бічної панелі --- */
+body[data-sidebar-collapsed="true"] {
+  --sidebar-width: 80px;
+}
+
+/* --- Акцентні кольори платформи --- */
+body[data-platform-accent="blue"] {
+  --platform-accent: #4299e1;
+  --platform-accent-hover: #2b6cb0;
+}
+body[data-platform-accent="green"] {
+  --platform-accent: #48bb78;
+  --platform-accent-hover: #38a169;
+}
+body[data-platform-accent="orange"] {
+  --platform-accent: #ed8936;
+  --platform-accent-hover: #dd6b20;
+}
+body[data-platform-accent="gray"] {
+  --platform-accent: #718096;
+  --platform-accent-hover: #4a5568;
+  --platform-accent-text: #ffffff; /* Перевизначаємо для сірого */
+}
+/* --- НОВІ АКЦЕНТНІ КОЛЬОРИ --- */
+body[data-platform-accent="yellow"] {
+  --platform-accent: #ecc94b;
+  --platform-accent-hover: #d69e2e;
+  --platform-accent-text: #1a202c; /* Темний текст для жовтого */
+}
+body[data-platform-accent="red"] {
+  --platform-accent: #f56565;
+  --platform-accent-hover: #e53e3e;
+}
+body[data-platform-accent="purple"] {
+  --platform-accent: #9f7aea;
+  --platform-accent-hover: #805ad5;
+}
+body[data-platform-accent="lime"] {
+  --platform-accent: #a0d468; /* Вибрав приємний лаймовий */
+  --platform-accent-hover: #8cc152;
+  --platform-accent-text: #1a202c; /* Темний текст для лаймового */
+}
+
+/* --- Тема сайту: Темний режим --- */
+.site-wrapper[data-site-mode="dark"] {
+  --site-bg: #1E1E1E;
+  --site-header-bg: #121212;
+  --site-card-bg: #2d3748;
+  --site-text-primary: #f7fafc;
+  --site-text-secondary: #a0aec0;
+  --site-border-color: #4a5568;
+}
+
+/* --- Акцентні кольори сайту --- */
+.site-wrapper[data-site-accent="blue"] {
+  --site-accent: #2b6cb0;
+  --site-accent-hover: #2c5282;
+}
+.site-wrapper[data-site-accent="green"] {
+  --site-accent: #2f855a;
+  --site-accent-hover: #276749;
+}
+
+/* --- Базові стилі --- */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--platform-bg);
+  color: var(--platform-text-primary);
+  transition: background-color 0.3s, color 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Стилі для логотипа --- */
+.platform-logo {
+  background-image: var(--platform-logo-url);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* --- Стилі для основного макету --- */
+.layout-content {
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  flex: 1;
+}
+
+main {
+  flex-grow: 1;
+  padding: 2rem;
+  min-height: calc(100vh - 150px); /* Забезпечує мінімальну висоту */
+}
+
+footer {
+  flex-shrink: 0;
+  background: var(--platform-card-bg);
+  border-top: 1px solid var(--platform-border-color);
+}
+
+/* Стилі для кнопок */
+.btn {
+  @apply px-4 py-2 rounded-md transition-colors duration-200 font-medium text-sm;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn-primary {
+  background-color: var(--platform-accent);
+  color: var(--platform-accent-text);
+}
+.btn-primary:hover:not(:disabled) {
+   background-color: var(--platform-accent-hover);
+}
+.btn-secondary {
+  background-color: var(--platform-card-bg);
+  color: var(--platform-text-secondary);
+  border: 1px solid var(--platform-border-color);
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--platform-text-primary);
+  color: var(--platform-text-primary);
+}
+.btn-danger {
+  background-color: var(--platform-danger);
+  color: white;
+}
+.btn-danger:hover {
+  opacity: 0.9;
+}
+button:disabled, .btn:disabled {
+  @apply opacity-60 cursor-not-allowed;
+  background-color: var(--platform-text-secondary) !important;
+  color: var(--platform-text-primary) !important;
+}
+
+/* Стилі для посилань */
+a {
+    color: var(--platform-accent);
+    text-decoration: none;
+}
+a:hover {
+    color: var(--platform-accent-hover);
+    text-decoration: underline;
+}
+
+/* Стилі для інпутів */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+    @apply w-full px-3 py-2 rounded-md border;
+    background-color: var(--platform-card-bg);
+    color: var(--platform-text-primary);
+    border-color: var(--platform-border-color);
+}
+input:focus, textarea:focus, select:focus {
+    @apply outline-none ring-2;
+    border-color: var(--platform-accent);
+    --tw-ring-color: var(--platform-accent);
+}
+
+/* Стилі для карток/плиток */
+.card {
+    background: var(--platform-card-bg);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid var(--platform-border-color);
+}
+
+/* Додаткові утиліти */
+.text-primary { color: var(--platform-text-primary); }
+.text-secondary { color: var(--platform-text-secondary); }
+.text-accent { color: var(--platform-accent); }
+.text-danger { color: var(--platform-danger); }
+.text-success { color: var(--platform-success); }
+.text-warning { color: var(--platform-warning); }
+.bg-primary { background-color: var(--platform-accent); }
+.bg-secondary { background-color: var(--platform-card-bg); }
+.bg-danger-light { background-color: #fed7d7; color: #c53030; }
+.bg-success-light { background-color: #c6f6d5; color: #2f855a; }
+
+/* Інше */
+hr {
+    border: none;
+    border-top: 1px solid var(--platform-border-color);
+    margin: 1.5rem 0;
+}

@@ -89,51 +89,70 @@ const RegisterPage = () => {
         maxWidth: '450px',
         margin: '2rem auto',
         padding: '2rem 2.5rem',
-        border: '1px solid #e2e8f0',
+        background: 'var(--platform-card-bg)',
+        border: '1px solid var(--platform-border-color)',
         borderRadius: '12px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
         fontFamily: 'sans-serif'
-    };
-    
-    const inputGroupStyle = { marginBottom: '1rem' };
-
-    const labelStyle = {
-        display: 'block',
-        marginBottom: '0.5rem',
-        fontWeight: '500',
-        color: '#4a5568',
-        textAlign: 'left'
     };
 
     const inputStyle = { 
         width: '100%', 
         padding: '12px', 
         borderRadius: '8px', 
-        border: '1px solid #ccc',
-        boxSizing: 'border-box'
+        border: '1px solid var(--platform-border-color)',
+        boxSizing: 'border-box',
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        marginBottom: '1rem'
     };
-    
-    const buttonStyle = { 
-        width: '100%', 
-        padding: '14px', 
-        fontSize: '1rem', 
-        background: '#242060', 
-        color: 'white', 
-        border: 'none', 
-        borderRadius: '8px', 
-        cursor: 'pointer',
-        marginTop: '1rem'
+
+    const avatarImageStyle = {
+        width: '45px', 
+        height: '45px', 
+        borderRadius: '50%', 
+        cursor: 'pointer', 
+        border: selectedAvatar === url ? '3px solid var(--platform-accent)' : '3px solid transparent', 
+        transition: 'border 0.2s'
     };
 
     return (
         <div style={containerStyle}>
-            <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#2d3748' }}>Створення акаунту</h2>
+            <h2 style={{ 
+                textAlign: 'center', 
+                marginBottom: '1.5rem', 
+                color: 'var(--platform-text-primary)'
+            }}>
+                Створення акаунту
+            </h2>
 
-            {error && <p style={{ color: '#e53e3e', background: '#fed7d7', padding: '10px', borderRadius: '8px' }}>{error}</p>}
+            {error && (
+                <p style={{ 
+                    color: 'var(--platform-danger)', 
+                    background: '#fed7d7', 
+                    padding: '10px', 
+                    borderRadius: '8px',
+                    marginBottom: '1rem'
+                }}>
+                    {error}
+                </p>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-                    {preview && <img src={preview} alt="Аватар" style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #e2e8f0' }} />}
+                    {preview && (
+                        <img 
+                            src={preview} 
+                            alt="Аватар" 
+                            style={{ 
+                                width: '100px', 
+                                height: '100px', 
+                                borderRadius: '50%', 
+                                objectFit: 'cover', 
+                                border: '3px solid var(--platform-border-color)' 
+                            }} 
+                        />
+                    )}
                     
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', margin: '1rem 0' }}>
                         {defaultAvatars.map(url => (
@@ -142,42 +161,81 @@ const RegisterPage = () => {
                                 src={`${API_URL}${url}`} 
                                 alt="стандартний аватар"
                                 onClick={() => handleSelectDefault(url)}
-                                style={{ width: '45px', height: '45px', borderRadius: '50%', cursor: 'pointer', border: selectedAvatar === url ? '3px solid #4299e1' : '3px solid transparent', transition: 'border 0.2s' }}
+                                style={avatarImageStyle}
                             />
                         ))}
                     </div>
-                    <label htmlFor="avatar-upload" style={{ cursor: 'pointer', color: '#4299e1', textDecoration: 'underline' }}>Завантажити свій</label>
-                    <input type="file" id="avatar-upload" onChange={handleCustomAvatarChange} accept="image/*" style={{ display: 'none' }} />
+                    <label 
+                        htmlFor="avatar-upload" 
+                        style={{ 
+                            cursor: 'pointer', 
+                            color: 'var(--platform-accent)', 
+                            textDecoration: 'underline' 
+                        }}
+                    >
+                        Завантажити свій
+                    </label>
+                    <input 
+                        type="file" 
+                        id="avatar-upload" 
+                        onChange={handleCustomAvatarChange} 
+                        accept="image/*" 
+                        style={{ display: 'none' }} 
+                    />
                 </div>
 
-                <div style={inputGroupStyle}>
-                    <label htmlFor="username" style={labelStyle}>Ім'я користувача</label>
-                    <input id="username" type="text" name="username" placeholder="JohnDoe" style={inputStyle} onChange={handleChange} required />
-                </div>
+                <input 
+                    type="text" 
+                    name="username" 
+                    placeholder="Ім'я користувача" 
+                    style={inputStyle} 
+                    onChange={handleChange} 
+                    required 
+                />
 
-                <div style={inputGroupStyle}>
-                    <label htmlFor="email" style={labelStyle}>Email</label>
-                    <input id="email" type="email" name="email" placeholder="user@example.com" style={inputStyle} onChange={handleChange} required />
-                </div>
+                <input 
+                    type="email" 
+                    name="email" 
+                    placeholder="Email" 
+                    style={inputStyle} 
+                    onChange={handleChange} 
+                    required 
+                />
                 
-                {/* Нове поле для номера телефону */}
-                <div style={inputGroupStyle}>
-                    <label htmlFor="phone_number" style={labelStyle}>Номер телефону (необов'язково)</label>
-                    <input id="phone_number" type="tel" name="phone_number" placeholder="+380 (99) 123-45-67" style={inputStyle} onChange={handleChange} />
-                </div>
+                <input 
+                    type="tel" 
+                    name="phone_number" 
+                    placeholder="Номер телефону (необов'язково)" 
+                    style={inputStyle} 
+                    onChange={handleChange} 
+                />
                 
-                <div style={inputGroupStyle}>
-                    <label htmlFor="password" style={labelStyle}>Пароль</label>
-                    <input id="password" type="password" name="password" placeholder="Мін. 6 символів" style={inputStyle} onChange={handleChange} required minLength="6" />
-                </div>
+                <input 
+                    type="password" 
+                    name="password" 
+                    placeholder="Мін. 6 символів" 
+                    style={inputStyle} 
+                    onChange={handleChange} 
+                    required 
+                    minLength="6" 
+                />
 
-                <button type="submit" style={buttonStyle} disabled={isLoading}>
+                <button 
+                    type="submit" 
+                    className="btn btn-primary" 
+                    style={{ width: '100%', marginTop: '1rem' }} 
+                    disabled={isLoading}
+                >
                     {isLoading ? 'Реєстрація...' : 'Зареєструватися'}
                 </button>
             </form>
 
-            <p style={{ textAlign: 'center', marginTop: '1.5rem', color: '#718096' }}>
-                Вже є акаунт? <Link to="/login" style={{ color: '#4299e1' }}>Увійти</Link>
+            <p style={{ 
+                textAlign: 'center', 
+                marginTop: '1.5rem', 
+                color: 'var(--platform-text-secondary)'
+            }}>
+                Вже є акаунт? <Link to="/login" style={{ color: 'var(--platform-accent)' }}>Увійти</Link>
             </p>
         </div>
     );

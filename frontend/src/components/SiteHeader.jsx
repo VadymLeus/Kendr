@@ -7,17 +7,16 @@ import { FavoritesContext } from '../features/favorites/FavoritesContext';
 
 const API_URL = 'http://localhost:5000';
 
-// Додано проп `sidebarWidth` для динамічної адаптації шапки
 const SiteHeader = ({ pathParam, sidebarWidth }) => {
-    const { user } = useContext(AuthContext); // Отримуємо поточного користувача
+    const { user } = useContext(AuthContext);
     const { favoriteSiteIds, addFavorite, removeFavorite } = useContext(FavoritesContext);
     const [siteData, setSiteData] = useState(null);
     const [loading, setLoading] = useState(true);
     const location = useLocation();
 
     useEffect(() => {
-        if (!pathParam) return;
-
+        if (!pathParam) { setLoading(false); return; }
+        
         const isProductPage = location.pathname.startsWith('/product/');
 
         const fetchSiteData = async () => {
@@ -49,77 +48,87 @@ const SiteHeader = ({ pathParam, sidebarWidth }) => {
         fetchSiteData();
     }, [pathParam, location.pathname]);
 
-    // СТИЛЬ: Динамічна адаптація шапки до ширини бічної панелі
     const headerStyle = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0.5rem 2rem',
-        borderBottom: '1px solid #dee2e6',
+        borderBottom: '1px solid var(--platform-border-color)',
         position: 'sticky',
         top: 0,
         zIndex: 1000,
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backgroundColor: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
         backdropFilter: 'blur(10px)',
-        // Динамічна ширина та відступ для синхронізації з бічною панеллю
-        width: `calc(100% - ${sidebarWidth})`, 
-        left: sidebarWidth, 
-        transition: 'width 0.3s ease, left 0.3s ease' // Синхронна анімація
+        width: `calc(100% - ${sidebarWidth})`,
+        left: sidebarWidth,
+        transition: 'width 0.3s ease, left 0.3s ease, background-color 0.3s ease'
+    };
+
+    const iconButtonStyle = {
+        background: 'none', 
+        border: 'none', 
+        cursor: 'pointer', 
+        padding: 0,
+        color: 'var(--platform-text-secondary)',
+        transition: 'color 0.2s ease'
     };
 
     if (loading || !siteData) {
-        return <header style={headerStyle} />;
+        return <header style={{ ...headerStyle, backgroundColor: 'var(--platform-card-bg)', borderBottom: '1px solid var(--platform-border-color)' }} />;
     }
 
     const isOwner = user && siteData && user.id === siteData.user_id;
-    const isFavorite = siteData && favoriteSiteIds.has(siteData.id);
+    const isFavorite = favoriteSiteIds.has(siteData.id);
 
     const handleToggleFavorite = () => {
-        if (!user) return; // Гість не може додавати в обране
+        if (!user) return;
         isFavorite ? removeFavorite(siteData.id) : addFavorite(siteData.id);
+    };
+
+    const handleIconMouseEnter = (e) => {
+        e.target.style.color = 'var(--platform-accent)';
+    };
+
+    const handleIconMouseLeave = (e) => {
+        e.target.style.color = 'var(--platform-text-secondary)';
     };
 
     return (
         <header style={headerStyle}>
-            <Link 
-                to={`/site/${siteData.site_path}`} 
-                style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '1rem', 
-                    textDecoration: 'none', 
-                    color: 'inherit' 
-                }}
-            >
+            <Link to={`/site/${siteData.site_path}`} style={{ display: 'flex', alignItems: 'center', gap: '1rem', textDecoration: 'none', color: 'inherit' }}>
                 <img 
                     src={`${API_URL}${siteData.logo_url}`} 
                     alt="Логотип сайту" 
-                    style={{ 
-                        height: '50px', 
-                        width: '50px', 
-                        objectFit: 'contain' 
-                    }} 
+                    style={{ height: '50px', width: '50px', objectFit: 'contain' }} 
                 />
-                <span style={{ 
-                    fontSize: '1.5rem', 
-                    fontWeight: 'bold' 
-                }}>
+                <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                     {siteData.title}
                 </span>
             </Link>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                {/* Кнопка "В обране" - не для власника і тільки для авторизованих */}
-                {user && !isOwner && siteData && (
-                    <button onClick={handleToggleFavorite} title={isFavorite ? "Видалити з обраних" : "Додати в обрані"} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                {user && !isOwner && (
+                    <button 
+                        onClick={handleToggleFavorite} 
+                        title={isFavorite ? "Видалити з обраних" : "Додати в обрані"} 
+                        style={iconButtonStyle}
+                        onMouseEnter={handleIconMouseEnter}
+                        onMouseLeave={handleIconMouseLeave}
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={isFavorite ? "gold" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
                     </button>
                 )}
-                {/* Кнопка переходу до панелі керування сайтом, видима лише для власника */}
                 {isOwner && (
-                    <Link to={`/dashboard/${pathParam}`} title="Панель управління" style={{color: 'black'}}>
+                    <Link 
+                        to={`/dashboard/${pathParam}`} 
+                        title="Панель управління" 
+                        style={iconButtonStyle}
+                        onMouseEnter={handleIconMouseEnter}
+                        onMouseLeave={handleIconMouseLeave}
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
                             <circle cx="12" cy="12" r="3"></circle>

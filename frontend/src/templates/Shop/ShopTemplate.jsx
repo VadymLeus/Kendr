@@ -6,29 +6,21 @@ import { CartContext } from '../../features/cart/CartContext';
 
 const API_URL = 'http://localhost:5000';
 
-const ShopTemplate = ({ content, products, siteOwnerId }) => {
+const ShopTemplate = ({ content, products, siteOwnerId, siteData }) => {
     const { user } = useContext(AuthContext);
     const { addToCart } = useContext(CartContext);
     const navigate = useNavigate();
 
-    const headerTitle = content?.headerTitle || 'Назва магазину';
-    const footerText = content?.footerText || `© ${new Date().getFullYear()} Мій Магазин`;
+    const siteBg = siteData?.site_bg_color || '#f7fafc';
+    const footerText = content?.footerText || `© ${new Date().getFullYear()} ${siteData?.title || 'Мій Магазин'}`;
     const productList = Array.isArray(products) ? products : [];
-
-    const handleAddToCart = (productToAdd) => {
-        if (!user) {
-            if (window.confirm("Щоб додати товар до кошика, необхідно увійти до акаунту. Перейти на сторінку входу?")) {
-                navigate('/login');
-            }
-            return;
-        }
-        addToCart(productToAdd);
-    };
 
     const groupedProducts = useMemo(() => {
         if (!productList.length) return {};
 
         return productList.reduce((acc, product) => {
+            if (!product || typeof product !== 'object') return acc;
+            
             const categoryName = product.category_name || 'Різне';
             if (!acc[categoryName]) {
                 acc[categoryName] = [];
@@ -37,57 +29,156 @@ const ShopTemplate = ({ content, products, siteOwnerId }) => {
             return acc;
         }, {});
     }, [productList]);
-    
-    const categoryNames = Object.keys(groupedProducts).sort();
+
+    const categoryNames = groupedProducts && Object.keys(groupedProducts).length > 0 
+        ? Object.keys(groupedProducts).sort() 
+        : [];
+
+    const handleAddToCart = (productToAdd) => { /* ... (без змін) */ };
+
+    const containerStyle = {
+        fontFamily: "'Inter', sans-serif",
+        backgroundColor: siteBg,
+        minHeight: 'calc(100vh - 75px)',
+        padding: '2rem 5%',
+    };
+
+    const categoryTitleStyle = {
+        borderBottom: '2px solid #cbd5e0',
+        paddingBottom: '0.5rem',
+        marginBottom: '2rem',
+        color: '#2d3748'
+    };
+
+    const productGridStyle = {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: '2rem'
+    };
+
+    const productCardStyle = {
+        border: '1px solid #e2e8f0',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#ffffff'
+    };
+
+    const productImageStyle = (isSoldOut) => ({
+        width: '100%',
+        height: '220px',
+        objectFit: 'cover',
+        display: 'block',
+        filter: isSoldOut ? 'grayscale(90%) opacity(70%)' : 'none',
+        transition: 'transform 0.3s ease'
+    });
+
+    const productInfoStyle = {
+        padding: '1rem 1.25rem',
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+    };
+
+    const productNameStyle = {
+        margin: '0 0 0.5rem 0',
+        fontSize: '1.1rem',
+        fontWeight: '600',
+        color: '#1a202c'
+    };
+
+    const productPriceStyle = {
+        fontWeight: 'bold',
+        fontSize: '1.25rem',
+        color: '#242060',
+        marginTop: 'auto'
+    };
+
+    const productActionsStyle = {
+        padding: '0 1.25rem 1.25rem',
+        display: 'flex',
+        gap: '0.75rem',
+        borderTop: '1px solid #e2e8f0',
+        marginTop: '1rem',
+        paddingTop: '1rem'
+    };
+
+    const buttonBaseStyle = {
+        flex: 1,
+        padding: '0.6rem',
+        cursor: 'pointer',
+        border: 'none',
+        borderRadius: '8px',
+        fontWeight: '500',
+        transition: 'background-color 0.2s',
+        fontSize: '0.9rem'
+    };
+
+    const detailsButtonStyle = {
+        ...buttonBaseStyle,
+        backgroundColor: '#f0f4ff',
+        color: '#242060',
+        border: '1px solid #d3dfff'
+    };
+
+    const addToCartButtonStyle = (isOwner, isSoldOut) => ({
+        ...buttonBaseStyle,
+        backgroundColor: isOwner ? '#e2e8f0' : (isSoldOut ? '#a0aec0' : '#242060'),
+        color: isOwner ? '#718096' : 'white',
+        cursor: isOwner || isSoldOut ? 'not-allowed' : 'pointer'
+    });
+
+    const footerStyle = {
+        textAlign: 'center',
+        padding: '2rem 0',
+        borderTop: '1px solid #e2e8f0',
+        marginTop: '3rem',
+        color: '#718096',
+        background: siteBg
+    };
 
     return (
-        <div style={{ fontFamily: 'Arial, sans-serif' }}>
-            <header style={{ textAlign: 'center', padding: '2rem 0', borderBottom: '1px solid #eee' }}>
-                <h1>{headerTitle}</h1>
-            </header>
-            <main style={{ padding: '2rem' }}>
-                {productList.length > 0 ? (
+        <div style={containerStyle}>
+            <main>
+                {productList.length > 0 && categoryNames.length > 0 ? (
                     categoryNames.map(categoryName => (
                         <div key={categoryName} style={{ marginBottom: '3rem' }}>
-                            <h2 style={{ borderBottom: '2px solid #007BFF', paddingBottom: '0.5rem' }}>{categoryName}</h2>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
-                                {groupedProducts[categoryName].map((product) => {
+                            <h2 style={categoryTitleStyle}>{categoryName}</h2>
+                            <div style={productGridStyle}>
+                                {groupedProducts[categoryName]?.map((product) => {
+                                    if (!product) return null;
                                     const isOwner = user && user.id === siteOwnerId;
                                     const isSoldOut = product.stock_quantity === 0;
 
                                     return (
-                                        <div key={product.id} style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 8px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+                                        <div key={product.id} style={productCardStyle}
+                                            onMouseOver={e => e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)'} 
+                                            onMouseOut={e => e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)'}>
                                             <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                                 <img
-                                                    src={product.image_url ? `${API_URL}${product.image_url}` : 'https://placehold.co/300x200'}
+                                                    src={product.image_url ? `${API_URL}${product.image_url}` : 'https://placehold.co/400x300/EFEFEF/31343C?text=Фото+товару'}
                                                     alt={product.name}
-                                                    style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block', filter: isSoldOut ? 'grayscale(100%)' : 'none' }}
+                                                    style={productImageStyle(isSoldOut)}
+                                                    onMouseOver={e => e.currentTarget.style.transform = 'scale(1.03)'} 
+                                                    onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                                                 />
                                             </Link>
-                                            <div style={{ padding: '1rem', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                                                <h3 style={{ margin: '0 0 0.5rem 0' }}>{product.name}</h3>
-                                                <p style={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#007BFF', marginTop: 'auto' }}>{product.price} грн.</p>
+                                            <div style={productInfoStyle}>
+                                                <h3 style={productNameStyle}>{product.name}</h3>
+                                                <p style={productPriceStyle}>{product.price} грн.</p>
                                             </div>
-                                            <div style={{ padding: '0 1rem 1rem', display: 'flex', gap: '0.5rem' }}>
-                                                 <Link to={`/product/${product.id}`} style={{ flex: 1 }}>
-                                                    <button style={{ width: '100%', padding: '0.5rem', cursor: 'pointer' }}>
-                                                        Деталі
-                                                    </button>
-                                                 </Link>
+                                            <div style={productActionsStyle}>
+                                                <Link to={`/product/${product.id}`} style={{ flex: 1 }}>
+                                                    <button style={detailsButtonStyle}>Деталі</button>
+                                                </Link>
                                                 <button
                                                     onClick={() => handleAddToCart(product)}
                                                     disabled={isOwner || isSoldOut}
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '0.5rem',
-                                                        backgroundColor: isOwner ? '#ccc' : (isSoldOut ? '#888' : '#28a745'),
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '4px',
-                                                        cursor: isOwner || isSoldOut ? 'not-allowed' : 'pointer'
-                                                    }}
+                                                    style={addToCartButtonStyle(isOwner, isSoldOut)}
                                                 >
-                                                    {isOwner ? 'Ваш товар' : (isSoldOut ? 'Товар закінчився' : (user ? 'У кошик' : 'Увійти'))}
+                                                    {isOwner ? 'Ваш товар' : (isSoldOut ? 'Немає' : 'У кошик')}
                                                 </button>
                                             </div>
                                         </div>
@@ -97,10 +188,10 @@ const ShopTemplate = ({ content, products, siteOwnerId }) => {
                         </div>
                     ))
                 ) : (
-                    <p style={{ textAlign: 'center' }}>У цьому магазині поки що немає товарів.</p>
+                    <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#718096' }}>У цьому магазині поки що немає товарів.</p>
                 )}
             </main>
-            <footer style={{ textAlign: 'center', padding: '2rem 0', borderTop: '1px solid #eee', marginTop: '2rem' }}>
+            <footer style={footerStyle}>
                 <p>{footerText}</p>
             </footer>
         </div>

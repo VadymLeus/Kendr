@@ -25,37 +25,125 @@ const MyTicketsPage = () => {
     const getStatusStyle = (status) => {
         switch (status) {
             case 'open':
-                return { color: '#dd6b20', fontWeight: 'bold' }; // Orange
+                return { color: 'var(--platform-warning)', fontWeight: 'bold' };
             case 'answered':
-                return { color: '#38a169', fontWeight: 'bold' }; // Green
+                return { color: 'var(--platform-success)', fontWeight: 'bold' };
             case 'closed':
-                return { color: '#718096', fontWeight: 'bold' }; // Gray
+                return { color: 'var(--platform-text-secondary)', fontWeight: 'bold' };
             default:
                 return {};
         }
     };
 
-    if (loading) return <div>Завантаження звернень...</div>;
-    if (error) return <p style={{ color: 'red' }}>{error}</p>;
+    const containerStyle = {
+        maxWidth: '900px',
+        margin: '0 auto',
+        padding: '2rem 1rem'
+    };
+
+    const headerStyle = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '2rem'
+    };
+
+    const ticketLinkStyle = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '1.5rem',
+        border: '1px solid var(--platform-border-color)',
+        borderRadius: '12px',
+        textDecoration: 'none',
+        color: 'inherit',
+        background: 'var(--platform-card-bg)',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+    };
+
+    const ticketLinkHoverStyle = {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
+    };
+
+    if (loading) return (
+        <div style={{ 
+            padding: '2rem', 
+            textAlign: 'center', 
+            color: 'var(--platform-text-secondary)' 
+        }}>
+            Завантаження звернень...
+        </div>
+    );
+    
+    if (error) return (
+        <div style={{ 
+            color: 'var(--platform-danger)', 
+            background: '#fff2f0',
+            padding: '1rem',
+            borderRadius: '8px',
+            textAlign: 'center',
+            margin: '2rem'
+        }}>
+            {error}
+        </div>
+    );
 
     return (
-        <div style={{ maxWidth: '900px', margin: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1>Мої звернення</h1>
+        <div style={containerStyle}>
+            <div style={headerStyle}>
+                <h1 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>
+                    Мої звернення
+                </h1>
                 <Link to="/support/new-ticket">
-                    <button>Створити нове звернення</button>
+                    <button className="btn btn-primary">
+                        Створити нове звернення
+                    </button>
                 </Link>
             </div>
             
             {tickets.length === 0 ? (
-                <p>У вас ще немає звернень до підтримки.</p>
+                <div style={{ 
+                    textAlign: 'center', 
+                    padding: '3rem',
+                    background: 'var(--platform-card-bg)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--platform-border-color)'
+                }}>
+                    <p style={{ 
+                        color: 'var(--platform-text-secondary)',
+                        marginBottom: '1.5rem'
+                    }}>
+                        У вас ще немає звернень до підтримки.
+                    </p>
+                    <Link to="/support/new-ticket">
+                        <button className="btn btn-primary">
+                            Створити перше звернення
+                        </button>
+                    </Link>
+                </div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {tickets.map(ticket => (
-                        <Link to={`/support/ticket/${ticket.id}`} key={ticket.id} style={ticketLinkStyle}>
+                        <Link 
+                            to={`/support/ticket/${ticket.id}`} 
+                            key={ticket.id} 
+                            style={ticketLinkStyle}
+                            onMouseEnter={(e) => Object.assign(e.currentTarget.style, ticketLinkHoverStyle)}
+                            onMouseLeave={(e) => Object.assign(e.currentTarget.style, ticketLinkStyle)}
+                        >
                             <div>
-                                <h3 style={{ margin: 0, color: '#2d3748' }}>{ticket.subject}</h3>
-                                <small style={{ color: '#718096' }}>
+                                <h3 style={{ 
+                                    margin: '0 0 0.5rem 0', 
+                                    color: 'var(--platform-text-primary)' 
+                                }}>
+                                    {ticket.subject}
+                                </h3>
+                                <small style={{ 
+                                    color: 'var(--platform-text-secondary)',
+                                    fontSize: '0.9rem'
+                                }}>
                                     Створено: {new Date(ticket.created_at).toLocaleString()}
                                 </small>
                             </div>
@@ -70,19 +158,6 @@ const MyTicketsPage = () => {
             )}
         </div>
     );
-};
-
-const ticketLinkStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '1.5rem',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    color: 'inherit',
-    background: 'white',
-    transition: 'box-shadow 0.2s, transform 0.2s',
 };
 
 export default MyTicketsPage;

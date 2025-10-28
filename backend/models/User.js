@@ -14,17 +14,26 @@ class User {
     }
 
     static async findByEmail(email) {
-        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        const [rows] = await db.query(
+            'SELECT * FROM users WHERE email = ?',
+            [email]
+        );
         return rows[0];
     }
 
     static async findById(id) {
-        const [rows] = await db.query('SELECT id, username, email, role, created_at, avatar_url FROM users WHERE id = ?', [id]);
+        const [rows] = await db.query(
+            'SELECT id, username, email, role, status, platform_theme_mode, platform_theme_accent, created_at, avatar_url, last_login_at FROM users WHERE id = ?',
+            [id]
+        );
         return rows[0];
     }
     
     static async findByUsername(username) {
-        const [rows] = await db.query('SELECT id, username, email, role, created_at, avatar_url FROM users WHERE username = ?', [username]);
+        const [rows] = await db.query(
+            'SELECT id, username, email, role, status, platform_theme_mode, platform_theme_accent, created_at, avatar_url FROM users WHERE username = ?',
+            [username]
+        );
         return rows[0];
     }
 
@@ -33,7 +42,7 @@ class User {
         return rows[0].siteCount;
     }
 
-    static async update(userId, { username, password, avatar_url }) {
+    static async update(userId, { username, password, avatar_url, platform_theme_mode, platform_theme_accent }) {
         let queryParts = [];
         const params = [];
 
@@ -50,6 +59,14 @@ class User {
         if (avatar_url) {
             queryParts.push('avatar_url = ?');
             params.push(avatar_url);
+        }
+        if (platform_theme_mode) {
+            queryParts.push('platform_theme_mode = ?');
+            params.push(platform_theme_mode);
+        }
+        if (platform_theme_accent) {
+            queryParts.push('platform_theme_accent = ?');
+            params.push(platform_theme_accent);
         }
 
         if (queryParts.length === 0) {

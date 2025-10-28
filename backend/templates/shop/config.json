@@ -5,7 +5,6 @@
   "description": "Шаблон для продажу товарів з картками та цінами.",
   "thumbnailUrl": "/previews/shop.png",
   "defaultContent": [
-    { "key": "headerTitle", "value": "Назва магазину" },
     { "key": "footerText", "value": "© 2025 Мій Магазин" }
   ]
 }

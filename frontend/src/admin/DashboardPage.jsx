@@ -67,14 +67,72 @@ const DashboardPage = () => {
         }
     };
 
-    if (loading) return <p>Завантаження сайтів...</p>;
+    const containerStyle = {
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '2rem 1rem'
+    };
+
+    const tableStyle = {
+        width: '100%',
+        borderCollapse: 'collapse',
+        background: 'var(--platform-card-bg)',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+    };
+
+    const thStyle = { 
+        padding: '1rem', 
+        textAlign: 'left',
+        background: 'var(--platform-sidebar-bg)',
+        color: 'var(--platform-accent-text)',
+        fontWeight: '600',
+        borderBottom: '1px solid var(--platform-border-color)'
+    };
+
+    const tdStyle = { 
+        padding: '1rem', 
+        borderBottom: '1px solid var(--platform-border-color)',
+        color: 'var(--platform-text-primary)'
+    };
+
+    const statusBadgeStyle = (status) => {
+        const baseStyle = {
+            padding: '6px 12px',
+            borderRadius: '12px',
+            fontWeight: 'bold',
+            color: 'white',
+            fontSize: '0.8rem',
+            display: 'inline-block'
+        };
+        if (status === 'published') return { ...baseStyle, background: 'var(--platform-success)' };
+        if (status === 'draft') return { ...baseStyle, background: 'var(--platform-text-secondary)' };
+        if (status === 'suspended') return { ...baseStyle, background: 'var(--platform-warning)' };
+        return baseStyle;
+    };
+
+    if (loading) return (
+        <div style={{ 
+            padding: '2rem', 
+            textAlign: 'center', 
+            color: 'var(--platform-text-secondary)' 
+        }}>
+            Завантаження сайтів...
+        </div>
+    );
 
     return (
-        <div>
-            <h1>Всі сайти платформи</h1>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={containerStyle}>
+            <h1 style={{ 
+                color: 'var(--platform-text-primary)', 
+                marginBottom: '1.5rem' 
+            }}>
+                Всі сайти платформи
+            </h1>
+            <table style={tableStyle}>
                 <thead>
-                    <tr style={{ borderBottom: '2px solid #4a5568' }}>
+                    <tr>
                         <th style={thStyle}>Назва сайту</th>
                         <th style={thStyle}>Автор</th>
                         <th style={thStyle}>Статус</th>
@@ -85,7 +143,18 @@ const DashboardPage = () => {
                     {sites.map(site => (
                         <tr key={site.id}>
                             <td style={tdStyle}>
-                                <a href={`/site/${site.site_path}`} target="_blank" rel="noopener noreferrer">{site.title}</a>
+                                <a 
+                                    href={`/site/${site.site_path}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    style={{ 
+                                        color: 'var(--platform-accent)',
+                                        textDecoration: 'none',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    {site.title}
+                                </a>
                             </td>
                             <td style={tdStyle}>{site.author}</td>
                             <td style={tdStyle}>
@@ -95,19 +164,69 @@ const DashboardPage = () => {
                                     {site.status === 'suspended' && 'Призупинено'}
                                 </span>
                                 {site.status === 'suspended' && (
-                                    <small style={{ display: 'block', color: '#dd6b20' }}>
+                                    <small style={{ 
+                                        display: 'block', 
+                                        color: 'var(--platform-warning)',
+                                        marginTop: '0.25rem',
+                                        fontSize: '0.8rem'
+                                    }}>
                                         {formatTimeRemaining(site.deletion_scheduled_for)}
                                     </small>
                                 )}
                             </td>
-                            <td style={{ ...tdStyle, display: 'flex', gap: '10px' }}>
+                            <td style={{ 
+                                ...tdStyle, 
+                                display: 'flex', 
+                                gap: '0.5rem',
+                                flexWrap: 'wrap'
+                            }}>
                                 {site.status === 'suspended' ? (
-                                    <button onClick={() => handleUpdateStatus(site.site_path, 'published')} style={actionButtonStyle('green')}>Відновити</button>
+                                    <button 
+                                        onClick={() => handleUpdateStatus(site.site_path, 'published')} 
+                                        className="btn"
+                                        style={{ 
+                                            background: 'var(--platform-success)',
+                                            color: 'white',
+                                            padding: '0.5rem 1rem',
+                                            fontSize: '0.8rem'
+                                        }}
+                                    >
+                                        Відновити
+                                    </button>
                                 ) : (
-                                    <button onClick={() => handleUpdateStatus(site.site_path, 'suspended')} style={actionButtonStyle('orange')}>Призупинити</button>
+                                    <button 
+                                        onClick={() => handleUpdateStatus(site.site_path, 'suspended')} 
+                                        className="btn"
+                                        style={{ 
+                                            background: 'var(--platform-warning)',
+                                            color: 'white',
+                                            padding: '0.5rem 1rem',
+                                            fontSize: '0.8rem'
+                                        }}
+                                    >
+                                        Призупинити
+                                    </button>
                                 )}
-                                <button onClick={() => handleUpdateStatus(site.site_path, 'draft')} style={actionButtonStyle('gray')}>У чернетки</button>
-                                <button onClick={() => handleDeleteSite(site.site_path, site.title)} style={actionButtonStyle('red')}>Видалити</button>
+                                <button 
+                                    onClick={() => handleUpdateStatus(site.site_path, 'draft')} 
+                                    className="btn btn-secondary"
+                                    style={{ 
+                                        padding: '0.5rem 1rem',
+                                        fontSize: '0.8rem'
+                                    }}
+                                >
+                                    У чернетки
+                                </button>
+                                <button 
+                                    onClick={() => handleDeleteSite(site.site_path, site.title)} 
+                                    className="btn btn-danger"
+                                    style={{ 
+                                        padding: '0.5rem 1rem',
+                                        fontSize: '0.8rem'
+                                    }}
+                                >
+                                    Видалити
+                                </button>
                             </td>
                         </tr>
                     ))}
@@ -115,38 +234,6 @@ const DashboardPage = () => {
             </table>
         </div>
     );
-};
-
-const thStyle = { padding: '12px 8px', textAlign: 'left' };
-const tdStyle = { padding: '12px 8px', borderTop: '1px solid #e2e8f0' };
-const statusBadgeStyle = (status) => {
-    const baseStyle = {
-        padding: '4px 10px',
-        borderRadius: '12px',
-        fontWeight: 'bold',
-        color: 'white',
-        fontSize: '0.8rem'
-    };
-    if (status === 'published') return { ...baseStyle, background: '#38a169' };
-    if (status === 'draft') return { ...baseStyle, background: '#718096' };
-    if (status === 'suspended') return { ...baseStyle, background: '#dd6b20' };
-    return baseStyle;
-};
-const actionButtonStyle = (color) => {
-    const colors = {
-        red: '#c53030',
-        orange: '#dd6b20',
-        gray: '#718096',
-        green: '#38a169'
-    };
-    return {
-        background: colors[color] || '#4a5568',
-        color: 'white',
-        border: 'none',
-        borderRadius: '5px',
-        padding: '6px 12px',
-        cursor: 'pointer'
-    };
 };
 
 export default DashboardPage;

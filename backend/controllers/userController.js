@@ -26,22 +26,28 @@ exports.getPublicProfile = async (req, res, next) => {
 };
 
 exports.updateProfile = async (req, res, next) => {
-    const { username, newPassword, currentPassword } = req.body;
+    const { username, newPassword, currentPassword, platform_theme_mode, platform_theme_accent } = req.body;
     const userId = req.user.id;
 
     const currentUser = await User.findById(userId);
     if (!currentUser) return res.status(404).json({ message: 'Користувача не знайдено.' });
 
-    if (!currentPassword) {
-        return res.status(400).json({ message: 'Для внесення змін потрібен поточний пароль.' });
-    }
+    // Перевіряємо пароль тільки при зміні username або пароля
+    const requiresPasswordCheck = (username && username !== currentUser.username) || newPassword;
     
-    const userForAuth = await User.findByEmail(currentUser.email);
-    const isMatch = await bcrypt.compare(currentPassword, userForAuth.password_hash);
-    if (!isMatch) {
-        return res.status(401).json({ message: 'Невірний поточний пароль.' });
+    if (requiresPasswordCheck) {
+        if (!currentPassword) {
+            return res.status(400).json({ message: 'Для зміни імені або пароля потрібен поточний пароль.' });
+        }
+        
+        const userForAuth = await User.findByEmail(currentUser.email);
+        const isMatch = await bcrypt.compare(currentPassword, userForAuth.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Невірний поточний пароль.' });
+        }
     }
-    
+
+    // Перевірка унікальності username
     if (username && username !== currentUser.username) {
         const existingUser = await User.findByUsername(username);
         if (existingUser && existingUser.id !== userId) {
@@ -49,7 +55,13 @@ exports.updateProfile = async (req, res, next) => {
         }
     }
 
-    const updatedUser = await User.update(userId, { username, password: newPassword });
+    // Підготовка даних для оновлення
+    const updateData = { username };
+    if (newPassword) updateData.password = newPassword;
+    if (platform_theme_mode) updateData.platform_theme_mode = platform_theme_mode;
+    if (platform_theme_accent) updateData.platform_theme_accent = platform_theme_accent;
+
+    const updatedUser = await User.update(userId, updateData);
     res.json({ message: 'Профіль успішно оновлено!', user: updatedUser });
 };
 

@@ -119,7 +119,7 @@ exports.updateSiteContent = async (req, res, next) => {
 exports.updateSiteSettings = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const { title, status, tags } = req.body;
+        const { title, status, tags, site_theme_mode, site_theme_accent } = req.body;
         const userId = req.user.id;
 
         const site = await Site.findByPath(site_path);
@@ -127,7 +127,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав на редагування цього сайту.' });
         }
 
-        await Site.updateSettings(site.id, { title, status });
+        await Site.updateSettings(site.id, { title, status, site_theme_mode, site_theme_accent });
         
         if (Array.isArray(tags)) {
             await Site.updateTags(site.id, tags);

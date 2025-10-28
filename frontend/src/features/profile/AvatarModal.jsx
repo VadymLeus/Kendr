@@ -56,30 +56,127 @@ const AvatarModal = ({ onClose, onAvatarUpdate }) => {
         }
     };
 
-    const modalOverlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 };
-    const modalContentStyle = { background: 'white', padding: '2rem', borderRadius: '8px', width: '90%', maxWidth: '500px', boxShadow: '0 5px 15px rgba(0,0,0,0.3)' };
-    const primaryButtonStyle = { padding: '10px 20px', background: '#242060', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' };
-    const secondaryButtonStyle = { padding: '10px 20px', background: '#e2e8f0', color: 'black', border: 'none', borderRadius: '5px', cursor: 'pointer' };
+    const modalOverlayStyle = { 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0, 
+        background: 'rgba(0,0,0,0.5)', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        zIndex: 1200 
+    };
+
+    const modalContentStyle = { 
+        background: 'var(--platform-card-bg)', 
+        padding: '2rem', 
+        borderRadius: '12px', 
+        width: '90%', 
+        maxWidth: '500px', 
+        boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+        border: '1px solid var(--platform-border-color)'
+    };
 
     return (
         <div style={modalOverlayStyle} onClick={onClose}>
             <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
-                <h3 style={{ textAlign: 'center', marginTop: 0 }}>Змінити аватар</h3>
-                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                    {preview && <img src={preview} alt="Попередній перегляд" style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover' }} />}
+                <h3 style={{ 
+                    textAlign: 'center', 
+                    marginTop: 0, 
+                    color: 'var(--platform-text-primary)',
+                    marginBottom: '1.5rem'
+                }}>
+                    Змінити аватар
+                </h3>
+                
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                    {preview && (
+                        <img 
+                            src={preview} 
+                            alt="Попередній перегляд" 
+                            style={{ 
+                                width: '100px', 
+                                height: '100px', 
+                                borderRadius: '50%', 
+                                objectFit: 'cover',
+                                border: '3px solid var(--platform-accent)'
+                            }} 
+                        />
+                    )}
                 </div>
-                <h4>Стандартні аватари</h4>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '1rem' }}>
+
+                <h4 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
+                    Стандартні аватари
+                </h4>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    gap: '10px', 
+                    flexWrap: 'wrap', 
+                    marginBottom: '1.5rem' 
+                }}>
                     {defaultAvatars.map(url => (
-                        <img key={url} src={`${API_URL}${url}`} alt="стандартний аватар" onClick={() => handleSelectDefault(url)}
-                            style={{ width: '50px', height: '50px', borderRadius: '50%', cursor: 'pointer', border: selectedAvatar === url ? '3px solid #4299e1' : '3px solid transparent' }} />
+                        <img 
+                            key={url} 
+                            src={`${API_URL}${url}`} 
+                            alt="стандартний аватар" 
+                            onClick={() => handleSelectDefault(url)}
+                            style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                borderRadius: '50%', 
+                                cursor: 'pointer', 
+                                border: selectedAvatar === url ? '3px solid var(--platform-accent)' : '3px solid transparent',
+                                transition: 'border 0.2s ease'
+                            }} 
+                        />
                     ))}
                 </div>
-                <label htmlFor="avatar-upload" style={{ cursor: 'pointer', color: '#4299e1', textDecoration: 'underline' }}>... або завантажте свій</label>
-                <input type="file" id="avatar-upload" onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
-                    <button onClick={onClose} style={secondaryButtonStyle}>Скасувати</button>
-                    <button onClick={handleSave} disabled={isLoading || (!customAvatarFile && !selectedAvatar)} style={{...primaryButtonStyle, opacity: isLoading || (!customAvatarFile && !selectedAvatar) ? 0.6 : 1 }}>{isLoading ? 'Збереження...' : 'Зберегти'}</button>
+
+                <label 
+                    htmlFor="avatar-upload" 
+                    style={{ 
+                        cursor: 'pointer', 
+                        color: 'var(--platform-accent)', 
+                        textDecoration: 'underline',
+                        display: 'block',
+                        textAlign: 'center',
+                        marginBottom: '1.5rem'
+                    }}
+                >
+                    ... або завантажте свій
+                </label>
+                <input 
+                    type="file" 
+                    id="avatar-upload" 
+                    onChange={handleFileChange} 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                />
+
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    gap: '1rem', 
+                    marginTop: '2rem', 
+                    borderTop: '1px solid var(--platform-border-color)', 
+                    paddingTop: '1.5rem' 
+                }}>
+                    <button 
+                        onClick={onClose} 
+                        className="btn btn-secondary"
+                    >
+                        Скасувати
+                    </button>
+                    <button 
+                        onClick={handleSave} 
+                        disabled={isLoading || (!customAvatarFile && !selectedAvatar)} 
+                        className="btn btn-primary"
+                    >
+                        {isLoading ? 'Збереження...' : 'Зберегти'}
+                    </button>
                 </div>
             </div>
         </div>

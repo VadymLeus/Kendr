@@ -3,34 +3,106 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const SupportPage = () => {
-    return (
-        <div style={{ maxWidth: '800px', margin: 'auto' }}>
-            <h1>Центр підтримки</h1>
-            <p>Перш ніж створювати звернення, будь ласка, ознайомтеся з найчастішими питаннями.</p>
+    const containerStyle = {
+        maxWidth: '800px',
+        margin: 'auto',
+        padding: '2rem 1rem'
+    };
 
-            <div style={{ marginBottom: '2rem' }}>
-                <h3>Як змінити назву мого сайту?</h3>
-                <p>Перейдіть на сторінку вашого сайту, натисніть на іконку шестірні у правому верхньому куті, щоб потрапити до панелі управління. У вкладці "Загальні" ви можете змінити назву.</p>
+    const sectionStyle = {
+        marginBottom: '2rem',
+        padding: '1.5rem',
+        background: 'var(--platform-card-bg)',
+        borderRadius: '12px',
+        border: '1px solid var(--platform-border-color)'
+    };
+
+    const centerSectionStyle = {
+        ...sectionStyle,
+        textAlign: 'center'
+    };
+
+    return (
+        <div style={containerStyle}>
+            <h1 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
+                Центр підтримки
+            </h1>
+            <p style={{ 
+                color: 'var(--platform-text-secondary)',
+                marginBottom: '2rem'
+            }}>
+                Перш ніж створювати звернення, будь ласка, ознайомтеся з найчастішими питаннями.
+            </p>
+
+            <div style={sectionStyle}>
+                <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>
+                    Як змінити назву мого сайту?
+                </h3>
+                <p style={{ 
+                    color: 'var(--platform-text-secondary)',
+                    margin: 0,
+                    lineHeight: '1.6'
+                }}>
+                    Перейдіть на сторінку вашого сайту, натисніть на іконку шестірні у правому верхньому куті, щоб потрапити до панелі управління. У вкладці "Загальні" ви можете змінити назву.
+                </p>
             </div>
-            <div style={{ marginBottom: '2rem' }}>
-                <h3>Чи можу я змінити шаблон після створення сайту?</h3>
-                <p>На даний момент ця функція не реалізована. Вам потрібно буде створити новий сайт з бажаним шаблоном.</p>
+
+            <div style={sectionStyle}>
+                <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>
+                    Чи можу я змінити шаблон після створення сайту?
+                </h3>
+                <p style={{ 
+                    color: 'var(--platform-text-secondary)',
+                    margin: 0,
+                    lineHeight: '1.6'
+                }}>
+                    На даний момент ця функція не реалізована. Вам потрібно буде створити новий сайт з бажаним шаблоном.
+                </p>
             </div>
             
-            <hr />
+            <hr style={{ 
+                border: 'none',
+                borderTop: '1px solid var(--platform-border-color)',
+                margin: '2rem 0'
+            }} />
 
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                <h3>Не знайшли відповідь?</h3>
-                <p>Створіть звернення, і наша команда підтримки допоможе вам.</p>
+            <div style={centerSectionStyle}>
+                <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
+                    Не знайшли відповідь?
+                </h3>
+                <p style={{ 
+                    color: 'var(--platform-text-secondary)',
+                    marginBottom: '1.5rem'
+                }}>
+                    Створіть звернення, і наша команда підтримки допоможе вам.
+                </p>
                 <Link to="/support/new-ticket">
-                    <button style={{ padding: '12px 24px', fontSize: '1rem' }}>Створити звернення</button>
+                    <button className="btn btn-primary" style={{ marginBottom: '1rem' }}>
+                        Створити звернення
+                    </button>
                 </Link>
                 <br/>
-                <Link to="/support/appeal" style={{ marginTop: '1rem', display: 'inline-block' }}>
+                <Link 
+                    to="/support/appeal" 
+                    style={{ 
+                        color: 'var(--platform-accent)',
+                        textDecoration: 'none',
+                        display: 'inline-block',
+                        margin: '0.5rem 0'
+                    }}
+                >
                     Оскаржити блокування
                 </Link>
                 <br/>
-                <Link to="/support/my-tickets" style={{ marginTop: '1rem', display: 'inline-block' }}>
+                <Link 
+                    to="/support/my-tickets" 
+                    style={{ 
+                        color: 'var(--platform-accent)',
+                        textDecoration: 'none',
+                        display: 'inline-block',
+                        margin: '0.5rem 0'
+                    }}
+                >
                     Переглянути мої звернення
                 </Link>
             </div>
