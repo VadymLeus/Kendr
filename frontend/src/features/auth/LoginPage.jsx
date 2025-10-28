@@ -37,71 +37,84 @@ const LoginPage = () => {
         }
     };
 
-    
     const containerStyle = {
-        maxWidth: '450px',
+        maxWidth: '400px',
         margin: '4rem auto',
         padding: '2rem 2.5rem',
-        border: '1px solid #e2e8f0',
+        background: 'var(--platform-card-bg)',
+        border: '1px solid var(--platform-border-color)',
         borderRadius: '12px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
         fontFamily: 'sans-serif'
-    };
-    
-    const inputGroupStyle = { marginBottom: '1rem' };
-
-    const labelStyle = {
-        display: 'block',
-        marginBottom: '0.5rem',
-        fontWeight: '500',
-        color: '#4a5568',
-        textAlign: 'left'
     };
 
     const inputStyle = { 
         width: '100%', 
         padding: '12px', 
         borderRadius: '8px', 
-        border: '1px solid #ccc',
-        boxSizing: 'border-box'
-    };
-    
-    const buttonStyle = { 
-        width: '100%', 
-        padding: '14px', 
-        fontSize: '1rem', 
-        background: '#242060', 
-        color: 'white', 
-        border: 'none', 
-        borderRadius: '8px', 
-        cursor: 'pointer',
-        marginTop: '1rem'
+        border: '1px solid var(--platform-border-color)',
+        boxSizing: 'border-box',
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        marginBottom: '1rem'
     };
 
     return (
         <div style={containerStyle}>
-            <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#2d3748' }}>Вхід в акаунт</h2>
+            <h2 style={{ 
+                textAlign: 'center', 
+                marginBottom: '1.5rem', 
+                color: 'var(--platform-text-primary)'
+            }}>
+                Вхід в акаунт
+            </h2>
 
-            {error && <p style={{ color: '#e53e3e', background: '#fed7d7', padding: '10px', borderRadius: '8px' }}>{error}</p>}
+            {error && (
+                <p style={{ 
+                    color: 'var(--platform-danger)', 
+                    background: '#fed7d7', 
+                    padding: '10px', 
+                    borderRadius: '8px',
+                    marginBottom: '1rem'
+                }}>
+                    {error}
+                </p>
+            )}
 
             <form onSubmit={handleSubmit}>
-                <div style={inputGroupStyle}>
-                    <label htmlFor="email" style={labelStyle}>Email</label>
-                    <input id="email" type="email" name="email" placeholder="user@example.com" style={inputStyle} onChange={handleChange} required />
-                </div>
+                <input 
+                    type="email" 
+                    name="email" 
+                    placeholder="Email" 
+                    style={inputStyle} 
+                    onChange={handleChange} 
+                    required 
+                />
+                <input 
+                    type="password" 
+                    name="password" 
+                    placeholder="Пароль" 
+                    style={inputStyle} 
+                    onChange={handleChange} 
+                    required 
+                />
                 
-                <div style={inputGroupStyle}>
-                    <label htmlFor="password" style={labelStyle}>Пароль</label>
-                    <input id="password" type="password" name="password" placeholder="••••••••" style={inputStyle} onChange={handleChange} required />
-                </div>
-                
-                <button type="submit" style={buttonStyle} disabled={isLoading}>
+                <button 
+                    type="submit" 
+                    className="btn btn-primary" 
+                    style={{ width: '100%', marginTop: '1rem' }} 
+                    disabled={isLoading}
+                >
                     {isLoading ? 'Вхід...' : 'Увійти'}
                 </button>
             </form>
 
-            <p style={{ textAlign: 'center', marginTop: '1.5rem', color: '#718096' }}>
-                Немає акаунта? <Link to="/register" style={{ color: '#4299e1' }}>Зареєструватися</Link>
+            <p style={{ 
+                textAlign: 'center', 
+                marginTop: '1.5rem', 
+                color: 'var(--platform-text-secondary)'
+            }}>
+                Немає акаунта? <Link to="/register" style={{ color: 'var(--platform-accent)' }}>Зареєструватися</Link>
             </p>
         </div>
     );

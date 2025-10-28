@@ -29,7 +29,7 @@ const UserMenu = ({ isCollapsed }) => {
 
     const linkStyles = { 
         textDecoration: 'none', 
-        color: '#cbd5e0', 
+        color: 'var(--platform-text-secondary)', 
         fontWeight: '500', 
         display: 'block', 
         textAlign: 'center', 
@@ -42,15 +42,15 @@ const UserMenu = ({ isCollapsed }) => {
         borderRadius: '50%', 
         objectFit: 'cover', 
         cursor: 'pointer', 
-        border: '2px solid #4299e1' 
+        border: '3px solid var(--platform-accent)' 
     };
     
     const dropdownMenuStyles = { 
         position: 'absolute', 
         bottom: '70px', 
         right: isCollapsed ? '-130px' : 0,
-        background: '#2d3748', 
-        border: '1px solid #4a5568', 
+        background: 'var(--platform-sidebar-bg)', 
+        border: '1px solid var(--platform-border-color)', 
         borderRadius: '8px', 
         boxShadow: '0 -4px 8px rgba(0,0,0,0.5)', 
         minWidth: '200px', 
@@ -58,16 +58,43 @@ const UserMenu = ({ isCollapsed }) => {
         padding: '0.5rem 0' 
     };
     
+    const dropdownHeaderStyle = {
+        padding: '0.75rem 1rem', 
+        borderBottom: '1px solid var(--platform-border-color)',
+        color: 'var(--platform-text-primary)'
+    };
+    
+    const dropdownEmailStyle = { 
+        color: 'var(--platform-text-secondary)'
+    };
+    
     const dropdownItemStyles = { 
         display: 'block', 
         padding: '0.75rem 1rem', 
-        color: '#e2e8f0', 
+        color: 'var(--platform-text-secondary)', 
         textDecoration: 'none', 
         cursor: 'pointer', 
         background: 'none', 
         border: 'none', 
         width: '100%', 
-        textAlign: 'left' 
+        textAlign: 'left',
+        transition: 'all 0.2s ease'
+    };
+    
+    const dropdownItemHoverStyle = {
+        color: 'var(--platform-text-primary)',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)'
+    };
+    
+    const dropdownDividerStyle = { 
+        margin: '0.25rem 0', 
+        border: 'none', 
+        borderTop: '1px solid var(--platform-border-color)' 
+    };
+    
+    const logoutButtonStyle = { 
+        ...dropdownItemStyles, 
+        color: 'var(--platform-danger)' 
     };
     
     const userBlockStyle = { 
@@ -76,6 +103,19 @@ const UserMenu = ({ isCollapsed }) => {
         alignItems: 'center', 
         gap: '1rem', 
         position: 'relative' 
+    };
+
+    const handleItemClick = (callback) => {
+        setIsDropdownOpen(false);
+        if (callback) callback();
+    };
+
+    const handleItemMouseEnter = (e) => {
+        Object.assign(e.target.style, dropdownItemHoverStyle);
+    };
+
+    const handleItemMouseLeave = (e) => {
+        Object.assign(e.target.style, dropdownItemStyles);
     };
 
     return (
@@ -90,19 +130,50 @@ const UserMenu = ({ isCollapsed }) => {
                     />
                     {isDropdownOpen && (
                         <div style={dropdownMenuStyles}>
-                            <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #4a5568' }}>
-                                <strong style={{ display: 'block', color: 'white' }}>{user.username}</strong>
-                                <small style={{ color: '#a0aec0' }}>{user.email}</small>
+                            <div style={dropdownHeaderStyle}>
+                                <strong style={{ display: 'block' }}>{user.username}</strong>
+                                <small style={dropdownEmailStyle}>{user.email}</small>
                             </div>
-                            <Link to={`/profile/${user.username}`} onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Мій профіль</Link>
-                            <Link to="/settings" onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Налаштування</Link>
+                            <Link 
+                                to={`/profile/${user.username}`} 
+                                style={dropdownItemStyles}
+                                onMouseEnter={handleItemMouseEnter}
+                                onMouseLeave={handleItemMouseLeave}
+                                onClick={() => handleItemClick()}
+                            >
+                                Мій профіль
+                            </Link>
+                            <Link 
+                                to="/settings" 
+                                style={dropdownItemStyles}
+                                onMouseEnter={handleItemMouseEnter}
+                                onMouseLeave={handleItemMouseLeave}
+                                onClick={() => handleItemClick()}
+                            >
+                                Налаштування
+                            </Link>
                             
                             {!isAdmin && (
-                                <Link to="/my-sites" onClick={() => setIsDropdownOpen(false)} style={dropdownItemStyles}>Мої Сайти</Link>
+                                <Link 
+                                    to="/my-sites" 
+                                    style={dropdownItemStyles}
+                                    onMouseEnter={handleItemMouseEnter}
+                                    onMouseLeave={handleItemMouseLeave}
+                                    onClick={() => handleItemClick()}
+                                >
+                                    Мої Сайти
+                                </Link>
                             )}
 
-                            <hr style={{ margin: '0.25rem 0', border: 'none', borderTop: '1px solid #4a5568' }}/>
-                            <div onClick={handleLogout} style={{...dropdownItemStyles, color: '#f56565' }}>Вийти</div>
+                            <hr style={dropdownDividerStyle}/>
+                            <div 
+                                onClick={() => handleItemClick(handleLogout)} 
+                                style={logoutButtonStyle}
+                                onMouseEnter={handleItemMouseEnter}
+                                onMouseLeave={handleItemMouseLeave}
+                            >
+                                Вийти
+                            </div>
                         </div>
                     )}
                 </div>

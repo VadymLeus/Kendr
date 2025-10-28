@@ -77,58 +77,162 @@ const ProfileSettingsTab = () => {
 
     if (!user) return null;
 
+    const gridContainerStyle = { 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', 
+        gap: '1.5rem' 
+    };
+
+    const tileStyle = { 
+        background: 'var(--platform-card-bg)', 
+        padding: '1.5rem 2rem', 
+        borderRadius: '12px', 
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)', 
+        border: '1px solid var(--platform-border-color)' 
+    };
+
+    const inputStyle = { 
+        width: '100%', 
+        padding: '12px', 
+        marginTop: '8px', 
+        borderRadius: '8px', 
+        border: '1px solid var(--platform-border-color)',
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)'
+    };
+
     return (
         <div>
             {isModalOpen && <AvatarModal onClose={() => setIsModalOpen(false)} onAvatarUpdate={handleAvatarUpdate} />}
             
-            {error && <p style={{ color: 'red', background: '#ffebee', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>{error}</p>}
-            {success && <p style={{ color: 'green', background: '#e8f5e9', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>{success}</p>}
+            {error && (
+                <p style={{ 
+                    color: 'var(--platform-danger)', 
+                    background: '#fff2f0', 
+                    padding: '1rem', 
+                    borderRadius: '8px', 
+                    textAlign: 'center',
+                    marginBottom: '1rem'
+                }}>
+                    {error}
+                </p>
+            )}
+            {success && (
+                <p style={{ 
+                    color: 'var(--platform-success)', 
+                    background: '#f6ffed', 
+                    padding: '1rem', 
+                    borderRadius: '8px', 
+                    textAlign: 'center',
+                    marginBottom: '1rem'
+                }}>
+                    {success}
+                </p>
+            )}
 
             <div style={gridContainerStyle}>
                 <div style={tileStyle}>
-                    <h3>Аватар</h3>
-                    <p style={{color: '#555'}}>Натисніть на зображення, щоб змінити його.</p>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Аватар</h3>
+                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Натисніть на зображення, щоб змінити його.</p>
                     <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                        <img src={`${API_URL}${user.avatar_url}`} alt="avatar" style={{ width: '120px', height: '120px', borderRadius: '50%', cursor: 'pointer' }} onClick={() => setIsModalOpen(true)} />
+                        <img 
+                            src={`${API_URL}${user.avatar_url}`} 
+                            alt="avatar" 
+                            style={{ 
+                                width: '120px', 
+                                height: '120px', 
+                                borderRadius: '50%', 
+                                cursor: 'pointer',
+                                border: '3px solid var(--platform-accent)'
+                            }} 
+                            onClick={() => setIsModalOpen(true)} 
+                        />
                     </div>
                 </div>
 
                 <div style={tileStyle}>
-                    <h3>Загальні відомості</h3>
-                    <p style={{color: '#555'}}>Змініть ім'я користувача.</p>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Загальні відомості</h3>
+                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Змініть ім'я користувача.</p>
                     <form onSubmit={handleUpdateProfile}>
-                        <div>
-                            <label>Ім'я користувача</label>
-                            <input type="text" name="username" value={formData.username} onChange={handleChange} style={inputStyle} />
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ 
+                                display: 'block', 
+                                color: 'var(--platform-text-primary)',
+                                marginBottom: '0.5rem'
+                            }}>
+                                Ім'я користувача
+                            </label>
+                            <input 
+                                type="text" 
+                                name="username" 
+                                value={formData.username} 
+                                onChange={handleChange} 
+                                style={inputStyle} 
+                            />
                         </div>
-                        <button type="submit" style={primaryButtonStyle} disabled={isLoading}>{isLoading ? 'Збереження...' : 'Оновити ім\'я'}</button>
+                        <button 
+                            type="submit" 
+                            className="btn btn-primary" 
+                            style={{ width: '100%' }} 
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Збереження...' : 'Оновити ім\'я'}
+                        </button>
                     </form>
                 </div>
 
                 <div style={tileStyle}>
-                    <h3>Змінити пароль</h3>
-                    <p style={{color: '#555'}}>Зробіть пароль більш надійним.</p>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Змінити пароль</h3>
+                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Зробіть пароль більш надійним.</p>
                     <form onSubmit={handleUpdateProfile}>
-                        <div>
-                            <label>Новий пароль</label>
-                            <input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} style={inputStyle} placeholder="Залиште пустим, якщо не міняєте" />
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ 
+                                display: 'block', 
+                                color: 'var(--platform-text-primary)',
+                                marginBottom: '0.5rem'
+                            }}>
+                                Новий пароль
+                            </label>
+                            <input 
+                                type="password" 
+                                name="newPassword" 
+                                value={formData.newPassword} 
+                                onChange={handleChange} 
+                                style={inputStyle} 
+                                placeholder="Залиште пустим, якщо не міняєте" 
+                            />
                         </div>
-                         <div style={{marginTop: '1rem'}}>
-                            <label>Поточний пароль</label>
-                            <input type="password" name="currentPassword" value={formData.currentPassword} onChange={handleChange} style={inputStyle} required placeholder="Обов'язково для змін"/>
+                         <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ 
+                                display: 'block', 
+                                color: 'var(--platform-text-primary)',
+                                marginBottom: '0.5rem'
+                            }}>
+                                Поточний пароль
+                            </label>
+                            <input 
+                                type="password" 
+                                name="currentPassword" 
+                                value={formData.currentPassword} 
+                                onChange={handleChange} 
+                                style={inputStyle} 
+                                required 
+                                placeholder="Обов'язково для змін"
+                            />
                         </div>
-                        <button type="submit" style={primaryButtonStyle} disabled={isLoading}>{isLoading ? 'Збереження...' : 'Змінити пароль'}</button>
+                        <button 
+                            type="submit" 
+                            className="btn btn-primary" 
+                            style={{ width: '100%' }} 
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Збереження...' : 'Змінити пароль'}
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
     );
 };
-
-// Стили
-const gridContainerStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' };
-const tileStyle = { background: 'white', padding: '1.5rem 2rem', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0' };
-const inputStyle = { width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid #ccc' };
-const primaryButtonStyle = { padding: '12px', background: '#242060', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginTop: '1rem', width: '100%' };
 
 export default ProfileSettingsTab;

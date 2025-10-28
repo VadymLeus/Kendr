@@ -11,7 +11,6 @@ const ShopContentTab = ({ siteData }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Ініціалізація товарів при отриманні siteData
     useEffect(() => {
         if (siteData?.products) {
             setProducts(siteData.products.map(p => ({ 
@@ -22,7 +21,6 @@ const ShopContentTab = ({ siteData }) => {
         }
     }, [siteData]);
 
-    // Завантаження категорій
     useEffect(() => {
         const fetchCategories = async () => {
             if (!siteData?.id) return;
@@ -41,7 +39,6 @@ const ShopContentTab = ({ siteData }) => {
         fetchCategories();
     }, [siteData?.id]);
 
-    // --- КЕРУВАННЯ КАТЕГОРІЯМИ ---
     const handleAddCategory = async (e) => {
         e.preventDefault();
         if (!newCategoryName.trim() || !siteData?.id) return;
@@ -63,7 +60,6 @@ const ShopContentTab = ({ siteData }) => {
             try {
                 await apiClient.delete(`/categories/${categoryId}`);
                 setCategories(categories.filter(c => c.id !== categoryId));
-                // Оновлюємо товари, щоб прибрати в них видалену категорію
                 setProducts(products.map(p => 
                     p.category_id === categoryId ? { ...p, category_id: null } : p
                 ));
@@ -73,7 +69,6 @@ const ShopContentTab = ({ siteData }) => {
         }
     };
 
-    // --- КЕРУВАННЯ ТОВАРАМИ ---
     const handleProductChange = (index, field, value) => {
         const newProducts = [...products];
         if (field === 'category_id') {
@@ -160,22 +155,67 @@ const ShopContentTab = ({ siteData }) => {
         }
     };
 
-    if (loading) return <div>Завантаження...</div>;
+    const inputStyle = {
+        width: '100%',
+        padding: '0.75rem',
+        border: '1px solid var(--platform-border-color)',
+        borderRadius: '4px',
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        boxSizing: 'border-box'
+    };
+
+    const productCardStyle = {
+        border: '1px solid var(--platform-border-color)',
+        padding: '1.5rem',
+        marginBottom: '1rem',
+        borderRadius: '8px',
+        background: 'var(--platform-card-bg)'
+    };
+
+    const categoryTagStyle = {
+        background: 'var(--platform-bg)',
+        padding: '0.5rem 1rem',
+        borderRadius: '15px',
+        border: '1px solid var(--platform-border-color)',
+        color: 'var(--platform-text-primary)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+    };
+
+    if (loading) return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--platform-text-secondary)' }}>Завантаження...</div>;
 
     return (
         <div>
-            <h3>Управління товарами та категоріями</h3>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>Управління товарами та категоріями</h3>
+            {error && (
+                <p style={{ 
+                    color: 'var(--platform-danger)', 
+                    background: '#fff2f0',
+                    padding: '1rem',
+                    borderRadius: '4px',
+                    marginBottom: '1rem'
+                }}>
+                    {error}
+                </p>
+            )}
             
-            <div style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', marginBottom: '2rem' }}>
-                <h4>Категорії</h4>
+            <div className="card" style={{marginBottom: '2rem'}}>
+                <h4 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>Категорії</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
                     {categories.map(cat => (
-                        <span key={cat.id} style={{ background: '#eee', padding: '5px 10px', borderRadius: '15px' }}>
+                        <span key={cat.id} style={categoryTagStyle}>
                             {cat.name}
                             <button 
                                 onClick={() => handleDeleteCategory(cat.id)} 
-                                style={{ marginLeft: '5px', color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                                style={{ 
+                                    color: 'var(--platform-danger)', 
+                                    border: 'none', 
+                                    background: 'none', 
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem'
+                                }}
                             >
                                 ×
                             </button>
@@ -188,24 +228,19 @@ const ShopContentTab = ({ siteData }) => {
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
                         placeholder="Нова категорія"
-                        style={{ boxSizing: 'border-box' }}
+                        style={inputStyle}
                     />
-                    <button type="submit">Додати</button>
+                    <button type="submit" className="btn btn-primary">Додати</button>
                 </form>
             </div>
 
-            <button onClick={addProduct} style={{ marginBottom: '1rem' }}>
+            <button onClick={addProduct} className="btn btn-primary" style={{ marginBottom: '1.5rem' }}>
                 + Додати новий товар
             </button>
             
             {products.map((product, index) => (
-                <div key={product.id || `new-${index}`} style={{ 
-                    border: '1px solid #ddd', 
-                    padding: '1rem', 
-                    marginBottom: '1rem',
-                    borderRadius: '8px'
-                }}>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                <div key={product.id || `new-${index}`} style={productCardStyle}>
+                    <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
                         <div>
                             <img 
                                 src={product.imagePreview || 
@@ -214,7 +249,13 @@ const ShopContentTab = ({ siteData }) => {
                                          'https://placehold.co/600x400/EEE/31343C?text=Немає+фото'
                                      )} 
                                 alt="прев'ю" 
-                                style={{ width: '150px', height: '150px', objectFit: 'cover' }}
+                                style={{ 
+                                    width: '150px', 
+                                    height: '150px', 
+                                    objectFit: 'cover',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--platform-border-color)'
+                                }}
                             />
                             <input 
                                 type="file" 
@@ -223,19 +264,19 @@ const ShopContentTab = ({ siteData }) => {
                             />
                         </div>
 
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <input 
                                 type="text" 
                                 placeholder="Назва товару" 
                                 value={product.name} 
                                 onChange={(e) => handleProductChange(index, 'name', e.target.value)}
-                                style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
+                                style={inputStyle}
                             />
                             
                             <select
                                 value={product.category_id || ''}
                                 onChange={(e) => handleProductChange(index, 'category_id', e.target.value)}
-                                style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
+                                style={inputStyle}
                             >
                                 <option value="">Без категорії</option>
                                 {categories.map(cat => (
@@ -248,7 +289,7 @@ const ShopContentTab = ({ siteData }) => {
                                 value={product.description} 
                                 onChange={(e) => handleProductChange(index, 'description', e.target.value)} 
                                 rows={3}
-                                style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
+                                style={inputStyle}
                             ></textarea>
                             
                             <input 
@@ -256,7 +297,7 @@ const ShopContentTab = ({ siteData }) => {
                                 placeholder="Ціна" 
                                 value={product.price} 
                                 onChange={(e) => handleProductChange(index, 'price', e.target.value)}
-                                style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
+                                style={inputStyle}
                             />
                             
                             <input 
@@ -265,14 +306,20 @@ const ShopContentTab = ({ siteData }) => {
                                 value={product.stock_quantity || ''} 
                                 onChange={(e) => handleProductChange(index, 'stock_quantity', e.target.value === '' ? null : parseInt(e.target.value, 10))}
                                 min="0"
-                                style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
+                                style={inputStyle}
                             />
                             
-                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-                                <button onClick={() => handleSaveProduct(product, index)}>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                                <button 
+                                    onClick={() => handleSaveProduct(product, index)} 
+                                    className="btn btn-primary"
+                                >
                                     {product.id ? 'Оновити' : 'Створити'}
                                 </button>
-                                <button onClick={() => removeProduct(product.id, index)}>
+                                <button 
+                                    onClick={() => removeProduct(product.id, index)} 
+                                    className="btn btn-danger"
+                                >
                                     Видалити
                                 </button>
                             </div>

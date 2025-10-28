@@ -12,9 +12,9 @@ const CreateSitePage = () => {
     const [title, setTitle] = useState('');
     const [error, setError] = useState('');
     const [acceptedRules, setAcceptedRules] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    // Стани для логотипа
     const [defaultLogos, setDefaultLogos] = useState([]);
     const [selectedLogo, setSelectedLogo] = useState('');
     const [customLogoFile, setCustomLogoFile] = useState(null);
@@ -23,14 +23,12 @@ const CreateSitePage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Завантажуємо шаблони
                 const templatesResponse = await apiClient.get('/sites/templates');
                 setTemplates(templatesResponse.data);
                 if (templatesResponse.data.length > 0) {
                     setSelectedTemplate(templatesResponse.data[0].id);
                 }
 
-                // Завантажуємо стандартні логотипи
                 const logosResponse = await apiClient.get('/sites/default-logos');
                 setDefaultLogos(logosResponse.data);
                 if (logosResponse.data.length > 0) {
@@ -46,11 +44,9 @@ const CreateSitePage = () => {
         fetchData();
     }, []);
 
-    // Обробник для завантаження власного логотипа
     const handleCustomLogoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Перевірка розміру файлу (5MB)
             if (file.size > 5 * 1024 * 1024) {
                 setError('Розмір файлу не повинен перевищувати 5MB');
                 return;
@@ -62,7 +58,6 @@ const CreateSitePage = () => {
         }
     };
 
-    // Обробник для вибору стандартного логотипа
     const handleSelectDefaultLogo = (logoUrl) => {
         setSelectedLogo(logoUrl);
         setCustomLogoFile(null);
@@ -75,15 +70,17 @@ const CreateSitePage = () => {
     const handleCreateSite = async (e) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
         
-        // Перевірка прийняття правил
         if (!acceptedRules) {
             setError('Для створення сайту необхідно прийняти правила платформи.');
+            setIsLoading(false);
             return;
         }
         
         if (!sitePath || !title || !selectedTemplate) {
             setError('Будь ласка, заповніть усі поля.');
+            setIsLoading(false);
             return;
         }
 
@@ -101,40 +98,54 @@ const CreateSitePage = () => {
         try {
             const response = await apiClient.post('/sites/create', formData);
             alert('Сайт успішно створено!');
-            navigate(`/site/${response.data.site.site_path}`);
+            navigate(`/dashboard/${response.data.site.site_path}`);
         } catch (err) {
             setError(err.response?.data?.message || 'Сталася помилка під час створення сайту.');
+        } finally {
+            setIsLoading(false);
         }
     };
-    
-    return (
-        <div style={{ maxWidth: '700px', margin: 'auto', padding: '20px' }}>
-            <h2>Створення нового сайту 🎨</h2>
 
-            {/* Інформаційний блок із прапорцем */}
-            <div style={{ 
+    // Функция для получения стилей логотипа
+    const getLogoImageStyle = (currentUrl) => ({
+        width: '40px',
+        height: '40px',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        border: selectedLogo === currentUrl ? '3px solid var(--platform-accent)' : '3px solid transparent',
+        transition: 'border 0.2s',
+        padding: '2px',
+        background: 'var(--platform-card-bg)',
+        objectFit: 'contain'
+    });
+
+    return (
+        <div className="card" style={{ maxWidth: '700px', margin: 'auto' }}>
+            <h2 style={{ marginBottom: '1.5rem' }}>Створення нового сайту 🎨</h2>
+
+            <div style={{
                 padding: '1rem', 
                 marginBottom: '1.5rem', 
-                background: '#f6ffed', 
-                border: acceptedRules ? '1px solid #52c41a' : '1px solid #ffa39e',
-                borderRadius: '8px',
-                transition: 'border-color 0.3s'
+                borderRadius: '8px', 
+                transition: 'border-color 0.3s',
+                border: acceptedRules ? '1px solid var(--platform-success)' : '1px solid var(--platform-danger)',
+                background: acceptedRules ? 'var(--platform-bg)' : 'var(--platform-bg)'
             }}>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
                     <input 
                         type="checkbox" 
-                        checked={acceptedRules}
-                        onChange={(e) => setAcceptedRules(e.target.checked)}
+                        checked={acceptedRules} 
+                        onChange={(e) => setAcceptedRules(e.target.checked)} 
                         style={{ marginTop: '3px' }}
                     />
                     <span>
                         Я ознайомився та погоджуюся з{" "}
                         <Link 
                             to="/rules" 
-                            target="_blank"
+                            target="_blank" 
                             style={{ 
                                 fontWeight: 'bold', 
-                                color: '#1890ff',
+                                color: 'var(--platform-accent)',
                                 textDecoration: 'none'
                             }}
                             onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
@@ -147,19 +158,12 @@ const CreateSitePage = () => {
             </div>
 
             {error && (
-                <p style={{ 
-                    color: 'red', 
-                    border: '1px solid red', 
-                    padding: '10px',
-                    borderRadius: '4px',
-                    backgroundColor: '#fff2f0'
-                }}>
+                <p className="bg-danger-light text-danger" style={{ padding: '10px', borderRadius: '4px', marginBottom: '1rem' }}>
                     {error}
                 </p>
             )}
             
             <form onSubmit={handleCreateSite} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {/* Блок вибору шаблону */}
                 <div>
                     <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>
                         1. Оберіть шаблон:
@@ -167,14 +171,17 @@ const CreateSitePage = () => {
                     <select 
                         value={selectedTemplate} 
                         onChange={e => setSelectedTemplate(e.target.value)} 
-                        style={{ 
-                            width: '100%', 
-                            padding: '10px', 
-                            border: '1px solid #d9d9d9',
-                            borderRadius: '4px',
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--platform-border-color)',
+                            background: 'var(--platform-card-bg)',
+                            color: 'var(--platform-text-primary)',
                             fontSize: '14px',
                             boxSizing: 'border-box'
                         }}
+                        required
                     >
                         {templates.map(template => (
                             <option key={template.id} value={template.id}>
@@ -183,19 +190,13 @@ const CreateSitePage = () => {
                         ))}
                     </select>
                     {templates.find(t => t.id === parseInt(selectedTemplate))?.description && (
-                        <small style={{ color: '#666', fontStyle: 'italic', marginTop: '5px', display: 'block' }}>
+                        <small className="text-secondary" style={{ fontStyle: 'italic', marginTop: '5px', display: 'block' }}>
                             {templates.find(t => t.id === parseInt(selectedTemplate))?.description}
                         </small>
                     )}
                 </div>
                 
-                {/* Блок вибору логотипа */}
-                <div style={{ 
-                    border: '1px solid #eee', 
-                    padding: '1rem', 
-                    borderRadius: '8px',
-                    backgroundColor: '#fafafa'
-                }}>
+                <div className="card" style={{ padding: '1rem' }}>
                     <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
                         2. Оберіть логотип:
                     </label>
@@ -210,16 +211,26 @@ const CreateSitePage = () => {
                                         height: '64px', 
                                         borderRadius: '8px', 
                                         objectFit: 'contain',
-                                        border: '1px solid #ddd'
+                                        border: '1px solid var(--platform-border-color)'
                                     }} 
                                 />
-                                <div style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginTop: '5px' }}>
+                                <div style={{ 
+                                    fontSize: '12px', 
+                                    color: 'var(--platform-text-secondary)', 
+                                    textAlign: 'center', 
+                                    marginTop: '5px' 
+                                }}>
                                     Перегляд
                                 </div>
                             </div>
                         )}
                         <div style={{ flex: 1 }}>
-                            <p style={{ margin: '0 0 8px 0', padding: 0, fontWeight: '500' }}>
+                            <p style={{ 
+                                margin: '0 0 8px 0', 
+                                padding: 0, 
+                                fontWeight: '500',
+                                color: 'var(--platform-text-primary)'
+                            }}>
                                 Стандартні логотипи:
                             </p>
                             <div style={{ 
@@ -228,27 +239,17 @@ const CreateSitePage = () => {
                                 flexWrap: 'wrap', 
                                 margin: '10px 0',
                                 padding: '10px',
-                                backgroundColor: 'white',
+                                backgroundColor: 'var(--platform-card-bg)',
                                 borderRadius: '4px',
-                                border: '1px solid #e8e8e8'
+                                border: '1px solid var(--platform-border-color)'
                             }}>
-                                {defaultLogos.map(url => (
+                                {defaultLogos.map(logoUrl => (
                                     <img 
-                                        key={url}
-                                        src={`${API_URL}${url}`} 
+                                        key={logoUrl}
+                                        src={`${API_URL}${logoUrl}`} 
                                         alt="стандартний логотип"
-                                        onClick={() => handleSelectDefaultLogo(url)}
-                                        style={{ 
-                                            width: '40px', 
-                                            height: '40px',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            border: selectedLogo === url ? '3px solid #007bff' : '3px solid transparent',
-                                            transition: 'border 0.2s',
-                                            padding: '2px',
-                                            background: '#f0f0f0',
-                                            objectFit: 'contain'
-                                        }}
+                                        onClick={() => handleSelectDefaultLogo(logoUrl)}
+                                        style={getLogoImageStyle(logoUrl)}
                                     />
                                 ))}
                             </div>
@@ -256,25 +257,17 @@ const CreateSitePage = () => {
                             <div style={{ marginTop: '15px' }}>
                                 <label 
                                     htmlFor="logo-upload" 
+                                    className="btn btn-secondary"
                                     style={{ 
                                         cursor: 'pointer', 
-                                        color: '#007bff', 
-                                        textDecoration: 'none',
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '5px',
                                         padding: '8px 12px',
-                                        border: '1px dashed #007bff',
+                                        border: '1px dashed var(--platform-border-color)',
                                         borderRadius: '4px',
-                                        fontSize: '14px'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.target.style.backgroundColor = '#f0f8ff';
-                                        e.target.style.textDecoration = 'underline';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.backgroundColor = 'transparent';
-                                        e.target.style.textDecoration = 'none';
+                                        fontSize: '14px',
+                                        transition: 'all 0.2s ease'
                                     }}
                                 >
                                     📁 Завантажити свій логотип (до 5МБ)
@@ -287,7 +280,7 @@ const CreateSitePage = () => {
                                     style={{ display: 'none' }} 
                                 />
                                 {customLogoFile && (
-                                    <div style={{ fontSize: '12px', color: '#52c41a', marginTop: '5px' }}>
+                                    <div className="text-success" style={{ fontSize: '12px', marginTop: '5px' }}>
                                         Обрано файл: {customLogoFile.name}
                                     </div>
                                 )}
@@ -296,7 +289,6 @@ const CreateSitePage = () => {
                     </div>
                 </div>
 
-                {/* Блок назви та адреси */}
                 <div>
                     <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
                         3. Вкажіть назву та адресу:
@@ -307,27 +299,31 @@ const CreateSitePage = () => {
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         placeholder="Назва вашого сайту"
-                        style={{ 
-                            width: '100%', 
-                            padding: '10px', 
-                            border: '1px solid #d9d9d9',
-                            borderRadius: '4px',
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--platform-border-color)',
+                            background: 'var(--platform-card-bg)',
+                            color: 'var(--platform-text-primary)',
                             fontSize: '14px',
-                            marginBottom: '10px',
-                            boxSizing: 'border-box'
+                            boxSizing: 'border-box',
+                            marginBottom: '10px'
                         }}
                         required
                     />
                     
-                    <div style={{ position: 'relative' }}>
-                        <span style={{ 
-                            position: 'absolute', 
-                            left: '10px', 
-                            top: '10px', 
-                            color: '#888',
-                            fontSize: '14px',
-                            zIndex: 1
-                        }}>
+                    <div style={{ position: 'relative', marginTop: '10px' }}>
+                        <span 
+                            className="text-secondary" 
+                            style={{ 
+                                position: 'absolute', 
+                                left: '10px', 
+                                top: '10px', 
+                                fontSize: '14px',
+                                zIndex: 1
+                            }}
+                        >
                             {window.location.origin}/site/
                         </span>
                         <input
@@ -335,41 +331,36 @@ const CreateSitePage = () => {
                             value={sitePath}
                             onChange={e => setSitePath(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                             placeholder="my-cool-site"
-                            style={{ 
-                                width: '100%', 
-                                padding: '10px', 
-                                paddingLeft: '145px',
-                                border: '1px solid #d9d9d9',
-                                borderRadius: '4px',
+                            style={{
+                                width: '100%',
+                                padding: '12px 12px 12px 145px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--platform-border-color)',
+                                background: 'var(--platform-card-bg)',
+                                color: 'var(--platform-text-primary)',
                                 fontSize: '14px',
-                                position: 'relative',
                                 boxSizing: 'border-box'
                             }}
                             required
                         />
                     </div>
-                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                    <small className="text-secondary" style={{ marginTop: '5px', display: 'block' }}>
                         Можна використовувати лише латинські літери, цифри та дефіси.
                     </small>
                 </div>
 
                 <button 
                     type="submit" 
+                    className="btn btn-primary"
                     style={{ 
                         padding: '12px 24px', 
-                        fontSize: '1rem', 
-                        cursor: 'pointer',
-                        backgroundColor: '#1890ff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
+                        fontSize: '1rem',
                         fontWeight: 'bold',
-                        transition: 'background-color 0.3s'
+                        marginTop: '1rem'
                     }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#40a9ff'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#1890ff'}
+                    disabled={isLoading || !acceptedRules}
                 >
-                    Створити сайт
+                    {isLoading ? 'Створення...' : 'Створити сайт'}
                 </button>
             </form>
         </div>

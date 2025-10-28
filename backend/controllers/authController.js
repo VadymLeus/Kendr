@@ -65,7 +65,9 @@ exports.login = async (req, res, next) => {
                 username: user.username, 
                 email: user.email, 
                 avatar_url: user.avatar_url,
-                role: user.role
+                role: user.role,
+                platform_theme_mode: user.platform_theme_mode,
+                platform_theme_accent: user.platform_theme_accent
             }
         });
     } catch (error) {

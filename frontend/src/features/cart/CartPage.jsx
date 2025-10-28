@@ -24,45 +24,140 @@ const CartPage = () => {
         }
     };
 
+    const containerStyle = {
+        maxWidth: '800px',
+        margin: '0 auto',
+        padding: '2rem 1rem'
+    };
+
+    const cartItemStyle = {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+        padding: '1rem',
+        border: '1px solid var(--platform-border-color)',
+        borderRadius: '8px',
+        marginBottom: '1rem',
+        background: 'var(--platform-card-bg)'
+    };
+
+    const cartItemImageStyle = {
+        width: '80px',
+        height: '80px',
+        objectFit: 'cover',
+        borderRadius: '4px',
+        border: '1px solid var(--platform-border-color)'
+    };
+
+    const cartItemDetailsStyle = {
+        flex: 1
+    };
+
+    const cartItemTitleLinkStyle = {
+        textDecoration: 'none',
+        color: 'var(--platform-text-primary)'
+    };
+
+    const cartItemQuantityStyle = {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+    };
+
+    const quantityButtonStyle = {
+        width: '30px',
+        height: '30px',
+        border: '1px solid var(--platform-border-color)',
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    };
+
+    const cartSummaryStyle = {
+        padding: '1.5rem',
+        border: '1px solid var(--platform-border-color)',
+        borderRadius: '8px',
+        background: 'var(--platform-card-bg)',
+        textAlign: 'center'
+    };
+
     return (
-        <div className="cart-container">
-            <h2>Ваш кошик</h2>
+        <div style={containerStyle}>
+            <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '2rem' }}>Ваш кошик</h2>
             {cartItems.length === 0 ? (
-                <div>
-                    <p>У кошику поки що порожньо.</p>
-                    <Link to="/catalog"><button>Перейти до каталогу</button></Link>
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                    <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '1.5rem' }}>У кошику поки що порожньо.</p>
+                    <Link to="/catalog">
+                        <button className="btn btn-primary">Перейти до каталогу</button>
+                    </Link>
                 </div>
             ) : (
                 <>
-                    <div className="cart-items-list">
+                    <div>
                         {cartItems.map(item => (
-                            <div key={item.id} className="cart-item">
+                            <div key={item.id} style={cartItemStyle}>
                                 <Link to={`/product/${item.id}`}>
                                     <img 
                                         src={item.image_url ? `${API_URL}${item.image_url}` : 'https://placehold.co/100x100'} 
                                         alt={item.name} 
-                                        className="cart-item-image"
+                                        style={cartItemImageStyle}
                                     />
                                 </Link>
-                                <div className="cart-item-details">
-                                    <Link to={`/product/${item.id}`} className="cart-item-title-link">
-                                        <h4>{item.name}</h4>
+                                <div style={cartItemDetailsStyle}>
+                                    <Link to={`/product/${item.id}`} style={cartItemTitleLinkStyle}>
+                                        <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--platform-text-primary)' }}>{item.name}</h4>
                                     </Link>
-                                    <p>{item.price} грн.</p>
+                                    <p style={{ margin: 0, color: 'var(--platform-text-secondary)' }}>{item.price} грн.</p>
                                 </div>
-                                <div className="cart-item-quantity">
-                                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)}>-</button>
-                                    <span>{item.quantity}</span>
-                                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
+                                <div style={cartItemQuantityStyle}>
+                                    <button 
+                                        onClick={() => updateQuantity(item.id, item.quantity - 1)} 
+                                        style={quantityButtonStyle}
+                                        disabled={item.quantity <= 1}
+                                    >
+                                        -
+                                    </button>
+                                    <span style={{ 
+                                        padding: '0 1rem',
+                                        color: 'var(--platform-text-primary)'
+                                    }}>
+                                        {item.quantity}
+                                    </span>
+                                    <button 
+                                        onClick={() => updateQuantity(item.id, item.quantity + 1)} 
+                                        style={quantityButtonStyle}
+                                    >
+                                        +
+                                    </button>
                                 </div>
-                                <button onClick={() => removeFromCart(item.id)} className="cart-item-remove-btn">Видалити</button>
+                                <button 
+                                    onClick={() => removeFromCart(item.id)} 
+                                    className="btn btn-danger"
+                                    style={{ padding: '0.5rem 1rem' }}
+                                >
+                                    Видалити
+                                </button>
                             </div>
                         ))}
                     </div>
-                    <div className="cart-summary">
-                        <h3>Разом: {total.toFixed(2)} грн.</h3>
-                        <button onClick={handleCheckout} className="checkout-btn">Оформити замовлення</button>
-                        <button onClick={clearCart} className="clear-cart-btn">Очистити кошик</button>
+                    <div style={cartSummaryStyle}>
+                        <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>
+                            Разом: {total.toFixed(2)} грн.
+                        </h3>
+                        <button 
+                            onClick={handleCheckout} 
+                            className="btn btn-primary"
+                            style={{ marginRight: '1rem' }}
+                        >
+                            Оформити замовлення
+                        </button>
+                        <button 
+                            onClick={clearCart} 
+                            className="btn btn-secondary"
+                        >
+                            Очистити кошик
+                        </button>
                     </div>
                 </>
             )}

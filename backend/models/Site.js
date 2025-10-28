@@ -1,3 +1,4 @@
+// backend/models/Site.js
 const db = require('../db');
 const TemplateService = require('../utils/templateService');
 const { deleteFile } = require('../utils/fileUtils');
@@ -118,8 +119,10 @@ class Site {
     static async findByPath(sitePath) {
         const [sites] = await db.query(`
             SELECT
-                s.id, s.user_id, s.title, s.template_id, s.status, s.logo_url,
-                s.site_path, s.view_count,
+                s.id, s.user_id, s.title, s.template_id, s.logo_url, s.status,
+                s.view_count, s.deletion_scheduled_for,
+                s.site_theme_mode, s.site_theme_accent,
+                s.site_path, 
                 t.component_name
             FROM sites s
             JOIN templates t ON s.template_id = t.id
@@ -136,7 +139,7 @@ class Site {
         }, {});
         
         let products = [];
-        if (site.template_id == 2) { 
+        if (site.template_id == 2) {
             const [productRows] = await db.query(`
                 SELECT p.*, c.name as category_name
                 FROM products p
@@ -184,12 +187,45 @@ class Site {
     }
 
     static async updateSettings(siteId, data) {
-        const { title, status } = data;
-        const [result] = await db.query(
-            'UPDATE sites SET title = ?, status = ? WHERE id = ?',
-            [title, status, siteId]
-        );
-        return result;
+        console.log(`[updateSettings] Received data for siteId ${siteId}:`, data);
+
+        const { title, status, site_theme_mode, site_theme_accent } = data;
+
+        const params = [
+            title, 
+            status, 
+            site_theme_mode || 'light',
+            site_theme_accent || 'orange',
+            siteId
+        ];
+
+        const query = `
+            UPDATE sites 
+            SET 
+                title = ?, 
+                status = ?, 
+                site_theme_mode = ?, 
+                site_theme_accent = ? 
+            WHERE id = ?
+        `;
+
+        console.log('[updateSettings] Executing query:', query);
+        console.log('[updateSettings] With params:', params);
+
+        try {
+            const [result] = await db.query(query, params);
+            
+            console.log('[updateSettings] Query executed successfully. Result:', result);
+            
+            if (result.affectedRows === 0) {
+                console.warn(`[updateSettings] Warning: No rows updated for siteId ${siteId}. Does the site exist?`);
+            }
+            
+            return result;
+        } catch (error) {
+            console.error(`[updateSettings] Database Error for siteId ${siteId}:`, error);
+            throw error; 
+        }
     }
 
     static async updateTags(siteId, tagIds = []) {

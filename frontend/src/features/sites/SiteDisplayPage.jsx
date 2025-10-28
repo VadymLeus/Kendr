@@ -1,8 +1,9 @@
 // frontend/src/features/sites/SiteDisplayPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../../services/api';
 import TemplateLoader from '../../templates/TemplateLoader';
+import { ThemeContext } from '../../context/ThemeContext';
 
 const SiteDisplayPage = () => {
     const { site_path } = useParams();
@@ -10,6 +11,7 @@ const SiteDisplayPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isSuspended, setIsSuspended] = useState(false);
+    const { loadSiteTheme } = useContext(ThemeContext);
 
     useEffect(() => {
         const fetchSiteData = async () => {
@@ -20,6 +22,7 @@ const SiteDisplayPage = () => {
                     params: { increment_view: true }
                 });
                 setSiteData(response.data);
+                loadSiteTheme(response.data);
             } catch (err) {
                 if (err.response && err.response.status === 403) {
                     setError(err.response.data.message);
@@ -32,7 +35,7 @@ const SiteDisplayPage = () => {
             }
         };
         fetchSiteData();
-    }, [site_path]);
+    }, [site_path, loadSiteTheme]);
 
     if (loading) return <div>Завантаження сайту...</div>;
     
@@ -53,12 +56,19 @@ const SiteDisplayPage = () => {
     if (!siteData) return <div>Сайт не знайдено.</div>;
 
     return (
-        <TemplateLoader 
-            componentName={siteData.component_name}
-            content={siteData.content} 
-            products={siteData.products} 
-            siteOwnerId={siteData.user_id} 
-        />
+        <div 
+            className="site-wrapper" 
+            data-site-mode={siteData.site_theme_mode || 'light'} 
+            data-site-accent={siteData.site_theme_accent || 'orange'}
+        >
+            <TemplateLoader 
+                componentName={siteData.component_name}
+                content={siteData.content} 
+                products={siteData.products} 
+                siteOwnerId={siteData.user_id} 
+                siteData={siteData}
+            />
+        </div>
     );
 };
 

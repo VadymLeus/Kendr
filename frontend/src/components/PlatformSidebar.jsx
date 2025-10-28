@@ -1,6 +1,6 @@
 // frontend/src/components/PlatformSidebar.jsx
 import React, { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import UserMenu from './UserMenu';
 import { CartContext } from '../features/cart/CartContext';
 import { AuthContext } from '../features/auth/AuthContext';
@@ -23,19 +23,20 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         top: 0,
         height: '100vh',
         width: isCollapsed ? '80px' : '220px',
-        background: '#242060',
-        color: 'white',
+        background: 'var(--platform-sidebar-bg)',
+        color: 'var(--platform-text-secondary)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1100,
         transition: 'width 0.3s ease',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        borderRight: '1px solid var(--platform-border-color)'
     };
 
     const logoContainerStyle = {
-        padding: '1rem 0',
+        padding: '1.5rem 0',
         textAlign: 'center',
-        borderBottom: '1px solid #5a684aff'
+        borderBottom: '1px solid var(--platform-border-color)'
     };
 
     const navStyle = {
@@ -43,34 +44,52 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         marginTop: '1.5rem'
     };
 
-    const navLinkStyle = {
+    const navLinkBaseStyle = {
         display: 'flex',
         alignItems: 'center',
         gap: '1rem',
-        color: '#cbd5e0',
         textDecoration: 'none',
-        padding: '1rem',
-        borderRadius: '8px',
+        padding: '0.8rem 1rem',
+        borderRadius: '6px',
         margin: '0 0.5rem 0.5rem',
         transition: 'background 0.2s, color 0.2s',
         justifyContent: isCollapsed ? 'center' : 'flex-start',
+        color: 'var(--platform-text-secondary)'
+    };
+
+    const activeNavLinkStyle = {
+        backgroundColor: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)',
+        fontWeight: '500'
     };
     
     const toggleButtonStyle = {
         position: 'absolute',
-        top: '87px',
+        top: '75px',
         right: '-15px',
         width: '30px',
         height: '30px',
         borderRadius: '50%',
-        background: '#2d3748',
-        border: '1px solid #4a5568',
-        color: 'white',
+        background: 'var(--platform-sidebar-bg)',
+        border: '1px solid var(--platform-border-color)',
+        color: 'var(--platform-text-secondary)',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1300
+    };
+
+    // --- Стиль для адаптивного логотипа ---
+    const logoImageStyle = {
+        height: '70px',
+        width: 'auto',
+        transition: 'height 0.3s ease',
+        backgroundImage: 'var(--platform-logo-url)',
+        backgroundSize: 'contain',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
+        margin: '0 auto'
     };
 
     return (
@@ -81,41 +100,74 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
 
             <div style={logoContainerStyle}>
                 <Link to="/">
-                    <img 
-                        src="/icon.webp" 
-                        alt="Kendr Logo" 
-                        style={{ 
-                            height: '70px', 
-                            transition: 'height 0.3s ease' 
-                        }} 
-                    />
+                    {/* Адаптивный логотип через CSS переменные */}
+                    <div style={logoImageStyle} />
                 </Link>
             </div>
 
             <nav style={navStyle}>
-                <Link to="/catalog" style={navLinkStyle}>
+                <NavLink 
+                    to="/catalog" 
+                    style={({ isActive }) => ({ 
+                        ...navLinkBaseStyle, 
+                        ...(isActive ? activeNavLinkStyle : {}) 
+                    })}
+                >
                     <span>{isCollapsed ? '📖' : 'Каталог'}</span>
-                </Link>
-                <Link to="/my-sites" style={navLinkStyle} onClick={(e) => handleProtectedLinkClick(e, '/my-sites')}>
+                </NavLink>
+                <NavLink 
+                    to="/my-sites" 
+                    onClick={(e) => handleProtectedLinkClick(e, '/my-sites')}
+                    style={({ isActive }) => ({ 
+                        ...navLinkBaseStyle, 
+                        ...(isActive ? activeNavLinkStyle : {}) 
+                    })}
+                >
                     <span>{isCollapsed ? '💻' : 'Мої сайти'}</span>
-                </Link>
-                <Link to="/favorites" style={navLinkStyle} onClick={(e) => handleProtectedLinkClick(e, '/favorites')}>
+                </NavLink>
+                <NavLink 
+                    to="/favorites" 
+                    onClick={(e) => handleProtectedLinkClick(e, '/favorites')}
+                    style={({ isActive }) => ({ 
+                        ...navLinkBaseStyle, 
+                        ...(isActive ? activeNavLinkStyle : {}) 
+                    })}
+                >
                     <span>{isCollapsed ? '⭐' : 'Обране'}</span>
-                </Link>
-                <Link to="/create-site" style={navLinkStyle} onClick={(e) => handleProtectedLinkClick(e, '/create-site')}>
+                </NavLink>
+                <NavLink 
+                    to="/create-site" 
+                    onClick={(e) => handleProtectedLinkClick(e, '/create-site')}
+                    style={({ isActive }) => ({ 
+                        ...navLinkBaseStyle, 
+                        ...(isActive ? activeNavLinkStyle : {}) 
+                    })}
+                >
                     <span>{isCollapsed ? '➕' : 'Створити сайт'}</span>
-                </Link>
-                <Link to="/support" style={navLinkStyle}>
-                    <span>{isCollapsed ? '❓' : 'Підтримка'}</span>
-                </Link>
+                </NavLink>
                 {user && (
-                    <Link to="/cart" style={navLinkStyle}>
+                    <NavLink 
+                        to="/cart" 
+                        style={({ isActive }) => ({ 
+                            ...navLinkBaseStyle, 
+                            ...(isActive ? activeNavLinkStyle : {}) 
+                        })}
+                    >
                         <span>{isCollapsed ? `🛒` : `Кошик (${cartItems.length})`}</span>
-                    </Link>
+                    </NavLink>
                 )}
+                <NavLink 
+                    to="/support" 
+                    style={({ isActive }) => ({ 
+                        ...navLinkBaseStyle, 
+                        ...(isActive ? activeNavLinkStyle : {}) 
+                    })}
+                >
+                    <span>{isCollapsed ? '❓' : 'Підтримка'}</span>
+                </NavLink>
             </nav>
 
-            <div style={{ borderTop: '1px solid #4a5568', padding: '1rem 0' }}>
+            <div style={{ borderTop: '1px solid var(--platform-border-color)', padding: '1rem 0' }}>
                 <UserMenu isCollapsed={isCollapsed} />
             </div>
         </div>

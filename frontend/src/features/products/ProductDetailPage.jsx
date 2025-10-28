@@ -41,40 +41,122 @@ const ProductDetailPage = () => {
         addToCart(productToAdd);
     };
 
-    if (loading) return <div>Завантаження товару...</div>;
-    if (error) return <div style={{ color: 'red' }}>{error}</div>;
-    if (!product) return <div>Товар не знайдено.</div>;
+    const containerStyle = {
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '2rem 1rem',
+        display: 'flex',
+        gap: '3rem',
+        flexWrap: 'wrap',
+        alignItems: 'flex-start'
+    };
+
+    const imageContainerStyle = {
+        flex: '1 1 400px'
+    };
+
+    const infoContainerStyle = {
+        flex: '1 1 400px'
+    };
+
+    const imageStyle = {
+        width: '100%',
+        borderRadius: '12px',
+        border: '1px solid var(--platform-border-color)',
+        filter: product?.stock_quantity === 0 ? 'grayscale(100%)' : 'none',
+        opacity: product?.stock_quantity === 0 ? 0.7 : 1
+    };
+
+    if (loading) return (
+        <div style={{ 
+            padding: '2rem', 
+            textAlign: 'center', 
+            color: 'var(--platform-text-secondary)' 
+        }}>
+            Завантаження товару...
+        </div>
+    );
+    
+    if (error) return (
+        <div style={{ 
+            color: 'var(--platform-danger)', 
+            background: '#fff2f0',
+            padding: '1rem',
+            borderRadius: '8px',
+            textAlign: 'center',
+            margin: '2rem'
+        }}>
+            {error}
+        </div>
+    );
+    
+    if (!product) return (
+        <div style={{ 
+            textAlign: 'center', 
+            color: 'var(--platform-text-secondary)',
+            padding: '2rem'
+        }}>
+            Товар не знайдено.
+        </div>
+    );
 
     const isOwner = user && user.id === product.user_id;
     const isSoldOut = product.stock_quantity === 0;
 
     return (
-        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 400px' }}>
+        <div style={containerStyle}>
+            <div style={imageContainerStyle}>
                 <img
                     src={product.image_url ? `${API_URL}${product.image_url}` : 'https://placehold.co/600x400'}
                     alt={product.name}
-                    style={{ width: '100%', borderRadius: '8px', filter: isSoldOut ? 'grayscale(100%)' : 'none' }}
+                    style={imageStyle}
                 />
             </div>
-            <div style={{ flex: '1 1 400px' }}>
-                <h1>{product.name}</h1>
-                <p style={{ fontSize: '1.2rem', color: '#555' }}>{product.description}</p>
-                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1.5rem 0' }}>{product.price} грн.</p>
+            <div style={infoContainerStyle}>
+                <h1 style={{ 
+                    color: 'var(--platform-text-primary)', 
+                    marginBottom: '1rem' 
+                }}>
+                    {product.name}
+                </h1>
+                <p style={{ 
+                    fontSize: '1.1rem', 
+                    color: 'var(--platform-text-secondary)',
+                    lineHeight: '1.6',
+                    marginBottom: '1.5rem'
+                }}>
+                    {product.description}
+                </p>
+                <p style={{ 
+                    fontSize: '1.5rem', 
+                    fontWeight: 'bold', 
+                    margin: '1.5rem 0',
+                    color: 'var(--platform-text-primary)'
+                }}>
+                    {product.price} грн.
+                </p>
+                {product.stock_quantity !== null && (
+                    <p style={{ 
+                        color: 'var(--platform-text-secondary)',
+                        marginBottom: '1rem'
+                    }}>
+                        На складі: {product.stock_quantity} шт.
+                    </p>
+                )}
                 <button
                     onClick={() => handleAddToCart(product)}
                     disabled={isOwner || isSoldOut}
+                    className={isOwner || isSoldOut ? "btn" : "btn btn-primary"}
                     style={{
                         padding: '1rem 2rem',
-                        fontSize: '1.2rem',
-                        backgroundColor: isOwner ? '#ccc' : (isSoldOut ? '#888' : '#28a745'),
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
+                        fontSize: '1.1rem',
+                        opacity: isOwner || isSoldOut ? 0.6 : 1,
                         cursor: isOwner || isSoldOut ? 'not-allowed' : 'pointer'
                     }}
                 >
-                    {isOwner ? 'Це ваш товар' : (isSoldOut ? 'Товар закінчився' : (user ? 'Додати у кошик' : 'Увійдіть, щоб купити'))}
+                    {isOwner ? 'Це ваш товар' : 
+                     (isSoldOut ? 'Товар закінчився' : 
+                     (user ? 'Додати у кошик' : 'Увійдіть, щоб купити'))}
                 </button>
             </div>
         </div>
