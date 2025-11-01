@@ -107,14 +107,15 @@ const RegisterPage = () => {
         marginBottom: '1rem'
     };
 
-    const avatarImageStyle = {
+    const getAvatarImageStyle = (avatarUrl) => ({
         width: '45px', 
         height: '45px', 
         borderRadius: '50%', 
         cursor: 'pointer', 
-        border: selectedAvatar === url ? '3px solid var(--platform-accent)' : '3px solid transparent', 
-        transition: 'border 0.2s'
-    };
+        border: selectedAvatar === avatarUrl ? '3px solid var(--platform-accent)' : '3px solid transparent', 
+        transition: 'border 0.2s',
+        objectFit: 'cover'
+    });
 
     return (
         <div style={containerStyle}>
@@ -159,9 +160,9 @@ const RegisterPage = () => {
                             <img 
                                 key={url}
                                 src={`${API_URL}${url}`} 
-                                alt="стандартний аватар"
+                                alt="Стандартний аватар"
                                 onClick={() => handleSelectDefault(url)}
-                                style={avatarImageStyle}
+                                style={getAvatarImageStyle(url)}
                             />
                         ))}
                     </div>

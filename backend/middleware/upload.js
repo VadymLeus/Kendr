@@ -6,7 +6,6 @@ const fs = require('fs').promises;
 const { ensureDirExists } = require('../utils/fileUtils');
 
 const memoryStorage = multer.memoryStorage();
-
 const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const mimetype = allowedTypes.test(file.mimetype);
@@ -16,7 +15,6 @@ const fileFilter = (req, file, cb) => {
     }
     cb(new Error('Помилка: Дозволені лише файли зображень (jpeg, png, gif, webp)!'));
 };
-
 const upload = multer({
     storage: memoryStorage,
     fileFilter: fileFilter,
@@ -40,7 +38,7 @@ const processAndSaveImage = (subfolder, filenamePrefix, size = 128) => {
                 .toFormat('webp')
                 .webp({ quality: 80 })
                 .toFile(fullPath);
-
+            
             req.file.path = `/uploads/${subfolder}/${filename}`;
             req.file.filename = filename;
             next();
@@ -74,7 +72,7 @@ const processAndSaveLogo = (size = 64) => {
                 .toFormat('webp')
                 .webp({ quality: 85 })
                 .toFile(fullPath);
-
+            
             // Шлях, що зберігається в базі даних, також включає 'custom'
             req.file.path = `/uploads/shops/logos/custom/${filename}`;
             req.file.filename = filename;
@@ -87,8 +85,47 @@ const processAndSaveLogo = (size = 64) => {
     };
 };
 
+/**
+ * Обробляє та зберігає загальне зображення, обмежуючи ширину та зберігаючи пропорції.
+ * @param {string} subfolder - Підпапка в /uploads (наприклад 'general')
+ * @param {string} filenamePrefix - Префікс файлу (наприклад 'img')
+ * @param {number} maxWidth - Максимальна ширина зображення
+ */
+const processAndSaveGeneric = (subfolder, filenamePrefix, maxWidth = 1200) => {
+    return async (req, res, next) => {
+        if (!req.file) { return next(); }
+        try {
+            const uploadPath = path.join(__dirname, '..', 'uploads', subfolder);
+            await ensureDirExists(uploadPath);
+            
+            const userId = req.user ? req.user.id : 'guest';
+            const finalPrefix = `${filenamePrefix}-${userId}`;
+            const filename = `${finalPrefix}-${Date.now()}.webp`;
+            const fullPath = path.join(uploadPath, filename);
+
+            await sharp(req.file.buffer)
+                .resize({ 
+                    width: maxWidth, 
+                    fit: sharp.fit.inside, // Зберігає пропорції
+                    withoutEnlargement: true // Не збільшує, якщо зображення менше
+                })
+                .toFormat('webp')
+                .webp({ quality: 80 })
+                .toFile(fullPath);
+            
+            req.file.path = `/uploads/${subfolder}/${filename}`;
+            req.file.filename = filename;
+            next();
+        } catch (error) {
+            console.error('Помилка обробки загального зображення:', error);
+            res.status(500).json({ message: 'Не вдалося обробити зображення.' });
+        }
+    };
+};
+
 module.exports = {
     upload,
     processAndSaveImage,
-    processAndSaveLogo
+    processAndSaveLogo,
+    processAndSaveGeneric
 };

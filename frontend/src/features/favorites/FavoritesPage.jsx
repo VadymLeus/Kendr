@@ -9,8 +9,23 @@ const FavoritesPage = () => {
 
     useEffect(() => {
         apiClient.get('/favorites')
-            .then(response => setSites(response.data))
-            .catch(err => console.error(err))
+            .then(response => {
+                console.log('Favorites API response:', response.data);
+
+                const data = response.data;
+                // Гарантуємо приведення до масиву
+                if (Array.isArray(data)) {
+                    setSites(data);
+                } else if (data && Array.isArray(data.favorites)) {
+                    setSites(data.favorites);
+                } else {
+                    setSites([]);
+                }
+            })
+            .catch(err => {
+                console.error('Помилка при завантаженні обраних сайтів:', err);
+                setSites([]);
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -36,15 +51,17 @@ const FavoritesPage = () => {
         boxShadow: '0 8px 20px rgba(0,0,0,0.12)'
     };
 
-    if (loading) return (
-        <div style={{ 
-            padding: '2rem', 
-            textAlign: 'center', 
-            color: 'var(--platform-text-secondary)' 
-        }}>
-            Завантаження обраних сайтів...
-        </div>
-    );
+    if (loading) {
+        return (
+            <div style={{ 
+                padding: '2rem', 
+                textAlign: 'center', 
+                color: 'var(--platform-text-secondary)' 
+            }}>
+                Завантаження обраних сайтів...
+            </div>
+        );
+    }
 
     return (
         <div style={containerStyle}>
@@ -54,27 +71,8 @@ const FavoritesPage = () => {
             }}>
                 Обрані сайти
             </h2>
-            {sites.length === 0 ? (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '3rem',
-                    background: 'var(--platform-card-bg)',
-                    borderRadius: '12px',
-                    border: '1px solid var(--platform-border-color)'
-                }}>
-                    <p style={{ 
-                        color: 'var(--platform-text-secondary)',
-                        marginBottom: '1.5rem'
-                    }}>
-                        Ви ще не додали жодного сайту до обраних.
-                    </p>
-                    <Link to="/catalog">
-                        <button className="btn btn-primary">
-                            Перейти до каталогу
-                        </button>
-                    </Link>
-                </div>
-            ) : (
+
+            {Array.isArray(sites) && sites.length > 0 ? (
                 <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
@@ -112,6 +110,26 @@ const FavoritesPage = () => {
                             </Link>
                         </div>
                     ))}
+                </div>
+            ) : (
+                <div style={{ 
+                    textAlign: 'center', 
+                    padding: '3rem',
+                    background: 'var(--platform-card-bg)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--platform-border-color)'
+                }}>
+                    <p style={{ 
+                        color: 'var(--platform-text-secondary)',
+                        marginBottom: '1.5rem'
+                    }}>
+                        Ви ще не додали жодного сайту до обраних.
+                    </p>
+                    <Link to="/catalog">
+                        <button className="btn btn-primary">
+                            Перейти до каталогу
+                        </button>
+                    </Link>
                 </div>
             )}
         </div>

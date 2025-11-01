@@ -13,6 +13,7 @@ const CreateSitePage = () => {
     const [error, setError] = useState('');
     const [acceptedRules, setAcceptedRules] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isDataLoading, setIsDataLoading] = useState(true);
     const navigate = useNavigate();
 
     const [defaultLogos, setDefaultLogos] = useState([]);
@@ -22,15 +23,18 @@ const CreateSitePage = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            setIsDataLoading(true);
             try {
                 const templatesResponse = await apiClient.get('/sites/templates');
                 setTemplates(templatesResponse.data);
+                
                 if (templatesResponse.data.length > 0) {
-                    setSelectedTemplate(templatesResponse.data[0].id);
+                    setSelectedTemplate(templatesResponse.data[0].id.toString());
                 }
 
                 const logosResponse = await apiClient.get('/sites/default-logos');
                 setDefaultLogos(logosResponse.data);
+                
                 if (logosResponse.data.length > 0) {
                     const defaultLogoUrl = logosResponse.data[0];
                     setSelectedLogo(defaultLogoUrl);
@@ -38,7 +42,9 @@ const CreateSitePage = () => {
                 }
             } catch (error) {
                 console.error("Помилка під час завантаження даних для створення сайту:", error);
-                setError('Не вдалося завантажити необхідні дані.');
+                setError('Не вдалося завантажити необхідні дані. Спробуйте оновити сторінку.');
+            } finally {
+                setIsDataLoading(false);
             }
         };
         fetchData();
@@ -47,7 +53,7 @@ const CreateSitePage = () => {
     const handleCustomLogoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) {
+            if (file.size > 5 * 1024 * 1024) { 
                 setError('Розмір файлу не повинен перевищувати 5MB');
                 return;
             }
@@ -70,19 +76,18 @@ const CreateSitePage = () => {
     const handleCreateSite = async (e) => {
         e.preventDefault();
         setError('');
-        setIsLoading(true);
         
         if (!acceptedRules) {
             setError('Для створення сайту необхідно прийняти правила платформи.');
-            setIsLoading(false);
             return;
         }
         
         if (!sitePath || !title || !selectedTemplate) {
-            setError('Будь ласка, заповніть усі поля.');
-            setIsLoading(false);
+            setError('Будь ласка, заповніть усі поля та оберіть шаблон.');
             return;
         }
+
+        setIsLoading(true);
 
         const formData = new FormData();
         formData.append('templateId', selectedTemplate);
@@ -106,7 +111,6 @@ const CreateSitePage = () => {
         }
     };
 
-    // Функция для получения стилей логотипа
     const getLogoImageStyle = (currentUrl) => ({
         width: '40px',
         height: '40px',
@@ -119,87 +123,55 @@ const CreateSitePage = () => {
         objectFit: 'contain'
     });
 
+    if (isDataLoading) {
+        return <div className="card" style={{ maxWidth: '700px', margin: 'auto' }}>Завантаження редактора...</div>;
+    }
+
     return (
         <div className="card" style={{ maxWidth: '700px', margin: 'auto' }}>
             <h2 style={{ marginBottom: '1.5rem' }}>Створення нового сайту 🎨</h2>
 
             <div style={{
-                padding: '1rem', 
-                marginBottom: '1.5rem', 
-                borderRadius: '8px', 
-                transition: 'border-color 0.3s',
+                padding: '1rem', marginBottom: '1.5rem', borderRadius: '8px', transition: 'border-color 0.3s',
                 border: acceptedRules ? '1px solid var(--platform-success)' : '1px solid var(--platform-danger)',
-                background: acceptedRules ? 'var(--platform-bg)' : 'var(--platform-bg)'
+                background: 'var(--platform-bg)'
             }}>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
-                    <input 
-                        type="checkbox" 
-                        checked={acceptedRules} 
-                        onChange={(e) => setAcceptedRules(e.target.checked)} 
-                        style={{ marginTop: '3px' }}
-                    />
+                    <input type="checkbox" checked={acceptedRules} onChange={(e) => setAcceptedRules(e.target.checked)} style={{ marginTop: '3px' }}/>
                     <span>
                         Я ознайомився та погоджуюся з{" "}
-                        <Link 
-                            to="/rules" 
-                            target="_blank" 
-                            style={{ 
-                                fontWeight: 'bold', 
-                                color: 'var(--platform-accent)',
-                                textDecoration: 'none'
-                            }}
-                            onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
-                            onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
-                        >
-                            правилами платформи
-                        </Link>
+                        <Link to="/rules" target="_blank" style={{ fontWeight: 'bold' }}>правилами платформи</Link>
                     </span>
                 </label>
             </div>
 
             {error && (
-                <p className="bg-danger-light text-danger" style={{ padding: '10px', borderRadius: '4px', marginBottom: '1rem' }}>
-                    {error}
-                </p>
+                 <p className="bg-danger-light text-danger" style={{ padding: '10px', borderRadius: '4px', marginBottom: '1rem' }}>{error}</p>
             )}
             
             <form onSubmit={handleCreateSite} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div>
-                    <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>
-                        1. Оберіть шаблон:
-                    </label>
+                    <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>1. Оберіть шаблон:</label>
                     <select 
                         value={selectedTemplate} 
                         onChange={e => setSelectedTemplate(e.target.value)} 
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--platform-border-color)',
-                            background: 'var(--platform-card-bg)',
-                            color: 'var(--platform-text-primary)',
-                            fontSize: '14px',
-                            boxSizing: 'border-box'
-                        }}
                         required
                     >
-                        {templates.map(template => (
+                        {templates.map(template => ( 
                             <option key={template.id} value={template.id}>
                                 {template.name}
-                            </option>
+                            </option> 
                         ))}
                     </select>
                     {templates.find(t => t.id === parseInt(selectedTemplate))?.description && (
                         <small className="text-secondary" style={{ fontStyle: 'italic', marginTop: '5px', display: 'block' }}>
-                            {templates.find(t => t.id === parseInt(selectedTemplate))?.description}
+                           {templates.find(t => t.id === parseInt(selectedTemplate))?.description}
                         </small>
                     )}
                 </div>
                 
                 <div className="card" style={{ padding: '1rem' }}>
-                    <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
-                        2. Оберіть логотип:
-                    </label>
+                    <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>2. Оберіть логотип:</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
                         {preview && (
                             <div style={{ flexShrink: 0 }}>
@@ -214,152 +186,43 @@ const CreateSitePage = () => {
                                         border: '1px solid var(--platform-border-color)'
                                     }} 
                                 />
-                                <div style={{ 
-                                    fontSize: '12px', 
-                                    color: 'var(--platform-text-secondary)', 
-                                    textAlign: 'center', 
-                                    marginTop: '5px' 
-                                }}>
-                                    Перегляд
-                                </div>
                             </div>
                         )}
                         <div style={{ flex: 1 }}>
-                            <p style={{ 
-                                margin: '0 0 8px 0', 
-                                padding: 0, 
-                                fontWeight: '500',
-                                color: 'var(--platform-text-primary)'
-                            }}>
-                                Стандартні логотипи:
-                            </p>
-                            <div style={{ 
-                                display: 'flex', 
-                                gap: '10px', 
-                                flexWrap: 'wrap', 
-                                margin: '10px 0',
-                                padding: '10px',
-                                backgroundColor: 'var(--platform-card-bg)',
-                                borderRadius: '4px',
-                                border: '1px solid var(--platform-border-color)'
-                            }}>
+                            <p style={{ margin: '0 0 8px 0', padding: 0, fontWeight: '500' }}>Стандартні логотипи:</p>
+                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', margin: '10px 0', padding: '10px', backgroundColor: 'var(--platform-bg)', borderRadius: '4px', border: '1px solid var(--platform-border-color)'}}>
                                 {defaultLogos.map(logoUrl => (
                                     <img 
                                         key={logoUrl}
                                         src={`${API_URL}${logoUrl}`} 
-                                        alt="стандартний логотип"
+                                        alt="Стандартний логотип"
                                         onClick={() => handleSelectDefaultLogo(logoUrl)}
                                         style={getLogoImageStyle(logoUrl)}
                                     />
                                 ))}
                             </div>
-                            
                             <div style={{ marginTop: '15px' }}>
-                                <label 
-                                    htmlFor="logo-upload" 
-                                    className="btn btn-secondary"
-                                    style={{ 
-                                        cursor: 'pointer', 
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '5px',
-                                        padding: '8px 12px',
-                                        border: '1px dashed var(--platform-border-color)',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                >
+                                <label htmlFor="logo-upload" className="btn btn-secondary">
                                     📁 Завантажити свій логотип (до 5МБ)
                                 </label>
-                                <input 
-                                    type="file" 
-                                    id="logo-upload" 
-                                    onChange={handleCustomLogoChange} 
-                                    accept="image/*" 
-                                    style={{ display: 'none' }} 
-                                />
-                                {customLogoFile && (
-                                    <div className="text-success" style={{ fontSize: '12px', marginTop: '5px' }}>
-                                        Обрано файл: {customLogoFile.name}
-                                    </div>
-                                )}
+                                <input type="file" id="logo-upload" onChange={handleCustomLogoChange} accept="image/*" style={{ display: 'none' }}/>
+                                {customLogoFile && ( <div className="text-success" style={{ fontSize: '12px', marginTop: '5px' }}>Обрано файл: {customLogoFile.name}</div> )}
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
-                        3. Вкажіть назву та адресу:
-                    </label>
-                    
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={e => setTitle(e.target.value)}
-                        placeholder="Назва вашого сайту"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--platform-border-color)',
-                            background: 'var(--platform-card-bg)',
-                            color: 'var(--platform-text-primary)',
-                            fontSize: '14px',
-                            boxSizing: 'border-box',
-                            marginBottom: '10px'
-                        }}
-                        required
-                    />
-                    
+                    <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>3. Вкажіть назву та адресу:</label>
+                    <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Назва вашого сайту" required/>
                     <div style={{ position: 'relative', marginTop: '10px' }}>
-                        <span 
-                            className="text-secondary" 
-                            style={{ 
-                                position: 'absolute', 
-                                left: '10px', 
-                                top: '10px', 
-                                fontSize: '14px',
-                                zIndex: 1
-                            }}
-                        >
-                            {window.location.origin}/site/
-                        </span>
-                        <input
-                            type="text"
-                            value={sitePath}
-                            onChange={e => setSitePath(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                            placeholder="my-cool-site"
-                            style={{
-                                width: '100%',
-                                padding: '12px 12px 12px 145px',
-                                borderRadius: '8px',
-                                border: '1px solid var(--platform-border-color)',
-                                background: 'var(--platform-card-bg)',
-                                color: 'var(--platform-text-primary)',
-                                fontSize: '14px',
-                                boxSizing: 'border-box'
-                            }}
-                            required
-                        />
+                        <span className="text-secondary" style={{ position: 'absolute', left: '10px', top: '10px', fontSize: '14px', zIndex: 1 }}>{window.location.origin}/site/</span>
+                        <input type="text" value={sitePath} onChange={e => setSitePath(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="my-cool-site" style={{ paddingLeft: '145px' }} required/>
                     </div>
-                    <small className="text-secondary" style={{ marginTop: '5px', display: 'block' }}>
-                        Можна використовувати лише латинські літери, цифри та дефіси.
-                    </small>
+                    <small className="text-secondary" style={{ marginTop: '5px', display: 'block' }}>Можна використовувати лише латинські літери, цифри та дефіси.</small>
                 </div>
 
-                <button 
-                    type="submit" 
-                    className="btn btn-primary"
-                    style={{ 
-                        padding: '12px 24px', 
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        marginTop: '1rem'
-                    }}
-                    disabled={isLoading || !acceptedRules}
-                >
+                <button type="submit" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '1rem', fontWeight: 'bold', marginTop: '1rem' }} disabled={isLoading || isDataLoading || !acceptedRules}>
                     {isLoading ? 'Створення...' : 'Створити сайт'}
                 </button>
             </form>
