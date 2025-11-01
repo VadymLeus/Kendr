@@ -1,9 +1,8 @@
 // frontend/src/features/sites/SiteDisplayPage.jsx
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../../services/api';
-import TemplateLoader from '../../templates/TemplateLoader';
-import { ThemeContext } from '../../context/ThemeContext';
+import BlockRenderer from '../../components/blocks/BlockRenderer';
 
 const SiteDisplayPage = () => {
     const { site_path } = useParams();
@@ -11,7 +10,6 @@ const SiteDisplayPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isSuspended, setIsSuspended] = useState(false);
-    const { loadSiteTheme } = useContext(ThemeContext);
 
     useEffect(() => {
         const fetchSiteData = async () => {
@@ -22,7 +20,6 @@ const SiteDisplayPage = () => {
                     params: { increment_view: true }
                 });
                 setSiteData(response.data);
-                loadSiteTheme(response.data);
             } catch (err) {
                 if (err.response && err.response.status === 403) {
                     setError(err.response.data.message);
@@ -35,7 +32,7 @@ const SiteDisplayPage = () => {
             }
         };
         fetchSiteData();
-    }, [site_path, loadSiteTheme]);
+    }, [site_path]);
 
     if (loading) return <div>Завантаження сайту...</div>;
     
@@ -55,19 +52,32 @@ const SiteDisplayPage = () => {
     if (error) return <div>{error}</div>;
     if (!siteData) return <div>Сайт не знайдено.</div>;
 
+    // Обробка page_content для забезпечення коректного формату
+    let blocksToRender = [];
+    
+    if (Array.isArray(siteData.page_content)) {
+        // Якщо page_content вже масив - використовуємо без змін
+        blocksToRender = siteData.page_content;
+    } else if (typeof siteData.page_content === 'string') {
+        // Якщо page_content - рядок, намагаємося парсити JSON
+        try {
+            blocksToRender = JSON.parse(siteData.page_content);
+        } catch (e) {
+            console.error("Помилка парсингу page_content:", e);
+            blocksToRender = [];
+        }
+    } else {
+        // Якщо page_content не визначено або іншого типу - використовуємо порожній масив
+        blocksToRender = [];
+    }
+
     return (
         <div 
-            className="site-wrapper" 
+            id="site-root" 
             data-site-mode={siteData.site_theme_mode || 'light'} 
             data-site-accent={siteData.site_theme_accent || 'orange'}
         >
-            <TemplateLoader 
-                componentName={siteData.component_name}
-                content={siteData.content} 
-                products={siteData.products} 
-                siteOwnerId={siteData.user_id} 
-                siteData={siteData}
-            />
+            <BlockRenderer blocks={blocksToRender} siteData={siteData} />
         </div>
     );
 };

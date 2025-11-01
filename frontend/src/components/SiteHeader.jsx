@@ -6,7 +6,6 @@ import { AuthContext } from '../features/auth/AuthContext';
 import { FavoritesContext } from '../features/favorites/FavoritesContext';
 
 const API_URL = 'http://localhost:5000';
-
 const SiteHeader = ({ pathParam, sidebarWidth }) => {
     const { user } = useContext(AuthContext);
     const { favoriteSiteIds, addFavorite, removeFavorite } = useContext(FavoritesContext);
@@ -27,6 +26,13 @@ const SiteHeader = ({ pathParam, sidebarWidth }) => {
                 if (isProductPage) {
                     const productId = pathParam;
                     const productResponse = await apiClient.get(`/products/${productId}`);
+                    // !! Увага: переконайтеся, що ваш backend /products/:productId
+                    // повертає site_path. Ваша модель Product.js (line 457)
+                    // НЕ повертає site_path. Вам потрібно оновити модель Product.js.
+                    // Я додам це виправлення у модель Product.js.
+                    
+                    // Тим часом, припускаючи, що ви додали `s.site_path` до запиту
+                    // у `Product.findById` (див. наступне виправлення):
                     const sitePath = productResponse.data.site_path;
                     if (sitePath) {
                         const siteResponse = await apiClient.get(`/sites/${sitePath}`);
@@ -123,7 +129,8 @@ const SiteHeader = ({ pathParam, sidebarWidth }) => {
                 )}
                 {isOwner && (
                     <Link 
-                        to={`/dashboard/${pathParam}`} 
+                        // to={`/dashboard/${pathParam}`} // <-- ПОМИЛКА БУЛА ТУТ
+                        to={`/dashboard/${siteData.site_path}`} // <-- ВИПРАВЛЕННЯ
                         title="Панель управління" 
                         style={iconButtonStyle}
                         onMouseEnter={handleIconMouseEnter}

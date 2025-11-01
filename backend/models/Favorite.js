@@ -20,24 +20,29 @@ class Favorite {
         return result;
     }
 
-    // Отримати всі обрані сайти для користувача (з повною інформацією)
+    // Отримати всі обрані сайти користувача
     static async findForUser(userId) {
         const [rows] = await db.query(`
             SELECT
-                s.id, s.site_path, s.title, s.logo_url, s.status,
-                t.name AS templateName,
-                u.username AS author
-            FROM sites s
-            JOIN user_favorites uf ON s.id = uf.site_id
+                s.id,
+                s.site_path,
+                s.title,
+                s.logo_url,
+                s.status,
+                s.view_count,
+                s.site_theme_mode,
+                s.site_theme_accent,
+                u.username AS owner_username
+            FROM user_favorites uf
+            JOIN sites s ON uf.site_id = s.id
             JOIN users u ON s.user_id = u.id
-            JOIN templates t ON s.template_id = t.id
-            WHERE uf.user_id = ? AND s.status = 'published'
+            WHERE uf.user_id = ?
             ORDER BY uf.created_at DESC
         `, [userId]);
         return rows;
     }
 
-    // Отримати тільки ID обраних сайтів для швидкої перевірки
+    // Отримати лише ID обраних сайтів
     static async findIdsForUser(userId) {
         const [rows] = await db.query(
             'SELECT site_id FROM user_favorites WHERE user_id = ?',
