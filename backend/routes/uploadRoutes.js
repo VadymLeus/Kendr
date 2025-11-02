@@ -5,12 +5,11 @@ const uploadController = require('../controllers/uploadController');
 const verifyToken = require('../middleware/verifyToken');
 const { upload, processAndSaveGeneric } = require('../middleware/upload');
 
-// Захищений маршрут для завантаження одного зображення
 router.post(
     '/', 
     verifyToken, 
     upload.single('image'), 
-    processAndSaveGeneric('general', 'img', 1200),
+    processAndSaveGeneric('media', 'user-img', 1200), 
     uploadController.uploadGenericImage
 );
 

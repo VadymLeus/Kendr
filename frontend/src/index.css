@@ -4,25 +4,25 @@
 @tailwind utilities;
 
 :root {
-  /* --- Змінні теми платформи (за замовчуванням - системна, синій акцент) --- */
-  --platform-bg: #f8f9fa;            /* Світло-сірий */
-  --platform-sidebar-bg: #ffffff;   /* Білий для світлої теми */
-  --platform-card-bg: #ffffff;      /* Білий */
-  --platform-text-primary: #1a202c; /* Дуже темний (майже чорний) */
-  --platform-text-secondary: #4a5568; /* Темніший сірий для кращого контрасту */
-  --platform-border-color: #e2e8f0; /* Світло-сірий для рамок */
-  --platform-accent: #4299e1;       /* Синій */
-  --platform-accent-hover: #2b6cb0; /* Темніший синій */
-  --platform-accent-text: #ffffff; /* Текст на акцентному фоні */
-  --platform-danger: #e53e3e;       /* Червоний */
-  --platform-success: #38a169;     /* Зелений */
-  --platform-warning: #dd6b20;     /* Помаранчевий */
+  /* Змінні теми платформи (за замовчуванням - системна, синій акцент) */
+  --platform-bg: #f8f9fa;
+  --platform-sidebar-bg: #ffffff;
+  --platform-card-bg: #ffffff;
+  --platform-text-primary: #1a202c;
+  --platform-text-secondary: #4a5568;
+  --platform-border-color: #e2e8f0;
+  --platform-accent: #4299e1;
+  --platform-accent-hover: #2b6cb0;
+  --platform-accent-text: #ffffff;
+  --platform-danger: #e53e3e;
+  --platform-success: #38a169;
+  --platform-warning: #dd6b20;
 
-  /* --- Змінні для логотипів --- */
-  --platform-logo-url: url('/icon-dark.webp'); /* Лого для світлої теми */
-  --sidebar-width: 220px; /* Ширина бічної панелі за замовчуванням */
+  /* Змінні для логотипів */
+  --platform-logo-url: url('/icon-dark.webp');
+  --sidebar-width: 220px;
 
-  /* --- Змінні теми сайту (за замовчуванням - світла, помаранчевий акцент) --- */
+  /* Змінні теми сайту (за замовчуванням - світла, помаранчевий акцент) */
   --site-bg: #ffffff;
   --site-header-bg: #f7fafc;
   --site-card-bg: #ffffff;
@@ -34,24 +34,23 @@
   --site-accent-text: #ffffff;
 }
 
-/* --- Тема платформи: Темний режим --- */
+/* Тема платформи: Темний режим */
 body[data-platform-mode="dark"] {
   --platform-bg: #1a202c;
-  --platform-sidebar-bg: #111827; /* Темний фон для темної теми */
+  --platform-sidebar-bg: #111827;
   --platform-card-bg: #2d3748;
   --platform-text-primary: #f7fafc;
-  --platform-text-secondary: #a0aec0; /* Світліший сірий для темної теми */
+  --platform-text-secondary: #a0aec0;
   --platform-border-color: #4a5568;
-
-  --platform-logo-url: url('/icon-light.webp'); /* Лого для темної теми */
+  --platform-logo-url: url('/icon-light.webp');
 }
 
-/* --- Стилі для згорнутої бічної панелі --- */
+/* Стилі для згорнутої бічної панелі */
 body[data-sidebar-collapsed="true"] {
   --sidebar-width: 80px;
 }
 
-/* --- Акцентні кольори платформи --- */
+/* Акцентні кольори платформи */
 body[data-platform-accent="blue"] {
   --platform-accent: #4299e1;
   --platform-accent-hover: #2b6cb0;
@@ -67,13 +66,12 @@ body[data-platform-accent="orange"] {
 body[data-platform-accent="gray"] {
   --platform-accent: #718096;
   --platform-accent-hover: #4a5568;
-  --platform-accent-text: #ffffff; /* Перевизначаємо для сірого */
+  --platform-accent-text: #ffffff;
 }
-/* --- НОВІ АКЦЕНТНІ КОЛЬОРИ --- */
 body[data-platform-accent="yellow"] {
   --platform-accent: #ecc94b;
   --platform-accent-hover: #d69e2e;
-  --platform-accent-text: #1a202c; /* Темний текст для жовтого */
+  --platform-accent-text: #1a202c;
 }
 body[data-platform-accent="red"] {
   --platform-accent: #f56565;
@@ -84,12 +82,12 @@ body[data-platform-accent="purple"] {
   --platform-accent-hover: #805ad5;
 }
 body[data-platform-accent="lime"] {
-  --platform-accent: #a0d468; /* Вибрав приємний лаймовий */
+  --platform-accent: #a0d468;
   --platform-accent-hover: #8cc152;
-  --platform-accent-text: #1a202c; /* Темний текст для лаймового */
+  --platform-accent-text: #1a202c;
 }
 
-/* --- Тема сайту: Темний режим --- */
+/* Тема сайту: Темний режим */
 .site-wrapper[data-site-mode="dark"] {
   --site-bg: #1E1E1E;
   --site-header-bg: #121212;
@@ -99,7 +97,7 @@ body[data-platform-accent="lime"] {
   --site-border-color: #4a5568;
 }
 
-/* --- Акцентні кольори сайту --- */
+/* Акцентні кольори сайту */
 .site-wrapper[data-site-accent="blue"] {
   --site-accent: #2b6cb0;
   --site-accent-hover: #2c5282;
@@ -109,7 +107,7 @@ body[data-platform-accent="lime"] {
   --site-accent-hover: #276749;
 }
 
-/* --- Базові стилі --- */
+/* Базові стилі */
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -125,7 +123,7 @@ body {
   flex-direction: column;
 }
 
-/* --- Стилі для логотипа --- */
+/* Стилі для логотипа */
 .platform-logo {
   background-image: var(--platform-logo-url);
   background-size: contain;
@@ -133,7 +131,7 @@ body {
   background-position: center;
 }
 
-/* --- Стилі для основного макету --- */
+/* Стилі для основного макету */
 .layout-content {
   margin-left: var(--sidebar-width);
   transition: margin-left 0.3s ease;
@@ -146,7 +144,7 @@ body {
 main {
   flex-grow: 1;
   padding: 2rem;
-  min-height: calc(100vh - 150px); /* Забезпечує мінімальну висоту */
+  min-height: calc(100vh - 150px);
 }
 
 footer {
@@ -222,7 +220,7 @@ input:focus, textarea:focus, select:focus {
     --tw-ring-color: var(--platform-accent);
 }
 
-/* Стилі для карток/плиток */
+/* Стилі для карток */
 .card {
     background: var(--platform-card-bg);
     padding: 1.5rem 2rem;

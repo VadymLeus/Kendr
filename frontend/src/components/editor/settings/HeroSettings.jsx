@@ -1,5 +1,6 @@
 // frontend/src/components/editor/settings/HeroSettings.jsx
 import React, { useState } from 'react';
+import ImageInput from '../../media/ImageInput';
 
 const HeroSettings = ({ initialData, onSave, onClose }) => {
     
@@ -8,6 +9,12 @@ const HeroSettings = ({ initialData, onSave, onClose }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleImageChange = (newUrl) => {
+        // Видаляємо префікс API_URL, щоб зберегти відносний шлях у БД
+        const relativeUrl = newUrl.replace(/^http:\/\/localhost:5000/, '');
+        setData(prev => ({ ...prev, imageUrl: relativeUrl }));
     };
 
     const handleSave = (e) => {
@@ -62,13 +69,9 @@ const HeroSettings = ({ initialData, onSave, onClose }) => {
             </div>
 
             <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label>URL Зображення:</label>
-                <input 
-                    type="text" 
-                    name="imageUrl" 
-                    value={data.imageUrl || ''} 
-                    onChange={handleChange}
-                    placeholder="https://..."
+                <ImageInput 
+                    value={data.imageUrl} 
+                    onChange={handleImageChange} 
                 />
             </div>
 

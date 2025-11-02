@@ -1,6 +1,7 @@
 // frontend/src/components/shop/ProductManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../../services/api';
+import ImageInput from '../media/ImageInput';
 
 const API_URL = 'http://localhost:5000';
 
@@ -17,8 +18,7 @@ const ProductManager = ({ siteId }) => {
         price: 0, 
         stock_quantity: 1,
         category_id: null,
-        imageFile: null,
-        imagePreview: ''
+        image_url: ''
     });
 
     const [currentProduct, setCurrentProduct] = useState(getInitialFormState());
@@ -52,28 +52,18 @@ const ProductManager = ({ siteId }) => {
         const { name, value, type } = e.target;
         
         let val = value;
-        if (type === 'number') {
-            val = parseFloat(value) || 0;
-        }
-        if (name === 'category_id' && (value === "null" || value === "")) {
-            val = null;
-        }
+        if (type === 'number') { val = parseFloat(value) || 0; }
+        if (name === 'category_id' && (value === "null" || value === "")) { val = null; }
 
-        setCurrentProduct(prev => ({ 
-            ...prev, 
-            [name]: val
-        }));
+        setCurrentProduct(prev => ({ ...prev, [name]: val }));
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setCurrentProduct(prev => ({
-                ...prev,
-                imageFile: file,
-                imagePreview: URL.createObjectURL(file)
-            }));
-        }
+    const handleImageChange = (newUrl) => {
+        const relativeUrl = newUrl.replace(API_URL, '');
+        setCurrentProduct(prev => ({
+            ...prev,
+            image_url: relativeUrl
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -84,30 +74,21 @@ const ProductManager = ({ siteId }) => {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('site_id', siteId);
-        formData.append('name', currentProduct.name);
-        formData.append('description', currentProduct.description);
-        formData.append('price', currentProduct.price);
-        formData.append('stock_quantity', currentProduct.stock_quantity);
-        
-        if (currentProduct.category_id) {
-            formData.append('category_id', currentProduct.category_id);
-        }
-        
-        if (currentProduct.imageFile) {
-            formData.append('productImage', currentProduct.imageFile);
-        }
+        const productData = {
+            site_id: siteId,
+            name: currentProduct.name,
+            description: currentProduct.description,
+            price: currentProduct.price,
+            stock_quantity: currentProduct.stock_quantity,
+            category_id: currentProduct.category_id || null,
+            image_url: currentProduct.image_url || null
+        };
 
         try {
             if (isEditing) {
-                await apiClient.put(`/products/${currentProduct.id}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await apiClient.put(`/products/${currentProduct.id}`, productData);
             } else {
-                await apiClient.post(`/products`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await apiClient.post(`/products`, productData);
             }
             
             resetForm();
@@ -131,8 +112,7 @@ const ProductManager = ({ siteId }) => {
             price: product.price,
             stock_quantity: product.stock_quantity || 0,
             category_id: product.category_id,
-            imageFile: null,
-            imagePreview: imageUrl ? `${API_URL}${imageUrl}` : ''
+            image_url: imageUrl
         });
         setIsEditing(true);
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
@@ -152,8 +132,6 @@ const ProductManager = ({ siteId }) => {
     const resetForm = () => {
         setCurrentProduct(getInitialFormState());
         setIsEditing(false);
-        const fileInput = document.getElementById('productImageUpload');
-        if (fileInput) fileInput.value = null;
     };
 
     const getProductImageUrl = (gallery) => {
@@ -163,7 +141,7 @@ const ProductManager = ({ siteId }) => {
         return 'https://placehold.co/400x400/AAAAAA/FFFFFF?text=Немає+Фото';
     };
 
-    if (loading) return <div>Завантаження товарів та категорій...</div>;
+    if (loading) return <div>Завантаження...</div>;
 
     return (
         <div className="site-products-tab">
@@ -172,57 +150,50 @@ const ProductManager = ({ siteId }) => {
                 <h4>{isEditing ? `Редагування: ${currentProduct.name}` : 'Додавання нового товару'}</h4>
                 
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Назва товару:</label>
-                        <input type="text" name="name" value={currentProduct.name} onChange={handleFormChange} required />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label>Опис:</label>
-                        <textarea name="description" value={currentProduct.description} onChange={handleFormChange} rows="3" />
-                    </div>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
                         <div className="form-group">
-                            <label>Ціна (грн.):</label>
-                            <input type="number" name="price" value={currentProduct.price} onChange={handleFormChange} required min="0.01" step="0.01" />
-                        </div>
-                        <div className="form-group">
-                            <label>Кількість на складі:</label>
-                            <input type="number" name="stock_quantity" value={currentProduct.stock_quantity} onChange={handleFormChange} required min="0" />
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Категорія:</label>
-                        <select name="category_id" value={currentProduct.category_id || "null"} onChange={handleFormChange}>
-                            <option value="null">Без категорії</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    <div className="form-group">
-                        <label>Зображення:</label>
-                        <input 
-                            type="file" 
-                            id="productImageUpload" 
-                            name="productImage" 
-                            onChange={handleFileChange} 
-                            accept="image/*" 
-                        />
-                        {(currentProduct.imagePreview) && (
-                            <img 
-                                src={currentProduct.imagePreview} 
-                                alt="Прев'ю" 
-                                style={{ maxWidth: '100px', maxHeight: '100px', marginTop: '10px', borderRadius: '4px' }} 
-                                onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/100x100/AAAAAA/FFFFFF?text=Немає+Фото" }} 
+                            <label>Головне зображення:</label>
+                            <ImageInput 
+                                value={currentProduct.image_url ? `${API_URL}${currentProduct.image_url}` : ''} 
+                                onChange={handleImageChange} 
                             />
-                        )}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div className="form-group">
+                                <label>Назва товару:</label>
+                                <input type="text" name="name" value={currentProduct.name} onChange={handleFormChange} required />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Опис:</label>
+                                <textarea name="description" value={currentProduct.description} onChange={handleFormChange} rows="3" />
+                            </div>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label>Ціна (грн.):</label>
+                                    <input type="number" name="price" value={currentProduct.price} onChange={handleFormChange} required min="0.01" step="0.01" />
+                                </div>
+                                <div className="form-group">
+                                    <label>Кількість на складі:</label>
+                                    <input type="number" name="stock_quantity" value={currentProduct.stock_quantity} onChange={handleFormChange} required min="0" />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Категорія:</label>
+                                <select name="category_id" value={currentProduct.category_id || "null"} onChange={handleFormChange}>
+                                    <option value="null">Без категорії</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px', borderTop: '1px solid var(--platform-border-color)', paddingTop: '20px' }}>
                         {isEditing && (
                             <button type="button" onClick={resetForm} className="btn btn-secondary">
                                 Скасувати редагування
@@ -241,31 +212,33 @@ const ProductManager = ({ siteId }) => {
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
                     {products.map(product => (
-                        <div key={product.id} className="card" style={{ padding: '15px', display: 'flex', flexDirection: 'column' }}>
+                        <div key={product.id} className="card" style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
                             <img 
                                 src={getProductImageUrl(product.image_gallery)} 
                                 alt={product.name} 
-                                style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '4px', marginBottom: '10px' }} 
+                                style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px 8px 0 0' }} 
                                 onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/400x400/AAAAAA/FFFFFF?text=Немає+Фото" }}
                             />
-                            <h5 style={{ margin: '0 0 5px 0' }}>{product.name}</h5>
-                            <p style={{ margin: '0 0 5px 0', fontSize: '1.1em', fontWeight: 'bold' }} className="text-accent">
-                                {product.price} грн.
-                            </p>
-                            <p style={{ margin: '0 0 10px 0', fontSize: '0.9em' }} className={product.stock_quantity > 0 ? 'text-success' : 'text-danger'}>
-                                На складі: {product.stock_quantity} шт.
-                            </p>
-                            <small style={{ color: 'var(--platform-text-secondary)', marginBottom: '10px', flexGrow: 1 }}>
-                                Категорія: {categories.find(c => c.id === product.category_id)?.name || 'Не вказано'}
-                            </small>
-                            
-                            <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-                                <button onClick={() => handleEdit(product)} className="btn btn-secondary" style={{ flexGrow: 1 }} title="Редагувати">
-                                    ✏️
-                                </button>
-                                <button onClick={() => handleDelete(product.id)} className="btn btn-danger" title="Видалити">
-                                    ❌
-                                </button>
+                            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                                <h5 style={{ margin: '0 0 5px 0' }}>{product.name}</h5>
+                                <p style={{ margin: '0 0 5px 0', fontSize: '1.1em', fontWeight: 'bold' }} className="text-accent">
+                                    {product.price} грн.
+                                </p>
+                                <p style={{ margin: '0 0 10px 0', fontSize: '0.9em' }} className={product.stock_quantity > 0 ? 'text-success' : 'text-danger'}>
+                                    На складі: {product.stock_quantity} шт.
+                                </p>
+                                <small style={{ color: 'var(--platform-text-secondary)', marginBottom: '10px', flexGrow: 1 }}>
+                                    Категорія: {categories.find(c => c.id === product.category_id)?.name || 'Не вказано'}
+                                </small>
+                                
+                                <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+                                    <button onClick={() => handleEdit(product)} className="btn btn-secondary" style={{ flexGrow: 1 }} title="Редагувати">
+                                        ✏️ Редагувати
+                                    </button>
+                                    <button onClick={() => handleDelete(product.id)} className="btn btn-danger" title="Видалити">
+                                        ❌
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}

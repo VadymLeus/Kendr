@@ -1,5 +1,6 @@
 // frontend/src/components/editor/settings/BannerSettings.jsx
 import React, { useState } from 'react';
+import ImageInput from '../../media/ImageInput';
 
 const BannerSettings = ({ initialData, onSave, onClose }) => {
     const [data, setData] = useState(initialData);
@@ -9,6 +10,12 @@ const BannerSettings = ({ initialData, onSave, onClose }) => {
         setData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleImageChange = (newUrl) => {
+        // Видаляємо префікс API_URL, щоб зберегти відносний шлях у БД
+        const relativeUrl = newUrl.replace(/^http:\/\/localhost:5000/, '');
+        setData(prev => ({ ...prev, imageUrl: relativeUrl }));
+    };
+
     const handleSave = (e) => {
         e.preventDefault();
         onSave(data);
@@ -16,62 +23,21 @@ const BannerSettings = ({ initialData, onSave, onClose }) => {
 
     return (
         <form onSubmit={handleSave}>
-            <div className="form-group">
-                <label>Заголовок:</label>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label>Посилання (куди веде банер):</label>
                 <input 
                     type="text" 
-                    name="title" 
-                    value={data.title || ''} 
-                    onChange={handleChange} 
-                    required 
-                />
-            </div>
-            
-            <div className="form-group">
-                <label>Підзаголовок:</label>
-                <textarea 
-                    name="subtitle" 
-                    value={data.subtitle || ''} 
-                    onChange={handleChange} 
-                    rows="2"
-                />
-            </div>
-
-            <div className="form-group">
-                <label>Текст кнопки:</label>
-                <input 
-                    type="text" 
-                    name="buttonText" 
-                    value={data.buttonText || ''} 
+                    name="link" 
+                    value={data.link || '#'} 
                     onChange={handleChange} 
                 />
             </div>
             
-            <div className="form-group">
-                <label>URL зображення:</label>
-                <input 
-                    type="text" 
-                    name="imageUrl" 
-                    value={data.imageUrl || ''} 
-                    onChange={handleChange} 
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+                 <ImageInput 
+                    value={data.imageUrl} 
+                    onChange={handleImageChange} 
                 />
-                {data.imageUrl && (
-                    <img 
-                        src={data.imageUrl} 
-                        alt="Перегляд банера" 
-                        style={{ 
-                            maxWidth: '100%', 
-                            maxHeight: '150px', 
-                            marginTop: '10px', 
-                            objectFit: 'cover', 
-                            borderRadius: '4px' 
-                        }}
-                        onError={(e) => { 
-                            e.target.onerror = null; 
-                            e.target.src = "https://placehold.co/300x150/AAAAAA/FFFFFF?text=Немає+фото"; 
-                        }}
-                    />
-                )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
