@@ -4,144 +4,115 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../../services/api';
 import BlockEditor from '../../components/editor/BlockEditor';
 import GeneralSettingsTab from './tabs/GeneralSettingsTab';
-import SiteProductsTab from './tabs/SiteProductsTab';
+import ShopContentTab from './tabs/ShopContentTab';
 
 const SiteDashboardPage = () => {
-    const { site_path: sitePath } = useParams();
+    const { site_path } = useParams();
     const navigate = useNavigate();
     const [siteData, setSiteData] = useState(null);
-    const [pageContent, setPageContent] = useState([]);
-    const [pageId, setPageId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('editor');
+    const [error, setError] = useState('');
+
+    const [pageContent, setPageContent] = useState([]);
+    const [pageId, setPageId] = useState(null);
 
     const fetchSiteData = useCallback(async () => {
-        setLoading(true);
         try {
-            const response = await apiClient.get(`/sites/${sitePath}`);
-            const data = response.data;
-            
-            setSiteData(data);
-            if (data.page_content) {
-                if (Array.isArray(data.page_content)) {
-                    setPageContent(data.page_content);
-                } else {
-                    // Це спрацює, якщо з DB прийде щось дивне (не null, але і не масив)
-                    console.warn("page_content отримано, але це не масив:", data.page_content);
-                    setPageContent([]);
-                }
+            setLoading(true);
+            const response = await apiClient.get(`/sites/${site_path}`);
+            setSiteData(response.data);
+
+            if (response.data.page_content) {
+                setPageContent(response.data.page_content);
             } else {
                 setPageContent([]);
             }
-            
-            setPageId(data.page_id);
-            
-        } catch (error) {
-            console.error("Помилка завантаження даних сайту:", error);
-            if (error.response?.status === 404) {
-                navigate('/404');
-            }
+            setPageId(response.data.page_id);
+
+        } catch (err) {
+            setError(err.response?.data?.message || 'Помилка завантаження даних сайту.');
         } finally {
             setLoading(false);
         }
-    }, [sitePath, navigate]);
+    }, [site_path]);
 
     useEffect(() => {
         fetchSiteData();
     }, [fetchSiteData]);
 
-    const handleContentSave = async (newContent) => {
+    const savePageContent = useCallback(async (newBlocks) => {
         if (!pageId) {
-            alert("Помилка: ID сторінки не знайдено.");
-            return;
+             alert("Помилка: ID сторінки не знайдено.");
+             return;
         }
-        
         try {
             await apiClient.put(`/sites/page/${pageId}/content`, { 
-                page_content: newContent
+                page_content: newBlocks 
             });
-            setPageContent(newContent);
-            alert('Зміни контенту успішно збережено!');
+            setPageContent(newBlocks);
+            alert('Контент сторінки успішно збережено!');
         } catch (error) {
-            console.error("Помилка збереження контенту:", error);
+            console.error('Помилка збереження контенту:', error);
             alert('Помилка збереження контенту.');
         }
-    };
+    }, [pageId]);
+
+    if (loading) return <div>Завантаження панелі управління...</div>;
+    if (error) return <div className="bg-danger-light text-danger p-3">{error}</div>;
+    if (!siteData) return <div className="text-danger p-3">Сайт не знайдено.</div>;
     
-    const handleSettingsUpdate = (newSettings) => {
-        setSiteData(prev => ({ ...prev, ...newSettings }));
-    };
-
-    if (loading) return <div className="p-4">Завантаження панелі управління...</div>;
-    if (!siteData) return <div className="p-4 text-danger">Помилка: дані сайту не завантажені.</div>;
-
     const hasShopBlocks = Array.isArray(pageContent) && pageContent.some(
         block => block.type === 'catalog_grid' || block.type === 'categories'
     );
 
-    const tabs = [
-        { id: 'editor', label: 'Контент (Блоки)', available: true },
-        { id: 'shop', label: 'Товари та Категорії', available: hasShopBlocks },
-        { id: 'settings', label: 'Загальні Налаштування', available: true },
-    ];
-
-    const renderTabContent = () => {
-        switch (activeTab) {
-            case 'editor':
-                return (
-                    <BlockEditor
-                        blocks={pageContent}
-                        siteData={siteData}
-                        onSave={handleContentSave}
-                    />
-                );
-            case 'shop':
-                if (!hasShopBlocks) {
-                    return <div className="p-4 text-warning">Ця вкладка стане доступною, коли ви додате блок "Сітка товарів" або "Категорії" у редакторі контенту.</div>;
-                }
-                return <SiteProductsTab siteData={siteData} />;
-            case 'settings':
-                return <GeneralSettingsTab siteData={siteData} onUpdate={handleSettingsUpdate} />;
-            default:
-                return null;
-        }
-    };
-
     return (
-        <div className="site-dashboard-page" style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem' }}>
-            <h1 className="mb-4">Управління сайтом: {siteData.title}</h1>
-            <p className="text-secondary">Шлях: <code>{siteData.site_path}</code> | ID: <code>{siteData.id}</code></p>
-            
-            <div className="tabs-container mb-4">
-                <div className="nav nav-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--platform-border-color)' }}>
-                    {tabs.filter(tab => tab.available).map(tab => (
-                        <button
-                            key={tab.id}
-                            className={`nav-link ${activeTab === tab.id ? 'active' : ''}`}
-                            onClick={() => setActiveTab(tab.id)}
-                            style={{ 
-                                cursor: 'pointer',
-                                borderTopLeftRadius: '8px', 
-                                borderTopRightRadius: '8px',
-                                padding: '10px 15px',
-                                border: 'none',
-                                background: activeTab === tab.id ? 'var(--platform-card-bg)' : 'transparent',
-                                borderBottom: activeTab === tab.id ? '3px solid var(--platform-accent)' : '3px solid transparent',
-                                color: activeTab === tab.id ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                                fontWeight: activeTab === tab.id ? 'bold' : 'normal'
-                            }}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
+        <div style={{ maxWidth: '1200px', margin: 'auto' }}>
+            <h1>Панель управління сайтом: {siteData.title}</h1>
+            <p className="text-secondary">Шлях: <code>{siteData.site_path}</code></p>
+
+            <div style={{ borderBottom: '1px solid var(--platform-border-color)', marginBottom: '2rem' }}>
+                <button style={tabStyle(activeTab === 'editor')} onClick={() => setActiveTab('editor')}>Редактор Блоків</button>
+                <button style={tabStyle(activeTab === 'shop')} onClick={() => setActiveTab('shop')}>Товари та Категорії</button>
+                <button style={tabStyle(activeTab === 'settings')} onClick={() => setActiveTab('settings')}>Налаштування</button>
             </div>
-            
-            <div className="tab-content">
-                {renderTabContent()}
+
+            <div>
+                {activeTab === 'editor' && (
+                    <BlockEditor 
+                        blocks={pageContent} 
+                        siteData={siteData}
+                        onSave={savePageContent}
+                    />
+                )}
+                {activeTab === 'shop' && (
+                    hasShopBlocks ? (
+                        <ShopContentTab siteData={siteData} /> 
+                    ) : (
+                        <div className="card text-warning" style={{padding: '2rem'}}>
+                            Ця вкладка стане доступною, коли ви додасте блок **"Сітка товарів"** або **"Категорії"** у Редакторі Блоків.
+                        </div>
+                    )
+                )}
+                {activeTab === 'settings' && (
+                    <GeneralSettingsTab 
+                        siteData={siteData} 
+                    />
+                )}
             </div>
         </div>
     );
 };
+
+const tabStyle = (isActive) => ({
+    padding: '1rem 1.5rem',
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: isActive ? 'bold' : 'normal',
+    color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+    borderBottom: isActive ? '3px solid var(--platform-accent)' : '3px solid transparent',
+});
 
 export default SiteDashboardPage;

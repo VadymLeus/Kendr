@@ -5,6 +5,42 @@ const path = require('path');
 const fs = require('fs').promises;
 const { ensureDirExists } = require('../utils/fileUtils');
 
+// Налаштування для завантаження у тимчасову папку
+const tempUploadPath = path.join(__dirname, '..', 'uploads', 'temp');
+const mediaUploadPath = path.join(__dirname, '..', 'uploads', 'media');
+
+// Переконуємося, що папки існують при старті
+ensureDirExists(tempUploadPath);
+ensureDirExists(mediaUploadPath);
+
+// Фільтр файлів для медіатеки
+const mediaFileFilter = (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|webp/;
+    const mimetype = allowedTypes.test(file.mimetype);
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) {
+        return cb(null, true);
+    }
+    cb(new Error('Помилка: Дозволені лише файли зображень (jpeg, png, webp)!'));
+};
+
+// Multer для медіатеки (зберігає у /uploads/temp)
+const tempStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, tempUploadPath);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `temp-${req.user.id}-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+
+const mediaUpload = multer({
+    storage: tempStorage,
+    fileFilter: mediaFileFilter,
+    limits: { fileSize: 1024 * 1024 * 5 } // 5MB
+});
+
+// Існуючі middleware для обробки зображень
 const memoryStorage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
@@ -87,8 +123,6 @@ const processAndSaveLogo = (size = 64) => {
 
 /**
  * Обробляє та зберігає загальне зображення, обмежуючи ширину та зберігаючи пропорції.
- * @param {string} subfolder - Підпапка в /uploads (наприклад 'general')
- * @param {string} filenamePrefix - Префікс файлу (наприклад 'img')
  * @param {number} maxWidth - Максимальна ширина зображення
  */
 const processAndSaveGeneric = (subfolder, filenamePrefix, maxWidth = 1200) => {
@@ -127,5 +161,6 @@ module.exports = {
     upload,
     processAndSaveImage,
     processAndSaveLogo,
-    processAndSaveGeneric
+    processAndSaveGeneric,
+    mediaUpload
 };

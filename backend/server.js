@@ -14,7 +14,8 @@ const tagRoutes = require('./routes/tagRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const supportRoutes = require('./routes/supportRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const uploadRoutes = require('./routes/uploadRoutes'); // <-- 1. ДОДАНО ІМПОРТ
+const uploadRoutes = require('./routes/uploadRoutes');
+const mediaRoutes = require('./routes/mediaRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -37,7 +38,8 @@ app.use('/api/tags', tagRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/upload', uploadRoutes); // <-- 2. ДОДАНО ВИКОРИСТАННЯ
+app.use('/api/upload', uploadRoutes);
+app.use('/api/media', mediaRoutes);
 
 app.get('/', (req, res) => {
   res.send('Welcome to Kendr API!');

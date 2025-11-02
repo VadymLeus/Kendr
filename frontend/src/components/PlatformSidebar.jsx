@@ -80,7 +80,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         zIndex: 1300
     };
 
-    // --- Стиль для адаптивного логотипа ---
     const logoImageStyle = {
         height: '70px',
         width: 'auto',
@@ -100,7 +99,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
 
             <div style={logoContainerStyle}>
                 <Link to="/">
-                    {/* Адаптивный логотип через CSS переменные */}
                     <div style={logoImageStyle} />
                 </Link>
             </div>
@@ -124,6 +122,16 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                     })}
                 >
                     <span>{isCollapsed ? '💻' : 'Мої сайти'}</span>
+                </NavLink>
+                <NavLink 
+                    to="/media-library" 
+                    onClick={(e) => handleProtectedLinkClick(e, '/media-library')}
+                    style={({ isActive }) => ({ 
+                        ...navLinkBaseStyle, 
+                        ...(isActive ? activeNavLinkStyle : {}) 
+                    })}
+                >
+                    <span>{isCollapsed ? '🖼️' : 'Медіатека'}</span>
                 </NavLink>
                 <NavLink 
                     to="/favorites" 

@@ -11,21 +11,16 @@ router.get('/site/:siteId', productController.getProductsForSite);
 // Отримати товар за ID
 router.get('/:productId', productController.getProductById);
 
-// Додати новий товар
+// Додати новий товар (БЕЗ завантаження файлу, очікує image_url в body)
 router.post(
     '/',
     verifyToken,
-    upload.single('productImage'),
-    processAndSaveImage('shops/products', 'product', 500),
     productController.addProduct
 );
 
-// Оновити товар
 router.put(
     '/:productId',
     verifyToken,
-    upload.single('productImage'),
-    processAndSaveImage('shops/products', 'product', 500),
     productController.updateProduct
 );
 

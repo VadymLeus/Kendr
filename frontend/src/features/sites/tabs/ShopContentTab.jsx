@@ -6,21 +6,6 @@ import ProductManager from '../../../components/shop/ProductManager';
 const ShopContentTab = ({ siteData }) => {
     const [activeSubTab, setActiveSubTab] = useState('products');
 
-    const containerStyle = {
-        padding: '0'
-    };
-
-    const titleStyle = {
-        color: 'var(--platform-text-primary)',
-        marginBottom: '1.5rem'
-    };
-
-    const tabsContainerStyle = {
-        borderBottom: '1px solid var(--platform-border-color)',
-        marginBottom: '2rem',
-        display: 'flex'
-    };
-
     const tabStyle = (isActive) => ({
         padding: '1rem 1.5rem',
         border: 'none',
@@ -35,20 +20,16 @@ const ShopContentTab = ({ siteData }) => {
     });
 
     return (
-        <div style={containerStyle}>
-            <h3 style={titleStyle}>
-                Управління контентом магазину: {siteData.title}
-            </h3>
-
-            <div style={tabsContainerStyle}>
+        <div className="card">
+            <div style={{ borderBottom: '1px solid var(--platform-border-color)', marginBottom: '2rem', display: 'flex' }}>
                 <button 
-                    style={tabStyle(activeSubTab === 'products')} 
+                    style={tabStyle(activeSubTab === 'products')}
                     onClick={() => setActiveSubTab('products')}
                 >
                     Товари
                 </button>
                 <button 
-                    style={tabStyle(activeSubTab === 'categories')} 
+                    style={tabStyle(activeSubTab === 'categories')}
                     onClick={() => setActiveSubTab('categories')}
                 >
                     Категорії

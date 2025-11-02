@@ -15,7 +15,6 @@ class TemplateService {
             try {
                 const content = await fs.readFile(configPath, 'utf-8');
                 const config = JSON.parse(content);
-                // Використовуємо ім'я папки як унікальний ідентифікатор
                 config.id = folder;
                 templates.push(config);
             } catch (error) {
@@ -25,26 +24,8 @@ class TemplateService {
         return templates;
     }
 
-    // Синхронізує шаблони з файлової системи з базою даних
     static async syncWithDB() {
-        const fileTemplates = await this.discoverTemplates();
-        console.log('Виявлені шаблони:', fileTemplates.map(t => t.name).join(', '));
-
-        for (const tpl of fileTemplates) {
-            // Перевіряємо існування за іменем папки
-            const [existing] = await db.query('SELECT * FROM templates WHERE folder_name = ?', [tpl.id]);
-            
-            if (existing.length === 0) {
-                console.log(`Додавання нового шаблону в БД: ${tpl.name}`);
-                // Додаємо folder_name під час вставки
-                await db.query(
-                    'INSERT INTO templates (name, component_name, folder_name, description, thumbnail_url) VALUES (?, ?, ?, ?, ?)',
-                    [tpl.name, tpl.componentName, tpl.id, tpl.description, tpl.thumbnailUrl]
-                );
-            } else {
-                // У майбутньому тут можна додати логіку оновлення даних (назва, опис тощо)
-            }
-        }
+        console.log('Виявлені шаблони: (синхронізацію з БД вимкнено для нової блочної системи)');
     }
     
     // Отримати конфігурацію одного шаблону за іменем його папки

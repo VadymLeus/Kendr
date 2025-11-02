@@ -31,6 +31,7 @@ import AppealPage from './features/support/AppealPage';
 import MyTicketsPage from './features/support/MyTicketsPage';
 import TicketDetailPage from './features/support/TicketDetailPage';
 import AdminSupportPage from './admin/AdminSupportPage';
+import MediaLibraryPage from './pages/MediaLibraryPage';
 
 function App() {
     return (
@@ -60,6 +61,7 @@ function App() {
                         <Route path="/create-site" element={<CreateSitePage />} />
                         <Route path="/cart" element={<CartPage />} />
                         <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />
+                        <Route path="/media-library" element={<MediaLibraryPage />} />
                         <Route path="/support" element={<SupportPage />} />
                         <Route path="/support/new-ticket" element={<NewTicketPage />} />
                         <Route path="/support/appeal" element={<AppealPage />} />
