@@ -1,11 +1,11 @@
 // backend/controllers/siteController.js
 const Site = require('../models/Site');
+const Page = require('../models/Page');
 const db = require('../db');
 const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 
-// Отримання сайтів
 exports.getSites = async (req, res, next) => {
     try {
         const { search, scope } = req.query;
@@ -21,7 +21,6 @@ exports.getSites = async (req, res, next) => {
     }
 };
 
-// Отримання шаблонів сайтів
 exports.getTemplates = async (req, res, next) => {
     try {
         const [rows] = await db.query('SELECT id, name, description, thumbnail_url FROM templates');
@@ -31,7 +30,6 @@ exports.getTemplates = async (req, res, next) => {
     }
 };
 
-// Отримання стандартних логотипів
 exports.getDefaultLogos = async (req, res, next) => {
     try {
         const defaultLogosDir = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'default');
@@ -44,15 +42,13 @@ exports.getDefaultLogos = async (req, res, next) => {
     }
 };
 
-// Створення сайту
 exports.createSite = async (req, res, next) => {
     const { templateId, sitePath, title, selected_logo_url } = req.body;
     const userId = req.user.id;
 
     try {
-        // Перевірка, чи templateId взагалі прийшов
         if (!templateId || templateId === 'undefined') {
-            throw new Error('ID шаблону не було надано. Помилка на стороні клієнта.');
+            throw new Error('ID шаблону не було надано.');
         }
 
         const existingSite = await Site.findByPath(sitePath);
@@ -65,22 +61,28 @@ exports.createSite = async (req, res, next) => {
         else if (selected_logo_url) logoUrl = selected_logo_url;
         else logoUrl = '/uploads/shops/logos/default/default-logo.webp';
 
-        // Отримуємо стартовий контент із шаблону
         const [templates] = await db.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
         
         if (!templates[0] || !templates[0].default_block_content) {
             throw new Error(`Шаблон з ID ${templateId} не знайдено або він не містить 'default_block_content'.`);
         }
-        const initialPageContent = templates[0].default_block_content;
+        
+        let initialBlockContent;
+        try {
+            initialBlockContent = JSON.parse(templates[0].default_block_content);
+        } catch(e) {
+            initialBlockContent = [];
+        }
 
-        // Створюємо сайт
         const newSite = await Site.create(userId, sitePath, title, logoUrl);
         
-        // Створюємо для нього головну сторінку
-        await db.query(
-            'INSERT INTO pages (site_id, title, slug, page_content, is_homepage) VALUES (?, ?, ?, ?, ?)',
-            [newSite.id, 'Головна', '/', JSON.stringify(initialPageContent), 1]
-        );
+        await Page.create({
+            site_id: newSite.id, 
+            name: 'Головна', 
+            slug: 'home',
+            block_content: initialBlockContent, 
+            is_homepage: 1
+        });
 
         res.status(201).json({ message: 'Сайт успішно створено!', site: newSite });
     } catch (error) {
@@ -92,12 +94,16 @@ exports.createSite = async (req, res, next) => {
     }
 };
 
-// Отримання сайту за шляхом
+// Оновлена версія для нових маршрутів
 exports.getSiteByPath = async (req, res, next) => {
     try {
+        const { site_path, slug } = req.params;
         const { increment_view } = req.query;
-        const site = await Site.findByPath(req.params.site_path);
-        if (!site) return res.status(404).json({ message: 'Сайт не знайдено.' });
+
+        const site = await Site.findByPath(site_path);
+        if (!site) {
+            return res.status(404).json({ message: 'Сайт не знайдено.' });
+        }
 
         if (site.status === 'suspended') {
             let isAdmin = false;
@@ -105,42 +111,50 @@ exports.getSiteByPath = async (req, res, next) => {
                 const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
                 if (currentUser[0]?.role === 'admin') isAdmin = true;
             }
-            if (!isAdmin) return res.status(403).json({ message: 'Цей сайт тимчасово заблоковано адміністрацією.' });
+            const isOwner = req.user && req.user.id === site.user_id;
+            if (!isAdmin && !isOwner) {
+                return res.status(403).json({ message: 'Цей сайт тимчасово заблоковано.' });
+            }
+        }
+        
+        let page;
+        if (slug) {
+            page = await Page.findBySiteIdAndSlug(site.id, slug);
+        } else {
+            page = await Page.findHomepageBySiteId(site.id);
         }
 
-        if (increment_view === 'true') Site.incrementViewCount(site.id);
-        res.json(site);
+        if (!page) {
+            if (slug) {
+                return res.status(404).json({ 
+                    message: `Сторінку "${slug}" не знайдено.`,
+                    site: site
+                });
+            }
+            
+            return res.status(500).json({ 
+                message: 'Головну сторінку для цього сайту не налаштовано. Зверніться до адміністратора.',
+                site: site
+            });
+        }
+
+        if (increment_view === 'true' && page.is_homepage && !req.user) {
+            Site.incrementViewCount(site.id);
+        }
+
+        res.json({ 
+            ...site, 
+            page_content: page.block_content,
+            page_id: page.id,
+            page: page
+        });
+
     } catch (error) {
+        console.error('Помилка в getSiteByPath:', error);
         next(error);
     }
 };
 
-// Оновлення контенту сторінки
-exports.updatePageContent = async (req, res, next) => {
-    const { page_id } = req.params;
-    const { page_content } = req.body;
-    const userId = req.user.id;
-
-    try {
-        const [rows] = await db.query(
-            'SELECT s.user_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
-            [page_id]
-        );
-        if (!rows[0] || rows[0].user_id !== userId) {
-            return res.status(403).json({ message: 'У вас немає прав на редагування цієї сторінки.' });
-        }
-
-        await db.query(
-            'UPDATE pages SET page_content = ? WHERE id = ?',
-            [JSON.stringify(page_content), page_id]
-        );
-        res.json({ message: 'Контент сторінки успішно оновлено.' });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// Оновлення налаштувань сайту
 exports.updateSiteSettings = async (req, res, next) => {
     try {
         const { site_path } = req.params;
@@ -161,7 +175,6 @@ exports.updateSiteSettings = async (req, res, next) => {
     }
 };
 
-// Отримання заблокованих сайтів користувача
 exports.getMySuspendedSites = async (req, res, next) => {
     try {
         const sites = await Site.findSuspendedForUser(req.user.id);
@@ -171,7 +184,6 @@ exports.getMySuspendedSites = async (req, res, next) => {
     }
 };
 
-// Видалення сайту
 exports.deleteSite = async (req, res, next) => {
     try {
         const { site_path } = req.params;

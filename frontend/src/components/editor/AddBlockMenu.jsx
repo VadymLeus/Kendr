@@ -7,8 +7,8 @@ const AddBlockMenu = ({ library, onSelect, onClose }) => {
         top: '100%',
         left: '50%',
         transform: 'translateX(-50%)',
-        backgroundColor: 'var(--platform-card-bg)',
-        border: '1px solid var(--platform-border-color)',
+        backgroundColor: 'var(--site-card-bg)',
+        border: '1px solid var(--site-border-color)',
         borderRadius: '8px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         padding: '10px',
@@ -25,24 +25,60 @@ const AddBlockMenu = ({ library, onSelect, onClose }) => {
         alignItems: 'center',
         gap: '10px',
         transition: 'background-color 0.2s',
+        color: 'var(--site-text-primary)',
+    };
+
+    const closeButtonStyle = {
+        marginTop: '10px',
+        width: '100%',
+        padding: '8px 16px',
+        backgroundColor: 'var(--site-card-bg)',
+        color: 'var(--site-text-primary)',
+        border: '1px solid var(--site-border-color)',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        transition: 'all 0.2s ease'
     };
 
     return (
         <div style={modalStyle}>
-            <h4 style={{ margin: '0 0 10px 0', color: 'var(--platform-text-primary)' }}>Оберіть тип блоку</h4>
+            <h4 style={{ 
+                margin: '0 0 10px 0', 
+                color: 'var(--site-text-primary)',
+                fontSize: '16px',
+                fontWeight: '600'
+            }}>
+                Оберіть тип блоку
+            </h4>
             {library.map(block => (
                 <div 
                     key={block.type} 
                     style={itemStyle} 
                     onClick={() => { onSelect(block.type); onClose(); }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--platform-border-color)'}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--site-border-color)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                    <span>{block.icon}</span>
-                    <span>{block.name}</span>
+                    <span style={{ fontSize: '18px' }}>{block.icon}</span>
+                    <span style={{ fontSize: '14px', fontWeight: '500' }}>{block.name}</span>
                 </div>
             ))}
-            <button onClick={onClose} style={{ marginTop: '10px', width: '100%' }}>Закрити</button>
+            <button 
+                onClick={onClose} 
+                style={closeButtonStyle}
+                onMouseEnter={e => {
+                    e.target.style.backgroundColor = 'var(--site-accent)';
+                    e.target.style.color = 'var(--site-accent-text)';
+                    e.target.style.borderColor = 'var(--site-accent)';
+                }}
+                onMouseLeave={e => {
+                    e.target.style.backgroundColor = 'var(--site-card-bg)';
+                    e.target.style.color = 'var(--site-text-primary)';
+                    e.target.style.borderColor = 'var(--site-border-color)';
+                }}
+            >
+                Закрити
+            </button>
         </div>
     );
 };

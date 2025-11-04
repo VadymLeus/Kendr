@@ -46,7 +46,10 @@ function App() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/catalog" element={<CatalogPage />} />
                     <Route path="/profile/:username" element={<ProfilePage />} />
+                    
                     <Route path="/site/:site_path" element={<SiteDisplayPage />} />
+                    <Route path="/site/:site_path/:slug" element={<SiteDisplayPage />} />
+
                     <Route path="/product/:productId" element={<ProductDetailPage />} />
                     <Route path="/rules" element={<RulesPage />} />
 

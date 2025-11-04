@@ -4,16 +4,25 @@ import { Navigate, Outlet, useOutletContext } from 'react-router-dom';
 import { AuthContext } from '../features/auth/AuthContext';
 
 const AdminAccessGuard = () => {
-    const { isAdmin, isLoading } = useContext(AuthContext);
+    const { user, isAdmin, isLoading } = useContext(AuthContext);
     const outletContext = useOutletContext();
 
     if (isLoading) {
-        return <div>Перевірка доступу...</div>;
+        return (
+            <div style={{ 
+                padding: '2rem', 
+                textAlign: 'center',
+                color: 'var(--platform-text-secondary)'
+            }}>
+                Перевірка доступу...
+            </div>
+        );
     }
 
-    if (isAdmin) {
-        return <Navigate to="/admin" replace />;
-    }
+    if (!user) return <Navigate to="/login" replace />;
+
+    if (isAdmin) return <Navigate to="/admin" replace />;
+
     return <Outlet context={outletContext} />;
 };
 
