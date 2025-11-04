@@ -16,7 +16,7 @@ const SettingsComponentMap = {
     hero: HeroSettings
 };
 
-const BlockSettingsModal = ({ block, isOpen, onClose, onSave, onRemove }) => {
+const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
     if (!isOpen) return null;
 
     const SettingsComponent = SettingsComponentMap[block.type];
@@ -40,7 +40,7 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, onRemove }) => {
     };
 
     const contentStyle = {
-        background: 'var(--platform-bg)',
+        background: 'var(--site-card-bg)',
         padding: '30px',
         borderRadius: '12px',
         width: '90%',
@@ -49,24 +49,89 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, onRemove }) => {
         overflowY: 'auto',
         boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
         position: 'relative',
+        border: '1px solid var(--site-border-color)'
     };
+
     const modalHeaderStyle = {
-        borderBottom: '1px solid var(--platform-border-color)',
+        borderBottom: '1px solid var(--site-border-color)',
         paddingBottom: '15px',
         marginBottom: '20px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
     };
+
+    const closeButtonStyle = {
+        background: 'transparent',
+        border: 'none',
+        fontSize: '1.5rem',
+        cursor: 'pointer',
+        padding: '0 10px',
+        color: 'var(--site-text-secondary)',
+        transition: 'color 0.2s ease'
+    };
+
+    const warningTextStyle = {
+        color: 'var(--site-warning)',
+        marginBottom: '1rem'
+    };
+
+    const preStyle = {
+        background: 'var(--site-bg)',
+        padding: '15px',
+        borderRadius: '8px',
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-all',
+        border: '1px solid var(--site-border-color)',
+        color: 'var(--site-text-primary)',
+        fontSize: '0.9rem'
+    };
+
+    const buttonContainerStyle = {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '10px',
+        marginTop: '20px'
+    };
+
+    const buttonStyle = {
+        padding: '10px 20px',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: '500',
+        transition: 'all 0.2s ease'
+    };
+
+    const secondaryButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--site-card-bg)',
+        color: 'var(--site-text-primary)',
+        border: '1px solid var(--site-border-color)'
+    };
+
     return (
         <div style={modalStyle} onClick={onClose}>
             <div style={contentStyle} onClick={e => e.stopPropagation()}>
                 <div style={modalHeaderStyle}>
-                    <h4 style={{ margin: 0 }}>Налаштування блоку: {block.type}</h4>
+                    <h4 style={{ 
+                        margin: 0,
+                        color: 'var(--site-text-primary)',
+                        fontSize: '1.25rem',
+                        fontWeight: '600'
+                    }}>
+                        Налаштування блоку: {block.type}
+                    </h4>
                     <button 
                         onClick={onClose} 
-                        className="btn btn-sm btn-secondary" 
-                        style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', padding: '0 10px' }}
+                        style={closeButtonStyle}
+                        onMouseEnter={(e) => {
+                            e.target.style.color = 'var(--site-accent)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.color = 'var(--site-text-secondary)';
+                        }}
                     >
                         &times;
                     </button>
@@ -77,23 +142,31 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, onRemove }) => {
                         initialData={block.data} 
                         onSave={handleInternalSave} 
                         onClose={onClose}
+                        siteData={siteData}
                     />
                 ) : (
                     <>
-                        <p className="text-warning">
+                        <p style={warningTextStyle}>
                             Редактор для цього блоку поки не реалізовано. Ось його дані:
                         </p>
-                        <pre style={{ 
-                            background: 'var(--platform-card-bg)', 
-                            padding: '10px', 
-                            borderRadius: '4px', 
-                            whiteSpace: 'pre-wrap', 
-                            wordBreak: 'break-all' 
-                        }}>
+                        <pre style={preStyle}>
                             {JSON.stringify(block.data, null, 2)}
                         </pre>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                            <button onClick={onClose} className="btn btn-secondary">Закрити</button>
+                        <div style={buttonContainerStyle}>
+                            <button 
+                                onClick={onClose}
+                                style={secondaryButtonStyle}
+                                onMouseEnter={(e) => {
+                                    e.target.style.borderColor = 'var(--site-accent)';
+                                    e.target.style.color = 'var(--site-accent)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.borderColor = 'var(--site-border-color)';
+                                    e.target.style.color = 'var(--site-text-primary)';
+                                }}
+                            >
+                                Закрити
+                            </button>
                         </div>
                     </>
                 )}

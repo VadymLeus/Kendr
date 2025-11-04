@@ -145,8 +145,6 @@ const MySitesPage = () => {
                                     }}>
                                         Адреса: <a 
                                             href={`/site/${site.site_path}`} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
                                             style={{ color: 'var(--platform-accent)' }}
                                         >
                                             {`/site/${site.site_path}`}

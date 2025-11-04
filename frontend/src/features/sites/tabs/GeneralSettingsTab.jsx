@@ -1,6 +1,6 @@
 // frontend/src/features/sites/tabs/GeneralSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../services/api';
 
 const GeneralSettingsTab = ({ siteData }) => {
@@ -66,50 +66,61 @@ const GeneralSettingsTab = ({ siteData }) => {
     const siteAccents = [
         { value: 'orange', label: 'Помаранчевий', color: '#dd6b20' },
         { value: 'blue', label: 'Синій', color: '#2b6cb0' },
-        { value: 'green', label: 'Зелений', color: '#2f855a' }
+        { value: 'green', label: 'Зелений', color: '#2f855a' },
+        { value: 'red', label: 'Червоний', color: '#e53e3e' },
+        { value: 'purple', label: 'Фіолетовий', color: '#805ad5' },
+        { value: 'gray', label: 'Сірий', color: '#718096' },
+        { value: 'yellow', label: 'Жовтий', color: '#d69e2e' },
+        { value: 'lime', label: 'Лаймовий', color: '#8cc152' }
     ];
 
     const inputStyle = {
         width: '100%',
         padding: '0.75rem',
-        border: '1px solid var(--platform-border-color)',
+        /* ВИПРАВЛЕНО: Використовуємо змінні сайту */
+        border: '1px solid var(--site-border-color)',
         borderRadius: '4px',
         fontSize: '1rem',
         marginTop: '0.5rem',
-        background: 'var(--platform-card-bg)',
-        color: 'var(--platform-text-primary)'
+        background: 'var(--site-card-bg)',
+        color: 'var(--site-text-primary)'
+    };
+
+    const cardStyle = {
+        background: 'var(--site-card-bg)',
+        padding: '1.5rem 2rem',
+        borderRadius: '12px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        border: '1px solid var(--site-border-color)',
+        marginBottom: '1.5rem'
     };
 
     return (
         <div>
-            <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
-                <Link to={`/site/${siteData.site_path}`} className="btn btn-secondary">
-                    Повернутися на сайт
-                </Link>
-            </div>
-
-            <h2 style={{ color: 'var(--platform-text-primary)' }}>Загальні налаштування</h2>
+            <h2 style={{ color: 'var(--site-text-primary)', marginBottom: '1.5rem' }}>Загальні налаштування</h2>
             
             {error && (
                 <div style={{ 
-                    color: 'var(--platform-danger)', 
+                    color: 'var(--site-danger)', 
                     marginBottom: '1rem',
                     padding: '10px',
-                    backgroundColor: '#fff2f0',
-                    border: '1px solid var(--platform-danger)',
+                    backgroundColor: 'rgba(229, 62, 62, 0.1)',
+                    border: '1px solid var(--site-danger)',
                     borderRadius: '4px'
                 }}>
                     {error}
                 </div>
             )}
             
-            <div className="card" style={{marginBottom: '1.5rem'}}>
-                <h4 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>Основні налаштування</h4>
+            <div style={cardStyle}>
+                <h4 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>Основні налаштування</h4>
                 <div style={{ marginBottom: '1.5rem' }}>
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '0.5rem',
-                        color: 'var(--platform-text-primary)'
+                        /* ВИПРАВЛЕНО: */
+                        color: 'var(--site-text-primary)',
+                        fontWeight: '500'
                     }}>
                         Назва сайту:
                     </label>
@@ -118,6 +129,7 @@ const GeneralSettingsTab = ({ siteData }) => {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         style={inputStyle}
+                        placeholder="Введіть назву сайту"
                     />
                 </div>
                 
@@ -125,7 +137,9 @@ const GeneralSettingsTab = ({ siteData }) => {
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '0.5rem',
-                        color: 'var(--platform-text-primary)'
+                        /* ВИПРАВЛЕНО: */
+                        color: 'var(--site-text-primary)',
+                        fontWeight: '500'
                     }}>
                         Статус:
                     </label>
@@ -140,13 +154,15 @@ const GeneralSettingsTab = ({ siteData }) => {
                 </div>
             </div>
 
-            <div className="card" style={{marginBottom: '1.5rem'}}>
-                <h4 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>Дизайн сайту</h4>
+            <div style={cardStyle}>
+                <h4 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>Дизайн сайту</h4>
                 <div style={{ marginBottom: '1.5rem' }}>
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '0.5rem',
-                        color: 'var(--platform-text-primary)'
+                        /* ВИПРАВЛЕНО: */
+                        color: 'var(--site-text-primary)',
+                        fontWeight: '500'
                     }}>
                         Режим теми:
                     </label>
@@ -167,60 +183,95 @@ const GeneralSettingsTab = ({ siteData }) => {
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '0.5rem',
-                        color: 'var(--platform-text-primary)'
+                        /* ВИПРАВЛЕНО: */
+                        color: 'var(--site-text-primary)',
+                        fontWeight: '500'
                     }}>
                         Акцентний колір:
                     </label>
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                         {siteAccents.map(accent => (
-                            <button
-                                key={accent.value}
-                                onClick={() => setSiteAccent(accent.value)}
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '50%',
-                                    cursor: 'pointer',
-                                    border: siteAccent === accent.value ? '3px solid var(--platform-accent)' : '3px solid transparent',
-                                    transition: 'all 0.2s ease',
-                                    backgroundColor: accent.color
-                                }}
-                                title={accent.label}
-                            />
+                            <div key={accent.value} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                <button
+                                    onClick={() => setSiteAccent(accent.value)}
+                                    style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '50%',
+                                        cursor: 'pointer',
+                                        /* ВИПРАВЛЕНО: */
+                                        border: siteAccent === accent.value ? '3px solid var(--site-accent)' : '3px solid var(--site-border-color)',
+                                        transition: 'all 0.2s ease',
+                                        backgroundColor: accent.color
+                                    }}
+                                    title={accent.label}
+                                />
+                                <span style={{ 
+                                    fontSize: '0.75rem', 
+                                    color: 'var(--site-text-secondary)',
+                                    textAlign: 'center'
+                                }}>
+                                    {accent.label}
+                                </span>
+                            </div>
                         ))}
                     </div>
                 </div>
             </div>
             
-            <div className="card" style={{marginBottom: '1.5rem'}}>
-                <h4 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>Теги</h4>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={cardStyle}>
+                <h4 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>Теги</h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                     {allTags.map(tag => (
                         <label 
                             key={tag.id} 
                             style={{ 
                                 display: 'flex', 
                                 alignItems: 'center', 
-                                gap: '0.25rem',
-                                color: 'var(--platform-text-primary)'
+                                gap: '0.5rem',
+                                padding: '0.5rem 1rem',
+                                background: selectedTags.has(tag.id) ? 'var(--site-accent)' : 'var(--site-card-bg)',
+                                color: selectedTags.has(tag.id) ? 'var(--site-accent-text)' : 'var(--site-text-primary)',
+                                border: `1px solid ${selectedTags.has(tag.id) ? 'var(--site-accent)' : 'var(--site-border-color)'}`,
+                                borderRadius: '20px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                fontWeight: '500'
                             }}
                         >
                             <input
                                 type="checkbox"
                                 checked={selectedTags.has(tag.id)}
                                 onChange={() => handleTagChange(tag.id)}
+                                style={{ display: 'none' }}
                             />
                             {tag.name}
                         </label>
                     ))}
                 </div>
+                {allTags.length === 0 && (
+                    <p style={{ color: 'var(--site-text-secondary)', fontStyle: 'italic' }}>
+                        Теги відсутні. Створіть теги в адмін-панелі платформи.
+                    </p>
+                )}
             </div>
             
             <button 
                 onClick={handleSave} 
                 disabled={saving}
-                className="btn btn-primary"
-                style={{width: '100%'}}
+                style={{
+                    width: '100%',
+                    padding: '12px 24px',
+                    backgroundColor: 'var(--site-accent)',
+                    color: 'var(--site-accent-text)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    opacity: saving ? 0.7 : 1,
+                    transition: 'all 0.2s ease'
+                }}
             >
                 {saving ? 'Збереження...' : 'Зберегти зміни'}
             </button>
