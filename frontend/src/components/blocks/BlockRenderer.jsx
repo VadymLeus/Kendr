@@ -1,7 +1,6 @@
 // frontend/src/components/blocks/BlockRenderer.jsx
 import React, { Suspense, lazy } from 'react';
 
-// Ледаче завантаження компонентів блоків
 const HeroBlock = lazy(() => import('./HeroBlock'));
 const TextBlock = lazy(() => import('./TextBlock'));
 const CategoriesGridBlock = lazy(() => import('./CategoriesGridBlock'));
@@ -9,7 +8,6 @@ const CatalogGridBlock = lazy(() => import('./CatalogGridBlock'));
 const BannerBlock = lazy(() => import('./BannerBlock'));
 const FeaturesBlock = lazy(() => import('./FeaturesBlock'));
 
-// Мапування типів блоків на компоненти
 const blockMap = {
     hero: HeroBlock,
     text: TextBlock,
@@ -19,7 +17,7 @@ const blockMap = {
     features: FeaturesBlock,
 };
 
-const BlockRenderer = ({ blocks, siteData }) => {
+const BlockRenderer = ({ blocks, siteData, isEditorPreview = false }) => {
     if (!Array.isArray(blocks) || blocks.length === 0) {
         return <p style={{ textAlign: 'center', padding: '2rem' }}>Ця сторінка порожня.</p>;
     }
@@ -34,7 +32,11 @@ const BlockRenderer = ({ blocks, siteData }) => {
                 }
                 return (
                     <Suspense key={block.block_id || index} fallback={<div>Завантаження блоку...</div>}>
-                        <Component blockData={block.data} siteData={siteData} />
+                        <Component 
+                            blockData={block.data} 
+                            siteData={siteData} 
+                            isEditorPreview={isEditorPreview} 
+                        />
                     </Suspense>
                 );
             })}

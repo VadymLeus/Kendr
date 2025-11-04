@@ -141,18 +141,60 @@ const ProductManager = ({ siteId }) => {
         return 'https://placehold.co/400x400/AAAAAA/FFFFFF?text=Немає+Фото';
     };
 
-    if (loading) return <div>Завантаження...</div>;
+    // Стилі для використання змінних сайту
+    const cardStyle = {
+        background: 'var(--site-card-bg)',
+        padding: '1.5rem 2rem',
+        borderRadius: '12px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        border: '1px solid var(--site-border-color)',
+        marginBottom: '30px'
+    };
+
+    const inputStyle = {
+        width: '100%',
+        padding: '0.75rem',
+        border: '1px solid var(--site-border-color)',
+        borderRadius: '4px',
+        fontSize: '1rem',
+        background: 'var(--site-card-bg)',
+        color: 'var(--site-text-primary)'
+    };
+
+    const labelStyle = {
+        display: 'block',
+        marginBottom: '0.5rem',
+        color: 'var(--site-text-primary)',
+        fontWeight: '500'
+    };
+
+    if (loading) return (
+        <div style={{ 
+            padding: '2rem', 
+            textAlign: 'center',
+            color: 'var(--site-text-secondary)'
+        }}>
+            Завантаження...
+        </div>
+    );
 
     return (
         <div className="site-products-tab">
             
-            <div className="card" style={{ marginBottom: '30px' }}>
-                <h4>{isEditing ? `Редагування: ${currentProduct.name}` : 'Додавання нового товару'}</h4>
+            <div style={cardStyle}>
+                <h4 style={{ 
+                    color: 'var(--site-text-primary)', 
+                    marginBottom: '1.5rem',
+                    fontSize: '1.25rem',
+                    fontWeight: '600'
+                }}>
+                    {isEditing ? `Редагування: ${currentProduct.name}` : 'Додавання нового товару'}
+                </h4>
                 
                 <form onSubmit={handleSubmit}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
-                        <div className="form-group">
-                            <label>Головне зображення:</label>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={labelStyle}>Головне зображення:</label>
                             <ImageInput 
                                 value={currentProduct.image_url ? `${API_URL}${currentProduct.image_url}` : ''} 
                                 onChange={handleImageChange} 
@@ -160,30 +202,71 @@ const ProductManager = ({ siteId }) => {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div className="form-group">
-                                <label>Назва товару:</label>
-                                <input type="text" name="name" value={currentProduct.name} onChange={handleFormChange} required />
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={labelStyle}>Назва товару:</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    value={currentProduct.name} 
+                                    onChange={handleFormChange} 
+                                    required 
+                                    style={inputStyle}
+                                    placeholder="Введіть назву товару"
+                                />
                             </div>
                             
-                            <div className="form-group">
-                                <label>Опис:</label>
-                                <textarea name="description" value={currentProduct.description} onChange={handleFormChange} rows="3" />
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={labelStyle}>Опис:</label>
+                                <textarea 
+                                    name="description" 
+                                    value={currentProduct.description} 
+                                    onChange={handleFormChange} 
+                                    rows="3" 
+                                    style={{
+                                        ...inputStyle,
+                                        resize: 'vertical',
+                                        minHeight: '80px'
+                                    }}
+                                    placeholder="Опишіть товар (не обов'язково)"
+                                />
                             </div>
                             
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div className="form-group">
-                                    <label>Ціна (грн.):</label>
-                                    <input type="number" name="price" value={currentProduct.price} onChange={handleFormChange} required min="0.01" step="0.01" />
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={labelStyle}>Ціна (грн.):</label>
+                                    <input 
+                                        type="number" 
+                                        name="price" 
+                                        value={currentProduct.price} 
+                                        onChange={handleFormChange} 
+                                        required 
+                                        min="0.01" 
+                                        step="0.01" 
+                                        style={inputStyle}
+                                    />
                                 </div>
-                                <div className="form-group">
-                                    <label>Кількість на складі:</label>
-                                    <input type="number" name="stock_quantity" value={currentProduct.stock_quantity} onChange={handleFormChange} required min="0" />
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={labelStyle}>Кількість на складі:</label>
+                                    <input 
+                                        type="number" 
+                                        name="stock_quantity" 
+                                        value={currentProduct.stock_quantity} 
+                                        onChange={handleFormChange} 
+                                        required 
+                                        min="0" 
+                                        style={inputStyle}
+                                    />
                                 </div>
                             </div>
 
-                            <div className="form-group">
-                                <label>Категорія:</label>
-                                <select name="category_id" value={currentProduct.category_id || "null"} onChange={handleFormChange}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={labelStyle}>Категорія:</label>
+                                <select 
+                                    name="category_id" 
+                                    value={currentProduct.category_id || "null"} 
+                                    onChange={handleFormChange}
+                                    style={inputStyle}
+                                >
                                     <option value="null">Без категорії</option>
                                     {categories.map(cat => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -193,49 +276,184 @@ const ProductManager = ({ siteId }) => {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px', borderTop: '1px solid var(--platform-border-color)', paddingTop: '20px' }}>
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'flex-end', 
+                        gap: '10px', 
+                        marginTop: '20px', 
+                        /* ВИПРАВЛЕНО: */
+                        borderTop: '1px solid var(--site-border-color)', 
+                        paddingTop: '20px' 
+                    }}>
                         {isEditing && (
-                            <button type="button" onClick={resetForm} className="btn btn-secondary">
+                            <button 
+                                type="button" 
+                                onClick={resetForm}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: '1px solid var(--site-border-color)',
+                                    borderRadius: '4px',
+                                    background: 'var(--site-card-bg)',
+                                    color: 'var(--site-text-primary)',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.borderColor = 'var(--site-accent)';
+                                    e.target.style.color = 'var(--site-accent)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.borderColor = 'var(--site-border-color)';
+                                    e.target.style.color = 'var(--site-text-primary)';
+                                }}
+                            >
                                 Скасувати редагування
                             </button>
                         )}
-                        <button type="submit" className="btn btn-primary">
+                        <button 
+                            type="submit"
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: 'var(--site-accent)',
+                                color: 'var(--site-accent-text)',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                transition: 'background-color 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--site-accent-hover)'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--site-accent)'}
+                        >
                             {isEditing ? 'Зберегти зміни' : 'Додати товар'}
                         </button>
                     </div>
                 </form>
             </div>
 
-            <h4>Поточні товари ({products.length})</h4>
+            <h4 style={{ 
+                color: 'var(--site-text-primary)',
+                marginBottom: '1rem',
+                fontSize: '1.25rem',
+                fontWeight: '600'
+            }}>
+                Поточні товари ({products.length})
+            </h4>
+            
             {products.length === 0 ? (
-                <p>На цьому сайті поки немає товарів.</p>
+                <p style={{ 
+                    color: 'var(--site-text-secondary)',
+                    textAlign: 'center',
+                    padding: '2rem'
+                }}>
+                    На цьому сайті поки немає товарів.
+                </p>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
                     {products.map(product => (
-                        <div key={product.id} className="card" style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
+                        <div 
+                            key={product.id} 
+                            style={{ 
+                                ...cardStyle,
+                                padding: '0',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                marginBottom: 0
+                            }}
+                        >
                             <img 
                                 src={getProductImageUrl(product.image_gallery)} 
                                 alt={product.name} 
-                                style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px 8px 0 0' }} 
-                                onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/400x400/AAAAAA/FFFFFF?text=Немає+Фото" }}
+                                style={{ 
+                                    width: '100%', 
+                                    height: '200px', 
+                                    objectFit: 'cover', 
+                                    borderRadius: '8px 8px 0 0' 
+                                }} 
+                                onError={(e) => { 
+                                    e.target.onerror = null; 
+                                    e.target.src = "https://placehold.co/400x400/AAAAAA/FFFFFF?text=Немає+Фото" 
+                                }}
                             />
                             <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                                <h5 style={{ margin: '0 0 5px 0' }}>{product.name}</h5>
-                                <p style={{ margin: '0 0 5px 0', fontSize: '1.1em', fontWeight: 'bold' }} className="text-accent">
+                                <h5 style={{ 
+                                    margin: '0 0 5px 0',
+                                    color: 'var(--site-text-primary)',
+                                    fontSize: '1rem',
+                                    fontWeight: '600'
+                                }}>
+                                    {product.name}
+                                </h5>
+                                
+                                <p style={{ 
+                                    margin: '0 0 5px 0', 
+                                    fontSize: '1.1em', 
+                                    fontWeight: 'bold',
+                                    color: 'var(--site-accent)'
+                                }}>
                                     {product.price} грн.
                                 </p>
-                                <p style={{ margin: '0 0 10px 0', fontSize: '0.9em' }} className={product.stock_quantity > 0 ? 'text-success' : 'text-danger'}>
+                                
+                                <p style={{ 
+                                    margin: '0 0 10px 0', 
+                                    fontSize: '0.9em',
+                                    color: product.stock_quantity > 0 ? 'var(--site-success)' : 'var(--site-danger)'
+                                }}>
                                     На складі: {product.stock_quantity} шт.
                                 </p>
-                                <small style={{ color: 'var(--platform-text-secondary)', marginBottom: '10px', flexGrow: 1 }}>
+                                
+                                <small style={{ 
+                                    marginBottom: '10px', 
+                                    flexGrow: 1,
+                                    color: 'var(--site-text-secondary)'
+                                }}>
                                     Категорія: {categories.find(c => c.id === product.category_id)?.name || 'Не вказано'}
                                 </small>
                                 
                                 <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-                                    <button onClick={() => handleEdit(product)} className="btn btn-secondary" style={{ flexGrow: 1 }} title="Редагувати">
+                                    <button 
+                                        onClick={() => handleEdit(product)}
+                                        style={{
+                                            flexGrow: 1,
+                                            padding: '8px 16px',
+                                            border: '1px solid var(--site-border-color)',
+                                            borderRadius: '4px',
+                                            background: 'var(--site-card-bg)',
+                                            color: 'var(--site-text-primary)',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.target.style.borderColor = 'var(--site-accent)';
+                                            e.target.style.color = 'var(--site-accent)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.borderColor = 'var(--site-border-color)';
+                                            e.target.style.color = 'var(--site-text-primary)';
+                                        }}
+                                        title="Редагувати"
+                                    >
                                         ✏️ Редагувати
                                     </button>
-                                    <button onClick={() => handleDelete(product.id)} className="btn btn-danger" title="Видалити">
+                                    <button 
+                                        onClick={() => handleDelete(product.id)}
+                                        style={{
+                                            padding: '8px 12px',
+                                            backgroundColor: 'var(--site-danger)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            transition: 'background-color 0.2s ease'
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--site-danger-hover, #c53030)'}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--site-danger)'}
+                                        title="Видалити"
+                                    >
                                         ❌
                                     </button>
                                 </div>
