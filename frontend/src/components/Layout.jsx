@@ -22,48 +22,62 @@ const Layout = () => {
     const currentSidebarWidth = isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
     const handleToggleSidebar = () => setIsCollapsed(prev => !prev);
 
-    const siteHeaderMatch = location.pathname.match(/^\/(site|product|dashboard)\/([^/]+)/);
-    const shouldShowSiteHeader = !!siteHeaderMatch;
-    const pathParam = shouldShowSiteHeader ? siteHeaderMatch[2] : null;
-    const isDashboard = location.pathname.startsWith('/dashboard/');
-    const isProductPage = location.pathname.startsWith('/product/');
-
+    const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
+    const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
+    const productMatch = location.pathname.match(/^\/product\/([^/]+)/);
+    const shouldShowSiteHeader = !!(dashboardMatch || publicMatch || productMatch);
+    
     const shouldShowFooter = !isAdmin;
 
     useEffect(() => {
-        if (!pathParam) {
-            setIsSiteLoading(false);
-            setSiteData(null);
-            return;
-        }
-
         const fetchSiteData = async () => {
+            setIsSiteLoading(true);
+            setSiteData(null);
             try {
-                setIsSiteLoading(true);
-                let sitePathToFetch = pathParam;
-
-                if (isProductPage) {
-                    const productResponse = await apiClient.get(`/products/${pathParam}`);
-                    sitePathToFetch = productResponse.data.site_path;
-                }
+                let url = null;
+                let params = { increment_view: 'false' }; 
                 
-                if (sitePathToFetch) {
-                    const response = await apiClient.get(`/sites/${sitePathToFetch}`);
-                    setSiteData(response.data);
-                } else {
-                    setSiteData(null);
+                if (dashboardMatch) {
+                    const sitePath = dashboardMatch[1];
+                    // Панель керування завантажує сайт і його головну сторінку
+                    url = `/sites/${sitePath}`;
+                } else if (publicMatch) {
+                    const sitePath = publicMatch[1];
+                    const slug = publicMatch[2];
+                    
+                    // slug тепер є частиною шляху
+                    if (slug) {
+                        url = `/sites/${sitePath}/${slug}`;
+                    } else {
+                        url = `/sites/${sitePath}`;
+                    }
+                } else if (productMatch) {
+                    const productId = productMatch[1];
+                    const productResponse = await apiClient.get(`/products/${productId}`);
+                    const sitePath = productResponse.data.site_path;
+                    // Завантаження сайту для відображення хедера
+                    url = `/sites/${sitePath}`;
                 }
-               
+
+                if (url) {
+                    const response = await apiClient.get(url, { params });
+                    setSiteData(response.data);
+                }
             } catch (err) {
-                console.error("Layout: Не вдалося завантажити дані сайту", err);
+                console.error("Layout: не вдалося завантажити дані сайту", err.response?.data?.message || err.message);
                 setSiteData(null);
             } finally {
                 setIsSiteLoading(false);
             }
         };
 
-        fetchSiteData();
-    }, [pathParam, isProductPage]);
+        if (dashboardMatch || publicMatch || productMatch) {
+            fetchSiteData();
+        } else {
+            setIsSiteLoading(false);
+            setSiteData(null);
+        }
+    }, [location.pathname]);
 
     if (isAuthLoading) {
         return <div>Завантаження...</div>;
@@ -72,7 +86,7 @@ const Layout = () => {
     document.documentElement.style.setProperty('--sidebar-width', currentSidebarWidth);
     
     const mainStyles = {
-        padding: isDashboard ? 0 : '2rem',
+        padding: dashboardMatch ? 0 : '2rem',
         flexGrow: 1,
     };
 
@@ -95,7 +109,7 @@ const Layout = () => {
                 {shouldShowSiteHeader && (
                     <SiteHeader 
                         siteData={siteData} 
-                        loading={isSiteLoading}
+                        loading={isSiteLoading} 
                         sidebarWidth={currentSidebarWidth} 
                     />
                 )}

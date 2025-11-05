@@ -11,25 +11,28 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    // ВИПРАВЛЕННЯ: Переміщено визначення стилів ДО їх використання
     const isSoldOut = product.stock_quantity === 0;
 
-    const cardStyle = {
+    const cardStyleBase = {
         border: '1px solid var(--site-border-color)',
         borderRadius: '12px',
-        padding: '0',
         background: 'var(--site-card-bg)',
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
         display: 'flex',
-        flexDirection: 'column',
         overflow: 'hidden'
     };
-    
+
+    const cardStyle = isEditorPreview
+        ? { ...cardStyleBase, flexDirection: 'row', padding: '0.5rem', height: '90px', alignItems: 'center', gap: '1rem' }
+        : { ...cardStyleBase, flexDirection: 'column', padding: 0 };
+
     const imageLinkStyle = {
         display: 'block',
-        width: '100%',
-        height: '200px',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        width: isEditorPreview ? '70px' : '100%',
+        height: isEditorPreview ? '70px' : '200px',
+        flexShrink: 0,
+        borderRadius: isEditorPreview ? '8px' : 0
     };
 
     const imageStyle = {
@@ -41,14 +44,15 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
         transition: 'transform 0.3s ease',
         cursor: isEditorPreview ? 'default' : 'pointer'
     };
-    
+
     const cardBodyStyle = {
-        padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
-        flexGrow: 1
+        flexGrow: 1,
+        padding: isEditorPreview ? '0.5rem' : '1.5rem',
+        justifyContent: isEditorPreview ? 'center' : 'flex-start'
     };
-    
+
     const stockStyle = {
         margin: '0 0 1rem 0',
         fontSize: '0.9em',
@@ -62,7 +66,6 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
 
     const isOwner = user && siteData && user.id === siteData.user_id;
 
-    // Тепер 'imageLinkStyle' визначено і ця логіка спрацює
     const ImageWrapper = isEditorPreview ? 'div' : Link;
     const imageWrapperProps = isEditorPreview
         ? { style: imageLinkStyle }
@@ -70,14 +73,13 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
 
     const TitleWrapper = isEditorPreview ? 'div' : Link;
     const titleWrapperProps = isEditorPreview
-        ? { style: {textDecoration: 'none', color: 'inherit', cursor: 'default'} }
-        : { to: `/product/${product.id}`, style: {textDecoration: 'none', color: 'inherit'} };
+        ? { style: { textDecoration: 'none', color: 'inherit', cursor: 'default' } }
+        : { to: `/product/${product.id}`, style: { textDecoration: 'none', color: 'inherit' } };
 
     const handleAddToCart = () => {
-        if (isEditorPreview) return; // Блокуємо додавання в кошик у режимі прев'ю
-        
+        if (isEditorPreview) return;
         if (!user) {
-            if (window.confirm("Щоб додати товар до кошика, необхідно увійти до акаунту. Перейти на сторінку входу?")) {
+            if (window.confirm("Щоб додати товар до кошика, потрібно увійти в акаунт. Перейти до сторінки входу?")) {
                 navigate('/login');
             }
             return;
@@ -92,41 +94,74 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
                     src={imageUrl}
                     alt={product.name}
                     style={imageStyle}
-                    onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/400x400/AAAAAA/FFFFFF?text=Фото" }}
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/400x400/AAAAAA/FFFFFF?text=Фото";
+                    }}
                 />
             </ImageWrapper>
             <div style={cardBodyStyle}>
-                <h5 style={{ margin: '0 0 5px 0', color: 'var(--site-text-primary)' }}>
-                    <TitleWrapper {...titleWrapperProps}>
-                        {product.name}
-                    </TitleWrapper>
+                <h5 style={{
+                    margin: '0 0 5px 0',
+                    color: 'var(--site-text-primary)',
+                    fontSize: isEditorPreview ? '0.9rem' : '1.1rem',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                }}>
+                    <TitleWrapper {...titleWrapperProps}>{product.name}</TitleWrapper>
                 </h5>
-                <p style={{ margin: '0 0 1rem 0', fontSize: '1.2em', fontWeight: 'bold', color: 'var(--site-accent)' }}>
-                    {product.price} грн.
-                </p>
-                <small style={{ color: 'var(--site-text-secondary)', marginBottom: '10px' }}>
-                    Категорія: {product.category_name || 'Не вказано'}
-                </small>
-                <p style={stockStyle}>
-                    {isSoldOut ? 'Немає в наявності' : `В наявності: ${product.stock_quantity} шт.`}
-                </p>
-                
-                <button
-                    onClick={handleAddToCart}
-                    disabled={isEditorPreview || isOwner || isSoldOut}
-                    style={{
-                        padding: '0.75rem 1rem',
-                        fontSize: '1rem',
-                        opacity: (isEditorPreview || isOwner || isSoldOut) ? 0.6 : 1,
-                        cursor: (isEditorPreview || isOwner || isSoldOut) ? 'not-allowed' : 'pointer',
-                        background: 'var(--site-accent)',
-                        color: 'var(--site-accent-text)',
-                        border: 'none',
-                        borderRadius: '8px'
-                    }}
-                >
-                    {isEditorPreview ? 'Перегляд' : (isOwner ? 'Це ваш товар' : (isSoldOut ? 'Немає в наявності' : 'Додати у кошик'))}
-                </button>
+
+                {!isEditorPreview ? (
+                    <>
+                        <p style={{
+                            margin: '0 0 1rem 0',
+                            fontSize: '1.2em',
+                            fontWeight: 'bold',
+                            color: 'var(--site-accent)'
+                        }}>
+                            {product.price} грн.
+                        </p>
+                        <small style={{ color: 'var(--site-text-secondary)', marginBottom: '10px' }}>
+                            Категорія: {product.category_name || 'Не вказано'}
+                        </small>
+                        <p style={stockStyle}>
+                            {isSoldOut ? 'Немає в наявності' : `В наявності: ${product.stock_quantity} шт.`}
+                        </p>
+
+                        <button
+                            onClick={handleAddToCart}
+                            disabled={isEditorPreview || isOwner || isSoldOut}
+                            style={{
+                                padding: '0.75rem 1rem',
+                                fontSize: '1rem',
+                                opacity: (isEditorPreview || isOwner || isSoldOut) ? 0.6 : 1,
+                                cursor: (isEditorPreview || isOwner || isSoldOut) ? 'not-allowed' : 'pointer',
+                                background: 'var(--site-accent)',
+                                color: 'var(--site-accent-text)',
+                                border: 'none',
+                                borderRadius: '8px'
+                            }}
+                        >
+                            {isEditorPreview
+                                ? 'Перегляд'
+                                : (isOwner
+                                    ? 'Ваш товар'
+                                    : (isSoldOut
+                                        ? 'Немає в наявності'
+                                        : 'Додати у кошик'))}
+                        </button>
+                    </>
+                ) : (
+                    <p style={{
+                        margin: 0,
+                        fontSize: '0.9rem',
+                        color: 'var(--site-text-secondary)',
+                        fontStyle: 'italic'
+                    }}>
+                        {product.price} грн.
+                    </p>
+                )}
             </div>
         </div>
     );
@@ -134,41 +169,64 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
 
 const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
     const allProducts = siteData?.products || [];
-    
     const selectedIds = new Set(blockData.selectedProductIds || []);
-    
     const productsToDisplay = allProducts.filter(product => selectedIds.has(product.id));
 
-    if (productsToDisplay.length === 0) {
+    const gridStyle = isEditorPreview
+        ? {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+            gap: '1rem',
+            padding: '1rem',
+            border: '1px dashed var(--site-border-color)',
+            background: 'var(--site-bg)',
+            borderRadius: '8px'
+        }
+        : {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '2rem',
+            maxWidth: '1200px',
+            margin: '0 auto'
+        };
+
+    const containerStyle = isEditorPreview
+        ? { padding: '10px', background: 'var(--site-bg)' }
+        : { padding: '40px 20px', background: 'var(--site-bg)' };
+
+    if (productsToDisplay.length === 0 && !isEditorPreview) {
         return (
             <div style={{ padding: '20px', textAlign: 'center' }}>
                 <h3>{blockData.title || 'Товари'}</h3>
-                <p style={{color: 'var(--site-text-secondary)'}}>Немає обраних товарів для відображення.</p>
+                <p style={{ color: 'var(--site-text-secondary)' }}>Немає обраних товарів для відображення.</p>
             </div>
         );
     }
 
     return (
-        <div style={{ padding: '40px 20px', background: 'var(--site-bg)' }}>
+        <div style={containerStyle}>
             <h2 style={{ textAlign: 'center', marginBottom: '2.5rem', color: 'var(--site-text-primary)' }}>
                 {blockData.title || 'Товари'}
             </h2>
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: '2rem',
-                maxWidth: '1200px',
-                margin: '0 auto'
-            }}>
-                {productsToDisplay.map(product => (
-                    <ProductCard 
-                        key={product.id} 
-                        product={product} 
-                        siteData={siteData} 
-                        isEditorPreview={isEditorPreview} 
-                    />
-                ))}
-            </div>
+
+            {productsToDisplay.length === 0 && isEditorPreview && (
+                <div style={{ ...gridStyle, textAlign: 'center', color: 'var(--site-text-secondary)' }}>
+                    Немає вибраних товарів. (Налаштуйте блок, щоб додати їх)
+                </div>
+            )}
+
+            {productsToDisplay.length > 0 && (
+                <div style={gridStyle}>
+                    {productsToDisplay.map(product => (
+                        <ProductCard
+                            key={product.id}
+                            product={product}
+                            siteData={siteData}
+                            isEditorPreview={isEditorPreview}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

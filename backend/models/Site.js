@@ -46,8 +46,6 @@ class Site {
   }
 
   static async findByPath(sitePath) {
-    
-    // 1. Знаходимо сайт
     const [sites] = await db.query(`
         SELECT
             s.id, s.user_id, s.title, s.logo_url, s.status,
@@ -60,17 +58,6 @@ class Site {
     if (!sites[0]) return null;
     const site = sites[0];
     
-    // 2. Знаходимо ГОЛОВНУ сторінку (is_homepage = 1) для цього сайту
-    const [pages] = await db.query(
-        'SELECT id as page_id, page_content FROM pages WHERE site_id = ? AND is_homepage = 1',
-        [site.id]
-    );
-
-    // Додаємо page_content та page_id до об'єкта сайту
-    site.page_content = pages[0] ? pages[0].page_content : null;
-    site.page_id = pages[0] ? pages[0].page_id : null;
-
-    // 3. Завантажуємо товари (якщо це магазин)
     const [productRows] = await db.query(`
         SELECT p.*, c.name as category_name
         FROM products p
@@ -78,17 +65,13 @@ class Site {
         WHERE p.site_id = ?
         ORDER BY p.created_at DESC
     `, [site.id]);
-    const products = productRows;
-    
-    return { ...site, products };
+
+    return { ...site, products: productRows };
   }
 
   /**
    * Знаходить сайт за його ID та ID власника.
-   * Використовується для перевірки прав доступу (наприклад при додаванні товарів/категорій).
-   * @param {number} siteId - ID сайту.
-   * @param {number} userId - ID користувача.
-   * @returns {Promise<object | null>} Об'єкт сайту або null, якщо не знайдено.
+   * Використовується для перевірки прав доступу.
    */
   static async findByIdAndUserId(siteId, userId) {
     const [rows] = await db.query(
@@ -103,7 +86,14 @@ class Site {
       'INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, ?)',
       [userId, sitePath, title, logoUrl, 'draft']
     );
-    return { id: result.insertId, site_path: sitePath };
+    return { 
+      id: result.insertId, 
+      user_id: userId, 
+      site_path: sitePath, 
+      title: title, 
+      logo_url: logoUrl, 
+      status: 'draft' 
+    };
   }
 
   static async updateSettings(siteId, data) {

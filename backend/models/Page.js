@@ -1,0 +1,97 @@
+// backend/models/Page.js
+const db = require('../db');
+
+class Page {
+    static async create(pageData) {
+        const { site_id, name, slug, block_content, is_homepage = 0 } = pageData;
+        const [result] = await db.query(
+            'INSERT INTO pages (site_id, name, slug, block_content, is_homepage) VALUES (?, ?, ?, ?, ?)',
+            [site_id, name, slug, JSON.stringify(block_content), is_homepage]
+        );
+        return { id: result.insertId, ...pageData };
+    }
+
+    static async findById(pageId) {
+        const [rows] = await db.query('SELECT * FROM pages WHERE id = ?', [pageId]);
+        if (rows[0] && typeof rows[0].block_content === 'string') {
+            rows[0].block_content = JSON.parse(rows[0].block_content);
+        }
+        return rows[0];
+    }
+
+    static async findBySiteId(siteId) {
+        const [rows] = await db.query(
+            'SELECT id, name, slug, is_homepage, created_at FROM pages WHERE site_id = ? ORDER BY created_at ASC',
+            [siteId]
+        );
+        return rows;
+    }
+
+    static async findBySiteIdAndSlug(siteId, slug) {
+        const [rows] = await db.query(
+            'SELECT * FROM pages WHERE site_id = ? AND slug = ?',
+            [siteId, slug]
+        );
+        if (rows[0] && typeof rows[0].block_content === 'string') {
+            rows[0].block_content = JSON.parse(rows[0].block_content);
+        }
+        return rows[0];
+    }
+
+    static async findHomepageBySiteId(siteId) {
+        const [rows] = await db.query(
+            'SELECT * FROM pages WHERE site_id = ? AND is_homepage = 1',
+            [siteId]
+        );
+        if (rows[0] && typeof rows[0].block_content === 'string') {
+            rows[0].block_content = JSON.parse(rows[0].block_content);
+        }
+        return rows[0];
+    }
+    
+    static async updateContent(pageId, blockContent) {
+        const [result] = await db.query(
+            'UPDATE pages SET block_content = ? WHERE id = ?',
+            [JSON.stringify(blockContent), pageId]
+        );
+        return result;
+    }
+
+    static async updateSettings(pageId, { name, slug }) {
+        const [result] = await db.query(
+            'UPDATE pages SET name = ?, slug = ? WHERE id = ?',
+            [name, slug, pageId]
+        );
+        return result;
+    }
+
+    static async delete(pageId) {
+        const [result] = await db.query('DELETE FROM pages WHERE id = ?', [pageId]);
+        return result;
+    }
+
+    // Транзакція для встановлення головної сторінки
+    static async setHomepage(siteId, pageId) {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+            await connection.query(
+                'UPDATE pages SET is_homepage = 0 WHERE site_id = ?',
+                [siteId]
+            );
+            await connection.query(
+                'UPDATE pages SET is_homepage = 1 WHERE id = ? AND site_id = ?',
+                [pageId, siteId]
+            );
+            await connection.commit();
+            return true;
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+}
+
+module.exports = Page;
