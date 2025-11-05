@@ -1,7 +1,19 @@
 // frontend/src/components/editor/AddBlockMenu.jsx
-import React from 'react';
+import React, { useState } from 'react';
 
 const AddBlockMenu = ({ library, onSelect, onClose }) => {
+    const [showLayoutPresets, setShowLayoutPresets] = useState(false);
+    const layoutBlock = library.find(b => b.type === 'layout');
+
+    const handleSelect = (blockType, presetData = null) => {
+        if (blockType === 'layout' && !presetData) {
+            setShowLayoutPresets(true);
+            return;
+        }
+        onSelect(blockType, presetData);
+        onClose();
+    };
+
     const modalStyle = {
         position: 'absolute',
         top: '100%',
@@ -28,6 +40,12 @@ const AddBlockMenu = ({ library, onSelect, onClose }) => {
         color: 'var(--site-text-primary)',
     };
 
+    const subItemStyle = { 
+        ...itemStyle, 
+        paddingLeft: '30px',
+        fontSize: '14px'
+    };
+
     const closeButtonStyle = {
         marginTop: '10px',
         width: '100%',
@@ -41,6 +59,26 @@ const AddBlockMenu = ({ library, onSelect, onClose }) => {
         transition: 'all 0.2s ease'
     };
 
+    const handleMouseEnter = (e) => {
+        e.currentTarget.style.backgroundColor = 'var(--site-border-color)';
+    };
+
+    const handleMouseLeave = (e) => {
+        e.currentTarget.style.backgroundColor = 'transparent';
+    };
+
+    const handleCloseMouseEnter = (e) => {
+        e.target.style.backgroundColor = 'var(--site-accent)';
+        e.target.style.color = 'var(--site-accent-text)';
+        e.target.style.borderColor = 'var(--site-accent)';
+    };
+
+    const handleCloseMouseLeave = (e) => {
+        e.target.style.backgroundColor = 'var(--site-card-bg)';
+        e.target.style.color = 'var(--site-text-primary)';
+        e.target.style.borderColor = 'var(--site-border-color)';
+    };
+
     return (
         <div style={modalStyle}>
             <h4 style={{ 
@@ -49,33 +87,54 @@ const AddBlockMenu = ({ library, onSelect, onClose }) => {
                 fontSize: '16px',
                 fontWeight: '600'
             }}>
-                Оберіть тип блоку
+                {showLayoutPresets ? 'Виберіть макет' : 'Виберіть тип блоку'}
             </h4>
-            {library.map(block => (
-                <div 
-                    key={block.type} 
-                    style={itemStyle} 
-                    onClick={() => { onSelect(block.type); onClose(); }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--site-border-color)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                    <span style={{ fontSize: '18px' }}>{block.icon}</span>
-                    <span style={{ fontSize: '14px', fontWeight: '500' }}>{block.name}</span>
-                </div>
-            ))}
+
+            {showLayoutPresets ? (
+                <>
+                    <div 
+                        style={itemStyle}
+                        onClick={() => setShowLayoutPresets(false)}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                    >
+                        <span style={{ fontSize: '18px' }}>⬅️</span>
+                        <span style={{ fontSize: '14px', fontWeight: '500' }}>Назад</span>
+                    </div>
+                    {layoutBlock?.presets?.map(preset => (
+                        <div
+                            key={preset.preset}
+                            style={subItemStyle}
+                            onClick={() => handleSelect('layout', { preset: preset.preset, columns: preset.columns })}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                        >
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{preset.name}</span>
+                        </div>
+                    ))}
+                </>
+            ) : (
+                <>
+                    {library.map(block => (
+                        <div 
+                            key={block.type} 
+                            style={itemStyle} 
+                            onClick={() => handleSelect(block.type)}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                        >
+                            <span style={{ fontSize: '18px' }}>{block.icon}</span>
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{block.name}</span>
+                        </div>
+                    ))}
+                </>
+            )}
+
             <button 
                 onClick={onClose} 
                 style={closeButtonStyle}
-                onMouseEnter={e => {
-                    e.target.style.backgroundColor = 'var(--site-accent)';
-                    e.target.style.color = 'var(--site-accent-text)';
-                    e.target.style.borderColor = 'var(--site-accent)';
-                }}
-                onMouseLeave={e => {
-                    e.target.style.backgroundColor = 'var(--site-card-bg)';
-                    e.target.style.color = 'var(--site-text-primary)';
-                    e.target.style.borderColor = 'var(--site-border-color)';
-                }}
+                onMouseEnter={handleCloseMouseEnter}
+                onMouseLeave={handleCloseMouseLeave}
             >
                 Закрити
             </button>

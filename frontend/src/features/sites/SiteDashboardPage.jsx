@@ -17,7 +17,6 @@ const SiteDashboardPage = () => {
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [currentPageName, setCurrentPageName] = useState('');
 
-    // Встановлення головної сторінки після завантаження даних сайту
     useEffect(() => {
         if (siteData && siteData.page) {
             setCurrentPageId(siteData.page.id);
@@ -30,7 +29,6 @@ const SiteDashboardPage = () => {
         }
     }, [siteData, isSiteLoading]);
 
-    // Завантаження іншої сторінки
     const fetchPageContent = async (pageId) => {
         if (siteData && siteData.page && siteData.page.id === pageId) {
             setBlocks(siteData.page.block_content || []);
@@ -52,14 +50,12 @@ const SiteDashboardPage = () => {
         }
     };
     
-    // Викликається при редагуванні сторінки у вкладці "Сторінки"
     const handleEditPage = (pageId) => {
         setCurrentPageId(pageId);
         fetchPageContent(pageId);
         setActiveTab('editor');
     };
 
-    // Збереження контенту сторінки
     const savePageContent = useCallback(async (newBlocks) => {
         if (!currentPageId) {
             alert("Помилка: не обрано сторінку.");
@@ -87,10 +83,6 @@ const SiteDashboardPage = () => {
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--site-text-secondary)' }}>
             Сайт не знайдено.
         </div>
-    );
-    
-    const hasShopBlocks = Array.isArray(siteData.page?.block_content) && siteData.page.block_content.some(
-        block => block.type === 'catalog_grid' || block.type === 'categories'
     );
 
     return (
@@ -155,20 +147,7 @@ const SiteDashboardPage = () => {
                     />
                 )}
                 {activeTab === 'shop' && (
-                    hasShopBlocks ? (
-                        <ShopContentTab siteData={siteData} /> 
-                    ) : (
-                        <div style={{
-                            padding: '2rem', 
-                            background: 'var(--site-card-bg)',
-                            color: 'var(--site-text-primary)',
-                            borderRadius: '8px',
-                            border: '1px solid var(--site-border-color)',
-                            textAlign: 'center'
-                        }}>
-                            Ця вкладка з’явиться, коли буде додано блок <strong>"Сітка товарів"</strong> або <strong>"Категорії"</strong> у редакторі (на головній сторінці).
-                        </div>
-                    )
+                    <ShopContentTab siteData={siteData} />
                 )}
                 {activeTab === 'settings' && (
                     <GeneralSettingsTab siteData={siteData} />
