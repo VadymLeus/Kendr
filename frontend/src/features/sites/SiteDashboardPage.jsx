@@ -3,10 +3,24 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import apiClient from '../../services/api';
 import BlockEditor from '../../components/editor/BlockEditor';
+import BlockSettingsModal from '../../components/editor/BlockSettingsModal';
 import GeneralSettingsTab from './tabs/GeneralSettingsTab';
 import ShopContentTab from './tabs/ShopContentTab';
 import PagesSettingsTab from './tabs/PagesSettingsTab';
 import EditorSidebar from '../../components/editor/EditorSidebar';
+import { 
+    BLOCK_LIBRARY, 
+    generateBlockId, 
+    getDefaultBlockData 
+} from '../../components/editor/editorConfig'; // 👈 НОВИЙ ІМПОРТ
+import { 
+    updateBlockDataByPath, 
+    removeBlockByPath, 
+    addBlockByPath, 
+    moveBlock,
+    handleDrop,
+    findBlockByPath
+} from '../../components/editor/blockUtils';
 
 const SiteDashboardPage = () => {
     const { site_path } = useParams();
@@ -17,6 +31,10 @@ const SiteDashboardPage = () => {
     const [currentPageId, setCurrentPageId] = useState(null);
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [currentPageName, setCurrentPageName] = useState('');
+    
+    // Стан для модального вікна налаштувань
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [currentBlockPath, setCurrentBlockPath] = useState(null);
 
     useEffect(() => {
         if (siteData && siteData.page) {
@@ -74,13 +92,48 @@ const SiteDashboardPage = () => {
         }
     }, [currentPageId]);
 
-    const handleAddBlock = useCallback((blockType, path) => {
-        console.log('Add block:', blockType, 'at path:', path);
+    // Callback для переміщення блоків
+    const handleMoveBlock = useCallback((dragPath, hoverPath) => {
+        setBlocks(prevBlocks => moveBlock(prevBlocks, dragPath, hoverPath));
     }, []);
 
-    const handleMoveBlock = useCallback((fromPath, toPath) => {
-        console.log('Move block from:', fromPath, 'to:', toPath);
+    // Callback для drop
+    const handleDropBlock = useCallback((dragItem, dropZonePath) => {
+        setBlocks(prevBlocks => handleDrop(prevBlocks, dragItem, dropZonePath));
     }, []);
+
+    // Callback для додавання блоків
+    const handleAddBlock = useCallback((path, type, presetData = {}) => {
+        const newBlock = {
+            block_id: generateBlockId(),
+            type,
+            data: getDefaultBlockData(type, presetData),
+        };
+        setBlocks(prevBlocks => addBlockByPath(prevBlocks, newBlock, path));
+    }, []);
+
+    // Callback для видалення блоків
+    const handleDeleteBlock = useCallback((path) => {
+        if (!window.confirm('Ви впевнені, що хочете видалити цей блок?')) return;
+        setBlocks(prevBlocks => removeBlockByPath(prevBlocks, path));
+    }, []);
+
+    // Callback для редагування блоків
+    const handleEditBlock = useCallback((path) => {
+        setCurrentBlockPath(path);
+        setIsSettingsOpen(true);
+    }, []);
+
+    // Callback для збереження налаштувань блоку
+    const handleSaveBlockSettings = useCallback((updatedData) => {
+        if (!currentBlockPath) return;
+        setBlocks(prevBlocks => updateBlockDataByPath(prevBlocks, currentBlockPath, updatedData));
+        setCurrentBlockPath(null);
+        setIsSettingsOpen(false);
+    }, [currentBlockPath]);
+
+    // Знаходимо поточний блок для модального вікна
+    const currentBlockToEdit = currentBlockPath ? findBlockByPath(blocks, currentBlockPath) : null;
 
     if (isSiteLoading) return (
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--site-text-secondary)' }}>
@@ -153,13 +206,22 @@ const SiteDashboardPage = () => {
                                         blocks={blocks} 
                                         siteData={siteData}
                                         onSave={savePageContent}
-                                        onAddBlockByPath={handleAddBlock}
+                                        onAddBlock={handleAddBlock}
                                         onMoveBlock={handleMoveBlock}
+                                        onDropBlock={handleDropBlock}
+                                        onDeleteBlock={handleDeleteBlock}
+                                        onEditBlock={handleEditBlock}
                                     />
                                 </>
                             )}
                         </div>
-                        <EditorSidebar blocks={blocks} siteData={siteData} />
+                        <EditorSidebar
+                            blocks={blocks}
+                            siteData={siteData}
+                            onMoveBlock={handleMoveBlock}
+                            onEditBlock={handleEditBlock}
+                            onDeleteBlock={handleDeleteBlock}
+                        />
                     </div>
                 )}
                 
@@ -178,6 +240,17 @@ const SiteDashboardPage = () => {
                     )}
                 </div>
             </div>
+
+            {/* Модальне вікно налаштувань тепер живе тут, на рівні дашборду */}
+            {isSettingsOpen && currentBlockToEdit && (
+                <BlockSettingsModal
+                    isOpen={isSettingsOpen}
+                    block={currentBlockToEdit}
+                    siteData={siteData}
+                    onSave={handleSaveBlockSettings}
+                    onClose={() => setIsSettingsOpen(false)}
+                />
+            )}
         </div>
     );
 };

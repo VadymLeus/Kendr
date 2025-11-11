@@ -4,7 +4,13 @@ import AddBlocksTab from './tabs/AddBlocksTab';
 import LayersTab from './tabs/LayersTab';
 import SettingsTab from './tabs/SettingsTab';
 
-const EditorSidebar = ({ blocks, siteData }) => {
+const EditorSidebar = ({
+    blocks,
+    siteData,
+    onMoveBlock,
+    onEditBlock,
+    onDeleteBlock
+}) => {
     const [activeTab, setActiveTab] = useState('add');
 
     const tabStyle = (tabName) => ({
@@ -37,7 +43,17 @@ const EditorSidebar = ({ blocks, siteData }) => {
 
             <div style={{ overflowY: 'auto', flex: 1, padding: '1rem' }}>
                 {activeTab === 'add' && <AddBlocksTab />}
-                {activeTab === 'layers' && <LayersTab blocks={blocks} siteData={siteData} />}
+                
+                {activeTab === 'layers' && (
+                    <LayersTab
+                        blocks={blocks}
+                        siteData={siteData}
+                        onMoveBlock={onMoveBlock}
+                        onEditBlock={onEditBlock}
+                        onDeleteBlock={onDeleteBlock}
+                    />
+                )}
+
                 {activeTab === 'settings' && <SettingsTab />}
             </div>
         </div>

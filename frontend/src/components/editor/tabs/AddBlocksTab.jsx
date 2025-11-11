@@ -1,7 +1,7 @@
-// frontend/src/components/editor/AddBlocksTab.jsx
+// frontend/src/components/editor/tabs/AddBlocksTab.jsx
 import React from 'react';
-import DraggableBlockItem from '../DraggableBlockItem';
-import { BLOCK_LIBRARY } from '../BlockEditor';
+import DraggableBlockItem from "../DraggableBlockItem";
+import { BLOCK_LIBRARY } from "../editorConfig";
 
 const Section = ({ title, children }) => (
     <div style={{ marginBottom: '1.5rem' }}>
