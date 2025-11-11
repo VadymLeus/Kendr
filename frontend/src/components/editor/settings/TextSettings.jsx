@@ -1,51 +1,37 @@
 // frontend/src/components/editor/settings/TextSettings.jsx
-import React, { useState } from 'react';
+import React from 'react';
 
-const TextSettings = ({ initialData, onSave, onClose }) => {
-    const [data, setData] = useState(initialData);
+const TextSettings = ({ data, onChange }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSave = (e) => {
-        e.preventDefault();
-        onSave(data);
+        onChange({ ...data, [name]: value });
     };
 
     return (
-        <form onSubmit={handleSave}>
-            <div className="form-group">
-                <label>Текст блоку:</label>
-                <textarea 
-                    name="content" 
-                    value={data.content || ''} 
+        <div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label>Заголовок блоку:</label>
+                <input 
+                    type="text" 
+                    name="headerTitle" 
+                    value={data.headerTitle || ''} 
                     onChange={handleChange} 
-                    rows="5"
-                    required 
+                    placeholder="Заголовок текстового блоку"
                 />
             </div>
 
-            <div className="form-group">
-                <label>Розмір шрифту:</label>
-                <select 
-                    name="size" 
-                    value={data.size || 'md'} 
-                    onChange={handleChange}
-                >
-                    <option value="sm">Маленький</option>
-                    <option value="md">Середній</option>
-                    <option value="lg">Великий</option>
-                    <option value="xl">Дуже великий</option>
-                </select>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label>Текст блоку:</label>
+                <textarea 
+                    name="aboutText" 
+                    value={data.aboutText || ''} 
+                    onChange={handleChange} 
+                    rows="8"
+                    placeholder="Введіть основний текст тут..."
+                />
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                <button type="button" onClick={onClose} className="btn btn-secondary">Скасувати</button>
-                <button type="submit" className="btn btn-primary">Зберегти</button>
-            </div>
-        </form>
+        </div>
     );
 };
 

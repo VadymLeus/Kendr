@@ -7,15 +7,13 @@ import { DND_TYPE_NEW_BLOCK } from './DraggableBlockItem';
 const BlockEditor = ({
     blocks,
     siteData,
-    onSave,
     onAddBlock,
     onMoveBlock,
     onDropBlock,
     onDeleteBlock,
-    onEditBlock
+    onSelectBlock,
+    selectedBlockPath
 }) => {
-    
-    const handlePublish = () => onSave(blocks);
     
     const [, dropRef] = useDrop(() => ({
         accept: [DND_TYPE_NEW_BLOCK],
@@ -27,35 +25,6 @@ const BlockEditor = ({
 
     return (
         <div style={{ padding: '0 2rem 2rem 2rem' }}>
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    alignItems: 'center',
-                    marginBottom: '30px',
-                    padding: '20px',
-                    backgroundColor: 'var(--site-card-bg)',
-                    borderRadius: '12px',
-                    border: '1px solid var(--site-border-color)'
-                }}
-            >
-                <button
-                    onClick={handlePublish}
-                    style={{
-                        backgroundColor: 'var(--site-accent)',
-                        color: 'var(--site-accent-text)',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                    }}
-                >
-                    💾 Зберегти зміни
-                </button>
-            </div>
-
             {blocks.length === 0 && (
                 <div
                     ref={dropRef}
@@ -83,8 +52,9 @@ const BlockEditor = ({
                             onMoveBlock={onMoveBlock}
                             onDropBlock={onDropBlock}
                             onDeleteBlock={onDeleteBlock}
-                            onEditBlock={onEditBlock}
                             onAddBlock={onAddBlock}
+                            onSelectBlock={onSelectBlock}
+                            selectedBlockPath={selectedBlockPath}
                         />
                     </React.Fragment>
                 ))}

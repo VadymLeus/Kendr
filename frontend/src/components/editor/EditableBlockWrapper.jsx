@@ -13,8 +13,9 @@ const EditableBlockWrapper = ({
     onMoveBlock, 
     onDropBlock,
     onDeleteBlock,
-    onEditBlock,
-    onAddBlock
+    onAddBlock,
+    onSelectBlock,
+    selectedBlockPath
 }) => {
     const [{ isDragging }, drag] = useDrag({
         type: DRAG_ITEM_TYPE_EXISTING,
@@ -26,7 +27,8 @@ const EditableBlockWrapper = ({
     });
 
     const [{ isOver }, drop] = useDrop({
-        accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK], 
+        accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
+
         hover(item, monitor) {
             if (!monitor.canDrop()) return;
 
@@ -34,15 +36,22 @@ const EditableBlockWrapper = ({
                 const dragPath = item.path;
                 const hoverPath = path;
                 if (dragPath.join(',') === hoverPath.join(',')) return;
+                
                 onMoveBlock(dragPath, hoverPath);
                 item.path = hoverPath;
             }
         },
         drop(item, monitor) {
-            if (monitor.didDrop()) return;
+            if (monitor.didDrop()) {
+                return;
+            }
             
-            if (item.type === DND_TYPE_NEW_BLOCK) {
+            const dragType = monitor.getItemType();
+            const isOverShallow = monitor.isOver({ shallow: true });
+
+            if (isOverShallow && dragType === DND_TYPE_NEW_BLOCK) {
                 onAddBlock(path, item.blockType, item.presetData);
+                return { name: 'EditableBlockWrapper', path };
             }
         },
         collect: (monitor) => ({
@@ -52,18 +61,32 @@ const EditableBlockWrapper = ({
 
     const wrapperRef = useCallback(node => drag(drop(node)), [drag, drop]);
     const opacity = isDragging ? 0.4 : 1;
-
     const blockType = { name: block.type, icon: '⚙️' };
+
+    const isSelected = selectedBlockPath && selectedBlockPath.join(',') === path.join(',');
+    
+    const handleSelect = (e) => {
+        e.stopPropagation(); 
+        onSelectBlock(path);
+    };
+
+    const handleDelete = (e) => {
+        e.stopPropagation(); 
+        onDeleteBlock(path);
+    };
 
     return (
         <div
             ref={wrapperRef}
+            onClick={handleSelect}
             style={{
                 opacity,
                 cursor: 'move',
                 position: 'relative',
                 margin: '20px 0',
-                border: isOver ? '2px dashed var(--site-accent)' : '2px dashed var(--site-border-color)',
+                border: isSelected 
+                    ? '2px solid var(--site-accent)' 
+                    : (isOver ? '2px dashed var(--site-accent)' : '2px dashed var(--site-border-color)'),
                 borderRadius: '8px',
                 transition: 'border-color 0.2s ease'
             }}
@@ -84,7 +107,7 @@ const EditableBlockWrapper = ({
                 </span>
                 <div>
                     <button 
-                        onClick={() => onEditBlock(path)}
+                        onClick={handleSelect}
                         style={{
                             marginRight: '8px',
                             padding: '4px 8px',
@@ -98,17 +121,19 @@ const EditableBlockWrapper = ({
                         Налаштування
                     </button>
                     <button 
-                        onClick={() => onDeleteBlock(path)}
+                        onClick={handleDelete}
+                        title="Видалити блок"
                         style={{
                             padding: '4px 8px',
-                            background: 'var(--site-error)',
+                            background: '#e53e3e',
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
                         }}
                     >
-                        Видалити
+                        &times;
                     </button>
                 </div>
             </div>
@@ -130,8 +155,9 @@ const EditableBlockWrapper = ({
                     onMoveBlock={onMoveBlock}
                     onDropBlock={onDropBlock}
                     onDeleteBlock={onDeleteBlock}
-                    onEditBlock={onEditBlock}
                     onAddBlock={onAddBlock}
+                    onSelectBlock={onSelectBlock}
+                    selectedBlockPath={selectedBlockPath}
                 />
             </div>
         </div>

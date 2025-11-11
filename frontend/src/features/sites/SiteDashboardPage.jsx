@@ -3,7 +3,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import apiClient from '../../services/api';
 import BlockEditor from '../../components/editor/BlockEditor';
-import BlockSettingsModal from '../../components/editor/BlockSettingsModal';
 import GeneralSettingsTab from './tabs/GeneralSettingsTab';
 import ShopContentTab from './tabs/ShopContentTab';
 import PagesSettingsTab from './tabs/PagesSettingsTab';
@@ -12,7 +11,7 @@ import {
     BLOCK_LIBRARY, 
     generateBlockId, 
     getDefaultBlockData 
-} from '../../components/editor/editorConfig'; // 👈 НОВИЙ ІМПОРТ
+} from '../../components/editor/editorConfig';
 import { 
     updateBlockDataByPath, 
     removeBlockByPath, 
@@ -31,10 +30,7 @@ const SiteDashboardPage = () => {
     const [currentPageId, setCurrentPageId] = useState(null);
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [currentPageName, setCurrentPageName] = useState('');
-    
-    // Стан для модального вікна налаштувань
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [currentBlockPath, setCurrentBlockPath] = useState(null);
+    const [selectedBlockPath, setSelectedBlockPath] = useState(null);
 
     useEffect(() => {
         if (siteData && siteData.page) {
@@ -73,6 +69,7 @@ const SiteDashboardPage = () => {
         setCurrentPageId(pageId);
         fetchPageContent(pageId);
         setActiveTab('editor');
+        setSelectedBlockPath(null);
     };
 
     const savePageContent = useCallback(async (newBlocks) => {
@@ -92,17 +89,14 @@ const SiteDashboardPage = () => {
         }
     }, [currentPageId]);
 
-    // Callback для переміщення блоків
     const handleMoveBlock = useCallback((dragPath, hoverPath) => {
         setBlocks(prevBlocks => moveBlock(prevBlocks, dragPath, hoverPath));
     }, []);
 
-    // Callback для drop
     const handleDropBlock = useCallback((dragItem, dropZonePath) => {
         setBlocks(prevBlocks => handleDrop(prevBlocks, dragItem, dropZonePath));
     }, []);
 
-    // Callback для додавання блоків
     const handleAddBlock = useCallback((path, type, presetData = {}) => {
         const newBlock = {
             block_id: generateBlockId(),
@@ -112,28 +106,20 @@ const SiteDashboardPage = () => {
         setBlocks(prevBlocks => addBlockByPath(prevBlocks, newBlock, path));
     }, []);
 
-    // Callback для видалення блоків
     const handleDeleteBlock = useCallback((path) => {
         if (!window.confirm('Ви впевнені, що хочете видалити цей блок?')) return;
         setBlocks(prevBlocks => removeBlockByPath(prevBlocks, path));
+        setSelectedBlockPath(null);
     }, []);
 
-    // Callback для редагування блоків
-    const handleEditBlock = useCallback((path) => {
-        setCurrentBlockPath(path);
-        setIsSettingsOpen(true);
+    const handleSelectBlock = useCallback((path) => {
+        setSelectedBlockPath(path);
     }, []);
 
-    // Callback для збереження налаштувань блоку
-    const handleSaveBlockSettings = useCallback((updatedData) => {
-        if (!currentBlockPath) return;
-        setBlocks(prevBlocks => updateBlockDataByPath(prevBlocks, currentBlockPath, updatedData));
-        setCurrentBlockPath(null);
-        setIsSettingsOpen(false);
-    }, [currentBlockPath]);
-
-    // Знаходимо поточний блок для модального вікна
-    const currentBlockToEdit = currentBlockPath ? findBlockByPath(blocks, currentBlockPath) : null;
+    const handleUpdateBlockData = useCallback((path, updatedData) => {
+        if (!path) return;
+        setBlocks(prevBlocks => updateBlockDataByPath(prevBlocks, path, updatedData));
+    }, []);
 
     if (isSiteLoading) return (
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--site-text-secondary)' }}>
@@ -205,12 +191,12 @@ const SiteDashboardPage = () => {
                                     <BlockEditor 
                                         blocks={blocks} 
                                         siteData={siteData}
-                                        onSave={savePageContent}
                                         onAddBlock={handleAddBlock}
                                         onMoveBlock={handleMoveBlock}
                                         onDropBlock={handleDropBlock}
                                         onDeleteBlock={handleDeleteBlock}
-                                        onEditBlock={handleEditBlock}
+                                        onSelectBlock={handleSelectBlock}
+                                        selectedBlockPath={selectedBlockPath}
                                     />
                                 </>
                             )}
@@ -219,8 +205,11 @@ const SiteDashboardPage = () => {
                             blocks={blocks}
                             siteData={siteData}
                             onMoveBlock={handleMoveBlock}
-                            onEditBlock={handleEditBlock}
                             onDeleteBlock={handleDeleteBlock}
+                            selectedBlockPath={selectedBlockPath}
+                            onSelectBlock={handleSelectBlock}
+                            onUpdateBlockData={handleUpdateBlockData}
+                            onSave={savePageContent}
                         />
                     </div>
                 )}
@@ -240,17 +229,6 @@ const SiteDashboardPage = () => {
                     )}
                 </div>
             </div>
-
-            {/* Модальне вікно налаштувань тепер живе тут, на рівні дашборду */}
-            {isSettingsOpen && currentBlockToEdit && (
-                <BlockSettingsModal
-                    isOpen={isSettingsOpen}
-                    block={currentBlockToEdit}
-                    siteData={siteData}
-                    onSave={handleSaveBlockSettings}
-                    onClose={() => setIsSettingsOpen(false)}
-                />
-            )}
         </div>
     );
 };

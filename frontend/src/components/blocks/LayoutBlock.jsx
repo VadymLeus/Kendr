@@ -14,7 +14,6 @@ const getLayoutStyles = (preset) => {
         gap: '20px',
         padding: '20px'
     };
-
     switch (preset) {
         case '50-50':
             return { ...baseStyle, gridTemplateColumns: '1fr 1fr', display: 'grid' };
@@ -33,13 +32,17 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
         drop: (item, monitor) => {
             if (monitor.didDrop()) return;
-            
-            if (item.type === DRAG_ITEM_TYPE_EXISTING) {
+
+            const dragType = monitor.getItemType();
+
+            if (dragType === DRAG_ITEM_TYPE_EXISTING) {
                 onDrop(item, path);
-            } else if (item.type === DND_TYPE_NEW_BLOCK) {
+            } else if (dragType === DND_TYPE_NEW_BLOCK) {
                 const newBlockPath = [...path, React.Children.count(children)];
                 onAddBlock(newBlockPath, item.blockType, item.presetData);
             }
+            
+            return { name: 'ColumnDropZone', path };
         },
         canDrop: () => isEditorPreview,
         collect: (monitor) => ({
@@ -47,7 +50,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
             canDrop: monitor.canDrop(),
         }),
     });
-
+    
     const columnStyle = {
         flex: 1,
         minHeight: '150px',
@@ -70,7 +73,8 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
                     textAlign: 'center', 
                     color: 'var(--site-text-secondary)', 
                     paddingTop: '50px',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    pointerEvents: 'none'
                 }}>
                     Перетягніть блоки сюди
                 </div>
@@ -87,7 +91,8 @@ const LayoutBlock = ({
     onMoveBlock, 
     onDropBlock, 
     onDeleteBlock, 
-    onEditBlock, 
+    onSelectBlock, 
+    selectedBlockPath,
     onAddBlock 
 }) => {
     const { preset, columns = [] } = block.data;
@@ -130,8 +135,9 @@ const LayoutBlock = ({
                                 onMoveBlock={onMoveBlock}
                                 onDropBlock={onDropBlock}
                                 onDeleteBlock={onDeleteBlock}
-                                onEditBlock={onEditBlock}
                                 onAddBlock={onAddBlock}
+                                onSelectBlock={onSelectBlock}
+                                selectedBlockPath={selectedBlockPath}
                             />
                         ))}
                     </ColumnDropZone>

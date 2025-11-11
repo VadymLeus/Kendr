@@ -1,4 +1,4 @@
-// frontend/src/components/editor/BlockLayerItem.jsx
+// frontend/src/components/editor/tabs/BlockLayerItem.jsx
 import React, { useCallback, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { BLOCK_LIBRARY } from "../editorConfig";
@@ -31,7 +31,7 @@ const BlockLayerItem = ({
     block,
     path,
     onMoveBlock,
-    onEditBlock,
+    onSelectBlock,
     onDeleteBlock
 }) => {
     const ref = useRef(null);
@@ -61,9 +61,9 @@ const BlockLayerItem = ({
 
     drag(drop(ref));
 
-    const handleEdit = (e) => {
+    const handleSelect = (e) => {
         e.stopPropagation();
-        onEditBlock(path);
+        onSelectBlock(path);
     };
 
     const handleDelete = (e) => {
@@ -77,14 +77,14 @@ const BlockLayerItem = ({
             <div style={nestedContainerStyle}>
                 {block.data.columns.map((column, colIndex) => (
                     <div key={colIndex} style={{ padding: '5px', fontStyle: 'italic', color: 'var(--site-text-secondary)' }}>
-                        <small>Column {colIndex + 1}</small>
+                        <small>Колонка {colIndex + 1}</small>
                         {column.map((colBlock, colBlockIndex) => (
                             <BlockLayerItem
                                 key={colBlock.block_id}
                                 block={colBlock}
                                 path={[...path, 'data', 'columns', colIndex, colBlockIndex]}
                                 onMoveBlock={onMoveBlock}
-                                onEditBlock={onEditBlock}
+                                onSelectBlock={onSelectBlock}
                                 onDeleteBlock={onDeleteBlock}
                             />
                         ))}
@@ -109,8 +109,8 @@ const BlockLayerItem = ({
                     {blockInfo.name}
                 </span>
                 
-                <button title="Settings" onClick={handleEdit} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--site-text-secondary)'}}>⚙️</button>
-                <button title="Delete" onClick={handleDelete} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--platform-danger)'}}>❌</button>
+                <button title="Налаштування" onClick={handleSelect} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--site-text-secondary)'}}>⚙️</button>
+                <button title="Видалити" onClick={handleDelete} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--platform-danger)'}}>❌</button>
             </div>
             {nestedBlocks}
         </>
