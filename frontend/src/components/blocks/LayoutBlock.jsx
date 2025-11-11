@@ -1,12 +1,12 @@
 // frontend/src/components/blocks/LayoutBlock.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../editor/EditableBlockWrapper';
-import AddBlockMenu from '../editor/AddBlockMenu';
-import { BLOCK_LIBRARY } from '../editor/BlockEditor';
+import { DND_TYPE_NEW_BLOCK } from '../editor/DraggableBlockItem';
 import BlockRenderer from './BlockRenderer';
 
-// Функція для визначення стилів макета
+const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
+
 const getLayoutStyles = (preset) => {
     const baseStyle = {
         display: 'flex',
@@ -28,11 +28,19 @@ const getLayoutStyles = (preset) => {
     }
 };
 
-// Область для перетягування блоків
-const ColumnDropZone = ({ children, onDrop, path, isEditorPreview }) => {
+const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock }) => {
     const [{ isOver, canDrop }, drop] = useDrop({
-        accept: 'BLOCK',
-        drop: (item) => onDrop(item, path),
+        accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
+        drop: (item, monitor) => {
+            if (monitor.didDrop()) return;
+            
+            if (item.type === DRAG_ITEM_TYPE_EXISTING) {
+                onDrop(item, path);
+            } else if (item.type === DND_TYPE_NEW_BLOCK) {
+                const newBlockPath = [...path, React.Children.count(children)];
+                onAddBlock(newBlockPath, item.blockType, item.presetData);
+            }
+        },
         canDrop: () => isEditorPreview,
         collect: (monitor) => ({
             isOver: monitor.isOver(),
@@ -45,9 +53,9 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview }) => {
         minHeight: '150px',
         padding: '10px',
         borderRadius: '8px',
-        border: '2px dashed var(--site-border-color)',
-        transition: 'background-color 0.2s ease',
-        backgroundColor: isOver && canDrop ? 'rgba(0,0,0,0.1)' : 'transparent',
+        border: isOver && canDrop ? '2px dashed var(--site-accent)' : '2px dashed var(--site-border-color)',
+        transition: 'background-color 0.2s ease, border-color 0.2s ease',
+        backgroundColor: isOver && canDrop ? 'rgba(var(--site-accent-rgb), 0.1)' : 'transparent',
     };
 
     if (!isEditorPreview) {
@@ -58,44 +66,14 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview }) => {
         <div ref={drop} style={columnStyle}>
             {children}
             {React.Children.count(children) === 0 && (
-                <div style={{ textAlign: 'center', color: 'var(--site-text-secondary)', paddingTop: '50px' }}>
-                    Перетягніть блок сюди
+                <div style={{ 
+                    textAlign: 'center', 
+                    color: 'var(--site-text-secondary)', 
+                    paddingTop: '50px',
+                    fontSize: '14px'
+                }}>
+                    Перетягніть блоки сюди
                 </div>
-            )}
-        </div>
-    );
-};
-
-// Кнопка для додавання нового блоку
-const AddBlockButton = ({ path, onAddBlock }) => {
-    const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
-    return (
-        <div style={{ textAlign: 'center', padding: '10px 0', position: 'relative' }}>
-            <button
-                onClick={() => setIsAddMenuOpen(true)}
-                title="Додати блок у цю колонку"
-                style={{
-                    backgroundColor: 'var(--site-accent)',
-                    color: 'var(--site-accent-text)',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
-                }}
-            >
-                ➕ Додати блок
-            </button>
-            {isAddMenuOpen && (
-                <AddBlockMenu
-                    library={BLOCK_LIBRARY}
-                    onSelect={(type, presetData) => {
-                        onAddBlock(path, type, presetData);
-                        setIsAddMenuOpen(false);
-                    }}
-                    onClose={() => setIsAddMenuOpen(false)}
-                />
             )}
         </div>
     );
@@ -116,7 +94,6 @@ const LayoutBlock = ({
     const layoutStyle = getLayoutStyles(preset);
 
     if (!isEditorPreview) {
-        // Публічний режим
         return (
             <div style={layoutStyle}>
                 {columns.map((columnBlocks, colIndex) => (
@@ -132,7 +109,6 @@ const LayoutBlock = ({
         );
     }
 
-    // Режим редагування
     return (
         <div style={layoutStyle}>
             {columns.map((columnBlocks, colIndex) => {
@@ -143,6 +119,7 @@ const LayoutBlock = ({
                         isEditorPreview={isEditorPreview}
                         path={columnPath}
                         onDrop={onDropBlock}
+                        onAddBlock={onAddBlock}
                     >
                         {columnBlocks.map((childBlock, childIndex) => (
                             <EditableBlockWrapper
@@ -157,10 +134,6 @@ const LayoutBlock = ({
                                 onAddBlock={onAddBlock}
                             />
                         ))}
-                        <AddBlockButton 
-                            path={[...columnPath, columnBlocks.length]} 
-                            onAddBlock={onAddBlock}
-                        />
                     </ColumnDropZone>
                 );
             })}

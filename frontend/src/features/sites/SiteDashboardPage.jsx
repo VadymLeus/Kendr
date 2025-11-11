@@ -6,6 +6,7 @@ import BlockEditor from '../../components/editor/BlockEditor';
 import GeneralSettingsTab from './tabs/GeneralSettingsTab';
 import ShopContentTab from './tabs/ShopContentTab';
 import PagesSettingsTab from './tabs/PagesSettingsTab';
+import EditorSidebar from '../../components/editor/EditorSidebar';
 
 const SiteDashboardPage = () => {
     const { site_path } = useParams();
@@ -73,6 +74,14 @@ const SiteDashboardPage = () => {
         }
     }, [currentPageId]);
 
+    const handleAddBlock = useCallback((blockType, path) => {
+        console.log('Add block:', blockType, 'at path:', path);
+    }, []);
+
+    const handleMoveBlock = useCallback((fromPath, toPath) => {
+        console.log('Move block from:', fromPath, 'to:', toPath);
+    }, []);
+
     if (isSiteLoading) return (
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--site-text-secondary)' }}>
             Завантаження панелі керування...
@@ -86,72 +95,88 @@ const SiteDashboardPage = () => {
     );
 
     return (
-        <div style={{ 
-            maxWidth: '1200px', 
-            margin: 'auto',
-            padding: '2rem' 
-        }}>
-            <h1 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>
-                Панель керування сайтом: {siteData.title}
-            </h1>
-            <p style={{ color: 'var(--site-text-secondary)', marginBottom: '2rem' }}>
-                Шлях: <code style={{ 
-                    background: 'var(--site-card-bg)', 
-                    padding: '0.25rem 0.5rem', 
-                    borderRadius: '4px',
-                    color: 'var(--site-text-primary)'
-                }}>{siteData.site_path}</code>
-            </p>
-
+        <div style={{ margin: 'auto' }}>
             <div style={{ 
-                borderBottom: '1px solid var(--site-border-color)', 
-                marginBottom: '2rem',
-                display: 'flex',
-                flexWrap: 'wrap'
+                maxWidth: '1200px', 
+                margin: 'auto',
+                padding: '2rem 2rem 0 2rem' 
             }}>
-                <button style={tabStyle(activeTab === 'editor')} onClick={() => setActiveTab('editor')}>
-                    Редактор сторінок
-                </button>
-                <button style={tabStyle(activeTab === 'pages')} onClick={() => setActiveTab('pages')}>
-                    Сторінки
-                </button>
-                <button style={tabStyle(activeTab === 'shop')} onClick={() => setActiveTab('shop')}>
-                    Товари та категорії
-                </button>
-                <button style={tabStyle(activeTab === 'settings')} onClick={() => setActiveTab('settings')}>
-                    Налаштування
-                </button>
+                <h1 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>
+                    Панель керування сайтом: {siteData.title}
+                </h1>
+                <p style={{ color: 'var(--site-text-secondary)', marginBottom: '2rem' }}>
+                    Шлях: <code style={{ 
+                        background: 'var(--site-card-bg)', 
+                        padding: '0.25rem 0.5rem', 
+                        borderRadius: '4px',
+                        color: 'var(--site-text-primary)'
+                    }}>{siteData.site_path}</code>
+                </p>
+
+                <div style={{ 
+                    borderBottom: '1px solid var(--site-border-color)', 
+                    marginBottom: '2rem',
+                    display: 'flex',
+                    flexWrap: 'wrap'
+                }}>
+                    <button style={tabStyle(activeTab === 'editor')} onClick={() => setActiveTab('editor')}>
+                        Редактор сторінок
+                    </button>
+                    <button style={tabStyle(activeTab === 'pages')} onClick={() => setActiveTab('pages')}>
+                        Сторінки
+                    </button>
+                    <button style={tabStyle(activeTab === 'shop')} onClick={() => setActiveTab('shop')}>
+                        Товари та категорії
+                    </button>
+                    <button style={tabStyle(activeTab === 'settings')} onClick={() => setActiveTab('settings')}>
+                        Налаштування
+                    </button>
+                </div>
             </div>
 
             <div>
                 {activeTab === 'editor' && (
-                    isPageLoading ? (
-                        <p style={{color: 'var(--site-text-secondary)', textAlign: 'center'}}>Завантаження редактора...</p>
-                    ) : (
-                        <>
-                            <h2 style={{color: 'var(--site-text-primary)', marginBottom: '1.5rem'}}>
-                                Редагування сторінки: "{currentPageName}"
-                            </h2>
-                            <BlockEditor 
-                                blocks={blocks} 
-                                siteData={siteData}
-                                onSave={savePageContent}
-                            />
-                        </>
-                    )
+                    <div style={{ display: 'flex' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            {isPageLoading ? (
+                                <p style={{color: 'var(--site-text-secondary)', textAlign: 'center'}}>Завантаження редактора...</p>
+                            ) : (
+                                <>
+                                    <h2 style={{
+                                        color: 'var(--site-text-primary)', 
+                                        marginBottom: '1.5rem',
+                                        paddingLeft: '2rem'
+                                    }}>
+                                        Редагування сторінки: "{currentPageName}"
+                                    </h2>
+                                    <BlockEditor 
+                                        blocks={blocks} 
+                                        siteData={siteData}
+                                        onSave={savePageContent}
+                                        onAddBlockByPath={handleAddBlock}
+                                        onMoveBlock={handleMoveBlock}
+                                    />
+                                </>
+                            )}
+                        </div>
+                        <EditorSidebar blocks={blocks} siteData={siteData} />
+                    </div>
                 )}
-                {activeTab === 'pages' && (
-                    <PagesSettingsTab 
-                        siteId={siteData.id} 
-                        onEditPage={handleEditPage} 
-                    />
-                )}
-                {activeTab === 'shop' && (
-                    <ShopContentTab siteData={siteData} />
-                )}
-                {activeTab === 'settings' && (
-                    <GeneralSettingsTab siteData={siteData} />
-                )}
+                
+                <div style={{ maxWidth: '1200px', margin: 'auto', padding: '0 2rem 2rem 2rem' }}>
+                    {activeTab === 'pages' && (
+                        <PagesSettingsTab 
+                            siteId={siteData.id} 
+                            onEditPage={handleEditPage} 
+                        />
+                    )}
+                    {activeTab === 'shop' && (
+                        <ShopContentTab siteData={siteData} />
+                    )}
+                    {activeTab === 'settings' && (
+                        <GeneralSettingsTab siteData={siteData} />
+                    )}
+                </div>
             </div>
         </div>
     );

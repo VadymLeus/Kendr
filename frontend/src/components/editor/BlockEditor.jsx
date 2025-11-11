@@ -1,7 +1,7 @@
 // frontend/src/components/editor/BlockEditor.jsx
 import React, { useState, useCallback, useEffect } from 'react';
+import { useDrop } from 'react-dnd';
 import BlockSettingsModal from './BlockSettingsModal';
-import AddBlockMenu from './AddBlockMenu';
 import EditableBlockWrapper from './EditableBlockWrapper';
 import { 
     updateBlockDataByPath, 
@@ -11,8 +11,8 @@ import {
     handleDrop,
     findBlockByPath
 } from './blockUtils';
+import { DND_TYPE_NEW_BLOCK } from './DraggableBlockItem';
 
-// Бібліотека доступних блоків
 export const BLOCK_LIBRARY = [
     { type: 'hero', name: 'Обкладинка (Hero)', icon: '🖼️' },
     { type: 'text', name: 'Текстовий блок', icon: '📝' },
@@ -29,7 +29,6 @@ export const BLOCK_LIBRARY = [
     { type: 'features', name: 'Переваги', icon: '✅' },
 ];
 
-// Генерація унікального ID
 const generateBlockId = () => {
     if (crypto && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -37,7 +36,6 @@ const generateBlockId = () => {
     return `id-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
-// Дані за замовчуванням для різних типів блоків
 const getDefaultBlockData = (type, options = {}) => {
     switch (type) {
         case 'hero':
@@ -86,8 +84,13 @@ const getDefaultBlockData = (type, options = {}) => {
     }
 };
 
-// Основний компонент редактора сторінки
-const BlockEditor = ({ blocks: initialBlocks, siteData, onSave }) => {
+const BlockEditor = ({ 
+    blocks: initialBlocks, 
+    siteData, 
+    onSave,
+    onAddBlockByPath,
+    onMoveBlock: externalMoveBlock
+}) => {
     const [blocks, setBlocks] = useState(initialBlocks);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [currentBlockPath, setCurrentBlockPath] = useState(null);
@@ -97,8 +100,12 @@ const BlockEditor = ({ blocks: initialBlocks, siteData, onSave }) => {
     }, [initialBlocks]);
 
     const handleMoveBlock = useCallback((dragPath, hoverPath) => {
-        setBlocks(prevBlocks => moveBlock(prevBlocks, dragPath, hoverPath));
-    }, []);
+        const updatedBlocks = moveBlock(blocks, dragPath, hoverPath);
+        setBlocks(updatedBlocks);
+        if (externalMoveBlock) {
+            externalMoveBlock(dragPath, hoverPath);
+        }
+    }, [blocks, externalMoveBlock]);
 
     const handleDropBlock = useCallback((dragItem, dropZonePath) => {
         setBlocks(prevBlocks => handleDrop(prevBlocks, dragItem, dropZonePath));
@@ -123,7 +130,10 @@ const BlockEditor = ({ blocks: initialBlocks, siteData, onSave }) => {
             data: getDefaultBlockData(type, presetData),
         };
         setBlocks(prevBlocks => addBlockByPath(prevBlocks, newBlock, path));
-    }, []);
+        if (onAddBlockByPath) {
+            onAddBlockByPath(type, path, presetData);
+        }
+    }, [onAddBlockByPath]);
 
     const handleDeleteBlock = useCallback((path) => {
         if (!window.confirm('Ви впевнені, що хочете видалити цей блок?')) return;
@@ -132,48 +142,22 @@ const BlockEditor = ({ blocks: initialBlocks, siteData, onSave }) => {
 
     const handlePublish = () => onSave(blocks);
 
-    // Кнопка додавання блоку
-    const AddBlockButton = ({ path }) => {
-        const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
-        return (
-            <div style={{ textAlign: 'center', padding: '20px 0', position: 'relative' }}>
-                <button
-                    onClick={() => setIsAddMenuOpen(true)}
-                    style={{
-                        backgroundColor: 'var(--site-accent)',
-                        color: 'var(--site-accent-text)',
-                        padding: '10px 20px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                    }}
-                >
-                    ➕ Додати блок
-                </button>
-                {isAddMenuOpen && (
-                    <AddBlockMenu
-                        library={BLOCK_LIBRARY}
-                        onSelect={(type, presetData) => {
-                            handleAddBlock(path, type, presetData);
-                            setIsAddMenuOpen(false);
-                        }}
-                        onClose={() => setIsAddMenuOpen(false)}
-                    />
-                )}
-            </div>
-        );
-    };
+    const [, dropRef] = useDrop(() => ({
+        accept: [DND_TYPE_NEW_BLOCK],
+        drop: (item, monitor) => {
+            if (monitor.didDrop()) return;
+            handleAddBlock([blocks.length], item.blockType, item.presetData);
+        },
+    }), [blocks.length, handleAddBlock]);
 
     const currentBlockToEdit = currentBlockPath ? findBlockByPath(blocks, currentBlockPath) : null;
 
     return (
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
+        <div style={{ padding: '0 2rem 2rem 2rem' }}>
             <div
                 style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-end',
                     alignItems: 'center',
                     marginBottom: '30px',
                     padding: '20px',
@@ -182,9 +166,6 @@ const BlockEditor = ({ blocks: initialBlocks, siteData, onSave }) => {
                     border: '1px solid var(--site-border-color)'
                 }}
             >
-                <h2 style={{ margin: 0, color: 'var(--site-text-primary)' }}>
-                    Редактор сторінки
-                </h2>
                 <button
                     onClick={handlePublish}
                     style={{
@@ -202,7 +183,21 @@ const BlockEditor = ({ blocks: initialBlocks, siteData, onSave }) => {
                 </button>
             </div>
 
-            <AddBlockButton path={[0]} />
+            {blocks.length === 0 && (
+                <div
+                    ref={dropRef}
+                    style={{
+                        padding: '3rem',
+                        textAlign: 'center',
+                        border: '2px dashed var(--site-border-color)',
+                        borderRadius: '8px',
+                        color: 'var(--site-text-secondary)',
+                        margin: '20px 0'
+                    }}
+                >
+                    Перетягніть сюди свій перший блок
+                </div>
+            )}
 
             <div className="blocks-container">
                 {blocks.map((block, index) => (
@@ -218,10 +213,26 @@ const BlockEditor = ({ blocks: initialBlocks, siteData, onSave }) => {
                             onEditBlock={handleEditBlock}
                             onAddBlock={handleAddBlock}
                         />
-                        <AddBlockButton path={[index + 1]} />
                     </React.Fragment>
                 ))}
             </div>
+
+            {blocks.length > 0 && (
+                 <div
+                    ref={dropRef}
+                    style={{
+                        padding: '1.5rem',
+                        textAlign: 'center',
+                        border: '2px dashed var(--site-border-color)',
+                        borderRadius: '8px',
+                        color: 'var(--site-text-secondary)',
+                        margin: '20px 0',
+                        opacity: 0.7
+                    }}
+                >
+                    Перетягніть блок сюди, щоб додати в кінець
+                </div>
+            )}
 
             {isSettingsOpen && currentBlockToEdit && (
                 <BlockSettingsModal
