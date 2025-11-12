@@ -1,7 +1,6 @@
 // frontend/src/components/editor/tabs/SettingsTab.jsx
 import React from 'react';
 import { findBlockByPath } from '../blockUtils';
-import BannerSettings from '../settings/BannerSettings';
 import CategoriesSettings from '../settings/CategoriesSettings';
 import FeaturesSettings from '../settings/FeaturesSettings';
 import CatalogSettings from '../settings/CatalogSettings';
@@ -9,7 +8,6 @@ import TextSettings from '../settings/TextSettings';
 import HeroSettings from '../settings/HeroSettings';
 
 const SettingsComponentMap = {
-    banner: BannerSettings,
     categories: CategoriesSettings,
     features: FeaturesSettings,
     catalog_grid: CatalogSettings,
