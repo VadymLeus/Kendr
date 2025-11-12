@@ -1,9 +1,10 @@
 // frontend/src/components/editor/settings/CatalogSettings.jsx
-import React from 'react';
+import React, { useState } from 'react';
 
 const CatalogSettings = ({ data, onChange, siteData }) => {
     
     const allProducts = siteData?.products || [];
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -57,6 +58,13 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
         cursor: 'pointer' 
     };
 
+    const filteredProducts = React.useMemo(() => 
+        allProducts.filter(product => 
+            product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ), 
+        [allProducts, searchTerm]
+    );
+
     return (
         <div>
             <div style={formGroupStyle}>
@@ -71,27 +79,49 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                     placeholder="Введіть заголовок розділу"
                 />
             </div>
+
+            <div style={formGroupStyle}>
+                <label style={labelStyle}>Пошук товару:</label>
+                <input
+                    type="text"
+                    name="search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={inputStyle}
+                    placeholder="Введіть назву товару..."
+                />
+            </div>
             
             <div style={formGroupStyle}>
                 <label style={labelStyle}>Оберіть товари для відображення:</label>
                 <div style={productsContainerStyle}>
                     {allProducts.length > 0 ? (
-                        allProducts.map(product => (
-                            <label 
-                                key={product.id} 
-                                style={productItemStyle}
-                                onMouseEnter={(e) => { e.target.style.backgroundColor = 'var(--site-card-bg)'; }}
-                                onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={(data.selectedProductIds || []).includes(product.id)}
-                                    onChange={() => handleProductToggle(product.id)}
-                                    style={checkboxStyle}
-                                />
-                                {product.name} ({product.price} грн)
-                            </label>
-                        ))
+                        filteredProducts.length > 0 ? (
+                            filteredProducts.map(product => (
+                                <label 
+                                    key={product.id} 
+                                    style={productItemStyle}
+                                    onMouseEnter={(e) => { e.target.style.backgroundColor = 'var(--site-card-bg)'; }}
+                                    onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={(data.selectedProductIds || []).includes(product.id)}
+                                        onChange={() => handleProductToggle(product.id)}
+                                        style={checkboxStyle}
+                                    />
+                                    {product.name} ({product.price} грн)
+                                </label>
+                            ))
+                        ) : (
+                            <p style={{ 
+                                color: 'var(--site-text-secondary)', 
+                                textAlign: 'center', 
+                                fontStyle: 'italic' 
+                            }}>
+                                Товари за вашим запитом не знайдено.
+                            </p>
+                        )
                     ) : (
                         <p style={{ 
                             color: 'var(--site-text-secondary)', 

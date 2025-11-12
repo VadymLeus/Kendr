@@ -36,6 +36,17 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
             const dragType = monitor.getItemType();
 
             if (dragType === DRAG_ITEM_TYPE_EXISTING) {
+                const dragPath = item.path;
+                const dropZonePath = path;
+
+                const isDroppingOnSelf = dropZonePath.join(',').startsWith(dragPath.join(',')) &&
+                                        dropZonePath.length > dragPath.length;
+
+                if (isDroppingOnSelf) {
+                    console.error("Заборонено: Не можна перемістити макет сам у себе.");
+                    return;
+                }
+
                 onDrop(item, path);
             } else if (dragType === DND_TYPE_NEW_BLOCK) {
                 const newBlockPath = [...path, React.Children.count(children)];

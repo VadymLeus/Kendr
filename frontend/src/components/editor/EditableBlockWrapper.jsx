@@ -36,6 +36,13 @@ const EditableBlockWrapper = ({
                 const dragPath = item.path;
                 const hoverPath = path;
                 if (dragPath.join(',') === hoverPath.join(',')) return;
+
+                const dragParentPath = dragPath.slice(0, -1).join(',');
+                const hoverParentPath = hoverPath.slice(0, -1).join(',');
+
+                if (dragParentPath !== hoverParentPath) {
+                    return;
+                }
                 
                 onMoveBlock(dragPath, hoverPath);
                 item.path = hoverPath;
@@ -47,11 +54,34 @@ const EditableBlockWrapper = ({
             }
             
             const dragType = monitor.getItemType();
-            const isOverShallow = monitor.isOver({ shallow: true });
+            if (!monitor.isOver({ shallow: true })) {
+                return;
+            }
 
-            if (isOverShallow && dragType === DND_TYPE_NEW_BLOCK) {
+            if (dragType === DND_TYPE_NEW_BLOCK) {
                 onAddBlock(path, item.blockType, item.presetData);
-                return { name: 'EditableBlockWrapper', path };
+                return { name: 'EditableBlockWrapper - New', path };
+            }
+
+            if (dragType === DRAG_ITEM_TYPE_EXISTING) {
+                const dragPath = item.path;
+                const hoverPath = path;
+
+                if (dragPath.join(',') === hoverPath.join(',')) {
+                    return;
+                }
+
+                const isDroppingOnSelf = hoverPath.join(',').startsWith(dragPath.join(',')) &&
+                                        hoverPath.length > dragPath.length;
+
+                if (isDroppingOnSelf) {
+                    console.error("Заборонено: Не можна перемістити макет сам у себе.");
+                    return;
+                }
+
+                onMoveBlock(dragPath, hoverPath);
+                item.path = hoverPath;
+                return { name: 'EditableBlockWrapper - Move', path };
             }
         },
         collect: (monitor) => ({

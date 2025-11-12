@@ -210,7 +210,12 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
             </h2>
 
             {productsToDisplay.length === 0 && isEditorPreview && (
-                <div style={{ ...gridStyle, textAlign: 'center', color: 'var(--site-text-secondary)' }}>
+                <div style={{ 
+                    ...gridStyle,
+                    display: 'block',
+                    textAlign: 'center',
+                    color: 'var(--site-text-secondary)'
+                }}>
                     Немає вибраних товарів. (Налаштуйте блок, щоб додати їх)
                 </div>
             )}
