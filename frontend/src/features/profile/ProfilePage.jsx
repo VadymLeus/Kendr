@@ -34,7 +34,7 @@ const ProfilePage = () => {
         <div style={{ 
             padding: '2rem', 
             textAlign: 'center',
-            color: 'var(--site-text-secondary)'
+            color: 'var(--platform-text-secondary)'
         }}>
             Завантаження профілю...
         </div>
@@ -42,7 +42,7 @@ const ProfilePage = () => {
     
     if (error) return (
         <div style={{ 
-            color: 'var(--site-danger)', 
+            color: 'var(--platform-danger)', 
             textAlign: 'center',
             padding: '2rem'
         }}>
@@ -52,12 +52,12 @@ const ProfilePage = () => {
 
     const containerStyle = {
         padding: '2rem',
-        border: '1px solid var(--site-border-color)',
+        border: '1px solid var(--platform-border-color)',
         borderRadius: '12px',
         maxWidth: '700px',
         margin: '2rem auto',
         textAlign: 'center',
-        background: 'var(--site-card-bg)',
+        background: 'var(--platform-card-bg)',
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
     };
 
@@ -67,8 +67,8 @@ const ProfilePage = () => {
         gap: '8px',
         marginTop: '1.5rem',
         padding: '12px 24px',
-        background: 'var(--site-accent)',
-        color: 'var(--site-accent-text)',
+        background: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)',
         textDecoration: 'none',
         borderRadius: '8px',
         border: 'none',
@@ -80,9 +80,9 @@ const ProfilePage = () => {
 
     const statusCardStyle = {
         padding: '1.5rem',
-        border: '1px solid var(--site-border-color)',
+        border: '1px solid var(--platform-border-color)',
         borderRadius: '8px',
-        background: 'var(--site-bg)',
+        background: 'var(--platform-bg)',
         marginTop: '1.5rem'
     };
 
@@ -97,18 +97,18 @@ const ProfilePage = () => {
                         height: '150px', 
                         borderRadius: '50%', 
                         objectFit: 'cover',
-                        border: '3px solid var(--site-border-color)'
+                        border: '3px solid var(--platform-border-color)'
                     }} 
                 />
             )}
             <h1 style={{ 
                 marginBottom: '0.5rem',
-                color: 'var(--site-text-primary)'
+                color: 'var(--platform-text-primary)'
             }}>
                 {profileData.username}
             </h1>
             <p style={{ 
-                color: 'var(--site-text-secondary)', 
+                color: 'var(--platform-text-secondary)', 
                 marginTop: 0 
             }}>
                 На платформі з: <strong>{new Date(profileData.createdAt).toLocaleDateString()}</strong>
@@ -118,8 +118,8 @@ const ProfilePage = () => {
                 <Link 
                     to="/settings" 
                     style={settingsButtonStyle}
-                    onMouseEnter={(e) => e.target.style.background = 'var(--site-accent-hover)'}
-                    onMouseLeave={(e) => e.target.style.background = 'var(--site-accent)'}
+                    onMouseEnter={(e) => e.target.style.background = 'var(--platform-accent-hover)'}
+                    onMouseLeave={(e) => e.target.style.background = 'var(--platform-accent)'}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
@@ -132,14 +132,14 @@ const ProfilePage = () => {
             <div style={statusCardStyle}>
                 <h3 style={{ 
                     marginTop: 0,
-                    color: 'var(--site-text-primary)'
+                    color: 'var(--platform-text-primary)'
                 }}>
                     Статус акаунту
                 </h3>
                 {profileData.warnings && profileData.warnings.length > 0 ? (
                     <div>
                         <p style={{ 
-                            color: 'var(--site-danger)', 
+                            color: 'var(--platform-danger)', 
                             fontWeight: 'bold',
                             marginBottom: '1rem'
                         }}>
@@ -156,7 +156,7 @@ const ProfilePage = () => {
                                 <div key={warning.id} title={`Попередження від ${new Date(warning.created_at).toLocaleDateString()}`}>
                                     <span style={{ 
                                         fontSize: '2rem', 
-                                        color: 'var(--site-danger)'
+                                        color: 'var(--platform-danger)'
                                     }}>
                                         ⚠️
                                     </span>
@@ -164,7 +164,7 @@ const ProfilePage = () => {
                             ))}
                         </div>
                         <small style={{
-                            color: 'var(--site-text-secondary)',
+                            color: 'var(--platform-text-secondary)',
                             fontSize: '0.8rem'
                         }}>
                             Попередження автоматично знімаються через рік, якщо ви не отримуєте нових.
@@ -172,7 +172,7 @@ const ProfilePage = () => {
                     </div>
                 ) : (
                     <p style={{ 
-                        color: 'var(--site-success)', 
+                        color: 'var(--platform-success)', 
                         fontWeight: 'bold',
                         margin: 0
                     }}>
@@ -184,13 +184,13 @@ const ProfilePage = () => {
             <hr style={{ 
                 margin: '1.5rem 0',
                 border: 'none',
-                borderTop: '1px solid var(--site-border-color)'
+                borderTop: '1px solid var(--platform-border-color)'
             }}/>
             
             <div>
-                <h3 style={{ color: 'var(--site-text-primary)' }}>Статистика</h3>
+                <h3 style={{ color: 'var(--platform-text-primary)' }}>Статистика</h3>
                 <p style={{ 
-                    color: 'var(--site-text-primary)',
+                    color: 'var(--platform-text-primary)',
                     margin: '0.5rem 0'
                 }}>
                     Створено сайтів: <strong>{profileData.siteCount}</strong>

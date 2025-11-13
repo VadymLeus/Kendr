@@ -9,6 +9,7 @@ const FeaturesBlock = lazy(() => import('./FeaturesBlock'));
 const LayoutBlock = lazy(() => import('./LayoutBlock'));
 const ImageBlock = lazy(() => import('./ImageBlock'));
 const ButtonBlock = lazy(() => import('./ButtonBlock'));
+const FormBlock = lazy(() => import('./FormBlock'));
 
 const blockMap = {
     hero: HeroBlock,
@@ -19,6 +20,7 @@ const blockMap = {
     layout: LayoutBlock,
     image: ImageBlock,
     button: ButtonBlock,
+    form: FormBlock,
 };
 
 const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) => {

@@ -17,7 +17,10 @@ const supportRoutes = require('./routes/supportRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const mediaRoutes = require('./routes/mediaRoutes');
+const formRoutes = require('./routes/formRoutes');
+const publicFormRoutes = require('./routes/publicFormRoutes');
 const errorHandler = require('./middleware/errorHandler');
+const verifyToken = require('./middleware/verifyToken');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +45,8 @@ app.use('/api/support', supportRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/media', mediaRoutes);
+app.use('/api/form', verifyToken, formRoutes);
+app.use('/api/public/form', publicFormRoutes);
 
 app.get('/', (req, res) => {
   res.send('Welcome to Kendr API!');

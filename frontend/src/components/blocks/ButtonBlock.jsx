@@ -2,46 +2,49 @@
 import React from 'react';
 
 const ButtonBlock = ({ blockData, isEditorPreview }) => {
-    const { text, link } = blockData;
-    
-    const accent = isEditorPreview ? 'var(--platform-accent)' : 'var(--site-accent)';
-    const accentText = isEditorPreview ? 'var(--platform-accent-text)' : 'var(--site-accent-text)';
-    const accentHover = isEditorPreview ? 'var(--platform-accent-hover)' : 'var(--site-accent-hover)';
+    const { text, link, styleType, alignment, targetBlank } = blockData;
 
-    const buttonStyle = {
+    const themeClass = styleType === 'secondary' ? 'btn-site-secondary' : 'btn-site-primary';
+
+    const containerStyle = {
+        padding: '20px',
+        textAlign: alignment || 'center',
+        background: isEditorPreview ? 'var(--platform-card-bg)' : 'transparent'
+    };
+
+    const previewStyle = {
         display: 'inline-block',
         padding: '12px 24px',
-        backgroundColor: accent,
-        color: accentText,
+        backgroundColor: styleType === 'secondary' ? 'var(--platform-card-bg)' : 'var(--platform-accent)',
+        color: styleType === 'secondary' ? 'var(--platform-text-primary)' : 'var(--platform-accent-text)',
+        border: styleType === 'secondary' ? '1px solid var(--platform-border-color)' : 'none',
         textDecoration: 'none',
         borderRadius: '6px',
-        border: 'none',
         fontSize: '16px',
         fontWeight: '500',
         cursor: 'pointer',
         transition: 'background-color 0.2s ease',
-        textAlign: 'center'
     };
 
-    const containerStyle = {
-        padding: '20px',
-        textAlign: 'center',
-        background: isEditorPreview ? 'var(--platform-card-bg)' : 'transparent'
-    };
+    if (isEditorPreview) {
+        return (
+            <div style={containerStyle}>
+                <a href="#" style={previewStyle} onClick={(e) => e.preventDefault()}>
+                    {text || 'Кнопка'}
+                </a>
+            </div>
+        );
+    }
 
     return (
         <div style={containerStyle}>
             <a 
                 href={link || '#'} 
-                style={buttonStyle}
-                onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = accentHover;
-                }}
-                onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = accent;
-                }}
+                className={`btn-site ${themeClass}`}
+                target={targetBlank ? '_blank' : '_self'}
+                rel={targetBlank ? 'noopener noreferrer' : ''}
             >
-                {text || 'Кнопка'}
+                {text || 'Кнопка'} 
             </a>
         </div>
     );

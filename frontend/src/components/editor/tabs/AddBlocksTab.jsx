@@ -19,7 +19,7 @@ const Section = ({ title, children }) => (
 );
 
 const layoutBlocks = BLOCK_LIBRARY.filter(b => b.type === 'layout');
-const basicBlocks = BLOCK_LIBRARY.filter(b => ['hero', 'text', 'image', 'button'].includes(b.type));
+const basicBlocks = BLOCK_LIBRARY.filter(b => ['hero', 'text', 'image', 'button', 'form'].includes(b.type));
 const ecommerceBlocks = BLOCK_LIBRARY.filter(b => ['catalog_grid', 'categories'].includes(b.type));
 
 const AddBlocksTab = () => {

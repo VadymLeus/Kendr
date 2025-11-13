@@ -35,8 +35,10 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
         borderRadius: '4px', 
         fontSize: '1rem', 
         background: 'var(--platform-card-bg)', 
-        color: 'var(--platform-text-primary)' 
+        color: 'var(--platform-text-primary)',
+        boxSizing: 'border-box'
     };
+
     const productsContainerStyle = { 
         maxHeight: '300px', 
         overflowY: 'auto', 
@@ -97,10 +99,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                     {allProducts.length > 0 ? (
                         filteredProducts.length > 0 ? (
                             filteredProducts.map(product => (
-                                <label 
-                                    key={product.id} 
-                                    style={productItemStyle}
-                                >
+                                <label key={product.id} style={productItemStyle}>
                                     <input
                                         type="checkbox"
                                         checked={(data.selectedProductIds || []).includes(product.id)}
@@ -111,32 +110,19 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                                 </label>
                             ))
                         ) : (
-                            <p style={{ 
-                                color: 'var(--platform-text-secondary)', 
-                                textAlign: 'center', 
-                                fontStyle: 'italic' 
-                            }}>
+                            <p style={{ color: 'var(--platform-text-secondary)', textAlign: 'center', fontStyle: 'italic' }}>
                                 Товари за вашим запитом не знайдено.
                             </p>
                         )
                     ) : (
-                        <p style={{ 
-                            color: 'var(--platform-text-secondary)', 
-                            textAlign: 'center', 
-                            fontStyle: 'italic' 
-                        }}>
+                        <p style={{ color: 'var(--platform-text-secondary)', textAlign: 'center', fontStyle: 'italic' }}>
                             До цього сайту ще не додано жодного товару.
                         </p>
                     )}
                 </div>
             </div>
 
-            <p style={{ 
-                color: 'var(--platform-text-secondary)', 
-                marginTop: '15px', 
-                fontSize: '0.9rem', 
-                lineHeight: '1.4' 
-            }}>
+            <p style={{ color: 'var(--platform-text-secondary)', marginTop: '15px', fontSize: '0.9rem', lineHeight: '1.4' }}>
                 Щоб додати, редагувати або видалити самі товари, перейдіть на вкладку
                 <strong style={{color: 'var(--platform-text-primary)'}}> "Товари та категорії" </strong> 
                 в меню керування сайтом.

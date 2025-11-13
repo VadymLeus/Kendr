@@ -8,6 +8,7 @@ import ShopContentTab from './tabs/ShopContentTab';
 import PagesSettingsTab from './tabs/PagesSettingsTab';
 import EditorSidebar from '../../components/editor/EditorSidebar';
 import ThemeSettingsTab from './tabs/ThemeSettingsTab';
+import SubmissionsTab from './tabs/SubmissionsTab';
 import { 
     generateBlockId, 
     getDefaultBlockData 
@@ -238,6 +239,12 @@ const SiteDashboardPage = () => {
                         🎨 Тема та Шапка
                     </button>
                     <button 
+                        style={tabStyle(activeTab === 'submissions')} 
+                        onClick={() => setActiveTab('submissions')}
+                    >
+                        ✉️ Заявки
+                    </button>
+                    <button 
                         style={tabStyle(activeTab === 'settings')} 
                         onClick={() => setActiveTab('settings')}
                     >
@@ -306,6 +313,9 @@ const SiteDashboardPage = () => {
                     )}
                     {activeTab === 'theme' && (
                         <ThemeSettingsTab siteData={siteData} />
+                    )}
+                    {activeTab === 'submissions' && (
+                        <SubmissionsTab siteId={siteData.id} />
                     )}
                     {activeTab === 'settings' && (
                         <GeneralSettingsTab siteData={siteData} />

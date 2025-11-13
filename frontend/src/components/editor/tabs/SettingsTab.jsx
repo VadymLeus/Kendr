@@ -6,6 +6,9 @@ import FeaturesSettings from '../settings/FeaturesSettings';
 import CatalogSettings from '../settings/CatalogSettings';
 import TextSettings from '../settings/TextSettings';
 import HeroSettings from '../settings/HeroSettings';
+import ImageSettings from '../settings/ImageSettings';
+import ButtonSettings from '../settings/ButtonSettings';
+import FormSettings from '../settings/FormSettings';
 
 const SettingsComponentMap = {
     categories: CategoriesSettings,
@@ -13,6 +16,9 @@ const SettingsComponentMap = {
     catalog_grid: CatalogSettings,
     text: TextSettings,
     hero: HeroSettings,
+    image: ImageSettings,
+    button: ButtonSettings,
+    form: FormSettings,
 };
 
 const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData }) => {

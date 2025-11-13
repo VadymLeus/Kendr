@@ -13,6 +13,7 @@ export const BLOCK_LIBRARY = [
     { type: 'categories', name: 'Сітка категорій', icon: '🗂️' },
     { type: 'catalog_grid', name: 'Сітка товарів', icon: '🛍️' },
     { type: 'features', name: 'Переваги', icon: '✅' },
+    { type: 'form', name: 'Форма зв\'язку', icon: '✉️' },
 ];
 
 export const generateBlockId = () => {
@@ -40,12 +41,19 @@ export const getDefaultBlockData = (type, options = {}) => {
         case 'image':
             return { 
                 imageUrl: 'https://placehold.co/1000x500/EFEFEF/31343C?text=Ваше+зображення', 
-                alt: 'Опис зображення' 
+                alt: 'Опис зображення',
+                objectFit: 'cover',
+                borderRadius: '0px',
+                link: '',
+                targetBlank: false
             };
         case 'button':
             return { 
                 text: 'Натисніть тут', 
-                link: '#' 
+                link: '#',
+                styleType: 'primary',
+                alignment: 'center',
+                targetBlank: false
             };
         case 'layout':
             const columnCount = options.columns || 2;
@@ -64,6 +72,12 @@ export const getDefaultBlockData = (type, options = {}) => {
                     { icon: '🌟', text: 'Особливість 1' }, 
                     { icon: '💡', text: 'Особливість 2' } 
                 ] 
+            };
+        case 'form':
+            return {
+                buttonText: 'Надіслати',
+                successMessage: 'Дякуємо! Ваше повідомлення надіслано.',
+                notifyEmail: ''
             };
         default:
             return {};
