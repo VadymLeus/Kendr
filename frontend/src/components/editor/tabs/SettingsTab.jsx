@@ -26,13 +26,13 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
             <div style={{
                 padding: '2rem',
                 textAlign: 'center',
-                border: '1px dashed var(--site-border-color)',
+                border: '1px dashed var(--platform-border-color)',
                 borderRadius: '8px',
-                color: 'var(--site-text-secondary)',
+                color: 'var(--platform-text-secondary)',
                 marginTop: '2rem'
             }}>
                 <span style={{ fontSize: '2rem' }}>⚙️</span>
-                <p style={{ fontWeight: '500', color: 'var(--site-text-primary)' }}>
+                <p style={{ fontWeight: '500', color: 'var(--platform-text-primary)' }}>
                     Налаштування блоку
                 </p>
                 <p>
@@ -46,9 +46,9 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
 
     if (!SettingsComponent) {
         return (
-             <div style={{ padding: '1rem', color: 'var(--site-text-primary)'}}>
+             <div style={{ padding: '1rem', color: 'var(--platform-text-primary)'}}>
                 <h4 style={{marginBottom: '1rem'}}>Налаштування: {selectedBlock.type}</h4>
-                <p style={{color: 'var(--site-text-secondary)'}}>
+                <p style={{color: 'var(--platform-text-secondary)'}}>
                     Компонент налаштувань для цього типу блоку ({selectedBlock.type}) ще не створено.
                 </p>
             </div>
@@ -61,7 +61,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
 
     return (
         <div>
-             <h3 style={{ color: 'var(--site-text-primary)', marginBottom: '1.5rem' }}>
+             <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>
                 Налаштування: {selectedBlock.type}
             </h3>
             <SettingsComponent

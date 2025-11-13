@@ -29,11 +29,11 @@ const EditorSidebar = ({
     const tabStyle = (tabName) => ({
         flex: 1,
         padding: '0.75rem',
-        background: activeTab === tabName ? 'var(--site-card-bg)' : 'var(--site-bg)',
+        background: activeTab === tabName ? 'var(--platform-card-bg)' : 'var(--platform-sidebar-bg)',
         border: 'none',
-        borderBottom: activeTab === tabName ? '2px solid var(--site-accent)' : '2px solid transparent',
+        borderBottom: activeTab === tabName ? '2px solid var(--platform-accent)' : '2px solid transparent',
         cursor: 'pointer',
-        color: 'var(--site-text-primary)',
+        color: activeTab === tabName ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
         fontWeight: activeTab === tabName ? '600' : '400',
     });
 
@@ -45,20 +45,20 @@ const EditorSidebar = ({
             top: '60px', 
             display: 'flex',
             flexDirection: 'column',
-            background: 'var(--site-bg)',
-            borderLeft: '1px solid var(--site-border-color)',
+            background: 'var(--platform-sidebar-bg)',
+            borderLeft: '1px solid var(--platform-border-color)',
         }}>
             <div style={{
                 padding: '1rem',
-                borderBottom: '1px solid var(--site-border-color)',
-                background: 'var(--site-card-bg)'
+                borderBottom: '1px solid var(--platform-border-color)',
+                background: 'var(--platform-card-bg)'
             }}>
                 <button
                     onClick={handleSave}
                     style={{
                         width: '100%',
-                        backgroundColor: 'var(--site-accent)',
-                        color: 'var(--site-accent-text)',
+                        backgroundColor: 'var(--platform-accent)',
+                        color: 'var(--platform-accent-text)',
                         padding: '12px 24px',
                         borderRadius: '8px',
                         border: 'none',
@@ -71,7 +71,7 @@ const EditorSidebar = ({
                 </button>
             </div>
 
-            <nav style={{ display: 'flex', borderBottom: '1px solid var(--site-border-color)' }}>
+            <nav style={{ display: 'flex', borderBottom: '1px solid var(--platform-border-color)' }}>
                 <button style={tabStyle('add')} onClick={() => setActiveTab('add')}>➕ Додати</button>
                 <button style={tabStyle('layers')} onClick={() => setActiveTab('layers')}>🗂️ Шари</button>
                 <button style={tabStyle('settings')} onClick={() => setActiveTab('settings')}>⚙️ Налаш.</button>

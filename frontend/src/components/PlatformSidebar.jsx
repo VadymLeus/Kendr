@@ -36,7 +36,8 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     const logoContainerStyle = {
         padding: '1.5rem 0',
         textAlign: 'center',
-        borderBottom: '1px solid var(--platform-border-color)'
+        borderBottom: '1px solid var(--platform-border-color)',
+        transition: 'padding 0.3s ease'
     };
 
     const navStyle = {
@@ -82,8 +83,10 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
 
     const logoImageStyle = {
         height: '70px',
-        width: 'auto',
-        transition: 'height 0.3s ease',
+        maxHeight: '70px',
+        width: '100%',
+        maxWidth: isCollapsed ? '70px' : '180px',
+        transition: 'all 0.3s ease',
         backgroundImage: 'var(--platform-logo-url)',
         backgroundSize: 'contain',
         backgroundRepeat: 'no-repeat',

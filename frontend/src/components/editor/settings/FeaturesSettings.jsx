@@ -30,50 +30,69 @@ const FeaturesSettings = ({ data, onChange }) => {
         const newFeatures = (data.items || []).filter((_, i) => i !== index);
         onChange({ ...data, items: newFeatures });
     };
+
+    const formGroupStyle = { marginBottom: '1rem' };
+    const labelStyle = { 
+        display: 'block', 
+        marginBottom: '0.5rem', 
+        color: 'var(--platform-text-primary)', 
+        fontWeight: '500' 
+    };
+    const inputStyle = { 
+        width: '100%', 
+        padding: '0.75rem', 
+        border: '1px solid var(--platform-border-color)', 
+        borderRadius: '4px', 
+        fontSize: '1rem', 
+        background: 'var(--platform-card-bg)', 
+        color: 'var(--platform-text-primary)' 
+    };
     
     return (
         <div>
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label>Заголовок розділу переваг:</label>
+            <div style={formGroupStyle}>
+                <label style={labelStyle}>Заголовок розділу переваг:</label>
                 <input 
                     type="text" 
                     value={data.title || 'Наші переваги'} 
                     onChange={handleTitleChange} 
                     required 
+                    style={inputStyle}
                 />
             </div>
 
-            <h5 style={{ marginTop: '20px', marginBottom: '10px' }}>Список переваг:</h5>
+            <h5 style={{ marginTop: '20px', marginBottom: '10px', color: 'var(--platform-text-primary)' }}>Список переваг:</h5>
             
             {(data.items || []).map((feature, index) => (
-                <div key={index} style={{ border: '1px solid var(--platform-border-color)', padding: '15px', borderRadius: '6px', marginBottom: '15px', position: 'relative' }}>
+                <div key={index} style={{ border: '1px solid var(--platform-border-color)', padding: '15px', borderRadius: '6px', marginBottom: '15px', position: 'relative', background: 'var(--platform-bg)' }}>
                     
-                    <div className="form-group" style={{ marginBottom: '1rem' }}>
-                         <label>Іконка (емодзі/символ):</label>
+                    <div style={formGroupStyle}>
+                         <label style={labelStyle}>Іконка (емодзі/символ):</label>
                         <input 
                             type="text" 
                             name="icon"
                             value={feature.icon} 
                             onChange={(e) => handleFeatureChange(index, e)} 
                             maxLength="5"
+                            style={inputStyle}
                         />
                     </div>
                     
-                    <div className="form-group" style={{ marginBottom: '1rem' }}>
-                        <label>Опис:</label>
+                    <div style={formGroupStyle}>
+                        <label style={labelStyle}>Опис:</label>
                         <input 
                             type="text" 
                             name="text"
                             value={feature.text} 
                             onChange={(e) => handleFeatureChange(index, e)} 
                             required 
+                            style={inputStyle}
                         />
                     </div>
                     
                     <button 
                         type="button" 
                         onClick={() => handleRemoveFeature(index)} 
-                        className="btn btn-sm btn-danger"
                         style={{ 
                             position: 'absolute', 
                             top: '10px', 
@@ -94,13 +113,12 @@ const FeaturesSettings = ({ data, onChange }) => {
             <button 
                 type="button" 
                 onClick={handleAddFeature} 
-                className="btn btn-secondary" 
                 style={{ 
                     width: '100%', 
                     marginBottom: '20px',
-                    background: 'var(--site-card-bg)',
-                    color: 'var(--site-text-primary)',
-                    border: '1px solid var(--site-border-color)',
+                    background: 'var(--platform-card-bg)',
+                    color: 'var(--platform-text-primary)',
+                    border: '1px solid var(--platform-border-color)',
                     padding: '10px',
                     borderRadius: '4px',
                     cursor: 'pointer'

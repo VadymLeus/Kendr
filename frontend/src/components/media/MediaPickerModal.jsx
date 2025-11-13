@@ -45,7 +45,7 @@ const UploadTab = ({ onUploadSuccess }) => {
                 disabled={uploading}
                 style={{ display: 'none' }}
             />
-            {error && <p style={{ color: 'var(--site-danger)', marginTop: '1rem' }}>{error}</p>}
+            {error && <p style={{ color: 'var(--platform-danger)', marginTop: '1rem' }}>{error}</p>}
         </div>
     );
 };
@@ -72,21 +72,15 @@ const LibraryTab = ({ onSelectImage }) => {
 
     return (
         <div style={tabContentStyle}>
-            {loading ? <p style={{ color: 'var(--site-text-secondary)' }}>Завантаження...</p> : 
-             error ? <div style={{ color: 'var(--site-danger)' }}>{error}</div> : 
-             mediaFiles.length === 0 ? <p style={{ color: 'var(--site-text-secondary)' }}>Ваша медіатека порожня.</p> : (
+            {loading ? <p style={{ color: 'var(--platform-text-secondary)' }}>Завантаження...</p> : 
+             error ? <div style={{ color: 'var(--platform-danger)' }}>{error}</div> : 
+             mediaFiles.length === 0 ? <p style={{ color: 'var(--platform-text-secondary)' }}>Ваша медіатека порожня.</p> : (
                 <div style={mediaGridStyle}>
                     {mediaFiles.map(file => (
                         <div 
                             key={file.id} 
                             style={mediaGridItemStyle}
                             onClick={() => onSelectImage(file.path_full)}
-                            onMouseEnter={(e) => {
-                                e.target.style.borderColor = 'var(--site-accent)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.borderColor = 'var(--site-border-color)';
-                            }}
                         >
                             <img 
                                 src={`${API_URL}${file.path_thumb}`} 
@@ -119,7 +113,7 @@ const MediaPickerModal = ({ isOpen, onClose, onSelectImage }) => {
         <div style={modalOverlayStyle} onClick={onClose}>
             <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
                 <div style={modalHeaderStyle}>
-                    <h4 style={{ color: 'var(--site-text-primary)', margin: 0 }}>Вибір зображення</h4>
+                    <h4 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>Вибір зображення</h4>
                     <button onClick={onClose} style={closeButtonStyle}>&times;</button>
                 </div>
                 
@@ -127,36 +121,12 @@ const MediaPickerModal = ({ isOpen, onClose, onSelectImage }) => {
                     <button 
                         style={tabButtonStyle(activeTab === 'library')}
                         onClick={() => setActiveTab('library')}
-                        onMouseEnter={(e) => {
-                            if (activeTab !== 'library') {
-                                e.target.style.background = 'var(--site-accent)';
-                                e.target.style.color = 'var(--site-accent-text)';
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (activeTab !== 'library') {
-                                e.target.style.background = 'var(--site-card-bg)';
-                                e.target.style.color = 'var(--site-text-secondary)';
-                            }
-                        }}
                     >
                         Завантажити з медіатеки
                     </button>
                     <button 
                         style={tabButtonStyle(activeTab === 'upload')}
                         onClick={() => setActiveTab('upload')}
-                        onMouseEnter={(e) => {
-                            if (activeTab !== 'upload') {
-                                e.target.style.background = 'var(--site-accent)';
-                                e.target.style.color = 'var(--site-accent-text)';
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (activeTab !== 'upload') {
-                                e.target.style.background = 'var(--site-card-bg)';
-                                e.target.style.color = 'var(--site-text-secondary)';
-                            }
-                        }}
                     >
                         Завантажити файл
                     </button>
@@ -189,13 +159,13 @@ const modalOverlayStyle = {
 };
 
 const modalContentStyle = { 
-    background: 'var(--site-card-bg)', 
+    background: 'var(--platform-card-bg)', 
     padding: '1.5rem', 
     borderRadius: '12px', 
     width: '90%', 
     maxWidth: '700px', 
     boxShadow: '0 5px 15px rgba(0,0,0,0.3)', 
-    border: '1px solid var(--site-border-color)' 
+    border: '1px solid var(--platform-border-color)' 
 };
 
 const modalHeaderStyle = { 
@@ -203,7 +173,7 @@ const modalHeaderStyle = {
     justifyContent: 'space-between', 
     alignItems: 'center', 
     paddingBottom: '1rem', 
-    borderBottom: '1px solid var(--site-border-color)' 
+    borderBottom: '1px solid var(--platform-border-color)' 
 };
 
 const closeButtonStyle = { 
@@ -211,8 +181,7 @@ const closeButtonStyle = {
     border: 'none', 
     fontSize: '1.5rem', 
     cursor: 'pointer', 
-    color: 'var(--site-text-secondary)',
-    transition: 'color 0.2s ease'
+    color: 'var(--platform-text-secondary)'
 };
 
 const modalTabsStyle = { 
@@ -225,12 +194,11 @@ const tabButtonStyle = (isActive) => ({
     flex: 1,
     padding: '1rem',
     borderRadius: '8px',
-    border: '1px solid var(--site-border-color)',
-    background: isActive ? 'var(--site-accent)' : 'var(--site-card-bg)',
-    color: isActive ? 'var(--site-accent-text)' : 'var(--site-text-secondary)',
+    border: '1px solid var(--platform-border-color)',
+    background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
+    color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-secondary)',
     cursor: 'pointer',
-    fontWeight: '500',
-    transition: 'all 0.2s ease'
+    fontWeight: '500'
 });
 
 const tabContentStyle = { 
@@ -244,12 +212,11 @@ const uploadBoxStyle = {
     justifyContent: 'center',
     width: '100%',
     height: '250px',
-    border: '2px dashed var(--site-border-color)',
+    border: '2px dashed var(--platform-border-color)',
     borderRadius: '8px',
-    background: 'var(--site-bg)',
-    color: 'var(--site-text-secondary)',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
+    background: 'var(--platform-bg)',
+    color: 'var(--platform-text-secondary)',
+    cursor: 'pointer'
 };
 
 const mediaGridStyle = { 
@@ -265,9 +232,8 @@ const mediaGridItemStyle = {
     height: '100px',
     borderRadius: '8px',
     overflow: 'hidden',
-    border: '2px solid var(--site-border-color)',
-    cursor: 'pointer',
-    transition: 'border-color 0.2s ease'
+    border: '2px solid var(--platform-border-color)',
+    cursor: 'pointer'
 };
 
 export default MediaPickerModal;

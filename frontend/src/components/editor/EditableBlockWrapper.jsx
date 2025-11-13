@@ -28,13 +28,13 @@ const EditableBlockWrapper = ({
 
     const [{ isOver }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
-
         hover(item, monitor) {
             if (!monitor.canDrop()) return;
 
             if (item.type === DRAG_ITEM_TYPE_EXISTING) {
                 const dragPath = item.path;
                 const hoverPath = path;
+                
                 if (dragPath.join(',') === hoverPath.join(',')) return;
 
                 const dragParentPath = dragPath.slice(0, -1).join(',');
@@ -94,7 +94,7 @@ const EditableBlockWrapper = ({
     const blockType = { name: block.type, icon: '⚙️' };
 
     const isSelected = selectedBlockPath && selectedBlockPath.join(',') === path.join(',');
-    
+
     const handleSelect = (e) => {
         e.stopPropagation(); 
         onSelectBlock(path);
@@ -105,63 +105,118 @@ const EditableBlockWrapper = ({
         onDeleteBlock(path);
     };
 
+    const themeSettings = siteData?.theme_settings || {};
+
+    const styles = {
+        wrapper: {
+            opacity,
+            cursor: 'move',
+            position: 'relative',
+            margin: '20px 0',
+            border: isSelected 
+                ? '2px solid var(--platform-accent)' 
+                : (isOver ? '2px dashed var(--platform-accent)' : '2px dashed var(--platform-border-color)'),
+            borderRadius: '8px',
+            transition: 'all 0.2s ease',
+            background: block.type === 'layout' ? 'transparent' : 'var(--platform-card-bg)',
+            boxShadow: block.type === 'layout' ? 'none' : '0 2px 4px rgba(0,0,0,0.05)'
+        },
+        header: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '8px 12px',
+            background: 'var(--platform-card-bg)',
+            borderBottom: '1px solid var(--platform-border-color)',
+            borderRadius: '8px 8px 0 0',
+            transition: 'all 0.2s ease',
+        },
+        headerText: {
+            fontSize: '14px', 
+            fontWeight: '500', 
+            color: 'var(--platform-text-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+        },
+        buttonGroup: {
+            display: 'flex', 
+            gap: '8px'
+        },
+        settingsButton: {
+            padding: '6px 12px',
+            background: 'var(--platform-accent)',
+            color: 'var(--platform-accent-text)',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: '500',
+            transition: 'all 0.2s ease',
+        },
+        deleteButton: {
+            padding: '6px 10px',
+            background: 'var(--platform-danger)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            transition: 'all 0.2s ease',
+        },
+        canvas: {
+            background: 'var(--platform-card-bg)',
+            color: 'var(--platform-text-primary)',
+            ...(block.type === 'layout' && { background: 'transparent' }),
+            '--font-heading': themeSettings.font_heading || 'sans-serif',
+            '--font-body': themeSettings.font_body || 'sans-serif',
+            '--btn-radius': themeSettings.button_radius || '4px',
+            transition: 'all 0.2s ease',
+            borderRadius: '0 0 8px 8px',
+        }
+    };
+
+    const handleButtonHover = (e) => {
+        e.target.style.opacity = '0.9';
+        e.target.style.transform = 'translateY(-1px)';
+    };
+
+    const handleButtonLeave = (e) => {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+    };
+
     return (
         <div
             ref={wrapperRef}
             onClick={handleSelect}
-            style={{
-                opacity,
-                cursor: 'move',
-                position: 'relative',
-                margin: '20px 0',
-                border: isSelected 
-                    ? '2px solid var(--site-accent)' 
-                    : (isOver ? '2px dashed var(--site-accent)' : '2px dashed var(--site-border-color)'),
-                borderRadius: '8px',
-                transition: 'border-color 0.2s ease'
-            }}
+            style={styles.wrapper}
+            className="editable-block-wrapper"
         >
             <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '8px 12px',
-                    background: 'var(--site-bg-secondary)',
-                    borderBottom: '1px solid var(--site-border-color)',
-                    borderRadius: '8px 8px 0 0'
-                }}
+                style={styles.header}
+                className="editable-block-header"
             >
-                <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--site-text-primary)' }}>
-                    {blockType?.icon} {blockType?.name}
+                <span style={styles.headerText}>
+                    <span>{blockType?.icon}</span>
+                    <span>{blockType?.name}</span>
                 </span>
-                <div>
+                <div style={styles.buttonGroup}>
                     <button 
                         onClick={handleSelect}
-                        style={{
-                            marginRight: '8px',
-                            padding: '4px 8px',
-                            background: 'var(--site-accent)',
-                            color: 'var(--site-accent-text)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}
+                        style={styles.settingsButton}
+                        onMouseEnter={handleButtonHover}
+                        onMouseLeave={handleButtonLeave}
                     >
                         Налаштування
                     </button>
                     <button 
                         onClick={handleDelete}
                         title="Видалити блок"
-                        style={{
-                            padding: '4px 8px',
-                            background: '#e53e3e',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold'
-                        }}
+                        style={styles.deleteButton}
+                        onMouseEnter={handleButtonHover}
+                        onMouseLeave={handleButtonLeave}
                     >
                         &times;
                     </button>
@@ -169,13 +224,9 @@ const EditableBlockWrapper = ({
             </div>
 
             <div
-                className="site-theme-context"
-                data-site-mode={siteData.site_theme_mode || 'light'}
-                data-site-accent={siteData.site_theme_accent || 'orange'}
-                style={{
-                    background: 'var(--site-bg)',
-                    color: 'var(--site-text-primary)'
-                }}
+                data-site-mode={siteData?.site_theme_mode || 'light'}
+                data-site-accent={siteData?.site_theme_accent || 'orange'}
+                style={styles.canvas}
             >
                 <BlockRenderer 
                     blocks={[block]} 

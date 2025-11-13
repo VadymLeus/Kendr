@@ -94,7 +94,6 @@ exports.createSite = async (req, res, next) => {
     }
 };
 
-// Оновлена версія для нових маршрутів
 exports.getSiteByPath = async (req, res, next) => {
     try {
         const { site_path, slug } = req.params;
@@ -158,7 +157,7 @@ exports.getSiteByPath = async (req, res, next) => {
 exports.updateSiteSettings = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const { title, status, tags, site_theme_mode, site_theme_accent } = req.body;
+        const { title, status, tags, site_theme_mode, site_theme_accent, theme_settings, header_settings } = req.body;
         const userId = req.user.id;
 
         const site = await Site.findByPath(site_path);
@@ -166,7 +165,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав на редагування цього сайту.' });
         }
 
-        await Site.updateSettings(site.id, { title, status, site_theme_mode, site_theme_accent });
+        await Site.updateSettings(site.id, { title, status, site_theme_mode, site_theme_accent, theme_settings, header_settings });
         if (Array.isArray(tags)) await Site.updateTags(site.id, tags);
 
         res.json({ message: 'Налаштування сайту успішно оновлено.' });

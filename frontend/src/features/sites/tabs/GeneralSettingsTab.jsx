@@ -27,7 +27,7 @@ const GeneralSettingsTab = ({ siteData }) => {
         };
         fetchTags();
     }, [siteData.id]);
-    
+
     const handleTagChange = (tagId) => {
         const newSelectedTags = new Set(selectedTags);
         if (newSelectedTags.has(tagId)) {
@@ -47,7 +47,9 @@ const GeneralSettingsTab = ({ siteData }) => {
                 status,
                 tags: Array.from(selectedTags),
                 site_theme_mode: siteMode,
-                site_theme_accent: siteAccent
+                site_theme_accent: siteAccent,
+                theme_settings: siteData.theme_settings || null,
+                header_settings: siteData.header_settings || null
             });
             alert('Налаштування успішно збережено!');
             window.location.reload();
@@ -77,49 +79,68 @@ const GeneralSettingsTab = ({ siteData }) => {
     const inputStyle = {
         width: '100%',
         padding: '0.75rem',
-        /* ВИПРАВЛЕНО: Використовуємо змінні сайту */
-        border: '1px solid var(--site-border-color)',
+        border: '1px solid var(--platform-border-color)',
         borderRadius: '4px',
         fontSize: '1rem',
         marginTop: '0.5rem',
-        background: 'var(--site-card-bg)',
-        color: 'var(--site-text-primary)'
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)'
     };
 
     const cardStyle = {
-        background: 'var(--site-card-bg)',
+        background: 'var(--platform-card-bg)',
         padding: '1.5rem 2rem',
         borderRadius: '12px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        border: '1px solid var(--site-border-color)',
+        border: '1px solid var(--platform-border-color)',
         marginBottom: '1.5rem'
     };
 
     return (
         <div>
-            <h2 style={{ color: 'var(--site-text-primary)', marginBottom: '1.5rem' }}>Загальні налаштування</h2>
+            <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>Загальні налаштування</h2>
             
             {error && (
                 <div style={{ 
-                    color: 'var(--site-danger)', 
+                    color: 'var(--platform-danger)', 
                     marginBottom: '1rem',
                     padding: '10px',
                     backgroundColor: 'rgba(229, 62, 62, 0.1)',
-                    border: '1px solid var(--site-danger)',
+                    border: '1px solid var(--platform-danger)',
                     borderRadius: '4px'
                 }}>
                     {error}
                 </div>
             )}
             
+            <button 
+                onClick={handleSave} 
+                disabled={saving}
+                style={{
+                    width: '100%',
+                    padding: '12px 24px',
+                    backgroundColor: 'var(--platform-accent)',
+                    color: 'var(--platform-accent-text)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    opacity: saving ? 0.7 : 1,
+                    transition: 'all 0.2s ease',
+                    marginBottom: '1.5rem'
+                }}
+            >
+                {saving ? 'Збереження...' : 'Зберегти зміни'}
+            </button>
+
             <div style={cardStyle}>
-                <h4 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>Основні налаштування</h4>
+                <h4 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>Основні налаштування</h4>
                 <div style={{ marginBottom: '1.5rem' }}>
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '0.5rem',
-                        /* ВИПРАВЛЕНО: */
-                        color: 'var(--site-text-primary)',
+                        color: 'var(--platform-text-primary)',
                         fontWeight: '500'
                     }}>
                         Назва сайту:
@@ -137,8 +158,7 @@ const GeneralSettingsTab = ({ siteData }) => {
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '0.5rem',
-                        /* ВИПРАВЛЕНО: */
-                        color: 'var(--site-text-primary)',
+                        color: 'var(--platform-text-primary)',
                         fontWeight: '500'
                     }}>
                         Статус:
@@ -155,13 +175,12 @@ const GeneralSettingsTab = ({ siteData }) => {
             </div>
 
             <div style={cardStyle}>
-                <h4 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>Дизайн сайту</h4>
+                <h4 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>Дизайн сайту</h4>
                 <div style={{ marginBottom: '1.5rem' }}>
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '0.5rem',
-                        /* ВИПРАВЛЕНО: */
-                        color: 'var(--site-text-primary)',
+                        color: 'var(--platform-text-primary)',
                         fontWeight: '500'
                     }}>
                         Режим теми:
@@ -183,8 +202,7 @@ const GeneralSettingsTab = ({ siteData }) => {
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '0.5rem',
-                        /* ВИПРАВЛЕНО: */
-                        color: 'var(--site-text-primary)',
+                        color: 'var(--platform-text-primary)',
                         fontWeight: '500'
                     }}>
                         Акцентний колір:
@@ -199,8 +217,7 @@ const GeneralSettingsTab = ({ siteData }) => {
                                         height: '40px',
                                         borderRadius: '50%',
                                         cursor: 'pointer',
-                                        /* ВИПРАВЛЕНО: */
-                                        border: siteAccent === accent.value ? '3px solid var(--site-accent)' : '3px solid var(--site-border-color)',
+                                        border: siteAccent === accent.value ? '3px solid var(--platform-accent)' : '3px solid var(--platform-border-color)',
                                         transition: 'all 0.2s ease',
                                         backgroundColor: accent.color
                                     }}
@@ -208,7 +225,7 @@ const GeneralSettingsTab = ({ siteData }) => {
                                 />
                                 <span style={{ 
                                     fontSize: '0.75rem', 
-                                    color: 'var(--site-text-secondary)',
+                                    color: 'var(--platform-text-secondary)',
                                     textAlign: 'center'
                                 }}>
                                     {accent.label}
@@ -220,7 +237,7 @@ const GeneralSettingsTab = ({ siteData }) => {
             </div>
             
             <div style={cardStyle}>
-                <h4 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>Теги</h4>
+                <h4 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>Теги</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                     {allTags.map(tag => (
                         <label 
@@ -230,9 +247,9 @@ const GeneralSettingsTab = ({ siteData }) => {
                                 alignItems: 'center', 
                                 gap: '0.5rem',
                                 padding: '0.5rem 1rem',
-                                background: selectedTags.has(tag.id) ? 'var(--site-accent)' : 'var(--site-card-bg)',
-                                color: selectedTags.has(tag.id) ? 'var(--site-accent-text)' : 'var(--site-text-primary)',
-                                border: `1px solid ${selectedTags.has(tag.id) ? 'var(--site-accent)' : 'var(--site-border-color)'}`,
+                                background: selectedTags.has(tag.id) ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
+                                color: selectedTags.has(tag.id) ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
+                                border: `1px solid ${selectedTags.has(tag.id) ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
                                 borderRadius: '20px',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease',
@@ -250,31 +267,11 @@ const GeneralSettingsTab = ({ siteData }) => {
                     ))}
                 </div>
                 {allTags.length === 0 && (
-                    <p style={{ color: 'var(--site-text-secondary)', fontStyle: 'italic' }}>
+                    <p style={{ color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
                         Теги відсутні. Створіть теги в адмін-панелі платформи.
                     </p>
                 )}
             </div>
-            
-            <button 
-                onClick={handleSave} 
-                disabled={saving}
-                style={{
-                    width: '100%',
-                    padding: '12px 24px',
-                    backgroundColor: 'var(--site-accent)',
-                    color: 'var(--site-accent-text)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    opacity: saving ? 0.7 : 1,
-                    transition: 'all 0.2s ease'
-                }}
-            >
-                {saving ? 'Збереження...' : 'Зберегти зміни'}
-            </button>
         </div>
     );
 };

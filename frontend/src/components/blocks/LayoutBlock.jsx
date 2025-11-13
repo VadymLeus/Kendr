@@ -12,7 +12,9 @@ const getLayoutStyles = (preset) => {
         display: 'flex',
         flexWrap: 'wrap',
         gap: '20px',
-        padding: '20px'
+        padding: '20px',
+        backgroundColor: 'transparent',
+        background: 'none'
     };
     switch (preset) {
         case '50-50':
@@ -28,6 +30,10 @@ const getLayoutStyles = (preset) => {
 };
 
 const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock }) => {
+    const accent = isEditorPreview ? 'var(--platform-accent)' : 'var(--site-accent)';
+    const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
+    const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
+
     const [{ isOver, canDrop }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
         drop: (item, monitor) => {
@@ -67,13 +73,13 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         minHeight: '150px',
         padding: '10px',
         borderRadius: '8px',
-        border: isOver && canDrop ? '2px dashed var(--site-accent)' : '2px dashed var(--site-border-color)',
+        border: isOver && canDrop ? `2px dashed ${accent}` : `2px dashed ${borderColor}`,
         transition: 'background-color 0.2s ease, border-color 0.2s ease',
-        backgroundColor: isOver && canDrop ? 'rgba(var(--site-accent-rgb), 0.1)' : 'transparent',
+        backgroundColor: isOver && canDrop ? 'rgba(66, 153, 225, 0.1)' : 'transparent',
     };
 
     if (!isEditorPreview) {
-        return <div style={{ flex: 1 }}>{children}</div>;
+        return <div style={{ flex: 1, backgroundColor: 'transparent' }}>{children}</div>;
     }
 
     return (
@@ -82,10 +88,11 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
             {React.Children.count(children) === 0 && (
                 <div style={{ 
                     textAlign: 'center', 
-                    color: 'var(--site-text-secondary)', 
+                    color: textSecondary, 
                     paddingTop: '50px',
                     fontSize: '14px',
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
+                    backgroundColor: 'transparent'
                 }}>
                     Перетягніть блоки сюди
                 </div>
@@ -113,7 +120,11 @@ const LayoutBlock = ({
         return (
             <div style={layoutStyle}>
                 {columns.map((columnBlocks, colIndex) => (
-                    <div key={colIndex} style={{ flex: 1, minWidth: '250px' }}>
+                    <div key={colIndex} style={{ 
+                        flex: 1, 
+                        minWidth: '250px',
+                        backgroundColor: 'transparent'
+                    }}>
                         <BlockRenderer
                             blocks={columnBlocks}
                             siteData={siteData}

@@ -7,8 +7,8 @@ import GeneralSettingsTab from './tabs/GeneralSettingsTab';
 import ShopContentTab from './tabs/ShopContentTab';
 import PagesSettingsTab from './tabs/PagesSettingsTab';
 import EditorSidebar from '../../components/editor/EditorSidebar';
+import ThemeSettingsTab from './tabs/ThemeSettingsTab';
 import { 
-    BLOCK_LIBRARY, 
     generateBlockId, 
     getDefaultBlockData 
 } from '../../components/editor/editorConfig';
@@ -17,9 +17,56 @@ import {
     removeBlockByPath, 
     addBlockByPath, 
     moveBlock,
-    handleDrop,
-    findBlockByPath
+    handleDrop
 } from '../../components/editor/blockUtils';
+
+const tabStyle = (isActive) => ({
+    padding: '1rem 1.5rem',
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: isActive ? '600' : '400',
+    color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+    borderBottom: isActive ? '3px solid var(--platform-accent)' : '3px solid transparent',
+    marginBottom: '-1px',
+    transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap',
+    borderRadius: '4px 4px 0 0'
+});
+
+const containerStyles = {
+    main: { 
+        margin: 'auto',
+        minHeight: '100vh',
+        background: 'var(--platform-bg)'
+    },
+    header: { 
+        maxWidth: '1200px', 
+        margin: 'auto',
+        padding: '2rem 2rem 0 2rem' 
+    },
+    content: { 
+        maxWidth: '1200px', 
+        margin: 'auto', 
+        padding: '0 2rem 2rem 2rem' 
+    },
+    tabsContainer: {
+        borderBottom: '1px solid var(--platform-border-color)', 
+        marginBottom: '2rem',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.5rem'
+    },
+    code: {
+        background: 'var(--platform-card-bg)', 
+        padding: '0.25rem 0.5rem', 
+        borderRadius: '4px',
+        color: 'var(--platform-text-primary)',
+        fontSize: '0.9rem',
+        fontFamily: 'monospace'
+    }
+};
 
 const SiteDashboardPage = () => {
     const { site_path } = useParams();
@@ -122,69 +169,102 @@ const SiteDashboardPage = () => {
     }, []);
 
     if (isSiteLoading) return (
-        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--site-text-secondary)' }}>
+        <div style={{ 
+            padding: '2rem', 
+            textAlign: 'center', 
+            color: 'var(--platform-text-secondary)',
+            background: 'var(--platform-bg)',
+            minHeight: '100vh'
+        }}>
             Завантаження панелі керування...
         </div>
     );
     
     if (!siteData) return (
-        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--site-text-secondary)' }}>
+        <div style={{ 
+            padding: '2rem', 
+            textAlign: 'center', 
+            color: 'var(--platform-text-secondary)',
+            background: 'var(--platform-bg)',
+            minHeight: '100vh'
+        }}>
             Сайт не знайдено.
         </div>
     );
 
     return (
-        <div style={{ margin: 'auto' }}>
-            <div style={{ 
-                maxWidth: '1200px', 
-                margin: 'auto',
-                padding: '2rem 2rem 0 2rem' 
-            }}>
-                <h1 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>
+        <div style={containerStyles.main}>
+            <div style={containerStyles.header}>
+                <h1 style={{ 
+                    color: 'var(--platform-text-primary)', 
+                    marginBottom: '1rem',
+                    fontSize: '1.8rem'
+                }}>
                     Панель керування сайтом: {siteData.title}
                 </h1>
-                <p style={{ color: 'var(--site-text-secondary)', marginBottom: '2rem' }}>
-                    Шлях: <code style={{ 
-                        background: 'var(--site-card-bg)', 
-                        padding: '0.25rem 0.5rem', 
-                        borderRadius: '4px',
-                        color: 'var(--site-text-primary)'
-                    }}>{siteData.site_path}</code>
-                </p>
-
-                <div style={{ 
-                    borderBottom: '1px solid var(--site-border-color)', 
+                <p style={{ 
+                    color: 'var(--platform-text-secondary)', 
                     marginBottom: '2rem',
                     display: 'flex',
-                    flexWrap: 'wrap'
+                    alignItems: 'center',
+                    gap: '0.5rem'
                 }}>
-                    <button style={tabStyle(activeTab === 'editor')} onClick={() => setActiveTab('editor')}>
-                        Редактор сторінок
+                    Шлях: <code style={containerStyles.code}>{siteData.site_path}</code>
+                </p>
+
+                <div style={containerStyles.tabsContainer}>
+                    <button 
+                        style={tabStyle(activeTab === 'editor')} 
+                        onClick={() => setActiveTab('editor')}
+                    >
+                        📝 Редактор сторінок
                     </button>
-                    <button style={tabStyle(activeTab === 'pages')} onClick={() => setActiveTab('pages')}>
-                        Сторінки
+                    <button 
+                        style={tabStyle(activeTab === 'pages')} 
+                        onClick={() => setActiveTab('pages')}
+                    >
+                        📄 Сторінки
                     </button>
-                    <button style={tabStyle(activeTab === 'shop')} onClick={() => setActiveTab('shop')}>
-                        Товари та категорії
+                    <button 
+                        style={tabStyle(activeTab === 'shop')} 
+                        onClick={() => setActiveTab('shop')}
+                    >
+                        🛒 Товари та категорії
                     </button>
-                    <button style={tabStyle(activeTab === 'settings')} onClick={() => setActiveTab('settings')}>
-                        Налаштування
+                    <button 
+                        style={tabStyle(activeTab === 'theme')} 
+                        onClick={() => setActiveTab('theme')}
+                    >
+                        🎨 Тема та Шапка
+                    </button>
+                    <button 
+                        style={tabStyle(activeTab === 'settings')} 
+                        onClick={() => setActiveTab('settings')}
+                    >
+                        ⚙️ Налаштування
                     </button>
                 </div>
             </div>
 
             <div>
                 {activeTab === 'editor' && (
-                    <div style={{ display: 'flex' }}>
+                    <div style={{ display: 'flex', minHeight: '600px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             {isPageLoading ? (
-                                <p style={{color: 'var(--site-text-secondary)', textAlign: 'center'}}>Завантаження редактора...</p>
+                                <p style={{
+                                    color: 'var(--platform-text-secondary)', 
+                                    textAlign: 'center',
+                                    padding: '2rem'
+                                }}>
+                                    Завантаження редактора...
+                                </p>
                             ) : (
                                 <>
                                     <h2 style={{
-                                        color: 'var(--site-text-primary)', 
+                                        color: 'var(--platform-text-primary)', 
                                         marginBottom: '1.5rem',
-                                        paddingLeft: '2rem'
+                                        padding: '0 2rem 1rem 2rem',
+                                        borderBottom: '1px solid var(--platform-border-color)'
                                     }}>
                                         Редагування сторінки: "{currentPageName}"
                                     </h2>
@@ -214,7 +294,7 @@ const SiteDashboardPage = () => {
                     </div>
                 )}
                 
-                <div style={{ maxWidth: '1200px', margin: 'auto', padding: '0 2rem 2rem 2rem' }}>
+                <div style={containerStyles.content}>
                     {activeTab === 'pages' && (
                         <PagesSettingsTab 
                             siteId={siteData.id} 
@@ -224,6 +304,9 @@ const SiteDashboardPage = () => {
                     {activeTab === 'shop' && (
                         <ShopContentTab siteData={siteData} />
                     )}
+                    {activeTab === 'theme' && (
+                        <ThemeSettingsTab siteData={siteData} />
+                    )}
                     {activeTab === 'settings' && (
                         <GeneralSettingsTab siteData={siteData} />
                     )}
@@ -232,19 +315,5 @@ const SiteDashboardPage = () => {
         </div>
     );
 };
-
-const tabStyle = (isActive) => ({
-    padding: '1rem 1.5rem',
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: isActive ? 'bold' : 'normal',
-    color: isActive ? 'var(--site-accent)' : 'var(--site-text-secondary)',
-    borderBottom: isActive ? '3px solid var(--site-accent)' : '3px solid transparent',
-    marginBottom: '-1px',
-    transition: 'all 0.2s ease',
-    whiteSpace: 'nowrap'
-});
 
 export default SiteDashboardPage;

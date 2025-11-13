@@ -25,33 +25,32 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
     const labelStyle = { 
         display: 'block', 
         marginBottom: '0.5rem', 
-        color: 'var(--site-text-primary)', 
+        color: 'var(--platform-text-primary)', 
         fontWeight: '500' 
     };
     const inputStyle = { 
         width: '100%', 
         padding: '0.75rem', 
-        border: '1px solid var(--site-border-color)', 
+        border: '1px solid var(--platform-border-color)', 
         borderRadius: '4px', 
         fontSize: '1rem', 
-        background: 'var(--site-card-bg)', 
-        color: 'var(--site-text-primary)' 
+        background: 'var(--platform-card-bg)', 
+        color: 'var(--platform-text-primary)' 
     };
     const productsContainerStyle = { 
         maxHeight: '300px', 
         overflowY: 'auto', 
-        border: '1px solid var(--site-border-color)', 
+        border: '1px solid var(--platform-border-color)', 
         borderRadius: '8px', 
         padding: '1rem', 
-        background: 'var(--site-bg)' 
+        background: 'var(--platform-bg)' 
     };
     const productItemStyle = { 
         display: 'block', 
         padding: '0.75rem 0', 
         cursor: 'pointer', 
-        borderBottom: '1px solid var(--site-border-color)', 
-        color: 'var(--site-text-primary)', 
-        transition: 'background-color 0.2s ease' 
+        borderBottom: '1px solid var(--platform-border-color)', 
+        color: 'var(--platform-text-primary)'
     };
     const checkboxStyle = { 
         marginRight: '10px', 
@@ -101,8 +100,6 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                                 <label 
                                     key={product.id} 
                                     style={productItemStyle}
-                                    onMouseEnter={(e) => { e.target.style.backgroundColor = 'var(--site-card-bg)'; }}
-                                    onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; }}
                                 >
                                     <input
                                         type="checkbox"
@@ -115,7 +112,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                             ))
                         ) : (
                             <p style={{ 
-                                color: 'var(--site-text-secondary)', 
+                                color: 'var(--platform-text-secondary)', 
                                 textAlign: 'center', 
                                 fontStyle: 'italic' 
                             }}>
@@ -124,7 +121,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                         )
                     ) : (
                         <p style={{ 
-                            color: 'var(--site-text-secondary)', 
+                            color: 'var(--platform-text-secondary)', 
                             textAlign: 'center', 
                             fontStyle: 'italic' 
                         }}>
@@ -135,13 +132,13 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
             </div>
 
             <p style={{ 
-                color: 'var(--site-text-secondary)', 
+                color: 'var(--platform-text-secondary)', 
                 marginTop: '15px', 
                 fontSize: '0.9rem', 
                 lineHeight: '1.4' 
             }}>
                 Щоб додати, редагувати або видалити самі товари, перейдіть на вкладку
-                <strong style={{color: 'var(--site-text-primary)'}}> "Товари та категорії" </strong> 
+                <strong style={{color: 'var(--platform-text-primary)'}}> "Товари та категорії" </strong> 
                 в меню керування сайтом.
             </p>
         </div>

@@ -110,70 +110,120 @@ const CategoryManager = ({ siteId }) => {
         }
     };
 
-    // Стилі (залишаємо без змін)
-    const actionButtonStyle = {
-        border: 'none',
-        background: 'none',
-        cursor: 'pointer',
-        fontSize: '14px',
-        padding: '6px 8px',
-        borderRadius: '4px',
-        transition: 'all 0.2s ease',
-        width: '32px',
-        height: '32px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: actionLoading ? 0.6 : 1,
-        pointerEvents: actionLoading ? 'none' : 'auto'
+    const styles = {
+        container: {
+            padding: '1.5rem',
+            border: '1px solid var(--platform-border-color)',
+            borderRadius: '12px',
+            backgroundColor: 'var(--platform-card-bg)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+        },
+        title: {
+            color: 'var(--platform-text-primary)', 
+            marginBottom: '1rem',
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+        },
+        error: {
+            padding: '0.75rem',
+            marginBottom: '1rem',
+            backgroundColor: 'rgba(229, 62, 62, 0.1)',
+            color: 'var(--platform-danger)',
+            border: '1px solid var(--platform-danger)',
+            borderRadius: '8px',
+            fontSize: '0.9rem'
+        },
+        input: {
+            flexGrow: 1,
+            padding: '0.75rem',
+            border: '1px solid var(--platform-border-color)',
+            borderRadius: '6px',
+            backgroundColor: 'var(--platform-card-bg)',
+            color: 'var(--platform-text-primary)',
+            fontSize: '0.9rem',
+            transition: 'all 0.2s ease'
+        },
+        primaryButton: {
+            backgroundColor: 'var(--platform-accent)',
+            color: 'var(--platform-accent-text)',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '0.75rem 1.25rem',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: '500',
+            transition: 'all 0.2s ease',
+            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem'
+        },
+        secondaryButton: {
+            backgroundColor: 'transparent',
+            color: 'var(--platform-text-secondary)',
+            border: '1px solid var(--platform-border-color)',
+            borderRadius: '6px',
+            padding: '0.75rem 1rem',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            fontWeight: '500',
+            transition: 'all 0.2s ease'
+        },
+        actionButton: {
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            padding: '0.5rem',
+            borderRadius: '6px',
+            transition: 'all 0.2s ease',
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        },
+        editButton: {
+            color: 'var(--platform-text-secondary)',
+        },
+        deleteButton: {
+            color: 'var(--platform-danger)',
+        },
+        listItem: {
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            padding: '0.75rem 0', 
+            borderBottom: '1px solid var(--platform-border-color)',
+            transition: 'background-color 0.2s ease'
+        },
+        categoryName: {
+            color: 'var(--platform-text-primary)',
+            fontSize: '0.95rem',
+            fontWeight: '500'
+        },
+        emptyState: {
+            color: 'var(--platform-text-secondary)', 
+            textAlign: 'center',
+            marginTop: '1.5rem',
+            fontSize: '0.9rem',
+            fontStyle: 'italic',
+            padding: '1.5rem',
+            border: '2px dashed var(--platform-border-color)',
+            borderRadius: '8px',
+            backgroundColor: 'var(--platform-bg)'
+        }
     };
-
-    const editButtonStyle = {
-        ...actionButtonStyle,
-        color: 'var(--site-text-secondary)',
-    };
-    
-    const deleteButtonStyle = {
-        ...actionButtonStyle,
-        color: 'var(--platform-danger)',
-    };
-
-    const primaryButtonStyle = {
-        backgroundColor: 'var(--site-accent)',
-        color: 'var(--site-accent-text)',
-        border: 'none',
-        borderRadius: '4px',
-        padding: '8px 12px',
-        cursor: actionLoading ? 'not-allowed' : 'pointer',
-        fontSize: '12px',
-        fontWeight: '500',
-        transition: 'background-color 0.2s ease',
-        opacity: actionLoading ? 0.6 : 1
-    };
-
-    const secondaryButtonStyle = {
-        backgroundColor: 'transparent',
-        color: 'var(--site-text-secondary)',
-        border: '1px solid var(--site-border-color)',
-        borderRadius: '4px',
-        padding: '8px 12px',
-        cursor: actionLoading ? 'not-allowed' : 'pointer',
-        fontSize: '12px',
-        fontWeight: '500',
-        transition: 'all 0.2s ease',
-        opacity: actionLoading ? 0.6 : 1
-    };
-
-    console.log('Current categories state:', categories);
-    console.log('Is array:', Array.isArray(categories));
-    console.log('Type:', typeof categories);
 
     if (loading) {
         return (
             <div style={{ 
-                padding: '20px', 
+                padding: '2rem', 
                 textAlign: 'center',
-                color: 'var(--site-text-secondary)'
+                color: 'var(--platform-text-secondary)'
             }}>
                 Завантаження категорій...
             </div>
@@ -183,39 +233,21 @@ const CategoryManager = ({ siteId }) => {
     const categoriesToRender = Array.isArray(categories) ? categories : [];
 
     return (
-        <div style={{ 
-            padding: '20px', 
-            border: '1px solid var(--site-border-color)', 
-            borderRadius: '8px',
-            backgroundColor: 'var(--site-card-bg)'
-        }}>
-            <h4 style={{ 
-                color: 'var(--site-text-primary)', 
-                marginBottom: '1rem',
-                fontSize: '1.25rem',
-                fontWeight: '600'
-            }}>
-                Категорії товарів
+        <div style={styles.container}>
+            <h4 style={styles.title}>
+                📂 Категорії товарів
             </h4>
 
             {error && (
-                <div style={{
-                    padding: '10px',
-                    marginBottom: '15px',
-                    backgroundColor: 'var(--platform-danger-light)',
-                    color: 'var(--platform-danger)',
-                    border: '1px solid var(--platform-danger)',
-                    borderRadius: '4px',
-                    fontSize: '14px'
-                }}>
+                <div style={styles.error}>
                     {error}
                 </div>
             )}
 
             <form onSubmit={handleAddCategory} style={{ 
-                marginBottom: '20px', 
+                marginBottom: '1.5rem', 
                 display: 'flex', 
-                gap: '10px' 
+                gap: '0.75rem' 
             }}>
                 <input
                     type="text"
@@ -225,161 +257,127 @@ const CategoryManager = ({ siteId }) => {
                     required
                     disabled={actionLoading}
                     style={{ 
-                        flexGrow: 1, 
-                        padding: '10px',
-                        border: '1px solid var(--site-border-color)',
-                        borderRadius: '4px',
-                        backgroundColor: 'var(--site-card-bg)',
-                        color: 'var(--site-text-primary)',
-                        fontSize: '14px',
-                        transition: 'border-color 0.2s ease',
+                        ...styles.input,
                         opacity: actionLoading ? 0.6 : 1
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--site-accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--site-border-color)'}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--platform-border-color)'}
                 />
                 <button 
                     type="submit" 
                     disabled={actionLoading}
                     style={{ 
-                        backgroundColor: 'var(--site-accent)', 
-                        color: 'var(--site-accent-text)',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '10px 20px',
-                        cursor: actionLoading ? 'not-allowed' : 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        transition: 'background-color 0.2s ease',
-                        whiteSpace: 'nowrap',
+                        ...styles.primaryButton,
                         opacity: actionLoading ? 0.6 : 1
                     }}
-                    onMouseEnter={(e) => {
-                        if (!actionLoading) {
-                            e.target.style.backgroundColor = 'var(--site-accent-hover)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        if (!actionLoading) {
-                            e.target.style.backgroundColor = 'var(--site-accent)';
-                        }
-                    }}
                 >
-                    {actionLoading ? '...' : 'Додати'}
+                    {actionLoading ? '⏳' : '➕'} Додати
                 </button>
             </form>
 
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-                {categoriesToRender.map(category => (
-                    <li key={category.id} style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        padding: '12px 0', 
-                        borderBottom: '1px solid var(--site-border-color)',
-                        transition: 'background-color 0.2s ease'
-                    }}>
-                        {editingCategoryId === category.id ? (
-                            <form onSubmit={handleUpdateCategory} style={{ display: 'flex', flexGrow: 1, gap: '8px' }}>
-                                <input
-                                    type="text"
-                                    value={editingCategoryName}
-                                    onChange={(e) => setEditingCategoryName(e.target.value)}
-                                    disabled={actionLoading}
-                                    autoFocus
-                                    style={{
-                                        flexGrow: 1,
-                                        padding: '8px',
-                                        border: '1px solid var(--site-accent)',
-                                        borderRadius: '4px',
-                                        backgroundColor: 'var(--site-card-bg)',
-                                        color: 'var(--site-text-primary)',
-                                        opacity: actionLoading ? 0.6 : 1
-                                    }}
-                                />
-                                <button 
-                                    type="submit" 
-                                    disabled={actionLoading}
-                                    style={primaryButtonStyle}
-                                >
-                                    {actionLoading ? '...' : 'Зберегти'}
-                                </button>
-                                <button 
-                                    type="button" 
-                                    onClick={handleCancelEdit}
-                                    disabled={actionLoading}
-                                    style={secondaryButtonStyle}
-                                >
-                                    Скасувати
-                                </button>
-                            </form>
-                        ) : (
-                            <>
-                                <span style={{ 
-                                    color: 'var(--site-text-primary)',
-                                    fontSize: '14px',
-                                    fontWeight: '500'
-                                }}>
-                                    {category.name}
-                                </span>
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                    <button 
-                                        onClick={() => handleEditClick(category)} 
+            {categoriesToRender.length > 0 ? (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {categoriesToRender.map(category => (
+                        <li key={category.id} style={styles.listItem}>
+                            {editingCategoryId === category.id ? (
+                                <form onSubmit={handleUpdateCategory} style={{ display: 'flex', flexGrow: 1, gap: '0.5rem' }}>
+                                    <input
+                                        type="text"
+                                        value={editingCategoryName}
+                                        onChange={(e) => setEditingCategoryName(e.target.value)}
                                         disabled={actionLoading}
-                                        style={editButtonStyle}
-                                        onMouseEnter={(e) => {
-                                            if (!actionLoading) {
-                                                e.target.style.backgroundColor = 'var(--platform-border-color)';
-                                                e.target.style.color = 'var(--site-text-primary)';
-                                            }
+                                        autoFocus
+                                        style={{
+                                            ...styles.input,
+                                            opacity: actionLoading ? 0.6 : 1
                                         }}
-                                        onMouseLeave={(e) => {
-                                            if (!actionLoading) {
-                                                e.target.style.backgroundColor = 'transparent';
-                                                e.target.style.color = 'var(--site-text-secondary)';
-                                            }
+                                    />
+                                    <button 
+                                        type="submit" 
+                                        disabled={actionLoading}
+                                        style={{
+                                            ...styles.primaryButton,
+                                            padding: '0.75rem 1rem',
+                                            opacity: actionLoading ? 0.6 : 1
                                         }}
-                                        title="Редагувати назву"
                                     >
-                                        ✏️
+                                        {actionLoading ? '⏳' : '💾'} Зберегти
                                     </button>
                                     <button 
-                                        onClick={() => handleDeleteCategory(category.id)} 
+                                        type="button" 
+                                        onClick={handleCancelEdit}
                                         disabled={actionLoading}
-                                        style={deleteButtonStyle}
-                                        onMouseEnter={(e) => {
-                                            if (!actionLoading) {
-                                                e.target.style.backgroundColor = 'var(--platform-danger)';
-                                                e.target.style.color = 'white';
-                                            }
+                                        style={{
+                                            ...styles.secondaryButton,
+                                            opacity: actionLoading ? 0.6 : 1
                                         }}
-                                        onMouseLeave={(e) => {
-                                            if (!actionLoading) {
-                                                e.target.style.backgroundColor = 'transparent';
-                                                e.target.style.color = 'var(--platform-danger)';
-                                            }
-                                        }}
-                                        title="Видалити категорію"
                                     >
-                                        ×
+                                        Скасувати
                                     </button>
-                                </div>
-                            </>
-                        )}
-                    </li>
-                ))}
-            </ul>
+                                </form>
+                            ) : (
+                                <>
+                                    <span style={styles.categoryName}>
+                                        {category.name}
+                                    </span>
+                                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                        <button 
+                                            onClick={() => handleEditClick(category)} 
+                                            disabled={actionLoading}
+                                            style={{
+                                                ...styles.actionButton,
+                                                ...styles.editButton,
+                                                opacity: actionLoading ? 0.6 : 1
+                                            }}
+                                            title="Редагувати назву"
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteCategory(category.id)} 
+                                            disabled={actionLoading}
+                                            style={{
+                                                ...styles.actionButton,
+                                                ...styles.deleteButton,
+                                                opacity: actionLoading ? 0.6 : 1
+                                            }}
+                                            title="Видалити категорію"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div style={styles.emptyState}>
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📂</div>
+                    <p style={{ margin: 0 }}>Немає створених категорій</p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>
+                        Додайте першу категорію для організації товарів
+                    </p>
+                </div>
+            )}
 
-            {categoriesToRender.length === 0 && !loading && (
-                <p style={{ 
-                    color: 'var(--site-text-secondary)', 
-                    textAlign: 'center',
+            {categoriesToRender.length > 0 && (
+                <div style={{
                     marginTop: '1rem',
-                    fontSize: '14px',
-                    fontStyle: 'italic'
+                    padding: '0.75rem',
+                    backgroundColor: 'var(--platform-bg)',
+                    borderRadius: '6px',
+                    border: '1px solid var(--platform-border-color)'
                 }}>
-                    Немає створених категорій.
-                </p>
+                    <p style={{
+                        margin: 0,
+                        fontSize: '0.8rem',
+                        color: 'var(--platform-text-secondary)',
+                        textAlign: 'center'
+                    }}>
+                        📝 <strong>{categoriesToRender.length}</strong> категорій
+                    </p>
+                </div>
             )}
         </div>
     );

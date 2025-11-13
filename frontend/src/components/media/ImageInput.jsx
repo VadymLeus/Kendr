@@ -16,8 +16,8 @@ const ImageInput = ({ value, onChange }) => {
         width: '100%',
         position: 'relative',
         aspectRatio: '16 / 9',
-        backgroundColor: 'var(--site-bg)',
-        border: '1px solid var(--site-border-color)',
+        backgroundColor: 'var(--platform-bg)',
+        border: '1px solid var(--platform-border-color)',
         borderRadius: '8px',
         overflow: 'hidden',
         display: 'flex',
@@ -32,7 +32,7 @@ const ImageInput = ({ value, onChange }) => {
     };
 
     const placeholderStyle = {
-        color: 'var(--site-text-secondary)',
+        color: 'var(--platform-text-secondary)',
         fontSize: '0.9rem'
     };
 
@@ -43,41 +43,31 @@ const ImageInput = ({ value, onChange }) => {
         transform: 'translateX(-50%)',
         display: 'flex',
         gap: '10px',
-        background: 'var(--site-card-bg)',
+        background: 'var(--platform-card-bg)',
         padding: '8px 16px',
         borderRadius: '6px',
-        border: '1px solid var(--site-border-color)',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+        border: '1px solid var(--platform-border-color)'
     };
 
     const buttonStyle = {
-        background: 'var(--site-accent)',
-        color: 'var(--site-accent-text)',
+        background: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)',
         border: 'none',
         borderRadius: '4px',
         padding: '8px 16px',
         cursor: 'pointer',
         fontSize: '0.9rem',
-        fontWeight: '500',
-        transition: 'all 0.2s ease'
+        fontWeight: '500'
     };
 
     const deleteButtonStyle = {
         ...buttonStyle,
-        background: 'var(--site-danger)',
+        background: 'var(--platform-danger)',
         color: 'white'
-    };
-
-    const labelStyle = {
-        display: 'block', 
-        marginBottom: '0.5rem',
-        color: 'var(--site-text-primary)',
-        fontWeight: '500'
     };
 
     return (
         <div className="image-input-container">
-            <label style={labelStyle}>Зображення:</label>
             <div style={containerStyle}>
                 {value ? (
                     <img 
@@ -100,12 +90,6 @@ const ImageInput = ({ value, onChange }) => {
                         type="button" 
                         style={buttonStyle}
                         onClick={() => setIsModalOpen(true)}
-                        onMouseEnter={(e) => {
-                            e.target.style.background = 'var(--site-accent-hover)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.background = 'var(--site-accent)';
-                        }}
                     >
                         {value ? 'Змінити' : 'Вибрати...'}
                     </button>
@@ -114,12 +98,6 @@ const ImageInput = ({ value, onChange }) => {
                             type="button" 
                             style={deleteButtonStyle}
                             onClick={() => onChange('')}
-                            onMouseEnter={(e) => {
-                                e.target.style.background = 'var(--site-danger-hover, #c53030)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.background = 'var(--site-danger)';
-                            }}
                         >
                             Видалити
                         </button>

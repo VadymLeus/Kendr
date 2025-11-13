@@ -31,9 +31,9 @@ const BlockEditor = ({
                     style={{
                         padding: '3rem',
                         textAlign: 'center',
-                        border: '2px dashed var(--site-border-color)',
+                        border: '2px dashed var(--platform-border-color)',
                         borderRadius: '8px',
-                        color: 'var(--site-text-secondary)',
+                        color: 'var(--platform-text-secondary)',
                         margin: '20px 0'
                     }}
                 >
@@ -66,9 +66,9 @@ const BlockEditor = ({
                     style={{
                         padding: '1.5rem',
                         textAlign: 'center',
-                        border: '2px dashed var(--site-border-color)',
+                        border: '2px dashed var(--platform-border-color)',
                         borderRadius: '8px',
-                        color: 'var(--site-text-secondary)',
+                        color: 'var(--platform-text-secondary)',
                         margin: '20px 0',
                         opacity: 0.7
                     }}

@@ -5,28 +5,6 @@ import { BLOCK_LIBRARY } from "../editorConfig";
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
-const layerItemStyle = {
-    padding: '0.5rem 0.75rem',
-    margin: '0.25rem 0',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    background: 'var(--site-card-bg)',
-    border: '1px solid var(--site-border-color)',
-    borderRadius: '4px',
-    cursor: 'grab',
-    transition: 'all 0.2s ease',
-    color: 'var(--site-text-primary)',
-    fontSize: '0.875rem',
-    fontWeight: 500
-};
-
-const nestedContainerStyle = {
-    marginLeft: '1.5rem',
-    paddingLeft: '0.5rem',
-    borderLeft: '2px solid var(--site-border-color)'
-};
-
 const BlockLayerItem = ({
     block,
     path,
@@ -36,6 +14,70 @@ const BlockLayerItem = ({
 }) => {
     const ref = useRef(null);
     const blockInfo = BLOCK_LIBRARY.find(b => b.type === block.type) || { name: block.type, icon: '❓' };
+
+    const styles = {
+        layerItem: {
+            padding: '0.75rem 1rem',
+            margin: '0.25rem 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            background: 'var(--platform-card-bg)',
+            border: '1px solid var(--platform-border-color)',
+            borderRadius: '8px',
+            cursor: 'grab',
+            transition: 'all 0.2s ease',
+            color: 'var(--platform-text-primary)',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        },
+        nestedContainer: {
+            marginLeft: '1.5rem',
+            paddingLeft: '0.75rem',
+            borderLeft: '2px solid var(--platform-border-color)',
+            marginTop: '0.5rem'
+        },
+        columnLabel: {
+            padding: '0.5rem',
+            fontStyle: 'italic',
+            color: 'var(--platform-text-secondary)',
+            fontSize: '0.8rem',
+            background: 'var(--platform-bg)',
+            borderRadius: '4px',
+            marginBottom: '0.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+        },
+        icon: {
+            fontSize: '1rem',
+            opacity: 0.8,
+            flexShrink: 0
+        },
+        name: {
+            flex: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            minWidth: 0
+        },
+        button: {
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.25rem',
+            borderRadius: '4px',
+            transition: 'all 0.2s ease',
+            flexShrink: 0
+        },
+        settingsButton: {
+            color: 'var(--platform-text-secondary)'
+        },
+        deleteButton: {
+            color: 'var(--platform-danger)'
+        }
+    };
 
     const [{ isDragging }, drag] = useDrag({
         type: DRAG_ITEM_TYPE_EXISTING,
@@ -74,10 +116,16 @@ const BlockLayerItem = ({
     let nestedBlocks = null;
     if (block.type === 'layout' && block.data.columns) {
         nestedBlocks = (
-            <div style={nestedContainerStyle}>
+            <div style={styles.nestedContainer}>
                 {block.data.columns.map((column, colIndex) => (
-                    <div key={colIndex} style={{ padding: '5px', fontStyle: 'italic', color: 'var(--site-text-secondary)' }}>
-                        <small>Колонка {colIndex + 1}</small>
+                    <div key={colIndex}>
+                        <div style={styles.columnLabel}>
+                            <span>📑</span>
+                            <span>Колонка {colIndex + 1}</span>
+                            <small style={{ marginLeft: 'auto', opacity: 0.7 }}>
+                                {column.length} блок(ів)
+                            </small>
+                        </div>
                         {column.map((colBlock, colBlockIndex) => (
                             <BlockLayerItem
                                 key={colBlock.block_id}
@@ -99,18 +147,65 @@ const BlockLayerItem = ({
             <div
                 ref={ref}
                 style={{
-                    ...layerItemStyle,
+                    ...styles.layerItem,
                     opacity: isDragging ? 0.3 : 1,
-                    border: isDragging ? '2px dashed var(--site-accent)' : layerItemStyle.border
+                    border: isDragging ? '2px dashed var(--platform-accent)' : styles.layerItem.border,
+                    transform: isDragging ? 'scale(0.98)' : 'scale(1)'
+                }}
+                onMouseEnter={(e) => {
+                    if (!isDragging) {
+                        e.target.style.transform = 'translateX(4px)';
+                        e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    if (!isDragging) {
+                        e.target.style.transform = 'translateX(0)';
+                        e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+                    }
                 }}
             >
-                <span style={{ fontSize: '1rem' }}>{blockInfo.icon}</span>
-                <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={styles.icon}>{blockInfo.icon}</span>
+                <span style={styles.name}>
                     {blockInfo.name}
                 </span>
                 
-                <button title="Налаштування" onClick={handleSelect} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--site-text-secondary)'}}>⚙️</button>
-                <button title="Видалити" onClick={handleDelete} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--platform-danger)'}}>❌</button>
+                <button 
+                    title="Налаштування" 
+                    onClick={handleSelect} 
+                    style={{
+                        ...styles.button,
+                        ...styles.settingsButton
+                    }}
+                    onMouseEnter={(e) => {
+                        e.target.style.background = 'var(--platform-bg)';
+                        e.target.style.color = 'var(--platform-accent)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.style.background = 'none';
+                        e.target.style.color = 'var(--platform-text-secondary)';
+                    }}
+                >
+                    ⚙️
+                </button>
+                <button 
+                    title="Видалити" 
+                    onClick={handleDelete} 
+                    style={{
+                        ...styles.button,
+                        ...styles.deleteButton
+                    }}
+                    onMouseEnter={(e) => {
+                        e.target.style.background = 'var(--platform-danger)';
+                        e.target.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.style.background = 'none';
+                        e.target.style.color = 'var(--platform-danger)';
+                    }}
+                >
+                    ❌
+                </button>
             </div>
             {nestedBlocks}
         </>

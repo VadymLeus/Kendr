@@ -6,7 +6,7 @@ import { BLOCK_LIBRARY } from "../editorConfig";
 const Section = ({ title, children }) => (
     <div style={{ marginBottom: '1.5rem' }}>
         <h4 style={{
-            color: 'var(--site-text-secondary)',
+            color: 'var(--platform-text-secondary)',
             fontSize: '0.9rem',
             fontWeight: '600',
             textTransform: 'uppercase',

@@ -48,14 +48,20 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
         zIndex: 1300
     };
 
-    // Базовий клас для посилань (аналогічно PlatformSidebar)
     const navLinkBaseClass = `flex items-center gap-4 text-decoration-none py-3 px-4 rounded-md mx-2 mb-2 transition-colors duration-200 ${isCollapsed ? 'justify-center' : 'justify-start'} text-[var(--platform-text-secondary)] hover:bg-[rgba(0,0,0,0.05)] hover:text-[var(--platform-text-primary)]`;
 
-    // Стиль активного посилання
     const activeStyle = {
         backgroundColor: 'var(--platform-accent)',
         color: 'var(--platform-accent-text)',
         fontWeight: '500'
+    };
+    
+    const logoImageStyle = {
+        height: '70px',
+        width: isCollapsed ? '70px' : 'auto',
+        maxWidth: '100%',
+        objectFit: 'contain',
+        transition: 'all 0.3s ease'
     };
 
     return (
@@ -66,14 +72,10 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
 
             <div style={logoContainerStyle}>
                 <Link to="/admin">
-                    {/* Адмінське лого не залежить від теми */}
                     <img 
                         src="/admin.webp" 
                         alt="Admin Logo" 
-                        style={{ 
-                            height: '70px', 
-                            transition: 'height 0.3s ease' 
-                        }} 
+                        style={logoImageStyle} 
                     />
                 </Link>
             </div>

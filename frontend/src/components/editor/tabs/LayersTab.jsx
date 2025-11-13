@@ -13,7 +13,7 @@ const LayersTab = ({
     if (typeof onMoveBlock !== 'function' || typeof onSelectBlock !== 'function') {
         console.warn("LayersTab: Необхідні пропси (onMoveBlock, onSelectBlock) не передані.");
         return (
-             <div style={{ padding: '1rem', color: 'var(--site-danger)'}}>
+             <div style={{ padding: '1rem', color: 'var(--platform-danger)'}}>
                 Помилка: Вкладка "Шари" не змогла ініціалізуватися.
             </div>
         )
@@ -21,17 +21,17 @@ const LayersTab = ({
 
     return (
         <div>
-            <h3 style={{ color: 'var(--site-text-primary)', marginBottom: '1rem' }}>
-                🗂️ Шари сторінки
+            <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
+                Шари сторінки
             </h3>
             
             {(!blocks || blocks.length === 0) ? (
                  <div style={{
                     padding: '2rem',
                     textAlign: 'center',
-                    border: '1px dashed var(--site-border-color)',
+                    border: '1px dashed var(--platform-border-color)',
                     borderRadius: '8px',
-                    color: 'var(--site-text-secondary)'
+                    color: 'var(--platform-text-secondary)'
                 }}>
                     <p>Сторінка порожня.</p>
                     <p>Перетягніть сюди блоки з вкладки "Додати".</p>

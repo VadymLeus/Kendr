@@ -56,7 +56,7 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
     const stockStyle = {
         margin: '0 0 1rem 0',
         fontSize: '0.9em',
-        color: isSoldOut ? 'var(--platform-danger)' : 'var(--platform-success)',
+        color: isSoldOut ? 'var(--site-danger)' : 'var(--site-success)',
         flexGrow: 1
     };
 
@@ -178,8 +178,8 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
             gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
             gap: '1rem',
             padding: '1rem',
-            border: '1px dashed var(--site-border-color)',
-            background: 'var(--site-bg)',
+            border: '1px dashed var(--platform-border-color)',
+            background: 'var(--platform-card-bg)',
             borderRadius: '8px'
         }
         : {
@@ -191,7 +191,7 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
         };
 
     const containerStyle = isEditorPreview
-        ? { padding: '10px', background: 'var(--site-bg)' }
+        ? { padding: '10px', background: 'var(--platform-card-bg)' }
         : { padding: '40px 20px', background: 'var(--site-bg)' };
 
     if (productsToDisplay.length === 0 && !isEditorPreview) {
@@ -205,7 +205,11 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
 
     return (
         <div style={containerStyle}>
-            <h2 style={{ textAlign: 'center', marginBottom: '2.5rem', color: 'var(--site-text-primary)' }}>
+            <h2 style={{ 
+                textAlign: 'center', 
+                marginBottom: '2.5rem', 
+                color: isEditorPreview ? 'var(--platform-text-primary)' : 'var(--site-text-primary)' 
+            }}>
                 {blockData.title || 'Товари'}
             </h2>
 
@@ -214,7 +218,7 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
                     ...gridStyle,
                     display: 'block',
                     textAlign: 'center',
-                    color: 'var(--site-text-secondary)'
+                    color: 'var(--platform-text-secondary)'
                 }}>
                     Немає вибраних товарів. (Налаштуйте блок, щоб додати їх)
                 </div>

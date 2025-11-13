@@ -50,7 +50,7 @@ class Site {
         SELECT
             s.id, s.user_id, s.title, s.logo_url, s.status,
             s.view_count, s.site_theme_mode, s.site_theme_accent,
-            s.site_path, s.header_layout, s.footer_layout
+            s.site_path, s.theme_settings, s.header_settings, s.footer_layout
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -58,6 +58,13 @@ class Site {
     if (!sites[0]) return null;
     const site = sites[0];
     
+    if (typeof site.theme_settings === 'string') {
+        site.theme_settings = JSON.parse(site.theme_settings);
+    }
+    if (typeof site.header_settings === 'string') {
+        site.header_settings = JSON.parse(site.header_settings);
+    }
+
     const [productRows] = await db.query(`
         SELECT p.*, c.name as category_name
         FROM products p
@@ -69,10 +76,6 @@ class Site {
     return { ...site, products: productRows };
   }
 
-  /**
-   * Знаходить сайт за його ID та ID власника.
-   * Використовується для перевірки прав доступу.
-   */
   static async findByIdAndUserId(siteId, userId) {
     const [rows] = await db.query(
       'SELECT * FROM sites WHERE id = ? AND user_id = ?',
@@ -97,12 +100,14 @@ class Site {
   }
 
   static async updateSettings(siteId, data) {
-    const { title, status, site_theme_mode, site_theme_accent } = data;
+    const { title, status, site_theme_mode, site_theme_accent, theme_settings, header_settings } = data;
     const params = [
          title, 
         status, 
         site_theme_mode || 'light',
         site_theme_accent || 'orange',
+        theme_settings ? JSON.stringify(theme_settings) : null,
+        header_settings ? JSON.stringify(header_settings) : null,
         siteId
     ];
     const query = `
@@ -111,7 +116,9 @@ class Site {
             title = ?, 
             status = ?, 
             site_theme_mode = ?, 
-            site_theme_accent = ?
+            site_theme_accent = ?,
+            theme_settings = ?,
+            header_settings = ?
         WHERE id = ?
     `;
     const [result] = await db.query(query, params);
