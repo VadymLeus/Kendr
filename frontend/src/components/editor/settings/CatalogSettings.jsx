@@ -1,10 +1,21 @@
 // frontend/src/components/editor/settings/CatalogSettings.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import apiClient from '../../../services/api';
 
 const CatalogSettings = ({ data, onChange, siteData }) => {
     
     const allProducts = siteData?.products || [];
     const [searchTerm, setSearchTerm] = useState('');
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    
+    useEffect(() => {
+        if (siteData?.id) {
+            apiClient.get(`/categories/site/${siteData.id}`)
+                .then(res => setCategories(res.data))
+                .catch(err => console.error("Не вдалося завантажити категорії", err));
+        }
+    }, [siteData?.id]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -60,10 +71,14 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
     };
 
     const filteredProducts = React.useMemo(() => 
-        allProducts.filter(product => 
-            product.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ), 
-        [allProducts, searchTerm]
+        allProducts.filter(product => {
+            const matchesCategory = selectedCategory === 'all' || 
+                                    String(product.category_id) === selectedCategory;
+            const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            return matchesCategory && matchesSearch;
+        }), 
+        [allProducts, searchTerm, selectedCategory]
     );
 
     return (
@@ -82,6 +97,20 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
             </div>
 
             <div style={formGroupStyle}>
+                <label style={labelStyle}>Фільтр за категорією:</label>
+                <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    style={inputStyle}
+                >
+                    <option value="all">Всі категорії</option>
+                    {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                </select>
+            </div>
+
+            <div style={formGroupStyle}>
                 <label style={labelStyle}>Пошук товару:</label>
                 <input
                     type="text"
@@ -94,7 +123,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
             </div>
             
             <div style={formGroupStyle}>
-                <label style={labelStyle}>Оберіть товари для відображення:</label>
+                <label style={labelStyle}>Оберіть товари для відображення ({data.selectedProductIds?.length || 0} обрано):</label>
                 <div style={productsContainerStyle}>
                     {allProducts.length > 0 ? (
                         filteredProducts.length > 0 ? (
