@@ -17,7 +17,7 @@ export const BLOCK_LIBRARY = [
         ]
     },
 
-    { type: 'categories', name: 'Сітка категорій', icon: '🗂️' },
+    { type: 'categories', name: 'Вітрина категорій', icon: '🗂️' },
     { type: 'catalog_grid', name: 'Сітка товарів', icon: '🛍️' },
     { type: 'features', name: 'Переваги', icon: '✅' },
     { type: 'form', name: 'Форма звʼязку', icon: '✉️' },
@@ -75,13 +75,18 @@ export const getDefaultBlockData = (type, options = {}) => {
 
         case 'categories':
             return { 
-                title: 'Категорії товарів' 
+                columns: 3,
+                items: [
+                    { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+1', title: 'Елемент 1', link: '#' },
+                    { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+2', title: 'Елемент 2', link: '#' },
+                    { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+3', title: 'Елемент 3', link: '#' }
+                ]
             };
 
         case 'catalog_grid':
             return { 
-                title: 'Нова сітка товарів',
-                selectedProductIds: [] 
+                title: 'Наші товари',
+                category_id: 'all'
             };
 
         case 'features':
