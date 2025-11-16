@@ -55,7 +55,7 @@ const EditableBlockWrapper = ({
             
             const dragType = monitor.getItemType();
             if (!monitor.isOver({ shallow: true })) {
-                return;
+                 return;
             }
 
             if (dragType === DND_TYPE_NEW_BLOCK) {
@@ -73,7 +73,6 @@ const EditableBlockWrapper = ({
 
                 const isDroppingOnSelf = hoverPath.join(',').startsWith(dragPath.join(',')) &&
                                         hoverPath.length > dragPath.length;
-
                 if (isDroppingOnSelf) {
                     console.error("Заборонено: Не можна перемістити макет сам у себе.");
                     return;
@@ -92,6 +91,8 @@ const EditableBlockWrapper = ({
     const wrapperRef = useCallback(node => drag(drop(node)), [drag, drop]);
     const opacity = isDragging ? 0.4 : 1;
     const blockType = { name: block.type, icon: '⚙️' };
+
+    const blockDomId = `block-${block.block_id}`;
 
     const isSelected = selectedBlockPath && selectedBlockPath.join(',') === path.join(',');
 
@@ -189,6 +190,7 @@ const EditableBlockWrapper = ({
 
     return (
         <div
+            id={blockDomId}
             ref={wrapperRef}
             onClick={handleSelect}
             style={styles.wrapper}

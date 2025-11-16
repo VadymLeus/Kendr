@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../../../services/api';
 
-const PageModal = ({ isOpen, onClose, onSave, page, siteId }) => {
+const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
     const [name, setName] = useState(page ? page.name : '');
     const [slug, setSlug] = useState(page ? page.slug : '');
     const [error, setError] = useState('');
@@ -32,6 +32,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId }) => {
                 await apiClient.post(`/sites/${siteId}/pages`, { name, slug });
             }
             onSave();
+            if (onPageUpdate) onPageUpdate();
         } catch (err) {
             setError(err.response?.data?.message || 'Сталася помилка.');
         }
@@ -151,7 +152,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId }) => {
     );
 };
 
-const PagesSettingsTab = ({ siteId, onEditPage }) => {
+const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate }) => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -193,6 +194,7 @@ const PagesSettingsTab = ({ siteId, onEditPage }) => {
     const handleSaveSuccess = () => {
         handleCloseModal();
         fetchPages();
+        if (onPageUpdate) onPageUpdate();
     };
 
     const handleDelete = async (page) => {
@@ -206,6 +208,7 @@ const PagesSettingsTab = ({ siteId, onEditPage }) => {
         try {
             await apiClient.delete(`/pages/${page.id}`);
             fetchPages();
+            if (onPageUpdate) onPageUpdate();
         } catch (err) {
             alert(err.response?.data?.message || 'Помилка під час видалення.');
         }
@@ -215,6 +218,7 @@ const PagesSettingsTab = ({ siteId, onEditPage }) => {
         try {
             await apiClient.post(`/pages/${pageId}/set-home`);
             fetchPages();
+            if (onPageUpdate) onPageUpdate();
         } catch (err) {
             alert('Помилка під час встановлення головної сторінки.');
         }
@@ -282,6 +286,7 @@ const PagesSettingsTab = ({ siteId, onEditPage }) => {
                 onSave={handleSaveSuccess}
                 page={editingPage}
                 siteId={siteId}
+                onPageUpdate={onPageUpdate} 
             />
 
             <div style={{

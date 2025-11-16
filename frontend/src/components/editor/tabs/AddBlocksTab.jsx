@@ -1,22 +1,58 @@
 // frontend/src/components/editor/tabs/AddBlocksTab.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import DraggableBlockItem from "../DraggableBlockItem";
 import { BLOCK_LIBRARY } from "../editorConfig";
 
-const Section = ({ title, children }) => (
-    <div style={{ marginBottom: '1.5rem' }}>
-        <h4 style={{
-            color: 'var(--platform-text-secondary)',
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            textTransform: 'uppercase',
-            marginBottom: '0.75rem'
-        }}>
-            {title}
-        </h4>
-        {children}
-    </div>
-);
+const Section = ({ title, children }) => {
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    const headerStyle = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        color: 'var(--platform-text-secondary)',
+        fontSize: '0.9rem',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        marginBottom: '0.75rem',
+        cursor: 'pointer',
+        padding: '0.25rem 0',
+        userSelect: 'none'
+    };
+
+    const toggleButtonStyle = {
+        background: 'none',
+        border: 'none',
+        color: 'var(--platform-text-secondary)',
+        cursor: 'pointer',
+        fontSize: '1.2rem',
+        padding: '0.25rem 0.5rem',
+        transition: 'transform 0.2s ease',
+        transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'
+    };
+
+    return (
+        <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--platform-border-color)', paddingBottom: '1rem' }}>
+            <h4 
+                style={headerStyle} 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                title={isCollapsed ? 'Розгорнути' : 'Згорнути'}
+            >
+                {title}
+                <button 
+                    style={toggleButtonStyle}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCollapsed(!isCollapsed);
+                    }}
+                >
+                    ▼
+                </button>
+            </h4>
+            {!isCollapsed && children}
+        </div>
+    );
+};
 
 const layoutBlocks = BLOCK_LIBRARY.filter(b => b.type === 'layout');
 const basicBlocks = BLOCK_LIBRARY.filter(b => ['hero', 'text', 'image', 'button', 'form', 'features'].includes(b.type));

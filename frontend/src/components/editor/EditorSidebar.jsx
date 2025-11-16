@@ -12,20 +12,22 @@ const EditorSidebar = ({
     selectedBlockPath,
     onSelectBlock,
     onUpdateBlockData,
-    onSave
+    onSave,
+    allPages,
+    currentPageId,
+    onSelectPage
 }) => {
     const [activeTab, setActiveTab] = useState('add');
-
     useEffect(() => {
         if (selectedBlockPath) {
             setActiveTab('settings');
         }
     }, [selectedBlockPath]);
-
+    
     const handleSave = () => {
         onSave(blocks);
     };
-
+    
     const tabStyle = (tabName) => ({
         flex: 1,
         padding: '0.75rem',
@@ -36,13 +38,30 @@ const EditorSidebar = ({
         color: activeTab === tabName ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
         fontWeight: activeTab === tabName ? '600' : '400',
     });
-
+    
+    const pageSwitcherStyle = {
+        padding: '1rem',
+        borderBottom: '1px solid var(--platform-border-color)',
+        background: 'var(--platform-card-bg)'
+    };
+    
+    const selectStyle = {
+        width: '100%',
+        padding: '0.75rem',
+        border: '1px solid var(--platform-border-color)',
+        borderRadius: '6px',
+        background: 'var(--platform-bg)',
+        color: 'var(--platform-text-primary)',
+        fontWeight: '500',
+        cursor: 'pointer'
+    };
+    
     return (
         <div style={{
             width: '300px',
-            height: 'calc(100vh - 60px)', 
+            height: 'calc(100vh - 65px)',
             position: 'sticky',
-            top: '60px', 
+            top: '65px',
             display: 'flex',
             flexDirection: 'column',
             background: 'var(--platform-sidebar-bg)',
@@ -71,13 +90,40 @@ const EditorSidebar = ({
                 </button>
             </div>
 
+            <div style={pageSwitcherStyle}>
+                <label style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '500',
+                    color: 'var(--platform-text-secondary)',
+                    marginBottom: '0.5rem',
+                    display: 'block'
+                }}>
+                    Поточна сторінка:
+                </label>
+                <select
+                    style={selectStyle}
+                    value={currentPageId || ''}
+                    onChange={(e) => onSelectPage(parseInt(e.target.value, 10))}
+                    disabled={!allPages || allPages.length === 0}
+                >
+                    {(allPages || []).map(page => (
+                        <option key={page.id} value={page.id}>
+                            {page.is_homepage ? `🏠 ${page.name}` : page.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             <nav style={{ display: 'flex', borderBottom: '1px solid var(--platform-border-color)' }}>
                 <button style={tabStyle('add')} onClick={() => setActiveTab('add')}>➕ Додати</button>
                 <button style={tabStyle('layers')} onClick={() => setActiveTab('layers')}>🗂️ Шари</button>
                 <button style={tabStyle('settings')} onClick={() => setActiveTab('settings')}>⚙️ Налаш.</button>
             </nav>
 
-            <div style={{ overflowY: 'auto', flex: 1, padding: '1rem' }}>
+            <div style={{ 
+                 overflowY: 'auto', flex: 1, padding: '1rem' }}
+                 className="custom-scrollbar"
+            >
                 {activeTab === 'add' && <AddBlocksTab />}
                 
                 {activeTab === 'layers' && (

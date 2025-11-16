@@ -103,14 +103,25 @@ const BlockLayerItem = ({
 
     drag(drop(ref));
 
-    const handleSelect = (e) => {
-        e.stopPropagation();
-        onSelectBlock(path);
-    };
-
     const handleDelete = (e) => {
         e.stopPropagation();
         onDeleteBlock(path);
+    };
+
+    const handleSelectAndScroll = (e) => {
+        e.stopPropagation();
+        onSelectBlock(path);
+
+        const blockDomId = `block-${block.block_id}`;
+        const element = document.getElementById(blockDomId);
+
+        if (element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }
     };
 
     let nestedBlocks = null;
@@ -152,6 +163,7 @@ const BlockLayerItem = ({
                     border: isDragging ? '2px dashed var(--platform-accent)' : styles.layerItem.border,
                     transform: isDragging ? 'scale(0.98)' : 'scale(1)'
                 }}
+                onClick={handleSelectAndScroll}
                 onMouseEnter={(e) => {
                     if (!isDragging) {
                         e.target.style.transform = 'translateX(4px)';
@@ -172,7 +184,7 @@ const BlockLayerItem = ({
                 
                 <button 
                     title="Налаштування" 
-                    onClick={handleSelect} 
+                    onClick={handleSelectAndScroll}
                     style={{
                         ...styles.button,
                         ...styles.settingsButton

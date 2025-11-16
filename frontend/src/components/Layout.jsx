@@ -18,17 +18,17 @@ const Layout = () => {
 
     const [siteData, setSiteData] = useState(null);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
-    
     const currentSidebarWidth = isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
     const handleToggleSidebar = () => setIsCollapsed(prev => !prev);
 
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
     const productMatch = location.pathname.match(/^\/product\/([^/]+)/);
-    const shouldShowSiteHeader = !!(dashboardMatch || publicMatch || productMatch);
     
-    const shouldShowFooter = !isAdmin;
-
+    const shouldShowSiteHeader = !!(publicMatch || productMatch);
+    
+    const shouldShowFooter = !isAdmin && !dashboardMatch;
+    
     useEffect(() => {
         const fetchSiteData = async () => {
             setIsSiteLoading(true);
@@ -47,7 +47,7 @@ const Layout = () => {
                     if (slug) {
                         url = `/sites/${sitePath}/${slug}`;
                     } else {
-                         url = `/sites/${sitePath}`;
+                        url = `/sites/${sitePath}`;
                     }
                 } else if (productMatch) {
                     const productId = productMatch[1];
@@ -84,13 +84,11 @@ const Layout = () => {
     
     const themeSettings = siteData?.theme_settings || {};
     
-    const isPublicPage = !!(publicMatch || productMatch); 
-
+    const isPublicPage = !!(publicMatch || productMatch);
     const mainStyles = {
         padding: dashboardMatch ? 0 : '2rem',
         flexGrow: 1,
     };
-
     if (isPublicPage && siteData) {
         mainStyles['--font-heading'] = themeSettings.font_heading || 'sans-serif';
         mainStyles['--font-body'] = themeSettings.font_body || 'sans-serif';

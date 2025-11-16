@@ -12,9 +12,6 @@ export const BLOCK_LIBRARY = [
         presets: [
             { preset: '50-50', name: '2 колонки (50/50)', columns: 2 },
             { preset: '75-25', name: '2 колонки (75/25)', columns: 2 },
-            { preset: '25-75', name: '2 колонки (25/75)', columns: 2 },
-            { preset: '33-33-33', name: '3 колонки (33/33/33)', columns: 3 },
-            { preset: '25-25-25-25', name: '4 колонки (25/25/25/25)', columns: 4 },
         ]
     },
 
