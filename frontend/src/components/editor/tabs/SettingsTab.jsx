@@ -9,6 +9,7 @@ import HeroSettings from '../settings/HeroSettings';
 import ImageSettings from '../settings/ImageSettings';
 import ButtonSettings from '../settings/ButtonSettings';
 import FormSettings from '../settings/FormSettings';
+import LayoutSettings from '../settings/LayoutSettings';
 
 const SettingsComponentMap = {
     categories: CategoriesSettings,
@@ -19,6 +20,7 @@ const SettingsComponentMap = {
     image: ImageSettings,
     button: ButtonSettings,
     form: FormSettings,
+    layout: LayoutSettings,
 };
 
 const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData }) => {

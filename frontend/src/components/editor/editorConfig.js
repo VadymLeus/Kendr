@@ -10,10 +10,11 @@ export const BLOCK_LIBRARY = [
         name: 'Макет (Колонки)', 
         icon: '📐', 
         presets: [
-            { preset: '100', name: '1 колонка (100%)', columns: 1 },
             { preset: '50-50', name: '2 колонки (50/50)', columns: 2 },
+            { preset: '75-25', name: '2 колонки (75/25)', columns: 2 },
+            { preset: '25-75', name: '2 колонки (25/75)', columns: 2 },
             { preset: '33-33-33', name: '3 колонки (33/33/33)', columns: 3 },
-            { preset: '30-70', name: '2 колонки (30/70)', columns: 2 },
+            { preset: '25-25-25-25', name: '4 колонки (25/25/25/25)', columns: 4 },
         ]
     },
 
@@ -69,6 +70,7 @@ export const getDefaultBlockData = (type, options = {}) => {
         case 'layout':
             const columnCount = options.columns || 2;
             return { 
+                direction: 'row',
                 preset: options.preset || '50-50',
                 columns: Array(columnCount).fill().map(() => [])
             };

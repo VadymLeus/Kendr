@@ -7,58 +7,67 @@ import BlockRenderer from './BlockRenderer';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
-const getLayoutStyles = (preset) => {
+const getLayoutStyles = (direction, preset) => {
     const baseStyle = {
-        display: 'flex',
-        flexWrap: 'wrap',
+        display: 'grid',
         gap: '20px',
         padding: '20px',
         backgroundColor: 'transparent',
-        background: 'none'
+        background: 'none',
     };
+
+    if (direction === 'column') {
+        baseStyle.gridTemplateColumns = '1fr';
+        return baseStyle;
+    }
+
     switch (preset) {
         case '50-50':
-            return { ...baseStyle, gridTemplateColumns: '1fr 1fr', display: 'grid' };
+            baseStyle.gridTemplateColumns = '1fr 1fr';
+            break;
+        case '75-25':
+            baseStyle.gridTemplateColumns = '3fr 1fr';
+            break;
+        case '25-75':
+            baseStyle.gridTemplateColumns = '1fr 3fr';
+            break;
         case '33-33-33':
-            return { ...baseStyle, gridTemplateColumns: '1fr 1fr 1fr', display: 'grid' };
-        case '30-70':
-            return { ...baseStyle, gridTemplateColumns: '0.3fr 0.7fr', display: 'grid' };
-        case '100':
-        default:
-            return { ...baseStyle, gridTemplateColumns: '1fr', display: 'grid' };
+            baseStyle.gridTemplateColumns = '1fr 1fr 1fr';
+            break;
+        case '25-25-25-25':
+            baseStyle.gridTemplateColumns = '1fr 1fr 1fr 1fr';
+            break;
+        default: 
+            baseStyle.gridTemplateColumns = '1fr 1fr'; 
     }
+    
+    return baseStyle;
 };
 
 const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock }) => {
     const accent = isEditorPreview ? 'var(--platform-accent)' : 'var(--site-accent)';
     const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
     const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
-
+    
     const [{ isOver, canDrop }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
         drop: (item, monitor) => {
             if (monitor.didDrop()) return;
-
             const dragType = monitor.getItemType();
-
             if (dragType === DRAG_ITEM_TYPE_EXISTING) {
                 const dragPath = item.path;
                 const dropZonePath = path;
-
                 const isDroppingOnSelf = dropZonePath.join(',').startsWith(dragPath.join(',')) &&
                                         dropZonePath.length > dragPath.length;
-
                 if (isDroppingOnSelf) {
                     console.error("Заборонено: Не можна перемістити макет сам у себе.");
                     return;
                 }
-
                 onDrop(item, path);
             } else if (dragType === DND_TYPE_NEW_BLOCK) {
                 const newBlockPath = [...path, React.Children.count(children)];
                 onAddBlock(newBlockPath, item.blockType, item.presetData);
             }
-            
             return { name: 'ColumnDropZone', path };
         },
         canDrop: () => isEditorPreview,
@@ -69,17 +78,18 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
     });
     
     const columnStyle = {
-        flex: 1,
         minHeight: '150px',
         padding: '10px',
         borderRadius: '8px',
-        border: isOver && canDrop ? `2px dashed ${accent}` : `2px dashed ${borderColor}`,
+        border: isOver && canDrop ?
+            `2px dashed ${accent}` : `2px dashed ${borderColor}`,
         transition: 'background-color 0.2s ease, border-color 0.2s ease',
-        backgroundColor: isOver && canDrop ? 'rgba(66, 153, 225, 0.1)' : 'transparent',
+        backgroundColor: isOver && canDrop ?
+            'rgba(66, 153, 225, 0.1)' : 'transparent',
     };
-
+    
     if (!isEditorPreview) {
-        return <div style={{ flex: 1, backgroundColor: 'transparent' }}>{children}</div>;
+        return <div style={{ backgroundColor: 'transparent' }}>{children}</div>;
     }
 
     return (
@@ -113,15 +123,14 @@ const LayoutBlock = ({
     selectedBlockPath,
     onAddBlock 
 }) => {
-    const { preset, columns = [] } = block.data;
-    const layoutStyle = getLayoutStyles(preset);
+    const { preset, columns = [], direction } = block.data;
+    const layoutStyle = getLayoutStyles(direction, preset);
 
     if (!isEditorPreview) {
         return (
             <div style={layoutStyle}>
                 {columns.map((columnBlocks, colIndex) => (
                     <div key={colIndex} style={{ 
-                        flex: 1, 
                         minWidth: '250px',
                         backgroundColor: 'transparent'
                     }}>
