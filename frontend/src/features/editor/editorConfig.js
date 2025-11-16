@@ -41,8 +41,9 @@ export const getDefaultBlockData = (type, options = {}) => {
 
         case 'text':
             return { 
-                headerTitle: 'Новий текстовий блок',
-                aboutText: 'Вставте сюди свій текст.'
+                content: 'Вставте сюди свій текст.',
+                alignment: 'left',
+                style: 'p'
             };
 
         case 'image':
