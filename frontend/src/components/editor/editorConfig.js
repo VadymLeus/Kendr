@@ -85,8 +85,11 @@ export const getDefaultBlockData = (type, options = {}) => {
 
         case 'catalog_grid':
             return { 
-                title: 'Наші товари',
-                category_id: 'all'
+                title: 'Нова сітка товарів',
+                mode: 'auto',
+                category_id: 'all',
+                selectedProductIds: [],
+                excludedProductIds: []
             };
 
         case 'features':

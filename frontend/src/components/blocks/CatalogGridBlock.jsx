@@ -1,5 +1,5 @@
 // frontend/src/components/blocks/CatalogGridBlock.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CartContext } from '../../features/cart/CartContext';
 import { AuthContext } from '../../features/auth/AuthContext';
@@ -12,7 +12,6 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
     const navigate = useNavigate();
 
     const isSoldOut = product.stock_quantity === 0;
-
     const cardStyleBase = {
         border: '1px solid var(--site-border-color)',
         borderRadius: '12px',
@@ -21,11 +20,9 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
         display: 'flex',
         overflow: 'hidden'
     };
-
     const cardStyle = isEditorPreview
         ? { ...cardStyleBase, flexDirection: 'row', padding: '0.5rem', height: '90px', alignItems: 'center', gap: '1rem' }
         : { ...cardStyleBase, flexDirection: 'column', padding: 0 };
-
     const imageLinkStyle = {
         display: 'block',
         overflow: 'hidden',
@@ -52,30 +49,25 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
         padding: isEditorPreview ? '0.5rem' : '1.5rem',
         justifyContent: isEditorPreview ? 'center' : 'flex-start'
     };
-
     const stockStyle = {
         margin: '0 0 1rem 0',
         fontSize: '0.9em',
         color: isSoldOut ? 'var(--site-danger)' : 'var(--site-success)',
         flexGrow: 1
     };
-
     const imageUrl = (Array.isArray(product.image_gallery) && product.image_gallery.length > 0)
         ? `${API_URL}${product.image_gallery[0]}`
-        : 'https://placehold.co/400x400/AAAAAA/FFFFFF?text=Немає+Фото';
+        : 'https://placehold.co/400x400/AAAAAA/FFFFFF?text=Немає+фото';
 
     const isOwner = user && siteData && user.id === siteData.user_id;
-
     const ImageWrapper = isEditorPreview ? 'div' : Link;
     const imageWrapperProps = isEditorPreview
         ? { style: imageLinkStyle }
         : { to: `/product/${product.id}`, style: imageLinkStyle };
-
     const TitleWrapper = isEditorPreview ? 'div' : Link;
     const titleWrapperProps = isEditorPreview
         ? { style: { textDecoration: 'none', color: 'inherit', cursor: 'default' } }
         : { to: `/product/${product.id}`, style: { textDecoration: 'none', color: 'inherit' } };
-
     const handleAddToCart = () => {
         if (isEditorPreview) return;
         if (!user) {
@@ -86,7 +78,6 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
         }
         addToCart(product);
     };
-
     return (
         <div style={cardStyle} className="product-card">
             <ImageWrapper {...imageWrapperProps}>
@@ -169,8 +160,23 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
 
 const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
     const allProducts = siteData?.products || [];
-    const selectedIds = new Set(blockData.selectedProductIds || []);
-    const productsToDisplay = allProducts.filter(product => selectedIds.has(product.id));
+    
+    const productsToDisplay = useMemo(() => {
+        const { mode = 'auto', category_id = 'all', selectedProductIds = [], excludedProductIds = [] } = blockData;
+
+        if (mode === 'manual') {
+            const selectedIds = new Set(selectedProductIds);
+            return allProducts.filter(product => selectedIds.has(product.id));
+        } else {
+            const exclusionSet = new Set(excludedProductIds || []);
+
+            const categoryFiltered = (category_id === 'all' || !category_id)
+                ? allProducts
+                : allProducts.filter(product => String(product.category_id) === String(category_id));
+            
+            return categoryFiltered.filter(product => !exclusionSet.has(product.id));
+        }
+    }, [blockData, allProducts]);
 
     const gridStyle = isEditorPreview
         ? {
@@ -189,7 +195,6 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
             maxWidth: '1200px',
             margin: '0 auto'
         };
-
     const containerStyle = isEditorPreview
         ? { padding: '10px', background: 'var(--platform-card-bg)' }
         : { padding: '40px 20px', background: 'var(--site-bg)' };
@@ -198,7 +203,7 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
         return (
             <div style={{ padding: '20px', textAlign: 'center' }}>
                 <h3>{blockData.title || 'Товари'}</h3>
-                <p style={{ color: 'var(--site-text-secondary)' }}>Немає обраних товарів для відображення.</p>
+                <p style={{ color: 'var(--site-text-secondary)' }}>Немає товарів для відображення.</p>
             </div>
         );
     }
@@ -220,7 +225,7 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
                     textAlign: 'center',
                     color: 'var(--platform-text-secondary)'
                 }}>
-                    Немає вибраних товарів. (Налаштуйте блок, щоб додати їх)
+                    Немає вибраних товарів або товарів у цій категорії. (Налаштуйте блок)
                 </div>
             )}
 
