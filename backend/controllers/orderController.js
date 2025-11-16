@@ -13,7 +13,6 @@ exports.processCheckout = async (req, res, next) => {
         await connection.beginTransaction();
 
         for (const item of cartItems) {
-            // Зменшуємо кількість товару на складі
             await connection.query(
                 `UPDATE products 
                  SET stock_quantity = stock_quantity - ? 

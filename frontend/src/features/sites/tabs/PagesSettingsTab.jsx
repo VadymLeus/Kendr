@@ -1,6 +1,6 @@
 // frontend/src/features/sites/tabs/PagesSettingsTab.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import apiClient from '../../../services/api';
+import apiClient from "../../../services/api";
 
 const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
     const [name, setName] = useState(page ? page.name : '');

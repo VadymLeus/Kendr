@@ -1,7 +1,7 @@
 // frontend/src/features/sites/tabs/ShopContentTab.jsx
 import React, { useState } from 'react';
-import CategoryManager from '../../../components/shop/CategoryManager';
-import ProductManager from '../../../components/shop/ProductManager';
+import CategoryManager from '../shop/CategoryManager';
+import ProductManager from '../shop/ProductManager';
 
 const ShopContentTab = ({ siteData }) => {
     const [activeSubTab, setActiveSubTab] = useState('products');

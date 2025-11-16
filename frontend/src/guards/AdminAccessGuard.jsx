@@ -1,7 +1,7 @@
 // frontend/src/guards/AdminAccessGuard.jsx
 import React, { useContext } from 'react';
 import { Navigate, Outlet, useOutletContext } from 'react-router-dom';
-import { AuthContext } from '../features/auth/AuthContext';
+import { AuthContext } from '../providers/AuthContext';
 
 const AdminAccessGuard = () => {
     const { user, isAdmin, isLoading } = useContext(AuthContext);

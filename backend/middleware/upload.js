@@ -5,15 +5,12 @@ const path = require('path');
 const fs = require('fs').promises;
 const { ensureDirExists } = require('../utils/fileUtils');
 
-// Налаштування для завантаження у тимчасову папку
 const tempUploadPath = path.join(__dirname, '..', 'uploads', 'temp');
 const mediaUploadPath = path.join(__dirname, '..', 'uploads', 'media');
 
-// Переконуємося, що папки існують при старті
 ensureDirExists(tempUploadPath);
 ensureDirExists(mediaUploadPath);
 
-// Фільтр файлів для медіатеки
 const mediaFileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|webp/;
     const mimetype = allowedTypes.test(file.mimetype);
@@ -24,7 +21,6 @@ const mediaFileFilter = (req, file, cb) => {
     cb(new Error('Помилка: Дозволені лише файли зображень (jpeg, png, webp)!'));
 };
 
-// Multer для медіатеки (зберігає у /uploads/temp)
 const tempStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, tempUploadPath);
@@ -37,10 +33,9 @@ const tempStorage = multer.diskStorage({
 const mediaUpload = multer({
     storage: tempStorage,
     fileFilter: mediaFileFilter,
-    limits: { fileSize: 1024 * 1024 * 5 } // 5MB
+    limits: { fileSize: 1024 * 1024 * 5 }
 });
 
-// Існуючі middleware для обробки зображень
 const memoryStorage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
@@ -54,10 +49,9 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage: memoryStorage,
     fileFilter: fileFilter,
-    limits: { fileSize: 1024 * 1024 * 5 } // 5MB
+    limits: { fileSize: 1024 * 1024 * 5 }
 });
 
-// Middleware для обробки та збереження зображень (аватарів, зображень товарів)
 const processAndSaveImage = (subfolder, filenamePrefix, size = 128) => {
     return async (req, res, next) => {
         if (!req.file) { return next(); }
@@ -85,7 +79,6 @@ const processAndSaveImage = (subfolder, filenamePrefix, size = 128) => {
     };
 };
 
-// Middleware для обробки та збереження логотипів сайтів
 const processAndSaveLogo = (size = 64) => {
     return async (req, res, next) => {
         if (!req.file) {
@@ -93,7 +86,6 @@ const processAndSaveLogo = (size = 64) => {
         }
 
         try {
-            // Всі завантажені користувачами логотипи зберігаються в підпапці 'custom'
             const uploadPath = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'custom');
             await ensureDirExists(uploadPath);
 
@@ -109,7 +101,6 @@ const processAndSaveLogo = (size = 64) => {
                 .webp({ quality: 85 })
                 .toFile(fullPath);
             
-            // Шлях, що зберігається в базі даних, також включає 'custom'
             req.file.path = `/uploads/shops/logos/custom/${filename}`;
             req.file.filename = filename;
 
@@ -121,10 +112,6 @@ const processAndSaveLogo = (size = 64) => {
     };
 };
 
-/**
- * Обробляє та зберігає загальне зображення, обмежуючи ширину та зберігаючи пропорції.
- * @param {number} maxWidth - Максимальна ширина зображення
- */
 const processAndSaveGeneric = (subfolder, filenamePrefix, maxWidth = 1200) => {
     return async (req, res, next) => {
         if (!req.file) { return next(); }
@@ -140,8 +127,8 @@ const processAndSaveGeneric = (subfolder, filenamePrefix, maxWidth = 1200) => {
             await sharp(req.file.buffer)
                 .resize({ 
                     width: maxWidth, 
-                    fit: sharp.fit.inside, // Зберігає пропорції
-                    withoutEnlargement: true // Не збільшує, якщо зображення менше
+                    fit: sharp.fit.inside,
+                    withoutEnlargement: true
                 })
                 .toFormat('webp')
                 .webp({ quality: 80 })

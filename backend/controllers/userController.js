@@ -32,7 +32,6 @@ exports.updateProfile = async (req, res, next) => {
     const currentUser = await User.findById(userId);
     if (!currentUser) return res.status(404).json({ message: 'Користувача не знайдено.' });
 
-    // Перевіряємо пароль тільки при зміні username або пароля
     const requiresPasswordCheck = (username && username !== currentUser.username) || newPassword;
     
     if (requiresPasswordCheck) {
@@ -47,7 +46,6 @@ exports.updateProfile = async (req, res, next) => {
         }
     }
 
-    // Перевірка унікальності username
     if (username && username !== currentUser.username) {
         const existingUser = await User.findByUsername(username);
         if (existingUser && existingUser.id !== userId) {
@@ -55,7 +53,6 @@ exports.updateProfile = async (req, res, next) => {
         }
     }
 
-    // Підготовка даних для оновлення
     const updateData = { username };
     if (newPassword) updateData.password = newPassword;
     if (platform_theme_mode) updateData.platform_theme_mode = platform_theme_mode;

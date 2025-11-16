@@ -1,6 +1,6 @@
 // frontend/src/features/profile/tabs/ProfileSettingsTab.jsx
 import React, { useState, useContext, useEffect } from 'react';
-import { AuthContext } from '../../auth/AuthContext';
+import { AuthContext } from '../../../providers/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../services/api';
 import AvatarModal from '../AvatarModal';

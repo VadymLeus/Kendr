@@ -4,7 +4,6 @@ const router = express.Router();
 const pageController = require('../controllers/pageController');
 const verifyToken = require('../middleware/verifyToken');
 
-// Всі маршрути захищені
 router.use(verifyToken);
 
 router.get('/:pageId', pageController.getPageById);

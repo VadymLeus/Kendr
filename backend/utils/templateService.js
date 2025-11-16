@@ -5,7 +5,6 @@ const db = require('../db');
 const templatesDir = path.join(__dirname, '..', 'templates');
 
 class TemplateService {
-    // Сканує директорію та завантажує конфігурації шаблонів із файлів config.json
     static async discoverTemplates() {
         const templateFolders = await fs.readdir(templatesDir);
         const templates = [];
@@ -28,7 +27,6 @@ class TemplateService {
         console.log('Виявлені шаблони: (синхронізацію з БД вимкнено для нової блочної системи)');
     }
     
-    // Отримати конфігурацію одного шаблону за іменем його папки
     static async getConfigById(folderName) {
         const configPath = path.join(templatesDir, folderName, 'config.json');
         try {

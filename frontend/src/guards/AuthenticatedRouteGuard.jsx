@@ -1,7 +1,7 @@
 // frontend/src/guards/AuthenticatedRouteGuard.jsx
 import React, { useContext } from 'react';
 import { Navigate, Outlet, useOutletContext } from 'react-router-dom';
-import { AuthContext } from '../features/auth/AuthContext';
+import { AuthContext } from '../providers/AuthContext';
 
 const AuthenticatedRouteGuard = () => {
     const { user, isLoading } = useContext(AuthContext);

@@ -1,7 +1,6 @@
 // backend/controllers/tagController.js
 const Tag = require('../models/Tag');
 
-// Отримати список всіх доступних тегів
 exports.getAllTags = async (req, res, next) => {
     try {
         const tags = await Tag.getAll();
@@ -11,7 +10,6 @@ exports.getAllTags = async (req, res, next) => {
     }
 };
 
-// Отримати теги для конкретного сайту
 exports.getTagsForSite = async (req, res, next) => {
     try {
         const { siteId } = req.params;

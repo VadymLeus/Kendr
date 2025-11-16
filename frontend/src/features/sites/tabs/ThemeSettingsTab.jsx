@@ -1,7 +1,7 @@
 // frontend/src/features/sites/tabs/ThemeSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../services/api';
-import ImageInput from '../../../components/media/ImageInput';
+import ImageInput from '../../media/ImageInput';
 
 const API_URL = 'http://localhost:5000';
 

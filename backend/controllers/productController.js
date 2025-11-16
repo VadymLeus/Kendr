@@ -4,21 +4,6 @@ const Site = require('../models/Site');
 const { deleteFile } = require('../utils/fileUtils');
 const Media = require('../models/Media');
 
-const safeParseGallery = (galleryData) => {
-    if (!galleryData) return [];
-    if (Array.isArray(galleryData)) return galleryData;
-    if (typeof galleryData === 'string') {
-        try {
-            const parsed = JSON.parse(galleryData);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (e) {
-            if (galleryData.startsWith('/')) return [galleryData];
-            return [];
-        }
-    }
-    return [];
-};
-
 exports.getProductById = async (req, res, next) => {
     try {
         const product = await Product.findById(req.params.productId);

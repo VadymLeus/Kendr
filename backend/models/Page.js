@@ -70,7 +70,6 @@ class Page {
         return result;
     }
 
-    // Транзакція для встановлення головної сторінки
     static async setHomepage(siteId, pageId) {
         const connection = await db.getConnection();
         try {

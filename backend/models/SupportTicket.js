@@ -15,7 +15,7 @@ class SupportTicket {
         return rows;
     }
 
-    static async findAllOpen() { // Для адмінів
+    static async findAllOpen() {
         const [rows] = await db.query(`
             SELECT st.*, u.username 
             FROM support_tickets st
@@ -36,7 +36,6 @@ class SupportTicket {
             'INSERT INTO ticket_replies (ticket_id, user_id, body) VALUES (?, ?, ?)',
             [ticketId, userId, body]
         );
-        // Оновлюємо статус тікета, якщо на нього відповів адмін
         const [userRows] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
         const status = userRows[0].role === 'admin' ? 'answered' : 'open';
 

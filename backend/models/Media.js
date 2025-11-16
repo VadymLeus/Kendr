@@ -2,16 +2,6 @@
 const db = require('../db');
 
 class Media {
-    /**
-     * Створює новий запис про медіафайл у БД
-     * @param {object} mediaData - Дані медіафайлу
-     * @param {number} mediaData.userId - ID користувача
-     * @param {string} mediaData.path_full - Шлях до повного зображення
-     * @param {string} mediaData.path_thumb - Шлях до мініатюри
-     * @param {string} mediaData.original_file_name - Оригінальна назва файлу
-     * @param {string} mediaData.mime_type - MIME тип
-     * @param {number} mediaData.file_size_kb - Розмір файлу в КБ
-     */
     static async create(mediaData) {
         const { 
             userId, 
@@ -32,10 +22,6 @@ class Media {
         return this.findById(result.insertId);
     }
 
-    /**
-     * Знаходить всі медіафайли для користувача
-     * @param {number} userId - ID користувача
-     */
     static async findByUserId(userId) {
         const [rows] = await db.query(
             'SELECT * FROM user_media WHERE user_id = ? ORDER BY uploaded_at DESC',
@@ -44,29 +30,16 @@ class Media {
         return rows;
     }
 
-    /**
-     * Знаходить медіафайл за ID
-     * @param {number} mediaId - ID медіафайлу
-     */
     static async findById(mediaId) {
         const [rows] = await db.query('SELECT * FROM user_media WHERE id = ?', [mediaId]);
         return rows[0];
     }
 
-    /**
-     * Видаляє запис про медіафайл з БД
-     * @param {number} mediaId - ID медіафайлу
-     */
     static async delete(mediaId) {
         const [result] = await db.query('DELETE FROM user_media WHERE id = ?', [mediaId]);
         return result;
     }
 
-    /**
-     * Оновлює alt-текст для зображення
-     * @param {number} mediaId - ID медіафайлу
-     * @param {string} altText - Новий alt-текст
-     */
     static async updateAlt(mediaId, altText) {
         const [result] = await db.query(
             'UPDATE user_media SET alt_text = ? WHERE id = ?',
