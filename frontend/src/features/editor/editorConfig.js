@@ -20,6 +20,8 @@ export const BLOCK_LIBRARY = [
     { type: 'features', name: 'Переваги', icon: '✅' },
     { type: 'form', name: 'Форма звʼязку', icon: '✉️' },
     { type: 'video', name: 'Відео', icon: '🎬' },
+    { type: 'map', name: 'Мапа', icon: '🗺️' },
+    { type: 'accordion', name: 'Акордеон (FAQ)', icon: '❓' },
 ];
 
 export const generateBlockId = () => {
@@ -128,6 +130,20 @@ export const getDefaultBlockData = (type, options = {}) => {
             return {
                 url: '',
                 sizePreset: 'medium'
+            };
+
+        case 'map':
+            return {
+                embed_code: '',
+                sizePreset: 'medium'
+            };
+
+        case 'accordion':
+            return {
+                items: [
+                    { id: generateBlockId(), title: "Перше питання", content: "Текст відповіді тут..." },
+                    { id: generateBlockId(), title: "Друге питання", content: "Інший текст відповіді..." }
+                ]
             };
 
         default:

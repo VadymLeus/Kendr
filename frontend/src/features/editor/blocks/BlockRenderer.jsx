@@ -11,6 +11,7 @@ const ImageBlock = lazy(() => import('./ImageBlock'));
 const ButtonBlock = lazy(() => import('./ButtonBlock'));
 const FormBlock = lazy(() => import('./FormBlock'));
 const VideoBlock = lazy(() => import('./VideoBlock'));
+const MapBlock = lazy(() => import('./MapBlock'));
 
 const blockMap = {
     hero: HeroBlock,
@@ -23,6 +24,7 @@ const blockMap = {
     button: ButtonBlock,
     form: FormBlock,
     video: VideoBlock,
+    map: MapBlock,
 };
 
 const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) => {

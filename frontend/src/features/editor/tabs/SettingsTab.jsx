@@ -11,6 +11,7 @@ import ButtonSettings from '../settings/ButtonSettings';
 import FormSettings from '../settings/FormSettings';
 import LayoutSettings from '../settings/LayoutSettings';
 import VideoSettings from '../settings/VideoSettings';
+import MapSettings from '../settings/MapSettings';
 
 const SettingsComponentMap = {
     categories: CategoriesSettings,
@@ -23,6 +24,7 @@ const SettingsComponentMap = {
     form: FormSettings,
     layout: LayoutSettings,
     video: VideoSettings,
+    map: MapSettings,
 };
 
 const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData }) => {
