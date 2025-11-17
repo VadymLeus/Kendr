@@ -49,12 +49,26 @@ export const getDefaultBlockData = (type, options = {}) => {
 
         case 'image':
             return { 
-                imageUrl: 'https://placehold.co/1000x500/EFEFEF/31343C?text=Ваше+зображення',
-                alt: 'Опис зображення',
-                objectFit: 'cover',
+                mode: 'single',
+                items: [
+                    { 
+                        id: generateBlockId(), 
+                        src: 'https://placehold.co/1000x500/EFEFEF/31343C?text=Ваше+зображення',
+                        alt: 'Опис зображення'
+                    }
+                ],
+                width: 'medium',
+                objectFit: 'contain',
                 borderRadius: '0px',
                 link: '',
-                targetBlank: false
+                targetBlank: false,
+                settings_slider: { 
+                    navigation: true, 
+                    pagination: true, 
+                    autoplay: false, 
+                    loop: true 
+                },
+                settings_grid: { columns: 3 }
             };
 
         case 'button':

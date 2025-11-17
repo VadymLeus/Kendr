@@ -99,7 +99,7 @@ const ImageInput = ({ value, onChange }) => {
                             style={deleteButtonStyle}
                             onClick={() => onChange('')}
                         >
-                            Видалити
+                            Очистити
                         </button>
                     )}
                 </div>

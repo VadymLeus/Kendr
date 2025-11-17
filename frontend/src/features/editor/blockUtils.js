@@ -54,7 +54,7 @@ export const moveBlock = (blocks, dragPath, hoverPath) => {
         }
         
         const dragParentPath = dragPath.slice(0, -1);
-        const dragIndex = dragPath[drag.length - 1];
+        const dragIndex = dragPath[dragPath.length - 1];
         let parent = draft;
         if (dragParentPath.length > 0) parent = get(draft, getPathString(dragParentPath));
         parent.splice(dragIndex, 1);
