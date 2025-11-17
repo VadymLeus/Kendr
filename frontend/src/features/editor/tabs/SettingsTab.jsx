@@ -10,6 +10,7 @@ import ImageSettings from '../settings/ImageSettings';
 import ButtonSettings from '../settings/ButtonSettings';
 import FormSettings from '../settings/FormSettings';
 import LayoutSettings from '../settings/LayoutSettings';
+import VideoSettings from '../settings/VideoSettings';
 
 const SettingsComponentMap = {
     categories: CategoriesSettings,
@@ -21,6 +22,7 @@ const SettingsComponentMap = {
     button: ButtonSettings,
     form: FormSettings,
     layout: LayoutSettings,
+    video: VideoSettings,
 };
 
 const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData }) => {
@@ -44,7 +46,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                     Налаштування блоку
                 </p>
                 <p>
-                    Оберіть блок на сторінці (або в шарах), щоб побачити його налаштування.
+                    Оберіть блок на сторінці, щоб побачити його налаштування.
                 </p>
             </div>
         );

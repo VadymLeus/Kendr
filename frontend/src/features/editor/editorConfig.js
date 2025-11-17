@@ -19,6 +19,7 @@ export const BLOCK_LIBRARY = [
     { type: 'catalog_grid', name: 'Сітка товарів', icon: '🛍️' },
     { type: 'features', name: 'Переваги', icon: '✅' },
     { type: 'form', name: 'Форма звʼязку', icon: '✉️' },
+    { type: 'video', name: 'Відео', icon: '🎬' },
 ];
 
 export const generateBlockId = () => {
@@ -68,9 +69,9 @@ export const getDefaultBlockData = (type, options = {}) => {
         case 'layout':
             const columnCount = options.columns || 2;
             return { 
-                direction: 'row',
                 preset: options.preset || '50-50',
-                columns: Array(columnCount).fill().map(() => [])
+                columns: Array(columnCount).fill().map(() => []),
+                verticalAlign: 'top'
             };
 
         case 'categories':
@@ -107,6 +108,12 @@ export const getDefaultBlockData = (type, options = {}) => {
                 buttonText: 'Надіслати',
                 successMessage: 'Дякуємо! Ваше повідомлення надіслано.',
                 notifyEmail: ''
+            };
+
+        case 'video':
+            return {
+                url: '',
+                sizePreset: 'medium'
             };
 
         default:

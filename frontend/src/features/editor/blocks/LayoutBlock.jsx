@@ -1,19 +1,26 @@
 // frontend/src/features/editor/blocks/LayoutBlock.jsx
 import React from 'react';
 import { useDrop } from 'react-dnd';
-import EditableBlockWrapper from '../editor/EditableBlockWrapper';
-import { DND_TYPE_NEW_BLOCK } from '../editor/DraggableBlockItem';
+import EditableBlockWrapper from '../EditableBlockWrapper';
+import { DND_TYPE_NEW_BLOCK } from '../DraggableBlockItem';
 import BlockRenderer from './BlockRenderer';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
-const getLayoutStyles = (direction, preset) => {
+const getLayoutStyles = (direction, preset, verticalAlign = 'top') => {
+    const alignMap = {
+        top: 'start',
+        middle: 'center',
+        bottom: 'end'
+    };
+    
     const baseStyle = {
         display: 'grid',
         gap: '20px',
         padding: '20px',
         backgroundColor: 'transparent',
         background: 'none',
+        alignItems: alignMap[verticalAlign] || 'start',
     };
 
     if (direction === 'column') {
@@ -38,7 +45,7 @@ const getLayoutStyles = (direction, preset) => {
             baseStyle.gridTemplateColumns = '1fr 1fr 1fr 1fr';
             break;
         default: 
-            baseStyle.gridTemplateColumns = '1fr 1fr'; 
+            baseStyle.gridTemplateColumns = '1fr 1fr';
     }
     
     return baseStyle;
@@ -54,13 +61,14 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         drop: (item, monitor) => {
             if (monitor.didDrop()) return;
             const dragType = monitor.getItemType();
+            
             if (dragType === DRAG_ITEM_TYPE_EXISTING) {
                 const dragPath = item.path;
                 const dropZonePath = path;
                 const isDroppingOnSelf = dropZonePath.join(',').startsWith(dragPath.join(',')) &&
                                         dropZonePath.length > dragPath.length;
                 if (isDroppingOnSelf) {
-                    console.error("Заборонено: Не можна перемістити макет сам у себе.");
+                    console.error("Помилка: Не можна перемістити макет сам у себе.");
                     return;
                 }
                 onDrop(item, path);
@@ -76,18 +84,16 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
             canDrop: monitor.canDrop(),
         }),
     });
-    
+
     const columnStyle = {
         minHeight: '150px',
         padding: '10px',
         borderRadius: '8px',
-        border: isOver && canDrop ?
-            `2px dashed ${accent}` : `2px dashed ${borderColor}`,
+        border: isOver && canDrop ? `2px dashed ${accent}` : `2px dashed ${borderColor}`,
         transition: 'background-color 0.2s ease, border-color 0.2s ease',
-        backgroundColor: isOver && canDrop ?
-            'rgba(66, 153, 225, 0.1)' : 'transparent',
+        backgroundColor: isOver && canDrop ? 'rgba(66, 153, 225, 0.1)' : 'transparent',
     };
-    
+
     if (!isEditorPreview) {
         return <div style={{ backgroundColor: 'transparent' }}>{children}</div>;
     }
@@ -123,8 +129,8 @@ const LayoutBlock = ({
     selectedBlockPath,
     onAddBlock 
 }) => {
-    const { preset, columns = [], direction } = block.data;
-    const layoutStyle = getLayoutStyles(direction, preset);
+    const { preset, columns = [], direction, verticalAlign } = block.data;
+    const layoutStyle = getLayoutStyles(direction, preset, verticalAlign);
 
     if (!isEditorPreview) {
         return (

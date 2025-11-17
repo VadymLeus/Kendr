@@ -1,6 +1,6 @@
 // frontend/src/features/editor/blocks/FormBlock.jsx
 import React, { useState } from 'react';
-import apiClient from '../../services/api';
+import apiClient from '../../../services/api';
 
 const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -14,7 +14,7 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isEditorPreview) return; 
+        if (isEditorPreview) return;
 
         setStatus({ loading: true, error: '', success: '' });
         try {
@@ -29,11 +29,9 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
         }
     };
 
-    const bg = isEditorPreview ? 'var(--platform-bg)' : 'var(--site-bg)';
-    const cardBg = isEditorPreview ? 'var(--platform-card-bg)' : 'var(--site-card-bg)';
     const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
+    const cardBg = isEditorPreview ? 'var(--platform-card-bg)' : 'var(--site-card-bg)';
     const textPrimary = isEditorPreview ? 'var(--platform-text-primary)' : 'var(--site-text-primary)';
-    const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
     const accent = isEditorPreview ? 'var(--platform-accent)' : 'var(--site-accent)';
     const accentText = isEditorPreview ? 'var(--platform-accent-text)' : 'var(--site-accent-text)';
     const accentHover = isEditorPreview ? 'var(--platform-accent-hover)' : 'var(--site-accent-hover)';

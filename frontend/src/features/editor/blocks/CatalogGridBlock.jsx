@@ -1,8 +1,8 @@
 // frontend/src/features/editor/blocks/CatalogGridBlock.jsx
 import React, { useContext, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CartContext } from '../../features/cart/CartContext';
-import { AuthContext } from '../../features/auth/AuthContext';
+import { CartContext } from '../../../providers/CartContext';
+import { AuthContext } from '../../../providers/AuthContext';
 
 const API_URL = 'http://localhost:5000';
 

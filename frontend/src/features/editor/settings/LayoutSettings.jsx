@@ -12,7 +12,6 @@ const inputStyle = {
     fontSize: '1rem', background: 'var(--platform-card-bg)', 
     color: 'var(--platform-text-primary)', boxSizing: 'border-box' 
 };
-
 const PRESETS = [
     { preset: '50-50', name: '50% / 50%', columns: 2 },
     { preset: '75-25', name: '75% / 25%', columns: 2 },
@@ -22,10 +21,6 @@ const PRESETS = [
 ];
 
 const LayoutSettings = ({ data, onChange }) => {
-
-    const handleDirectionChange = (e) => {
-        onChange({ ...data, direction: e.target.value });
-    };
 
     const handlePresetChange = (e) => {
         const newPresetValue = e.target.value;
@@ -39,17 +34,13 @@ const LayoutSettings = ({ data, onChange }) => {
 
         let updatedColumns = [...currentColumns];
 
-        if (newColumnCount === currentColumnCount) {
-        } 
-        else if (newColumnCount > currentColumnCount) {
+        if (newColumnCount > currentColumnCount) {
             for (let i = 0; i < newColumnCount - currentColumnCount; i++) {
                 updatedColumns.push([]);
             }
-        } 
-        else {
+        } else if (newColumnCount < currentColumnCount) {
             const columnsToKeep = currentColumns.slice(0, newColumnCount);
             const columnsToMerge = currentColumns.slice(newColumnCount);
-            
             const mergedBlocks = columnsToMerge.flat(); 
 
             if (columnsToKeep.length > 0) {
@@ -67,22 +58,13 @@ const LayoutSettings = ({ data, onChange }) => {
             columns: updatedColumns
         });
     };
+    
+    const handleChange = (e) => {
+        onChange({ ...data, [e.target.name]: e.target.value });
+    };
 
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Напрямок:</label>
-                <select
-                    name="direction"
-                    value={data.direction || 'row'}
-                    onChange={handleDirectionChange}
-                    style={inputStyle}
-                >
-                    <option value="row">Горизонтально (в рядок)</option>
-                    <option value="column">Вертикально (в стовпчик)</option>
-                </select>
-            </div>
-
             <div style={formGroupStyle}>
                 <label style={labelStyle}>Пресет колонок:</label>
                 <select
@@ -97,6 +79,23 @@ const LayoutSettings = ({ data, onChange }) => {
                         </option>
                     ))}
                 </select>
+            </div>
+            
+            <div style={formGroupStyle}>
+                <label style={labelStyle}>Вертикальне вирівнювання:</label>
+                <select
+                    name="verticalAlign"
+                    value={data.verticalAlign || 'top'}
+                    onChange={handleChange}
+                    style={inputStyle}
+                >
+                    <option value="top">Вгорі</option>
+                    <option value="middle">Посередині</option>
+                    <option value="bottom">Внизу</option>
+                </select>
+                <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block'}}>
+                    Вирівнює вміст колонок по вертикалі, якщо вони різної висоти.
+                </small>
             </div>
         </div>
     );

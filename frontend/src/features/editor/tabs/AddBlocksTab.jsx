@@ -55,7 +55,7 @@ const Section = ({ title, children }) => {
 };
 
 const layoutBlocks = BLOCK_LIBRARY.filter(b => b.type === 'layout');
-const basicBlocks = BLOCK_LIBRARY.filter(b => ['hero', 'text', 'image', 'button', 'form', 'features'].includes(b.type));
+const basicBlocks = BLOCK_LIBRARY.filter(b => ['hero', 'text', 'image', 'button', 'form', 'features', 'video'].includes(b.type));
 const ecommerceBlocks = BLOCK_LIBRARY.filter(b => ['catalog_grid', 'categories'].includes(b.type));
 
 const AddBlocksTab = () => {
@@ -75,7 +75,7 @@ const AddBlocksTab = () => {
                 ))}
             </Section>
 
-            <Section title="Базові">
+            <Section title="Базові блоки">
                 {basicBlocks.map(block => (
                     <DraggableBlockItem
                         key={block.type}
