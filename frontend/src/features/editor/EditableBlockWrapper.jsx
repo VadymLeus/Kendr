@@ -15,7 +15,9 @@ const EditableBlockWrapper = ({
     onDeleteBlock,
     onAddBlock,
     onSelectBlock,
-    selectedBlockPath
+    selectedBlockPath,
+    isCollapsed,
+    onToggleCollapse
 }) => {
     const [{ isDragging }, drag] = useDrag({
         type: DRAG_ITEM_TYPE_EXISTING,
@@ -144,6 +146,17 @@ const EditableBlockWrapper = ({
             display: 'flex', 
             gap: '8px'
         },
+        collapseButton: {
+            padding: '6px 10px',
+            background: 'var(--platform-text-secondary)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            transition: 'all 0.2s ease',
+        },
         settingsButton: {
             padding: '6px 12px',
             background: 'var(--platform-accent)',
@@ -206,6 +219,15 @@ const EditableBlockWrapper = ({
                 </span>
                 <div style={styles.buttonGroup}>
                     <button 
+                        onClick={(e) => { e.stopPropagation(); onToggleCollapse(block.block_id); }}
+                        style={styles.collapseButton}
+                        onMouseEnter={handleButtonHover}
+                        onMouseLeave={handleButtonLeave}
+                        title={isCollapsed ? 'Розгорнути' : 'Згорнути'}
+                    >
+                        {isCollapsed ? '🔽' : '🔼'}
+                    </button>
+                    <button 
                         onClick={handleSelect}
                         style={styles.settingsButton}
                         onMouseEnter={handleButtonHover}
@@ -225,24 +247,38 @@ const EditableBlockWrapper = ({
                 </div>
             </div>
 
-            <div
-                data-site-mode={siteData?.site_theme_mode || 'light'}
-                data-site-accent={siteData?.site_theme_accent || 'orange'}
-                style={styles.canvas}
-            >
-                <BlockRenderer 
-                    blocks={[block]} 
-                    siteData={siteData} 
-                    isEditorPreview={true} 
-                    path={path}
-                    onMoveBlock={onMoveBlock}
-                    onDropBlock={onDropBlock}
-                    onDeleteBlock={onDeleteBlock}
-                    onAddBlock={onAddBlock}
-                    onSelectBlock={onSelectBlock}
-                    selectedBlockPath={selectedBlockPath}
-                />
-            </div>
+            {isCollapsed ? (
+                <div style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    background: 'var(--platform-bg)',
+                    color: 'var(--platform-text-secondary)',
+                    borderRadius: '0 0 8px 8px'
+                }}>
+                    <h4 style={{ margin: 0, fontWeight: 500 }}>
+                        {blockType?.icon} {blockType?.name} (Згорнуто)
+                    </h4>
+                </div>
+            ) : (
+                <div
+                    data-site-mode={siteData?.site_theme_mode || 'light'}
+                    data-site-accent={siteData?.site_theme_accent || 'orange'}
+                    style={styles.canvas}
+                >
+                    <BlockRenderer 
+                        blocks={[block]} 
+                        siteData={siteData} 
+                        isEditorPreview={true} 
+                        path={path}
+                        onMoveBlock={onMoveBlock}
+                        onDropBlock={onDropBlock}
+                        onDeleteBlock={onDeleteBlock}
+                        onAddBlock={onAddBlock}
+                        onSelectBlock={onSelectBlock}
+                        selectedBlockPath={selectedBlockPath}
+                    />
+                </div>
+            )}
         </div>
     );
 };

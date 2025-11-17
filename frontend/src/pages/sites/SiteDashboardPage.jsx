@@ -33,7 +33,8 @@ const SiteDashboardPage = () => {
     const [currentPageName, setCurrentPageName] = useState('');
     const [selectedBlockPath, setSelectedBlockPath] = useState(null);
     const [allPages, setAllPages] = useState([]);
-    
+    const [collapsedBlocks, setCollapsedBlocks] = useState([]);
+
     useEffect(() => {
         if (siteData && siteData.page) {
             setCurrentPageId(siteData.page.id);
@@ -50,6 +51,14 @@ const SiteDashboardPage = () => {
             console.error("Дані сайту завантажені, але головна сторінка відсутня.");
         }
     }, [siteData, isSiteLoading]);
+
+    const toggleCollapse = (blockId) => {
+        setCollapsedBlocks(prev => 
+            prev.includes(blockId)
+                ? prev.filter(id => id !== blockId) 
+                : [...prev, blockId]
+        );
+    };
     
     const fetchPageContent = async (pageId) => {
         if (siteData && siteData.page && siteData.page.id === pageId) {
@@ -191,6 +200,8 @@ const SiteDashboardPage = () => {
                                         onDeleteBlock={handleDeleteBlock}
                                         onSelectBlock={handleSelectBlock}
                                         selectedBlockPath={selectedBlockPath}
+                                        collapsedBlocks={collapsedBlocks}
+                                        onToggleCollapse={toggleCollapse}
                                     />
                                 </>
                             )}
