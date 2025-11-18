@@ -12,6 +12,7 @@ const ButtonBlock = lazy(() => import('./ButtonBlock'));
 const FormBlock = lazy(() => import('./FormBlock'));
 const VideoBlock = lazy(() => import('./VideoBlock'));
 const MapBlock = lazy(() => import('./MapBlock'));
+const AccordionBlock = lazy(() => import('./AccordionBlock'));
 
 const blockMap = {
     hero: HeroBlock,
@@ -25,6 +26,7 @@ const blockMap = {
     form: FormBlock,
     video: VideoBlock,
     map: MapBlock,
+    accordion: AccordionBlock,
 };
 
 const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) => {

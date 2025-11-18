@@ -21,7 +21,7 @@ export const BLOCK_LIBRARY = [
     { type: 'form', name: 'Форма звʼязку', icon: '✉️' },
     { type: 'video', name: 'Відео', icon: '🎬' },
     { type: 'map', name: 'Мапа', icon: '🗺️' },
-    { type: 'accordion', name: 'Акордеон (FAQ)', icon: '❓' },
+    { type: 'accordion', name: 'Акордеон', icon: '❓' },
 ];
 
 export const generateBlockId = () => {
