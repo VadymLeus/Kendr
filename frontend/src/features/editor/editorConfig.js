@@ -36,11 +36,14 @@ export const getDefaultBlockData = (type, options = {}) => {
     switch (type) {
         case 'hero':
             return { 
-                title: 'Нова обкладинка',
-                subtitle: 'Тут буде ваш заголовок',
-                buttonText: 'Докладніше',
-                buttonLink: '#',
-                imageUrl: 'https://placehold.co/1200x500/EFEFEF/31343C?text=Нова+обкладинка'
+                bg_image: '',
+                overlay_color: 'rgba(0, 0, 0, 0.5)',
+                title: 'Заголовок обкладинки',
+                subtitle: 'Напишіть тут короткий опис вашої пропозиції або компанії. Це перше, що побачать відвідувачі.',
+                button_text: 'Дізнатись більше',
+                button_link: '#',
+                alignment: 'center',
+                height: 'medium'
             };
 
         case 'text':
@@ -104,7 +107,7 @@ export const getDefaultBlockData = (type, options = {}) => {
 
         case 'catalog_grid':
             return { 
-                title: 'Нова сітка товарів',
+                title: 'Наші товари',
                 mode: 'auto',
                 category_id: 'all',
                 selectedProductIds: [],

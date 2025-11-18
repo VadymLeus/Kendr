@@ -1,5 +1,5 @@
 // frontend/src/features/editor/blocks/LayoutBlock.jsx
-import React from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../DraggableBlockItem';
@@ -19,7 +19,7 @@ const getLayoutStyles = (direction = 'row', preset, verticalAlign = 'top', horiz
         center: 'center',
         end: 'end'
     };
-    
+
     const baseStyle = {
         display: 'grid',
         gap: '20px',
@@ -62,7 +62,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
     const accent = isEditorPreview ? 'var(--platform-accent)' : 'var(--site-accent)';
     const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
     const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
-    
+
     const [{ isOver, canDrop }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
         drop: (item, monitor) => {
@@ -74,6 +74,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
                 const dropZonePath = path;
                 const isDroppingOnSelf = dropZonePath.join(',').startsWith(dragPath.join(',')) &&
                                         dropZonePath.length > dragPath.length;
+                
                 if (isDroppingOnSelf) {
                     console.error("Помилка: Не можна перемістити макет сам у себе.");
                     return;
@@ -92,6 +93,43 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         }),
     });
 
+    const columnRef = useRef(null);
+    const contentRef = useRef(null);
+    const [scale, setScale] = useState(1);
+
+    useEffect(() => {
+        if (!isEditorPreview) return;
+
+        const calculateScale = () => {
+            if (columnRef.current && contentRef.current) {
+                const columnWidth = columnRef.current.offsetWidth;
+                const MIN_COMFORTABLE_WIDTH = 250; 
+
+                if (columnWidth < MIN_COMFORTABLE_WIDTH && columnWidth > 0) {
+                    const newScale = columnWidth / MIN_COMFORTABLE_WIDTH;
+                    setScale(newScale);
+                } else {
+                    setScale(1);
+                }
+            }
+        };
+
+        const resizeObserver = new ResizeObserver(() => {
+            calculateScale();
+        });
+
+        if (columnRef.current) {
+            resizeObserver.observe(columnRef.current);
+        }
+
+        return () => resizeObserver.disconnect();
+    }, [isEditorPreview, children]);
+
+    const setRefs = useCallback((node) => {
+        drop(node);
+        columnRef.current = node;
+    }, [drop]);
+
     const columnStyle = {
         minHeight: '150px',
         padding: '10px',
@@ -99,8 +137,19 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         border: isOver && canDrop ? `2px dashed ${accent}` : `2px dashed ${borderColor}`,
         transition: 'background-color 0.2s ease, border-color 0.2s ease',
         backgroundColor: isOver && canDrop ? 'rgba(66, 153, 225, 0.1)' : 'transparent',
-        width: '100%',
-        boxSizing: 'border-box'
+        width: '100%', 
+        boxSizing: 'border-box',
+        overflow: 'hidden', 
+        display: 'flex',
+        flexDirection: 'column'
+    };
+
+    const contentWrapperStyle = {
+        flex: 1,
+        width: scale < 1 ? `${(1/scale) * 100}%` : '100%',
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+        marginBottom: scale < 1 ? `-${(1 - scale) * 100}%` : '0',
     };
 
     if (!isEditorPreview) {
@@ -108,20 +157,22 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
     }
 
     return (
-        <div ref={drop} style={columnStyle}>
-            {children}
-            {React.Children.count(children) === 0 && (
-                <div style={{ 
-                    textAlign: 'center', 
-                    color: textSecondary, 
-                    paddingTop: '50px',
-                    fontSize: '14px',
-                    pointerEvents: 'none',
-                    backgroundColor: 'transparent'
-                }}>
-                    Перетягніть блоки сюди
-                </div>
-            )}
+        <div ref={setRefs} style={columnStyle}>
+            <div ref={contentRef} style={contentWrapperStyle}>
+                {children}
+                {React.Children.count(children) === 0 && (
+                    <div style={{ 
+                        textAlign: 'center', 
+                        color: textSecondary, 
+                        paddingTop: '50px',
+                        fontSize: '14px',
+                        pointerEvents: 'none',
+                        backgroundColor: 'transparent'
+                    }}>
+                        Перетягніть блоки сюди
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
@@ -146,7 +197,7 @@ const LayoutBlock = ({
             <div style={layoutStyle}>
                 {columns.map((columnBlocks, colIndex) => (
                     <div key={colIndex} style={{ 
-                        minWidth: '0',
+                        minWidth: '0', 
                         backgroundColor: 'transparent'
                     }}>
                         <BlockRenderer

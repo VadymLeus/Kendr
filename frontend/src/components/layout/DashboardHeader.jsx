@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const tabStyle = (isActive, isMobile) => ({
-    padding: isMobile ? '1rem' : '1rem 1.5rem',
+    padding: isMobile ? '1rem' : '1rem 1.2rem',
     border: 'none',
     background: 'none',
     cursor: 'pointer',
@@ -34,19 +34,18 @@ const headerStyle = {
 };
 
 const DashboardHeader = ({ siteData, activeTab, onTabChange }) => {
-    
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [isCompactMode, setIsCompactMode] = useState(window.innerWidth < 1280);
 
     useEffect(() => {
         const handleResize = () => {
-            setIsMobile(window.innerWidth < 1024);
+            setIsCompactMode(window.innerWidth < 1280);
         };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const tabs = [
-        { key: 'editor', icon: '📝', text: 'Редактор сторінок' },
+        { key: 'editor', icon: '📝', text: 'Редактор' },
         { key: 'pages', icon: '📄', text: 'Сторінки' },
         { key: 'shop', icon: '🛒', text: 'Товари' },
         { key: 'theme', icon: '🎨', text: 'Тема' },
@@ -54,37 +53,64 @@ const DashboardHeader = ({ siteData, activeTab, onTabChange }) => {
         { key: 'settings', icon: '⚙️', text: 'Налаштування' }
     ];
 
+    const viewButtonStyle = {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        padding: '0.6rem 1.2rem',
+        background: 'linear-gradient(135deg, var(--platform-accent) 0%, var(--platform-accent-hover) 100%)',
+        color: '#ffffff',
+        borderRadius: '30px',
+        textDecoration: 'none',
+        fontWeight: '600',
+        fontSize: '0.9rem',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        border: 'none'
+    };
+
     return (
         <header style={headerStyle}>
-            <nav style={{ display: 'flex', height: '100%', overflowX: 'auto', flex: 1, justifyContent: 'center' }}>
+            <nav 
+                className="no-scrollbar"
+                style={{ 
+                    display: 'flex', 
+                    height: '100%', 
+                    overflowX: 'auto', 
+                    flex: 1, 
+                    alignItems: 'center'
+                }}
+            >
                 {tabs.map(tab => (
                     <button
                         key={tab.key}
-                        style={tabStyle(activeTab === tab.key, isMobile)}
+                        style={tabStyle(activeTab === tab.key, isCompactMode)}
                         onClick={() => onTabChange(tab.key)}
                         title={tab.text}
                     >
-                        <span style={{ fontSize: '1.1rem' }}>{tab.icon}</span>
-                        {!isMobile && <span>{tab.text}</span>}
+                        <span style={{ fontSize: '1.2rem' }}>{tab.icon}</span>
+                        {!isCompactMode && <span>{tab.text}</span>}
                     </button>
                 ))}
             </nav>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: '150px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingLeft: '1rem' }}>
                 <a
                     href={`/site/${siteData.site_path}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-secondary"
-                    style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem 1rem'
+                    style={viewButtonStyle}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
                     }}
                 >
-                    <span style={{lineHeight: 1}}>👁️</span>
-                    <span>Переглянути</span>
+                    <span style={{ fontSize: '1.1rem' }}>👁️</span>
+                    {!isCompactMode && <span>Переглянути</span>}
                 </a>
             </div>
         </header>

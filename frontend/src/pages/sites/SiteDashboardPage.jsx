@@ -144,7 +144,7 @@ const SiteDashboardPage = () => {
         if (!path) return;
         setBlocks(prevBlocks => updateBlockDataByPath(prevBlocks, path, updatedData));
     }, []);
-    
+
     if (isSiteLoading) return (
         <div style={{ 
             padding: '2rem', 

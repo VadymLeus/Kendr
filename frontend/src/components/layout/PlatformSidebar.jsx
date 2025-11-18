@@ -67,7 +67,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     
     const toggleButtonStyle = {
         position: 'absolute',
-        top: '105px', 
+        top: '103px', 
         right: '-15px',
         width: '30px',
         height: '30px',
