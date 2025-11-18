@@ -13,6 +13,7 @@ import LayoutSettings from '../settings/LayoutSettings';
 import VideoSettings from '../settings/VideoSettings';
 import MapSettings from '../settings/MapSettings';
 import AccordionSettings from '../settings/AccordionSettings';
+import SocialIconsSettings from '../settings/SocialIconsSettings';
 
 const SettingsComponentMap = {
     categories: CategoriesSettings,
@@ -27,6 +28,7 @@ const SettingsComponentMap = {
     video: VideoSettings,
     map: MapSettings,
     accordion: AccordionSettings,
+    social_icons: SocialIconsSettings,
 };
 
 const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData }) => {
@@ -63,7 +65,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
              <div style={{ padding: '1rem', color: 'var(--platform-text-primary)'}}>
                 <h4 style={{marginBottom: '1rem'}}>Налаштування: {selectedBlock.type}</h4>
                 <p style={{color: 'var(--platform-text-secondary)'}}>
-                    Комponent налаштувань для цього типу блоку ({selectedBlock.type}) ще не створено.
+                    Компонент налаштувань для цього типу блоку ({selectedBlock.type}) ще не створено.
                 </p>
             </div>
         )

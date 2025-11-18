@@ -22,6 +22,7 @@ export const BLOCK_LIBRARY = [
     { type: 'video', name: 'Відео', icon: '🎬' },
     { type: 'map', name: 'Мапа', icon: '🗺️' },
     { type: 'accordion', name: 'Акордеон', icon: '❓' },
+    { type: 'social_icons', name: 'Іконки Соцмереж', icon: '📱' },
 ];
 
 export const generateBlockId = () => {
@@ -144,6 +145,16 @@ export const getDefaultBlockData = (type, options = {}) => {
                     { id: generateBlockId(), title: "Перше питання", content: "Текст відповіді тут..." },
                     { id: generateBlockId(), title: "Друге питання", content: "Інший текст відповіді..." }
                 ]
+            };
+
+        case 'social_icons':
+            return {
+                alignment: 'left',
+                facebook: '',
+                instagram: '',
+                telegram: '',
+                youtube: '',
+                tiktok: ''
             };
 
         default:
