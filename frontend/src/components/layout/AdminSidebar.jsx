@@ -33,7 +33,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
 
     const toggleButtonStyle = {
         position: 'absolute',
-        top: '75px',
+        top: '105px', 
         right: '-15px',
         width: '30px',
         height: '30px',
@@ -45,7 +45,8 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1300
+        zIndex: 1300,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
     };
 
     const navLinkBaseClass = `flex items-center gap-4 text-decoration-none py-3 px-4 rounded-md mx-2 mb-2 transition-colors duration-200 ${isCollapsed ? 'justify-center' : 'justify-start'} text-[var(--platform-text-secondary)] hover:bg-[rgba(0,0,0,0.05)] hover:text-[var(--platform-text-primary)]`;
@@ -66,7 +67,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
 
     return (
         <div style={sidebarStyle}>
-            <button onClick={onToggle} style={toggleButtonStyle}>
+            <button onClick={onToggle} style={toggleButtonStyle} title={isCollapsed ? "Розгорнути меню" : "Згорнути меню"}>
                 {isCollapsed ? '»' : '«'}
             </button>
 
@@ -87,7 +88,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }) => {
                     className={navLinkBaseClass}
                     style={({ isActive }) => isActive ? activeStyle : undefined}
                 >
-                    <span>{isCollapsed ? '📊' : 'Всі Сайти'}</span>
+                    <span>{isCollapsed ? '📊' : 'Всі сайти'}</span>
                 </NavLink>
                 
                 <NavLink 

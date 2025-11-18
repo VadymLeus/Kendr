@@ -27,7 +27,7 @@ const getLayoutStyles = (direction = 'row', preset, verticalAlign = 'top', horiz
         backgroundColor: 'transparent',
         background: 'none',
         alignItems: verticalAlignMap[verticalAlign] || 'start',
-        justifyItems: horizontalAlignMap[horizontalAlign] || 'start',
+        justifyItems: direction === 'column' ? (horizontalAlignMap[horizontalAlign] || 'stretch') : 'stretch',
     };
 
     if (direction === 'column') {
@@ -99,6 +99,8 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         border: isOver && canDrop ? `2px dashed ${accent}` : `2px dashed ${borderColor}`,
         transition: 'background-color 0.2s ease, border-color 0.2s ease',
         backgroundColor: isOver && canDrop ? 'rgba(66, 153, 225, 0.1)' : 'transparent',
+        width: '100%',
+        boxSizing: 'border-box'
     };
 
     if (!isEditorPreview) {
@@ -144,7 +146,7 @@ const LayoutBlock = ({
             <div style={layoutStyle}>
                 {columns.map((columnBlocks, colIndex) => (
                     <div key={colIndex} style={{ 
-                        minWidth: '250px',
+                        minWidth: '0',
                         backgroundColor: 'transparent'
                     }}>
                         <BlockRenderer

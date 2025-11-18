@@ -1,4 +1,4 @@
-// frontend/src/components/layout/layout/Layout.jsx
+// frontend/src/components/layout/Layout.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { useLocation, Outlet } from 'react-router-dom';
 import { AuthContext } from '../../providers/AuthContext';
@@ -26,7 +26,6 @@ const Layout = () => {
     const productMatch = location.pathname.match(/^\/product\/([^/]+)/);
     
     const shouldShowSiteHeader = !!(publicMatch || productMatch);
-    
     const shouldShowFooter = !isAdmin && !dashboardMatch;
     
     useEffect(() => {
@@ -43,7 +42,6 @@ const Layout = () => {
                 } else if (publicMatch) {
                     const sitePath = publicMatch[1];
                     const slug = publicMatch[2];
-                    
                     if (slug) {
                         url = `/sites/${sitePath}/${slug}`;
                     } else {
@@ -106,6 +104,10 @@ const Layout = () => {
     } else if (shouldShowSiteHeader) {
         mainStyles.background = 'var(--platform-bg)';
     }
+
+    const layoutContentStyle = {
+        overflowY: dashboardMatch ? 'hidden' : 'auto'
+    };
     
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -115,7 +117,7 @@ const Layout = () => {
                 <PlatformSidebar isCollapsed={isCollapsed} onToggle={handleToggleSidebar} />
             )}
 
-            <div className="layout-content">
+            <div className="layout-content" style={layoutContentStyle}>
                 {shouldShowSiteHeader && (
                     <SiteHeader 
                         siteData={siteData} 

@@ -151,7 +151,10 @@ const SiteDashboardPage = () => {
             textAlign: 'center', 
             color: 'var(--platform-text-secondary)',
             background: 'var(--platform-bg)',
-            minHeight: '100vh'
+            height: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
         }}>
             Завантаження панелі керування...
         </div>
@@ -163,24 +166,38 @@ const SiteDashboardPage = () => {
             textAlign: 'center', 
             color: 'var(--platform-text-secondary)',
             background: 'var(--platform-bg)',
-            minHeight: '100vh'
+            height: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
         }}>
             Сайт не знайдено.
         </div>
     );
     
     return (
-        <div>
+        <div className="editor-layout-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
             <DashboardHeader
                 siteData={siteData}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
             />
 
-            <div>
+            <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
                 {activeTab === 'editor' && (
-                    <div style={{ display: 'flex', minHeight: 'calc(100vh - 65px)' }}>
-                        <div style={{ flex: 1, minWidth: 0, background: 'var(--platform-bg)' }}>
+                    <>
+                        <div 
+                            className="editor-canvas-scroll-area"
+                            style={{ 
+                                flex: 1, 
+                                minWidth: 0, 
+                                background: 'var(--platform-bg)', 
+                                overflowY: 'auto', 
+                                overflowX: 'auto',
+                                height: '100%',
+                                position: 'relative'
+                            }}
+                        >
                             {isPageLoading ? (
                                 <p style={{
                                     color: 'var(--platform-text-secondary)', 
@@ -190,7 +207,7 @@ const SiteDashboardPage = () => {
                                     Завантаження редактора...
                                 </p>
                             ) : (
-                                <>
+                                <div style={{ paddingBottom: '100px' }}>
                                     <BlockEditor 
                                         blocks={blocks} 
                                         siteData={siteData}
@@ -203,9 +220,10 @@ const SiteDashboardPage = () => {
                                         collapsedBlocks={collapsedBlocks}
                                         onToggleCollapse={toggleCollapse}
                                     />
-                                </>
+                                </div>
                             )}
                         </div>
+
                         <EditorSidebar
                             blocks={blocks}
                             siteData={siteData}
@@ -219,34 +237,42 @@ const SiteDashboardPage = () => {
                             currentPageId={currentPageId}
                             onSelectPage={handleEditPage}
                         />
-                    </div>
+                    </>
                 )}
                 
-                <div style={{ 
-                    padding: activeTab !== 'editor' ? '2rem' : '0',
-                    maxWidth: activeTab !== 'editor' ? '1200px' : 'none',
-                    margin: activeTab !== 'editor' ? 'auto' : '0'
-                }}>
-                    {activeTab === 'pages' && (
-                        <PagesSettingsTab 
-                            siteId={siteData.id} 
-                            onEditPage={handleEditPage}
-                            onPageUpdate={refreshPageList}
-                        />
-                    )}
-                    {activeTab === 'shop' && (
-                        <ShopContentTab siteData={siteData} />
-                    )}
-                    {activeTab === 'theme' && (
-                        <ThemeSettingsTab siteData={siteData} />
-                    )}
-                    {activeTab === 'submissions' && (
-                        <SubmissionsTab siteId={siteData.id} />
-                    )}
-                    {activeTab === 'settings' && (
-                        <GeneralSettingsTab siteData={siteData} />
-                    )}
-                </div>
+                {activeTab !== 'editor' && (
+                    <div 
+                        className="editor-canvas-scroll-area"
+                        style={{ 
+                            flex: 1, 
+                            overflowY: 'auto', 
+                            padding: '2rem',
+                            background: 'var(--platform-bg)'
+                        }}
+                    >
+                        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                            {activeTab === 'pages' && (
+                                <PagesSettingsTab 
+                                    siteId={siteData.id} 
+                                    onEditPage={handleEditPage}
+                                    onPageUpdate={refreshPageList}
+                                />
+                            )}
+                            {activeTab === 'shop' && (
+                                <ShopContentTab siteData={siteData} />
+                            )}
+                            {activeTab === 'theme' && (
+                                <ThemeSettingsTab siteData={siteData} />
+                            )}
+                            {activeTab === 'submissions' && (
+                                <SubmissionsTab siteId={siteData.id} />
+                            )}
+                            {activeTab === 'settings' && (
+                                <GeneralSettingsTab siteData={siteData} />
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

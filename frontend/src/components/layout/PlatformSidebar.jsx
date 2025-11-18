@@ -37,7 +37,8 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         padding: '1.5rem 0',
         textAlign: 'center',
         borderBottom: '1px solid var(--platform-border-color)',
-        transition: 'padding 0.3s ease'
+        transition: 'padding 0.3s ease',
+        position: 'relative'
     };
 
     const navStyle = {
@@ -66,7 +67,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     
     const toggleButtonStyle = {
         position: 'absolute',
-        top: '75px',
+        top: '105px', 
         right: '-15px',
         width: '30px',
         height: '30px',
@@ -78,7 +79,8 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1300
+        zIndex: 1300,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
     };
 
     const logoImageStyle = {
@@ -96,7 +98,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
 
     return (
         <div style={sidebarStyle}>
-            <button onClick={onToggle} style={toggleButtonStyle}>
+            <button onClick={onToggle} style={toggleButtonStyle} title={isCollapsed ? "Розгорнути меню" : "Згорнути меню"}>
                 {isCollapsed ? '»' : '«'}
             </button>
 

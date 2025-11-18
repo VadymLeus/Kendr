@@ -132,6 +132,7 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 body {
@@ -155,16 +156,22 @@ body {
   transition: margin-left 0.3s ease;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
 }
 
 main {
   flex-grow: 1;
-  min-height: calc(100vh - 150px);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-height: auto;
 }
 
 footer {
+  margin-top: auto;
   flex-shrink: 0;
   background: var(--platform-card-bg);
   border-top: 1px solid var(--platform-border-color);
@@ -347,22 +354,37 @@ hr {
     }
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+.editor-canvas-scroll-area::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar,
+.layout-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--platform-sidebar-bg);
-  border-radius: 4px;
+
+.editor-canvas-scroll-area::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track,
+.layout-content::-webkit-scrollbar-track {
+    background: var(--platform-sidebar-bg);
+    border-radius: 4px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--platform-text-secondary);
-  border-radius: 4px;
-  border: 2px solid var(--platform-sidebar-bg);
+
+.editor-canvas-scroll-area::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.layout-content::-webkit-scrollbar-thumb {
+    background-color: var(--platform-text-secondary);
+    opacity: 0.5;
+    border-radius: 4px;
+    border: 2px solid var(--platform-sidebar-bg);
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--platform-accent);
+
+.editor-canvas-scroll-area::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.layout-content::-webkit-scrollbar-thumb:hover {
+    background-color: var(--platform-accent);
 }
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--platform-text-secondary) var(--platform-sidebar-bg);
+
+.editor-canvas-scroll-area::-webkit-scrollbar-corner,
+.custom-scrollbar::-webkit-scrollbar-corner,
+.layout-content::-webkit-scrollbar-corner {
+    background: var(--platform-sidebar-bg);
 }

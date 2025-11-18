@@ -1,8 +1,8 @@
 // frontend/src/features/editor/EditorSidebar.jsx
 import React, { useState, useEffect } from 'react';
-import AddBlocksTab from '../../../src/features/editor/tabs/AddBlocksTab';
-import LayersTab from '../../../src/features/editor/tabs/LayersTab';
-import SettingsTab from '../../../src/features/editor/tabs/SettingsTab';
+import AddBlocksTab from './tabs/AddBlocksTab';
+import LayersTab from './tabs/LayersTab';
+import SettingsTab from './tabs/SettingsTab';
 
 const EditorSidebar = ({
     blocks,
@@ -59,9 +59,7 @@ const EditorSidebar = ({
     return (
         <div style={{
             width: '300px',
-            height: 'calc(100vh - 65px)',
-            position: 'sticky',
-            top: '65px',
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             background: 'var(--platform-sidebar-bg)',
