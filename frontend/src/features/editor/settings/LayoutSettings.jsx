@@ -12,6 +12,23 @@ const inputStyle = {
     fontSize: '1rem', background: 'var(--platform-card-bg)', 
     color: 'var(--platform-text-primary)', boxSizing: 'border-box' 
 };
+const toggleButtonContainerStyle = {
+    display: 'flex',
+    borderRadius: '6px',
+    border: '1px solid var(--platform-border-color)',
+    overflow: 'hidden'
+};
+const toggleButtonStyle = (isActive) => ({
+    flex: 1,
+    padding: '0.75rem',
+    border: 'none',
+    background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
+    color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
+    cursor: 'pointer',
+    fontWeight: isActive ? 'bold' : 'normal',
+    transition: 'background 0.2s, color 0.2s'
+});
+
 const PRESETS = [
     { preset: '50-50', name: '50% / 50%', columns: 2 },
     { preset: '75-25', name: '75% / 25%', columns: 2 },
@@ -21,7 +38,7 @@ const PRESETS = [
 ];
 
 const LayoutSettings = ({ data, onChange }) => {
-
+    
     const handlePresetChange = (e) => {
         const newPresetValue = e.target.value;
         const selectedPreset = PRESETS.find(p => p.preset === newPresetValue);
@@ -55,16 +72,50 @@ const LayoutSettings = ({ data, onChange }) => {
         onChange({
             ...data,
             preset: newPresetValue,
-            columns: updatedColumns
+            columns: updatedColumns,
+            direction: data.direction || 'row'
         });
     };
     
     const handleChange = (e) => {
-        onChange({ ...data, [e.target.name]: e.target.value });
+        onChange({ ...data, [e.target.name]: e.target.value, direction: data.direction || 'row' });
     };
 
+    const handleDirectionChange = (direction) => {
+        const update = { ...data, direction };
+        if (direction === 'column') {
+             update.horizontalAlign = data.horizontalAlign || 'start'; 
+        } else if (direction === 'row') {
+             update.verticalAlign = data.verticalAlign || 'top';
+        }
+        onChange(update);
+    };
+
+    const isHorizontal = data.direction === 'row' || !data.direction;
+    const isVertical = data.direction === 'column';
+    
     return (
         <div>
+            <div style={formGroupStyle}>
+                <label style={labelStyle}>Напрямок:</label>
+                <div style={toggleButtonContainerStyle}>
+                    <button
+                        type="button"
+                        style={toggleButtonStyle(isHorizontal)}
+                        onClick={() => handleDirectionChange('row')}
+                    >
+                        Горизонтально
+                    </button>
+                    <button
+                        type="button"
+                        style={toggleButtonStyle(isVertical)}
+                        onClick={() => handleDirectionChange('column')}
+                    >
+                        Вертикально
+                    </button>
+                </div>
+            </div>
+
             <div style={formGroupStyle}>
                 <label style={labelStyle}>Пресет колонок:</label>
                 <select
@@ -82,20 +133,45 @@ const LayoutSettings = ({ data, onChange }) => {
             </div>
             
             <div style={formGroupStyle}>
-                <label style={labelStyle}>Вертикальне вирівнювання:</label>
-                <select
-                    name="verticalAlign"
-                    value={data.verticalAlign || 'top'}
-                    onChange={handleChange}
-                    style={inputStyle}
-                >
-                    <option value="top">Вгорі</option>
-                    <option value="middle">Посередині</option>
-                    <option value="bottom">Внизу</option>
-                </select>
-                <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block'}}>
-                    Вирівнює вміст колонок по вертикалі, якщо вони різної висоти.
-                </small>
+                <label style={labelStyle}>
+                    Вирівнювання:
+                </label>
+                
+                {isHorizontal && (
+                    <>
+                        <select
+                            name="verticalAlign"
+                            value={data.verticalAlign || 'top'}
+                            onChange={handleChange}
+                            style={inputStyle}
+                        >
+                            <option value="top">Вгорі</option>
+                            <option value="middle">Посередині</option>
+                            <option value="bottom">Внизу</option>
+                        </select>
+                        <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block'}}>
+                            Вирівнює вміст колонок по вертикалі, якщо вони різної висоти
+                        </small>
+                    </>
+                )}
+
+                {isVertical && (
+                    <>
+                        <select
+                            name="horizontalAlign"
+                            value={data.horizontalAlign || 'start'}
+                            onChange={handleChange}
+                            style={inputStyle}
+                        >
+                            <option value="start">Ліворуч</option>
+                            <option value="center">По центру</option>
+                            <option value="end">Праворуч</option>
+                        </select>
+                        <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block'}}>
+                            Вирівнює вміст вкладених блоків по горизонталі
+                        </small>
+                    </>
+                )}
             </div>
         </div>
     );

@@ -7,11 +7,17 @@ import BlockRenderer from './BlockRenderer';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
-const getLayoutStyles = (direction, preset, verticalAlign = 'top') => {
-    const alignMap = {
+const getLayoutStyles = (direction = 'row', preset, verticalAlign = 'top', horizontalAlign = 'start') => {
+    
+    const verticalAlignMap = {
         top: 'start',
         middle: 'center',
         bottom: 'end'
+    };
+    const horizontalAlignMap = {
+        start: 'start',
+        center: 'center',
+        end: 'end'
     };
     
     const baseStyle = {
@@ -20,7 +26,8 @@ const getLayoutStyles = (direction, preset, verticalAlign = 'top') => {
         padding: '20px',
         backgroundColor: 'transparent',
         background: 'none',
-        alignItems: alignMap[verticalAlign] || 'start',
+        alignItems: verticalAlignMap[verticalAlign] || 'start',
+        justifyItems: horizontalAlignMap[horizontalAlign] || 'start',
     };
 
     if (direction === 'column') {
@@ -129,8 +136,8 @@ const LayoutBlock = ({
     selectedBlockPath,
     onAddBlock 
 }) => {
-    const { preset, columns = [], direction, verticalAlign } = block.data;
-    const layoutStyle = getLayoutStyles(direction, preset, verticalAlign);
+    const { preset, columns = [], direction, verticalAlign, horizontalAlign } = block.data;
+    const layoutStyle = getLayoutStyles(direction, preset, verticalAlign, horizontalAlign);
 
     if (!isEditorPreview) {
         return (

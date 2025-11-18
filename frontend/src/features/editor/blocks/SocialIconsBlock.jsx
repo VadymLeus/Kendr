@@ -68,7 +68,7 @@ const SocialIconsBlock = ({ blockData, isEditorPreview }) => {
                 flexDirection: 'column'
             }}>
                 <span style={{fontSize: '2rem'}}>📱</span>
-                <p style={{margin: '0.5rem 0 0 0', fontWeight: '500'}}>Іконки соцмереж</p>
+                <p style={{margin: '0.5rem 0 0 0', fontWeight: '500'}}>Соцмережі</p>
                 <small>Вкажіть посилання в налаштуваннях блоку.</small>
             </div>
         );

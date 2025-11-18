@@ -22,7 +22,7 @@ export const BLOCK_LIBRARY = [
     { type: 'video', name: 'Відео', icon: '🎬' },
     { type: 'map', name: 'Мапа', icon: '🗺️' },
     { type: 'accordion', name: 'Акордеон', icon: '❓' },
-    { type: 'social_icons', name: 'Іконки Соцмереж', icon: '📱' },
+    { type: 'social_icons', name: 'Соцмережі', icon: '📱' },
 ];
 
 export const generateBlockId = () => {
@@ -88,7 +88,8 @@ export const getDefaultBlockData = (type, options = {}) => {
             return { 
                 preset: options.preset || '50-50',
                 columns: Array(columnCount).fill().map(() => []),
-                verticalAlign: 'top'
+                verticalAlign: 'top',
+                direction: 'row'
             };
 
         case 'categories':
