@@ -19,7 +19,8 @@ import {
     removeBlockByPath, 
     addBlockByPath, 
     moveBlock,
-    handleDrop
+    handleDrop,
+    cloneBlockWithNewIds
 } from '../../features/editor/blockUtils';
 
 const SiteDashboardPage = () => {
@@ -34,21 +35,40 @@ const SiteDashboardPage = () => {
     const [selectedBlockPath, setSelectedBlockPath] = useState(null);
     const [allPages, setAllPages] = useState([]);
     const [collapsedBlocks, setCollapsedBlocks] = useState([]);
+    const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
 
     useEffect(() => {
-        if (siteData && siteData.page) {
-            setCurrentPageId(siteData.page.id);
-            setBlocks(siteData.page.block_content || []);
-            setCurrentPageName(siteData.page.name || 'Головна');
-            setIsPageLoading(false);
+        if (siteData) {
+            if (siteData.page) {
+                setCurrentPageId(siteData.page.id);
+                setBlocks(siteData.page.block_content || []);
+                setCurrentPageName(siteData.page.name || 'Головна');
+                setIsPageLoading(false);
+            } else {
+                apiClient.get(`/sites/${siteData.id}/pages`)
+                    .then(res => {
+                        setAllPages(res.data);
+                        const homePage = res.data.find(p => p.is_homepage);
+                        if (homePage) {
+                            setCurrentPageId(homePage.id);
+                            return apiClient.get(`/pages/${homePage.id}`);
+                        }
+                    })
+                    .then(res => {
+                        if (res && res.data) {
+                            setBlocks(res.data.block_content || []);
+                            setCurrentPageName(res.data.name);
+                            setIsPageLoading(false);
+                        }
+                    })
+                    .catch(err => console.error("Помилка ініціалізації сторінки", err));
+            }
 
-            apiClient.get(`/sites/${siteData.id}/pages`)
-                .then(res => setAllPages(res.data))
-                .catch(err => console.error("Не вдалося завантажити список сторінок", err));
-
-        } else if (!isSiteLoading) {
-            setIsPageLoading(false);
-            console.error("Дані сайту завантажені, але головна сторінка відсутня.");
+            if (!allPages.length) {
+                apiClient.get(`/sites/${siteData.id}/pages`)
+                    .then(res => setAllPages(res.data))
+                    .catch(err => console.error(err));
+            }
         }
     }, [siteData, isSiteLoading]);
 
@@ -59,6 +79,10 @@ const SiteDashboardPage = () => {
                 : [...prev, blockId]
         );
     };
+
+    const handleBlockSaved = useCallback(() => {
+        setSavedBlocksUpdateTrigger(prev => prev + 1);
+    }, []);
     
     const fetchPageContent = async (pageId) => {
         if (siteData && siteData.page && siteData.page.id === pageId) {
@@ -122,11 +146,27 @@ const SiteDashboardPage = () => {
     }, []);
     
     const handleAddBlock = useCallback((path, type, presetData = {}) => {
+        let blockData;
+        let libraryMeta = {};
+
+        if (presetData && presetData.isSavedBlock && presetData.content) {
+            blockData = cloneBlockWithNewIds(presetData.content);
+            
+            libraryMeta = {
+                _library_origin_id: presetData.originId,
+                _library_name: presetData.originName
+            };
+        } else {
+            blockData = getDefaultBlockData(type, presetData);
+        }
+
         const newBlock = {
             block_id: generateBlockId(),
             type,
-            data: getDefaultBlockData(type, presetData),
+            data: blockData,
+            ...libraryMeta
         };
+        
         setBlocks(prevBlocks => addBlockByPath(prevBlocks, newBlock, path));
     }, []);
     
@@ -219,6 +259,7 @@ const SiteDashboardPage = () => {
                                         selectedBlockPath={selectedBlockPath}
                                         collapsedBlocks={collapsedBlocks}
                                         onToggleCollapse={toggleCollapse}
+                                        onBlockSaved={handleBlockSaved}
                                     />
                                 </div>
                             )}
@@ -236,6 +277,7 @@ const SiteDashboardPage = () => {
                             allPages={allPages}
                             currentPageId={currentPageId}
                             onSelectPage={handleEditPage}
+                            savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
                         />
                     </>
                 )}

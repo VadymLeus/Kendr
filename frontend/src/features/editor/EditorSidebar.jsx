@@ -15,7 +15,8 @@ const EditorSidebar = ({
     onSave,
     allPages,
     currentPageId,
-    onSelectPage
+    onSelectPage,
+    savedBlocksUpdateTrigger
 }) => {
     const [activeTab, setActiveTab] = useState('add');
     useEffect(() => {
@@ -122,7 +123,11 @@ const EditorSidebar = ({
                  overflowY: 'auto', flex: 1, padding: '1rem' }}
                  className="custom-scrollbar"
             >
-                {activeTab === 'add' && <AddBlocksTab />}
+                {activeTab === 'add' && (
+                    <AddBlocksTab 
+                        savedBlocksUpdateTrigger={savedBlocksUpdateTrigger} 
+                    />
+                )}
                 
                 {activeTab === 'layers' && (
                     <LayersTab

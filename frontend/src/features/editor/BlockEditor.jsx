@@ -14,7 +14,8 @@ const BlockEditor = ({
     onSelectBlock,
     selectedBlockPath,
     collapsedBlocks,
-    onToggleCollapse
+    onToggleCollapse,
+    onBlockSaved
 }) => {
     
     const [, dropRef] = useDrop(() => ({
@@ -59,6 +60,7 @@ const BlockEditor = ({
                             selectedBlockPath={selectedBlockPath}
                             isCollapsed={collapsedBlocks.includes(block.block_id)}
                             onToggleCollapse={onToggleCollapse}
+                            onBlockSaved={onBlockSaved}
                         />
                     </React.Fragment>
                 ))}

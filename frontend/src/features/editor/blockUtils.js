@@ -79,3 +79,26 @@ export const handleDrop = (blocks, dragItem, dropPath) => {
     const hoverPath = [...dropPath, targetBlockList.length];
     return moveBlock(blocks, dragPath, hoverPath);
 };
+
+export const generateNewId = () => {
+    return crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
+export const cloneBlockWithNewIds = (obj) => {
+    if (Array.isArray(obj)) {
+        return obj.map(item => cloneBlockWithNewIds(item));
+    } else if (obj !== null && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                if (key === 'block_id' || (key === 'id' && typeof obj[key] === 'string' && (obj[key].startsWith('id-') || obj[key].length > 20))) {
+                    newObj[key] = generateNewId();
+                } else {
+                    newObj[key] = cloneBlockWithNewIds(obj[key]);
+                }
+            }
+        }
+        return newObj;
+    }
+    return obj;
+};

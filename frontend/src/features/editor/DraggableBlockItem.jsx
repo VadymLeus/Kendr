@@ -4,7 +4,7 @@ import { useDrag } from 'react-dnd';
 
 export const DND_TYPE_NEW_BLOCK = 'NEW_BLOCK';
 
-const DraggableBlockItem = ({ blockType, presetData = {}, name, icon }) => {
+const DraggableBlockItem = ({ blockType, presetData = {}, name, icon, customStyle = {} }) => {
     const [{ isDragging }, drag] = useDrag(() => ({
         type: DND_TYPE_NEW_BLOCK,
         item: { blockType, presetData },
@@ -27,7 +27,8 @@ const DraggableBlockItem = ({ blockType, presetData = {}, name, icon }) => {
             gap: '0.5rem',
             color: 'var(--platform-text-primary)',
             transition: 'all 0.2s ease',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            ...customStyle
         },
         icon: {
             fontSize: '1.25rem',

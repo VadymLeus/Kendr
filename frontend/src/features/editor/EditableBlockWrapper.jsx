@@ -3,6 +3,8 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import BlockRenderer from './blocks/BlockRenderer';
 import { DND_TYPE_NEW_BLOCK } from './DraggableBlockItem';
+import apiClient from '../../services/api';
+import SaveBlockModal from './SaveBlockModal';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
@@ -17,9 +19,11 @@ const EditableBlockWrapper = ({
     onSelectBlock,
     selectedBlockPath,
     isCollapsed,
-    onToggleCollapse
+    onToggleCollapse,
+    onBlockSaved
 }) => {
     const [isCompact, setIsCompact] = useState(window.innerWidth < 1024);
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setIsCompact(window.innerWidth < 1024);
@@ -91,6 +95,39 @@ const EditableBlockWrapper = ({
         e.stopPropagation(); 
         onDeleteBlock(path);
     };
+
+    const handleSaveBlock = async (name, mode, targetOverrideId = null) => {
+        try {
+            const targetId = targetOverrideId || block._library_origin_id;
+
+            if (mode === 'overwrite' && targetId) {
+                 await apiClient.put(`/saved-blocks/${targetId}`, {
+                    content: block.data
+                });
+                alert(`Блок успішно оновлено в бібліотеці!`);
+            } else {
+                await apiClient.post('/saved-blocks', {
+                    name: name,
+                    type: block.type,
+                    content: block.data
+                });
+                alert('Блок успішно збережено в бібліотеку!');
+            }
+
+            if (onBlockSaved) {
+                onBlockSaved();
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('Помилка збереження блоку.');
+        }
+    };
+
+    const originBlockInfo = block._library_origin_id ? {
+        id: block._library_origin_id,
+        name: block._library_name
+    } : null;
 
     const themeSettings = siteData?.theme_settings || {};
 
@@ -167,6 +204,19 @@ const EditableBlockWrapper = ({
                 </span>
                 
                 <div style={styles.buttonGroup}>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsSaveModalOpen(true); }}
+                        style={{
+                            ...styles.actionButton,
+                            background: 'var(--platform-card-bg)',
+                            color: 'var(--platform-accent)',
+                            border: '1px solid var(--platform-border-color)'
+                        }}
+                        title={originBlockInfo ? `Оновити "${originBlockInfo.name}"` : "Зберегти в бібліотеку"}
+                    >
+                        💾
+                    </button>
+
                     <button 
                         onClick={(e) => { e.stopPropagation(); onToggleCollapse(block.block_id); }}
                         style={{
@@ -245,6 +295,13 @@ const EditableBlockWrapper = ({
                     />
                 </div>
             )}
+
+            <SaveBlockModal 
+                isOpen={isSaveModalOpen} 
+                onClose={() => setIsSaveModalOpen(false)} 
+                onSave={handleSaveBlock}
+                originBlockInfo={originBlockInfo}
+            />
         </div>
     );
 };
