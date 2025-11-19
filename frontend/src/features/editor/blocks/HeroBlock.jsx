@@ -13,6 +13,7 @@ const HeroBlock = ({ blockData, siteData, isEditorPreview }) => {
     const alignment = blockData.alignment || 'center';
     const overlayColor = blockData.overlay_color || 'rgba(0, 0, 0, 0.5)';
     const heightPreset = blockData.height || 'medium';
+    const { fontFamily } = blockData;
 
     const contentColor = '#ffffff';
     
@@ -75,7 +76,8 @@ const HeroBlock = ({ blockData, siteData, isEditorPreview }) => {
         width: '100%',
         textAlign: textAlign,
         color: contentColor,
-        padding: '0 20px'
+        padding: '0 20px',
+        fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : undefined
     };
     
     const titleStyle = {

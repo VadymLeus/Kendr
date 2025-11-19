@@ -1,6 +1,8 @@
 // frontend/src/features/editor/settings/HeroSettings.jsx
 import React from 'react';
 import ImageInput from '../../media/ImageInput';
+import { FONT_LIBRARY } from '../editorConfig';
+import CustomSelect from '../../../components/common/CustomSelect';
 
 const formGroupStyle = { marginBottom: '1.5rem' };
 const labelStyle = { 
@@ -27,22 +29,22 @@ const sectionTitleStyle = {
     paddingBottom: '0.5rem',
     borderBottom: '1px solid var(--platform-border-color)'
 };
-const buttonGroupStyle = {
+const toggleButtonContainerStyle = {
     display: 'flex',
     borderRadius: '6px',
-    overflow: 'hidden',
-    border: '1px solid var(--platform-border-color)'
+    border: '1px solid var(--platform-border-color)',
+    overflow: 'hidden'
 };
 const toggleButtonStyle = (isActive) => ({
     flex: 1,
-    padding: '0.6rem',
+    padding: '0.75rem',
     border: 'none',
     background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
     color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
     cursor: 'pointer',
-    fontSize: '0.9rem',
-    transition: 'all 0.2s',
-    borderRight: '1px solid var(--platform-border-color)'
+    fontWeight: isActive ? 'bold' : 'normal',
+    transition: 'background 0.2s, color 0.2s',
+    fontSize: '0.9rem'
 });
 
 const HeroSettings = ({ data, onChange }) => {
@@ -55,7 +57,8 @@ const HeroSettings = ({ data, onChange }) => {
         button_text: data.button_text || data.buttonText || '',
         button_link: data.button_link || data.buttonLink || '',
         alignment: data.alignment || 'center',
-        height: data.height || 'medium'
+        height: data.height || 'medium',
+        fontFamily: data.fontFamily || 'global' // Додано поле для шрифту
     };
 
     const handleChange = (e) => {
@@ -72,12 +75,16 @@ const HeroSettings = ({ data, onChange }) => {
         onChange({ ...safeData, alignment });
     };
     
-    const handleHeightChange = (height) => {
-        onChange({ ...safeData, height });
-    };
+    const heightOptions = [
+        { value: 'small', label: 'Маленька (300px)' },
+        { value: 'medium', label: 'Середня (500px)' },
+        { value: 'large', label: 'Велика (700px)' },
+        { value: 'full', label: 'На весь екран' },
+    ];
 
     return (
         <div> 
+            {/* СЕКЦІЯ: ФОН ТА ВИГЛЯД */}
             <div style={{ marginBottom: '2rem' }}>
                 <h4 style={sectionTitleStyle}>🖼️ Фон та вигляд</h4>
                 
@@ -109,29 +116,37 @@ const HeroSettings = ({ data, onChange }) => {
                             flexShrink: 0
                         }} />
                     </div>
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
+                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
                         CSS колір. Наприклад: <code>rgba(0, 0, 0, 0.6)</code> для затемнення.
                     </small>
                 </div>
                 
                 <div style={formGroupStyle}>
                     <label style={labelStyle}>Висота блоку:</label>
-                    <select 
+                    <CustomSelect 
                         name="height" 
                         value={safeData.height} 
                         onChange={handleChange} 
+                        options={heightOptions}
                         style={inputStyle}
-                    >
-                        <option value="small">Маленька</option>
-                        <option value="medium">Середня</option>
-                        <option value="large">Велика</option>
-                        <option value="full">На весь екран</option>
-                    </select>
+                    />
                 </div>
             </div>
 
+            {/* СЕКЦІЯ: ВМІСТ (Тут додано вибір шрифту) */}
             <div style={{ marginBottom: '2rem' }}>
                 <h4 style={sectionTitleStyle}>📝 Вміст</h4>
+
+                <div style={formGroupStyle}>
+                    <label style={labelStyle}>Шрифт тексту:</label>
+                    <CustomSelect
+                        name="fontFamily"
+                        value={safeData.fontFamily}
+                        onChange={handleChange}
+                        options={FONT_LIBRARY}
+                        style={inputStyle}
+                    />
+                </div>
                 
                 <div style={formGroupStyle}>
                     <label style={labelStyle}>Заголовок:</label>
@@ -159,7 +174,7 @@ const HeroSettings = ({ data, onChange }) => {
 
                 <div style={formGroupStyle}>
                     <label style={labelStyle}>Вирівнювання тексту:</label>
-                    <div style={buttonGroupStyle}>
+                    <div style={toggleButtonContainerStyle}>
                         <button 
                             type="button"
                             style={toggleButtonStyle(safeData.alignment === 'left')}
@@ -176,7 +191,7 @@ const HeroSettings = ({ data, onChange }) => {
                         </button>
                         <button 
                             type="button"
-                            style={{...toggleButtonStyle(safeData.alignment === 'right'), borderRight: 'none'}}
+                            style={toggleButtonStyle(safeData.alignment === 'right')}
                             onClick={() => handleAlignmentChange('right')}
                         >
                             ➡️ Справа
@@ -185,6 +200,7 @@ const HeroSettings = ({ data, onChange }) => {
                 </div>
             </div>
 
+            {/* СЕКЦІЯ: КНОПКА */}
             <div>
                 <h4 style={sectionTitleStyle}>🔘 Кнопка дії</h4>
                 
@@ -198,7 +214,7 @@ const HeroSettings = ({ data, onChange }) => {
                         placeholder="Наприклад: Детальніше"
                         style={inputStyle}
                     />
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
+                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
                         Залиште порожнім, щоб приховати кнопку.
                     </small>
                 </div>

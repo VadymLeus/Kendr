@@ -2,13 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../services/api';
 import ImageInput from '../../media/ImageInput';
+import { FONT_LIBRARY } from '../../editor/editorConfig';
+import CustomSelect from '../../../components/common/CustomSelect';
 
 const API_URL = 'http://localhost:5000';
 
+const FONT_OPTIONS = FONT_LIBRARY.filter(f => f.value !== 'global');
+
 const ThemeSettingsTab = ({ siteData }) => {
     const [themeSettings, setThemeSettings] = useState({
-        font_heading: 'sans-serif',
-        font_body: 'sans-serif',
+        font_heading: "'Inter', sans-serif",
+        font_body: "'Inter', sans-serif",
         button_radius: '8px',
     });
     const [headerSettings, setHeaderSettings] = useState({
@@ -83,7 +87,7 @@ const ThemeSettingsTab = ({ siteData }) => {
 
     useEffect(() => {
         if (siteData.theme_settings) {
-            setThemeSettings(siteData.theme_settings);
+            setThemeSettings(prev => ({ ...prev, ...siteData.theme_settings }));
         }
         if (siteData.header_settings) {
             setHeaderSettings(siteData.header_settings);
@@ -188,33 +192,25 @@ const ThemeSettingsTab = ({ siteData }) => {
                 </h4>
                 
                 <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={styles.label}>Шрифт Заголовків</label>
-                    <input 
-                        type="text" 
+                    <label style={styles.label}>Шрифт Заголовків (H1-H6)</label>
+                    <CustomSelect
                         name="font_heading" 
                         value={themeSettings.font_heading} 
                         onChange={handleThemeChange} 
+                        options={FONT_OPTIONS}
                         style={styles.input}
-                        placeholder="Наприклад: Roboto, Montserrat, sans-serif"
                     />
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
-                        Введіть назву шрифту або шрифтового стеку
-                    </small>
                 </div>
                 
                 <div style={{ marginBottom: '1.5rem' }}>
                     <label style={styles.label}>Шрифт Основного Тексту</label>
-                    <input 
-                        type="text" 
+                    <CustomSelect
                         name="font_body" 
                         value={themeSettings.font_body} 
                         onChange={handleThemeChange} 
+                        options={FONT_OPTIONS}
                         style={styles.input}
-                        placeholder="Наприклад: Lato, Open Sans, sans-serif"
                     />
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
-                        Введіть назву шрифту або шрифтового стеку
-                    </small>
                 </div>
                 
                 <div style={{ marginBottom: '1rem' }}>
@@ -225,11 +221,8 @@ const ThemeSettingsTab = ({ siteData }) => {
                         value={themeSettings.button_radius} 
                         onChange={handleThemeChange} 
                         style={styles.input}
-                        placeholder="Наприклад: 4px, 20px, 0"
+                        placeholder="Наприклад: 8px, 20px, 0"
                     />
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
-                        Введіть значення в px або %
-                    </small>
                 </div>
             </div>
 

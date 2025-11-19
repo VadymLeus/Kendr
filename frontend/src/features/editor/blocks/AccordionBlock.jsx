@@ -3,8 +3,8 @@ import React from 'react';
 import AccordionItem from './AccordionItem';
 
 const AccordionBlock = ({ blockData, isEditorPreview }) => {
-    const { items = [] } = blockData;
-
+    const { items = [], fontFamily } = blockData;
+    
     const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
     const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
 
@@ -13,6 +13,7 @@ const AccordionBlock = ({ blockData, isEditorPreview }) => {
         maxWidth: '900px',
         margin: '0 auto',
         background: isEditorPreview ? 'var(--platform-card-bg)' : 'transparent',
+        fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : undefined,
         ...(isEditorPreview && {
              border: `1px dashed ${borderColor}`,
              borderRadius: '8px'

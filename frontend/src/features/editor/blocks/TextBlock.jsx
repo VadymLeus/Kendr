@@ -2,7 +2,7 @@
 import React from 'react';
 
 const TextBlock = ({ blockData, isEditorPreview }) => {
-    const { content, alignment = 'left', style = 'p' } = blockData;
+    const { content, alignment = 'left', style = 'p', fontFamily } = blockData;
     
     const Tag = ['p', 'h1', 'h2', 'h3'].includes(style) ? style : 'p';
     
@@ -20,7 +20,8 @@ const TextBlock = ({ blockData, isEditorPreview }) => {
         textAlign: alignment,
         ...(styleMap[Tag] || styleMap.p),
         whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word'
+        wordBreak: 'break-word',
+        fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : undefined
     };
 
     return (

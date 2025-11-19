@@ -1,6 +1,7 @@
 // frontend/src/features/editor/settings/AccordionSettings.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { generateBlockId } from '../editorConfig';
+import { generateBlockId, FONT_LIBRARY } from '../editorConfig';
+import CustomSelect from '../../../components/common/CustomSelect';
 
 const formGroupStyle = { marginBottom: '1.5rem' };
 const labelStyle = { 
@@ -72,6 +73,11 @@ const AccordionSettings = ({ data, onChange }) => {
         onChange({ ...data, items: newItems });
     };
 
+    const handleFontChange = (e) => {
+        // CustomSelect повертає подію з target.value
+        onChange({ ...data, fontFamily: e.target.value });
+    };
+
     const handleAddItem = () => {
         const newItem = { 
             id: generateBlockId(), 
@@ -109,6 +115,17 @@ const AccordionSettings = ({ data, onChange }) => {
 
     return (
         <div>
+            <div style={formGroupStyle}>
+                <label style={labelStyle}>Шрифт блоку:</label>
+                <CustomSelect
+                    name="fontFamily"
+                    value={data.fontFamily || 'global'}
+                    onChange={handleFontChange}
+                    options={FONT_LIBRARY}
+                    style={inputStyle}
+                />
+            </div>
+
             <label style={labelStyle}>Елементи акордеону:</label>
             
             {(data.items || []).map((item, index) => (

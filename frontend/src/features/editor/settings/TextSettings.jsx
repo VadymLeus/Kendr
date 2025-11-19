@@ -1,5 +1,7 @@
 // frontend/src/features/editor/settings/TextSettings.jsx
 import React, { useRef, useEffect } from 'react';
+import { FONT_LIBRARY } from '../editorConfig';
+import CustomSelect from '../../../components/common/CustomSelect';
 
 const formGroupStyle = { marginBottom: '1.5rem' };
 const labelStyle = { 
@@ -54,6 +56,13 @@ const TextSettings = ({ data, onChange }) => {
         autoResizeTextarea();
     }, [data.content]);
 
+    const styleOptions = [
+        { value: 'p', label: 'Звичайний текст (p)' },
+        { value: 'h1', label: 'Заголовок 1 (h1)' },
+        { value: 'h2', label: 'Заголовок 2 (h2)' },
+        { value: 'h3', label: 'Заголовок 3 (h3)' }
+    ];
+
     return (
         <div>
             <div className="form-group" style={formGroupStyle}>
@@ -101,18 +110,23 @@ const TextSettings = ({ data, onChange }) => {
             </div>
 
             <div className="form-group" style={formGroupStyle}>
-                <label style={labelStyle}>Стиль тексту:</label>
-                <select 
-                    name="style" 
-                    value={data.style || 'p'} 
-                    onChange={handleChange}
-                    style={inputStyle}
-                >
-                    <option value="p">Звичайний текст (p)</option>
-                    <option value="h1">Заголовок 1 (h1)</option>
-                    <option value="h2">Заголовок 2 (h2)</option>
-                    <option value="h3">Заголовок 3 (h3)</option>
-                </select>
+                <label style={labelStyle}>Стиль та Шрифт:</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <CustomSelect 
+                        name="style" 
+                        value={data.style || 'p'} 
+                        onChange={handleChange}
+                        options={styleOptions}
+                        style={inputStyle}
+                    />
+                    <CustomSelect
+                        name="fontFamily"
+                        value={data.fontFamily || 'global'}
+                        onChange={handleChange}
+                        options={FONT_LIBRARY}
+                        style={inputStyle}
+                    />
+                </div>
             </div>
         </div>
     );

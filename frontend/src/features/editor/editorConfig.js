@@ -1,6 +1,6 @@
 // frontend/src/features/editor/editorConfig.js
 export const BLOCK_LIBRARY = [
-    { type: 'hero', name: 'Обкладинка (Hero)', icon: '🖼️' },
+    { type: 'hero', name: 'Обкладинка', icon: '🖼️' },
     { type: 'text', name: 'Текстовий блок', icon: '📝' },
     { type: 'image', name: 'Зображення', icon: '🏞️' },
     { type: 'button', name: 'Кнопка', icon: '🔘' },
@@ -32,6 +32,34 @@ export const generateBlockId = () => {
     return `id-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
+export const FONT_LIBRARY = [
+    { label: 'Як на сайті (Default)', value: 'global', type: 'sans-serif' },
+    
+    { label: 'Inter', value: "'Inter', sans-serif", googleFont: 'Inter' },
+    { label: 'Roboto', value: "'Roboto', sans-serif", googleFont: 'Roboto' },
+    { label: 'Open Sans', value: "'Open Sans', sans-serif", googleFont: 'Open Sans' },
+    { label: 'Montserrat', value: "'Montserrat', sans-serif", googleFont: 'Montserrat' },
+    { label: 'Lato', value: "'Lato', sans-serif", googleFont: 'Lato' },
+    { label: 'Nunito', value: "'Nunito', sans-serif", googleFont: 'Nunito' },
+    { label: 'Oswald', value: "'Oswald', sans-serif", googleFont: 'Oswald' },
+    { label: 'Raleway', value: "'Raleway', sans-serif", googleFont: 'Raleway' },
+
+    { label: 'Merriweather', value: "'Merriweather', serif", googleFont: 'Merriweather' },
+    { label: 'Playfair Display', value: "'Playfair Display', serif", googleFont: 'Playfair Display' },
+    { label: 'Lora', value: "'Lora', serif", googleFont: 'Lora' },
+    { label: 'PT Serif', value: "'PT Serif', serif", googleFont: 'PT Serif' },
+    { label: 'Bitter', value: "'Bitter', serif", googleFont: 'Bitter' },
+
+    { label: 'Comfortaa', value: "'Comfortaa', display", googleFont: 'Comfortaa' },
+    { label: 'Russo One', value: "'Russo One', sans-serif", googleFont: 'Russo One' },
+    { label: 'Pacifico', value: "'Pacifico', cursive", googleFont: 'Pacifico' },
+    { label: 'Lobster', value: "'Lobster', cursive", googleFont: 'Lobster' },
+    { label: 'Caveat', value: "'Caveat', cursive", googleFont: 'Caveat' },
+    
+    { label: 'Roboto Mono', value: "'Roboto Mono', monospace", googleFont: 'Roboto Mono' },
+    { label: 'Ubuntu Mono', value: "'Ubuntu Mono', monospace", googleFont: 'Ubuntu Mono' }
+];
+
 export const getDefaultBlockData = (type, options = {}) => {
     switch (type) {
         case 'hero':
@@ -43,14 +71,16 @@ export const getDefaultBlockData = (type, options = {}) => {
                 button_text: 'Дізнатись більше',
                 button_link: '#',
                 alignment: 'center',
-                height: 'medium'
+                height: 'medium',
+                fontFamily: 'global'
             };
 
         case 'text':
             return { 
                 content: 'Вставте сюди свій текст.',
                 alignment: 'left',
-                style: 'p'
+                style: 'p',
+                fontFamily: 'global'
             };
 
         case 'image':
@@ -145,6 +175,7 @@ export const getDefaultBlockData = (type, options = {}) => {
 
         case 'accordion':
             return {
+                fontFamily: 'global',
                 items: [
                     { id: generateBlockId(), title: "Перше питання", content: "Текст відповіді тут..." },
                     { id: generateBlockId(), title: "Друге питання", content: "Інший текст відповіді..." }
