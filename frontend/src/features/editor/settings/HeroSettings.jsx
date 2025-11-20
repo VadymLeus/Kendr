@@ -58,7 +58,9 @@ const HeroSettings = ({ data, onChange }) => {
         button_link: data.button_link || data.buttonLink || '',
         alignment: data.alignment || 'center',
         height: data.height || 'medium',
-        fontFamily: data.fontFamily || 'global' // Додано поле для шрифту
+        fontFamily: data.fontFamily || 'global',
+        theme_mode: data.theme_mode || 'auto',
+        overlay_opacity: data.overlay_opacity !== undefined ? data.overlay_opacity : 0.5
     };
 
     const handleChange = (e) => {
@@ -84,7 +86,6 @@ const HeroSettings = ({ data, onChange }) => {
 
     return (
         <div> 
-            {/* СЕКЦІЯ: ФОН ТА ВИГЛЯД */}
             <div style={{ marginBottom: '2rem' }}>
                 <h4 style={sectionTitleStyle}>🖼️ Фон та вигляд</h4>
                 
@@ -93,6 +94,55 @@ const HeroSettings = ({ data, onChange }) => {
                     <ImageInput 
                         value={safeData.bg_image}
                         onChange={handleImageChange} 
+                    />
+                </div>
+
+                <div style={formGroupStyle}>
+                    <label style={labelStyle}>🎨 Тема блоку (Контраст):</label>
+                    <div style={toggleButtonContainerStyle}>
+                        <button 
+                            type="button"
+                            style={toggleButtonStyle(safeData.theme_mode === 'auto')}
+                            onClick={() => onChange({ ...safeData, theme_mode: 'auto' })}
+                            title="Як на сайті"
+                        >
+                            🌓 Авто
+                        </button>
+                        <button 
+                            type="button"
+                            style={toggleButtonStyle(safeData.theme_mode === 'light')}
+                            onClick={() => onChange({ ...safeData, theme_mode: 'light' })}
+                            title="Чорний текст на білому"
+                        >
+                            ☀️ Світла
+                        </button>
+                        <button 
+                            type="button"
+                            style={toggleButtonStyle(safeData.theme_mode === 'dark')}
+                            onClick={() => onChange({ ...safeData, theme_mode: 'dark' })}
+                            title="Білий текст на темному"
+                        >
+                            🌙 Темна
+                        </button>
+                    </div>
+                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
+                        Оберіть "Темну", якщо використовуєте фотографію.
+                    </small>
+                </div>
+
+                <div style={formGroupStyle}>
+                    <label style={labelStyle}>
+                        🌑 Затемнення фону: {Math.round(safeData.overlay_opacity * 100)}%
+                    </label>
+                    <input 
+                        type="range" 
+                        name="overlay_opacity" 
+                        min="0" 
+                        max="0.9" 
+                        step="0.1" 
+                        value={safeData.overlay_opacity}
+                        onChange={handleChange}
+                        style={{ width: '100%', cursor: 'pointer' }}
                     />
                 </div>
 
@@ -133,7 +183,6 @@ const HeroSettings = ({ data, onChange }) => {
                 </div>
             </div>
 
-            {/* СЕКЦІЯ: ВМІСТ (Тут додано вибір шрифту) */}
             <div style={{ marginBottom: '2rem' }}>
                 <h4 style={sectionTitleStyle}>📝 Вміст</h4>
 
@@ -200,7 +249,6 @@ const HeroSettings = ({ data, onChange }) => {
                 </div>
             </div>
 
-            {/* СЕКЦІЯ: КНОПКА */}
             <div>
                 <h4 style={sectionTitleStyle}>🔘 Кнопка дії</h4>
                 

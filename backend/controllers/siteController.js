@@ -67,34 +67,46 @@ exports.createSite = async (req, res, next) => {
             throw new Error(`Шаблон з ID ${templateId} не знайдено.`);
         }
         
-        let templatePages;
         const rawContent = templates[0].default_block_content;
+        let templateData = {};
 
         try {
-            if (typeof rawContent === 'object' && rawContent !== null) {
-                templatePages = rawContent;
-            } else if (typeof rawContent === 'string') {
-                templatePages = JSON.parse(rawContent);
-            } else {
-                templatePages = [];
-            }
+            templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
         } catch(e) {
             console.error("Помилка парсингу шаблону:", e);
-            templatePages = [];
+            templateData = {};
         }
 
-        if (Array.isArray(templatePages) && templatePages.length > 0 && !templatePages[0].slug) {
-             templatePages = [{
-                title: 'Головна',
-                slug: 'home',
-                blocks: templatePages
-             }];
+        let pagesToCreate = [];
+        let footerToSave = [];
+
+        if (templateData.pages && Array.isArray(templateData.pages)) {
+            pagesToCreate = templateData.pages;
+            footerToSave = templateData.footer_content || [];
+        } 
+        else if (Array.isArray(templateData)) {
+            if (templateData.length > 0 && !templateData[0].slug) {
+                pagesToCreate = [{
+                    title: 'Головна',
+                    slug: 'home',
+                    blocks: templateData
+                }];
+            } else {
+                pagesToCreate = templateData;
+            }
         }
 
         const newSite = await Site.create(userId, sitePath, title, logoUrl);
         
-        if (Array.isArray(templatePages)) {
-            for (const pageData of templatePages) {
+        if (footerToSave && footerToSave.length > 0) {
+            await db.query(
+                'UPDATE sites SET footer_content = ? WHERE id = ?',
+                [JSON.stringify(footerToSave), newSite.id]
+            );
+        }
+
+        if (pagesToCreate.length > 0) {
+            for (const pageData of pagesToCreate) {
                 await Page.create({
                     site_id: newSite.id, 
                     name: pageData.title || 'Нова сторінка', 

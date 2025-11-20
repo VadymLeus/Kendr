@@ -269,15 +269,17 @@ const EditableBlockWrapper = ({
                 </div>
             ) : (
                 <div
+                    className="site-theme-context"
                     data-site-mode={siteData?.site_theme_mode || 'light'}
                     data-site-accent={siteData?.site_theme_accent || 'orange'}
                     style={{
                         background: 'var(--platform-card-bg)',
                         color: 'var(--platform-text-primary)',
                         ...(block.type === 'layout' && { background: 'transparent' }),
-                        '--font-heading': themeSettings.font_heading || 'sans-serif',
-                        '--font-body': themeSettings.font_body || 'sans-serif',
-                        '--btn-radius': themeSettings.button_radius || '4px',
+                        '--font-heading': themeSettings.font_heading || "'Inter', sans-serif",
+                        '--font-body': themeSettings.font_body || "'Inter', sans-serif",
+                        '--btn-radius': themeSettings.button_radius || '8px',
+                        
                         borderRadius: '0 0 8px 8px',
                     }}
                 >

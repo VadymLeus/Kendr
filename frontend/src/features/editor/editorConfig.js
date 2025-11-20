@@ -12,6 +12,8 @@ export const BLOCK_LIBRARY = [
         presets: [
             { preset: '50-50', name: '2 колонки (50/50)', columns: 2 },
             { preset: '75-25', name: '2 колонки (75/25)', columns: 2 },
+            { preset: '33-33-33', name: '3 колонки (33/33/33)', columns: 3 },
+            { preset: '25-25-25-25', name: '4 колонки (25/25/25/25)', columns: 4 },
         ]
     },
 
@@ -23,6 +25,11 @@ export const BLOCK_LIBRARY = [
     { type: 'map', name: 'Мапа', icon: '🗺️' },
     { type: 'accordion', name: 'Акордеон', icon: '❓' },
     { type: 'social_icons', name: 'Соцмережі', icon: '📱' },
+    
+    { type: 'divider', name: 'Роздільник', icon: '➖' },
+    { type: 'spacer', name: 'Відступ', icon: '⏸️' },
+    { type: 'quote', name: 'Цитата', icon: '💬' },
+    { type: 'testimonials', name: 'Відгуки', icon: '⭐' },
 ];
 
 export const generateBlockId = () => {
@@ -72,7 +79,8 @@ export const getDefaultBlockData = (type, options = {}) => {
                 button_link: '#',
                 alignment: 'center',
                 height: 'medium',
-                fontFamily: 'global'
+                fontFamily: 'global',
+                block_theme: 'auto'
             };
 
         case 'text':
@@ -80,7 +88,8 @@ export const getDefaultBlockData = (type, options = {}) => {
                 content: 'Вставте сюди свій текст.',
                 alignment: 'left',
                 style: 'p',
-                fontFamily: 'global'
+                fontFamily: 'global',
+                block_theme: 'auto'
             };
 
         case 'image':
@@ -104,7 +113,8 @@ export const getDefaultBlockData = (type, options = {}) => {
                     autoplay: false, 
                     loop: true 
                 },
-                settings_grid: { columns: 3 }
+                settings_grid: { columns: 3 },
+                block_theme: 'auto'
             };
 
         case 'button':
@@ -113,7 +123,8 @@ export const getDefaultBlockData = (type, options = {}) => {
                 link: '#',
                 styleType: 'primary',
                 alignment: 'center',
-                targetBlank: false
+                targetBlank: false,
+                block_theme: 'auto'
             };
 
         case 'layout':
@@ -122,7 +133,8 @@ export const getDefaultBlockData = (type, options = {}) => {
                 preset: options.preset || '50-50',
                 columns: Array(columnCount).fill().map(() => []),
                 verticalAlign: 'top',
-                direction: 'row'
+                direction: 'row',
+                block_theme: 'auto'
             };
 
         case 'categories':
@@ -132,7 +144,8 @@ export const getDefaultBlockData = (type, options = {}) => {
                     { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+1', title: 'Елемент 1', link: '#' },
                     { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+2', title: 'Елемент 2', link: '#' },
                     { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+3', title: 'Елемент 3', link: '#' }
-                ]
+                ],
+                block_theme: 'auto'
             };
 
         case 'catalog_grid':
@@ -141,7 +154,8 @@ export const getDefaultBlockData = (type, options = {}) => {
                 mode: 'auto',
                 category_id: 'all',
                 selectedProductIds: [],
-                excludedProductIds: []
+                excludedProductIds: [],
+                block_theme: 'auto'
             };
 
         case 'features':
@@ -151,26 +165,30 @@ export const getDefaultBlockData = (type, options = {}) => {
                 items: [
                     { id: generateBlockId(), icon: '🌟', title: 'Особливість 1', text: 'Короткий опис' },
                     { id: generateBlockId(), icon: '💡', title: 'Особливість 2', text: 'Короткий опис' }
-                ]
+                ],
+                block_theme: 'auto'
             };
 
         case 'form':
             return {
                 buttonText: 'Надіслати',
                 successMessage: 'Дякуємо! Ваше повідомлення надіслано.',
-                notifyEmail: ''
+                notifyEmail: '',
+                block_theme: 'auto'
             };
 
         case 'video':
             return {
                 url: '',
-                sizePreset: 'medium'
+                sizePreset: 'medium',
+                block_theme: 'auto'
             };
 
         case 'map':
             return {
                 embed_code: '',
-                sizePreset: 'medium'
+                sizePreset: 'medium',
+                block_theme: 'auto'
             };
 
         case 'accordion':
@@ -179,7 +197,8 @@ export const getDefaultBlockData = (type, options = {}) => {
                 items: [
                     { id: generateBlockId(), title: "Перше питання", content: "Текст відповіді тут..." },
                     { id: generateBlockId(), title: "Друге питання", content: "Інший текст відповіді..." }
-                ]
+                ],
+                block_theme: 'auto'
             };
 
         case 'social_icons':
@@ -189,10 +208,91 @@ export const getDefaultBlockData = (type, options = {}) => {
                 instagram: '',
                 telegram: '',
                 youtube: '',
-                tiktok: ''
+                tiktok: '',
+                block_theme: 'auto'
+            };
+
+        case 'divider':
+            return {
+                style: 'solid',
+                color: 'var(--site-border-color)',
+                thickness: '1px',
+                width: '100%',
+                alignment: 'center',
+                block_theme: 'auto'
+            };
+
+        case 'spacer':
+            return {
+                height: '40px',
+                responsive: {
+                    mobile: '20px',
+                    tablet: '30px'
+                },
+                block_theme: 'auto'
+            };
+
+        case 'quote':
+            return {
+                text: 'Це дуже надихаюча цитата, яка може мотивувати ваших відвідувачів.',
+                author: 'Автор цитати',
+                alignment: 'center',
+                fontFamily: 'global',
+                style: 'default',
+                block_theme: 'auto'
+            };
+
+        case 'testimonials':
+            return {
+                title: 'Що кажуть наші клієнти',
+                columns: 2,
+                items: [
+                    { 
+                        id: generateBlockId(), 
+                        name: 'Іван Петренко', 
+                        position: 'Клієнт',
+                        text: 'Дуже задоволений якістю обслуговування та продукції. Рекомендую всім!',
+                        rating: 5,
+                        avatar: ''
+                    },
+                    { 
+                        id: generateBlockId(), 
+                        name: 'Марія Коваленко', 
+                        position: 'Партнер',
+                        text: 'Професійний підхід та оперативність. Співпраця була дуже приємною.',
+                        rating: 4,
+                        avatar: ''
+                    }
+                ],
+                block_theme: 'auto'
             };
 
         default:
-            return {};
+            return { block_theme: 'auto' };
     }
 };
+
+export const BLOCK_THEME_OPTIONS = [
+    { value: 'auto', label: 'Автоматично (як на сайті)' },
+    { value: 'light', label: 'Світла тема' },
+    { value: 'dark', label: 'Темна тема' }
+];
+
+export const getBlockThemeClass = (blockTheme) => {
+    if (blockTheme === 'light') return 'block-theme-light';
+    if (blockTheme === 'dark') return 'block-theme-dark';
+    return '';
+};
+
+export const ALIGNMENT_OPTIONS = [
+    { value: 'left', label: 'Ліворуч', icon: '←' },
+    { value: 'center', label: 'По центру', icon: '●' },
+    { value: 'right', label: 'Праворуч', icon: '→' }
+];
+
+export const HEIGHT_OPTIONS = [
+    { value: 'small', label: 'Мала' },
+    { value: 'medium', label: 'Середня' },
+    { value: 'large', label: 'Велика' },
+    { value: 'fullscreen', label: 'На весь екран' }
+];

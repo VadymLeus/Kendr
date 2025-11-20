@@ -388,3 +388,35 @@ hr {
 .layout-content::-webkit-scrollbar-corner {
     background: var(--platform-sidebar-bg);
 }
+
+.block-theme-dark {
+  --site-text-primary: #ffffff;
+  --site-text-secondary: #e2e8f0;
+  --site-bg: #1a202c;
+  --site-card-bg: #2d3748;
+  --site-border-color: #4a5568;
+}
+
+.block-theme-light {
+  --site-text-primary: #1a202c;
+  --site-text-secondary: #4a5568;
+  --site-bg: #ffffff;
+  --site-card-bg: #f7fafc;
+  --site-border-color: #e2e8f0;
+}
+
+.hero-block-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-block-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #000000;
+    z-index: 1;
+    pointer-events: none;
+}
