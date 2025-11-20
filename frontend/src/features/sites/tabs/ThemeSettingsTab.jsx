@@ -20,6 +20,7 @@ const ThemeSettingsTab = ({ siteData }) => {
         logo_url: siteData.logo_url || '',
         menu_links: [],
     });
+    
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');

@@ -89,7 +89,7 @@ const EditorSidebar = ({
                 </button>
             </div>
 
-            <div style={pageSwitcherStyle}>
+<div style={pageSwitcherStyle}>
                 <label style={{
                     fontSize: '0.8rem',
                     fontWeight: '500',
@@ -102,7 +102,10 @@ const EditorSidebar = ({
                 <select
                     style={selectStyle}
                     value={currentPageId || ''}
-                    onChange={(e) => onSelectPage(parseInt(e.target.value, 10))}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        onSelectPage(val === 'footer' ? 'footer' : parseInt(val, 10));
+                    }}
                     disabled={!allPages || allPages.length === 0}
                 >
                     {(allPages || []).map(page => (

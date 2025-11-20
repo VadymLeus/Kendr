@@ -152,7 +152,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
     );
 };
 
-const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate }) => {
+const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter }) => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -344,106 +344,153 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate }) => {
                             <p>Створіть першу сторінку для вашого сайту</p>
                         </div>
                     ) : (
-                        <table style={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th style={styles.th}>Назва</th>
-                                    <th style={styles.th}>Шлях (Slug)</th>
-                                    <th style={styles.th}>Статус</th>
-                                    <th style={styles.th}>Дії</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pages.map(page => (
-                                    <tr key={page.id}>
-                                        <td style={styles.td}>
-                                            <strong>{page.name}</strong>
-                                        </td>
-                                        <td style={styles.td}>/{page.slug}</td>
-                                        <td style={styles.td}>
-                                            {page.is_homepage ? (
-                                                <span style={{
-                                                    color: 'var(--platform-accent)', 
-                                                    fontWeight: 'bold',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.25rem'
-                                                }}>🏠 Головна</span>
-                                            ) : (
-                                                'Звичайна'
-                                            )}
-                                        </td>
-                                        <td style={{
-                                            ...styles.td, 
-                                            display: 'flex', 
-                                            gap: '8px', 
-                                            flexWrap: 'wrap'
-                                        }}>
-                                            <button 
-                                                style={{
-                                                    ...styles.button,
-                                                    background: 'var(--platform-card-bg)',
-                                                    color: 'var(--platform-text-primary)',
-                                                    border: '1px solid var(--platform-border-color)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.25rem'
-                                                }}
-                                                onClick={() => onEditPage(page.id)}
-                                                title="Редагувати вміст"
-                                            >
-                                                ✏️ Редактор
-                                            </button>
-                                            <button 
-                                                style={{
-                                                    ...styles.button,
-                                                    background: 'var(--platform-card-bg)',
-                                                    color: 'var(--platform-text-primary)',
-                                                    border: '1px solid var(--platform-border-color)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.25rem'
-                                                }}
-                                                onClick={() => handleOpenEdit(page)}
-                                                title="Налаштування сторінки"
-                                            >
-                                                ⚙️ Налаш.
-                                            </button>
-                                            {!page.is_homepage && (
-                                                <>
-                                                    <button 
-                                                        style={{
-                                                            ...styles.button,
-                                                            background: 'var(--platform-card-bg)',
-                                                            color: 'var(--platform-text-primary)',
-                                                            border: '1px solid var(--platform-border-color)',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.25rem'
-                                                        }}
-                                                        onClick={() => handleSetHome(page.id)}
-                                                        title="Зробити головною сторінкою"
-                                                    >
-                                                        🏠 Головна
-                                                    </button>
-                                                    <button 
-                                                        style={{
-                                                            ...styles.button,
-                                                            background: 'var(--platform-danger)',
-                                                            color: 'white'
-                                                        }}
-                                                        onClick={() => handleDelete(page)}
-                                                        title="Видалити сторінку"
-                                                    >
-                                                        ❌ Видалити
-                                                    </button>
-                                                </>
-                                            )}
-                                        </td>
+                        <>
+                            <table style={styles.table}>
+                                <thead>
+                                    <tr>
+                                        <th style={styles.th}>Назва</th>
+                                        <th style={styles.th}>Шлях (Slug)</th>
+                                        <th style={styles.th}>Статус</th>
+                                        <th style={styles.th}>Дії</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {pages.map(page => (
+                                        <tr key={page.id}>
+                                            <td style={styles.td}>
+                                                <strong>{page.name}</strong>
+                                            </td>
+                                            <td style={styles.td}>/{page.slug}</td>
+                                            <td style={styles.td}>
+                                                {page.is_homepage ? (
+                                                    <span style={{
+                                                        color: 'var(--platform-accent)', 
+                                                        fontWeight: 'bold',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.25rem'
+                                                    }}>🏠 Головна</span>
+                                                ) : (
+                                                    'Звичайна'
+                                                )}
+                                            </td>
+                                            <td style={{
+                                                ...styles.td, 
+                                                display: 'flex', 
+                                                gap: '8px', 
+                                                flexWrap: 'wrap'
+                                            }}>
+                                                <button 
+                                                    style={{
+                                                        ...styles.button,
+                                                        background: 'var(--platform-card-bg)',
+                                                        color: 'var(--platform-text-primary)',
+                                                        border: '1px solid var(--platform-border-color)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.25rem'
+                                                    }}
+                                                    onClick={() => onEditPage(page.id)}
+                                                    title="Редагувати вміст"
+                                                >
+                                                    ✏️ Редактор
+                                                </button>
+                                                <button 
+                                                    style={{
+                                                        ...styles.button,
+                                                        background: 'var(--platform-card-bg)',
+                                                        color: 'var(--platform-text-primary)',
+                                                        border: '1px solid var(--platform-border-color)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.25rem'
+                                                    }}
+                                                    onClick={() => handleOpenEdit(page)}
+                                                    title="Налаштування сторінки"
+                                                >
+                                                    ⚙️ Налаш.
+                                                </button>
+                                                {!page.is_homepage && (
+                                                    <>
+                                                        <button 
+                                                            style={{
+                                                                ...styles.button,
+                                                                background: 'var(--platform-card-bg)',
+                                                                color: 'var(--platform-text-primary)',
+                                                                border: '1px solid var(--platform-border-color)',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.25rem'
+                                                            }}
+                                                            onClick={() => handleSetHome(page.id)}
+                                                            title="Зробити головною сторінкою"
+                                                        >
+                                                            🏠 Головна
+                                                        </button>
+                                                        <button 
+                                                            style={{
+                                                                ...styles.button,
+                                                                background: 'var(--platform-danger)',
+                                                                color: 'white'
+                                                            }}
+                                                            onClick={() => handleDelete(page)}
+                                                            title="Видалити сторінку"
+                                                        >
+                                                            ❌ Видалити
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            <div style={{ marginTop: '2rem' }}>
+                                <h4 style={{ 
+                                    color: 'var(--platform-text-secondary)', 
+                                    fontSize: '0.9rem', 
+                                    textTransform: 'uppercase', 
+                                    borderBottom: '1px solid var(--platform-border-color)',
+                                    paddingBottom: '0.5rem',
+                                    marginBottom: '0'
+                                }}>
+                                    Глобальні області (на всіх сторінках)
+                                </h4>
+                                
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <tbody>
+                                        <tr>
+                                            <td style={styles.td}>
+                                                <strong>🔻 Глобальний Футер</strong>
+                                            </td>
+                                            <td style={styles.td}>/ (footer)</td>
+                                            <td style={styles.td}>
+                                                <span style={{ color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
+                                                    Наскрізний блок
+                                                </span>
+                                            </td>
+                                            <td style={styles.td}>
+                                                <button 
+                                                    style={{
+                                                        ...styles.button,
+                                                        background: 'var(--platform-accent)',
+                                                        color: 'var(--platform-accent-text)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.25rem'
+                                                    }}
+                                                    onClick={onEditFooter}
+                                                    title="Редагувати вміст футера"
+                                                >
+                                                    🛠 Редагувати Футер
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
                     )}
                 </>
             )}

@@ -27,7 +27,7 @@ const Layout = () => {
     const productMatch = location.pathname.match(/^\/product\/([^/]+)/);
     
     const shouldShowSiteHeader = !!(publicMatch || productMatch);
-    const shouldShowFooter = !isAdmin && !dashboardMatch;
+    const shouldShowFooter = !isAdmin && !dashboardMatch && !publicMatch && !productMatch;
     
     useEffect(() => {
         const fetchSiteData = async () => {
@@ -116,7 +116,7 @@ const Layout = () => {
     
     const isPublicPage = !!(publicMatch || productMatch);
     const mainStyles = {
-        padding: dashboardMatch ? 0 : '2rem',
+        padding: (dashboardMatch || isPublicPage) ? 0 : '2rem', 
         flexGrow: 1,
         '--font-heading': themeSettings.font_heading || "'Inter', sans-serif",
         '--font-body': themeSettings.font_body || "'Inter', sans-serif",

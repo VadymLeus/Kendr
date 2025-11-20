@@ -92,7 +92,7 @@ exports.createSite = async (req, res, next) => {
         }
 
         const newSite = await Site.create(userId, sitePath, title, logoUrl);
-        у
+        
         if (Array.isArray(templatePages)) {
             for (const pageData of templatePages) {
                 await Page.create({
@@ -186,7 +186,6 @@ exports.getSiteByPath = async (req, res, next) => {
 exports.updateSiteSettings = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const { title, status, tags, site_theme_mode, site_theme_accent, theme_settings, header_settings } = req.body;
         const userId = req.user.id;
 
         const site = await Site.findByPath(site_path);
@@ -194,11 +193,49 @@ exports.updateSiteSettings = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав на редагування цього сайту.' });
         }
 
-        await Site.updateSettings(site.id, { title, status, site_theme_mode, site_theme_accent, theme_settings, header_settings });
-        if (Array.isArray(tags)) await Site.updateTags(site.id, tags);
+        const { 
+            title, 
+            status, 
+            tags, 
+            site_theme_mode, 
+            site_theme_accent, 
+            theme_settings, 
+            header_settings, 
+            footer_content 
+        } = req.body;
+
+        const processJsonField = (newField, currentField) => {
+            if (newField === undefined) return currentField;
+            
+            if (typeof newField === 'string') {
+                try { return JSON.parse(newField); } 
+                catch (e) { 
+                    console.warn('Помилка парсингу JSON поля:', e);
+                    return currentField;
+                }
+            }
+            return newField;
+        };
+
+        await Site.updateSettings(site.id, { 
+            title: title !== undefined ? title : site.title,
+            status: status !== undefined ? status : site.status,
+            
+            site_theme_mode: site_theme_mode !== undefined ? site_theme_mode : site.site_theme_mode,
+            site_theme_accent: site_theme_accent !== undefined ? site_theme_accent : site.site_theme_accent,
+            
+            theme_settings: processJsonField(theme_settings, site.theme_settings),
+            header_settings: processJsonField(header_settings, site.header_settings),
+            footer_content: processJsonField(footer_content, site.footer_content) 
+        });
+        
+        if (Array.isArray(tags)) {
+            await Site.updateTags(site.id, tags);
+        }
 
         res.json({ message: 'Налаштування сайту успішно оновлено.' });
     } catch (error) {
+        console.error('Помилка при оновленні налаштувань сайту:', error);
         next(error);
     }
 };

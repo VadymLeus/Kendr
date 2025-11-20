@@ -37,6 +37,8 @@ const SiteDashboardPage = () => {
     const [collapsedBlocks, setCollapsedBlocks] = useState([]);
     const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
 
+    const isFooterMode = currentPageId === 'footer';
+
     useEffect(() => {
         if (siteData) {
             if (siteData.page) {
@@ -72,6 +74,44 @@ const SiteDashboardPage = () => {
         }
     }, [siteData, isSiteLoading]);
 
+    const fetchPageContent = async (pageId) => {
+        setIsPageLoading(true);
+        setBlocks([]);
+        
+        try {
+            if (pageId === 'footer') {
+                const res = await apiClient.get(`/sites/${siteData.site_path}`);
+                let footerBlocks = res.data.footer_content || [];
+                
+                if (typeof footerBlocks === 'string') {
+                    try { footerBlocks = JSON.parse(footerBlocks); } catch (e) {}
+                }
+                
+                setBlocks(footerBlocks);
+                setCurrentPageName('Глобальний Футер');
+            } else {
+                const response = await apiClient.get(`/pages/${pageId}`);
+                let content = response.data.block_content || [];
+                if (typeof content === 'string') content = JSON.parse(content);
+                
+                setBlocks(content);
+                setCurrentPageName(response.data.name || '');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Помилка під час завантаження контенту.');
+        } finally {
+            setIsPageLoading(false);
+        }
+    };
+
+    const handleEditFooter = () => {
+        setCurrentPageId('footer');
+        fetchPageContent('footer');
+        setActiveTab('editor');
+        setSelectedBlockPath(null);
+    };
+
     const toggleCollapse = (blockId) => {
         setCollapsedBlocks(prev => 
             prev.includes(blockId)
@@ -83,27 +123,6 @@ const SiteDashboardPage = () => {
     const handleBlockSaved = useCallback(() => {
         setSavedBlocksUpdateTrigger(prev => prev + 1);
     }, []);
-    
-    const fetchPageContent = async (pageId) => {
-        if (siteData && siteData.page && siteData.page.id === pageId) {
-            setBlocks(siteData.page.block_content || []);
-            setCurrentPageName(siteData.page.name || 'Головна');
-            setIsPageLoading(false);
-            return;
-        }
-
-        setIsPageLoading(true);
-        try {
-            const response = await apiClient.get(`/pages/${pageId}`);
-            setBlocks(response.data.block_content || []);
-            setCurrentPageName(response.data.name || '');
-        } catch (err) {
-            alert('Помилка під час завантаження сторінки.');
-            setBlocks([]);
-        } finally {
-            setIsPageLoading(false);
-        }
-    };
     
     const handleEditPage = (pageId) => {
         if (currentPageId === pageId) return;
@@ -121,21 +140,33 @@ const SiteDashboardPage = () => {
     };
 
     const savePageContent = useCallback(async (newBlocks) => {
-        if (!currentPageId) {
-            alert("Помилка: не обрано сторінку.");
-            return;
-        }
+        if (!currentPageId) return;
+
         try {
-            await apiClient.put(`/pages/${currentPageId}/content`, { 
-                block_content: newBlocks 
-            });
+            if (currentPageId === 'footer') {
+                await apiClient.put(`/sites/${siteData.site_path}/settings`, {
+                    title: siteData.title,
+                    status: siteData.status,
+                    site_theme_mode: siteData.site_theme_mode,
+                    site_theme_accent: siteData.site_theme_accent,
+                    theme_settings: siteData.theme_settings,
+                    header_settings: siteData.header_settings,
+                    
+                    footer_content: newBlocks
+                });
+                alert('Футер успішно оновлено!');
+            } else {
+                await apiClient.put(`/pages/${currentPageId}/content`, { 
+                    block_content: newBlocks 
+                });
+                alert('Контент сторінки збережено!');
+            }
             setBlocks(newBlocks);
-            alert('Контент сторінки успішно збережено!');
         } catch (error) {
-            console.error('Помилка збереження контенту:', error);
+            console.error('Помилка збереження:', error);
             alert('Помилка під час збереження.');
         }
-    }, [currentPageId]);
+    }, [currentPageId, siteData]);
     
     const handleMoveBlock = useCallback((dragPath, hoverPath) => {
         setBlocks(prevBlocks => moveBlock(prevBlocks, dragPath, hoverPath));
@@ -238,6 +269,21 @@ const SiteDashboardPage = () => {
                                 position: 'relative'
                             }}
                         >
+                            {isFooterMode && (
+                                <div style={{
+                                    background: '#2d3748', 
+                                    color: 'white', 
+                                    padding: '0.5rem', 
+                                    textAlign: 'center', 
+                                    fontSize: '0.9rem',
+                                    position: 'sticky',
+                                    top: 0,
+                                    zIndex: 100
+                                }}>
+                                    🛠 Режим редагування: <strong>Глобальний Футер</strong> (відображається на всіх сторінках)
+                                </div>
+                            )}
+                            
                             {isPageLoading ? (
                                 <p style={{
                                     color: 'var(--platform-text-secondary)', 
@@ -274,9 +320,12 @@ const SiteDashboardPage = () => {
                             onSelectBlock={handleSelectBlock}
                             onUpdateBlockData={handleUpdateBlockData}
                             onSave={savePageContent}
-                            allPages={allPages}
+                            allPages={[...allPages, { id: 'footer', name: '🔻 Глобальний Футер', is_homepage: false }]}
                             currentPageId={currentPageId}
-                            onSelectPage={handleEditPage}
+                            onSelectPage={(id) => {
+                                if (id === 'footer') handleEditFooter();
+                                else handleEditPage(id);
+                            }}
                             savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
                         />
                     </>
@@ -297,6 +346,7 @@ const SiteDashboardPage = () => {
                                 <PagesSettingsTab 
                                     siteId={siteData.id} 
                                     onEditPage={handleEditPage}
+                                    onEditFooter={handleEditFooter}
                                     onPageUpdate={refreshPageList}
                                 />
                             )}
