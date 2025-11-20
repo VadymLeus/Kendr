@@ -64,25 +64,54 @@ exports.createSite = async (req, res, next) => {
         const [templates] = await db.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
         
         if (!templates[0] || !templates[0].default_block_content) {
-            throw new Error(`Шаблон з ID ${templateId} не знайдено або він не містить 'default_block_content'.`);
+            throw new Error(`Шаблон з ID ${templateId} не знайдено.`);
         }
         
-        let initialBlockContent;
+        let templatePages;
+        const rawContent = templates[0].default_block_content;
+
         try {
-            initialBlockContent = JSON.parse(templates[0].default_block_content);
+            if (typeof rawContent === 'object' && rawContent !== null) {
+                templatePages = rawContent;
+            } else if (typeof rawContent === 'string') {
+                templatePages = JSON.parse(rawContent);
+            } else {
+                templatePages = [];
+            }
         } catch(e) {
-            initialBlockContent = [];
+            console.error("Помилка парсингу шаблону:", e);
+            templatePages = [];
+        }
+
+        if (Array.isArray(templatePages) && templatePages.length > 0 && !templatePages[0].slug) {
+             templatePages = [{
+                title: 'Головна',
+                slug: 'home',
+                blocks: templatePages
+             }];
         }
 
         const newSite = await Site.create(userId, sitePath, title, logoUrl);
-        
-        await Page.create({
-            site_id: newSite.id, 
-            name: 'Головна', 
-            slug: 'home',
-            block_content: initialBlockContent, 
-            is_homepage: 1
-        });
+        у
+        if (Array.isArray(templatePages)) {
+            for (const pageData of templatePages) {
+                await Page.create({
+                    site_id: newSite.id, 
+                    name: pageData.title || 'Нова сторінка', 
+                    slug: pageData.slug || `page-${Date.now()}`,
+                    block_content: pageData.blocks || [], 
+                    is_homepage: (pageData.slug === 'home') ? 1 : 0
+                });
+            }
+        } else {
+             await Page.create({
+                site_id: newSite.id, 
+                name: 'Головна', 
+                slug: 'home',
+                block_content: [], 
+                is_homepage: 1
+            });
+        }
 
         res.status(201).json({ message: 'Сайт успішно створено!', site: newSite });
     } catch (error) {
