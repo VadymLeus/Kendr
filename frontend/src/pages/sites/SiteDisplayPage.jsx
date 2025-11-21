@@ -1,12 +1,16 @@
 // frontend/src/pages/sites/SiteDisplayPage.jsx
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import apiClient from '../../services/api';
 import BlockRenderer from '../../features/editor/blocks/BlockRenderer';
+import { AuthContext } from '../../providers/AuthContext';
+import NotFoundPage from '../../components/common/NotFoundPage';
+import MaintenancePage from '../../components/common/MaintenancePage';
 
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
     const { site_path } = useParams();
+    const { user } = useContext(AuthContext);
     
     useEffect(() => {
         if (!isSiteLoading && siteData && siteData.page && siteData.page.is_homepage) {
@@ -15,9 +19,28 @@ const SiteDisplayPage = () => {
         }
     }, [isSiteLoading, siteData, site_path]);
 
-    if (isSiteLoading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Завантаження...</div>;
-    if (!siteData) return <div style={{ padding: '2rem', textAlign: 'center' }}>Сайт не знайдено.</div>;
-    if (!siteData.page) return <div style={{ padding: '2rem', textAlign: 'center' }}>Сторінку не знайдено.</div>;
+    if (isSiteLoading) {
+        return (
+            <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh' }}>
+                Завантаження...
+            </div>
+        );
+    }
+
+    if (!siteData) {
+        return <NotFoundPage />;
+    }
+
+    const isOwner = user && user.id === siteData.user_id;
+    const isAdmin = user && user.role === 'admin';
+    
+    if ((siteData.status === 'private' || siteData.status === 'draft') && !isOwner && !isAdmin) {
+        return <MaintenancePage logoUrl={siteData.logo_url} siteName={siteData.title} />;
+    }
+
+    if (!siteData.page) {
+        return <NotFoundPage />;
+    }
 
     let pageBlocks = [];
     if (Array.isArray(siteData.page.block_content)) {
@@ -70,7 +93,6 @@ const SiteDisplayPage = () => {
 
     return (
         <div className="site-root" style={layoutStyle}>
-            
             <main style={mainContentStyle}>
                 <BlockRenderer blocks={pageBlocks} siteData={siteData} />
             </main>
@@ -78,7 +100,6 @@ const SiteDisplayPage = () => {
             {footerBlocks.length > 0 && (
                 <footer style={footerStyle}>
                     <BlockRenderer blocks={footerBlocks} siteData={siteData} />
-                    
                     <div style={copyrightStyle}>
                         Powered by Kendr
                     </div>

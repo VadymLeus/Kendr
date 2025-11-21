@@ -34,6 +34,7 @@ import TicketDetailPage from './pages/support/TicketDetailPage';
 
 import AdminDashboardPage from './admin/DashboardPage';
 import AdminSupportPage from './admin/AdminSupportPage';
+import NotFoundPage from './components/common/NotFoundPage';
 
 function App() {
     return (
@@ -77,7 +78,7 @@ function App() {
                         <Route path="/admin/support" element={<AdminSupportPage />} />
                     </Route>
 
-                    <Route path="*" element={<div><h2>404: Сторінку не знайдено</h2></div>} />
+                    <Route path="*" element={<NotFoundPage />} />
                 </Route>
             </Routes>
         </DndProvider>
