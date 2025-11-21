@@ -1,8 +1,27 @@
 // frontend/src/features/media/MediaPickerModal.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import apiClient from '../../services/api';
 
 const API_URL = 'http://localhost:5000';
+
+const ScrollbarStyles = () => (
+    <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: var(--platform-border-color);
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: var(--platform-text-secondary);
+        }
+    `}</style>
+);
 
 const UploadTab = ({ onUploadSuccess }) => {
     const [uploading, setUploading] = useState(false);
@@ -33,7 +52,7 @@ const UploadTab = ({ onUploadSuccess }) => {
     };
     
     return (
-        <div style={tabContentStyle}>
+        <div style={tabContentStyle} className="custom-scrollbar">
             <label htmlFor="modal-file-upload" style={uploadBoxStyle}>
                 {uploading ? 'Завантаження...' : 'Натисніть або перетягніть файл'}
             </label>
@@ -71,7 +90,7 @@ const LibraryTab = ({ onSelectImage }) => {
     }, []);
 
     return (
-        <div style={tabContentStyle}>
+        <div style={tabContentStyle} className="custom-scrollbar">
             {loading ? <p style={{ color: 'var(--platform-text-secondary)' }}>Завантаження...</p> : 
              error ? <div style={{ color: 'var(--platform-danger)' }}>{error}</div> : 
              mediaFiles.length === 0 ? <p style={{ color: 'var(--platform-text-secondary)' }}>Ваша медіатека порожня.</p> : (
@@ -85,7 +104,7 @@ const LibraryTab = ({ onSelectImage }) => {
                             <img 
                                 src={`${API_URL}${file.path_thumb}`} 
                                 alt={file.alt_text || file.original_file_name} 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                style={imageStyle}
                                 onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.src = "https://placehold.co/100x100/AAAAAA/FFFFFF?text=Помилка";
@@ -99,49 +118,103 @@ const LibraryTab = ({ onSelectImage }) => {
     );
 };
 
+const DefaultLogosTab = ({ onSelectImage }) => {
+    const [logos, setLogos] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        apiClient.get('/sites/default-logos')
+            .then(res => setLogos(res.data))
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
+    }, []);
+
+    return (
+        <div style={tabContentStyle} className="custom-scrollbar">
+            {loading ? (
+                <p style={{ color: 'var(--platform-text-secondary)' }}>Завантаження...</p>
+            ) : logos.length === 0 ? (
+                <p style={{ color: 'var(--platform-text-secondary)' }}>Немає стандартних зображень.</p>
+            ) : (
+                <div style={mediaGridStyle}>
+                    {logos.map((logoUrl, index) => (
+                        <div 
+                            key={index} 
+                            style={{
+                                ...mediaGridItemStyle,
+                                background: '#eee'
+                            }}
+                            onClick={() => onSelectImage(logoUrl)}
+                        >
+                            <img 
+                                src={`${API_URL}${logoUrl}`} 
+                                alt="Standard" 
+                                style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '5px', boxSizing: 'border-box' }}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const MediaPickerModal = ({ isOpen, onClose, onSelectImage }) => {
     const [activeTab, setActiveTab] = useState('library');
 
     if (!isOpen) return null;
 
     const handleSelectAndClose = (path) => {
-        onSelectImage(`${API_URL}${path}`);
+        const finalPath = path.startsWith('http') ? path : `${API_URL}${path}`;
+        onSelectImage(finalPath);
         onClose();
     };
 
     return (
-        <div style={modalOverlayStyle} onClick={onClose}>
-            <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
-                <div style={modalHeaderStyle}>
-                    <h4 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>Вибір зображення</h4>
-                    <button onClick={onClose} style={closeButtonStyle}>&times;</button>
-                </div>
-                
-                <div style={modalTabsStyle}>
-                    <button 
-                        style={tabButtonStyle(activeTab === 'library')}
-                        onClick={() => setActiveTab('library')}
-                    >
-                        Завантажити з медіатеки
-                    </button>
-                    <button 
-                        style={tabButtonStyle(activeTab === 'upload')}
-                        onClick={() => setActiveTab('upload')}
-                    >
-                        Завантажити файл
-                    </button>
-                </div>
+        <>
+            <ScrollbarStyles />
+            <div style={modalOverlayStyle} onClick={onClose}>
+                <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
+                    <div style={modalHeaderStyle}>
+                        <h4 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>Вибір зображення</h4>
+                        <button onClick={onClose} style={closeButtonStyle}>&times;</button>
+                    </div>
+                    
+                    <div style={modalTabsStyle} className="custom-scrollbar">
+                        <button 
+                            style={tabButtonStyle(activeTab === 'library')}
+                            onClick={() => setActiveTab('library')}
+                        >
+                            Медіатека
+                        </button>
+                        <button 
+                            style={tabButtonStyle(activeTab === 'default')}
+                            onClick={() => setActiveTab('default')}
+                        >
+                            Стандартні
+                        </button>
+                        <button 
+                            style={tabButtonStyle(activeTab === 'upload')}
+                            onClick={() => setActiveTab('upload')}
+                        >
+                            Завантажити
+                        </button>
+                    </div>
 
-                <div style={{ padding: '1rem 0', minHeight: '300px' }}>
-                    {activeTab === 'library' && (
-                        <LibraryTab onSelectImage={handleSelectAndClose} />
-                    )}
-                    {activeTab === 'upload' && (
-                        <UploadTab onUploadSuccess={handleSelectAndClose} />
-                    )}
+                    <div style={{ padding: '1rem 0', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        {activeTab === 'library' && (
+                            <LibraryTab onSelectImage={handleSelectAndClose} />
+                        )}
+                        {activeTab === 'default' && (
+                            <DefaultLogosTab onSelectImage={handleSelectAndClose} />
+                        )}
+                        {activeTab === 'upload' && (
+                            <UploadTab onUploadSuccess={handleSelectAndClose} />
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
@@ -163,9 +236,13 @@ const modalContentStyle = {
     padding: '1.5rem', 
     borderRadius: '12px', 
     width: '90%', 
-    maxWidth: '700px', 
+    maxWidth: '800px',
     boxShadow: '0 5px 15px rgba(0,0,0,0.3)', 
-    border: '1px solid var(--platform-border-color)' 
+    border: '1px solid var(--platform-border-color)',
+    display: 'flex',
+    flexDirection: 'column',
+    height: '80vh',
+    maxHeight: '700px' 
 };
 
 const modalHeaderStyle = { 
@@ -173,7 +250,8 @@ const modalHeaderStyle = {
     justifyContent: 'space-between', 
     alignItems: 'center', 
     paddingBottom: '1rem', 
-    borderBottom: '1px solid var(--platform-border-color)' 
+    borderBottom: '1px solid var(--platform-border-color)',
+    flexShrink: 0
 };
 
 const closeButtonStyle = { 
@@ -187,23 +265,28 @@ const closeButtonStyle = {
 const modalTabsStyle = { 
     display: 'flex', 
     gap: '0.5rem', 
-    margin: '1rem 0' 
+    margin: '1rem 0',
+    overflowX: 'auto',
+    flexShrink: 0
 };
 
 const tabButtonStyle = (isActive) => ({
     flex: 1,
-    padding: '1rem',
+    padding: '0.8rem',
     borderRadius: '8px',
     border: '1px solid var(--platform-border-color)',
     background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
     color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-secondary)',
     cursor: 'pointer',
-    fontWeight: '500'
+    fontWeight: '500',
+    whiteSpace: 'nowrap',
+    transition: 'all 0.2s ease'
 });
 
 const tabContentStyle = { 
-    padding: '1rem 0', 
-    minHeight: '300px' 
+    paddingRight: '5px',
+    height: '100%',
+    overflowY: 'auto'
 };
 
 const uploadBoxStyle = {
@@ -216,24 +299,33 @@ const uploadBoxStyle = {
     borderRadius: '8px',
     background: 'var(--platform-bg)',
     color: 'var(--platform-text-secondary)',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'border-color 0.2s'
 };
 
 const mediaGridStyle = { 
     display: 'grid', 
-    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
-    gap: '1rem', 
-    maxHeight: '400px', 
-    overflowY: 'auto' 
+    gridTemplateColumns: 'repeat(6, 1fr)', 
+    gap: '10px', 
+    width: '100%'
 };
 
 const mediaGridItemStyle = {
-    width: '100px',
-    height: '100px',
+    width: '100%',
+    aspectRatio: '1 / 1', 
     borderRadius: '8px',
     overflow: 'hidden',
     border: '2px solid var(--platform-border-color)',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'transform 0.2s, border-color 0.2s',
+    position: 'relative'
+};
+
+const imageStyle = {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block'
 };
 
 export default MediaPickerModal;

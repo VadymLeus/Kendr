@@ -1,11 +1,8 @@
 // frontend/src/features/sites/tabs/ThemeSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../services/api';
-import ImageInput from '../../media/ImageInput';
 import { FONT_LIBRARY } from '../../editor/editorConfig';
 import CustomSelect from '../../../components/common/CustomSelect';
-
-const API_URL = 'http://localhost:5000';
 
 const FONT_OPTIONS = FONT_LIBRARY.filter(f => f.value !== 'global');
 
@@ -14,11 +11,6 @@ const ThemeSettingsTab = ({ siteData }) => {
         font_heading: "'Inter', sans-serif",
         font_body: "'Inter', sans-serif",
         button_radius: '8px',
-    });
-    const [headerSettings, setHeaderSettings] = useState({
-        layout: 'layout_1',
-        logo_url: siteData.logo_url || '',
-        menu_links: [],
     });
     
     const [saving, setSaving] = useState(false);
@@ -61,15 +53,6 @@ const ThemeSettingsTab = ({ siteData }) => {
             fontWeight: '500',
             transition: 'all 0.2s ease'
         },
-        smallButton: {
-            padding: '8px 12px',
-            fontSize: '12px',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: '500',
-            transition: 'all 0.2s ease'
-        },
         error: {
             color: 'var(--platform-danger)', 
             background: 'rgba(229, 62, 62, 0.1)', 
@@ -90,46 +73,11 @@ const ThemeSettingsTab = ({ siteData }) => {
         if (siteData.theme_settings) {
             setThemeSettings(prev => ({ ...prev, ...siteData.theme_settings }));
         }
-        if (siteData.header_settings) {
-            setHeaderSettings(siteData.header_settings);
-        } else {
-            setHeaderSettings(prev => ({ ...prev, logo_url: siteData.logo_url }));
-        }
     }, [siteData]);
 
     const handleThemeChange = (e) => {
         const { name, value } = e.target;
         setThemeSettings(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleHeaderChange = (e) => {
-        const { name, value } = e.target;
-        setHeaderSettings(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleLogoChange = (newUrl) => {
-        const relativeUrl = newUrl.replace(API_URL, '');
-        setHeaderSettings(prev => ({ ...prev, logo_url: relativeUrl }));
-    };
-
-    const handleLinkChange = (index, field, value) => {
-        const newLinks = [...headerSettings.menu_links];
-        newLinks[index][field] = value;
-        setHeaderSettings(prev => ({ ...prev, menu_links: newLinks }));
-    };
-
-    const addLink = () => {
-        setHeaderSettings(prev => ({
-            ...prev,
-            menu_links: [...prev.menu_links, { label: 'Нове Посилання', url: '/' }]
-        }));
-    };
-
-    const removeLink = (index) => {
-        setHeaderSettings(prev => ({
-            ...prev,
-            menu_links: prev.menu_links.filter((_, i) => i !== index)
-        }));
     };
 
     const handleSave = async () => {
@@ -139,7 +87,6 @@ const ThemeSettingsTab = ({ siteData }) => {
         try {
             await apiClient.put(`/sites/${siteData.site_path}/settings`, {
                 theme_settings: themeSettings,
-                header_settings: headerSettings,
                 title: siteData.title,
                 status: siteData.status,
                 site_theme_mode: siteData.site_theme_mode,
@@ -147,7 +94,6 @@ const ThemeSettingsTab = ({ siteData }) => {
             });
             setSuccess('Налаштування збережено!');
             setTimeout(() => {
-                alert('Налаштування збережено! Сторінка буде перезавантажена, щоб застосувати зміни.');
                 window.location.reload();
             }, 1000);
         } catch (err) {
@@ -224,108 +170,6 @@ const ThemeSettingsTab = ({ siteData }) => {
                         style={styles.input}
                         placeholder="Наприклад: 8px, 20px, 0"
                     />
-                </div>
-            </div>
-
-            <div style={styles.card}>
-                <h4 style={{ 
-                    color: 'var(--platform-text-primary)', 
-                    marginBottom: '1.5rem',
-                    fontSize: '1.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                }}>
-                    🏷️ Налаштування Шапки (Header)
-                </h4>
-                
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={styles.label}>Логотип</label>
-                    <ImageInput 
-                        value={headerSettings.logo_url ? `${API_URL}${headerSettings.logo_url}` : ''} 
-                        onChange={handleLogoChange} 
-                    />
-                </div>
-
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={styles.label}>Макет Шапки</label>
-                    <select 
-                        name="layout" 
-                        value={headerSettings.layout} 
-                        onChange={handleHeaderChange} 
-                        style={styles.input}
-                    >
-                        <option value="layout_1">🔄 Лого зліва, меню справа</option>
-                        <option value="layout_2">🔻 Лого по центру, меню знизу</option>
-                    </select>
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                    <label style={styles.label}>Посилання в Меню</label>
-                    {headerSettings.menu_links.length === 0 ? (
-                        <p style={{ 
-                            color: 'var(--platform-text-secondary)', 
-                            fontStyle: 'italic',
-                            padding: '1rem',
-                            background: 'var(--platform-bg)',
-                            borderRadius: '4px',
-                            textAlign: 'center'
-                        }}>
-                            Ще немає посилань у меню
-                        </p>
-                    ) : (
-                        headerSettings.menu_links.map((link, index) => (
-                            <div 
-                                key={index} 
-                                style={{ 
-                                    display: 'flex', 
-                                    gap: '10px', 
-                                    marginBottom: '10px', 
-                                    alignItems: 'center' 
-                                }}
-                            >
-                                <input 
-                                    type="text" 
-                                    placeholder="Текст (напр., Головна)" 
-                                    value={link.label} 
-                                    onChange={(e) => handleLinkChange(index, 'label', e.target.value)} 
-                                    style={{...styles.input, flex: 2, marginBottom: 0}} 
-                                />
-                                <input 
-                                    type="text" 
-                                    placeholder="Шлях (напр., /home)" 
-                                    value={link.url} 
-                                    onChange={(e) => handleLinkChange(index, 'url', e.target.value)} 
-                                    style={{...styles.input, flex: 2, marginBottom: 0}} 
-                                />
-                                <button 
-                                    onClick={() => removeLink(index)} 
-                                    style={{
-                                        ...styles.smallButton, 
-                                        background: 'var(--platform-danger)', 
-                                        color: 'white',
-                                        flex: 0.5
-                                    }}
-                                    title="Видалити посилання"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        ))
-                    )}
-                    <button 
-                        onClick={addLink} 
-                        style={{
-                            ...styles.smallButton, 
-                            background: 'var(--platform-card-bg)', 
-                            color: 'var(--platform-text-primary)', 
-                            border: '1px solid var(--platform-border-color)',
-                            width: '100%',
-                            marginTop: '0.5rem'
-                        }}
-                    >
-                        + Додати посилання
-                    </button>
                 </div>
             </div>
         </div>

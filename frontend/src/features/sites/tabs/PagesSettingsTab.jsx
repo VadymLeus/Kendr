@@ -152,7 +152,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
     );
 };
 
-const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter }) => {
+const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEditHeader }) => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -460,6 +460,33 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter }) =>
                                 
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                     <tbody>
+                                        <tr>
+                                            <td style={styles.td}>
+                                                <strong>🔝 Глобальний Хедер</strong>
+                                            </td>
+                                            <td style={styles.td}>/ (header)</td>
+                                            <td style={styles.td}>
+                                                <span style={{ color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
+                                                    Наскрізний блок
+                                                </span>
+                                            </td>
+                                            <td style={styles.td}>
+                                                <button 
+                                                    style={{
+                                                        ...styles.button,
+                                                        background: 'var(--platform-accent)',
+                                                        color: 'var(--platform-accent-text)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.25rem'
+                                                    }}
+                                                    onClick={onEditHeader}
+                                                    title="Редагувати вміст хедера"
+                                                >
+                                                    🛠 Редагувати Хедер
+                                                </button>
+                                            </td>
+                                        </tr>
                                         <tr>
                                             <td style={styles.td}>
                                                 <strong>🔻 Глобальний Футер</strong>

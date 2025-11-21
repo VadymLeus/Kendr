@@ -38,6 +38,7 @@ const SiteDashboardPage = () => {
     const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
 
     const isFooterMode = currentPageId === 'footer';
+    const isHeaderMode = currentPageId === 'header';
 
     useEffect(() => {
         if (siteData) {
@@ -82,13 +83,32 @@ const SiteDashboardPage = () => {
             if (pageId === 'footer') {
                 const res = await apiClient.get(`/sites/${siteData.site_path}`);
                 let footerBlocks = res.data.footer_content || [];
-                
                 if (typeof footerBlocks === 'string') {
                     try { footerBlocks = JSON.parse(footerBlocks); } catch (e) {}
                 }
-                
                 setBlocks(footerBlocks);
                 setCurrentPageName('Глобальний Футер');
+            } else if (pageId === 'header') {
+                const res = await apiClient.get(`/sites/${siteData.site_path}`);
+                let headerBlocks = res.data.header_content || [];
+                
+                if (typeof headerBlocks === 'string') {
+                    try { headerBlocks = JSON.parse(headerBlocks); } catch (e) {}
+                }
+
+                if (!headerBlocks || headerBlocks.length === 0) {
+                    const defaultHeader = {
+                        block_id: generateBlockId(),
+                        type: 'header',
+                        data: getDefaultBlockData('header')
+                    };
+                    headerBlocks = [defaultHeader];
+                }
+                
+                setBlocks(headerBlocks);
+                setCurrentPageName('Глобальний Хедер');
+                
+                setSelectedBlockPath([0]);
             } else {
                 const response = await apiClient.get(`/pages/${pageId}`);
                 let content = response.data.block_content || [];
@@ -110,6 +130,12 @@ const SiteDashboardPage = () => {
         fetchPageContent('footer');
         setActiveTab('editor');
         setSelectedBlockPath(null);
+    };
+
+    const handleEditHeader = () => {
+        setCurrentPageId('header');
+        fetchPageContent('header');
+        setActiveTab('editor');
     };
 
     const toggleCollapse = (blockId) => {
@@ -151,10 +177,20 @@ const SiteDashboardPage = () => {
                     site_theme_accent: siteData.site_theme_accent,
                     theme_settings: siteData.theme_settings,
                     header_settings: siteData.header_settings,
-                    
                     footer_content: newBlocks
                 });
                 alert('Футер успішно оновлено!');
+            } else if (currentPageId === 'header') {
+                 await apiClient.put(`/sites/${siteData.site_path}/settings`, {
+                    title: siteData.title,
+                    status: siteData.status,
+                    site_theme_mode: siteData.site_theme_mode,
+                    site_theme_accent: siteData.site_theme_accent,
+                    theme_settings: siteData.theme_settings,
+                    footer_content: siteData.footer_content,
+                    header_content: newBlocks
+                });
+                alert('Хедер успішно оновлено!');
             } else {
                 await apiClient.put(`/pages/${currentPageId}/content`, { 
                     block_content: newBlocks 
@@ -182,7 +218,6 @@ const SiteDashboardPage = () => {
 
         if (presetData && presetData.isSavedBlock && presetData.content) {
             blockData = cloneBlockWithNewIds(presetData.content);
-            
             libraryMeta = {
                 _library_origin_id: presetData.originId,
                 _library_name: presetData.originName
@@ -269,7 +304,7 @@ const SiteDashboardPage = () => {
                                 position: 'relative'
                             }}
                         >
-                            {isFooterMode && (
+                            {(isFooterMode || isHeaderMode) && (
                                 <div style={{
                                     background: '#2d3748', 
                                     color: 'white', 
@@ -280,7 +315,7 @@ const SiteDashboardPage = () => {
                                     top: 0,
                                     zIndex: 100
                                 }}>
-                                    🛠 Режим редагування: <strong>Глобальний Футер</strong> (відображається на всіх сторінках)
+                                    🛠 Режим редагування: <strong>{isHeaderMode ? 'Глобальний Хедер' : 'Глобальний Футер'}</strong>
                                 </div>
                             )}
                             
@@ -306,6 +341,7 @@ const SiteDashboardPage = () => {
                                         collapsedBlocks={collapsedBlocks}
                                         onToggleCollapse={toggleCollapse}
                                         onBlockSaved={handleBlockSaved}
+                                        isHeaderMode={isHeaderMode}
                                     />
                                 </div>
                             )}
@@ -320,13 +356,19 @@ const SiteDashboardPage = () => {
                             onSelectBlock={handleSelectBlock}
                             onUpdateBlockData={handleUpdateBlockData}
                             onSave={savePageContent}
-                            allPages={[...allPages, { id: 'footer', name: '🔻 Глобальний Футер', is_homepage: false }]}
+                            allPages={[
+                                { id: 'header', name: '🔝 Глобальний Хедер', is_homepage: false },
+                                ...allPages, 
+                                { id: 'footer', name: '🔻 Глобальний Футер', is_homepage: false }
+                            ]}
                             currentPageId={currentPageId}
                             onSelectPage={(id) => {
                                 if (id === 'footer') handleEditFooter();
+                                else if (id === 'header') handleEditHeader();
                                 else handleEditPage(id);
                             }}
                             savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
+                            isHeaderMode={isHeaderMode}
                         />
                     </>
                 )}
@@ -347,6 +389,7 @@ const SiteDashboardPage = () => {
                                     siteId={siteData.id} 
                                     onEditPage={handleEditPage}
                                     onEditFooter={handleEditFooter}
+                                    onEditHeader={handleEditHeader}
                                     onPageUpdate={refreshPageList}
                                 />
                             )}

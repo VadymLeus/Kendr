@@ -15,7 +15,8 @@ const BlockEditor = ({
     selectedBlockPath,
     collapsedBlocks,
     onToggleCollapse,
-    onBlockSaved
+    onBlockSaved,
+    isHeaderMode
 }) => {
     
     const [, dropRef] = useDrop(() => ({
@@ -66,7 +67,7 @@ const BlockEditor = ({
                 ))}
             </div>
 
-            {blocks.length > 0 && (
+            {blocks.length > 0 && !isHeaderMode && (
                  <div
                     ref={dropRef}
                     style={{

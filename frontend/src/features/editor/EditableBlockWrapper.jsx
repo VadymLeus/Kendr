@@ -13,7 +13,7 @@ const EditableBlockWrapper = ({
     siteData, 
     path, 
     onMoveBlock, 
-    onDropBlock,
+    onDropBlock, 
     onDeleteBlock,
     onAddBlock,
     onSelectBlock,
@@ -85,6 +85,7 @@ const EditableBlockWrapper = ({
     const blockType = { name: block.type, icon: '⚙️' };
     const blockDomId = `block-${block.block_id}`;
     const isSelected = selectedBlockPath && selectedBlockPath.join(',') === path.join(',');
+    const isHeaderBlock = block.type === 'header';
 
     const handleSelect = (e) => {
         e.stopPropagation();
@@ -143,7 +144,9 @@ const EditableBlockWrapper = ({
             borderRadius: '8px',
             transition: 'all 0.2s ease',
             background: block.type === 'layout' ? 'transparent' : 'var(--platform-card-bg)',
-            boxShadow: block.type === 'layout' ? 'none' : '0 2px 4px rgba(0,0,0,0.05)'
+            boxShadow: block.type === 'layout' ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
+            maxWidth: '100%',
+            overflowX: 'hidden'
         },
         header: {
             display: 'flex',
@@ -204,18 +207,20 @@ const EditableBlockWrapper = ({
                 </span>
                 
                 <div style={styles.buttonGroup}>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setIsSaveModalOpen(true); }}
-                        style={{
-                            ...styles.actionButton,
-                            background: 'var(--platform-card-bg)',
-                            color: 'var(--platform-accent)',
-                            border: '1px solid var(--platform-border-color)'
-                        }}
-                        title={originBlockInfo ? `Оновити "${originBlockInfo.name}"` : "Зберегти в бібліотеку"}
-                    >
-                        💾
-                    </button>
+                    {!isHeaderBlock && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsSaveModalOpen(true); }}
+                            style={{
+                                ...styles.actionButton,
+                                background: 'var(--platform-card-bg)',
+                                color: 'var(--platform-accent)',
+                                border: '1px solid var(--platform-border-color)'
+                            }}
+                            title={originBlockInfo ? `Оновити "${originBlockInfo.name}"` : "Зберегти в бібліотеку"}
+                        >
+                            💾
+                        </button>
+                    )}
 
                     <button 
                         onClick={(e) => { e.stopPropagation(); onToggleCollapse(block.block_id); }}
@@ -241,19 +246,21 @@ const EditableBlockWrapper = ({
                         {isCompact ? '⚙️' : 'Налаштування'}
                     </button>
 
-                    <button 
-                        onClick={handleDelete}
-                        title="Видалити блок"
-                        style={{
-                            ...styles.actionButton,
-                            background: 'var(--platform-danger)',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            fontSize: '14px'
-                        }}
-                    >
-                        &times;
-                    </button>
+                    {!isHeaderBlock && (
+                        <button 
+                            onClick={handleDelete}
+                            title="Видалити блок"
+                            style={{
+                                ...styles.actionButton,
+                                background: 'var(--platform-danger)',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                fontSize: '14px'
+                            }}
+                        >
+                            &times;
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -298,12 +305,14 @@ const EditableBlockWrapper = ({
                 </div>
             )}
 
-            <SaveBlockModal 
-                isOpen={isSaveModalOpen} 
-                onClose={() => setIsSaveModalOpen(false)} 
-                onSave={handleSaveBlock}
-                originBlockInfo={originBlockInfo}
-            />
+            {!isHeaderBlock && (
+                <SaveBlockModal 
+                    isOpen={isSaveModalOpen} 
+                    onClose={() => setIsSaveModalOpen(false)} 
+                    onSave={handleSaveBlock} 
+                    originBlockInfo={originBlockInfo}
+                />
+            )}
         </div>
     );
 };

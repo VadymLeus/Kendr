@@ -14,6 +14,7 @@ const VideoBlock = lazy(() => import('./VideoBlock'));
 const MapBlock = lazy(() => import('./MapBlock'));
 const AccordionBlock = lazy(() => import('./AccordionBlock'));
 const SocialIconsBlock = lazy(() => import('./SocialIconsBlock'));
+const HeaderBlock = lazy(() => import('./HeaderBlock'));
 
 const blockMap = {
     hero: HeroBlock,
@@ -29,6 +30,7 @@ const blockMap = {
     map: MapBlock,
     accordion: AccordionBlock,
     social_icons: SocialIconsBlock,
+    header: HeaderBlock,
 };
 
 const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) => {

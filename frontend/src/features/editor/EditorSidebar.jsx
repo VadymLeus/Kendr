@@ -16,9 +16,19 @@ const EditorSidebar = ({
     allPages,
     currentPageId,
     onSelectPage,
-    savedBlocksUpdateTrigger
+    savedBlocksUpdateTrigger,
+    isHeaderMode
 }) => {
     const [activeTab, setActiveTab] = useState('add');
+
+    useEffect(() => {
+        if (isHeaderMode) {
+            setActiveTab('settings');
+        } else if (activeTab === 'settings' && !selectedBlockPath) {
+            setActiveTab('add');
+        }
+    }, [isHeaderMode, selectedBlockPath]);
+
     useEffect(() => {
         if (selectedBlockPath) {
             setActiveTab('settings');
@@ -89,7 +99,7 @@ const EditorSidebar = ({
                 </button>
             </div>
 
-<div style={pageSwitcherStyle}>
+            <div style={pageSwitcherStyle}>
                 <label style={{
                     fontSize: '0.8rem',
                     fontWeight: '500',
@@ -104,7 +114,11 @@ const EditorSidebar = ({
                     value={currentPageId || ''}
                     onChange={(e) => {
                         const val = e.target.value;
-                        onSelectPage(val === 'footer' ? 'footer' : parseInt(val, 10));
+                        if (val === 'footer' || val === 'header') {
+                            onSelectPage(val);
+                        } else {
+                            onSelectPage(parseInt(val, 10));
+                        }
                     }}
                     disabled={!allPages || allPages.length === 0}
                 >
@@ -117,8 +131,12 @@ const EditorSidebar = ({
             </div>
 
             <nav style={{ display: 'flex', borderBottom: '1px solid var(--platform-border-color)' }}>
-                <button style={tabStyle('add')} onClick={() => setActiveTab('add')}>➕ Додати</button>
-                <button style={tabStyle('layers')} onClick={() => setActiveTab('layers')}>🗂️ Шари</button>
+                {!isHeaderMode && (
+                    <>
+                        <button style={tabStyle('add')} onClick={() => setActiveTab('add')}>➕ Додати</button>
+                        <button style={tabStyle('layers')} onClick={() => setActiveTab('layers')}>🗂️ Шари</button>
+                    </>
+                )}
                 <button style={tabStyle('settings')} onClick={() => setActiveTab('settings')}>⚙️ Налаш.</button>
             </nav>
 
@@ -126,13 +144,13 @@ const EditorSidebar = ({
                  overflowY: 'auto', flex: 1, padding: '1rem' }}
                  className="custom-scrollbar"
             >
-                {activeTab === 'add' && (
+                {activeTab === 'add' && !isHeaderMode && (
                     <AddBlocksTab 
                         savedBlocksUpdateTrigger={savedBlocksUpdateTrigger} 
                     />
                 )}
                 
-                {activeTab === 'layers' && (
+                {activeTab === 'layers' && !isHeaderMode && (
                     <LayersTab
                         blocks={blocks}
                         siteData={siteData}
@@ -143,12 +161,26 @@ const EditorSidebar = ({
                 )}
                 
                 {activeTab === 'settings' && (
-                    <SettingsTab 
-                        blocks={blocks}
-                        selectedBlockPath={selectedBlockPath}
-                        onUpdateBlockData={onUpdateBlockData}
-                        siteData={siteData}
-                    />
+                    <>
+                        {isHeaderMode && !selectedBlockPath && (
+                            <div style={{ 
+                                textAlign: 'center', 
+                                color: 'var(--platform-text-secondary)', 
+                                padding: '1rem',
+                                border: '1px dashed var(--platform-border-color)',
+                                borderRadius: '8px',
+                                marginBottom: '1rem'
+                            }}>
+                                <p>👈 Натисніть на блок хедера зліва, щоб налаштувати його.</p>
+                            </div>
+                        )}
+                        <SettingsTab 
+                            blocks={blocks}
+                            selectedBlockPath={selectedBlockPath}
+                            onUpdateBlockData={onUpdateBlockData}
+                            siteData={siteData}
+                        />
+                    </>
                 )}
             </div>
         </div>

@@ -50,7 +50,7 @@ class Site {
         SELECT
             s.id, s.user_id, s.title, s.logo_url, s.status,
             s.view_count, s.site_theme_mode, s.site_theme_accent,
-            s.site_path, s.theme_settings, s.header_settings, s.footer_content, s.footer_layout
+            s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -62,8 +62,8 @@ class Site {
         if (typeof site.theme_settings === 'string') {
             site.theme_settings = JSON.parse(site.theme_settings);
         }
-        if (typeof site.header_settings === 'string') {
-            site.header_settings = JSON.parse(site.header_settings);
+        if (typeof site.header_content === 'string') {
+            site.header_content = JSON.parse(site.header_content);
         }
         if (typeof site.footer_content === 'string') {
             site.footer_content = JSON.parse(site.footer_content);
@@ -71,8 +71,8 @@ class Site {
     } catch (error) {
         console.error('Error parsing JSON fields for site:', sitePath, error);
         site.theme_settings = site.theme_settings || {};
-        site.header_settings = site.header_settings || {};
-        site.footer_content = site.footer_content || {};
+        site.header_content = site.header_content || [];
+        site.footer_content = site.footer_content || [];
     }
 
     const [productRows] = await db.query(`
@@ -116,7 +116,7 @@ class Site {
       site_theme_mode, 
       site_theme_accent, 
       theme_settings, 
-      header_settings, 
+      header_content,
       footer_content 
     } = data;
     
@@ -136,7 +136,7 @@ class Site {
         site_theme_mode || 'light',
         site_theme_accent || 'orange',
         safeStringify(theme_settings),
-        safeStringify(header_settings),
+        safeStringify(header_content),
         safeStringify(footer_content),
         siteId
     ];
@@ -149,7 +149,7 @@ class Site {
             site_theme_mode = ?, 
             site_theme_accent = ?,
             theme_settings = ?,
-            header_settings = ?,
+            header_content = ?,
             footer_content = ?
         WHERE id = ?
     `;

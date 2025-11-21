@@ -87,6 +87,8 @@ exports.createSite = async (req, res, next) => {
         else if (selected_logo_url) logoUrl = selected_logo_url;
         else logoUrl = '/uploads/shops/logos/default/default-logo.webp';
 
+        const relativeLogoUrl = logoUrl.replace(/^http:\/\/localhost:5000/, '');
+
         let templateData = {};
         let siteThemeConfig = {};
 
@@ -99,7 +101,7 @@ exports.createSite = async (req, res, next) => {
             
             siteThemeConfig = {
                 theme_settings: templateData.theme_settings,
-                header_settings: templateData.header_settings,
+                header_content: regenerateBlockIds(templateData.header_content || []),
                 site_theme_mode: templateData.site_theme_mode,
                 site_theme_accent: templateData.site_theme_accent
             };
@@ -115,10 +117,12 @@ exports.createSite = async (req, res, next) => {
 
         let pagesToCreate = [];
         let footerToSave = [];
+        let headerToSave = [];
 
         if (templateData.pages && Array.isArray(templateData.pages)) {
             pagesToCreate = templateData.pages;
             footerToSave = regenerateBlockIds(templateData.footer_content || []);
+            headerToSave = regenerateBlockIds(templateData.header_content || []);
         } else if (Array.isArray(templateData)) {
             if (templateData.length > 0 && !templateData[0].slug) {
                 pagesToCreate = [{
@@ -131,12 +135,38 @@ exports.createSite = async (req, res, next) => {
             }
         }
 
+        if (headerToSave.length > 0) {
+            const headerBlock = headerToSave.find(b => b.type === 'header');
+            if (headerBlock) {
+                headerBlock.data.site_title = title;
+                headerBlock.data.logo_src = relativeLogoUrl;
+                headerBlock.data.show_title = true;
+            }
+        } else {
+            headerToSave = [{
+                block_id: uuidv4(),
+                type: 'header',
+                data: {
+                    site_title: title,
+                    logo_src: relativeLogoUrl,
+                    show_title: true,
+                    nav_items: [
+                         { id: uuidv4(), label: 'Головна', link: '/' }
+                    ],
+                    show_profile_icon: true,
+                    show_cart_icon: true,
+                    block_theme: 'auto'
+                }
+            }];
+        }
+
         const newSite = await Site.create(userId, sitePath, title, logoUrl);
 
         await Site.updateSettings(newSite.id, {
             title: title,
             status: 'draft',
             footer_content: footerToSave,
+            header_content: headerToSave,
             ...siteThemeConfig
         });
 
@@ -247,7 +277,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             site_theme_mode, 
             site_theme_accent, 
             theme_settings, 
-            header_settings, 
+            header_content, 
             footer_content 
         } = req.body;
 
@@ -272,7 +302,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             site_theme_accent: site_theme_accent !== undefined ? site_theme_accent : site.site_theme_accent,
             
             theme_settings: processJsonField(theme_settings, site.theme_settings),
-            header_settings: processJsonField(header_settings, site.header_settings),
+            header_content: processJsonField(header_content, site.header_content),
             footer_content: processJsonField(footer_content, site.footer_content) 
         });
         

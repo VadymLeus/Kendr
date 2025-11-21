@@ -1,4 +1,5 @@
 // frontend/src/features/editor/editorConfig.js
+
 export const BLOCK_LIBRARY = [
     { type: 'hero', name: 'Обкладинка', icon: '🖼️' },
     { type: 'text', name: 'Текстовий блок', icon: '📝' },
@@ -30,6 +31,8 @@ export const BLOCK_LIBRARY = [
     { type: 'spacer', name: 'Відступ', icon: '⏸️' },
     { type: 'quote', name: 'Цитата', icon: '💬' },
     { type: 'testimonials', name: 'Відгуки', icon: '⭐' },
+    
+    { type: 'header', name: 'Глобальний Хедер', icon: '🔝', isSystem: true },
 ];
 
 export const generateBlockId = () => {
@@ -69,6 +72,21 @@ export const FONT_LIBRARY = [
 
 export const getDefaultBlockData = (type, options = {}) => {
     switch (type) {
+        case 'header':
+            return {
+                logo_src: '',
+                site_title: 'Мій Сайт',
+                show_title: true,
+                logo_size: 'medium',
+                nav_alignment: 'right',
+                nav_style: 'text',
+                nav_items: [
+                    { id: generateBlockId(), label: 'Головна', link: '/' },
+                    { id: generateBlockId(), label: 'Контакти', link: '/contacts' }
+                ],
+                block_theme: 'auto'
+            };
+
         case 'hero':
             return { 
                 bg_image: '',
@@ -296,3 +314,7 @@ export const HEIGHT_OPTIONS = [
     { value: 'large', label: 'Велика' },
     { value: 'fullscreen', label: 'На весь екран' }
 ];
+
+export const getDraggableBlocks = () => {
+    return BLOCK_LIBRARY.filter(block => !block.isSystem);
+};

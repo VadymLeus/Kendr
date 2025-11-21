@@ -28,7 +28,7 @@ exports.saveAsTemplate = async (req, res, next) => {
 
         const snapshot = {
             theme_settings: siteDetails.theme_settings || {},
-            header_settings: siteDetails.header_settings || {},
+            header_content: siteDetails.header_content || [],
             footer_content: siteDetails.footer_content || [],
             site_theme_mode: siteDetails.site_theme_mode,
             site_theme_accent: siteDetails.site_theme_accent,
@@ -91,7 +91,7 @@ exports.updateTemplate = async (req, res, next) => {
 
         const snapshot = {
             theme_settings: siteDetails.theme_settings || {},
-            header_settings: siteDetails.header_settings || {},
+            header_content: siteDetails.header_content || [],
             footer_content: siteDetails.footer_content || [],
             site_theme_mode: siteDetails.site_theme_mode,
             site_theme_accent: siteDetails.site_theme_accent,

@@ -14,6 +14,7 @@ import VideoSettings from '../settings/VideoSettings';
 import MapSettings from '../settings/MapSettings';
 import AccordionSettings from '../settings/AccordionSettings';
 import SocialIconsSettings from '../settings/SocialIconsSettings';
+import HeaderSettings from '../settings/HeaderSettings';
 
 const SettingsComponentMap = {
     categories: CategoriesSettings,
@@ -29,6 +30,7 @@ const SettingsComponentMap = {
     map: MapSettings,
     accordion: AccordionSettings,
     social_icons: SocialIconsSettings,
+    header: HeaderSettings,
 };
 
 const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData }) => {
