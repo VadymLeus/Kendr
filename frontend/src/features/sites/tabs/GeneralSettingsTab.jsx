@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../services/api';
+import SaveTemplateModal from '../components/SaveTemplateModal';
 
 const GeneralSettingsTab = ({ siteData }) => {
     const navigate = useNavigate();
@@ -13,6 +14,9 @@ const GeneralSettingsTab = ({ siteData }) => {
     const [selectedTags, setSelectedTags] = useState(new Set());
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+    const [userTemplates, setUserTemplates] = useState([]);
+    const [templatesLoading, setTemplatesLoading] = useState(false);
 
     const styles = {
         card: {
@@ -79,7 +83,21 @@ const GeneralSettingsTab = ({ siteData }) => {
                 setError('Не вдалося завантажити теги.');
             }
         };
+        
+        const fetchUserTemplates = async () => {
+            try {
+                setTemplatesLoading(true);
+                const response = await apiClient.get('/templates/personal');
+                setUserTemplates(response.data);
+            } catch (err) {
+                console.error('Помилка завантаження шаблонів:', err);
+            } finally {
+                setTemplatesLoading(false);
+            }
+        };
+
         fetchTags();
+        fetchUserTemplates();
     }, [siteData.id]);
 
     const handleTagChange = (tagId) => {
@@ -114,6 +132,44 @@ const GeneralSettingsTab = ({ siteData }) => {
         }
     };
 
+    const handleSaveAsTemplate = async (name, description, overwriteId = null) => {
+        try {
+            if (overwriteId) {
+                await apiClient.put(`/templates/personal/${overwriteId}`, {
+                    siteId: siteData.id,
+                    templateName: name,
+                    description
+                });
+                alert(`Шаблон "${name}" успішно оновлено!`);
+            } else {
+                await apiClient.post('/templates/personal', {
+                    siteId: siteData.id,
+                    templateName: name,
+                    description
+                });
+                alert(`Шаблон "${name}" успішно створено!`);
+            }
+            setIsTemplateModalOpen(false);
+            // Оновлюємо список шаблонів
+            const response = await apiClient.get('/templates/personal');
+            setUserTemplates(response.data);
+        } catch (error) {
+            alert(error.response?.data?.message || 'Помилка збереження шаблону');
+        }
+    };
+
+    const handleDeleteTemplate = async (templateId, templateName) => {
+        if (window.confirm(`Видалити шаблон "${templateName}"?`)) {
+            try {
+                await apiClient.delete(`/templates/personal/${templateId}`);
+                setUserTemplates(prev => prev.filter(t => t.id !== templateId));
+                alert('Шаблон успішно видалено!');
+            } catch (error) {
+                alert('Помилка видалення шаблону');
+            }
+        }
+    };
+
     const siteModes = [
         { value: 'light', label: 'Світла', icon: '☀️' },
         { value: 'dark', label: 'Темна', icon: '🌙' }
@@ -132,6 +188,12 @@ const GeneralSettingsTab = ({ siteData }) => {
 
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <SaveTemplateModal 
+                isOpen={isTemplateModalOpen}
+                onClose={() => setIsTemplateModalOpen(false)}
+                onSave={handleSaveAsTemplate}
+            />
+
             <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>🛠️ Загальні налаштування сайту</h2>
             
             {error && (
@@ -157,6 +219,147 @@ const GeneralSettingsTab = ({ siteData }) => {
             >
                 {saving ? '⏳ Збереження...' : '💾 Зберегти Загальні Налаштування'}
             </button>
+
+            {/* Оновлений блок збереження шаблону */}
+            <div style={{ ...styles.card, border: '1px dashed var(--platform-accent)' }}>
+                <h4 style={styles.heading}>📦 Управління шаблонами</h4>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <p style={{color: 'var(--platform-text-secondary)', fontSize: '0.9rem', marginBottom: '1rem'}}>
+                        Збережіть поточний стан сайту як шаблон для майбутнього використання. 
+                        Шаблон включає всі сторінки, налаштування теми та футер.
+                    </p>
+                    <button 
+                        onClick={() => setIsTemplateModalOpen(true)}
+                        style={{
+                            ...styles.button,
+                            background: 'var(--platform-accent)',
+                            color: 'var(--platform-accent-text)',
+                            padding: '12px 24px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            width: '100%',
+                            borderRadius: '8px'
+                        }}
+                    >
+                        💾 Зберегти новий шаблон
+                    </button>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--platform-border-color)', paddingTop: '1.5rem' }}>
+                    <h5 style={{ 
+                        color: 'var(--platform-text-primary)', 
+                        marginBottom: '1rem',
+                        fontSize: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}>
+                        📚 Ваші шаблони ({userTemplates.length})
+                    </h5>
+                    
+                    {templatesLoading ? (
+                        <div style={{ 
+                            textAlign: 'center', 
+                            padding: '2rem',
+                            color: 'var(--platform-text-secondary)'
+                        }}>
+                            Завантаження шаблонів...
+                        </div>
+                    ) : userTemplates.length === 0 ? (
+                        <div style={{ 
+                            textAlign: 'center', 
+                            padding: '2rem',
+                            color: 'var(--platform-text-secondary)',
+                            background: 'var(--platform-bg)',
+                            borderRadius: '8px',
+                            border: '1px dashed var(--platform-border-color)'
+                        }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📁</div>
+                            <p style={{ margin: 0 }}>У вас поки що немає збережених шаблонів</p>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem' }}>
+                                Створіть перший шаблон, щоб швидко відтворювати дизайн
+                            </p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {userTemplates.map(template => (
+                                <div 
+                                    key={template.id}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '1rem',
+                                        background: 'var(--platform-bg)',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--platform-border-color)',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '0.5rem',
+                                            marginBottom: '0.25rem'
+                                        }}>
+                                            <span style={{ fontSize: '1.1rem' }}>📋</span>
+                                            <strong style={{ color: 'var(--platform-text-primary)' }}>
+                                                {template.name}
+                                            </strong>
+                                        </div>
+                                        {template.description && (
+                                            <p style={{ 
+                                                color: 'var(--platform-text-secondary)', 
+                                                margin: 0,
+                                                fontSize: '0.8rem'
+                                            }}>
+                                                {template.description}
+                                            </p>
+                                        )}
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            gap: '1rem',
+                                            marginTop: '0.5rem',
+                                            fontSize: '0.75rem',
+                                            color: 'var(--platform-text-secondary)'
+                                        }}>
+                                            <span>📄 {template.pages_count || 0} стор.</span>
+                                            <span>🕒 {new Date(template.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            onClick={() => handleDeleteTemplate(template.id, template.name)}
+                                            style={{
+                                                background: 'none',
+                                                border: '1px solid var(--platform-danger)',
+                                                color: 'var(--platform-danger)',
+                                                padding: '6px 12px',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                fontSize: '12px',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseEnter={e => {
+                                                e.target.style.background = 'var(--platform-danger)';
+                                                e.target.style.color = 'white';
+                                            }}
+                                            onMouseLeave={e => {
+                                                e.target.style.background = 'none';
+                                                e.target.style.color = 'var(--platform-danger)';
+                                            }}
+                                        >
+                                            Видалити
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
 
             <div style={styles.card}>
                 <h4 style={styles.heading}>

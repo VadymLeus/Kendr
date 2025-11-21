@@ -1,10 +1,36 @@
 // backend/controllers/siteController.js
 const Site = require('../models/Site');
 const Page = require('../models/Page');
+const UserTemplate = require('../models/UserTemplate');
 const db = require('../db');
 const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
+const { v4: uuidv4 } = require('uuid');
+
+const regenerateBlockIds = (blocks) => {
+    if (!blocks) return [];
+    
+    const mapBlock = (block) => {
+        const newBlock = { ...block, block_id: uuidv4() };
+        
+        if (newBlock.data && newBlock.data.columns && Array.isArray(newBlock.data.columns)) {
+            newBlock.data.columns = newBlock.data.columns.map(col => 
+                col.map(child => mapBlock(child))
+            );
+        }
+        if (newBlock.data && newBlock.data.items && Array.isArray(newBlock.data.items)) {
+            newBlock.data.items = newBlock.data.items.map(item => ({...item, id: uuidv4()}));
+        }
+        
+        return newBlock;
+    };
+
+    if (Array.isArray(blocks)) {
+        return blocks.map(mapBlock);
+    }
+    return blocks;
+};
 
 exports.getSites = async (req, res, next) => {
     try {
@@ -43,7 +69,7 @@ exports.getDefaultLogos = async (req, res, next) => {
 };
 
 exports.createSite = async (req, res, next) => {
-    const { templateId, sitePath, title, selected_logo_url } = req.body;
+    const { templateId, sitePath, title, selected_logo_url, isPersonal } = req.body;
     const userId = req.user.id;
 
     try {
@@ -61,20 +87,30 @@ exports.createSite = async (req, res, next) => {
         else if (selected_logo_url) logoUrl = selected_logo_url;
         else logoUrl = '/uploads/shops/logos/default/default-logo.webp';
 
-        const [templates] = await db.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
-        
-        if (!templates[0] || !templates[0].default_block_content) {
-            throw new Error(`Шаблон з ID ${templateId} не знайдено.`);
-        }
-        
-        const rawContent = templates[0].default_block_content;
         let templateData = {};
+        let siteThemeConfig = {};
 
-        try {
+        if (isPersonal) {
+            const personalTemplate = await UserTemplate.findById(templateId);
+            if (!personalTemplate || personalTemplate.user_id !== userId) {
+                throw new Error('Шаблон не знайдено або у вас немає доступу.');
+            }
+            templateData = personalTemplate.full_site_snapshot;
+            
+            siteThemeConfig = {
+                theme_settings: templateData.theme_settings,
+                header_settings: templateData.header_settings,
+                site_theme_mode: templateData.site_theme_mode,
+                site_theme_accent: templateData.site_theme_accent
+            };
+        } else {
+            const [templates] = await db.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
+            if (!templates[0] || !templates[0].default_block_content) {
+                throw new Error(`Шаблон з ID ${templateId} не знайдено.`);
+            }
+            
+            const rawContent = templates[0].default_block_content;
             templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
-        } catch(e) {
-            console.error("Помилка парсингу шаблону:", e);
-            templateData = {};
         }
 
         let pagesToCreate = [];
@@ -82,9 +118,8 @@ exports.createSite = async (req, res, next) => {
 
         if (templateData.pages && Array.isArray(templateData.pages)) {
             pagesToCreate = templateData.pages;
-            footerToSave = templateData.footer_content || [];
-        } 
-        else if (Array.isArray(templateData)) {
+            footerToSave = regenerateBlockIds(templateData.footer_content || []);
+        } else if (Array.isArray(templateData)) {
             if (templateData.length > 0 && !templateData[0].slug) {
                 pagesToCreate = [{
                     title: 'Головна',
@@ -97,30 +132,30 @@ exports.createSite = async (req, res, next) => {
         }
 
         const newSite = await Site.create(userId, sitePath, title, logoUrl);
-        
-        if (footerToSave && footerToSave.length > 0) {
-            await db.query(
-                'UPDATE sites SET footer_content = ? WHERE id = ?',
-                [JSON.stringify(footerToSave), newSite.id]
-            );
-        }
+
+        await Site.updateSettings(newSite.id, {
+            title: title,
+            status: 'draft',
+            footer_content: footerToSave,
+            ...siteThemeConfig
+        });
 
         if (pagesToCreate.length > 0) {
             for (const pageData of pagesToCreate) {
                 await Page.create({
-                    site_id: newSite.id, 
-                    name: pageData.title || 'Нова сторінка', 
+                    site_id: newSite.id,
+                    name: pageData.title || 'Нова сторінка',
                     slug: pageData.slug || `page-${Date.now()}`,
-                    block_content: pageData.blocks || [], 
+                    block_content: regenerateBlockIds(pageData.blocks || []),
                     is_homepage: (pageData.slug === 'home') ? 1 : 0
                 });
             }
         } else {
-             await Page.create({
-                site_id: newSite.id, 
-                name: 'Головна', 
+            await Page.create({
+                site_id: newSite.id,
+                name: 'Головна',
                 slug: 'home',
-                block_content: [], 
+                block_content: [],
                 is_homepage: 1
             });
         }
