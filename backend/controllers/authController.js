@@ -14,7 +14,7 @@ exports.register = async (req, res, next) => {
     }
     const existingUserByUsername = await User.findByUsername(username);
     if (existingUserByUsername) {
-        return res.status(400).json({ message: 'Це ім\'я користувача вже зайняте.' });
+        return res.status(400).json({ message: "Це ім'я користувача вже зайняте." });
     }
 
     let avatar_url;
@@ -30,7 +30,6 @@ exports.register = async (req, res, next) => {
             const randomAvatar = defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)];
             avatar_url = `/uploads/avatars/default/${randomAvatar}`;
         } else {
-            // Резервний варіант, якщо папка з аватарами порожня
             avatar_url = '/uploads/avatars/default/avatar1.png';
         }
     }
@@ -53,7 +52,6 @@ exports.login = async (req, res, next) => {
             return res.status(401).json({ message: 'Невірний email або пароль.' });
         }
 
-        // Оновлюємо час останнього входу
         await User.updateLastLogin(user.id);
 
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });

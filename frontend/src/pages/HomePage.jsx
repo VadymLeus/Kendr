@@ -26,9 +26,9 @@ const HomePage = () => {
 
     return (
         <div style={containerStyle}>
-            <h1 style={titleStyle}>Ласкаво просимо до GreenKendr! 🚀</h1>
+            <h1 style={titleStyle}>Ласкаво просимо до Kendr! 🚀</h1>
             <p style={subtitleStyle}>
-                Ваша платформа для створення неймовірних мінісайтів.
+                Ваша платформа для створення неймовірних сайтів.
             </p>
             <Link to="/register">
                 <button className="btn btn-primary" style={{ 

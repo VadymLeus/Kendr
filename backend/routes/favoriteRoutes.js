@@ -4,7 +4,6 @@ const router = express.Router();
 const favoriteController = require('../controllers/favoriteController');
 const verifyToken = require('../middleware/verifyToken');
 
-// Всі маршрути захищені, бо лише авторизовані користувачі можуть мати обране
 router.use(verifyToken);
 
 router.get('/', favoriteController.getFavorites);

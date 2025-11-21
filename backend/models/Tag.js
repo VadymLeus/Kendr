@@ -2,13 +2,11 @@
 const db = require('../db');
 
 class Tag {
-  // Отримати всі існуючі теги
   static async getAll() {
     const [rows] = await db.query('SELECT * FROM tags ORDER BY name ASC');
     return rows;
   }
 
-  // Знайти теги, присвоєні конкретному сайту
   static async findBySiteId(siteId) {
     const [rows] = await db.query(
       `SELECT t.id, t.name 

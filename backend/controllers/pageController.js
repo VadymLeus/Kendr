@@ -3,11 +3,6 @@ const Page = require('../models/Page');
 const Site = require('../models/Site');
 const db = require('../db');
 
-/**
- * @desc Отримати всі сторінки для сайту (для менеджера)
- * @route GET /api/sites/:siteId/pages
- * @access Private
- */
 exports.getPagesForSite = async (req, res, next) => {
     try {
         const { siteId } = req.params;
@@ -25,11 +20,6 @@ exports.getPagesForSite = async (req, res, next) => {
     }
 };
 
-/**
- * @desc Створити нову порожню сторінку
- * @route POST /api/sites/:siteId/pages
- * @access Private
- */
 exports.createPage = async (req, res, next) => {
     try {
         const { siteId } = req.params;
@@ -62,17 +52,11 @@ exports.createPage = async (req, res, next) => {
     }
 };
 
-/**
- * @desc Отримати дані однієї сторінки (для редактора)
- * @route GET /api/pages/:pageId
- * @access Private
- */
 exports.getPageById = async (req, res, next) => {
     try {
         const { pageId } = req.params;
         const userId = req.user.id;
 
-        // Перевірка прав: чи належить сторінка сайту поточного користувача
         const [rows] = await db.query(
             'SELECT s.user_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
             [pageId]
@@ -91,18 +75,12 @@ exports.getPageById = async (req, res, next) => {
     }
 };
 
-/**
- * @desc Оновити контент (блоки) сторінки
- * @route PUT /api/pages/:pageId/content
- * @access Private
- */
 exports.updatePageContent = async (req, res, next) => {
     const { pageId } = req.params;
     const { block_content } = req.body;
     const userId = req.user.id;
 
     try {
-        // Перевірка прав
         const [rows] = await db.query(
             'SELECT s.user_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
             [pageId]
@@ -118,11 +96,6 @@ exports.updatePageContent = async (req, res, next) => {
     }
 };
 
-/**
- * @desc Оновити налаштування сторінки (name, slug)
- * @route PUT /api/pages/:pageId/settings
- * @access Private
- */
 exports.updatePageSettings = async (req, res, next) => {
     try {
         const { pageId } = req.params;
@@ -133,7 +106,6 @@ exports.updatePageSettings = async (req, res, next) => {
             return res.status(400).json({ message: 'Назва (name) та шлях (slug) є обов\'язковими.' });
         }
         
-        // Перевірка прав
         const [rows] = await db.query(
             'SELECT s.user_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
             [pageId]
@@ -152,17 +124,11 @@ exports.updatePageSettings = async (req, res, next) => {
     }
 };
 
-/**
- * @desc Видалити сторінку
- * @route DELETE /api/pages/:pageId
- * @access Private
- */
 exports.deletePage = async (req, res, next) => {
     try {
         const { pageId } = req.params;
         const userId = req.user.id;
 
-        // Перевірка прав
         const [rows] = await db.query(
             'SELECT s.user_id, p.is_homepage, p.site_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
             [pageId]
@@ -178,7 +144,6 @@ exports.deletePage = async (req, res, next) => {
             return res.status(400).json({ message: 'Неможливо видалити головну сторінку.' });
         }
 
-        // Перевірка, чи це не остання сторінка
         const [countRows] = await db.query('SELECT COUNT(id) as count FROM pages WHERE site_id = ?', [site_id]);
         if (countRows[0].count <= 1) {
             return res.status(400).json({ message: 'Неможливо видалити останню сторінку сайту.' });
@@ -191,17 +156,11 @@ exports.deletePage = async (req, res, next) => {
     }
 };
 
-/**
- * @desc Встановити сторінку як головну
- * @route POST /api/pages/:pageId/set-home
- * @access Private
- */
 exports.setHomePage = async (req, res, next) => {
     try {
         const { pageId } = req.params;
         const userId = req.user.id;
 
-        // Перевірка прав
         const [rows] = await db.query(
             'SELECT s.user_id, p.site_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
             [pageId]

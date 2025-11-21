@@ -1,7 +1,6 @@
 // backend/controllers/favoriteController.js
 const Favorite = require('../models/Favorite');
 
-// Отримати всі обрані сайти користувача
 exports.getFavorites = async (req, res, next) => {
     try {
         const favorites = await Favorite.findForUser(req.user.id);
@@ -11,7 +10,6 @@ exports.getFavorites = async (req, res, next) => {
     }
 };
 
-// Отримати ID всіх обраних сайтів
 exports.getFavoriteIds = async (req, res, next) => {
     try {
         const favoriteIds = await Favorite.findIdsForUser(req.user.id);
@@ -21,7 +19,6 @@ exports.getFavoriteIds = async (req, res, next) => {
     }
 };
 
-// Додати сайт до обраних
 exports.addFavorite = async (req, res, next) => {
     try {
         const { siteId } = req.params;
@@ -32,7 +29,6 @@ exports.addFavorite = async (req, res, next) => {
     }
 };
 
-// Видалити сайт з обраних
 exports.removeFavorite = async (req, res, next) => {
     try {
         const { siteId } = req.params;

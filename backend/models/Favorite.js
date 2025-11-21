@@ -2,7 +2,6 @@
 const db = require('../db');
 
 class Favorite {
-    // Додати сайт до обраних
     static async add(userId, siteId) {
         const [result] = await db.query(
             'INSERT INTO user_favorites (user_id, site_id) VALUES (?, ?)',
@@ -11,7 +10,6 @@ class Favorite {
         return result;
     }
 
-    // Видалити сайт з обраних
     static async remove(userId, siteId) {
         const [result] = await db.query(
             'DELETE FROM user_favorites WHERE user_id = ? AND site_id = ?',
@@ -20,7 +18,6 @@ class Favorite {
         return result;
     }
 
-    // Отримати всі обрані сайти користувача
     static async findForUser(userId) {
         const [rows] = await db.query(`
             SELECT
@@ -42,7 +39,6 @@ class Favorite {
         return rows;
     }
 
-    // Отримати лише ID обраних сайтів
     static async findIdsForUser(userId) {
         const [rows] = await db.query(
             'SELECT site_id FROM user_favorites WHERE user_id = ?',

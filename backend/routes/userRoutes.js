@@ -5,16 +5,12 @@ const userController = require('../controllers/userController');
 const verifyToken = require('../middleware/verifyToken');
 const { upload, processAndSaveImage } = require('../middleware/upload');
 
-// Отримати список стандартних аватарів
 router.get('/default-avatars', userController.getDefaultAvatars);
 
-// Оновити дані профілю (ім'я, пароль)
 router.put('/profile/update', verifyToken, userController.updateProfile);
 
-// Оновити аватар, вибравши один зі стандартних
 router.put('/profile/avatar-url', verifyToken, userController.updateAvatarUrl);
 
-// Завантажити новий кастомний аватар
 router.post(
     '/profile/avatar',
     verifyToken,
@@ -23,7 +19,6 @@ router.post(
     userController.uploadAvatar
 );
 
-// Отримати публічний профіль користувача
 router.get('/:username', userController.getPublicProfile);
 
 module.exports = router;

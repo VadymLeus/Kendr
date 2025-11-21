@@ -1,9 +1,6 @@
 // backend/controllers/uploadController.js
 const Media = require('../models/Media');
 
-/**
- * @desc Завантажити одне зображення для загального використання
- */
 exports.uploadGenericImage = async (req, res, next) => {
     try {
         if (!req.file) {

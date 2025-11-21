@@ -1,8 +1,7 @@
 // frontend/src/features/profile/tabs/InterfaceSettingsTab.jsx
 import React, { useContext } from 'react';
-import { ThemeContext } from '../../../context/ThemeContext';
+import { ThemeContext } from '../../../providers/ThemeContext';
 
-// --- РАСШИРЕННАЯ ПАЛИТРА ЦВЕТОВ ---
 const accentColors = [
     { name: 'Синій', value: 'blue', color: '#4299e1' },
     { name: 'Зелений', value: 'green', color: '#48bb78' },
@@ -32,7 +31,6 @@ const InterfaceSettingsTab = () => {
                 Налаштуйте вигляд інтерфейсу Kendr.
             </p>
 
-            {/* Режим темы */}
             <div style={{ marginTop: '1.5rem' }}>
                 <label style={{ 
                     display: 'block', 
@@ -72,7 +70,6 @@ const InterfaceSettingsTab = () => {
                 </div>
             </div>
 
-            {/* Акцентные цвета */}
             <div style={{ marginTop: '2rem' }}>
                 <label style={{ 
                     display: 'block', 

@@ -1,10 +1,36 @@
 // backend/controllers/siteController.js
 const Site = require('../models/Site');
 const Page = require('../models/Page');
+const UserTemplate = require('../models/UserTemplate');
 const db = require('../db');
 const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
+const { v4: uuidv4 } = require('uuid');
+
+const regenerateBlockIds = (blocks) => {
+    if (!blocks) return [];
+    
+    const mapBlock = (block) => {
+        const newBlock = { ...block, block_id: uuidv4() };
+        
+        if (newBlock.data && newBlock.data.columns && Array.isArray(newBlock.data.columns)) {
+            newBlock.data.columns = newBlock.data.columns.map(col => 
+                col.map(child => mapBlock(child))
+            );
+        }
+        if (newBlock.data && newBlock.data.items && Array.isArray(newBlock.data.items)) {
+            newBlock.data.items = newBlock.data.items.map(item => ({...item, id: uuidv4()}));
+        }
+        
+        return newBlock;
+    };
+
+    if (Array.isArray(blocks)) {
+        return blocks.map(mapBlock);
+    }
+    return blocks;
+};
 
 exports.getSites = async (req, res, next) => {
     try {
@@ -43,7 +69,7 @@ exports.getDefaultLogos = async (req, res, next) => {
 };
 
 exports.createSite = async (req, res, next) => {
-    const { templateId, sitePath, title, selected_logo_url } = req.body;
+    const { templateId, sitePath, title, selected_logo_url, isPersonal } = req.body;
     const userId = req.user.id;
 
     try {
@@ -61,28 +87,78 @@ exports.createSite = async (req, res, next) => {
         else if (selected_logo_url) logoUrl = selected_logo_url;
         else logoUrl = '/uploads/shops/logos/default/default-logo.webp';
 
-        const [templates] = await db.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
-        
-        if (!templates[0] || !templates[0].default_block_content) {
-            throw new Error(`Шаблон з ID ${templateId} не знайдено або він не містить 'default_block_content'.`);
+        let templateData = {};
+        let siteThemeConfig = {};
+
+        if (isPersonal) {
+            const personalTemplate = await UserTemplate.findById(templateId);
+            if (!personalTemplate || personalTemplate.user_id !== userId) {
+                throw new Error('Шаблон не знайдено або у вас немає доступу.');
+            }
+            templateData = personalTemplate.full_site_snapshot;
+            
+            siteThemeConfig = {
+                theme_settings: templateData.theme_settings,
+                header_settings: templateData.header_settings,
+                site_theme_mode: templateData.site_theme_mode,
+                site_theme_accent: templateData.site_theme_accent
+            };
+        } else {
+            const [templates] = await db.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
+            if (!templates[0] || !templates[0].default_block_content) {
+                throw new Error(`Шаблон з ID ${templateId} не знайдено.`);
+            }
+            
+            const rawContent = templates[0].default_block_content;
+            templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
         }
-        
-        let initialBlockContent;
-        try {
-            initialBlockContent = JSON.parse(templates[0].default_block_content);
-        } catch(e) {
-            initialBlockContent = [];
+
+        let pagesToCreate = [];
+        let footerToSave = [];
+
+        if (templateData.pages && Array.isArray(templateData.pages)) {
+            pagesToCreate = templateData.pages;
+            footerToSave = regenerateBlockIds(templateData.footer_content || []);
+        } else if (Array.isArray(templateData)) {
+            if (templateData.length > 0 && !templateData[0].slug) {
+                pagesToCreate = [{
+                    title: 'Головна',
+                    slug: 'home',
+                    blocks: templateData
+                }];
+            } else {
+                pagesToCreate = templateData;
+            }
         }
 
         const newSite = await Site.create(userId, sitePath, title, logoUrl);
-        
-        await Page.create({
-            site_id: newSite.id, 
-            name: 'Головна', 
-            slug: 'home',
-            block_content: initialBlockContent, 
-            is_homepage: 1
+
+        await Site.updateSettings(newSite.id, {
+            title: title,
+            status: 'draft',
+            footer_content: footerToSave,
+            ...siteThemeConfig
         });
+
+        if (pagesToCreate.length > 0) {
+            for (const pageData of pagesToCreate) {
+                await Page.create({
+                    site_id: newSite.id,
+                    name: pageData.title || 'Нова сторінка',
+                    slug: pageData.slug || `page-${Date.now()}`,
+                    block_content: regenerateBlockIds(pageData.blocks || []),
+                    is_homepage: (pageData.slug === 'home') ? 1 : 0
+                });
+            }
+        } else {
+            await Page.create({
+                site_id: newSite.id,
+                name: 'Головна',
+                slug: 'home',
+                block_content: [],
+                is_homepage: 1
+            });
+        }
 
         res.status(201).json({ message: 'Сайт успішно створено!', site: newSite });
     } catch (error) {
@@ -94,7 +170,6 @@ exports.createSite = async (req, res, next) => {
     }
 };
 
-// Оновлена версія для нових маршрутів
 exports.getSiteByPath = async (req, res, next) => {
     try {
         const { site_path, slug } = req.params;
@@ -158,7 +233,6 @@ exports.getSiteByPath = async (req, res, next) => {
 exports.updateSiteSettings = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const { title, status, tags, site_theme_mode, site_theme_accent } = req.body;
         const userId = req.user.id;
 
         const site = await Site.findByPath(site_path);
@@ -166,11 +240,49 @@ exports.updateSiteSettings = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав на редагування цього сайту.' });
         }
 
-        await Site.updateSettings(site.id, { title, status, site_theme_mode, site_theme_accent });
-        if (Array.isArray(tags)) await Site.updateTags(site.id, tags);
+        const { 
+            title, 
+            status, 
+            tags, 
+            site_theme_mode, 
+            site_theme_accent, 
+            theme_settings, 
+            header_settings, 
+            footer_content 
+        } = req.body;
+
+        const processJsonField = (newField, currentField) => {
+            if (newField === undefined) return currentField;
+            
+            if (typeof newField === 'string') {
+                try { return JSON.parse(newField); } 
+                catch (e) { 
+                    console.warn('Помилка парсингу JSON поля:', e);
+                    return currentField;
+                }
+            }
+            return newField;
+        };
+
+        await Site.updateSettings(site.id, { 
+            title: title !== undefined ? title : site.title,
+            status: status !== undefined ? status : site.status,
+            
+            site_theme_mode: site_theme_mode !== undefined ? site_theme_mode : site.site_theme_mode,
+            site_theme_accent: site_theme_accent !== undefined ? site_theme_accent : site.site_theme_accent,
+            
+            theme_settings: processJsonField(theme_settings, site.theme_settings),
+            header_settings: processJsonField(header_settings, site.header_settings),
+            footer_content: processJsonField(footer_content, site.footer_content) 
+        });
+        
+        if (Array.isArray(tags)) {
+            await Site.updateTags(site.id, tags);
+        }
 
         res.json({ message: 'Налаштування сайту успішно оновлено.' });
     } catch (error) {
+        console.error('Помилка при оновленні налаштувань сайту:', error);
         next(error);
     }
 };

@@ -1,7 +1,6 @@
 // backend/utils/blockPresets.js
 const { v4: uuidv4 } = require('uuid');
 
-// Базові налаштування для блоків
 const blockDefaults = {
     hero: {
         title: "Ласкаво просимо!",
@@ -34,8 +33,6 @@ const blockDefaults = {
         ]
     }
 };
-
-// Генерація блоків за типом пресету
 function getDefaultBlocksForPreset(presetType, options = {}) {
     let blocksConfig = [];
 
@@ -56,7 +53,6 @@ function getDefaultBlocksForPreset(presetType, options = {}) {
             break;
     }
 
-    // Додаємо унікальний ID і зливаємо налаштування
     return blocksConfig.map(block => ({
         ...block,
         block_id: uuidv4(),
