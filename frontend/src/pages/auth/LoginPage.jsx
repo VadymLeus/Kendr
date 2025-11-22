@@ -3,10 +3,10 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../providers/AuthContext';
 import apiClient from '../../services/api';
+import { toast } from 'react-toastify';
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
-    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -17,7 +17,6 @@ const LoginPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setIsLoading(true);
 
         try {
@@ -25,13 +24,15 @@ const LoginPage = () => {
             const userData = response.data.user;
             login(userData, response.data.token);
 
+            toast.success(`З поверненням, ${userData.username}!`);
+
             if (userData.role === 'admin') {
                 navigate('/admin');
             } else {
                 navigate('/');
             }
         } catch (error) {
-            setError(error.response?.data?.message || 'Помилка входу');
+            console.error("Login failed", error);
         } finally {
             setIsLoading(false);
         }
@@ -68,18 +69,6 @@ const LoginPage = () => {
             }}>
                 Вхід в акаунт
             </h2>
-
-            {error && (
-                <p style={{ 
-                    color: 'var(--platform-danger)', 
-                    background: '#fed7d7', 
-                    padding: '10px', 
-                    borderRadius: '8px',
-                    marginBottom: '1rem'
-                }}>
-                    {error}
-                </p>
-            )}
 
             <form onSubmit={handleSubmit}>
                 <input 

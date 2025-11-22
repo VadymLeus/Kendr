@@ -10,6 +10,8 @@ import EditorSidebar from '../../features/editor/EditorSidebar';
 import ThemeSettingsTab from '../../features/sites/tabs/ThemeSettingsTab';
 import SubmissionsTab from '../../features/sites/tabs/SubmissionsTab';
 import DashboardHeader from '../../components/layout/DashboardHeader'; 
+import { toast } from 'react-toastify';
+
 import { 
     generateBlockId, 
     getDefaultBlockData 
@@ -119,7 +121,7 @@ const SiteDashboardPage = () => {
             }
         } catch (err) {
             console.error(err);
-            alert('Помилка під час завантаження контенту.');
+            toast.error('Помилка під час завантаження контенту.');
         } finally {
             setIsPageLoading(false);
         }
@@ -168,6 +170,8 @@ const SiteDashboardPage = () => {
     const savePageContent = useCallback(async (newBlocks) => {
         if (!currentPageId) return;
 
+        const saveToast = toast.loading("Збереження...");
+
         try {
             if (currentPageId === 'footer') {
                 await apiClient.put(`/sites/${siteData.site_path}/settings`, {
@@ -179,7 +183,7 @@ const SiteDashboardPage = () => {
                     header_settings: siteData.header_settings,
                     footer_content: newBlocks
                 });
-                alert('Футер успішно оновлено!');
+                toast.update(saveToast, { render: "Футер успішно оновлено!", type: "success", isLoading: false, autoClose: 3000 });
             } else if (currentPageId === 'header') {
                  await apiClient.put(`/sites/${siteData.site_path}/settings`, {
                     title: siteData.title,
@@ -190,17 +194,17 @@ const SiteDashboardPage = () => {
                     footer_content: siteData.footer_content,
                     header_content: newBlocks
                 });
-                alert('Хедер успішно оновлено!');
+                toast.update(saveToast, { render: "Хедер успішно оновлено!", type: "success", isLoading: false, autoClose: 3000 });
             } else {
                 await apiClient.put(`/pages/${currentPageId}/content`, { 
                     block_content: newBlocks 
                 });
-                alert('Контент сторінки збережено!');
+                toast.update(saveToast, { render: "Контент сторінки збережено!", type: "success", isLoading: false, autoClose: 3000 });
             }
             setBlocks(newBlocks);
         } catch (error) {
             console.error('Помилка збереження:', error);
-            alert('Помилка під час збереження.');
+            toast.update(saveToast, { render: "Помилка під час збереження.", type: "error", isLoading: false, autoClose: 3000 });
         }
     }, [currentPageId, siteData]);
     
@@ -237,7 +241,7 @@ const SiteDashboardPage = () => {
     }, []);
     
     const handleDeleteBlock = useCallback((path) => {
-        if (!window.confirm('Ви впевнені, що хочете видалити цей блок?')) return;
+        if (!window.confirm('Ви впевнені, що хочетe видалити цей блок?')) return;
         setBlocks(prevBlocks => removeBlockByPath(prevBlocks, path));
         setSelectedBlockPath(null);
     }, []);

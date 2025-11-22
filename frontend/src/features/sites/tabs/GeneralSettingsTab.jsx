@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../services/api';
 import SaveTemplateModal from '../components/SaveTemplateModal';
+import { toast } from 'react-toastify';
 
 const GeneralSettingsTab = ({ siteData }) => {
     const navigate = useNavigate();
@@ -12,7 +13,6 @@ const GeneralSettingsTab = ({ siteData }) => {
     const [siteAccent, setSiteAccent] = useState(siteData.site_theme_accent || 'orange');
     const [allTags, setAllTags] = useState([]);
     const [selectedTags, setSelectedTags] = useState(new Set());
-    const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [userTemplates, setUserTemplates] = useState([]);
@@ -55,13 +55,6 @@ const GeneralSettingsTab = ({ siteData }) => {
             fontWeight: '500',
             transition: 'all 0.2s ease'
         },
-        error: {
-            color: 'var(--platform-danger)', 
-            background: 'rgba(229, 62, 62, 0.1)', 
-            padding: '1rem', 
-            borderRadius: '8px',
-            marginBottom: '1rem'
-        },
         heading: {
             color: 'var(--platform-text-primary)', 
             marginBottom: '1.5rem',
@@ -80,7 +73,7 @@ const GeneralSettingsTab = ({ siteData }) => {
                 const siteTagsRes = await apiClient.get(`/tags/site/${siteData.id}`);
                 setSelectedTags(new Set(siteTagsRes.data.map(t => t.id)));
             } catch (err) {
-                setError('Не вдалося завантажити теги.');
+                console.error('Помилка завантаження тегів:', err);
             }
         };
         
@@ -113,7 +106,6 @@ const GeneralSettingsTab = ({ siteData }) => {
     const handleSave = async () => {
         try {
             setSaving(true);
-            setError('');
             await apiClient.put(`/sites/${siteData.site_path}/settings`, {
                 title,
                 status,
@@ -123,10 +115,10 @@ const GeneralSettingsTab = ({ siteData }) => {
                 theme_settings: siteData.theme_settings || null,
                 header_settings: siteData.header_settings || null
             });
-            alert('Налаштування успішно збережено! Сторінка буде перезавантажена, щоб застосувати зміни.');
-            window.location.reload();
+            toast.success('Налаштування успішно збережено!');
+            setTimeout(() => window.location.reload(), 1000);
         } catch (err) {
-            setError('Не вдалося зберегти налаштування. Спробуйте ще раз.');
+            console.error('Помилка збереження:', err);
         } finally {
             setSaving(false);
         }
@@ -140,21 +132,20 @@ const GeneralSettingsTab = ({ siteData }) => {
                     templateName: name,
                     description
                 });
-                alert(`Шаблон "${name}" успішно оновлено!`);
+                toast.success(`Шаблон "${name}" успішно оновлено!`);
             } else {
                 await apiClient.post('/templates/personal', {
                     siteId: siteData.id,
                     templateName: name,
                     description
                 });
-                alert(`Шаблон "${name}" успішно створено!`);
+                toast.success(`Шаблон "${name}" успішно створено!`);
             }
             setIsTemplateModalOpen(false);
-            // Оновлюємо список шаблонів
             const response = await apiClient.get('/templates/personal');
             setUserTemplates(response.data);
         } catch (error) {
-            alert(error.response?.data?.message || 'Помилка збереження шаблону');
+            console.error('Помилка збереження шаблону:', error);
         }
     };
 
@@ -163,9 +154,9 @@ const GeneralSettingsTab = ({ siteData }) => {
             try {
                 await apiClient.delete(`/templates/personal/${templateId}`);
                 setUserTemplates(prev => prev.filter(t => t.id !== templateId));
-                alert('Шаблон успішно видалено!');
+                toast.success('Шаблон успішно видалено!');
             } catch (error) {
-                alert('Помилка видалення шаблону');
+                console.error('Помилка видалення шаблону:', error);
             }
         }
     };
@@ -196,12 +187,6 @@ const GeneralSettingsTab = ({ siteData }) => {
 
             <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>🛠️ Загальні налаштування сайту</h2>
             
-            {error && (
-                <div style={styles.error}>
-                    {error}
-                </div>
-            )}
-            
             <button 
                 onClick={handleSave} 
                 disabled={saving}
@@ -220,7 +205,6 @@ const GeneralSettingsTab = ({ siteData }) => {
                 {saving ? '⏳ Збереження...' : '💾 Зберегти Загальні Налаштування'}
             </button>
 
-            {/* Оновлений блок збереження шаблону */}
             <div style={{ ...styles.card, border: '1px dashed var(--platform-accent)' }}>
                 <h4 style={styles.heading}>📦 Управління шаблонами</h4>
                 

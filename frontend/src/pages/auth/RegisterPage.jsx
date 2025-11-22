@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../../services/api';
+import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:5000';
 
@@ -16,7 +17,6 @@ const RegisterPage = () => {
     const [selectedAvatar, setSelectedAvatar] = useState('');
     const [customAvatarFile, setCustomAvatarFile] = useState(null);
     const [preview, setPreview] = useState('');
-    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -32,7 +32,7 @@ const RegisterPage = () => {
                 }
             } catch (err) {
                 console.error("Не вдалося завантажити стандартні аватари", err);
-                setError('Не вдалося завантажити варіанти аватарів.');
+                toast.error('Не вдалося завантажити варіанти аватарів.');
             }
         };
         fetchDefaultAvatars();
@@ -43,6 +43,10 @@ const RegisterPage = () => {
     const handleCustomAvatarChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Розмір файлу не повинен перевищувати 5MB');
+                return;
+            }
             setCustomAvatarFile(file);
             setSelectedAvatar('');
             setPreview(URL.createObjectURL(file));
@@ -59,7 +63,6 @@ const RegisterPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setIsLoading(true);
 
         const registrationData = new FormData();
@@ -76,10 +79,13 @@ const RegisterPage = () => {
 
         try {
             await apiClient.post('/auth/register', registrationData);
-            alert('Реєстрація пройшла успішно! Тепер ви можете увійти.');
-            navigate('/login');
+            toast.success('Реєстрація пройшла успішно! Тепер ви можете увійти.');
+            setTimeout(() => {
+                navigate('/login');
+            }, 1500);
         } catch (err) {
-            setError(err.response?.data?.message || 'Помилка реєстрації');
+            // Помилка обробляється глобально в apiClient
+            console.error('Помилка реєстрації:', err);
         } finally {
             setIsLoading(false);
         }
@@ -127,18 +133,6 @@ const RegisterPage = () => {
                 Створення акаунту
             </h2>
 
-            {error && (
-                <p style={{ 
-                    color: 'var(--platform-danger)', 
-                    background: '#fed7d7', 
-                    padding: '10px', 
-                    borderRadius: '8px',
-                    marginBottom: '1rem'
-                }}>
-                    {error}
-                </p>
-            )}
-
             <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
                     {preview && (
@@ -166,23 +160,31 @@ const RegisterPage = () => {
                             />
                         ))}
                     </div>
-                    <label 
-                        htmlFor="avatar-upload" 
-                        style={{ 
-                            cursor: 'pointer', 
-                            color: 'var(--platform-accent)', 
-                            textDecoration: 'underline' 
-                        }}
-                    >
-                        Завантажити свій
-                    </label>
-                    <input 
-                        type="file" 
-                        id="avatar-upload" 
-                        onChange={handleCustomAvatarChange} 
-                        accept="image/*" 
-                        style={{ display: 'none' }} 
-                    />
+                    <div>
+                        <label 
+                            htmlFor="avatar-upload" 
+                            className="btn btn-secondary"
+                            style={{ 
+                                fontSize: '0.9rem',
+                                padding: '8px 16px',
+                                marginBottom: '0.5rem'
+                            }}
+                        >
+                            📁 Завантажити свій аватар (до 5МБ)
+                        </label>
+                        <input 
+                            type="file" 
+                            id="avatar-upload" 
+                            onChange={handleCustomAvatarChange} 
+                            accept="image/*" 
+                            style={{ display: 'none' }} 
+                        />
+                        {customAvatarFile && (
+                            <div style={{ fontSize: '12px', color: 'var(--platform-success)' }}>
+                                Обрано: {customAvatarFile.name}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <input 
@@ -227,7 +229,7 @@ const RegisterPage = () => {
                     style={{ width: '100%', marginTop: '1rem' }} 
                     disabled={isLoading}
                 >
-                    {isLoading ? 'Реєстрація...' : 'Зареєструватися'}
+                    {isLoading ? '⏳ Реєстрація...' : '🚀 Зареєструватися'}
                 </button>
             </form>
 

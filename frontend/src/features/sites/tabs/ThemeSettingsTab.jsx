@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../../services/api';
 import { FONT_LIBRARY } from '../../editor/editorConfig';
 import CustomSelect from '../../../components/common/CustomSelect';
+import { toast } from 'react-toastify';
 
 const FONT_OPTIONS = FONT_LIBRARY.filter(f => f.value !== 'global');
 
@@ -14,8 +15,6 @@ const ThemeSettingsTab = ({ siteData }) => {
     });
     
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
     
     const styles = {
         card: {
@@ -52,20 +51,6 @@ const ThemeSettingsTab = ({ siteData }) => {
             fontSize: '14px', 
             fontWeight: '500',
             transition: 'all 0.2s ease'
-        },
-        error: {
-            color: 'var(--platform-danger)', 
-            background: 'rgba(229, 62, 62, 0.1)', 
-            padding: '1rem', 
-            borderRadius: '8px',
-            marginBottom: '1rem'
-        },
-        success: {
-            color: 'var(--platform-success)', 
-            background: 'rgba(56, 161, 105, 0.1)', 
-            padding: '1rem', 
-            borderRadius: '8px',
-            marginBottom: '1rem'
         }
     };
 
@@ -82,8 +67,6 @@ const ThemeSettingsTab = ({ siteData }) => {
 
     const handleSave = async () => {
         setSaving(true);
-        setError('');
-        setSuccess('');
         try {
             await apiClient.put(`/sites/${siteData.site_path}/settings`, {
                 theme_settings: themeSettings,
@@ -92,12 +75,12 @@ const ThemeSettingsTab = ({ siteData }) => {
                 site_theme_mode: siteData.site_theme_mode,
                 site_theme_accent: siteData.site_theme_accent
             });
-            setSuccess('Налаштування збережено!');
+            toast.success('🎨 Налаштування теми успішно збережено!');
             setTimeout(() => {
                 window.location.reload();
-            }, 1000);
+            }, 1500);
         } catch (err) {
-            setError(err.response?.data?.message || 'Помилка збереження.');
+            console.error('Помилка збереження налаштувань теми:', err);
         } finally {
             setSaving(false);
         }
@@ -105,9 +88,6 @@ const ThemeSettingsTab = ({ siteData }) => {
 
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            {error && <div style={styles.error}>{error}</div>}
-            {success && <div style={styles.success}>{success}</div>}
-
             <button 
                 onClick={handleSave} 
                 disabled={saving} 
@@ -147,6 +127,14 @@ const ThemeSettingsTab = ({ siteData }) => {
                         options={FONT_OPTIONS}
                         style={styles.input}
                     />
+                    <small style={{
+                        color: 'var(--platform-text-secondary)',
+                        fontSize: '0.8rem',
+                        marginTop: '0.25rem',
+                        display: 'block'
+                    }}>
+                        Шрифт для всіх заголовків на сайті
+                    </small>
                 </div>
                 
                 <div style={{ marginBottom: '1.5rem' }}>
@@ -158,6 +146,14 @@ const ThemeSettingsTab = ({ siteData }) => {
                         options={FONT_OPTIONS}
                         style={styles.input}
                     />
+                    <small style={{
+                        color: 'var(--platform-text-secondary)',
+                        fontSize: '0.8rem',
+                        marginTop: '0.25rem',
+                        display: 'block'
+                    }}>
+                        Шрифт для параграфів, списків та іншого тексту
+                    </small>
                 </div>
                 
                 <div style={{ marginBottom: '1rem' }}>
@@ -170,7 +166,41 @@ const ThemeSettingsTab = ({ siteData }) => {
                         style={styles.input}
                         placeholder="Наприклад: 8px, 20px, 0"
                     />
+                    <small style={{
+                        color: 'var(--platform-text-secondary)',
+                        fontSize: '0.8rem',
+                        marginTop: '0.25rem',
+                        display: 'block'
+                    }}>
+                        Вкажіть значення в px (8px, 12px) або 0 для квадратних кнопок
+                    </small>
                 </div>
+            </div>
+
+            <div style={{
+                ...styles.card,
+                background: 'rgba(56, 161, 105, 0.05)',
+                border: '1px solid rgba(56, 161, 105, 0.2)'
+            }}>
+                <h4 style={{ 
+                    color: 'var(--platform-success)', 
+                    marginBottom: '1rem',
+                    fontSize: '1.1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                }}>
+                    💡 Порада
+                </h4>
+                <p style={{ 
+                    color: 'var(--platform-text-secondary)',
+                    margin: 0,
+                    fontSize: '0.9rem',
+                    lineHeight: '1.5'
+                }}>
+                    Глобальні налаштування застосовуються до всього сайту. Після збереження сторінка 
+                    автоматично перезавантажиться для застосування змін.
+                </p>
             </div>
         </div>
     );

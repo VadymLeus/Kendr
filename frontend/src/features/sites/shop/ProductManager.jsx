@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../../../services/api';
 import ImageInput from '../../media/ImageInput';
+import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:5000';
 
@@ -70,7 +71,7 @@ const ProductManager = ({ siteId }) => {
         e.preventDefault();
         
         if (!currentProduct.name || currentProduct.price <= 0) {
-            alert("Назва товару та ціна (більше 0) обов'язкові!");
+            toast.warning("Назва товару та ціна (більше 0) обов'язкові!");
             return;
         }
 
@@ -87,16 +88,17 @@ const ProductManager = ({ siteId }) => {
         try {
             if (isEditing) {
                 await apiClient.put(`/products/${currentProduct.id}`, productData);
+                toast.success(`✅ Товар "${currentProduct.name}" успішно оновлено!`);
             } else {
                 await apiClient.post(`/products`, productData);
+                toast.success(`✅ Товар "${currentProduct.name}" успішно додано!`);
             }
             
             resetForm();
             fetchData();
 
         } catch (error) {
-            console.error('Помилка збереження товару:', error.response?.data?.message || error.message);
-            alert(`Помилка збереження: ${error.response?.data?.message || 'Невідома помилка'}`);
+            console.error('Помилка збереження товару:', error);
         }
     };
 
@@ -118,20 +120,21 @@ const ProductManager = ({ siteId }) => {
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
     };
 
-    const handleDelete = async (productId) => {
-        if (!window.confirm('Ви впевнені, що хочете видалити цей товар?')) return;
+    const handleDelete = async (productId, productName) => {
+        if (!window.confirm(`Ви впевнені, що хочете видалити товар "${productName}"?`)) return;
         try {
             await apiClient.delete(`/products/${productId}`);
+            toast.success(`🗑️ Товар "${productName}" успішно видалено`);
             fetchData();
         } catch (error) {
             console.error('Помилка видалення товару:', error);
-            alert(`Помилка видалення: ${error.response?.data?.message || 'Невідома помилка'}`);
         }
     };
 
     const resetForm = () => {
         setCurrentProduct(getInitialFormState());
         setIsEditing(false);
+        toast.info('📝 Форма очищена, готові до створення нового товару');
     };
 
     const getProductImageUrl = (gallery) => {
@@ -214,7 +217,7 @@ const ProductManager = ({ siteId }) => {
             textAlign: 'center',
             color: 'var(--platform-text-secondary)'
         }}>
-            Завантаження...
+            ⏳ Завантаження...
         </div>
     );
 
@@ -333,7 +336,7 @@ const ProductManager = ({ siteId }) => {
                                 onClick={resetForm}
                                 style={styles.secondaryButton}
                             >
-                                Скасувати редагування
+                                ❌ Скасувати редагування
                             </button>
                         )}
                         <button 
@@ -463,7 +466,7 @@ const ProductManager = ({ siteId }) => {
                                         ✏️ Редагувати
                                     </button>
                                     <button 
-                                        onClick={() => handleDelete(product.id)}
+                                        onClick={() => handleDelete(product.id, product.name)}
                                         style={{
                                             ...styles.dangerButton,
                                             display: 'flex',
@@ -473,7 +476,7 @@ const ProductManager = ({ siteId }) => {
                                         }}
                                         title="Видалити"
                                     >
-                                        ❌ Видалити
+                                        🗑️ Видалити
                                     </button>
                                 </div>
                             </div>

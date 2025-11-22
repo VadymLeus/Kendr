@@ -1,5 +1,6 @@
 // frontend/src/services/api.js
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:5000/api',
@@ -23,12 +24,37 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      console.error("Термін дії сесії вийшов або токен недійсний. Виконується вихід.");
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    if (error.response) {
+      const { status, data } = error.response;
+      const message = data.message || 'Щось пішло не так';
+
+      if (status === 401) {
+        console.error("Термін дії сесії вийшов або токен недійсний.");
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } 
+      else if (status === 403) {
+        toast.error(`Доступ заборонено: ${message}`);
+      }
+      else if (status === 404) {
+        if (error.config.method !== 'get') {
+             toast.error(`Ресурс не знайдено: ${message}`);
+        }
+      }
+      else if (status >= 500) {
+        toast.error(`Помилка сервера: ${message}`);
+      }
+      else {
+         if (error.config.method !== 'get') {
+            toast.error(`Помилка: ${message}`);
+         }
+      }
+    } else if (error.request) {
+      toast.error('Сервер не відповідає. Перевірте підключення до інтернету.');
+    } else {
+      toast.error(`Помилка: ${error.message}`);
     }
+
     return Promise.reject(error);
   }
 );

@@ -1,16 +1,16 @@
 // frontend/src/features/sites/tabs/PagesSettingsTab.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from "../../../services/api";
+import { toast } from 'react-toastify';
 
 const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
     const [name, setName] = useState(page ? page.name : '');
     const [slug, setSlug] = useState(page ? page.slug : '');
-    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setName(page ? page.name : '');
         setSlug(page ? page.slug : '');
-        setError('');
     }, [page, isOpen]);
 
     const handleSlugChange = (e) => {
@@ -19,22 +19,26 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         if (!name || !slug) {
-            setError('Назва та Slug є обовязковими.');
+            toast.warning('Назва та Slug є обовязковими.');
             return;
         }
 
+        setLoading(true);
         try {
             if (page) {
                 await apiClient.put(`/pages/${page.id}/settings`, { name, slug });
+                toast.success(`✅ Сторінку "${name}" успішно оновлено!`);
             } else {
                 await apiClient.post(`/sites/${siteId}/pages`, { name, slug });
+                toast.success(`✅ Сторінку "${name}" успішно створено!`);
             }
             onSave();
             if (onPageUpdate) onPageUpdate();
         } catch (err) {
-            setError(err.response?.data?.message || 'Сталася помилка.');
+            console.error('Помилка збереження сторінки:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -80,14 +84,6 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                 }}>
                     {page ? '⚙️ Налаштування сторінки' : '📄 Створити сторінку'}
                 </h3>
-                {error && <p style={{
-                    color: 'var(--platform-danger)', 
-                    marginBottom: '1rem',
-                    padding: '0.75rem',
-                    background: 'rgba(229, 62, 62, 0.1)',
-                    borderRadius: '4px',
-                    fontSize: '0.9rem'
-                }}>{error}</p>}
                 <form onSubmit={handleSubmit}>
                     <div style={{marginBottom: '1.5rem'}}>
                         <label style={labelStyle}>Назва сторінки:</label>
@@ -97,6 +93,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                             onChange={(e) => setName(e.target.value)} 
                             style={inputStyle} 
                             placeholder="Про нас" 
+                            disabled={loading}
                         />
                     </div>
                     <div style={{marginBottom: '1.5rem'}}>
@@ -107,6 +104,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                             onChange={handleSlugChange} 
                             style={inputStyle} 
                             placeholder="about-us" 
+                            disabled={loading}
                         />
                         <small style={{
                             color: 'var(--platform-text-secondary)', 
@@ -129,9 +127,11 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                                 ...buttonStyle,
                                 background: 'var(--platform-card-bg)',
                                 color: 'var(--platform-text-primary)',
-                                border: '1px solid var(--platform-border-color)'
+                                border: '1px solid var(--platform-border-color)',
+                                opacity: loading ? 0.6 : 1
                             }}
                             onClick={onClose}
+                            disabled={loading}
                         >
                             Скасувати
                         </button>
@@ -140,10 +140,12 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                             style={{
                                 ...buttonStyle,
                                 background: 'var(--platform-accent)',
-                                color: 'var(--platform-accent-text)'
+                                color: 'var(--platform-accent-text)',
+                                opacity: loading ? 0.6 : 1
                             }}
+                            disabled={loading}
                         >
-                            {page ? '💾 Зберегти' : '➕ Створити'}
+                            {loading ? '⏳' : page ? '💾 Зберегти' : '➕ Створити'}
                         </button>
                     </div>
                 </form>
@@ -155,18 +157,14 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
 const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEditHeader }) => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingPage, setEditingPage] = useState(null);
 
     const fetchPages = useCallback(async () => {
         setLoading(true);
         try {
             const response = await apiClient.get(`/sites/${siteId}/pages`);
             setPages(response.data);
-            setError('');
         } catch (err) {
-            setError('Не вдалося завантажити сторінки.');
+            console.error('Помилка завантаження сторінок:', err);
         } finally {
             setLoading(false);
         }
@@ -199,7 +197,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
 
     const handleDelete = async (page) => {
         if (page.is_homepage) {
-            alert('Неможливо видалити головну сторінку.');
+            toast.warning('Неможливо видалити головну сторінку.');
             return;
         }
         if (!window.confirm(`Ви впевнені, що хочете видалити сторінку "${page.name}"?`)) {
@@ -209,20 +207,25 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
             await apiClient.delete(`/pages/${page.id}`);
             fetchPages();
             if (onPageUpdate) onPageUpdate();
+            toast.success(`🗑️ Сторінку "${page.name}" успішно видалено`);
         } catch (err) {
-            alert(err.response?.data?.message || 'Помилка під час видалення.');
+            console.error('Помилка видалення сторінки:', err);
         }
     };
 
-    const handleSetHome = async (pageId) => {
+    const handleSetHome = async (pageId, pageName) => {
         try {
             await apiClient.post(`/pages/${pageId}/set-home`);
             fetchPages();
             if (onPageUpdate) onPageUpdate();
+            toast.success(`🏠 Сторінку "${pageName}" встановлено як головну`);
         } catch (err) {
-            alert('Помилка під час встановлення головної сторінки.');
+            console.error('Помилка встановлення головної сторінки:', err);
         }
     };
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingPage, setEditingPage] = useState(null);
 
     const styles = {
         card: {
@@ -317,16 +320,9 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                 color: 'var(--platform-text-secondary)',
                 textAlign: 'center',
                 padding: '2rem'
-            }}>Завантаження сторінок...</p>}
-            {error && <p style={{
-                color: 'var(--platform-danger)',
-                padding: '1rem',
-                background: 'rgba(229, 62, 62, 0.1)',
-                borderRadius: '8px',
-                textAlign: 'center'
-            }}>{error}</p>}
+            }}>⏳ Завантаження сторінок...</p>}
             
-            {!loading && !error && (
+            {!loading && (
                 <>
                     {pages.length === 0 ? (
                         <div style={{
@@ -422,7 +418,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                                                 alignItems: 'center',
                                                                 gap: '0.25rem'
                                                             }}
-                                                            onClick={() => handleSetHome(page.id)}
+                                                            onClick={() => handleSetHome(page.id, page.name)}
                                                             title="Зробити головною сторінкою"
                                                         >
                                                             🏠 Головна
@@ -431,12 +427,15 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                                             style={{
                                                                 ...styles.button,
                                                                 background: 'var(--platform-danger)',
-                                                                color: 'white'
+                                                                color: 'white',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.25rem'
                                                             }}
                                                             onClick={() => handleDelete(page)}
                                                             title="Видалити сторінку"
                                                         >
-                                                            ❌ Видалити
+                                                            🗑️ Видалити
                                                         </button>
                                                     </>
                                                 )}

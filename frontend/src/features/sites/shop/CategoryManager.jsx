@@ -1,6 +1,7 @@
 // frontend/src/features/sites/shop/CategoryManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../../../services/api';
+import { toast } from 'react-toastify';
 
 const CategoryManager = ({ siteId }) => {
     const [categories, setCategories] = useState([]);
@@ -9,13 +10,11 @@ const CategoryManager = ({ siteId }) => {
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [editingCategoryName, setEditingCategoryName] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
-    const [error, setError] = useState(null);
 
     const fetchCategories = useCallback(async () => {
         if (!siteId) return;
         try {
             setLoading(true);
-            setError(null);
             const response = await apiClient.get(`/categories/site/${siteId}`);
             
             if (response.data && Array.isArray(response.data)) {
@@ -26,7 +25,6 @@ const CategoryManager = ({ siteId }) => {
             }
         } catch (error) {
             console.error('Помилка завантаження категорій:', error);
-            setError('Не вдалося завантажити категорії');
             setCategories([]);
         } finally {
             setLoading(false);
@@ -43,36 +41,30 @@ const CategoryManager = ({ siteId }) => {
         
         try {
             setActionLoading(true);
-            setError(null);
             await apiClient.post('/categories', { 
                 siteId: siteId,
                 name: newCategoryName.trim() 
             });
             setNewCategoryName('');
             await fetchCategories();
+            toast.success(`Категорію "${newCategoryName.trim()}" успішно додано!`);
         } catch (error) {
             console.error('Помилка додавання категорії:', error);
-            const errorMessage = error.response?.data?.message || 'Помилка додавання категорії';
-            setError(errorMessage);
-            alert(errorMessage);
         } finally {
             setActionLoading(false);
         }
     };
     
-    const handleDeleteCategory = async (categoryId) => {
-        if (!window.confirm('Ви впевнені, що хочете видалити цю категорію? Видалення категорії не видалить товари, вони залишаться без категорії.')) return;
+    const handleDeleteCategory = async (categoryId, categoryName) => {
+        if (!window.confirm(`Ви впевнені, що хочете видалити категорію "${categoryName}"? Видалення категорії не видалить товари, вони залишаться без категорії.`)) return;
         
         try {
             setActionLoading(true);
-            setError(null);
             await apiClient.delete(`/categories/${categoryId}`);
             await fetchCategories();
+            toast.success(`Категорію "${categoryName}" успішно видалено`);
         } catch (error) {
             console.error('Помилка видалення категорії:', error);
-            const errorMessage = error.response?.data?.message || 'Помилка видалення категорії';
-            setError(errorMessage);
-            alert(errorMessage);
         } finally {
             setActionLoading(false);
         }
@@ -94,17 +86,14 @@ const CategoryManager = ({ siteId }) => {
 
         try {
             setActionLoading(true);
-            setError(null);
             await apiClient.put(`/categories/${editingCategoryId}`, { 
                 name: editingCategoryName.trim() 
             });
             handleCancelEdit();
             await fetchCategories();
+            toast.success(`Категорію успішно оновлено на "${editingCategoryName.trim()}"`);
         } catch (error) {
             console.error('Помилка оновлення категорії:', error);
-            const errorMessage = error.response?.data?.message || 'Помилка оновлення';
-            setError(errorMessage);
-            alert(errorMessage);
         } finally {
             setActionLoading(false);
         }
@@ -126,15 +115,6 @@ const CategoryManager = ({ siteId }) => {
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem'
-        },
-        error: {
-            padding: '0.75rem',
-            marginBottom: '1rem',
-            backgroundColor: 'rgba(229, 62, 62, 0.1)',
-            color: 'var(--platform-danger)',
-            border: '1px solid var(--platform-danger)',
-            borderRadius: '8px',
-            fontSize: '0.9rem'
         },
         input: {
             flexGrow: 1,
@@ -225,7 +205,7 @@ const CategoryManager = ({ siteId }) => {
                 textAlign: 'center',
                 color: 'var(--platform-text-secondary)'
             }}>
-                Завантаження категорій...
+                ⏳ Завантаження категорій...
             </div>
         );
     }
@@ -237,12 +217,6 @@ const CategoryManager = ({ siteId }) => {
             <h4 style={styles.title}>
                 📂 Категорії товарів
             </h4>
-
-            {error && (
-                <div style={styles.error}>
-                    {error}
-                </div>
-            )}
 
             <form onSubmit={handleAddCategory} style={{ 
                 marginBottom: '1.5rem', 
@@ -334,7 +308,7 @@ const CategoryManager = ({ siteId }) => {
                                             ✏️
                                         </button>
                                         <button 
-                                            onClick={() => handleDeleteCategory(category.id)} 
+                                            onClick={() => handleDeleteCategory(category.id, category.name)} 
                                             disabled={actionLoading}
                                             style={{
                                                 ...styles.actionButton,
@@ -343,7 +317,7 @@ const CategoryManager = ({ siteId }) => {
                                             }}
                                             title="Видалити категорію"
                                         >
-                                            ×
+                                            🗑️
                                         </button>
                                     </div>
                                 </>

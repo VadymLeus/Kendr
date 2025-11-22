@@ -3,6 +3,8 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import Layout from './components/layout/Layout';
 
@@ -81,6 +83,19 @@ function App() {
                     <Route path="*" element={<NotFoundPage />} />
                 </Route>
             </Routes>
+
+            <ToastContainer
+                position="bottom-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
         </DndProvider>
     );
 }

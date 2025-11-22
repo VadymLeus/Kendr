@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../../services/api';
+import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:5000';
 
@@ -13,7 +14,6 @@ const CreateSitePage = () => {
     const [selectedTemplate, setSelectedTemplate] = useState('');
     const [sitePath, setSitePath] = useState('');
     const [title, setTitle] = useState('');
-    const [error, setError] = useState('');
     const [acceptedRules, setAcceptedRules] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isDataLoading, setIsDataLoading] = useState(true);
@@ -70,7 +70,7 @@ const CreateSitePage = () => {
                 }
             } catch (error) {
                 console.error("Помилка під час завантаження даних:", error);
-                setError('Не вдалося завантажити дані.');
+                toast.error('Не вдалося завантажити дані шаблонів або логотипів.');
             } finally {
                 setIsDataLoading(false);
             }
@@ -99,13 +99,12 @@ const CreateSitePage = () => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) { 
-                setError('Розмір файлу не повинен перевищувати 5MB');
+                toast.error('Розмір файлу не повинен перевищувати 5MB');
                 return;
             }
             setCustomLogoFile(file);
             setSelectedLogo('');
             setPreview(URL.createObjectURL(file));
-            setError('');
         }
     };
 
@@ -115,7 +114,6 @@ const CreateSitePage = () => {
         setPreview(`${API_URL}${logoUrl}`);
         const fileInput = document.getElementById('logo-upload');
         if (fileInput) fileInput.value = null;
-        setError('');
     };
 
     const handleDeleteTemplate = async () => {
@@ -133,22 +131,22 @@ const CreateSitePage = () => {
             } else {
                 setSelectedTemplate('');
             }
+            toast.success('Шаблон видалено');
         } catch (err) {
-            alert(err.response?.data?.message || 'Помилка видалення шаблону');
+            console.error(err);
         }
     };
 
     const handleCreateSite = async (e) => {
         e.preventDefault();
-        setError('');
         
         if (!acceptedRules) {
-            setError('Для створення сайту необхідно прийняти правила платформи.');
+            toast.warning('Для створення сайту необхідно прийняти правила платформи.');
             return;
         }
         
         if (!sitePath || !title || !selectedTemplate) {
-            setError('Будь ласка, заповніть усі поля та оберіть шаблон.');
+            toast.warning('Будь ласка, заповніть усі поля та оберіть шаблон.');
             return;
         }
 
@@ -171,10 +169,12 @@ const CreateSitePage = () => {
 
         try {
             const response = await apiClient.post('/sites/create', formData);
-            alert('Сайт успішно створено!');
-            navigate(`/dashboard/${response.data.site.site_path}`);
+            toast.success('Сайт успішно створено! Переходимо в редактор...');
+            setTimeout(() => {
+                navigate(`/dashboard/${response.data.site.site_path}`);
+            }, 1000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Сталася помилка під час створення сайту.');
+            console.error(err);
         } finally {
             setIsLoading(false);
         }
@@ -213,15 +213,7 @@ const CreateSitePage = () => {
 
     if (isDataLoading) {
         return (
-            <div 
-                className="card" 
-                style={{ 
-                    maxWidth: '700px', 
-                    margin: 'auto', 
-                    textAlign: 'center', 
-                    padding: '2rem' 
-                }}
-            >
+            <div className="card" style={{ maxWidth: '700px', margin: 'auto', textAlign: 'center', padding: '2rem' }}>
                 Завантаження...
             </div>
         );
@@ -230,19 +222,6 @@ const CreateSitePage = () => {
     return (
         <div className="card" style={{ maxWidth: '700px', margin: 'auto' }}>
             <h2 style={{ marginBottom: '1.5rem' }}>Створення нового сайту 🎨</h2>
-
-            {error && (
-                <p 
-                    className="bg-danger-light text-danger" 
-                    style={{ 
-                        padding: '10px', 
-                        borderRadius: '4px', 
-                        marginBottom: '1rem' 
-                    }}
-                >
-                    {error}
-                </p>
-            )}
             
             <form onSubmit={handleCreateSite} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 
@@ -256,18 +235,10 @@ const CreateSitePage = () => {
                         marginBottom: '1rem', 
                         borderBottom: '1px solid var(--platform-border-color)' 
                     }}>
-                        <button 
-                            type="button" 
-                            style={tabStyle(activeTab === 'gallery')} 
-                            onClick={() => setActiveTab('gallery')}
-                        >
+                        <button type="button" style={tabStyle(activeTab === 'gallery')} onClick={() => setActiveTab('gallery')}>
                             🏛️ Галерея
                         </button>
-                        <button 
-                            type="button" 
-                            style={tabStyle(activeTab === 'personal')} 
-                            onClick={() => setActiveTab('personal')}
-                        >
+                        <button type="button" style={tabStyle(activeTab === 'personal')} onClick={() => setActiveTab('personal')}>
                             👤 Мої Шаблони
                         </button>
                     </div>

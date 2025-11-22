@@ -1,6 +1,7 @@
 // frontend/src/features/editor/SaveBlockModal.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../services/api';
+import { toast } from 'react-toastify';
 
 const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
     const [name, setName] = useState('');
@@ -26,7 +27,10 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
         e.preventDefault();
         const trimmedName = name.trim();
         
-        if (!trimmedName) return;
+        if (!trimmedName) {
+            toast.warning('Будь ласка, введіть назву для блоку');
+            return;
+        }
 
         const duplicate = existingBlocks.find(b => b.name.toLowerCase() === trimmedName.toLowerCase());
 
@@ -37,12 +41,12 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
 
             if (confirmReplace) {
                 onSave(null, 'overwrite', duplicate.id);
+                toast.success(`✅ Блок "${trimmedName}" успішно оновлено!`);
                 onClose();
-            } else {
-                return; 
             }
         } else {
             onSave(trimmedName, 'new');
+            toast.success(`✅ Блок "${trimmedName}" успішно збережено!`);
             onClose();
         }
     };
@@ -50,6 +54,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
     const handleOverwriteOriginal = () => {
         if (window.confirm(`Ви впевнені, що хочете оновити оригінальний блок "${originBlockInfo.name}"?`)) {
             onSave(null, 'overwrite', originBlockInfo.id);
+            toast.success(`✅ Оригінальний блок "${originBlockInfo.name}" успішно оновлено!`);
             onClose();
         }
     };
@@ -181,7 +186,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                         fontSize: '1.1rem',
                         fontWeight: '600'
                     }}>
-                        {originBlockInfo ? 'Оновлення блоку' : 'Зберегти блок'}
+                        {originBlockInfo ? '🔄 Оновлення блоку' : '💾 Зберегти блок'}
                     </h3>
                     <button 
                         onClick={onClose}
@@ -246,7 +251,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                                     color: 'var(--platform-text-secondary)',
                                     fontSize: '0.8rem',
                                     fontWeight: '500'
-                                }}>або збереги як новий</span>
+                                }}>або зберегти як новий</span>
                                 <div style={{flex: 1, height: '1px', background: 'var(--platform-border-color)'}}></div>
                             </div>
                         </div>
@@ -288,7 +293,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                                     borderRadius: '50%',
                                     animation: 'spin 1s linear infinite'
                                 }}></div>
-                                Перевірка наявних блоків...
+                                ⏳ Перевірка наявних блоків...
                             </div>
                         )}
                     </form>
@@ -307,7 +312,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                             e.target.style.color = 'var(--platform-text-secondary)';
                         }}
                     >
-                        Скасувати
+                        ❌ Скасувати
                     </button>
                     <button 
                         onClick={handleSaveAsNew}
@@ -333,7 +338,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                 </div>
             </div>
 
-            {/* ВИПРАВЛЕНО: Прибрано атрибут jsx */}
             <style>{`
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
