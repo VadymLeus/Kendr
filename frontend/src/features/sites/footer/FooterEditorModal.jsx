@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import BlockEditor from '../../editor/BlockEditor';
 import EditorSidebar from '../../editor/EditorSidebar';
+import { toast } from 'react-toastify';
 import { 
     generateBlockId, 
     getDefaultBlockData 
@@ -18,6 +19,7 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
     const [blocks, setBlocks] = useState(initialBlocks || []);
     const [selectedBlockPath, setSelectedBlockPath] = useState(null);
     const [collapsedBlocks, setCollapsedBlocks] = useState([]);
+    const [saving, setSaving] = useState(false);
 
     const toggleCollapse = (blockId) => {
         setCollapsedBlocks(prev => prev.includes(blockId) ? prev.filter(id => id !== blockId) : [...prev, blockId]);
@@ -46,6 +48,7 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
         if (window.confirm('Видалити цей блок з футера?')) {
             setBlocks(prev => removeBlockByPath(prev, path));
             setSelectedBlockPath(null);
+            toast.info('🗑️ Блок видалено з футера');
         }
     }, []);
 
@@ -53,8 +56,17 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
         setBlocks(prev => updateBlockDataByPath(prev, path, updatedData));
     }, []);
 
-    const handleSave = () => {
-        onSave(blocks);
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await onSave(blocks);
+            toast.success('✅ Футер успішно збережено!');
+            onClose();
+        } catch (error) {
+            console.error('Помилка збереження футера:', error);
+        } finally {
+            setSaving(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -79,7 +91,8 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
     const primaryButtonStyle = {
         ...buttonStyle,
         background: 'var(--platform-accent)',
-        color: 'var(--platform-accent-text)'
+        color: 'var(--platform-accent-text)',
+        opacity: saving ? 0.6 : 1
     };
 
     return (
@@ -96,29 +109,54 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
                     padding: '1rem 2rem', background: 'var(--platform-card-bg)', borderBottom: '1px solid var(--platform-border-color)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                 }}>
-                    <h3 style={{ margin: 0, color: 'var(--platform-text-primary)' }}>🛠 Редагування Глобального Футера</h3>
+                    <h3 style={{ 
+                        margin: 0, 
+                        color: 'var(--platform-text-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}>
+                        🛠 Редагування Глобального Футера
+                    </h3>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <button 
                             onClick={onClose} 
-                            style={secondaryButtonStyle}
+                            disabled={saving}
+                            style={{
+                                ...secondaryButtonStyle,
+                                opacity: saving ? 0.6 : 1
+                            }}
                             onMouseEnter={(e) => {
-                                e.target.style.borderColor = 'var(--platform-accent)';
-                                e.target.style.color = 'var(--platform-accent)';
+                                if (!saving) {
+                                    e.target.style.borderColor = 'var(--platform-accent)';
+                                    e.target.style.color = 'var(--platform-accent)';
+                                }
                             }}
                             onMouseLeave={(e) => {
-                                e.target.style.borderColor = 'var(--platform-border-color)';
-                                e.target.style.color = 'var(--platform-text-primary)';
+                                if (!saving) {
+                                    e.target.style.borderColor = 'var(--platform-border-color)';
+                                    e.target.style.color = 'var(--platform-text-primary)';
+                                }
                             }}
                         >
-                            Скасувати
+                            ❌ Скасувати
                         </button>
                         <button 
                             onClick={handleSave} 
+                            disabled={saving}
                             style={primaryButtonStyle}
-                            onMouseEnter={(e) => e.target.style.background = 'var(--platform-accent-hover)'}
-                            onMouseLeave={(e) => e.target.style.background = 'var(--platform-accent)'}
+                            onMouseEnter={(e) => {
+                                if (!saving) {
+                                    e.target.style.background = 'var(--platform-accent-hover)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (!saving) {
+                                    e.target.style.background = 'var(--platform-accent)';
+                                }
+                            }}
                         >
-                            💾 Зберегти Футер
+                            {saving ? '⏳ Збереження...' : '💾 Зберегти Футер'}
                         </button>
                     </div>
                 </div>
@@ -144,14 +182,26 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
                                 onToggleCollapse={toggleCollapse}
                             />
                             {blocks.length === 0 && (
-                                <p style={{ 
+                                <div style={{ 
                                     textAlign: 'center', 
                                     color: 'var(--platform-text-secondary)', 
                                     marginTop: '20px',
-                                    padding: '2rem'
+                                    padding: '3rem',
+                                    border: '2px dashed var(--platform-border-color)',
+                                    borderRadius: '12px',
+                                    background: 'var(--platform-card-bg)'
                                 }}>
-                                    Футер порожній. Додайте блоки з панелі зліва.
-                                </p>
+                                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔻</div>
+                                    <h4 style={{ 
+                                        color: 'var(--platform-text-primary)', 
+                                        marginBottom: '0.5rem' 
+                                    }}>
+                                        Футер порожній
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                                        Додайте блоки з панелі зліва, щоб створити футер
+                                    </p>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -175,6 +225,20 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
                             onSelectPage={() => {}}
                         />
                     </div>
+                </div>
+
+                <div style={{
+                    padding: '1rem 2rem',
+                    background: 'var(--platform-card-bg)',
+                    borderTop: '1px solid var(--platform-border-color)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.8rem',
+                    color: 'var(--platform-text-secondary)'
+                }}>
+                    <span>🔻 Глобальний футер - відображається на всіх сторінках сайту</span>
+                    <span>📊 Блоків: <strong>{blocks.length}</strong></span>
                 </div>
             </div>
         </div>

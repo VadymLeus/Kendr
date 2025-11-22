@@ -1,6 +1,7 @@
 // frontend/src/providers/CartContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { AuthContext } from './AuthContext';
+import { toast } from 'react-toastify';
 
 export const CartContext = createContext(null);
 
@@ -44,11 +45,12 @@ export const CartProvider = ({ children }) => {
                 return [...prevItems, { ...product, quantity: 1 }];
             }
         });
-        alert(`Товар "${product.name}" додано до кошика!`);
+        toast.success(`Товар "${product.name}" додано до кошика!`);
     };
 
     const removeFromCart = (productId) => {
         setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+        toast.info("Товар видалено з кошика");
     };
 
     const updateQuantity = (productId, newQuantity) => {

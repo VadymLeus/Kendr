@@ -6,6 +6,8 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import { ConfirmProvider } from './providers/ConfirmContext';
+
 import Layout from './components/layout/Layout';
 
 import AdminRouteGuard from './guards/AdminRouteGuard';
@@ -41,61 +43,63 @@ import NotFoundPage from './components/common/NotFoundPage';
 function App() {
     return (
         <DndProvider backend={HTML5Backend}>
-            <Routes>
-                <Route element={<Layout />}>
-                    
-                    <Route element={<PublicOnlyRouteGuard />}>
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/register" element={<RegisterPage />} />
+            <ConfirmProvider>
+                <Routes>
+                    <Route element={<Layout />}>
+                        
+                        <Route element={<PublicOnlyRouteGuard />}>
+                            <Route path="/login" element={<LoginPage />} />
+                            <Route path="/register" element={<RegisterPage />} />
+                        </Route>
+
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/catalog" element={<CatalogPage />} />
+                        <Route path="/profile/:username" element={<ProfilePage />} />
+                        <Route path="/site/:site_path" element={<SiteDisplayPage />} />
+                        <Route path="/site/:site_path/:slug" element={<SiteDisplayPage />} />
+                        <Route path="/product/:productId" element={<ProductDetailPage />} />
+                        <Route path="/rules" element={<RulesPage />} />
+
+                        <Route element={<AuthenticatedRouteGuard />}>
+                            <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
+                        </Route>
+
+                        <Route element={<AdminAccessGuard />}>
+                            <Route path="/my-sites" element={<MySitesPage />} />
+                            <Route path="/favorites" element={<FavoritesPage />} />
+                            <Route path="/create-site" element={<CreateSitePage />} />
+                            <Route path="/cart" element={<CartPage />} />
+                            <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />
+                            <Route path="/media-library" element={<MediaLibraryPage />} />
+                            <Route path="/support" element={<SupportPage />} />
+                            <Route path="/support/new-ticket" element={<NewTicketPage />} />
+                            <Route path="/support/appeal" element={<AppealPage />} />
+                            <Route path="/support/my-tickets" element={<MyTicketsPage />} />
+                        </Route>
+
+                        <Route element={<AdminRouteGuard />}>
+                            <Route path="/admin" element={<AdminDashboardPage />} />
+                            <Route path="/admin/support" element={<AdminSupportPage />} />
+                        </Route>
+
+                        <Route path="*" element={<NotFoundPage />} />
                     </Route>
+                </Routes>
 
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/catalog" element={<CatalogPage />} />
-                    <Route path="/profile/:username" element={<ProfilePage />} />
-                    <Route path="/site/:site_path" element={<SiteDisplayPage />} />
-                    <Route path="/site/:site_path/:slug" element={<SiteDisplayPage />} />
-                    <Route path="/product/:productId" element={<ProductDetailPage />} />
-                    <Route path="/rules" element={<RulesPage />} />
-
-                    <Route element={<AuthenticatedRouteGuard />}>
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
-                    </Route>
-
-                    <Route element={<AdminAccessGuard />}>
-                        <Route path="/my-sites" element={<MySitesPage />} />
-                        <Route path="/favorites" element={<FavoritesPage />} />
-                        <Route path="/create-site" element={<CreateSitePage />} />
-                        <Route path="/cart" element={<CartPage />} />
-                        <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />
-                        <Route path="/media-library" element={<MediaLibraryPage />} />
-                        <Route path="/support" element={<SupportPage />} />
-                        <Route path="/support/new-ticket" element={<NewTicketPage />} />
-                        <Route path="/support/appeal" element={<AppealPage />} />
-                        <Route path="/support/my-tickets" element={<MyTicketsPage />} />
-                    </Route>
-
-                    <Route element={<AdminRouteGuard />}>
-                        <Route path="/admin" element={<AdminDashboardPage />} />
-                        <Route path="/admin/support" element={<AdminSupportPage />} />
-                    </Route>
-
-                    <Route path="*" element={<NotFoundPage />} />
-                </Route>
-            </Routes>
-
-            <ToastContainer
-                position="bottom-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="colored"
-            />
+                <ToastContainer
+                    position="bottom-right"
+                    autoClose={3000}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="colored"
+                />
+            </ConfirmProvider>
         </DndProvider>
     );
 }

@@ -32,7 +32,6 @@ const RegisterPage = () => {
                 }
             } catch (err) {
                 console.error("Не вдалося завантажити стандартні аватари", err);
-                toast.error('Не вдалося завантажити варіанти аватарів.');
             }
         };
         fetchDefaultAvatars();
@@ -44,7 +43,7 @@ const RegisterPage = () => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
-                toast.error('Розмір файлу не повинен перевищувати 5MB');
+                toast.warning('Розмір файлу не повинен перевищувати 5MB');
                 return;
             }
             setCustomAvatarFile(file);
@@ -79,13 +78,11 @@ const RegisterPage = () => {
 
         try {
             await apiClient.post('/auth/register', registrationData);
-            toast.success('Реєстрація пройшла успішно! Тепер ви можете увійти.');
-            setTimeout(() => {
-                navigate('/login');
-            }, 1500);
+            toast.success('Реєстрація успішна! Будь ласка, увійдіть.');
+            navigate('/login');
         } catch (err) {
-            // Помилка обробляється глобально в apiClient
-            console.error('Помилка реєстрації:', err);
+            if (err.response && err.response.status === 400) {
+            }
         } finally {
             setIsLoading(false);
         }
@@ -125,28 +122,14 @@ const RegisterPage = () => {
 
     return (
         <div style={containerStyle}>
-            <h2 style={{ 
-                textAlign: 'center', 
-                marginBottom: '1.5rem', 
-                color: 'var(--platform-text-primary)'
-            }}>
+            <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--platform-text-primary)' }}>
                 Створення акаунту
             </h2>
 
             <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
                     {preview && (
-                        <img 
-                            src={preview} 
-                            alt="Аватар" 
-                            style={{ 
-                                width: '100px', 
-                                height: '100px', 
-                                borderRadius: '50%', 
-                                objectFit: 'cover', 
-                                border: '3px solid var(--platform-border-color)' 
-                            }} 
-                        />
+                        <img src={preview} alt="Аватар" style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--platform-border-color)' }} />
                     )}
                     
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', margin: '1rem 0' }}>
@@ -160,84 +143,23 @@ const RegisterPage = () => {
                             />
                         ))}
                     </div>
-                    <div>
-                        <label 
-                            htmlFor="avatar-upload" 
-                            className="btn btn-secondary"
-                            style={{ 
-                                fontSize: '0.9rem',
-                                padding: '8px 16px',
-                                marginBottom: '0.5rem'
-                            }}
-                        >
-                            📁 Завантажити свій аватар (до 5МБ)
-                        </label>
-                        <input 
-                            type="file" 
-                            id="avatar-upload" 
-                            onChange={handleCustomAvatarChange} 
-                            accept="image/*" 
-                            style={{ display: 'none' }} 
-                        />
-                        {customAvatarFile && (
-                            <div style={{ fontSize: '12px', color: 'var(--platform-success)' }}>
-                                Обрано: {customAvatarFile.name}
-                            </div>
-                        )}
-                    </div>
+                    <label htmlFor="avatar-upload" style={{ cursor: 'pointer', color: 'var(--platform-accent)', textDecoration: 'underline' }}>
+                        Завантажити свій
+                    </label>
+                    <input type="file" id="avatar-upload" onChange={handleCustomAvatarChange} accept="image/*" style={{ display: 'none' }} />
                 </div>
 
-                <input 
-                    type="text" 
-                    name="username" 
-                    placeholder="Ім'я користувача" 
-                    style={inputStyle} 
-                    onChange={handleChange} 
-                    required 
-                />
+                <input type="text" name="username" placeholder="Ім'я користувача" style={inputStyle} onChange={handleChange} required />
+                <input type="email" name="email" placeholder="Email" style={inputStyle} onChange={handleChange} required />
+                <input type="tel" name="phone_number" placeholder="Номер телефону (необов'язково)" style={inputStyle} onChange={handleChange} />
+                <input type="password" name="password" placeholder="Мін. 6 символів" style={inputStyle} onChange={handleChange} required minLength="6" />
 
-                <input 
-                    type="email" 
-                    name="email" 
-                    placeholder="Email" 
-                    style={inputStyle} 
-                    onChange={handleChange} 
-                    required 
-                />
-                
-                <input 
-                    type="tel" 
-                    name="phone_number" 
-                    placeholder="Номер телефону (необов'язково)" 
-                    style={inputStyle} 
-                    onChange={handleChange} 
-                />
-                
-                <input 
-                    type="password" 
-                    name="password" 
-                    placeholder="Мін. 6 символів" 
-                    style={inputStyle} 
-                    onChange={handleChange} 
-                    required 
-                    minLength="6" 
-                />
-
-                <button 
-                    type="submit" 
-                    className="btn btn-primary" 
-                    style={{ width: '100%', marginTop: '1rem' }} 
-                    disabled={isLoading}
-                >
-                    {isLoading ? '⏳ Реєстрація...' : '🚀 Зареєструватися'}
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={isLoading}>
+                    {isLoading ? 'Реєстрація...' : 'Зареєструватися'}
                 </button>
             </form>
 
-            <p style={{ 
-                textAlign: 'center', 
-                marginTop: '1.5rem', 
-                color: 'var(--platform-text-secondary)'
-            }}>
+            <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'var(--platform-text-secondary)' }}>
                 Вже є акаунт? <Link to="/login" style={{ color: 'var(--platform-accent)' }}>Увійти</Link>
             </p>
         </div>

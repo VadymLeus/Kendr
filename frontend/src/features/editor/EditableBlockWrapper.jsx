@@ -5,6 +5,8 @@ import BlockRenderer from './blocks/BlockRenderer';
 import { DND_TYPE_NEW_BLOCK } from './DraggableBlockItem';
 import apiClient from '../../services/api';
 import SaveBlockModal from './SaveBlockModal';
+import { toast } from 'react-toastify';
+import { useConfirm } from '../../hooks/useConfirm';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
@@ -24,6 +26,7 @@ const EditableBlockWrapper = ({
 }) => {
     const [isCompact, setIsCompact] = useState(window.innerWidth < 1024);
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const { confirm } = useConfirm();
 
     useEffect(() => {
         const handleResize = () => setIsCompact(window.innerWidth < 1024);
@@ -48,7 +51,6 @@ const EditableBlockWrapper = ({
                 const dragParentPath = dragPath.slice(0, -1).join(',');
                 const hoverParentPath = hoverPath.slice(0, -1).join(',');
                 if (dragParentPath !== hoverParentPath) return;
-                
                 onMoveBlock(dragPath, hoverPath);
                 item.path = hoverPath;
             }
@@ -75,9 +77,7 @@ const EditableBlockWrapper = ({
                 return { name: 'EditableBlockWrapper - Move', path };
             }
         },
-        collect: (monitor) => ({
-            isOver: monitor.isOver({ shallow: true }),
-        })
+        collect: (monitor) => ({ isOver: monitor.isOver({ shallow: true }) })
     });
 
     const wrapperRef = useCallback(node => drag(drop(node)), [drag, drop]);
@@ -92,9 +92,19 @@ const EditableBlockWrapper = ({
         onSelectBlock(path);
     };
 
-    const handleDelete = (e) => {
-        e.stopPropagation(); 
-        onDeleteBlock(path);
+    const handleDelete = async (e) => {
+        e.stopPropagation();
+        const isConfirmed = await confirm({
+            title: "Видалення блоку",
+            message: "Ви впевнені, що хочете видалити цей блок? Цю дію не можна буде скасувати.",
+            type: "danger",
+            confirmLabel: "Видалити"
+        });
+
+        if (isConfirmed) {
+            onDeleteBlock(path);
+            toast.info("🗑️ Блок видалено");
+        }
     };
 
     const handleSaveBlock = async (name, mode, targetOverrideId = null) => {
@@ -105,14 +115,14 @@ const EditableBlockWrapper = ({
                  await apiClient.put(`/saved-blocks/${targetId}`, {
                     content: block.data
                 });
-                alert(`Блок успішно оновлено в бібліотеці!`);
+                toast.success(`✅ Блок успішно оновлено в бібліотеці!`);
             } else {
                 await apiClient.post('/saved-blocks', {
                     name: name,
                     type: block.type,
                     content: block.data
                 });
-                alert('Блок успішно збережено в бібліотеку!');
+                toast.success('✅ Блок успішно збережено в бібліотеку!');
             }
 
             if (onBlockSaved) {
@@ -121,13 +131,12 @@ const EditableBlockWrapper = ({
 
         } catch (error) {
             console.error(error);
-            alert('Помилка збереження блоку.');
         }
     };
 
-    const originBlockInfo = block._library_origin_id ? {
-        id: block._library_origin_id,
-        name: block._library_name
+    const originBlockInfo = block._library_origin_id ? { 
+        id: block._library_origin_id, 
+        name: block._library_name 
     } : null;
 
     const themeSettings = siteData?.theme_settings || {};
@@ -286,7 +295,6 @@ const EditableBlockWrapper = ({
                         '--font-heading': themeSettings.font_heading || "'Inter', sans-serif",
                         '--font-body': themeSettings.font_body || "'Inter', sans-serif",
                         '--btn-radius': themeSettings.button_radius || '8px',
-                        
                         borderRadius: '0 0 8px 8px',
                     }}
                 >

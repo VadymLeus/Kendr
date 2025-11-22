@@ -1,12 +1,14 @@
 // frontend/src/features/editor/SaveBlockModal.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../services/api';
+import { useConfirm } from '../../hooks/useConfirm';
 import { toast } from 'react-toastify';
 
 const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
     const [name, setName] = useState('');
     const [existingBlocks, setExistingBlocks] = useState([]);
     const [isChecking, setIsChecking] = useState(false);
+    const { confirm } = useConfirm();
 
     useEffect(() => {
         if (isOpen) {
@@ -23,38 +25,45 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
 
     if (!isOpen) return null;
 
-    const handleSaveAsNew = (e) => {
+    const handleSaveAsNew = async (e) => {
         e.preventDefault();
         const trimmedName = name.trim();
         
         if (!trimmedName) {
-            toast.warning('Будь ласка, введіть назву для блоку');
+            toast.warning("Введіть назву блоку");
             return;
         }
 
         const duplicate = existingBlocks.find(b => b.name.toLowerCase() === trimmedName.toLowerCase());
 
         if (duplicate) {
-            const confirmReplace = window.confirm(
-                `Блок з назвою "${trimmedName}" вже існує у вашій бібліотеці.\n\nБажаєте замінити його новим вмістом?`
-            );
+            const isConfirmed = await confirm({
+                title: "Блок вже існує",
+                message: `Блок з назвою "${trimmedName}" вже є у вашій бібліотеці. Бажаєте замінити його новим вмістом?`,
+                confirmLabel: "Замінити",
+                type: "warning"
+            });
 
-            if (confirmReplace) {
+            if (isConfirmed) {
                 onSave(null, 'overwrite', duplicate.id);
-                toast.success(`✅ Блок "${trimmedName}" успішно оновлено!`);
                 onClose();
             }
         } else {
             onSave(trimmedName, 'new');
-            toast.success(`✅ Блок "${trimmedName}" успішно збережено!`);
             onClose();
         }
     };
 
-    const handleOverwriteOriginal = () => {
-        if (window.confirm(`Ви впевнені, що хочете оновити оригінальний блок "${originBlockInfo.name}"?`)) {
+    const handleOverwriteOriginal = async () => {
+        const isConfirmed = await confirm({
+            title: "Оновлення блоку",
+            message: `Ви впевнені, що хочете оновити оригінальний блок "${originBlockInfo.name}" у бібліотеці? Це змінить його для всіх нових вставок.`,
+            confirmLabel: "Оновити",
+            type: "info"
+        });
+
+        if (isConfirmed) {
             onSave(null, 'overwrite', originBlockInfo.id);
-            toast.success(`✅ Оригінальний блок "${originBlockInfo.name}" успішно оновлено!`);
             onClose();
         }
     };
@@ -186,19 +195,11 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                         fontSize: '1.1rem',
                         fontWeight: '600'
                     }}>
-                        {originBlockInfo ? '🔄 Оновлення блоку' : '💾 Зберегти блок'}
+                        {originBlockInfo ? 'Оновлення блоку' : 'Зберегти блок'}
                     </h3>
                     <button 
                         onClick={onClose}
                         style={closeButtonStyle}
-                        onMouseEnter={e => {
-                            e.target.style.background = 'var(--platform-bg)';
-                            e.target.style.color = 'var(--platform-text-primary)';
-                        }}
-                        onMouseLeave={e => {
-                            e.target.style.background = 'none';
-                            e.target.style.color = 'var(--platform-text-secondary)';
-                        }}
                     >
                         ✕
                     </button>
@@ -230,12 +231,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                             <button 
                                 onClick={handleOverwriteOriginal}
                                 style={overwriteButtonStyle}
-                                onMouseEnter={e => {
-                                    e.target.style.opacity = '0.9';
-                                }}
-                                onMouseLeave={e => {
-                                    e.target.style.opacity = '1';
-                                }}
                             >
                                 💾 Оновити оригінальний блок
                             </button>
@@ -251,7 +246,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                                     color: 'var(--platform-text-secondary)',
                                     fontSize: '0.8rem',
                                     fontWeight: '500'
-                                }}>або зберегти як новий</span>
+                                }}>або збереги як новий</span>
                                 <div style={{flex: 1, height: '1px', background: 'var(--platform-border-color)'}}></div>
                             </div>
                         </div>
@@ -293,7 +288,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                                     borderRadius: '50%',
                                     animation: 'spin 1s linear infinite'
                                 }}></div>
-                                ⏳ Перевірка наявних блоків...
+                                Перевірка наявних блоків...
                             </div>
                         )}
                     </form>
@@ -303,16 +298,8 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                     <button 
                         onClick={onClose}
                         style={secondaryButtonStyle}
-                        onMouseEnter={e => {
-                            e.target.style.background = 'var(--platform-card-bg)';
-                            e.target.style.color = 'var(--platform-text-primary)';
-                        }}
-                        onMouseLeave={e => {
-                            e.target.style.background = 'var(--platform-bg)';
-                            e.target.style.color = 'var(--platform-text-secondary)';
-                        }}
                     >
-                        ❌ Скасувати
+                        Скасувати
                     </button>
                     <button 
                         onClick={handleSaveAsNew}
@@ -322,16 +309,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                             cursor: (!name.trim() || isChecking) ? 'not-allowed' : 'pointer'
                         }}
                         disabled={!name.trim() || isChecking}
-                        onMouseEnter={e => {
-                            if (name.trim() && !isChecking) {
-                                e.target.style.opacity = '0.9';
-                            }
-                        }}
-                        onMouseLeave={e => {
-                            if (name.trim() && !isChecking) {
-                                e.target.style.opacity = '1';
-                            }
-                        }}
                     >
                         {originBlockInfo ? '💫 Зберегти як новий блок' : '💾 Зберегти блок'}
                     </button>

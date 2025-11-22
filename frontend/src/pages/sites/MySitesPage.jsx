@@ -3,13 +3,15 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../providers/AuthContext';
 import apiClient from '../../services/api';
+import { toast } from 'react-toastify';
+import { useConfirm } from '../../hooks/useConfirm';
 
 const MySitesPage = () => {
     const [sites, setSites] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    const { confirm } = useConfirm();
 
     useEffect(() => {
         if (!user) {
@@ -25,8 +27,7 @@ const MySitesPage = () => {
                 });
                 setSites(response.data);
             } catch (err) {
-                setError('Не вдалося завантажити ваші сайти.');
-                console.error(err);
+                toast.error('Не вдалося завантажити ваші сайти.');
             } finally {
                 setLoading(false);
             }
@@ -36,15 +37,21 @@ const MySitesPage = () => {
     }, [user, navigate]);
 
     const handleDeleteSite = async (sitePath, siteTitle) => {
-        const confirmation = window.confirm(`Ви впевнені, що хочете видалити сайт "${siteTitle}"? Ця дія є незворотною і видалить усі пов'язані з ним товари та категорії.`);
+        const isConfirmed = await confirm({
+            title: "Видалення сайту",
+            message: `Ви впевнені, що хочете видалити сайт "${siteTitle}"? Ця дія є незворотною і видалить усі пов'язані товари та категорії.`,
+            confirmLabel: "Так, видалити",
+            cancelLabel: "Ні, залишити",
+            type: "danger"
+        });
         
-        if (confirmation) {
+        if (isConfirmed) {
             try {
                 await apiClient.delete(`/sites/${sitePath}`);
                 setSites(sites.filter(site => site.site_path !== sitePath));
-                alert('Сайт успішно видалено!');
+                toast.success('Сайт успішно видалено!');
             } catch (err) {
-                alert(err.response?.data?.message || 'Не вдалося видалити сайт.');
+                console.error(err);
             }
         }
     };
@@ -80,19 +87,6 @@ const MySitesPage = () => {
             color: 'var(--platform-text-secondary)' 
         }}>
             Завантаження ваших сайтів...
-        </div>
-    );
-    
-    if (error) return (
-        <div style={{ 
-            color: 'var(--platform-danger)', 
-            background: '#fff2f0',
-            padding: '1rem',
-            borderRadius: '8px',
-            textAlign: 'center',
-            margin: '2rem'
-        }}>
-            {error}
         </div>
     );
 
