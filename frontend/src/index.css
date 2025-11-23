@@ -132,6 +132,45 @@ body[data-platform-accent="lime"] {
   --site-accent-text: #1a202c;
 }
 
+.site-wysiwyg-wrapper {
+  background-color: var(--site-bg);
+  color: var(--site-text-primary);
+  font-family: var(--site-font-main, 'Inter', sans-serif);
+  
+  width: 100%;
+  min-height: 100%;
+  position: relative;
+  transition: background-color 0.3s, color 0.3s;
+  --platform-bg: var(--site-bg);
+  --platform-card-bg: var(--site-card-bg);
+  --platform-text-primary: var(--site-text-primary);
+  --platform-text-secondary: var(--site-text-secondary);
+  --platform-border-color: var(--site-border-color);
+}
+
+.platform-ui-reset {
+  --local-ui-bg: #ffffff;
+  --local-ui-text: #1a202c;
+  --local-ui-border: #e2e8f0;
+  
+  background-color: var(--platform-card-bg) !important;
+  color: var(--platform-text-primary) !important;
+  border-color: var(--platform-border-color) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+body[data-platform-mode="dark"] .platform-ui-reset {
+   background-color: #2d3748 !important;
+   color: #f7fafc !important;
+   border-color: #4a5568 !important;
+}
+
+body[data-platform-mode="light"] .platform-ui-reset {
+   background-color: #ffffff !important;
+   color: #1a202c !important;
+   border-color: #e2e8f0 !important;
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;

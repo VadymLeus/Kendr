@@ -6,8 +6,11 @@ const TextBlock = ({ blockData, isEditorPreview }) => {
     
     const Tag = ['p', 'h1', 'h2', 'h3'].includes(style) ? style : 'p';
     
-    const textPrimary = isEditorPreview ? 'var(--platform-text-primary)' : 'var(--site-text-primary)';
-    const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
+    const textPrimary = 'var(--site-text-primary)';
+    const textSecondary = 'var(--site-text-secondary)';
+    
+    const bgStyle = isEditorPreview ? 'var(--site-card-bg)' : 'transparent';
+    const borderStyle = isEditorPreview ? '1px dashed var(--site-border-color)' : 'none';
 
     const styleMap = {
         h1: { fontSize: '2.5rem', fontWeight: 'bold', color: textPrimary, margin: '0 0 1rem 0', lineHeight: '1.2' },
@@ -21,16 +24,19 @@ const TextBlock = ({ blockData, isEditorPreview }) => {
         ...(styleMap[Tag] || styleMap.p),
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
-        fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : undefined
+        fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : 'var(--site-font-main, inherit)'
     };
 
     return (
         <div style={{ 
             padding: '20px',
-            background: 'transparent',
+            background: bgStyle,
+            border: borderStyle, 
+            borderRadius: '8px',
+            transition: 'background 0.3s ease'
         }}>
             <Tag style={blockStyle}>
-                {content || (isEditorPreview ? 'Текстовий блок' : '')}
+                {content || (isEditorPreview ? 'Текстовий блок (порожній)' : '')}
             </Tag>
         </div>
     );

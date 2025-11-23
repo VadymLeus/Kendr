@@ -11,14 +11,12 @@ const MapBlock = ({ blockData, isEditorPreview }) => {
     const { embed_code, sizePreset = 'medium' } = blockData;
     const mapSrc = parseSrcFromIframe(embed_code);
 
-    const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
-    const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
+    const textPrimary = 'var(--site-text-primary)';
+    const textSecondary = 'var(--site-text-secondary)';
+    const borderColor = 'var(--site-border-color)';
+    const cardBg = 'var(--site-card-bg)';
 
-    const sizeMap = {
-        small: '400px',
-        medium: '650px',
-        large: '100%',
-    };
+    const sizeMap = { small: '400px', medium: '650px', large: '100%' };
     const maxWidth = sizeMap[sizePreset] || '650px';
 
     if (!mapSrc) {
@@ -26,7 +24,7 @@ const MapBlock = ({ blockData, isEditorPreview }) => {
             <div style={{
                 padding: '3rem',
                 textAlign: 'center',
-                background: isEditorPreview ? 'var(--platform-bg)' : 'transparent',
+                background: cardBg, 
                 border: isEditorPreview ? `1px dashed ${borderColor}` : 'none',
                 borderRadius: '8px',
                 color: textSecondary,
@@ -37,8 +35,8 @@ const MapBlock = ({ blockData, isEditorPreview }) => {
                 flexDirection: 'column'
             }}>
                 <span style={{ fontSize: '2.5rem' }}>🗺️</span>
-                <p style={{ margin: '0.5rem 0 0 0', fontWeight: '500' }}>Блок карти</p>
-                {isEditorPreview && <small>Вставте код iframe в налаштуваннях блоку.</small>}
+                <p style={{ margin: '0.5rem 0 0 0', fontWeight: '500', color: textPrimary }}>Блок карти</p> 
+                {isEditorPreview && <small style={{ color: textSecondary }}>Вставте код iframe в налаштуваннях.</small>}
             </div>
         );
     }
@@ -61,7 +59,8 @@ const MapBlock = ({ blockData, isEditorPreview }) => {
                 maxWidth: maxWidth,
                 margin: '0 auto',
                 padding: '20px',
-                border: '1px dashed var(--platform-border-color)', 
+                border: `1px dashed ${borderColor}`, 
+                backgroundColor: cardBg,
                 borderRadius: '8px', 
                 overflow: 'hidden',
                 pointerEvents: 'none' 

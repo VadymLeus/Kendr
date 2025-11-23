@@ -9,32 +9,17 @@ const ButtonBlock = ({ blockData, isEditorPreview }) => {
     const containerStyle = {
         padding: '20px',
         textAlign: alignment || 'center',
-        background: isEditorPreview ? 'var(--platform-card-bg)' : 'transparent'
+        background: isEditorPreview ? 'var(--site-card-bg)' : 'transparent',
+        border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
+        borderRadius: isEditorPreview ? '8px' : '0',
+        transition: 'all 0.3s ease'
     };
 
-    const previewStyle = {
-        display: 'inline-block',
-        padding: '12px 24px',
-        backgroundColor: styleType === 'secondary' ? 'var(--platform-card-bg)' : 'var(--platform-accent)',
-        color: styleType === 'secondary' ? 'var(--platform-text-primary)' : 'var(--platform-accent-text)',
-        border: styleType === 'secondary' ? '1px solid var(--platform-border-color)' : 'none',
-        textDecoration: 'none',
-        borderRadius: '6px',
-        fontSize: '16px',
-        fontWeight: '500',
-        cursor: 'pointer',
-        transition: 'background-color 0.2s ease',
+    const handleClick = (e) => {
+        if (isEditorPreview) {
+            e.preventDefault();
+        }
     };
-
-    if (isEditorPreview) {
-        return (
-            <div style={containerStyle}>
-                <a href="#" style={previewStyle} onClick={(e) => e.preventDefault()}>
-                    {text || 'Кнопка'}
-                </a>
-            </div>
-        );
-    }
 
     return (
         <div style={containerStyle}>
@@ -43,6 +28,11 @@ const ButtonBlock = ({ blockData, isEditorPreview }) => {
                 className={`btn-site ${themeClass}`}
                 target={targetBlank ? '_blank' : '_self'}
                 rel={targetBlank ? 'noopener noreferrer' : ''}
+                onClick={handleClick}
+                style={{
+                    display: 'inline-block',
+                    textDecoration: 'none',
+                }}
             >
                 {text || 'Кнопка'} 
             </a>

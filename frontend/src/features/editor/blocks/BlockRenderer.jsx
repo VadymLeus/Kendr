@@ -34,12 +34,12 @@ const blockMap = {
 };
 
 const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) => {
-    const bg = isEditorPreview ? 'var(--platform-bg)' : 'var(--site-bg)';
-    const cardBg = isEditorPreview ? 'var(--platform-card-bg)' : 'var(--site-card-bg)';
-    const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
-    const textPrimary = isEditorPreview ? 'var(--platform-text-primary)' : 'var(--site-text-primary)';
-    const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
-    const danger = isEditorPreview ? 'var(--platform-danger)' : 'var(--site-danger)';
+    const bg = 'var(--site-bg)';
+    const cardBg = 'var(--site-card-bg)';
+    const borderColor = 'var(--site-border-color)';
+    const textPrimary = 'var(--site-text-primary)';
+    const textSecondary = 'var(--site-text-secondary)';
+    const danger = 'var(--site-danger)';
 
     if (!Array.isArray(blocks) || blocks.length === 0) {
         return (
@@ -49,7 +49,8 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                 color: textSecondary,
                 background: bg,
                 borderRadius: '8px',
-                margin: '1rem 0'
+                margin: '1rem 0',
+                border: isEditorPreview ? `1px dashed ${borderColor}` : 'none'
             }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.7 }}>🏗️</div>
                 <h3 style={{ 

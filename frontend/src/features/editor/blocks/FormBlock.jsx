@@ -30,65 +30,63 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
         }
     };
 
-    const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
-    const cardBg = isEditorPreview ? 'var(--platform-card-bg)' : 'var(--site-card-bg)';
-    const textPrimary = isEditorPreview ? 'var(--platform-text-primary)' : 'var(--site-text-primary)';
-    const accent = isEditorPreview ? 'var(--platform-accent)' : 'var(--site-accent)';
-    const accentText = isEditorPreview ? 'var(--platform-accent-text)' : 'var(--site-accent-text)';
-    const accentHover = isEditorPreview ? 'var(--platform-accent-hover)' : 'var(--site-accent-hover)';
-    const danger = isEditorPreview ? 'var(--platform-danger)' : 'var(--site-danger)';
-
     const inputStyle = {
         width: '100%', 
         padding: '0.75rem', 
-        border: `1px solid ${borderColor}`,
+        
+        background: 'var(--site-card-bg)', 
+        border: '1px solid var(--site-border-color)',
+        color: 'var(--site-text-primary)',
+        
         borderRadius: '4px', 
-        background: cardBg,
-        color: textPrimary, 
         marginBottom: '1rem', 
         boxSizing: 'border-box',
         fontSize: '14px',
+        fontFamily: 'inherit',
         transition: 'border-color 0.2s ease'
     };
 
     const buttonStyle = {
         padding: '12px 24px',
-        backgroundColor: accent,
-        color: accentText,
+        backgroundColor: 'var(--site-accent)',
+        color: 'var(--site-accent-text)',
         border: 'none',
-        borderRadius: '4px',
+        borderRadius: 'var(--btn-radius, 4px)',
         cursor: isEditorPreview ? 'default' : 'pointer',
         fontSize: '14px',
         fontWeight: '500',
-        transition: 'background-color 0.2s ease',
-        opacity: isEditorPreview ? 0.7 : 1
+        opacity: isEditorPreview ? 0.8 : 1,
+        transition: 'background-color 0.2s ease'
     };
 
     const errorStyle = {
         padding: '1rem', 
-        border: `1px solid ${danger}`, 
+        border: '1px solid var(--site-danger)', 
         background: 'rgba(229, 62, 62, 0.1)', 
-        color: danger, 
+        color: 'var(--site-danger)', 
         borderRadius: '4px', 
         marginBottom: '1rem',
         textAlign: 'center'
     };
 
+    const containerStyle = { 
+        padding: '30px', 
+        background: isEditorPreview ? 'var(--site-bg)' : 'transparent',
+        border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
+        maxWidth: '600px',
+        margin: '0 auto',
+        borderRadius: '8px'
+    };
+
     return (
-        <div style={{ 
-            padding: '20px', 
-            background: isEditorPreview ? cardBg : 'transparent',
-            maxWidth: '600px',
-            margin: '0 auto',
-            borderRadius: isEditorPreview ? '8px' : '0',
-            border: isEditorPreview ? `1px solid ${borderColor}` : 'none'
-        }}>
+        <div style={containerStyle}>
             <form onSubmit={handleSubmit}>
                 {status.error && (
                     <div style={errorStyle}>
                         {status.error}
                     </div>
                 )}
+                
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                     <input 
                         type="text" 
@@ -102,8 +100,8 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
                             marginBottom: 0, 
                             flex: 1 
                         }}
-                        onFocus={(e) => e.target.style.borderColor = accent}
-                        onBlur={(e) => e.target.style.borderColor = borderColor}
+                        onFocus={(e) => e.target.style.borderColor = 'var(--site-accent)'}
+                        onBlur={(e) => e.target.style.borderColor = 'var(--site-border-color)'}
                     />
                     <input 
                         type="email" 
@@ -117,8 +115,8 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
                             marginBottom: 0, 
                             flex: 1 
                         }}
-                        onFocus={(e) => e.target.style.borderColor = accent}
-                        onBlur={(e) => e.target.style.borderColor = borderColor}
+                        onFocus={(e) => e.target.style.borderColor = 'var(--site-accent)'}
+                        onBlur={(e) => e.target.style.borderColor = 'var(--site-border-color)'}
                     />
                 </div>
                 <input 
@@ -128,8 +126,8 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
                     onChange={handleChange} 
                     placeholder="Тема (необов'язково)" 
                     style={inputStyle}
-                    onFocus={(e) => e.target.style.borderColor = accent}
-                    onBlur={(e) => e.target.style.borderColor = borderColor}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--site-accent)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--site-border-color)'}
                 />
                 <textarea 
                     name="message" 
@@ -142,8 +140,8 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
                         minHeight: '150px', 
                         resize: 'vertical'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = accent}
-                    onBlur={(e) => e.target.style.borderColor = borderColor}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--site-accent)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--site-border-color)'}
                 />
                 
                 <div style={{ textAlign: 'center' }}> 
@@ -153,12 +151,12 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
                         style={buttonStyle}
                         onMouseEnter={(e) => {
                             if (!isEditorPreview && !status.loading) {
-                                e.target.style.backgroundColor = accentHover;
+                                e.target.style.backgroundColor = 'var(--site-accent-hover)';
                             }
                         }}
                         onMouseLeave={(e) => {
                             if (!isEditorPreview && !status.loading) {
-                                e.target.style.backgroundColor = accent;
+                                e.target.style.backgroundColor = 'var(--site-accent)';
                             }
                         }}
                     >

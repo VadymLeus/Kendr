@@ -25,9 +25,9 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
         display: 'flex',
         alignItems: 'center',
         padding: '1rem 2rem',
-        backgroundColor: isEditorPreview ? 'var(--platform-card-bg)' : 'var(--site-header-bg, var(--site-bg))',
-        borderBottom: `1px solid ${isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)'}`,
-        color: isEditorPreview ? 'var(--platform-text-primary)' : 'var(--site-text-primary)',
+        backgroundColor: 'var(--site-header-bg, var(--site-bg))',
+        borderBottom: `1px solid var(--site-border-color)`,
+        color: 'var(--site-text-primary)', 
         position: 'relative',
         transition: 'background-color 0.3s, color 0.3s',
         gap: '2rem' 
@@ -89,7 +89,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
                 ...baseStyle,
                 padding: '8px 16px',
                 backgroundColor: 'var(--site-accent)',
-                color: 'var(--site-accent-text)',
+                color: 'var(--site-accent-text)', 
                 borderRadius: 'var(--btn-radius, 8px)',
                 border: 'none'
             };
@@ -119,14 +119,14 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
     const ownerButtonStyle = {
         ...actionButtonStyle,
         fontSize: '0.9rem',
-        border: `1px solid ${isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)'}`,
+        border: `1px solid var(--site-border-color)`, 
         padding: '0.5rem 1rem',
         borderRadius: '6px',
         textDecoration: 'none',
         gap: '0.5rem',
-        backgroundColor: isEditorPreview ? 'var(--platform-bg)' : 'var(--site-card-bg)'
+        backgroundColor: 'var(--site-card-bg)'
     };
-
+    
     const siteRoot = `/site/${siteData?.site_path}`;
     const homeLink = isEditorPreview ? '#' : siteRoot;
 
@@ -192,7 +192,12 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
                 </nav>
             </div>
 
-            <div style={{ borderLeft: `1px solid ${isEditorPreview ? '#ddd' : 'var(--site-border-color)'}`, paddingLeft: '1rem', display: 'flex', alignItems: 'center' }}>
+            <div style={{ 
+                borderLeft: `1px solid var(--site-border-color)`, 
+                paddingLeft: '1rem', 
+                display: 'flex', 
+                alignItems: 'center' 
+            }}>
                 {isOwner ? (
                     <ActionWrapper 
                         to={`/dashboard/${siteData?.site_path}`}
@@ -211,7 +216,10 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
                         onMouseEnter={e => e.target.style.transform = 'scale(1.2)'}
                         onMouseLeave={e => e.target.style.transform = 'scale(1)'}
                     >
-                        {isFavorite ? <span style={{ color: 'gold' }}>★</span> : <span style={{ opacity: 0.5 }}>☆</span>}
+                        {isFavorite 
+                            ? <span style={{ color: 'var(--site-accent)' }}>★</span>
+                            : <span style={{ opacity: 0.5 }}>☆</span>
+                        }
                     </button>
                 )}
             </div>

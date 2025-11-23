@@ -5,7 +5,6 @@ const getEmbedUrl = (url) => {
     if (!url) return null;
     let embedUrl = null;
     let videoId = null;
-    
     try {
         const urlObj = new URL(url);
         if (urlObj.hostname.includes('youtube.com')) {
@@ -21,9 +20,7 @@ const getEmbedUrl = (url) => {
                 embedUrl = `https://player.vimeo.com/video/${videoId}`;
             }
         }
-    } catch (e) {
-        return null;
-    }
+    } catch (e) { return null; }
     return embedUrl;
 };
 
@@ -31,22 +28,18 @@ const VideoBlock = ({ blockData, isEditorPreview }) => {
     const { url, sizePreset = 'medium' } = blockData;
     const embedUrl = getEmbedUrl(url);
 
-    const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
-    const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
+    const textSecondary = 'var(--site-text-secondary)';
+    const borderColor = 'var(--site-border-color)';
+    const cardBg = 'var(--site-card-bg)';
 
-    const sizeMap = {
-        small: '400px',
-        medium: '650px',
-        large: '100%',
-    };
-    
+    const sizeMap = { small: '400px', medium: '650px', large: '100%' };
     const maxWidth = sizeMap[sizePreset] || '650px';
 
     const wrapperStyle = {
         width: '100%',
         maxWidth: maxWidth,
         margin: '0 auto',
-        background: isEditorPreview ? 'var(--platform-bg)' : 'transparent',
+        background: isEditorPreview ? cardBg : 'transparent',
         borderRadius: '8px',
         overflow: 'hidden',
         border: isEditorPreview ? `1px dashed ${borderColor}` : 'none'
@@ -61,12 +54,7 @@ const VideoBlock = ({ blockData, isEditorPreview }) => {
     };
 
     const iframeStyle = {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        border: 'none'
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none'
     };
 
     if (!embedUrl) {
@@ -78,15 +66,15 @@ const VideoBlock = ({ blockData, isEditorPreview }) => {
                 justifyContent: 'center',
                 minHeight: '200px',
                 maxHeight: '300px',
-                background: 'var(--platform-bg)',
                 border: `1px dashed ${borderColor}`,
+                backgroundColor: cardBg,
                 padding: '20px',
                 boxSizing: 'border-box'
             }}>
                 <div style={{ textAlign: 'center', color: textSecondary }}>
                     <span style={{ fontSize: '2rem' }}>🎬</span>
-                    <p style={{ margin: '0.5rem 0 0 0' }}>Блок Відео</p>
-                    <small>Вставте посилання YouTube або Vimeo у налаштуваннях.</small>
+                    <p style={{ margin: '0.5rem 0 0 0', color: 'var(--site-text-primary)' }}>Блок Відео</p>
+                    <small style={{ color: textSecondary }}>Вставте посилання YouTube або Vimeo у налаштуваннях.</small>
                 </div>
             </div>
         );
@@ -94,7 +82,7 @@ const VideoBlock = ({ blockData, isEditorPreview }) => {
 
     if (isEditorPreview) {
         return (
-            <div style={{ padding: '20px' }}>
+            <div style={{ padding: '20px 0' }}> 
                 <div style={wrapperStyle}>
                     <div style={responsiveContainerStyle}>
                         <div style={{
@@ -102,14 +90,14 @@ const VideoBlock = ({ blockData, isEditorPreview }) => {
                             display: 'flex', 
                             flexDirection: 'column', 
                             alignItems: 'center', 
-                            justifyContent: 'center', 
+                            justifyContent: 'center',
                             background: '#333', 
                             color: 'white', 
                             padding: '1rem', 
                             textAlign: 'center'
                         }}>
                             <span style={{ fontSize: '2.5rem' }}>🎬</span>
-                            <p style={{ margin: '0.5rem 0 0 0' }}>Попередній перегляд відео</p>
+                            <p style={{ margin: '0.5rem 0 0 0' }}>Попередній перегляд (Клікніть, щоб редагувати)</p>
                             <small style={{ wordBreak: 'break-all', opacity: 0.7, fontSize: '0.75rem' }}>
                                 {embedUrl}
                             </small>
@@ -121,7 +109,7 @@ const VideoBlock = ({ blockData, isEditorPreview }) => {
     }
 
     return (
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '20px 0' }}>
             <div style={wrapperStyle}>
                 <div style={responsiveContainerStyle}>
                     <iframe

@@ -59,9 +59,9 @@ const getLayoutStyles = (direction = 'row', preset, verticalAlign = 'top', horiz
 };
 
 const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock }) => {
-    const accent = isEditorPreview ? 'var(--platform-accent)' : 'var(--site-accent)';
-    const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
-    const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
+    const siteAccent = 'var(--site-accent)';
+    const siteBorderColor = 'var(--site-border-color)';
+    const siteTextSecondary = 'var(--site-text-secondary)';
 
     const [{ isOver, canDrop }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
@@ -73,7 +73,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
                 const dragPath = item.path;
                 const dropZonePath = path;
                 const isDroppingOnSelf = dropZonePath.join(',').startsWith(dragPath.join(',')) &&
-                                        dropZonePath.length > dragPath.length;
+                                         dropZonePath.length > dragPath.length;
                 
                 if (isDroppingOnSelf) {
                     console.error("Помилка: Не можна перемістити макет сам у себе.");
@@ -134,9 +134,9 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         minHeight: '150px',
         padding: '10px',
         borderRadius: '8px',
-        border: isOver && canDrop ? `2px dashed ${accent}` : `2px dashed ${borderColor}`,
+        border: isOver && canDrop ? `2px dashed ${siteAccent}` : `2px dashed ${siteBorderColor}`,
         transition: 'background-color 0.2s ease, border-color 0.2s ease',
-        backgroundColor: isOver && canDrop ? 'rgba(66, 153, 225, 0.1)' : 'transparent',
+        backgroundColor: isOver && canDrop ? 'var(--site-card-bg-hover, rgba(0, 0, 0, 0.05))' : 'transparent',
         width: '100%', 
         boxSizing: 'border-box',
         overflow: 'hidden', 
@@ -163,7 +163,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
                 {React.Children.count(children) === 0 && (
                     <div style={{ 
                         textAlign: 'center', 
-                        color: textSecondary, 
+                        color: siteTextSecondary, 
                         paddingTop: '50px',
                         fontSize: '14px',
                         pointerEvents: 'none',

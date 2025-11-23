@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom';
 const API_URL = 'http://localhost:5000';
 
 const CategoryItem = ({ item, isEditorPreview }) => {
-    const cardBg = isEditorPreview ? 'var(--platform-card-bg)' : 'var(--site-card-bg)';
-    const borderColor = isEditorPreview ? 'var(--platform-border-color)' : 'var(--site-border-color)';
-    const textPrimary = isEditorPreview ? 'var(--platform-text-primary)' : 'var(--site-text-primary)';
+    const cardBg = 'var(--site-card-bg)';
+    const borderColor = 'var(--site-border-color)';
+    const textPrimary = 'var(--site-text-primary)';
     
     const imageUrl = item.image
         ? (item.image.startsWith('http') ? item.image : `${API_URL}${item.image}`)
@@ -21,6 +21,7 @@ const CategoryItem = ({ item, isEditorPreview }) => {
         textDecoration: 'none',
         display: 'block',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        boxShadow: isEditorPreview ? '0 1px 4px rgba(0,0,0,0.05)' : 'none', 
     };
 
     const imageStyle = {
@@ -77,16 +78,18 @@ const CategoryItem = ({ item, isEditorPreview }) => {
 const CategoriesGridBlock = ({ blockData, isEditorPreview }) => {
     const { columns = 3, items = [] } = blockData;
 
-    const textPrimary = isEditorPreview ? 'var(--platform-text-primary)' : 'var(--site-text-primary)';
-    const textSecondary = isEditorPreview ? 'var(--platform-text-secondary)' : 'var(--site-text-secondary)';
+    const textPrimary = 'var(--site-text-primary)';
+    const textSecondary = 'var(--site-text-secondary)';
+    const borderColor = 'var(--site-border-color)';
+    const siteBg = 'var(--site-bg)';
     
     const containerStyle = {
         padding: '40px 20px',
         maxWidth: '1200px',
         margin: '0 auto',
-        background: isEditorPreview ? 'var(--platform-bg)' : 'transparent',
+        background: isEditorPreview ? siteBg : 'transparent',
         ...(isEditorPreview && {
-             border: '1px dashed var(--platform-border-color)',
+             border: `1px dashed ${borderColor}`,
              borderRadius: '8px'
         })
     };

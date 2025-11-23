@@ -4,47 +4,47 @@ import { Link } from 'react-router-dom';
 
 const API_URL = 'http://localhost:5000';
 
-const HeroBlock = ({ blockData, siteData, isEditorPreview }) => {
-    const bgImage = blockData.bg_image || blockData.imageUrl || '';
-    const title = blockData.title || '';
-    const subtitle = blockData.subtitle || '';
-    const buttonText = blockData.button_text || blockData.buttonText || '';
-    const buttonLink = blockData.button_link || blockData.buttonLink || '#';
-    const alignment = blockData.alignment || 'center';
-    const heightPreset = blockData.height || 'medium';
-    const { fontFamily } = blockData;
+const HeroBlock = ({ blockData, isEditorPreview }) => {
+    // Извлекаем данные из blockData
+    const { 
+        bg_image, title, subtitle, button_text, button_link, 
+        alignment = 'center', height = 'medium', fontFamily, 
+        theme_mode = 'auto', overlay_opacity = 0
+    } = blockData;
 
-    const themeMode = blockData.theme_mode || 'auto'; 
-    const overlayOpacity = blockData.overlay_opacity !== undefined ? blockData.overlay_opacity : 0.5;
-
+    // Определяем класс темы (он переопределит --site-* переменные локально, если нужно)
     let themeClass = '';
-    if (themeMode === 'dark') themeClass = 'block-theme-dark';
-    if (themeMode === 'light') themeClass = 'block-theme-light';
+    if (theme_mode === 'dark') themeClass = 'block-theme-dark';
+    if (theme_mode === 'light') themeClass = 'block-theme-light';
     
-    const fullImageUrl = bgImage 
-        ? (bgImage.startsWith('http') ? bgImage : `${API_URL}${bgImage}`)
+    const fullImageUrl = bg_image 
+        ? (bg_image.startsWith('http') ? bg_image : `${API_URL}${bg_image}`)
         : null;
 
-    const heightMap = {
-        small: '300px',
-        medium: '500px',
-        large: '700px',
-        full: 'calc(100vh - 60px)'
+    // Маппинг высоты и выравнивания
+    const heightMap = { 
+        small: '300px', 
+        medium: '500px', 
+        large: '700px', 
+        full: 'calc(100vh - 60px)' 
     };
-
-    const alignMap = {
-        left: 'flex-start',
-        center: 'center',
-        right: 'flex-end'
+    const alignMap = { 
+        left: 'flex-start', 
+        center: 'center', 
+        right: 'flex-end' 
     };
 
     const containerStyle = {
         position: 'relative',
         width: '100%',
-        height: heightMap[heightPreset] || '500px',
+        height: heightMap[height] || '500px',
         minHeight: '300px',
         backgroundImage: fullImageUrl ? `url(${fullImageUrl})` : 'none',
-        backgroundColor: 'var(--site-bg)',
+        
+        // ВАЖНО: Используем переменные сайта
+        backgroundColor: 'var(--site-bg)', 
+        color: 'var(--site-text-primary)',
+        
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -53,16 +53,7 @@ const HeroBlock = ({ blockData, siteData, isEditorPreview }) => {
         justifyContent: alignMap[alignment] || 'center',
         padding: '20px',
         boxSizing: 'border-box',
-        overflow: 'hidden',
-        color: 'var(--site-text-primary)'
-    };
-
-    const overlayStyle = {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: '#000000',
-        opacity: overlayOpacity,
-        zIndex: 1
+        overflow: 'hidden'
     };
 
     const contentStyle = {
@@ -72,12 +63,16 @@ const HeroBlock = ({ blockData, siteData, isEditorPreview }) => {
         width: '100%',
         textAlign: alignment,
         padding: '0 20px',
-        fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : undefined
+        fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : 'var(--site-font-main, inherit)',
+        
+        // Текст наследует цвет от контейнера (который берет из --site-text-primary или переопределения темы)
+        color: 'inherit' 
     };
     
     const buttonStyle = {
         display: 'inline-block',
         padding: '12px 32px',
+        // Кнопки используют акцент сайта
         backgroundColor: 'var(--site-accent)', 
         color: 'var(--site-accent-text)',
         borderRadius: 'var(--btn-radius, 8px)', 
@@ -91,12 +86,22 @@ const HeroBlock = ({ blockData, siteData, isEditorPreview }) => {
         boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
     };
 
+    // Компонент кнопки (span для превью, Link для сайта)
     const ButtonComponent = isEditorPreview ? 'span' : Link;
-    const buttonProps = isEditorPreview ? {} : { to: buttonLink };
+    const buttonProps = isEditorPreview ? {} : { to: button_link || '#' };
 
     return (
         <div style={containerStyle} className={themeClass}>
-            <div style={overlayStyle}></div>
+            <div style={{
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                bottom: 0,
+                backgroundColor: '#000000', 
+                opacity: overlay_opacity, 
+                zIndex: 1
+            }}></div>
 
             <div style={contentStyle}>
                 {title && <h1 style={{ 
@@ -104,23 +109,24 @@ const HeroBlock = ({ blockData, siteData, isEditorPreview }) => {
                     fontWeight: '800',
                     margin: '0 0 1rem 0',
                     lineHeight: '1.1',
-                    textShadow: themeMode === 'light' ? 'none' : '0 2px 4px rgba(0,0,0,0.3)',
-                    color: 'var(--site-text-primary)'
+                    // Заголовки тоже наследуют цвет, чтобы работать на темном фоне
+                    color: 'inherit', 
+                    textShadow: theme_mode === 'light' ? 'none' : '0 2px 4px rgba(0,0,0,0.3)'
                 }}>{title}</h1>}
                 
                 {subtitle && <p style={{ 
                     fontSize: isEditorPreview ? '1rem' : 'clamp(1rem, 2vw, 1.25rem)',
                     margin: '0 0 2rem 0',
                     opacity: 0.9,
+                    lineHeight: '1.6',
+                    color: 'inherit',
                     maxWidth: '600px',
                     marginLeft: alignment === 'center' ? 'auto' : '0',
                     marginRight: alignment === 'center' ? 'auto' : '0',
-                    lineHeight: '1.6',
-                    textShadow: themeMode === 'light' ? 'none' : '0 1px 2px rgba(0,0,0,0.3)',
-                    color: 'var(--site-text-primary)'
+                    textShadow: theme_mode === 'light' ? 'none' : '0 1px 2px rgba(0,0,0,0.3)'
                 }}>{subtitle}</p>}
                 
-                {buttonText && (
+                {button_text && (
                     <ButtonComponent 
                         {...buttonProps}
                         style={buttonStyle}
@@ -137,7 +143,7 @@ const HeroBlock = ({ blockData, siteData, isEditorPreview }) => {
                             }
                         }}
                     >
-                        {buttonText}
+                        {button_text}
                     </ButtonComponent>
                 )}
             </div>

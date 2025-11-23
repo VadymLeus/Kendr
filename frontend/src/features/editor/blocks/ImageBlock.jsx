@@ -18,6 +18,11 @@ const formatBorderRadius = (radius) => {
 
 const ImageBlock = ({ blockData, isEditorPreview, siteData }) => {
     
+    const siteBg = 'var(--site-bg)';
+    const siteBorderColor = 'var(--site-border-color)';
+    const siteAccent = 'var(--site-accent)';
+    const siteTextSecondary = 'var(--site-text-secondary)';
+
     const isOldStructure = !blockData.mode && blockData.imageUrl;
     
     const mode = isOldStructure ? 'single' : blockData.mode || 'single';
@@ -55,16 +60,17 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData }) => {
         const item = items[0];
         if (!item || !item.src) {
              return isEditorPreview ? (
-                <div style={{
-                    padding: '3rem', 
-                    textAlign: 'center', 
-                    background: 'var(--platform-bg)', 
-                    border: '1px dashed var(--platform-border-color)',
-                    borderRadius: formatBorderRadius(borderRadius),
-                    aspectRatio: '16/9'
-                }}>
-                    Оберіть зображення в налаштуваннях
-                </div>
+                 <div style={{
+                     padding: '3rem', 
+                     textAlign: 'center', 
+                     background: siteBg, 
+                     border: `1px dashed ${siteBorderColor}`,
+                     borderRadius: formatBorderRadius(borderRadius),
+                     aspectRatio: '16/9',
+                     color: siteTextSecondary
+                 }}>
+                     Оберіть зображення в налаштуваннях
+                 </div>
              ) : null;
         }
         
@@ -106,9 +112,7 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData }) => {
         const paginationProp = settings.pagination ? { clickable: true } : false;
         const autoplayProp = settings.autoplay ? { delay: 3000, disableOnInteraction: false } : false;
         
-        const accentColor = isEditorPreview 
-            ? 'var(--platform-accent)' 
-            : (siteData?.site_theme_accent ? 'var(--site-accent)' : 'var(--platform-accent)');
+        const accentColor = siteAccent; 
 
         const swiperNavStyles = `
             .my-block-swiper-${blockData.block_id} .swiper-button-next,
@@ -121,9 +125,9 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData }) => {
         `;
         
         const swiperWrapperStyle = isEditorPreview ? {
-            border: '2px dashed var(--platform-border-color)',
+            border: `2px dashed ${siteBorderColor}`,
             padding: '1rem',
-            background: 'var(--platform-bg)',
+            background: siteBg,
         } : {};
 
         return (
@@ -152,10 +156,10 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData }) => {
     };
 
     const renderGrid = () => {
-         const gridWrapperStyle = isEditorPreview ? {
-            border: '2px dashed var(--platform-border-color)',
+        const gridWrapperStyle = isEditorPreview ? {
+            border: `2px dashed ${siteBorderColor}`,
             padding: '1rem',
-            background: 'var(--platform-bg)',
+            background: siteBg,
         } : {};
         
         const columns = settings_grid.columns || 3;
@@ -168,32 +172,32 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData }) => {
                  ...gridWrapperStyle,
                  padding: isEditorPreview ? '1rem 0 0 0' : '0' 
              }}>
-                {isEditorPreview && (
-                    <p style={{textAlign: 'center', color: 'var(--platform-text-secondary)', fontWeight: 'bold', margin: '0 0 1rem 0'}}>
-                        [Сітка: {columns} колонки]
-                    </p>
-                )}
-                
-                <div style={{ 
-                    display: 'flex', 
-                    flexWrap: 'wrap', 
-                    gap: gap, 
-                    justifyContent: 'center',
-                    width: '100%',
-                    margin: '0 auto' 
-                }}>
-                    {items.map(item => (
-                        <div key={item.id} style={{
-                            width: itemRelativeWidth, 
-                            aspectRatio: '1 / 1', 
-                            overflow: 'hidden', 
-                            borderRadius: formatBorderRadius(borderRadius)
-                        }}>
-                            {renderImage(item)}
-                        </div>
-                    ))}
-                </div>
-            </div>
+                 {isEditorPreview && (
+                     <p style={{textAlign: 'center', color: siteTextSecondary, fontWeight: 'bold', margin: '0 0 1rem 0'}}>
+                         [Сітка: {columns} колонки]
+                     </p>
+                 )}
+                 
+                 <div style={{ 
+                     display: 'flex', 
+                     flexWrap: 'wrap', 
+                     gap: gap, 
+                     justifyContent: 'center',
+                     width: '100%',
+                     margin: '0 auto' 
+                 }}>
+                     {items.map(item => (
+                         <div key={item.id} style={{
+                             width: itemRelativeWidth, 
+                             aspectRatio: '1 / 1', 
+                             overflow: 'hidden', 
+                             borderRadius: formatBorderRadius(borderRadius)
+                         }}>
+                             {renderImage(item)}
+                         </div>
+                     ))}
+                 </div>
+             </div>
         );
     };
 
