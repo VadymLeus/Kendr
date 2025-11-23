@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../services/api';
 import AvatarModal from '../AvatarModal';
 import { toast } from 'react-toastify';
+import ImageUploader from '../../../components/common/ImageUploader';
 
 const API_URL = 'http://localhost:5000';
 
@@ -14,6 +15,7 @@ const ProfileSettingsTab = () => {
     const [formData, setFormData] = useState({ username: '', newPassword: '', currentPassword: '' });
     const [isLoading, setIsLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAvatarUploading, setIsAvatarUploading] = useState(false);
 
     useEffect(() => {
         if (!user) {
@@ -52,14 +54,25 @@ const ProfileSettingsTab = () => {
         }
     };
     
-    const handleAvatarUpdate = async (update) => {
+    const handleCroppedAvatarUpload = async (file) => {
+        setIsAvatarUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            
+            const response = await apiClient.post('/users/profile/avatar', formData);
+            updateUser(response.data.user);
+            toast.success('Аватар успішно оновлено!');
+        } catch (err) {
+        } finally {
+            setIsAvatarUploading(false);
+        }
+    };
+
+    const handleAvatarUpdateFromModal = async (update) => {
         setIsLoading(true);
         try {
-            if (update.type === 'file_upload') {
-                updateUser(update.user);
-                toast.success('Аватар успішно оновлено!');
-            } 
-            else if (update.type === 'default_url') {
+             if (update.type === 'default_url') {
                 const response = await apiClient.put('/users/profile/avatar-url', { avatar_url: update.url });
                 updateUser(response.data.user);
                 toast.success('Аватар успішно оновлено!');
@@ -98,25 +111,79 @@ const ProfileSettingsTab = () => {
 
     return (
         <div>
-            {isModalOpen && <AvatarModal onClose={() => setIsModalOpen(false)} onAvatarUpdate={handleAvatarUpdate} />}
+            {isModalOpen && <AvatarModal onClose={() => setIsModalOpen(false)} onAvatarUpdate={handleAvatarUpdateFromModal} />}
             
             <div style={gridContainerStyle}>
                 <div style={tileStyle}>
                     <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Аватар</h3>
-                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Натисніть на зображення, щоб змінити його.</p>
-                    <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                        <img 
-                            src={`${API_URL}${user.avatar_url}`} 
-                            alt="avatar" 
-                            style={{ 
-                                width: '120px', 
-                                height: '120px', 
-                                borderRadius: '50%', 
-                                cursor: 'pointer', 
-                                border: '3px solid var(--platform-accent)' 
-                            }} 
-                            onClick={() => setIsModalOpen(true)} 
-                        />
+                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Натисніть на зображення, щоб завантажити нове, або кнопку нижче для вибору стандартного.</p>
+                    
+                    <div style={{ 
+                        textAlign: 'center', 
+                        marginTop: '1rem', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        gap: '1rem' 
+                    }}>
+                        <ImageUploader 
+                            onUpload={handleCroppedAvatarUpload}
+                            aspect={1} 
+                            circularCrop={true}
+                            uploading={isAvatarUploading}
+                        >
+                            <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <img 
+                                    src={`${API_URL}${user.avatar_url}`} 
+                                    alt="avatar" 
+                                    style={{ 
+                                        width: '120px', 
+                                        height: '120px', 
+                                        borderRadius: '50%', 
+                                        cursor: 'pointer', 
+                                        border: '3px solid var(--platform-accent)',
+                                        opacity: isAvatarUploading ? 0.5 : 1
+                                    }} 
+                                />
+                                {isAvatarUploading && (
+                                    <div style={{ 
+                                        position: 'absolute', 
+                                        top: '50%', 
+                                        left: '50%', 
+                                        transform: 'translate(-50%, -50%)', 
+                                        color: 'white', 
+                                        fontWeight: 'bold', 
+                                        textShadow: '0 0 4px black' 
+                                    }}>
+                                        ...
+                                    </div>
+                                )}
+                                <div style={{ 
+                                    position: 'absolute', 
+                                    bottom: 0, 
+                                    right: 0, 
+                                    background: 'var(--platform-accent)', 
+                                    color: 'white', 
+                                    borderRadius: '50%', 
+                                    width: '32px', 
+                                    height: '32px', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    border: '2px solid var(--platform-card-bg)'
+                                }}>
+                                    📷
+                                </div>
+                            </div>
+                        </ImageUploader>
+
+                        <button 
+                            onClick={() => setIsModalOpen(true)}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.85rem' }}
+                        >
+                            Вибрати зі стандартних
+                        </button>
                     </div>
                 </div>
 

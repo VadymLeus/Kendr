@@ -1,69 +1,203 @@
 // frontend/src/features/media/MediaPickerModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../../services/api';
+import { toast } from 'react-toastify';
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { getCroppedImg, createImage } from '../../utils/canvasUtils';
 
 const API_URL = 'http://localhost:5000';
 
-const ScrollbarStyles = () => (
-    <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
+    return centerCrop(
+        makeAspectCrop(
+            { unit: '%', width: 90 },
+            aspect,
+            mediaWidth,
+            mediaHeight,
+        ),
+        mediaWidth,
+        mediaHeight,
+    );
+}
+
+const CropperStep = ({ 
+    src, 
+    aspect, 
+    circularCrop, 
+    onConfirm, 
+    onCancel,
+    fileName 
+}) => {
+    const [crop, setCrop] = useState();
+    const [completedCrop, setCompletedCrop] = useState();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const imgRef = useRef(null);
+
+    const onImageLoad = (e) => {
+        if (aspect) {
+            const { width, height } = e.currentTarget;
+            setCrop(centerAspectCrop(width, height, aspect));
+        } else {
+            setCrop({ unit: '%', width: 50, height: 50, x: 25, y: 25 });
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
+    };
+
+    const handleConfirm = async () => {
+        if (!completedCrop || !imgRef.current) {
+            toast.warning('Будь ласка, обріжте зображення.');
+            return;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: var(--platform-border-color);
-            border-radius: 3px;
+
+        setIsProcessing(true);
+        try {
+            const imageElement = await createImage(src);
+            const blob = await getCroppedImg(imageElement, completedCrop);
+            
+            const file = new File([blob], `cropped-${fileName || 'image.jpg'}`, { type: 'image/jpeg' });
+            
+            await onConfirm(file);
+        } catch (e) {
+            console.error('Помилка обрізки:', e);
+            toast.error('Помилка при обробці зображення.');
+        } finally {
+            setIsProcessing(false);
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background-color: var(--platform-text-secondary);
-        }
-    `}</style>
-);
+    };
+
+    const cropperContentStyle = {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        overflow: 'hidden'
+    };
+
+    const imageContainerStyle = {
+        flex: 1,
+        overflow: 'auto',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        background: '#333',
+        borderRadius: '4px',
+        minHeight: '300px',
+        padding: '20px'
+    };
+
+    return (
+        <div style={cropperContentStyle}>
+            <h4 style={{ 
+                color: 'var(--platform-text-primary)', 
+                marginTop: 0, 
+                marginBottom: '1rem', 
+                textAlign: 'center', 
+                flexShrink: 0 
+            }}>
+                Кадрування зображення
+            </h4>
+            
+            <div style={imageContainerStyle}>
+                <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    aspect={aspect}
+                    circularCrop={circularCrop}
+                    style={{ maxWidth: '100%' }}
+                >
+                    <img
+                        ref={imgRef}
+                        alt="Crop me"
+                        src={src}
+                        style={{ transform: `scale(1)`, maxWidth: '100%' }}
+                        onLoad={onImageLoad}
+                    />
+                </ReactCrop>
+            </div>
+
+            <div style={{ 
+                marginTop: '1.5rem', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                gap: '1rem', 
+                flexShrink: 0 
+            }}>
+                <button 
+                    onClick={onCancel}
+                    className="btn btn-secondary"
+                    disabled={isProcessing}
+                >
+                    &larr; Назад
+                </button>
+                <button 
+                    onClick={handleConfirm}
+                    className="btn btn-primary"
+                    disabled={isProcessing}
+                >
+                    {isProcessing ? 'Обробка...' : '✂️ Зберегти обрізане'}
+                </button>
+            </div>
+        </div>
+    );
+};
 
 const UploadTab = ({ onUploadSuccess }) => {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
+    const fileInputRef = useRef(null);
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            handleUpload(file);
-        }
-    };
+    const handleFileChange = async (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            
+            const maxSize = 15 * 1024 * 1024;
+            if (file.size > maxSize) {
+                toast.error('Файл занадто великий (макс 15MB). Спробуйте зменшити розмір або обрати інший.');
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                return;
+            }
 
-    const handleUpload = async (file) => {
-        const formData = new FormData();
-        formData.append('mediaFile', file);
-        setUploading(true);
-        setError('');
-        try {
-            const response = await apiClient.post('/media/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            onUploadSuccess(response.data.path_full);
-        } catch (err) {
-            setError(err.response?.data?.message || 'Помилка завантаження.');
-        } finally {
-            setUploading(false);
+            const formData = new FormData();
+            formData.append('mediaFile', file);
+            setUploading(true);
+            setError('');
+            
+            try {
+                const response = await apiClient.post('/media/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                
+                toast.success('Оригінал завантажено. Тепер обріжте зображення.');
+                onUploadSuccess(response.data.path_full, file.name);
+
+            } catch (err) {
+                const msg = err.response?.data?.message || 'Помилка завантаження.';
+                setError(msg);
+                toast.error(msg);
+            } finally {
+                setUploading(false);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            }
         }
     };
     
     return (
         <div style={tabContentStyle} className="custom-scrollbar">
-            <label htmlFor="modal-file-upload" style={uploadBoxStyle}>
-                {uploading ? 'Завантаження...' : 'Натисніть або перетягніть файл'}
-            </label>
             <input
-                id="modal-file-upload"
                 type="file"
+                accept="image/*"
                 onChange={handleFileChange}
-                accept="image/jpeg,image/png,image/webp"
-                disabled={uploading}
+                ref={fileInputRef}
                 style={{ display: 'none' }}
             />
+            
+            <div 
+                style={uploadBoxStyle} 
+                onClick={() => !uploading && fileInputRef.current?.click()}
+            >
+                {uploading ? 'Завантаження...' : 'Натисніть, щоб вибрати зображення (макс 15MB)'}
+            </div>
+            
             {error && <p style={{ color: 'var(--platform-danger)', marginTop: '1rem' }}>{error}</p>}
         </div>
     );
@@ -89,6 +223,10 @@ const LibraryTab = ({ onSelectImage }) => {
         fetchMedia();
     }, []);
 
+    const handleSelect = (file) => {
+        onSelectImage(file.path_full, file.original_file_name);
+    }
+
     return (
         <div style={tabContentStyle} className="custom-scrollbar">
             {loading ? <p style={{ color: 'var(--platform-text-secondary)' }}>Завантаження...</p> : 
@@ -99,7 +237,7 @@ const LibraryTab = ({ onSelectImage }) => {
                         <div 
                             key={file.id} 
                             style={mediaGridItemStyle}
-                            onClick={() => onSelectImage(file.path_full)}
+                            onClick={() => handleSelect(file)}
                         >
                             <img 
                                 src={`${API_URL}${file.path_thumb}`} 
@@ -128,6 +266,11 @@ const DefaultLogosTab = ({ onSelectImage }) => {
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
     }, []);
+    
+    const handleSelect = (logoUrl) => {
+        const finalPath = logoUrl.startsWith('http') ? logoUrl : `${API_URL}${logoUrl}`;
+        onSelectImage(finalPath, 'default');
+    }
 
     return (
         <div style={tabContentStyle} className="custom-scrollbar">
@@ -144,7 +287,7 @@ const DefaultLogosTab = ({ onSelectImage }) => {
                                 ...mediaGridItemStyle,
                                 background: '#eee'
                             }}
-                            onClick={() => onSelectImage(logoUrl)}
+                            onClick={() => handleSelect(logoUrl)}
                         >
                             <img 
                                 src={`${API_URL}${logoUrl}`} 
@@ -159,25 +302,100 @@ const DefaultLogosTab = ({ onSelectImage }) => {
     );
 };
 
-const MediaPickerModal = ({ isOpen, onClose, onSelectImage }) => {
-    const [activeTab, setActiveTab] = useState('library');
+const MediaPickerModal = ({ 
+    isOpen, 
+    onClose, 
+    onSelectImage, 
+    aspect, 
+    circularCrop,
+    defaultTab = 'library'
+}) => {
+    const [activeTab, setActiveTab] = useState(defaultTab);
+    const [step, setStep] = useState('tabs');
+    const [imageToCropSrc, setImageToCropSrc] = useState(null);
+    const [imageFileName, setImageFileName] = useState(null);
 
     if (!isOpen) return null;
 
-    const handleSelectAndClose = (path) => {
-        const finalPath = path.startsWith('http') ? path : `${API_URL}${path}`;
-        onSelectImage(finalPath);
+    const handleClose = () => {
+        setStep('tabs');
+        setImageToCropSrc(null);
+        setImageFileName(null);
         onClose();
     };
 
+    const handleImageSelection = (pathFull, fileName = 'media-file') => {
+        if (fileName === 'default') {
+            onSelectImage(pathFull);
+            handleClose();
+            return;
+        }
+        setImageToCropSrc(`${API_URL}${pathFull}`);
+        setImageFileName(fileName);
+        setStep('crop');
+    };
+
+    const handleCroppedFileConfirmed = async (croppedFile) => {
+        const formData = new FormData();
+        formData.append('mediaFile', croppedFile);
+
+        try {
+            const response = await apiClient.post('/media/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (response.data && response.data.path_full) {
+                onSelectImage(response.data.path_full);
+                toast.success('Зображення успішно обрізано та збережено!');
+                handleClose();
+            } else {
+                throw new Error("Сервер не повернув шлях до файлу");
+            }
+        } catch (error) {
+            console.error("Помилка збереження кропу:", error);
+            toast.error(error.response?.data?.message || "Не вдалося зберегти обрізане зображення.");
+        }
+    };
+    
+    const modalContainerStyle = {
+        background: 'var(--platform-card-bg)', 
+        padding: '1.5rem', 
+        borderRadius: '12px', 
+        width: '95%',
+        maxWidth: '900px', 
+        height: '90vh',
+        maxHeight: '800px',
+        boxShadow: '0 5px 15px rgba(0,0,0,0.3)', 
+        border: '1px solid var(--platform-border-color)', 
+        display: 'flex', 
+        flexDirection: 'column' 
+    };
+
+    if (step === 'crop' && imageToCropSrc) {
+        return (
+            <div style={modalOverlayStyle} onClick={handleClose}>
+                <div style={modalContainerStyle} onClick={e => e.stopPropagation()}>
+                    <CropperStep 
+                        src={imageToCropSrc} 
+                        aspect={aspect} 
+                        circularCrop={circularCrop} 
+                        onConfirm={handleCroppedFileConfirmed}
+                        onCancel={() => setStep('tabs')}
+                        fileName={imageFileName}
+                    />
+                </div>
+            </div>
+        );
+    }
+    
     return (
         <>
             <ScrollbarStyles />
-            <div style={modalOverlayStyle} onClick={onClose}>
-                <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
+            <div style={modalOverlayStyle} onClick={handleClose}>
+                <div style={modalContainerStyle} onClick={e => e.stopPropagation()}>
                     <div style={modalHeaderStyle}>
                         <h4 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>Вибір зображення</h4>
-                        <button onClick={onClose} style={closeButtonStyle}>&times;</button>
+                        <button onClick={handleClose} style={closeButtonStyle}>&times;</button>
                     </div>
                     
                     <div style={modalTabsStyle} className="custom-scrollbar">
@@ -201,15 +419,21 @@ const MediaPickerModal = ({ isOpen, onClose, onSelectImage }) => {
                         </button>
                     </div>
 
-                    <div style={{ padding: '1rem 0', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ 
+                        padding: '1rem 0', 
+                        flex: 1, 
+                        overflow: 'hidden', 
+                        display: 'flex', 
+                        flexDirection: 'column' 
+                    }}>
                         {activeTab === 'library' && (
-                            <LibraryTab onSelectImage={handleSelectAndClose} />
+                            <LibraryTab onSelectImage={handleImageSelection} />
                         )}
                         {activeTab === 'default' && (
-                            <DefaultLogosTab onSelectImage={handleSelectAndClose} />
+                            <DefaultLogosTab onSelectImage={handleImageSelection} />
                         )}
                         {activeTab === 'upload' && (
-                            <UploadTab onUploadSuccess={handleSelectAndClose} />
+                            <UploadTab onUploadSuccess={handleImageSelection} /> 
                         )}
                     </div>
                 </div>
@@ -217,6 +441,25 @@ const MediaPickerModal = ({ isOpen, onClose, onSelectImage }) => {
         </>
     );
 };
+
+const ScrollbarStyles = () => (
+    <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: var(--platform-border-color);
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: var(--platform-text-secondary);
+        }
+    `}</style>
+);
 
 const modalOverlayStyle = { 
     position: 'fixed', 
@@ -229,20 +472,6 @@ const modalOverlayStyle = {
     alignItems: 'center', 
     justifyContent: 'center', 
     zIndex: 1200 
-};
-
-const modalContentStyle = { 
-    background: 'var(--platform-card-bg)', 
-    padding: '1.5rem', 
-    borderRadius: '12px', 
-    width: '90%', 
-    maxWidth: '800px',
-    boxShadow: '0 5px 15px rgba(0,0,0,0.3)', 
-    border: '1px solid var(--platform-border-color)',
-    display: 'flex',
-    flexDirection: 'column',
-    height: '80vh',
-    maxHeight: '700px' 
 };
 
 const modalHeaderStyle = { 
@@ -305,9 +534,9 @@ const uploadBoxStyle = {
 
 const mediaGridStyle = { 
     display: 'grid', 
-    gridTemplateColumns: 'repeat(6, 1fr)', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
     gap: '10px', 
-    width: '100%'
+    width: '100%' 
 };
 
 const mediaGridItemStyle = {

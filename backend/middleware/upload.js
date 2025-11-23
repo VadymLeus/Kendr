@@ -33,7 +33,7 @@ const tempStorage = multer.diskStorage({
 const mediaUpload = multer({
     storage: tempStorage,
     fileFilter: mediaFileFilter,
-    limits: { fileSize: 1024 * 1024 * 5 }
+    limits: { fileSize: 1024 * 1024 * 15 }
 });
 
 const memoryStorage = multer.memoryStorage();
@@ -46,10 +46,11 @@ const fileFilter = (req, file, cb) => {
     }
     cb(new Error('Помилка: Дозволені лише файли зображень (jpeg, png, gif, webp)!'));
 };
+
 const upload = multer({
     storage: memoryStorage,
     fileFilter: fileFilter,
-    limits: { fileSize: 1024 * 1024 * 5 }
+    limits: { fileSize: 1024 * 1024 * 15 }
 });
 
 const processAndSaveImage = (subfolder, filenamePrefix, size = 128) => {
