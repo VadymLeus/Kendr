@@ -1,6 +1,7 @@
 // frontend/src/features/editor/blocks/FormBlock.jsx
 import React, { useState } from 'react';
 import apiClient from '../../../services/api';
+import { toast } from 'react-toastify';
 
 const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -19,8 +20,8 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
         setStatus({ loading: true, error: '', success: '' });
         try {
             await apiClient.post(`/public/form/${siteData.id}/submit`, formData);
+            toast.success(successMessage || 'Дякуємо! Ваше повідомлення надіслано.');
             
-            alert(successMessage || 'Дякуємо! Ваше повідомлення надіслано.');
             setStatus({ loading: false, error: '', success: '' });
             setFormData({ name: '', email: '', subject: '', message: '' });
 

@@ -43,13 +43,10 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
     const handleDropBlock = useCallback((dragItem, dropZonePath) => {
         setBlocks(prev => handleDrop(prev, dragItem, dropZonePath));
     }, []);
-
+    
     const handleDeleteBlock = useCallback((path) => {
-        if (window.confirm('Видалити цей блок з футера?')) {
-            setBlocks(prev => removeBlockByPath(prev, path));
-            setSelectedBlockPath(null);
-            toast.info('🗑️ Блок видалено з футера');
-        }
+        setBlocks(prev => removeBlockByPath(prev, path));
+        setSelectedBlockPath(null);
     }, []);
 
     const handleUpdateBlockData = useCallback((path, updatedData) => {

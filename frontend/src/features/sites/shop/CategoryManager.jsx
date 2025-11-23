@@ -6,301 +6,284 @@ import { useConfirm } from '../../../hooks/useConfirm';
 
 const CategoryManager = ({ siteId }) => {
     const [categories, setCategories] = useState([]);
+    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [newCategoryName, setNewCategoryName] = useState('');
-    const [editingCategoryId, setEditingCategoryId] = useState(null);
-    const [editingCategoryName, setEditingCategoryName] = useState('');
-    const [actionLoading, setActionLoading] = useState(false);
+    const [search, setSearch] = useState('');
+    
+    const [formData, setFormData] = useState({ id: null, name: '' });
+    
     const { confirm } = useConfirm();
 
-    const fetchCategories = useCallback(async () => {
-        if (!siteId) return;
+    const fetchData = useCallback(async () => {
         try {
-            setLoading(true);
-            const response = await apiClient.get(`/categories/site/${siteId}`);
-            setCategories(Array.isArray(response.data) ? response.data : []);
-        } catch (error) {
-            setCategories([]);
+            const [catRes, prodRes] = await Promise.all([
+                apiClient.get(`/categories/site/${siteId}`),
+                apiClient.get(`/products/site/${siteId}`)
+            ]);
+            setCategories(catRes.data || []);
+            setProducts(prodRes.data || []);
+        } catch (err) {
+            console.error(err);
+            toast.error('Не вдалося завантажити дані');
         } finally {
             setLoading(false);
         }
     }, [siteId]);
 
-    useEffect(() => { fetchCategories(); }, [fetchCategories]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleAddCategory = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!newCategoryName.trim()) return;
-        
+        if (!formData.name.trim()) return;
+
         try {
-            setActionLoading(true);
-            await apiClient.post('/categories', { siteId: siteId, name: newCategoryName.trim() });
-            setNewCategoryName('');
-            toast.success('Категорію додано');
-            await fetchCategories();
-        } catch (error) {
-        } finally {
-            setActionLoading(false);
+            if (formData.id) {
+                await apiClient.put(`/categories/${formData.id}`, { name: formData.name });
+                toast.success('Категорію оновлено');
+            } else {
+                await apiClient.post('/categories', { siteId, name: formData.name });
+                toast.success('Категорію додано');
+            }
+            setFormData({ id: null, name: '' });
+            fetchData();
+        } catch (e) {
+            toast.error('Помилка збереження');
         }
     };
-    
-    const handleDeleteCategory = async (categoryId) => {
-        const isConfirmed = await confirm({
-            title: "Видалення категорії",
-            message: "Ви впевнені, що хочете видалити цю категорію? Товари залишаться, але втратять зв'язок з цією категорією.",
-            confirmLabel: "Видалити",
-            type: "danger"
-        });
-        
-        if (isConfirmed) {
+
+    const handleEdit = (category) => {
+        setFormData({ id: category.id, name: category.name });
+    };
+
+    const handleDelete = async (e, id) => {
+        e.stopPropagation();
+        if (await confirm({ 
+            title: 'Видалити категорію?', 
+            message: 'Товари залишаться, але будуть "Без категорії".', 
+            type: 'danger',
+            confirmLabel: 'Видалити'
+        })) {
             try {
-                setActionLoading(true);
-                await apiClient.delete(`/categories/${categoryId}`);
-                toast.success('Категорію видалено');
-                await fetchCategories();
-            } catch (error) {
-            } finally {
-                setActionLoading(false);
+                await apiClient.delete(`/categories/${id}`);
+                if (formData.id === id) setFormData({ id: null, name: '' });
+                fetchData();
+                toast.success('Видалено');
+            } catch (err) {
+                toast.error('Не вдалося видалити');
             }
         }
     };
 
-    const handleEditClick = (category) => { 
-        setEditingCategoryId(category.id); 
-        setEditingCategoryName(category.name); 
-    };
-    
-    const handleCancelEdit = () => { 
-        setEditingCategoryId(null); 
-        setEditingCategoryName(''); 
+    const getProductCount = (categoryId) => {
+        return products.filter(p => p.category_id === categoryId).length;
     };
 
-    const handleUpdateCategory = async (e) => {
-        e.preventDefault();
-        if (!editingCategoryName.trim() || !editingCategoryId) return;
+    const filteredCategories = categories.filter(c => 
+        c.name.toLowerCase().includes(search.toLowerCase())
+    );
 
-        try {
-            setActionLoading(true);
-            await apiClient.put(`/categories/${editingCategoryId}`, { name: editingCategoryName.trim() });
-            toast.success('Категорію оновлено');
-            handleCancelEdit();
-            await fetchCategories();
-        } catch (error) {
-        } finally {
-            setActionLoading(false);
-        }
+    const containerStyle = { 
+        display: 'flex', 
+        gap: '20px', 
+        height: 'calc(100vh - 140px)', 
+        padding: '20px',
+        boxSizing: 'border-box'
     };
 
-    const styles = {
-        container: { 
-            padding: '1.5rem', 
-            border: '1px solid var(--platform-border-color)', 
-            borderRadius: '12px', 
-            backgroundColor: 'var(--platform-card-bg)', 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)' 
-        },
-        title: { 
-            color: 'var(--platform-text-primary)', 
-            marginBottom: '1rem', 
-            fontSize: '1.25rem', 
-            fontWeight: '600', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem' 
-        },
-        input: { 
-            flexGrow: 1, 
-            padding: '0.75rem', 
-            border: '1px solid var(--platform-border-color)', 
-            borderRadius: '6px', 
-            backgroundColor: 'var(--platform-card-bg)', 
-            color: 'var(--platform-text-primary)', 
-            fontSize: '0.9rem', 
-            transition: 'all 0.2s ease' 
-        },
-        primaryButton: { 
-            backgroundColor: 'var(--platform-accent)', 
-            color: 'var(--platform-accent-text)', 
-            border: 'none', 
-            borderRadius: '6px', 
-            padding: '0.75rem 1.25rem', 
-            cursor: 'pointer', 
-            fontSize: '0.9rem', 
-            fontWeight: '500', 
-            transition: 'all 0.2s ease', 
-            whiteSpace: 'nowrap', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.25rem' 
-        },
-        secondaryButton: { 
-            backgroundColor: 'transparent', 
-            color: 'var(--platform-text-secondary)', 
-            border: '1px solid var(--platform-border-color)', 
-            borderRadius: '6px', 
-            padding: '0.75rem 1rem', 
-            cursor: 'pointer', 
-            fontSize: '0.85rem', 
-            fontWeight: '500', 
-            transition: 'all 0.2s ease' 
-        },
-        actionButton: { 
-            border: 'none', 
-            background: 'none', 
-            cursor: 'pointer', 
-            fontSize: '0.9rem', 
-            padding: '0.5rem', 
-            borderRadius: '6px', 
-            transition: 'all 0.2s ease', 
-            width: '32px', 
-            height: '32px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center' 
-        },
-        editButton: { 
-            color: 'var(--platform-text-secondary)' 
-        },
-        deleteButton: { 
-            color: 'var(--platform-danger)' 
-        },
-        listItem: { 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            padding: '0.75rem 0', 
-            borderBottom: '1px solid var(--platform-border-color)', 
-            transition: 'background-color 0.2s ease' 
-        },
-        categoryName: { 
-            color: 'var(--platform-text-primary)', 
-            fontSize: '0.95rem', 
-            fontWeight: '500' 
-        },
-        emptyState: { 
-            color: 'var(--platform-text-secondary)', 
-            textAlign: 'center', 
-            marginTop: '1.5rem', 
-            fontSize: '0.9rem', 
-            fontStyle: 'italic', 
-            padding: '1.5rem', 
-            border: '2px dashed var(--platform-border-color)', 
-            borderRadius: '8px', 
-            backgroundColor: 'var(--platform-bg)' 
-        }
+    const editorCardStyle = {
+        flex: '0 0 320px',
+        background: 'var(--platform-card-bg)',
+        borderRadius: '16px',
+        border: '1px solid var(--platform-border-color)',
+        padding: '24px',
+        display: 'flex', 
+        flexDirection: 'column',
+        height: 'fit-content'
     };
 
-    if (loading) return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--platform-text-secondary)' }}>Завантаження категорій...</div>;
+    const listAreaStyle = {
+        flex: 1,
+        background: 'var(--platform-card-bg)',
+        borderRadius: '16px',
+        border: '1px solid var(--platform-border-color)',
+        padding: '24px',
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'hidden'
+    };
+
+    const gridStyle = {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+        gap: '16px',
+        overflowY: 'auto',
+        padding: '4px',
+        alignContent: 'start'
+    };
+
+    const cardStyle = (isActive) => ({
+        background: 'var(--platform-bg)',
+        borderRadius: '12px',
+        border: isActive ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        cursor: 'pointer',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        position: 'relative'
+    });
+
+    const iconStyle = {
+        fontSize: '2.5rem',
+        marginBottom: '10px',
+        opacity: 0.8
+    };
+
+    const titleStyle = {
+        fontWeight: '600',
+        color: 'var(--platform-text-primary)',
+        marginBottom: '0.25rem',
+        fontSize: '1rem'
+    };
+
+    const countStyle = {
+        fontSize: '0.8rem',
+        color: 'var(--platform-text-secondary)',
+        background: 'rgba(0,0,0,0.05)',
+        padding: '2px 8px',
+        borderRadius: '10px',
+        marginTop: '4px'
+    };
+
+    const inputStyle = {
+        width: '100%', padding: '10px 12px', borderRadius: '8px',
+        border: '1px solid var(--platform-border-color)',
+        background: 'var(--platform-bg)', color: 'var(--platform-text-primary)',
+        marginBottom: '12px', boxSizing: 'border-box'
+    };
+
+    const primaryButton = {
+        background: 'var(--platform-accent)', color: 'var(--platform-accent-text)',
+        padding: '10px', borderRadius: '8px', border: 'none',
+        fontWeight: '600', cursor: 'pointer', width: '100%'
+    };
+
+    const deleteBtnStyle = {
+        position: 'absolute',
+        top: '8px',
+        right: '8px',
+        background: 'rgba(255,255,255,0.8)',
+        border: '1px solid #e2e8f0',
+        color: '#e53e3e',
+        width: '24px',
+        height: '24px',
+        borderRadius: '6px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        fontSize: '0.8rem'
+    };
+
+    if (loading) return <div style={{padding: 40, textAlign: 'center'}}>Завантаження...</div>;
 
     return (
-        <div style={styles.container}>
-            <h4 style={styles.title}>📂 Категорії товарів</h4>
+        <div style={containerStyle}>
+            <div style={editorCardStyle}>
+                <div style={{marginBottom: '20px'}}>
+                    <h3 style={{margin: '0 0 5px 0', fontSize: '1.2rem', color: 'var(--platform-text-primary)'}}>
+                        {formData.id ? '✏️ Редагування' : '➕ Нова категорія'}
+                    </h3>
+                    <p style={{margin: 0, fontSize: '0.85rem', color: 'var(--platform-text-secondary)'}}>
+                        {formData.id ? 'Змініть назву категорії' : 'Створіть групу для товарів'}
+                    </p>
+                </div>
 
-            <form onSubmit={handleAddCategory} style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.75rem' }}>
-                <input 
-                    type="text" 
-                    placeholder="Назва нової категорії" 
-                    value={newCategoryName} 
-                    onChange={(e) => setNewCategoryName(e.target.value)} 
-                    required 
-                    disabled={actionLoading} 
-                    style={{ ...styles.input, opacity: actionLoading ? 0.6 : 1 }} 
-                    onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'} 
-                    onBlur={(e) => e.target.style.borderColor = 'var(--platform-border-color)'} 
-                />
-                <button 
-                    type="submit" 
-                    disabled={actionLoading} 
-                    style={{ ...styles.primaryButton, opacity: actionLoading ? 0.6 : 1 }}
-                >
-                    {actionLoading ? '⏳' : '➕'} Додати
-                </button>
-            </form>
+                <form onSubmit={handleSubmit}>
+                    <label style={{fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'}}>
+                        Назва категорії
+                    </label>
+                    <input 
+                        type="text" 
+                        style={inputStyle} 
+                        value={formData.name} 
+                        onChange={e => setFormData({...formData, name: e.target.value})} 
+                        placeholder="Наприклад: Смартфони"
+                        required
+                        autoFocus
+                    />
 
-            {categories.length > 0 ? (
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {categories.map(category => (
-                        <li key={category.id} style={styles.listItem}>
-                            {editingCategoryId === category.id ? (
-                                <form onSubmit={handleUpdateCategory} style={{ display: 'flex', flexGrow: 1, gap: '0.5rem' }}>
-                                    <input 
-                                        type="text" 
-                                        value={editingCategoryName} 
-                                        onChange={(e) => setEditingCategoryName(e.target.value)} 
-                                        disabled={actionLoading} 
-                                        autoFocus 
-                                        style={{ ...styles.input, opacity: actionLoading ? 0.6 : 1 }} 
-                                    />
-                                    <button 
-                                        type="submit" 
-                                        disabled={actionLoading} 
-                                        style={{ ...styles.primaryButton, padding: '0.75rem 1rem', opacity: actionLoading ? 0.6 : 1 }}
-                                    >
-                                        {actionLoading ? '⏳' : '💾'} Зберегти
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        onClick={handleCancelEdit} 
-                                        disabled={actionLoading} 
-                                        style={{ ...styles.secondaryButton, opacity: actionLoading ? 0.6 : 1 }}
-                                    >
-                                        Скасувати
-                                    </button>
-                                </form>
-                            ) : (
-                                <>
-                                    <span style={styles.categoryName}>{category.name}</span>
-                                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                        <button 
-                                            onClick={() => handleEditClick(category)} 
-                                            disabled={actionLoading} 
-                                            style={{ ...styles.actionButton, ...styles.editButton, opacity: actionLoading ? 0.6 : 1 }} 
-                                            title="Редагувати назву"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDeleteCategory(category.id)} 
-                                            disabled={actionLoading} 
-                                            style={{ ...styles.actionButton, ...styles.deleteButton, opacity: actionLoading ? 0.6 : 1 }} 
-                                            title="Видалити категорію"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </li>
+                    <div style={{marginTop: '10px', display: 'flex', gap: '10px'}}>
+                        <button type="submit" style={primaryButton}>
+                            {formData.id ? 'Зберегти' : 'Додати'}
+                        </button>
+                        {formData.id && (
+                            <button 
+                                type="button" 
+                                onClick={() => setFormData({ id: null, name: '' })}
+                                style={{...primaryButton, background: 'transparent', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-primary)', width: 'auto'}}
+                            >
+                                Відміна
+                            </button>
+                        )}
+                    </div>
+                </form>
+            </div>
+
+            <div style={listAreaStyle}>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '1rem'}}>
+                    <input 
+                        type="text" 
+                        placeholder="🔍 Пошук..." 
+                        style={{...inputStyle, marginBottom: 0, width: '250px'}}
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
+                    
+                    <div style={{fontWeight: 'bold', color: 'var(--platform-text-primary)', whiteSpace: 'nowrap'}}>
+                        Всього категорій: <span style={{color: 'var(--platform-accent)'}}>{categories.length}</span>
+                    </div>
+                </div>
+
+                <div className="custom-scrollbar" style={gridStyle}>
+                    {filteredCategories.length === 0 && (
+                        <div style={{gridColumn: '1/-1', textAlign: 'center', color: 'var(--platform-text-secondary)', marginTop: '40px'}}>
+                            <div style={{fontSize: '3rem', marginBottom: '10px', opacity: 0.5}}>📂</div>
+                            {categories.length === 0 ? 'Список порожній' : 'Нічого не знайдено'}
+                        </div>
+                    )}
+
+                    {filteredCategories.map(cat => (
+                        <div 
+                            key={cat.id} 
+                            style={cardStyle(formData.id === cat.id)}
+                            onClick={() => handleEdit(cat)}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                            <button 
+                                onClick={(e) => handleDelete(e, cat.id)}
+                                style={deleteBtnStyle}
+                                title="Видалити"
+                                onMouseEnter={e => {e.currentTarget.style.background = '#fff5f5'; e.currentTarget.style.borderColor = '#fc8181'}}
+                                onMouseLeave={e => {e.currentTarget.style.background = 'rgba(255,255,255,0.8)'; e.currentTarget.style.borderColor = '#e2e8f0'}}
+                            >
+                                🗑️
+                            </button>
+
+                            <div style={iconStyle}>
+                                {formData.id === cat.id ? '✏️' : '📂'}
+                            </div>
+                            <div style={titleStyle}>{cat.name}</div>
+                            
+                            <div style={countStyle}>
+                                {getProductCount(cat.id)} од.
+                            </div>
+                        </div>
                     ))}
-                </ul>
-            ) : (
-                <div style={styles.emptyState}>
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📂</div>
-                    <p style={{ margin: 0 }}>Немає створених категорій</p>
-                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>
-                        Додайте першу категорію для організації товарів
-                    </p>
                 </div>
-            )}
-            
-            {categories.length > 0 && (
-                <div style={{ 
-                    marginTop: '1rem', 
-                    padding: '0.75rem', 
-                    backgroundColor: 'var(--platform-bg)', 
-                    borderRadius: '6px', 
-                    border: '1px solid var(--platform-border-color)' 
-                }}>
-                    <p style={{ 
-                        margin: 0, 
-                        fontSize: '0.8rem', 
-                        color: 'var(--platform-text-secondary)', 
-                        textAlign: 'center' 
-                    }}>
-                        📝 <strong>{categories.length}</strong> категорій
-                    </p>
-                </div>
-            )}
+            </div>
         </div>
     );
 };

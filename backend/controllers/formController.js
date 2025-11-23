@@ -69,6 +69,33 @@ exports.markSubmissionRead = async (req, res, next) => {
     }
 };
 
+exports.updateStatus = async (req, res, next) => {
+    try {
+        const { siteId, submissionId } = req.params;
+        const { status } = req.body;
+        
+        const site = await Site.findByIdAndUserId(siteId, req.user.id);
+        if (!site) return res.status(403).json({ message: 'Доступ заборонено.' });
+
+        const [rows] = await require('../db').query('SELECT form_data FROM form_submissions WHERE id = ?', [submissionId]);
+        if (!rows[0]) return res.status(404).json({ message: 'Заявку не знайдено' });
+
+        let formData = rows[0].form_data;
+        if (typeof formData === 'string') formData = JSON.parse(formData);
+
+        formData.status = status;
+
+        await require('../db').query(
+            'UPDATE form_submissions SET form_data = ? WHERE id = ?', 
+            [JSON.stringify(formData), submissionId]
+        );
+
+        res.json({ message: 'Статус оновлено' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.deleteSubmission = async (req, res, next) => {
     try {
         const { siteId, submissionId } = req.params;

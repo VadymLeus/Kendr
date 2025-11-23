@@ -283,16 +283,31 @@ exports.updateSiteSettings = async (req, res, next) => {
 
         const processJsonField = (newField, currentField) => {
             if (newField === undefined) return currentField;
-            
             if (typeof newField === 'string') {
                 try { return JSON.parse(newField); } 
-                catch (e) { 
-                    console.warn('Помилка парсингу JSON поля:', e);
-                    return currentField;
-                }
+                catch (e) { return currentField; }
             }
             return newField;
         };
+
+        let finalHeaderContent = processJsonField(header_content, site.header_content);
+        
+        if (title && title !== site.title) {
+            if (Array.isArray(finalHeaderContent)) {
+                finalHeaderContent = finalHeaderContent.map(block => {
+                    if (block.type === 'header') {
+                        return {
+                            ...block,
+                            data: {
+                                ...block.data,
+                                site_title: title
+                            }
+                        };
+                    }
+                    return block;
+                });
+            }
+        }
 
         await Site.updateSettings(site.id, { 
             title: title !== undefined ? title : site.title,
@@ -302,7 +317,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             site_theme_accent: site_theme_accent !== undefined ? site_theme_accent : site.site_theme_accent,
             
             theme_settings: processJsonField(theme_settings, site.theme_settings),
-            header_content: processJsonField(header_content, site.header_content),
+            header_content: finalHeaderContent,
             footer_content: processJsonField(footer_content, site.footer_content) 
         });
         
@@ -314,6 +329,51 @@ exports.updateSiteSettings = async (req, res, next) => {
     } catch (error) {
         console.error('Помилка при оновленні налаштувань сайту:', error);
         next(error);
+    }
+};
+
+exports.renameSite = async (req, res, next) => {
+    try {
+        const { site_path: oldPath } = req.params;
+        const { newPath } = req.body;
+        const userId = req.user.id;
+
+        if (!newPath) {
+            return res.status(400).json({ message: 'Новий шлях (newPath) є обов\'язковим.' });
+        }
+
+        const sanitizedNewPath = newPath.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        if (sanitizedNewPath.length < 3) {
+            return res.status(400).json({ message: 'Мінімум 3 символи для адреси.' });
+        }
+
+        const existingSite = await Site.findByPath(sanitizedNewPath);
+        if (existingSite) {
+            return res.status(409).json({ message: 'Ця адреса вже зайнята. Спробуйте іншу.' });
+        }
+
+        const currentSite = await Site.findByPath(oldPath);
+        if (!currentSite || currentSite.user_id !== userId) {
+            return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' });
+        }
+
+        const [result] = await db.query(
+            'UPDATE sites SET site_path = ? WHERE site_path = ? AND user_id = ?',
+            [sanitizedNewPath, oldPath, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' });
+        }
+
+        res.status(200).json({ 
+            message: 'Адресу сайту успішно змінено.', 
+            newPath: sanitizedNewPath 
+        });
+
+    } catch (error) {
+        console.error('Помилка при перейменуванні сайту:', error);
+        res.status(500).json({ message: 'Помилка сервера при зміні адреси.' });
     }
 };
 

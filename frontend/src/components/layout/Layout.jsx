@@ -162,7 +162,7 @@ const Layout = () => {
                     data-site-mode={siteData?.site_theme_mode || 'light'}
                     data-site-accent={siteData?.site_theme_accent || 'orange'}
                 >
-                    <Outlet context={{ siteData, isSiteLoading }} />
+                    <Outlet context={{ siteData, setSiteData, isSiteLoading }} />
                 </main>
                 
                 {shouldShowFooter && <Footer />}

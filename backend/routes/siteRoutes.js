@@ -11,6 +11,8 @@ router.get('/catalog', verifyTokenOptional, siteController.getSites);
 router.get('/templates', siteController.getTemplates);
 router.get('/default-logos', siteController.getDefaultLogos);
 
+router.put('/:site_path/rename', verifyToken, siteController.renameSite);
+
 router.get('/:siteId/pages', verifyToken, pageController.getPagesForSite);
 router.post('/:siteId/pages', verifyToken, pageController.createPage);
 

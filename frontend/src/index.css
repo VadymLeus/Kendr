@@ -7,6 +7,8 @@
   --platform-bg: #f8f9fa;
   --platform-sidebar-bg: #ffffff;
   --platform-card-bg: #ffffff;
+  --platform-input-bg: #ffffff;
+  --platform-dropdown-bg: #ffffff;
   --platform-text-primary: #1a202c;
   --platform-text-secondary: #4a5568;
   --platform-border-color: #e2e8f0;
@@ -37,6 +39,8 @@ body[data-platform-mode="dark"] {
   --platform-bg: #1a202c;
   --platform-sidebar-bg: #111827;
   --platform-card-bg: #2d3748;
+  --platform-input-bg: #4a5568;
+  --platform-dropdown-bg: #4a5568;
   --platform-text-primary: #f7fafc;
   --platform-text-secondary: #a0aec0;
   --platform-border-color: #4a5568;
@@ -241,14 +245,123 @@ input[type="number"],
 textarea,
 select {
     @apply w-full px-3 py-2 rounded-md border;
-    background-color: var(--platform-card-bg);
+    background-color: var(--platform-input-bg);
     color: var(--platform-text-primary);
     border-color: var(--platform-border-color);
+    font-size: 0.9rem;
 }
 input:focus, textarea:focus, select:focus {
     @apply outline-none ring-2;
     border-color: var(--platform-accent);
     --tw-ring-color: var(--platform-accent);
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+select option {
+    background-color: var(--platform-dropdown-bg) !important;
+    color: var(--platform-text-primary) !important;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+select option:hover {
+    background-color: var(--platform-accent) !important;
+    color: var(--platform-accent-text) !important;
+}
+
+select option:checked {
+    background-color: var(--platform-accent) !important;
+    color: var(--platform-accent-text) !important;
+}
+
+select option:focus {
+    background-color: var(--platform-accent) !important;
+    color: var(--platform-accent-text) !important;
+}
+
+.custom-select {
+    background-color: var(--platform-input-bg);
+    color: var(--platform-text-primary);
+    border: 1px solid var(--platform-border-color);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    width: 100%;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+.custom-select:focus {
+    outline: none;
+    border-color: var(--platform-accent);
+    box-shadow: 0 0 0 2px var(--platform-accent);
+}
+
+.custom-select option {
+    background-color: var(--platform-dropdown-bg) !important;
+    color: var(--platform-text-primary) !important;
+    padding: 8px 12px;
+}
+
+.custom-select option:hover {
+    background-color: var(--platform-accent) !important;
+    color: var(--platform-accent-text) !important;
+}
+
+.custom-select option:checked {
+    background-color: var(--platform-accent) !important;
+    color: var(--platform-accent-text) !important;
+}
+
+.theme-select {
+    background-color: var(--platform-input-bg);
+    color: var(--platform-text-primary);
+    border: 1px solid var(--platform-border-color);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    width: 100%;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+.theme-select:focus {
+    outline: none;
+    border-color: var(--platform-accent);
+    box-shadow: 0 0 0 2px var(--platform-accent);
+}
+
+.theme-select option {
+    background-color: var(--platform-dropdown-bg) !important;
+    color: var(--platform-text-primary) !important;
+    padding: 8px 12px;
+}
+
+.theme-select option:hover {
+    background-color: var(--platform-accent) !important;
+    color: var(--platform-accent-text) !important;
+}
+
+.theme-select option:checked {
+    background-color: var(--platform-accent) !important;
+    color: var(--platform-accent-text) !important;
 }
 
 .card {
@@ -419,4 +532,66 @@ hr {
     background-color: #000000;
     z-index: 1;
     pointer-events: none;
+}
+
+.dashboard-tabs-container {
+  width: 100%;
+  background: var(--platform-card-bg);
+  border-bottom: 1px solid var(--platform-border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.dashboard-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 0 1rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.dashboard-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.dashboard-tab-btn {
+  padding: 1rem 0.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--platform-text-secondary);
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.dashboard-tab-btn:hover {
+  color: var(--platform-text-primary);
+}
+
+.dashboard-tab-btn.active {
+  color: var(--platform-accent);
+  border-bottom-color: var(--platform-accent);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .dashboard-tabs {
+    justify-content: flex-start;
+    gap: 15px;
+  }
+  
+  .dashboard-tab-btn {
+    font-size: 0.9rem;
+    padding: 0.8rem 0.2rem;
+  }
 }

@@ -6,10 +6,16 @@ const CustomSelect = ({ name, value, onChange, options, placeholder = "Обер�
     const [isOpen, setIsOpen] = useState(false);
     const [menuStyle, setMenuStyle] = useState({});
     const triggerRef = useRef(null);
+    const menuRef = useRef(null);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (triggerRef.current && !triggerRef.current.contains(event.target)) {
+            if (
+                triggerRef.current && 
+                !triggerRef.current.contains(event.target) &&
+                menuRef.current && 
+                !menuRef.current.contains(event.target)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -103,7 +109,7 @@ const CustomSelect = ({ name, value, onChange, options, placeholder = "Обер�
             </div>
 
             {isOpen && createPortal(
-                <div style={menuStyle} className="custom-select-menu custom-scrollbar">
+                <div ref={menuRef} style={menuStyle} className="custom-select-menu custom-scrollbar">
                     {options.map(opt => (
                         <div
                             key={opt.value}
