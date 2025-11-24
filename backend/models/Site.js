@@ -50,7 +50,8 @@ class Site {
         SELECT
             s.id, s.user_id, s.title, s.logo_url, s.status,
             s.view_count, s.site_theme_mode, s.site_theme_accent,
-            s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout
+            s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout,
+            s.favicon_url, s.site_title_seo  -- ДОДАНО: нові поля
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -117,7 +118,9 @@ class Site {
       site_theme_accent, 
       theme_settings, 
       header_content,
-      footer_content 
+      footer_content,
+      favicon_url,
+      site_title_seo
     } = data;
     
     const safeStringify = (obj) => {
@@ -138,6 +141,8 @@ class Site {
         safeStringify(theme_settings),
         safeStringify(header_content),
         safeStringify(footer_content),
+        favicon_url || null,
+        site_title_seo || null,
         siteId
     ];
 
@@ -150,7 +155,9 @@ class Site {
             site_theme_accent = ?,
             theme_settings = ?,
             header_content = ?,
-            footer_content = ?
+            footer_content = ?,
+            favicon_url = ?, 
+            site_title_seo = ?
         WHERE id = ?
     `;
     

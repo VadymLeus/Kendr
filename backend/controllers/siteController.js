@@ -278,7 +278,9 @@ exports.updateSiteSettings = async (req, res, next) => {
             site_theme_accent, 
             theme_settings, 
             header_content, 
-            footer_content 
+            footer_content,
+            favicon_url,
+            site_title_seo
         } = req.body;
 
         const processJsonField = (newField, currentField) => {
@@ -318,7 +320,10 @@ exports.updateSiteSettings = async (req, res, next) => {
             
             theme_settings: processJsonField(theme_settings, site.theme_settings),
             header_content: finalHeaderContent,
-            footer_content: processJsonField(footer_content, site.footer_content) 
+            footer_content: processJsonField(footer_content, site.footer_content),
+            
+            favicon_url: favicon_url !== undefined ? favicon_url : site.favicon_url,
+            site_title_seo: site_title_seo !== undefined ? site_title_seo : site.site_title_seo
         });
         
         if (Array.isArray(tags)) {

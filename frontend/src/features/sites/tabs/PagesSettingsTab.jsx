@@ -2,15 +2,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from "../../../services/api";
 import { toast } from 'react-toastify';
+import { useConfirm } from '../../../hooks/useConfirm';
 
 const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
-    const [name, setName] = useState(page ? page.name : '');
-    const [slug, setSlug] = useState(page ? page.slug : '');
+    const [name, setName] = useState('');
+    const [slug, setSlug] = useState('');
+    const [seoTitle, setSeoTitle] = useState('');
+    const [seoDescription, setSeoDescription] = useState('');
+    const [showSeo, setShowSeo] = useState(false);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setName(page ? page.name : '');
         setSlug(page ? page.slug : '');
+        setSeoTitle(page ? (page.seo_title || '') : '');
+        setSeoDescription(page ? (page.seo_description || '') : '');
+        setShowSeo(false);
     }, [page, isOpen]);
 
     const handleSlugChange = (e) => {
@@ -26,17 +33,25 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
 
         setLoading(true);
         try {
+            const payload = { 
+                name, 
+                slug,
+                seo_title: seoTitle,
+                seo_description: seoDescription
+            };
+
             if (page) {
-                await apiClient.put(`/pages/${page.id}/settings`, { name, slug });
-                toast.success(`✅ Сторінку "${name}" успішно оновлено!`);
+                await apiClient.put(`/pages/${page.id}/settings`, payload);
+                toast.success(`✅ Сторінку "${name}" оновлено!`);
             } else {
-                await apiClient.post(`/sites/${siteId}/pages`, { name, slug });
-                toast.success(`✅ Сторінку "${name}" успішно створено!`);
+                await apiClient.post(`/sites/${siteId}/pages`, payload);
+                toast.success(`✅ Сторінку "${name}" створено!`);
             }
             onSave();
             if (onPageUpdate) onPageUpdate();
         } catch (err) {
-            console.error('Помилка збереження сторінки:', err);
+            console.error('Помилка:', err);
+            toast.error(err.response?.data?.message || 'Помилка збереження');
         } finally {
             setLoading(false);
         }
@@ -71,6 +86,25 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
         transition: 'all 0.2s ease'
     };
 
+    const seoSectionStyle = {
+        marginTop: '1rem',
+        borderTop: '1px solid var(--platform-border-color)',
+        paddingTop: '1rem'
+    };
+    
+    const toggleSeoBtnStyle = {
+        background: 'none',
+        border: 'none',
+        color: 'var(--platform-accent)',
+        cursor: 'pointer',
+        fontSize: '0.9rem',
+        padding: 0,
+        marginBottom: '1rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px'
+    };
+
     return (
         <div style={modalOverlayStyle} onClick={onClose}>
             <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
@@ -94,6 +128,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                             style={inputStyle} 
                             placeholder="Про нас" 
                             disabled={loading}
+                            required
                         />
                     </div>
                     <div style={{marginBottom: '1.5rem'}}>
@@ -105,6 +140,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                             style={inputStyle} 
                             placeholder="about-us" 
                             disabled={loading}
+                            required
                         />
                         <small style={{
                             color: 'var(--platform-text-secondary)', 
@@ -115,6 +151,48 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                             Дозволені символи: a-z, 0-9, -
                         </small>
                     </div>
+
+                    {/* Секція SEO */}
+                    <div style={seoSectionStyle}>
+                        <button 
+                            type="button" 
+                            onClick={() => setShowSeo(!showSeo)}
+                            style={toggleSeoBtnStyle}
+                        >
+                            {showSeo ? '▼' : '▶'} SEO Налаштування (для Google)
+                        </button>
+
+                        {showSeo && (
+                            <div className="animation-fade-in">
+                                <div style={{marginBottom: '1rem'}}>
+                                    <label style={labelStyle}>
+                                        SEO Заголовок <small style={{fontWeight:400, color:'gray'}}>(Meta Title)</small>:
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={seoTitle} 
+                                        onChange={(e) => setSeoTitle(e.target.value)} 
+                                        style={inputStyle} 
+                                        placeholder={name} // Placeholder як назва сторінки
+                                        disabled={loading}
+                                    />
+                                </div>
+                                <div style={{marginBottom: '1rem'}}>
+                                    <label style={labelStyle}>
+                                        SEO Опис <small style={{fontWeight:400, color:'gray'}}>(Meta Description)</small>:
+                                    </label>
+                                    <textarea 
+                                        value={seoDescription} 
+                                        onChange={(e) => setSeoDescription(e.target.value)} 
+                                        style={{...inputStyle, minHeight: '80px', resize: 'vertical'}} 
+                                        placeholder="Короткий опис сторінки для пошукової видачі..."
+                                        disabled={loading}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <div style={{
                         display: 'flex', 
                         justifyContent: 'flex-end', 
@@ -157,6 +235,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
 const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEditHeader }) => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { confirm } = useConfirm();
 
     const fetchPages = useCallback(async () => {
         setLoading(true);
@@ -200,9 +279,16 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
             toast.warning('Неможливо видалити головну сторінку.');
             return;
         }
-        if (!window.confirm(`Ви впевнені, що хочете видалити сторінку "${page.name}"?`)) {
-            return;
-        }
+
+        const isConfirmed = await confirm({
+            title: "Видалити сторінку?",
+            message: `Ви впевнені, що хочете видалити сторінку "${page.name}"?`,
+            type: "danger",
+            confirmLabel: "Так, видалити"
+        });
+
+        if (!isConfirmed) return;
+
         try {
             await apiClient.delete(`/pages/${page.id}`);
             fetchPages();
@@ -210,6 +296,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
             toast.success(`🗑️ Сторінку "${page.name}" успішно видалено`);
         } catch (err) {
             console.error('Помилка видалення сторінки:', err);
+            toast.error('Не вдалося видалити сторінку');
         }
     };
 
@@ -221,6 +308,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
             toast.success(`🏠 Сторінку "${pageName}" встановлено як головну`);
         } catch (err) {
             console.error('Помилка встановлення головної сторінки:', err);
+            toast.error('Не вдалося встановити головну сторінку');
         }
     };
 

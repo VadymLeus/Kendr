@@ -57,10 +57,10 @@ class Page {
         return result;
     }
 
-    static async updateSettings(pageId, { name, slug }) {
+    static async updateSettings(pageId, { name, slug, seo_title, seo_description, seo_keywords }) {
         const [result] = await db.query(
-            'UPDATE pages SET name = ?, slug = ? WHERE id = ?',
-            [name, slug, pageId]
+            'UPDATE pages SET name = ?, slug = ?, seo_title = ?, seo_description = ?, seo_keywords = ? WHERE id = ?',
+            [name, slug, seo_title || null, seo_description || null, seo_keywords || null, pageId]
         );
         return result;
     }

@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../hooks/useConfirm';
 import ChangeTemplateModal from '../components/ChangeTemplateModal';
 
+const API_URL = 'http://localhost:5000';
+
 const GeneralSettingsTab = ({ siteData, onUpdate }) => {
     const navigate = useNavigate();
     const { confirm } = useConfirm();
@@ -447,7 +449,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                                 }}>
                                     {data.favicon_url ? (
                                         <img 
-                                            src={`http://localhost:5000${data.favicon_url}`} 
+                                            src={data.favicon_url.startsWith('http') ? data.favicon_url : `${API_URL}${data.favicon_url}`} 
                                             alt="Favicon" 
                                             style={{ 
                                                 width: '100%', 

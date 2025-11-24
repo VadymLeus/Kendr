@@ -1,11 +1,14 @@
 // frontend/src/pages/sites/SiteDisplayPage.jsx
 import React, { useContext, useEffect } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async'; // ДОДАНО
 import apiClient from '../../services/api';
 import BlockRenderer from '../../features/editor/blocks/BlockRenderer';
 import { AuthContext } from '../../providers/AuthContext';
 import NotFoundPage from '../../components/common/NotFoundPage';
 import MaintenancePage from '../../components/common/MaintenancePage';
+
+const API_URL = 'http://localhost:5000'; // Для фавіконки
 
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
@@ -41,6 +44,18 @@ const SiteDisplayPage = () => {
     if (!siteData.page) {
         return <NotFoundPage />;
     }
+
+    // --- ЛОГІКА SEO ---
+    const page = siteData.page;
+    const titlePart = page.seo_title || page.name; // Назва сторінки
+    const sitePart = siteData.site_title_seo || siteData.title; // Назва сайту
+    const finalTitle = `${titlePart} | ${sitePart}`;
+    
+    const description = page.seo_description || `Сторінка ${page.name} на сайті ${siteData.title}`;
+    const favicon = siteData.favicon_url 
+        ? (siteData.favicon_url.startsWith('http') ? siteData.favicon_url : `${API_URL}${siteData.favicon_url}`) 
+        : '/icon-light.webp';
+    // ------------------
 
     let pageBlocks = [];
     if (Array.isArray(siteData.page.block_content)) {
@@ -93,6 +108,21 @@ const SiteDisplayPage = () => {
 
     return (
         <div className="site-root" style={layoutStyle}>
+            {/* SEO INJECTION */}
+            <Helmet>
+                <title>{finalTitle}</title>
+                <meta name="description" content={description} />
+                {page.seo_keywords && <meta name="keywords" content={page.seo_keywords} />}
+                <link rel="icon" type="image/webp" href={favicon} />
+                
+                {/* Open Graph (для соцмереж) */}
+                <meta property="og:title" content={finalTitle} />
+                <meta property="og:description" content={description} />
+                <meta property="og:image" content={siteData.logo_url ? `${API_URL}${siteData.logo_url}` : favicon} />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={window.location.href} />
+            </Helmet>
+
             <main style={mainContentStyle}>
                 <BlockRenderer blocks={pageBlocks} siteData={siteData} />
             </main>
