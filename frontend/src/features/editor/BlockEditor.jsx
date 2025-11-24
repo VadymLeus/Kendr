@@ -1,8 +1,27 @@
 // frontend/src/features/editor/BlockEditor.jsx
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from './EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from './DraggableBlockItem';
+import { resolveAccentColor } from '../sites/tabs/ThemeSettingsTab';
+
+const adjustColor = (hex, percent) => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+    const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
+    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+    return `#${(1 << 24 | R << 16 | G << 8 | B).toString(16).slice(1)}`;
+};
+
+const isLightColor = (hexColor) => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return brightness > 128;
+};
 
 const BlockEditor = ({
     blocks,
@@ -34,6 +53,41 @@ const BlockEditor = ({
             onAddBlock([blocks.length], item.blockType, item.presetData); 
         },
     }), [blocks.length, onAddBlock])[1];
+
+    const themeSettings = siteData?.theme_settings || {};
+    const isSiteDark = siteData?.site_theme_mode === 'dark';
+    
+    const siteBg = isSiteDark ? '#1a202c' : '#ffffff';
+    const siteText = isSiteDark ? '#f7fafc' : '#1a202c';
+    const siteCardBg = isSiteDark ? '#2d3748' : '#f7fafc';
+    const siteBorder = isSiteDark ? '#4a5568' : '#e2e8f0';
+    
+    const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');
+    const siteAccentHover = adjustColor(siteAccent, -10);
+    const siteAccentLight = adjustColor(siteAccent, 90);
+    const siteAccentText = isLightColor(siteAccent) ? '#000000' : '#ffffff';
+
+    const siteIsolationStyles = {
+        '--site-bg': siteBg,
+        '--site-text-primary': siteText,
+        '--site-text-secondary': isSiteDark ? '#a0aec0' : '#718096',
+        '--site-card-bg': siteCardBg,
+        '--site-border-color': siteBorder,
+        '--site-accent': siteAccent,
+        '--site-accent-hover': siteAccentHover,
+        '--site-accent-light': siteAccentLight,
+        '--site-accent-text': siteAccentText,
+        
+        '--site-font-main': themeSettings.font_body || "'Inter', sans-serif",
+        '--site-font-headings': themeSettings.font_heading || "'Inter', sans-serif",
+        '--site-btn-radius': themeSettings.button_radius || '8px',
+        
+        background: 'transparent',
+        width: '100%',
+        minHeight: '100%',
+        padding: '0 0 4rem 0', 
+        position: 'relative'
+    };
 
     return (
         <div style={{ padding: '0 2rem 2rem 2rem' }}>
@@ -82,77 +136,128 @@ const BlockEditor = ({
                 </div>
             )}
 
-            <div className="blocks-container">
-                {blocks.map((block, index) => (
-                    <React.Fragment key={block.block_id}>
-                        <EditableBlockWrapper
-                            index={index}
-                            block={block}
-                            siteData={siteData}
-                            path={[index]}
-                            onMoveBlock={onMoveBlock}
-                            onDropBlock={onDropBlock}
-                            onDeleteBlock={onDeleteBlock}
-                            onAddBlock={onAddBlock}
-                            onSelectBlock={onSelectBlock}
-                            selectedBlockPath={selectedBlockPath}
-                            isCollapsed={collapsedBlocks.includes(block.block_id)}
-                            onToggleCollapse={onToggleCollapse}
-                            onBlockSaved={onBlockSaved}
-                        />
-                    </React.Fragment>
-                ))}
+            <div 
+                className="site-theme-preview" 
+                style={siteIsolationStyles}
+                data-site-mode={siteData?.site_theme_mode || 'light'}
+                data-site-accent={siteData?.site_theme_accent || 'orange'}
+            >
+                <div className="blocks-container">
+                    {blocks.map((block, index) => (
+                        <React.Fragment key={block.block_id}>
+                            <EditableBlockWrapper
+                                index={index}
+                                block={block}
+                                siteData={siteData}
+                                path={[index]}
+                                onMoveBlock={onMoveBlock}
+                                onDropBlock={onDropBlock}
+                                onDeleteBlock={onDeleteBlock}
+                                onAddBlock={onAddBlock}
+                                onSelectBlock={onSelectBlock}
+                                selectedBlockPath={selectedBlockPath}
+                                isCollapsed={collapsedBlocks.includes(block.block_id)}
+                                onToggleCollapse={onToggleCollapse}
+                                onBlockSaved={onBlockSaved}
+                            />
+                        </React.Fragment>
+                    ))}
+                </div>
+
+                {blocks.length > 0 && !isHeaderMode && (
+                    <div
+                        ref={dropRef}
+                        style={{
+                            padding: '2rem',
+                            textAlign: 'center',
+                            border: '2px dashed var(--platform-border-color)',
+                            borderRadius: '8px',
+                            color: 'var(--platform-text-secondary)',
+                            margin: '20px 0',
+                            opacity: 0.7,
+                            transition: 'all 0.3s ease',
+                            background: 'var(--platform-bg)',
+                            cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.borderColor = 'var(--platform-accent)';
+                            e.target.style.color = 'var(--platform-accent)';
+                            e.target.style.opacity = '1';
+                            e.target.style.background = 'rgba(var(--platform-accent-rgb), 0.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.borderColor = 'var(--platform-border-color)';
+                            e.target.style.color = 'var(--platform-text-secondary)';
+                            e.target.style.opacity = '0.7';
+                            e.target.style.background = 'var(--platform-bg)';
+                        }}
+                    >
+                        <p style={{ 
+                            margin: 0, 
+                            fontSize: '0.9rem',
+                            fontWeight: '500'
+                        }}>
+                            Перетягніть блок сюди, щоб додати в кінець
+                        </p>
+                    </div>
+                )}
+
+                {blocks.length > 0 && (
+                    <div style={{
+                        textAlign: 'center',
+                        marginTop: '2rem',
+                        padding: '1rem',
+                        color: 'var(--platform-text-secondary)',
+                        fontSize: '0.8rem',
+                        opacity: 0.6
+                    }}>
+                    </div>
+                )}
             </div>
 
-            {blocks.length > 0 && !isHeaderMode && (
-                 <div
-                    ref={dropRef}
-                    style={{
-                        padding: '2rem',
-                        textAlign: 'center',
-                        border: '2px dashed var(--platform-border-color)',
-                        borderRadius: '8px',
-                        color: 'var(--platform-text-secondary)',
-                        margin: '20px 0',
-                        opacity: 0.7,
-                        transition: 'all 0.3s ease',
-                        background: 'var(--platform-bg)',
-                        cursor: 'pointer'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.target.style.borderColor = 'var(--platform-accent)';
-                        e.target.style.color = 'var(--platform-accent)';
-                        e.target.style.opacity = '1';
-                        e.target.style.background = 'rgba(var(--platform-accent-rgb), 0.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.borderColor = 'var(--platform-border-color)';
-                        e.target.style.color = 'var(--platform-text-secondary)';
-                        e.target.style.opacity = '0.7';
-                        e.target.style.background = 'var(--platform-bg)';
-                    }}
-                >
-                    <p style={{ 
-                        margin: 0, 
-                        fontSize: '0.9rem',
-                        fontWeight: '500'
-                    }}>
-                        Перетягніть блок сюди, щоб додати в кінець
-                    </p>
-                </div>
-            )}
-
-            {blocks.length > 0 && (
-                <div style={{
-                    textAlign: 'center',
-                    marginTop: '2rem',
-                    padding: '1rem',
-                    color: 'var(--platform-text-secondary)',
-                    fontSize: '0.8rem',
-                    opacity: 0.6
-                }}>
-                </div>
-            )}
+            <style>
+                {`
+                .site-theme-preview {
+                    /* Ізолюємо стилі сайту всередині цього контейнера */
+                    font-family: var(--site-font-main);
+                }
+                
+                .site-theme-preview * {
+                    box-sizing: border-box;
+                }
+                
+                .site-theme-preview .site-block {
+                    background: var(--site-bg);
+                    color: var(--site-text-primary);
+                    font-family: var(--site-font-main);
+                }
+                
+                .site-theme-preview .site-heading {
+                    font-family: var(--site-font-headings);
+                    color: var(--site-text-primary);
+                }
+                
+                .site-theme-preview .site-button {
+                    background: var(--site-accent);
+                    color: var(--site-accent-text);
+                    border-radius: var(--site-btn-radius);
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    font-family: var(--site-font-main);
+                    transition: background-color 0.2s ease;
+                }
+                
+                .site-theme-preview .site-button:hover {
+                    background: var(--site-accent-hover);
+                }
+                
+                .site-theme-preview .site-card {
+                    background: var(--site-card-bg);
+                    border: 1px solid var(--site-border-color);
+                    border-radius: var(--site-btn-radius);
+                }
+                `}
+            </style>
         </div>
     );
 };

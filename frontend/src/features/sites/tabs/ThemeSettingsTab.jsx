@@ -7,6 +7,31 @@ import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../hooks/useConfirm';
 
+const PRESET_COLORS = [
+    { id: 'green', color: '#48bb78', name: 'Зелений' },
+    { id: 'orange', color: '#ed8936', name: 'Помаранчевий' },
+    { id: 'blue', color: '#4299e1', name: 'Синій' },
+    { id: 'red', color: '#f56565', name: 'Червоний' },
+    { id: 'purple', color: '#9f7aea', name: 'Фіолетовий' },
+    { id: 'yellow', color: '#ecc94b', name: 'Жовтий' },
+    { id: 'gray', color: '#718096', name: 'Сірий' },
+    { id: 'black', color: '#000000', name: 'Чорний' },
+];
+
+export const resolveAccentColor = (val) => {
+    const preset = PRESET_COLORS.find(p => p.id === val);
+    return preset ? preset.color : (val || '#48bb78');
+};
+
+const isLightColor = (hexColor) => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return brightness > 128;
+};
+
 const ThemeSettingsTab = ({ siteData }) => {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [templates, setTemplates] = useState([]);
@@ -26,6 +51,10 @@ const ThemeSettingsTab = ({ siteData }) => {
         }
     );
 
+    const currentAccentHex = resolveAccentColor(data.site_theme_accent);
+    const isPreset = PRESET_COLORS.some(p => p.id === data.site_theme_accent);
+    const currentPreset = PRESET_COLORS.find(p => p.id === data.site_theme_accent);
+
     useEffect(() => {
         fetchTemplates();
     }, []);
@@ -37,6 +66,7 @@ const ThemeSettingsTab = ({ siteData }) => {
             setTemplates(res.data);
         } catch (error) {
             console.error("Error fetching templates:", error);
+            toast.error('Помилка завантаження шаблонів');
         } finally {
             setLoadingTemplates(false);
         }
@@ -45,6 +75,10 @@ const ThemeSettingsTab = ({ siteData }) => {
     const handleThemeSettingChange = (key, value) => {
         const newThemeSettings = { ...data.theme_settings, [key]: value };
         handleChange('theme_settings', newThemeSettings);
+    };
+
+    const handleColorChange = (colorValue) => {
+        handleChange('site_theme_accent', colorValue);
     };
 
     const handleSaveTemplate = async (name, description, overwriteId) => {
@@ -91,28 +125,24 @@ const ThemeSettingsTab = ({ siteData }) => {
     };
 
     const handleApplyTemplate = async (template) => {
-        try {
-            await apiClient.post(`/templates/personal/${template.id}/apply`, {
-                siteId: siteData.id
-            });
-            toast.success(`Шаблон "${template.name}" застосовано!`);
-            window.location.reload();
-        } catch (error) {
-            toast.error("Помилка застосування шаблону");
+        const isConfirmed = await confirm({
+            title: "Застосувати шаблон?",
+            message: `Поточні налаштування теми будуть замінені на шаблон "${template.name}". Продовжити?`,
+            confirmLabel: "Застосувати"
+        });
+
+        if (isConfirmed) {
+            try {
+                await apiClient.post(`/templates/personal/${template.id}/apply`, {
+                    siteId: siteData.id
+                });
+                toast.success(`Шаблон "${template.name}" застосовано!`);
+                window.location.reload();
+            } catch (error) {
+                toast.error("Помилка застосування шаблону");
+            }
         }
     };
-
-    const accents = [
-        { id: 'green', color: '#48bb78', name: 'Зелений' },
-        { id: 'orange', color: '#ed8936', name: 'Помаранчевий' },
-        { id: 'blue', color: '#4299e1', name: 'Синій' },
-        { id: 'red', color: '#f56565', name: 'Червоний' },
-        { id: 'purple', color: '#9f7aea', name: 'Фіолетовий' },
-        { id: 'yellow', color: '#ecc94b', name: 'Жовтий' },
-        { id: 'gray', color: '#718096', name: 'Сірий' },
-    ];
-
-    const siteAccentColor = accents.find(a => a.id === data.site_theme_accent)?.color || '#48bb78';
 
     const container = { 
         maxWidth: '800px', 
@@ -211,8 +241,6 @@ const ThemeSettingsTab = ({ siteData }) => {
         fontWeight: '500'
     };
 
-    const currentAccent = accents.find(a => a.id === data.site_theme_accent);
-
     return (
         <div style={container}>
             <div style={header}>
@@ -266,13 +294,13 @@ const ThemeSettingsTab = ({ siteData }) => {
                 }}>
                     <div 
                         style={{
-                            border: `2px solid ${data.site_theme_mode === 'light' ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
+                            border: `2px solid ${data.site_theme_mode === 'light' ? currentAccentHex : 'var(--platform-border-color)'}`,
                             borderRadius: '12px',
                             padding: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             background: 'var(--platform-bg)',
-                            boxShadow: data.site_theme_mode === 'light' ? '0 4px 20px rgba(var(--platform-accent-rgb), 0.15)' : 'none'
+                            boxShadow: data.site_theme_mode === 'light' ? `0 4px 20px ${currentAccentHex}33` : 'none'
                         }}
                         onClick={() => handleChange('site_theme_mode', 'light')}
                     >
@@ -289,7 +317,7 @@ const ThemeSettingsTab = ({ siteData }) => {
                             }}>
                                 <div style={{
                                     height: '20px',
-                                    background: 'var(--platform-accent)',
+                                    background: currentAccentHex,
                                     borderRadius: '4px',
                                     marginBottom: '12px',
                                     opacity: 0.7
@@ -327,13 +355,13 @@ const ThemeSettingsTab = ({ siteData }) => {
                     
                     <div 
                         style={{
-                            border: `2px solid ${data.site_theme_mode === 'dark' ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
+                            border: `2px solid ${data.site_theme_mode === 'dark' ? currentAccentHex : 'var(--platform-border-color)'}`,
                             borderRadius: '12px',
                             padding: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             background: 'var(--platform-bg)',
-                            boxShadow: data.site_theme_mode === 'dark' ? '0 4px 20px rgba(var(--platform-accent-rgb), 0.15)' : 'none'
+                            boxShadow: data.site_theme_mode === 'dark' ? `0 4px 20px ${currentAccentHex}33` : 'none'
                         }}
                         onClick={() => handleChange('site_theme_mode', 'dark')}
                     >
@@ -350,7 +378,7 @@ const ThemeSettingsTab = ({ siteData }) => {
                             }}>
                                 <div style={{
                                     height: '20px',
-                                    background: 'var(--platform-accent)',
+                                    background: currentAccentHex,
                                     borderRadius: '4px',
                                     marginBottom: '12px',
                                     opacity: 0.7
@@ -399,10 +427,25 @@ const ThemeSettingsTab = ({ siteData }) => {
                     <h3 style={cardTitle}>Акцентний колір</h3>
                     <div style={{
                         fontSize: '0.9rem',
-                        color: currentAccent?.color || 'var(--platform-text-secondary)',
-                        fontWeight: '600'
+                        color: currentAccentHex,
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
                     }}>
-                        {currentAccent?.name || 'Зелений'}
+                        <div style={{
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '4px',
+                            background: currentAccentHex,
+                            border: '1px solid var(--platform-border-color)'
+                        }}></div>
+                        {currentPreset ? currentPreset.name : 'Власний колір'}
+                        {!isPreset && (
+                            <span style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem'}}>
+                                ({currentAccentHex})
+                            </span>
+                        )}
                     </div>
                 </div>
                 
@@ -414,7 +457,7 @@ const ThemeSettingsTab = ({ siteData }) => {
                         padding: '8px 0',
                         justifyContent: 'center'
                     }}>
-                        {accents.map(a => (
+                        {PRESET_COLORS.map(a => (
                             <div key={a.id} style={{
                                 textAlign: 'center',
                                 display: 'flex',
@@ -422,7 +465,7 @@ const ThemeSettingsTab = ({ siteData }) => {
                                 alignItems: 'center'
                             }}>
                                 <button 
-                                    onClick={() => handleChange('site_theme_accent', a.id)}
+                                    onClick={() => handleColorChange(a.id)}
                                     style={{
                                         width: '40px', 
                                         height: '40px', 
@@ -438,6 +481,112 @@ const ThemeSettingsTab = ({ siteData }) => {
                                 />
                             </div>
                         ))}
+                        
+                        <div style={{
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center'
+                        }}>
+                            <label 
+                                style={{
+                                    width: '40px', 
+                                    height: '40px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    border: !isPreset ? `3px solid var(--platform-card-bg)` : '2px dashed var(--platform-border-color)',
+                                    boxShadow: !isPreset ? `0 0 0 2px ${currentAccentHex}` : 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: !isPreset ? currentAccentHex : 'transparent',
+                                    position: 'relative',
+                                    transition: 'all 0.2s ease',
+                                    transform: !isPreset ? 'scale(1.05)' : 'scale(1)'
+                                }}
+                                title="Власний колір"
+                            >
+                                <input 
+                                    type="color" 
+                                    value={currentAccentHex}
+                                    onChange={(e) => handleColorChange(e.target.value)} 
+                                    style={{ 
+                                        position: 'absolute', 
+                                        opacity: 0, 
+                                        width: '100%', 
+                                        height: '100%', 
+                                        cursor: 'pointer' 
+                                    }}
+                                />
+                                {!isPreset ? (
+                                    <span style={{ 
+                                        fontSize: '14px', 
+                                        color: isLightColor(currentAccentHex) ? '#000' : '#fff',
+                                        textShadow: isLightColor(currentAccentHex) ? 'none' : '0 1px 2px rgba(0,0,0,0.5)'
+                                    }}>
+                                        ✎
+                                    </span>
+                                ) : (
+                                    <span style={{ 
+                                        fontSize: '20px', 
+                                        color: 'var(--platform-text-secondary)', 
+                                        lineHeight: 1 
+                                    }}>
+                                        +
+                                    </span>
+                                )}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{
+                    marginTop: '24px',
+                    display: 'flex',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    background: 'var(--platform-bg)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--platform-border-color)'
+                }}>
+                    <button style={{
+                        padding: '10px 20px',
+                        background: currentAccentHex,
+                        color: isLightColor(currentAccentHex) ? '#000' : '#fff',
+                        border: 'none',
+                        borderRadius: data.theme_settings.button_radius,
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease'
+                    }}>
+                        Основна кнопка
+                    </button>
+                    <button style={{
+                        padding: '10px 20px',
+                        background: 'transparent',
+                        color: currentAccentHex,
+                        border: `1px solid ${currentAccentHex}`,
+                        borderRadius: data.theme_settings.button_radius,
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease'
+                    }}>
+                        Другорядна кнопка
+                    </button>
+                    <div style={{
+                        padding: '8px 12px',
+                        background: currentAccentHex + '20',
+                        color: currentAccentHex,
+                        borderRadius: data.theme_settings.button_radius,
+                        fontSize: '0.8rem',
+                        fontWeight: '500'
+                    }}>
+                        Фоновий елемент
                     </div>
                 </div>
             </div>
@@ -455,7 +604,7 @@ const ThemeSettingsTab = ({ siteData }) => {
                         value={data.theme_settings.font_heading}
                         onChange={(e) => handleThemeSettingChange('font_heading', e.target.value)}
                         className="theme-select"
-                        style={{width: '100%', marginBottom: '16px'}}
+                        style={{...inputStyle, marginBottom: '16px'}}
                     >
                         {FONT_LIBRARY.filter(f => f.value !== 'global').map(font => (
                             <option key={font.value} value={font.value}>
@@ -483,7 +632,7 @@ const ThemeSettingsTab = ({ siteData }) => {
                         value={data.theme_settings.font_body}
                         onChange={(e) => handleThemeSettingChange('font_body', e.target.value)}
                         className="theme-select"
-                        style={{width: '100%', marginBottom: '16px'}}
+                        style={{...inputStyle, marginBottom: '16px'}}
                     >
                         {FONT_LIBRARY.filter(f => f.value !== 'global').map(font => (
                             <option key={font.value} value={font.value}>
@@ -506,7 +655,7 @@ const ThemeSettingsTab = ({ siteData }) => {
                 </div>
 
                 <div style={section}>
-                    <label style={label}>Радіус закруглення</label>
+                    <label style={label}>Радіус закруглення кнопок</label>
                     <input 
                         type="text" 
                         value={data.theme_settings.button_radius}
@@ -524,8 +673,8 @@ const ThemeSettingsTab = ({ siteData }) => {
                     }}>
                         <button style={{
                             padding: '10px 20px',
-                            background: siteAccentColor,
-                            color: 'white',
+                            background: currentAccentHex,
+                            color: isLightColor(currentAccentHex) ? '#000' : '#fff',
                             border: 'none',
                             borderRadius: data.theme_settings.button_radius,
                             cursor: 'pointer',
@@ -538,8 +687,8 @@ const ThemeSettingsTab = ({ siteData }) => {
                         <button style={{
                             padding: '10px 20px',
                             background: 'transparent',
-                            color: siteAccentColor,
-                            border: `1px solid ${siteAccentColor}`,
+                            color: currentAccentHex,
+                            border: `1px solid ${currentAccentHex}`,
                             borderRadius: data.theme_settings.button_radius,
                             cursor: 'pointer',
                             fontSize: '0.9rem',
