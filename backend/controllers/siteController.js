@@ -400,3 +400,102 @@ exports.deleteSite = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.resetSiteToTemplate = async (req, res, next) => {
+    const { siteId } = req.params;
+    const { templateId, isPersonal } = req.body;
+    const userId = req.user.id;
+
+    const connection = await db.getConnection();
+
+    try {
+        const site = await Site.findByIdAndUserId(siteId, userId);
+        if (!site) {
+            return res.status(403).json({ message: 'Сайт не знайдено або у вас немає прав.' });
+        }
+
+        let templateData = {};
+        
+        if (isPersonal) {
+            const personalTemplate = await UserTemplate.findById(templateId);
+            if (!personalTemplate || personalTemplate.user_id !== userId) {
+                throw new Error('Приватний шаблон не знайдено.');
+            }
+            templateData = personalTemplate.full_site_snapshot;
+        } else {
+            const [templates] = await connection.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
+            if (!templates[0]) {
+                throw new Error('Системний шаблон не знайдено.');
+            }
+            const rawContent = templates[0].default_block_content;
+            templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
+        }
+
+        const headerToSave = regenerateBlockIds(templateData.header_content || []);
+        const footerToSave = regenerateBlockIds(templateData.footer_content || []);
+        
+        let pagesToCreate = [];
+        if (templateData.pages && Array.isArray(templateData.pages)) {
+            pagesToCreate = templateData.pages;
+        } else if (Array.isArray(templateData)) {
+            pagesToCreate = [{
+                title: 'Головна',
+                slug: 'home',
+                blocks: templateData
+            }];
+        }
+
+        await connection.beginTransaction();
+
+        await connection.query('DELETE FROM pages WHERE site_id = ?', [siteId]);
+        
+        const updateQuery = `
+            UPDATE sites 
+            SET 
+                header_content = ?, 
+                footer_content = ?,
+                site_theme_mode = ?,
+                site_theme_accent = ?,
+                theme_settings = ?
+            WHERE id = ?
+        `;
+
+        const themeSettings = templateData.theme_settings || {};
+        const siteThemeMode = templateData.site_theme_mode || 'light';
+        const siteThemeAccent = templateData.site_theme_accent || 'orange';
+
+        await connection.query(updateQuery, [
+            JSON.stringify(headerToSave),
+            JSON.stringify(footerToSave),
+            siteThemeMode,
+            siteThemeAccent,
+            JSON.stringify(themeSettings),
+            siteId
+        ]);
+
+        for (const pageData of pagesToCreate) {
+            const blocks = regenerateBlockIds(pageData.blocks || pageData.block_content || []);
+            
+            await connection.query(
+                'INSERT INTO pages (site_id, name, slug, block_content, is_homepage) VALUES (?, ?, ?, ?, ?)',
+                [
+                    siteId,
+                    pageData.title || 'Нова сторінка',
+                    pageData.slug || `page-${uuidv4()}`,
+                    JSON.stringify(blocks),
+                    (pageData.slug === 'home' || pageData.is_homepage) ? 1 : 0
+                ]
+            );
+        }
+
+        await connection.commit();
+        res.json({ message: 'Сайт успішно скинуто до шаблону.' });
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Помилка при зміні шаблону:', error);
+        next(error);
+    } finally {
+        connection.release();
+    }
+};

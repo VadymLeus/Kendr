@@ -24,4 +24,6 @@ router.put('/:site_path/settings', verifyToken, siteController.updateSiteSetting
 router.delete('/:site_path', verifyToken, siteController.deleteSite);
 router.get('/my-suspended', verifyToken, siteController.getMySuspendedSites);
 
+router.put('/:siteId/reset-template', verifyToken, siteController.resetSiteToTemplate);
+
 module.exports = router;

@@ -6,11 +6,13 @@ import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../hooks/useConfirm';
+import ChangeTemplateModal from '../components/ChangeTemplateModal';
 
 const GeneralSettingsTab = ({ siteData, onUpdate }) => {
     const navigate = useNavigate();
     const { confirm } = useConfirm();
     const [slugError, setSlugError] = useState('');
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
     const { data, handleChange, isSaving } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
@@ -59,6 +61,45 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
             setSlugError(error.response?.data?.message || 'Помилка зміни адреси');
         } finally {
             setIsSavingSlug(false);
+        }
+    };
+
+    const handleTemplateChange = async (templateId, isPersonal) => {
+        setIsTemplateModalOpen(false);
+
+        const isConfirmed = await confirm({
+            title: "Змінити шаблон?",
+            message: "УВАГА: Ця дія повністю видалить всі ваші поточні сторінки, хедер та футер і замінить їх структурою нового шаблону. Медіафайли залишаться. Продовжити?",
+            type: "danger",
+            confirmLabel: "Так, замінити все"
+        });
+
+        if (isConfirmed) {
+            const toastId = toast.loading("Застосування нового шаблону...");
+            try {
+                await apiClient.put(`/sites/${siteData.id}/reset-template`, {
+                    templateId,
+                    isPersonal
+                });
+                toast.update(toastId, { 
+                    render: "Шаблон успішно змінено! Перезавантаження...", 
+                    type: "success", 
+                    isLoading: false,
+                    autoClose: 2000 
+                });
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } catch (error) {
+                console.error(error);
+                toast.update(toastId, { 
+                    render: error.response?.data?.message || "Помилка зміни шаблону", 
+                    type: "error", 
+                    isLoading: false,
+                    autoClose: 3000 
+                });
+            }
         }
     };
 
@@ -176,6 +217,17 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
         fontWeight: '600', 
         cursor: 'pointer', 
         fontSize: '0.9rem' 
+    };
+
+    const warningButton = {
+        background: 'var(--platform-warning)',
+        color: 'white',
+        padding: '12px 24px',
+        borderRadius: '8px',
+        border: 'none',
+        fontWeight: '600',
+        cursor: 'pointer',
+        fontSize: '0.9rem'
     };
 
     return (
@@ -462,6 +514,44 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
 
             <div style={{ 
                 ...cardStyle, 
+                borderColor: 'var(--platform-warning)', 
+                background: 'rgba(237, 137, 54, 0.05)' 
+            }}>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    flexWrap: 'wrap', 
+                    gap: '16px' 
+                }}>
+                    <div style={{flex: 1}}>
+                        <h3 style={{ 
+                            ...cardTitleStyle, 
+                            color: 'var(--platform-warning)', 
+                            marginBottom: '8px' 
+                        }}>
+                            🔄 Зміна дизайну (Reset)
+                        </h3>
+                        <p style={{ 
+                            margin: 0, 
+                            color: 'var(--platform-text-secondary)', 
+                            fontSize: '0.9rem'
+                        }}>
+                            Скинути поточну структуру сайту та застосувати інший шаблон. 
+                            <strong> Всі поточні сторінки будуть втрачені.</strong>
+                        </p>
+                    </div>
+                    <button 
+                        onClick={() => setIsTemplateModalOpen(true)} 
+                        style={warningButton}
+                    >
+                        Змінити шаблон
+                    </button>
+                </div>
+            </div>
+
+            <div style={{ 
+                ...cardStyle, 
                 borderColor: '#fed7d7', 
                 background: 'linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%)' 
             }}>
@@ -497,6 +587,12 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                     </button>
                 </div>
             </div>
+
+            <ChangeTemplateModal 
+                isOpen={isTemplateModalOpen}
+                onClose={() => setIsTemplateModalOpen(false)}
+                onSelect={handleTemplateChange}
+            />
 
             <style>
                 {`
