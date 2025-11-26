@@ -12,6 +12,7 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
     const navigate = useNavigate();
 
     const isSoldOut = product.stock_quantity === 0;
+    const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
 
     const cardStyleBase = {
         border: '1px solid var(--site-border-color)',
@@ -74,10 +75,16 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
         ? { style: { textDecoration: 'none', color: 'inherit', cursor: 'default' } }
         : { to: `/product/${product.id}`, style: { textDecoration: 'none', color: 'inherit' } };
         
-    const handleAddToCart = () => {
+    const handleAction = () => {
         if (isEditorPreview) return;
+        
+        if (hasVariants) {
+            navigate(`/product/${product.id}`);
+            return;
+        }
+
         if (!user) {
-            if (window.confirm("Щоб додати товар до кошика, потрібно увійти в акаунт. Перейти до сторінки входу?")) {
+            if (window.confirm("Щоб додати товар до кошика, потрібно увійти. Перейти?")) {
                 navigate('/login');
             }
             return;
@@ -128,13 +135,13 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
                         </p>
 
                         <button
-                            onClick={handleAddToCart}
-                            disabled={isEditorPreview || isOwner || isSoldOut}
+                            onClick={handleAction}
+                            disabled={isEditorPreview || isOwner || (isSoldOut && !hasVariants)}
                             style={{
                                 padding: '0.75rem 1rem',
                                 fontSize: '1rem',
-                                opacity: (isEditorPreview || isOwner || isSoldOut) ? 0.6 : 1,
-                                cursor: (isEditorPreview || isOwner || isSoldOut) ? 'not-allowed' : 'pointer',
+                                opacity: (isEditorPreview || isOwner || (isSoldOut && !hasVariants)) ? 0.6 : 1,
+                                cursor: (isEditorPreview || isOwner || (isSoldOut && !hasVariants)) ? 'not-allowed' : 'pointer',
                                 background: 'var(--site-accent)',
                                 color: 'var(--site-accent-text)',
                                 border: 'none',
@@ -145,9 +152,11 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
                                 ? 'Перегляд'
                                 : (isOwner
                                     ? 'Ваш товар'
-                                    : (isSoldOut
-                                        ? 'Немає в наявності'
-                                        : 'Додати у кошик'))}
+                                    : (hasVariants 
+                                        ? 'Вибрати опції'
+                                        : (isSoldOut
+                                            ? 'Немає в наявності'
+                                            : 'Додати у кошик')))}
                         </button>
                     </>
                 ) : (

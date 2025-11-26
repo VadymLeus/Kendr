@@ -95,7 +95,7 @@ const CartPage = () => {
                 <>
                     <div>
                         {cartItems.map(item => (
-                            <div key={item.id} style={cartItemStyle}>
+                            <div key={item.cartItemId} style={cartItemStyle}>
                                 <Link to={`/product/${item.id}`}>
                                     <img 
                                         src={item.image_url ? `${API_URL}${item.image_url}` : 'https://placehold.co/100x100'} 
@@ -107,11 +107,22 @@ const CartPage = () => {
                                     <Link to={`/product/${item.id}`} style={cartItemTitleLinkStyle}>
                                         <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--platform-text-primary)' }}>{item.name}</h4>
                                     </Link>
+                                    
+                                    {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                                        <div style={{fontSize: '0.85rem', color: 'var(--platform-text-secondary)', marginBottom: '0.5rem'}}>
+                                            {Object.entries(item.selectedOptions).map(([key, val]) => (
+                                                <span key={key} style={{marginRight: '10px', background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '4px'}}>
+                                                    {key}: <b>{val}</b>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    
                                     <p style={{ margin: 0, color: 'var(--platform-text-secondary)' }}>{item.price} грн.</p>
                                 </div>
                                 <div style={cartItemQuantityStyle}>
                                     <button 
-                                        onClick={() => updateQuantity(item.id, item.quantity - 1)} 
+                                        onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)} 
                                         style={quantityButtonStyle}
                                         disabled={item.quantity <= 1}
                                     >
@@ -124,14 +135,14 @@ const CartPage = () => {
                                         {item.quantity}
                                     </span>
                                     <button 
-                                        onClick={() => updateQuantity(item.id, item.quantity + 1)} 
+                                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)} 
                                         style={quantityButtonStyle}
                                     >
                                         +
                                     </button>
                                 </div>
                                 <button 
-                                    onClick={() => removeFromCart(item.id)} 
+                                    onClick={() => removeFromCart(item.cartItemId)} 
                                     className="btn btn-danger"
                                     style={{ padding: '0.5rem 1rem' }}
                                 >

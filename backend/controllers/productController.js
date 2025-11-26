@@ -27,7 +27,7 @@ exports.getProductsForSite = async (req, res, next) => {
 };
 
 exports.addProduct = async (req, res, next) => {
-    const { site_id, name, description, price, category_id, stock_quantity, image_url } = req.body;
+    const { site_id, name, description, price, category_id, stock_quantity, image_url, variants } = req.body;
     const userId = req.user.id;
     
     try {
@@ -43,7 +43,8 @@ exports.addProduct = async (req, res, next) => {
             price, 
             image_path: image_url,
             category_id, 
-            stock_quantity 
+            stock_quantity,
+            variants
         });
         
         res.status(201).json(newProduct);
@@ -54,7 +55,7 @@ exports.addProduct = async (req, res, next) => {
 
 exports.updateProduct = async (req, res, next) => {
     const { productId } = req.params;
-    const { name, description, price, category_id, stock_quantity, image_url } = req.body;
+    const { name, description, price, category_id, stock_quantity, image_url, variants } = req.body;
     const userId = req.user.id;
 
     try {
@@ -68,7 +69,7 @@ exports.updateProduct = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для зміни цього товару.' });
         }
 
-        const updateData = { name, description, price, category_id, stock_quantity };
+        const updateData = { name, description, price, category_id, stock_quantity, variants };
 
         if (image_url !== undefined) {
             updateData.image_gallery = image_url ? JSON.stringify([image_url]) : null;

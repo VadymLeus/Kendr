@@ -9,57 +9,62 @@ export const CartProvider = ({ children }) => {
     const { user } = useContext(AuthContext);
     const [cartItems, setCartItems] = useState([]);
 
-    const getCartKey = () => `cart_${user?.id || null}`;
+    const getCartKey = () => `cart_${user?.id || 'guest'}`;
 
     useEffect(() => {
-        if (!user) {
-            setCartItems([]);
-            return;
-        }
-        
         const cartKey = getCartKey();
         try {
             const localData = localStorage.getItem(cartKey);
             setCartItems(localData ? JSON.parse(localData) : []);
         } catch (error) {
-            console.error(`Помилка парсингу кошика (${cartKey})`, error);
+            console.error(`Помилка парсингу кошика`, error);
             setCartItems([]);
         }
     }, [user]);
 
     useEffect(() => {
-        if (user) {
-            const cartKey = getCartKey();
-            localStorage.setItem(cartKey, JSON.stringify(cartItems));
-        }
+        const cartKey = getCartKey();
+        localStorage.setItem(cartKey, JSON.stringify(cartItems));
     }, [cartItems, user]);
 
-    const addToCart = (product) => {
+    const addToCart = (product, selectedOptions = {}, finalPrice = null) => {
+        const optionsString = JSON.stringify(selectedOptions, Object.keys(selectedOptions).sort());
+        const cartItemId = `${product.id}-${optionsString}`;
+        
+        const priceToAdd = finalPrice !== null ? finalPrice : product.price;
+
         setCartItems(prevItems => {
-            const existingItem = prevItems.find(item => item.id === product.id);
-            if (existingItem) {
-                return prevItems.map(item =>
-                    item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-                );
+            const existingItemIndex = prevItems.findIndex(item => item.cartItemId === cartItemId);
+            
+            if (existingItemIndex > -1) {
+                const newItems = [...prevItems];
+                newItems[existingItemIndex].quantity += 1;
+                return newItems;
             } else {
-                return [...prevItems, { ...product, quantity: 1 }];
+                return [...prevItems, { 
+                    ...product, 
+                    cartItemId,
+                    selectedOptions,
+                    price: priceToAdd,
+                    quantity: 1 
+                }];
             }
         });
-        toast.success(`Товар "${product.name}" додано до кошика!`);
+        toast.success(`"${product.name}" додано до кошика!`);
     };
 
-    const removeFromCart = (productId) => {
-        setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+    const removeFromCart = (cartItemId) => {
+        setCartItems(prevItems => prevItems.filter(item => item.cartItemId !== cartItemId));
         toast.info("Товар видалено з кошика");
     };
 
-    const updateQuantity = (productId, newQuantity) => {
+    const updateQuantity = (cartItemId, newQuantity) => {
         if (newQuantity <= 0) {
-            removeFromCart(productId);
+            removeFromCart(cartItemId);
         } else {
             setCartItems(prevItems =>
                 prevItems.map(item =>
-                    item.id === productId ? { ...item, quantity: newQuantity } : item
+                    item.cartItemId === cartItemId ? { ...item, quantity: newQuantity } : item
                 )
             );
         }

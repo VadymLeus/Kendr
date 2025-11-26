@@ -7,6 +7,283 @@ import { useConfirm } from '../../../hooks/useConfirm';
 
 const API_URL = 'http://localhost:5000';
 
+const VariantEditor = ({ variant, onChange, onRemove }) => {
+    const [newValueLabel, setNewValueLabel] = useState('');
+    const [newValuePrice, setNewValuePrice] = useState('');
+    
+    const { confirm } = useConfirm();
+
+    const addValue = (e) => {
+        if (e) e.preventDefault();
+        
+        const label = newValueLabel.trim();
+        if (!label) return;
+        
+        const newValues = [...(variant.values || []), { 
+            label: label, 
+            priceModifier: parseFloat(newValuePrice) || 0
+        }];
+        
+        onChange({ ...variant, values: newValues });
+        setNewValueLabel('');
+        setNewValuePrice('');
+    };
+
+    const handleRemoveValue = async (idx, label) => {
+        const isConfirmed = await confirm({
+            title: "Видалити значення?",
+            message: `Ви впевнені, що хочете видалити варіант "${label}"?`,
+            type: "danger",
+            confirmLabel: "Видалити",
+            cancelLabel: "Скасувати"
+        });
+
+        if (isConfirmed) {
+            const newValues = variant.values.filter((_, i) => i !== idx);
+            onChange({ ...variant, values: newValues });
+        }
+    };
+
+    const handleRemoveVariant = async () => {
+        const isConfirmed = await confirm({
+            title: "Видалити опцію?",
+            message: `Ви впевнені, що хочете видалити опцію "${variant.name || 'Без назви'}" та всі її значення?`,
+            type: "danger",
+            confirmLabel: "Видалити",
+            cancelLabel: "Скасувати"
+        });
+
+        if (isConfirmed) {
+            onRemove();
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addValue();
+        }
+    };
+
+    const styles = {
+        container: {
+            border: '1px solid var(--platform-border-color)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '12px',
+            background: 'var(--platform-bg)', 
+        },
+        header: { 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '10px',
+            gap: '8px',
+            width: '100%'
+        },
+        valuesList: { 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr',
+            gap: '8px', 
+            marginBottom: '10px' 
+        },
+        valueTag: {
+            background: 'var(--platform-card-bg)',
+            border: '1px solid var(--platform-border-color)',
+            borderRadius: '4px',
+            padding: '6px 8px',
+            fontSize: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '6px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            minWidth: 0 
+        },
+        textContainer: {
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            minWidth: 0
+        },
+        truncatedText: {
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontWeight: 500,
+            display: 'block'
+        },
+        priceText: {
+            fontSize: '0.75em',
+            opacity: 0.8,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+        },
+        inputField: { 
+            width: '100%',
+            padding: '8px 10px', 
+            borderRadius: '4px', 
+            border: '1px solid var(--platform-border-color)', 
+            fontSize: '0.9rem', 
+            background: 'var(--platform-card-bg)', 
+            color: 'var(--platform-text-primary)',
+            boxSizing: 'border-box',
+            marginBottom: '8px'
+        },
+        label: {
+            fontSize: '0.8rem', 
+            fontWeight: '500', 
+            display: 'block', 
+            marginBottom: '4px', 
+            color: 'var(--platform-text-secondary)'
+        },
+        optionNameInput: {
+            padding: '8px 10px', 
+            borderRadius: '4px', 
+            border: '1px solid var(--platform-border-color)', 
+            fontSize: '0.9rem', 
+            background: 'var(--platform-card-bg)', 
+            color: 'var(--platform-text-primary)',
+            fontWeight: 'bold', 
+            flex: 1,
+            boxSizing: 'border-box',
+            minWidth: 0
+        },
+        addButton: {
+            width: '100%',
+            padding: '8px',
+            borderRadius: '4px',
+            background: 'var(--platform-accent)',
+            color: 'var(--platform-accent-text)',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: '500',
+            marginTop: '4px'
+        },
+        deleteButton: {
+            background: 'rgba(229, 62, 62, 0.1)', 
+            border: '1px solid rgba(229, 62, 62, 0.2)', 
+            cursor: 'pointer', 
+            color: '#e53e3e', 
+            width: '34px', 
+            height: '34px', 
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            transition: 'all 0.2s'
+        },
+        removeValueBtn: {
+            border: 'none', 
+            background: 'transparent', 
+            cursor: 'pointer', 
+            color: 'var(--platform-text-secondary)',
+            fontSize: '1.1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 0 0 4px',
+            flexShrink: 0
+        }
+    };
+
+    return (
+        <div style={styles.container}>
+            <div style={styles.header}>
+                <input 
+                    type="text" 
+                    value={variant.name} 
+                    onChange={(e) => onChange({...variant, name: e.target.value})}
+                    placeholder="Назва опції (напр. Розмір)"
+                    style={styles.optionNameInput}
+                />
+                <button 
+                    type="button" 
+                    onClick={handleRemoveVariant} 
+                    style={styles.deleteButton}
+                    title="Видалити опцію"
+                    onMouseEnter={(e) => {
+                        e.target.style.background = '#e53e3e';
+                        e.target.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(229, 62, 62, 0.1)';
+                        e.target.style.color = '#e53e3e';
+                    }}
+                >
+                    ×
+                </button>
+            </div>
+
+            <div style={styles.valuesList}>
+                {variant.values && variant.values.map((val, idx) => (
+                    <div key={idx} style={styles.valueTag} title={`${val.label} ${val.priceModifier ? `(${val.priceModifier} ₴)` : ''}`}>
+                        <div style={styles.textContainer}>
+                            <span style={styles.truncatedText}>
+                                {val.label}
+                            </span>
+                            {val.priceModifier !== 0 && (
+                                <span style={{
+                                    ...styles.priceText,
+                                    color: val.priceModifier > 0 ? 'var(--platform-success)' : 'var(--platform-danger)', 
+                                }}>
+                                    {val.priceModifier > 0 ? '+' : ''}{val.priceModifier} ₴
+                                </span>
+                            )}
+                        </div>
+                        <button 
+                            type="button" 
+                            onClick={() => handleRemoveValue(idx, val.label)} 
+                            style={styles.removeValueBtn}
+                            onMouseEnter={(e) => e.target.style.color = '#e53e3e'}
+                            onMouseLeave={(e) => e.target.style.color = 'var(--platform-text-secondary)'}
+                        >
+                            ×
+                        </button>
+                    </div>
+                ))}
+            </div>
+
+            <div style={{
+                borderTop: '1px dashed var(--platform-border-color)', 
+                paddingTop: '10px', 
+                marginTop: '10px'
+            }}>
+                <label style={styles.label}>Значення (напр. XL)</label>
+                <input 
+                    type="text" 
+                    value={newValueLabel} 
+                    onChange={e => setNewValueLabel(e.target.value)} 
+                    onKeyDown={handleKeyDown}
+                    placeholder="XL, S, Червоний..." 
+                    style={styles.inputField}
+                />
+                
+                <label style={styles.label}>Вплив на ціну (₴)</label>
+                <input 
+                    type="number" 
+                    step="0.01"
+                    value={newValuePrice} 
+                    onChange={e => setNewValuePrice(e.target.value)} 
+                    onKeyDown={handleKeyDown}
+                    placeholder="+50 або -20" 
+                    style={styles.inputField}
+                />
+
+                <button type="button" onClick={addValue} style={styles.addButton}>
+                    Додати значення
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
 const ProductManager = ({ siteId }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -14,15 +291,20 @@ const ProductManager = ({ siteId }) => {
     const { confirm } = useConfirm();
     
     const initialFormState = { 
-        id: null, name: '', description: '', price: 0, stock_quantity: 1, category_id: null, image_url: '' 
+        id: null, 
+        name: '', 
+        description: '', 
+        price: 0, 
+        stock_quantity: 1, 
+        category_id: null, 
+        image_url: '', 
+        variants: [] 
     };
     const [formData, setFormData] = useState(initialFormState);
 
     const [filters, setFilters] = useState({
-        search: '',
-        category: 'all',
-        minPrice: '',
-        maxPrice: ''
+        search: '', 
+        category: 'all'
     });
 
     const fetchData = useCallback(async () => {
@@ -32,7 +314,13 @@ const ProductManager = ({ siteId }) => {
                 apiClient.get(`/products/site/${siteId}`),
                 apiClient.get(`/categories/site/${siteId}`)
             ]);
-            setProducts(pRes.data || []);
+            
+            const productsData = (pRes.data || []).map(p => ({
+                ...p,
+                variants: Array.isArray(p.variants) ? p.variants : 
+                         (typeof p.variants === 'string' ? JSON.parse(p.variants) : [])
+            }));
+            setProducts(productsData);
             setCategories(cRes.data || []);
         } catch (error) {
             console.error(error);
@@ -49,7 +337,16 @@ const ProductManager = ({ siteId }) => {
             toast.warning("Вкажіть назву та ціну (>0)");
             return;
         }
-        const payload = { ...formData, site_id: siteId };
+        
+        const payload = { 
+            ...formData, 
+            site_id: siteId,
+            variants: formData.variants.map(variant => ({
+                ...variant,
+                values: Array.isArray(variant.values) ? variant.values : []
+            }))
+        };
+        
         try {
             if (formData.id) {
                 await apiClient.put(`/products/${formData.id}`, payload);
@@ -61,6 +358,7 @@ const ProductManager = ({ siteId }) => {
             resetForm();
             fetchData();
         } catch (e) {
+            console.error('Помилка збереження:', e);
             toast.error('Помилка збереження');
         }
     };
@@ -69,8 +367,13 @@ const ProductManager = ({ siteId }) => {
         const img = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length) 
             ? product.image_gallery[0] 
             : (product.image_url || '');
-            
-        setFormData({ ...product, image_url: img, stock_quantity: product.stock_quantity || 0 });
+        
+        setFormData({ 
+            ...product, 
+            image_url: img, 
+            stock_quantity: product.stock_quantity || 0,
+            variants: Array.isArray(product.variants) ? product.variants : []
+        });
     };
 
     const resetForm = () => {
@@ -98,6 +401,26 @@ const ProductManager = ({ siteId }) => {
         }
     };
 
+    const addVariant = () => {
+        const newVariant = { 
+            id: Date.now().toString(),
+            name: '', 
+            values: [] 
+        };
+        setFormData(prev => ({ ...prev, variants: [...prev.variants, newVariant] }));
+    };
+
+    const updateVariant = (idx, updatedVariant) => {
+        const newVariants = [...formData.variants];
+        newVariants[idx] = updatedVariant;
+        setFormData(prev => ({ ...prev, variants: newVariants }));
+    };
+
+    const removeVariant = (idx) => {
+        const newVariants = formData.variants.filter((_, i) => i !== idx);
+        setFormData(prev => ({ ...prev, variants: newVariants }));
+    };
+
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
                             product.description.toLowerCase().includes(filters.search.toLowerCase());
@@ -116,16 +439,25 @@ const ProductManager = ({ siteId }) => {
     };
 
     const editorCardStyle = {
-        flex: '0 0 320px',
+        flex: '0 0 420px', 
         background: 'var(--platform-card-bg)',
         borderRadius: '16px',
         border: '1px solid var(--platform-border-color)',
         padding: '24px',
         display: 'flex', 
         flexDirection: 'column', 
-        overflowY: 'auto',
         height: '100%',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        overflow: 'hidden' 
+    };
+
+    const scrollableFormStyle = {
+        flex: 1,
+        overflowY: 'auto',
+        paddingRight: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
     };
 
     const productsAreaStyle = {
@@ -221,11 +553,15 @@ const ProductManager = ({ siteId }) => {
         width: '100%', padding: '10px 12px', borderRadius: '8px',
         border: '1px solid var(--platform-border-color)',
         background: 'var(--platform-bg)', color: 'var(--platform-text-primary)',
-        marginBottom: '12px', boxSizing: 'border-box'
+        marginBottom: '0', boxSizing: 'border-box'
+    };
+
+    const labelStyle = {
+        fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'
     };
 
     const primaryButton = {
-        background: 'var(--platform-accent)', color: 'white',
+        background: 'var(--platform-accent)', color: 'var(--platform-accent-text)',
         padding: '10px', borderRadius: '8px', border: 'none',
         fontWeight: '600', cursor: 'pointer', width: '100%'
     };
@@ -235,7 +571,7 @@ const ProductManager = ({ siteId }) => {
     return (
         <div style={containerStyle}>
             <div style={editorCardStyle}>
-                <div style={{marginBottom: '20px'}}>
+                <div style={{marginBottom: '20px', flexShrink: 0}}>
                     <h3 style={{margin: '0 0 5px 0', fontSize: '1.2rem', color: 'var(--platform-text-primary)'}}>
                         {formData.id ? '✏️ Редагування' : '➕ Новий товар'}
                     </h3>
@@ -244,62 +580,107 @@ const ProductManager = ({ siteId }) => {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
-                    <label style={{fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'}}>Назва</label>
-                    <input 
-                        type="text" 
-                        style={inputStyle} 
-                        value={formData.name} 
-                        onChange={e => setFormData({...formData, name: e.target.value})} 
-                        required
-                    />
-
-                    <div style={{display: 'flex', gap: '10px'}}>
-                        <div style={{flex: 1}}>
-                            <label style={{fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'}}>Ціна (₴)</label>
+                <form onSubmit={handleSubmit} style={{flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
+                    <div className="custom-scrollbar" style={scrollableFormStyle}>
+                        <div>
+                            <label style={labelStyle}>Назва</label>
                             <input 
-                                type="number" step="0.01" style={inputStyle} 
-                                value={formData.price} 
-                                onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} 
+                                type="text" 
+                                style={inputStyle} 
+                                value={formData.name} 
+                                onChange={e => setFormData({...formData, name: e.target.value})} 
                                 required
                             />
                         </div>
-                        <div style={{flex: 1}}>
-                            <label style={{fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'}}>Склад</label>
-                            <input 
-                                type="number" style={inputStyle} 
-                                value={formData.stock_quantity} 
-                                onChange={e => setFormData({...formData, stock_quantity: parseInt(e.target.value)})} 
+
+                        <div style={{display: 'flex', gap: '10px'}}>
+                            <div style={{flex: 1}}>
+                                <label style={labelStyle}>Ціна (₴)</label>
+                                <input 
+                                    type="number" step="0.01" style={inputStyle} 
+                                    value={formData.price} 
+                                    onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} 
+                                    required
+                                />
+                            </div>
+                            <div style={{flex: 1}}>
+                                <label style={labelStyle}>Склад</label>
+                                <input 
+                                    type="number" style={inputStyle} 
+                                    value={formData.stock_quantity} 
+                                    onChange={e => setFormData({...formData, stock_quantity: parseInt(e.target.value)})} 
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style={labelStyle}>Категорія</label>
+                            <select 
+                                style={inputStyle} 
+                                value={formData.category_id || ''} 
+                                onChange={e => setFormData({...formData, category_id: e.target.value || null})}
+                            >
+                                <option value="">Без категорії</option>
+                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                        </div>
+
+                        <div style={{
+                            borderTop: '1px dashed var(--platform-border-color)', 
+                            paddingTop: '10px'
+                        }}>
+                            <label style={{
+                                fontSize:'0.9rem', fontWeight:'600', marginBottom:'8px', display:'block', color: 'var(--platform-text-primary)'
+                            }}>
+                                Варіанти товару
+                            </label>
+                            
+                            {formData.variants.map((variant, idx) => (
+                                <VariantEditor 
+                                    key={variant.id || idx} 
+                                    variant={variant} 
+                                    onChange={(updated) => updateVariant(idx, updated)}
+                                    onRemove={() => removeVariant(idx)}
+                                />
+                            ))}
+
+                            <button 
+                                type="button" 
+                                onClick={addVariant}
+                                style={{
+                                    ...inputStyle, 
+                                    background: 'transparent', 
+                                    border: '1px dashed var(--platform-accent)', 
+                                    color: 'var(--platform-accent)', 
+                                    cursor: 'pointer', 
+                                    textAlign: 'center'
+                                }}
+                            >
+                                + Додати опцію (Розмір, Колір...)
+                            </button>
+                        </div>
+
+                        <div>
+                            <label style={labelStyle}>Опис</label>
+                            <textarea 
+                                style={{...inputStyle, minHeight: '80px', resize: 'vertical'}} 
+                                value={formData.description} 
+                                onChange={e => setFormData({...formData, description: e.target.value})}
                             />
+                        </div>
+
+                        <div>
+                            <label style={labelStyle}>Фото</label>
+                            <div style={{height: '120px'}}>
+                                <ImageInput 
+                                    value={formData.image_url ? `${API_URL}${formData.image_url}` : ''}
+                                    onChange={(url) => setFormData({...formData, image_url: url.replace(API_URL, '')})}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <label style={{fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'}}>Категорія</label>
-                    <select 
-                        style={inputStyle} 
-                        value={formData.category_id || ''} 
-                        onChange={e => setFormData({...formData, category_id: e.target.value || null})}
-                    >
-                        <option value="">Без категорії</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-
-                    <label style={{fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'}}>Опис</label>
-                    <textarea 
-                        style={{...inputStyle, minHeight: '80px', resize: 'none'}} 
-                        value={formData.description} 
-                        onChange={e => setFormData({...formData, description: e.target.value})}
-                    />
-
-                    <label style={{fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'}}>Фото</label>
-                    <div style={{height: '120px', marginBottom: '0'}}>
-                        <ImageInput 
-                            value={formData.image_url ? `${API_URL}${formData.image_url}` : ''}
-                            onChange={(url) => setFormData({...formData, image_url: url.replace(API_URL, '')})}
-                        />
-                    </div>
-
-                    <div style={{marginTop: 'auto', paddingTop: '20px', display: 'flex', gap: '10px'}}>
+                    <div style={{paddingTop: '20px', display: 'flex', gap: '10px', flexShrink: 0}}>
                         <button type="submit" style={primaryButton}>
                             {formData.id ? 'Зберегти' : 'Створити'}
                         </button>
@@ -307,7 +688,13 @@ const ProductManager = ({ siteId }) => {
                             <button 
                                 type="button" 
                                 onClick={resetForm}
-                                style={{...primaryButton, background: 'transparent', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-primary)', width: 'auto'}}
+                                style={{
+                                    ...primaryButton, 
+                                    background: 'transparent', 
+                                    border: '1px solid var(--platform-border-color)', 
+                                    color: 'var(--platform-text-primary)', 
+                                    width: 'auto'
+                                }}
                             >
                                 Відміна
                             </button>
@@ -317,7 +704,14 @@ const ProductManager = ({ siteId }) => {
             </div>
 
             <div style={productsAreaStyle}>
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px'}}>
+                <div style={{
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    marginBottom: '20px', 
+                    flexWrap: 'wrap', 
+                    gap: '10px'
+                }}>
                     <div style={{display: 'flex', gap: '10px', flex: 1, minWidth: '200px'}}>
                         <input 
                             placeholder="🔍 Пошук..." 
@@ -335,7 +729,12 @@ const ProductManager = ({ siteId }) => {
                         </select>
                     </div>
                     
-                    <div style={{fontWeight: 'bold', color: 'var(--platform-text-primary)', whiteSpace: 'nowrap', marginLeft: '10px'}}>
+                    <div style={{
+                        fontWeight: 'bold', 
+                        color: 'var(--platform-text-primary)', 
+                        whiteSpace: 'nowrap', 
+                        marginLeft: '10px'
+                    }}>
                         Всього товарів: <span style={{color: 'var(--platform-accent)', fontSize: '1.1rem'}}>{products.length}</span>
                     </div>
                 </div>
@@ -357,8 +756,14 @@ const ProductManager = ({ siteId }) => {
                                 onClick={(e) => handleDelete(e, product.id)}
                                 style={deleteBtnStyle}
                                 title="Видалити"
-                                onMouseEnter={e => {e.currentTarget.style.background = '#fff5f5'; e.currentTarget.style.borderColor = '#fc8181'}}
-                                onMouseLeave={e => {e.currentTarget.style.background = 'rgba(255,255,255,0.95)'; e.currentTarget.style.borderColor = '#e2e8f0'}}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.background = '#fff5f5'; 
+                                    e.currentTarget.style.borderColor = '#fc8181'
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.background = 'rgba(255,255,255,0.95)'; 
+                                    e.currentTarget.style.borderColor = '#e2e8f0'
+                                }}
                             >
                                 🗑️
                             </button>
@@ -367,7 +772,10 @@ const ProductManager = ({ siteId }) => {
                                 src={product.image_gallery?.[0] ? `${API_URL}${product.image_gallery[0]}` : 'https://placehold.co/300x200?text=No+Image'} 
                                 alt={product.name}
                                 style={tileImageStyle}
-                                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/300x200?text=No+Image" }}
+                                onError={(e) => { 
+                                    e.target.onerror = null; 
+                                    e.target.src = "https://placehold.co/300x200?text=No+Image" 
+                                }}
                             />
 
                             <div style={tileContentStyle}>
@@ -384,16 +792,47 @@ const ProductManager = ({ siteId }) => {
                                     }}>
                                         {product.name}
                                     </div>
-                                    <div style={{fontSize: '0.75rem', color: 'var(--platform-text-secondary)', marginBottom: '8px'}}>
+                                    <div style={{
+                                        fontSize: '0.75rem', 
+                                        color: 'var(--platform-text-secondary)', 
+                                        marginBottom: '8px'
+                                    }}>
                                         {categories.find(c => c.id === product.category_id)?.name || 'Без категорії'}
                                     </div>
+                                    
+                                    {product.variants && product.variants.length > 0 && (
+                                        <div style={{
+                                            fontSize: '0.7rem', 
+                                            background: 'var(--platform-card-bg)', 
+                                            border: '1px solid var(--platform-border-color)', 
+                                            display: 'inline-block', 
+                                            padding: '2px 6px', 
+                                            borderRadius: '4px', 
+                                            color: 'var(--platform-text-primary)'
+                                        }}>
+                                            🎨 {product.variants.length} опцій
+                                        </div>
+                                    )}
                                 </div>
-                                <div style={{marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                                    <span style={{fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--platform-accent)'}}>
+                                <div style={{
+                                    marginTop: 'auto', 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center'
+                                }}>
+                                    <span style={{
+                                        fontWeight: 'bold', 
+                                        fontSize: '1.1rem', 
+                                        color: 'var(--platform-accent)'
+                                    }}>
                                         {product.price} ₴
                                     </span>
                                     {formData.id === product.id && (
-                                        <span style={{fontSize: '0.7rem', color: 'var(--platform-text-secondary)', fontStyle: 'italic'}}>
+                                        <span style={{
+                                            fontSize: '0.7rem', 
+                                            color: 'var(--platform-text-secondary)', 
+                                            fontStyle: 'italic'
+                                        }}>
                                             Редагується...
                                         </span>
                                     )}
@@ -403,7 +842,12 @@ const ProductManager = ({ siteId }) => {
                     ))}
                     
                     {filteredProducts.length === 0 && (
-                        <div style={{gridColumn: '1/-1', textAlign: 'center', color: 'var(--platform-text-secondary)', marginTop: '40px'}}>
+                        <div style={{
+                            gridColumn: '1/-1', 
+                            textAlign: 'center', 
+                            color: 'var(--platform-text-secondary)', 
+                            marginTop: '40px'
+                        }}>
                             Товарів не знайдено 📦
                         </div>
                     )}

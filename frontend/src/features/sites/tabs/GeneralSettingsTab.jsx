@@ -1,14 +1,13 @@
 // frontend/src/features/sites/tabs/GeneralSettingsTab.jsx
 import React, { useState } from 'react';
 import { useAutoSave } from '../../../hooks/useAutoSave';
-import ImageUploader from '../../../components/common/ImageUploader';
+// ЗМІНА 1: Імпортуємо ImageInput замість ImageUploader
+import ImageInput from '../../media/ImageInput'; 
 import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../hooks/useConfirm';
 import ChangeTemplateModal from '../components/ChangeTemplateModal';
-
-const API_URL = 'http://localhost:5000';
 
 const GeneralSettingsTab = ({ siteData, onUpdate }) => {
     const navigate = useNavigate();
@@ -124,17 +123,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
         }
     };
 
-    const handleFaviconUpload = async (file) => {
-        const formData = new FormData();
-        formData.append('mediaFile', file);
-        try {
-            const res = await apiClient.post('/media/upload', formData);
-            handleChange('favicon_url', res.data.path_full);
-            toast.success('Favicon оновлено');
-        } catch (e) {
-            toast.error('Помилка завантаження');
-        }
-    };
 
     const containerStyle = { 
         maxWidth: '800px', 
@@ -429,58 +417,22 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                     <div>
                         <label style={labelStyle}>Favicon (Іконка сайту)</label>
                         <div style={{ 
-                            display: 'flex', 
-                            gap: '16px', 
-                            alignItems: 'flex-start' 
+                            height: '120px',
+                            width: '120px',
+                            marginBottom: '8px',
+                            display: 'block' 
                         }}>
-                            <ImageUploader aspect={1} onUpload={handleFaviconUpload}>
-                                <div style={{
-                                    width: '80px', 
-                                    height: '80px', 
-                                    borderRadius: '12px',
-                                    border: `2px dashed ${data.favicon_url ? 'var(--platform-border-color)' : 'var(--platform-accent)'}`,
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center',
-                                    cursor: 'pointer', 
-                                    overflow: 'hidden', 
-                                    background: 'var(--platform-bg)',
-                                    transition: 'all 0.2s ease'
-                                }}>
-                                    {data.favicon_url ? (
-                                        <img 
-                                            src={data.favicon_url.startsWith('http') ? data.favicon_url : `${API_URL}${data.favicon_url}`} 
-                                            alt="Favicon" 
-                                            style={{ 
-                                                width: '100%', 
-                                                height: '100%', 
-                                                objectFit: 'cover' 
-                                            }} 
-                                        />
-                                    ) : (
-                                        <div style={{textAlign: 'center'}}>
-                                            <span style={{
-                                                fontSize: '1.5rem', 
-                                                display: 'block', 
-                                                marginBottom: '4px'
-                                            }}>🖼️</span>
-                                            <span style={{
-                                                fontSize: '0.7rem', 
-                                                color: 'var(--platform-text-secondary)'
-                                            }}>Завантажити</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </ImageUploader>
-                            <div style={{flex: 1}}>
-                                <div style={{ 
-                                    fontSize: '0.8rem', 
-                                    color: 'var(--platform-text-secondary)', 
-                                    lineHeight: '1.4' 
-                                }}>
-                                    Завантажте квадратне зображення (PNG або ICO). Воно буде відображатися у вкладці браузера.
-                                </div>
-                            </div>
+                            <ImageInput 
+                                value={data.favicon_url}
+                                onChange={(url) => handleChange('favicon_url', url)}
+                            />
+                        </div>
+                        <div style={{ 
+                            fontSize: '0.8rem', 
+                            color: 'var(--platform-text-secondary)', 
+                            lineHeight: '1.4' 
+                        }}>
+                            Рекомендовано: квадратне зображення (PNG або ICO), мінімум 64x64px.
                         </div>
                     </div>
 

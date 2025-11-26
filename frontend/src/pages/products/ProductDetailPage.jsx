@@ -16,6 +16,9 @@ const ProductDetailPage = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    const [selectedOptions, setSelectedOptions] = useState({});
+    const [finalPrice, setFinalPrice] = useState(0);
+
     const { siteData, isSiteLoading } = useOutletContext();
 
     useEffect(() => {
@@ -23,7 +26,25 @@ const ProductDetailPage = () => {
             try {
                 setLoading(true);
                 const response = await apiClient.get(`/products/${productId}`);
-                setProduct(response.data);
+                const prod = response.data;
+                
+                if (typeof prod.variants === 'string') {
+                    try { prod.variants = JSON.parse(prod.variants); } catch (e) {}
+                }
+                
+                setProduct(prod);
+                setFinalPrice(parseFloat(prod.price));
+                
+                if (prod.variants && Array.isArray(prod.variants)) {
+                    const defaults = {};
+                    prod.variants.forEach(v => {
+                        if (v.values && v.values.length > 0) {
+                            defaults[v.name] = v.values[0].label;
+                        }
+                    });
+                    setSelectedOptions(defaults);
+                }
+
             } catch (err) {
                 setError('Не вдалося завантажити інформацію про товар.');
             } finally {
@@ -33,14 +54,34 @@ const ProductDetailPage = () => {
         fetchProduct();
     }, [productId]);
 
-    const handleAddToCart = (productToAdd) => {
+    useEffect(() => {
+        if (product) {
+            let price = parseFloat(product.price);
+            if (product.variants && Array.isArray(product.variants)) {
+                product.variants.forEach(v => {
+                    const selectedVal = selectedOptions[v.name];
+                    const optionObj = v.values.find(val => val.label === selectedVal);
+                    if (optionObj && optionObj.priceModifier) {
+                        price += parseFloat(optionObj.priceModifier);
+                    }
+                });
+            }
+            setFinalPrice(price);
+        }
+    }, [selectedOptions, product]);
+
+    const handleOptionChange = (optionName, value) => {
+        setSelectedOptions(prev => ({ ...prev, [optionName]: value }));
+    };
+
+    const handleAddToCart = () => {
         if (!user) {
             if (window.confirm("Щоб додати товар до кошика, необхідно увійти до акаунту. Перейти на сторінку входу?")) {
                 navigate('/login');
             }
             return;
         }
-        addToCart(productToAdd);
+        addToCart(product, selectedOptions, finalPrice);
     };
 
     const containerStyle = {
@@ -52,12 +93,12 @@ const ProductDetailPage = () => {
         alignItems: 'flex-start'
     };
 
-    const imageContainerStyle = {
-        flex: '1 1 400px'
+    const imageContainerStyle = { 
+        flex: '1 1 400px' 
     };
 
-    const infoContainerStyle = {
-        flex: '1 1 400px'
+    const infoContainerStyle = { 
+        flex: '1 1 400px' 
     };
 
     const imageStyle = {
@@ -66,6 +107,28 @@ const ProductDetailPage = () => {
         border: '1px solid var(--site-border-color)',
         filter: product?.stock_quantity === 0 ? 'grayscale(100%)' : 'none',
         opacity: product?.stock_quantity === 0 ? 0.7 : 1
+    };
+
+    const optionGroupStyle = { 
+        marginBottom: '1.5rem' 
+    };
+
+    const optionLabelStyle = { 
+        display: 'block', 
+        fontWeight: '600', 
+        marginBottom: '0.5rem', 
+        color: 'var(--site-text-primary)' 
+    };
+
+    const selectStyle = {
+        width: '100%',
+        padding: '0.8rem',
+        borderRadius: '8px',
+        border: '1px solid var(--site-border-color)',
+        background: 'var(--site-bg)',
+        color: 'var(--site-text-primary)',
+        fontSize: '1rem',
+        cursor: 'pointer'
     };
 
     if (loading || isSiteLoading) return (
@@ -128,14 +191,33 @@ const ProductDetailPage = () => {
                 }}>
                     {product.description}
                 </p>
+                
                 <p style={{ 
                     fontSize: '1.5rem', 
                     fontWeight: 'bold', 
                     margin: '1.5rem 0',
                     color: 'var(--site-text-primary)'
                 }}>
-                    {product.price} грн.
+                    {finalPrice.toFixed(2)} грн.
                 </p>
+
+                {product.variants && product.variants.map((variant, idx) => (
+                    <div key={idx} style={optionGroupStyle}>
+                        <label style={optionLabelStyle}>{variant.name}:</label>
+                        <select 
+                            style={selectStyle}
+                            value={selectedOptions[variant.name] || ''}
+                            onChange={(e) => handleOptionChange(variant.name, e.target.value)}
+                        >
+                            {variant.values.map((val, valIdx) => (
+                                <option key={valIdx} value={val.label}>
+                                    {val.label} {val.priceModifier !== 0 ? `(${val.priceModifier > 0 ? '+' : ''}${val.priceModifier} грн)` : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                ))}
+
                 {product.stock_quantity !== null && (
                     <p style={{ 
                         color: 'var(--site-text-secondary)',
@@ -144,8 +226,9 @@ const ProductDetailPage = () => {
                         На складі: {product.stock_quantity} шт.
                     </p>
                 )}
+                
                 <button
-                    onClick={() => handleAddToCart(product)}
+                    onClick={handleAddToCart}
                     disabled={isOwner || isSoldOut}
                     style={{
                         padding: '1rem 2rem',
@@ -155,7 +238,8 @@ const ProductDetailPage = () => {
                         background: (isOwner || isSoldOut) ? 'var(--site-text-secondary)' : 'var(--site-accent)',
                         color: (isOwner || isSoldOut) ? 'var(--site-text-primary)' : 'var(--site-accent-text)',
                         border: 'none',
-                        borderRadius: '8px'
+                        borderRadius: '8px',
+                        width: '100%'
                     }}
                 >
                     {isOwner ? 'Це ваш товар' : 
