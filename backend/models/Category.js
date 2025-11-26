@@ -29,17 +29,17 @@ class Category {
         }
     }
 
-    static async create(siteId, name) {
+    static async create(siteId, name, discount_percentage = 0) {
         try {
             if (!name || name.trim().length === 0) {
                 throw new Error('Назва категорії не може бути порожньою.');
             }
 
             const [result] = await db.query(
-                'INSERT INTO categories (site_id, name) VALUES (?, ?)',
-                [siteId, name.trim()]
+                'INSERT INTO categories (site_id, name, discount_percentage) VALUES (?, ?, ?)',
+                [siteId, name.trim(), discount_percentage]
             );
-            return { id: result.insertId, site_id: siteId, name: name.trim() };
+            return { id: result.insertId, site_id: siteId, name: name.trim(), discount_percentage };
         } catch (error) {
             if (error.code === 'ER_DUP_ENTRY') {
                 throw new Error('Категорія з такою назвою вже існує для цього сайту.');
@@ -48,15 +48,15 @@ class Category {
         }
     }
 
-    static async update(categoryId, name) {
+    static async update(categoryId, name, discount_percentage = 0) {
         try {
             if (!name || name.trim().length === 0) {
                 throw new Error('Назва категорії не може бути порожньою.');
             }
 
             const [result] = await db.query(
-                'UPDATE categories SET name = ? WHERE id = ?',
-                [name.trim(), categoryId]
+                'UPDATE categories SET name = ?, discount_percentage = ? WHERE id = ?',
+                [name.trim(), discount_percentage, categoryId]
             );
             
             if (result.affectedRows === 0) {

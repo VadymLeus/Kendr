@@ -17,7 +17,13 @@ const ProductDetailPage = () => {
     const navigate = useNavigate();
 
     const [selectedOptions, setSelectedOptions] = useState({});
-    const [finalPrice, setFinalPrice] = useState(0);
+    
+    const [priceData, setPriceData] = useState({
+        finalPrice: 0,
+        originalPrice: 0,
+        activeDiscount: 0,
+        isDiscounted: false
+    });
 
     const { siteData, isSiteLoading } = useOutletContext();
 
@@ -33,7 +39,6 @@ const ProductDetailPage = () => {
                 }
                 
                 setProduct(prod);
-                setFinalPrice(parseFloat(prod.price));
                 
                 if (prod.variants && Array.isArray(prod.variants)) {
                     const defaults = {};
@@ -56,17 +61,45 @@ const ProductDetailPage = () => {
 
     useEffect(() => {
         if (product) {
-            let price = parseFloat(product.price);
+            let basePriceWithModifiers = parseFloat(product.price);
+            let maxVariantDiscount = 0;
+
             if (product.variants && Array.isArray(product.variants)) {
                 product.variants.forEach(v => {
                     const selectedVal = selectedOptions[v.name];
                     const optionObj = v.values.find(val => val.label === selectedVal);
-                    if (optionObj && optionObj.priceModifier) {
-                        price += parseFloat(optionObj.priceModifier);
+                    
+                    if (optionObj) {
+                        if (optionObj.priceModifier) {
+                            basePriceWithModifiers += parseFloat(optionObj.priceModifier);
+                        }
+                        if (optionObj.salePercentage > 0) {
+                            maxVariantDiscount = Math.max(maxVariantDiscount, optionObj.salePercentage);
+                        }
                     }
                 });
             }
-            setFinalPrice(price);
+
+            let activeDiscount = 0;
+            
+            if (maxVariantDiscount > 0) {
+                activeDiscount = maxVariantDiscount;
+            } 
+            else if (product.sale_percentage > 0) {
+                activeDiscount = product.sale_percentage;
+            } 
+            else if (product.category_discount > 0) {
+                activeDiscount = product.category_discount;
+            }
+
+            const finalPrice = Math.round(basePriceWithModifiers * (1 - activeDiscount / 100));
+
+            setPriceData({
+                finalPrice: finalPrice,
+                originalPrice: basePriceWithModifiers,
+                activeDiscount: activeDiscount,
+                isDiscounted: activeDiscount > 0
+            });
         }
     }, [selectedOptions, product]);
 
@@ -81,7 +114,12 @@ const ProductDetailPage = () => {
             }
             return;
         }
-        addToCart(product, selectedOptions, finalPrice);
+        
+        addToCart(product, selectedOptions, {
+            finalPrice: priceData.finalPrice,
+            originalPrice: priceData.originalPrice,
+            discount: priceData.activeDiscount
+        });
     };
 
     const containerStyle = {
@@ -90,7 +128,8 @@ const ProductDetailPage = () => {
         display: 'flex',
         gap: '3rem',
         flexWrap: 'wrap',
-        alignItems: 'flex-start'
+        alignItems: 'flex-start',
+        padding: '2rem'
     };
 
     const imageContainerStyle = { 
@@ -192,14 +231,40 @@ const ProductDetailPage = () => {
                     {product.description}
                 </p>
                 
-                <p style={{ 
-                    fontSize: '1.5rem', 
-                    fontWeight: 'bold', 
-                    margin: '1.5rem 0',
-                    color: 'var(--site-text-primary)'
-                }}>
-                    {finalPrice.toFixed(2)} грн.
-                </p>
+                <div style={{ margin: '1.5rem 0' }}>
+                    {priceData.isDiscounted ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                            <span style={{ 
+                                fontSize: '1.8rem', 
+                                fontWeight: 'bold', 
+                                color: '#e53e3e'
+                            }}>
+                                {priceData.finalPrice} грн.
+                            </span>
+                            <span style={{ 
+                                textDecoration: 'line-through', 
+                                color: 'var(--site-text-secondary)',
+                                fontSize: '1.2rem'
+                            }}>
+                                {priceData.originalPrice} грн.
+                            </span>
+                            <span style={{
+                                background: '#e53e3e',
+                                color: 'white',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.9rem',
+                                fontWeight: 'bold'
+                            }}>
+                                -{priceData.activeDiscount}%
+                            </span>
+                        </div>
+                    ) : (
+                        <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--site-text-primary)' }}>
+                            {priceData.finalPrice} грн.
+                        </p>
+                    )}
+                </div>
 
                 {product.variants && product.variants.map((variant, idx) => (
                     <div key={idx} style={optionGroupStyle}>
@@ -209,11 +274,16 @@ const ProductDetailPage = () => {
                             value={selectedOptions[variant.name] || ''}
                             onChange={(e) => handleOptionChange(variant.name, e.target.value)}
                         >
-                            {variant.values.map((val, valIdx) => (
-                                <option key={valIdx} value={val.label}>
-                                    {val.label} {val.priceModifier !== 0 ? `(${val.priceModifier > 0 ? '+' : ''}${val.priceModifier} грн)` : ''}
-                                </option>
-                            ))}
+                            {variant.values.map((val, valIdx) => {
+                                let label = val.label;
+                                if (val.priceModifier) label += ` (${val.priceModifier > 0 ? '+' : ''}${val.priceModifier} грн)`;
+                                if (val.salePercentage) label += ` [Знижка ${val.salePercentage}%]`;
+                                return (
+                                    <option key={valIdx} value={val.label}>
+                                        {label}
+                                    </option>
+                                )
+                            })}
                         </select>
                     </div>
                 ))}

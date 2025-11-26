@@ -10,26 +10,53 @@ const API_URL = 'http://localhost:5000';
 const VariantEditor = ({ variant, onChange, onRemove }) => {
     const [newValueLabel, setNewValueLabel] = useState('');
     const [newValuePrice, setNewValuePrice] = useState('');
+    const [newValueSale, setNewValueSale] = useState('');
+    const [editingValueIndex, setEditingValueIndex] = useState(null);
     
     const { confirm } = useConfirm();
 
-    const addValue = (e) => {
+    const handleSaveValue = (e) => {
         if (e) e.preventDefault();
         
         const label = newValueLabel.trim();
         if (!label) return;
         
-        const newValues = [...(variant.values || []), { 
+        const valueData = { 
             label: label, 
-            priceModifier: parseFloat(newValuePrice) || 0
-        }];
+            priceModifier: parseFloat(newValuePrice) || 0,
+            salePercentage: parseInt(newValueSale) || 0
+        };
+
+        let newValues = [...(variant.values || [])];
+
+        if (editingValueIndex !== null) {
+            newValues[editingValueIndex] = valueData;
+            toast.info('Значення оновлено');
+        } else {
+            newValues.push(valueData);
+        }
         
         onChange({ ...variant, values: newValues });
-        setNewValueLabel('');
-        setNewValuePrice('');
+        resetInput();
     };
 
-    const handleRemoveValue = async (idx, label) => {
+    const startEditing = (idx) => {
+        const val = variant.values[idx];
+        setNewValueLabel(val.label);
+        setNewValuePrice(val.priceModifier || '');
+        setNewValueSale(val.salePercentage || '');
+        setEditingValueIndex(idx);
+    };
+
+    const resetInput = () => {
+        setNewValueLabel('');
+        setNewValuePrice('');
+        setNewValueSale('');
+        setEditingValueIndex(null);
+    };
+
+    const handleRemoveValue = async (idx, label, e) => {
+        e.stopPropagation();
         const isConfirmed = await confirm({
             title: "Видалити значення?",
             message: `Ви впевнені, що хочете видалити варіант "${label}"?`,
@@ -41,6 +68,8 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
         if (isConfirmed) {
             const newValues = variant.values.filter((_, i) => i !== idx);
             onChange({ ...variant, values: newValues });
+            
+            if (editingValueIndex === idx) resetInput();
         }
     };
 
@@ -61,7 +90,7 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            addValue();
+            handleSaveValue();
         }
     };
 
@@ -87,9 +116,9 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
             gap: '8px', 
             marginBottom: '10px' 
         },
-        valueTag: {
-            background: 'var(--platform-card-bg)',
-            border: '1px solid var(--platform-border-color)',
+        valueTag: (isEditing) => ({
+            background: isEditing ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
+            border: isEditing ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
             borderRadius: '4px',
             padding: '6px 8px',
             fontSize: '0.85rem',
@@ -98,8 +127,10 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
             justifyContent: 'space-between',
             gap: '6px',
             boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-            minWidth: 0 
-        },
+            minWidth: 0,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+        }),
         textContainer: {
             display: 'flex',
             flexDirection: 'column',
@@ -119,6 +150,12 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
             opacity: 0.8,
             overflow: 'hidden',
             textOverflow: 'ellipsis'
+        },
+        saleText: { 
+            fontSize: '0.75em', 
+            color: '#e53e3e', 
+            fontWeight: 'bold', 
+            marginLeft: '4px' 
         },
         inputField: { 
             width: '100%',
@@ -154,12 +191,23 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
             width: '100%',
             padding: '8px',
             borderRadius: '4px',
-            background: 'var(--platform-accent)',
-            color: 'var(--platform-accent-text)',
+            background: editingValueIndex !== null ? '#ecc94b' : 'var(--platform-accent)',
+            color: editingValueIndex !== null ? 'black' : 'var(--platform-accent-text)',
             border: 'none',
             cursor: 'pointer',
             fontSize: '0.9rem',
             fontWeight: '500',
+            marginTop: '4px'
+        },
+        cancelButton: {
+            width: '100%',
+            padding: '8px',
+            borderRadius: '4px',
+            background: 'transparent',
+            border: '1px solid var(--platform-border-color)',
+            color: 'var(--platform-text-secondary)',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
             marginTop: '4px'
         },
         deleteButton: {
@@ -189,6 +237,18 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
             justifyContent: 'center',
             padding: '0 0 0 4px',
             flexShrink: 0
+        },
+        buttonContainer: {
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '8px',
+            gridColumn: '1 / -1'
+        },
+        buttonWrapper: {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            flex: 1
         }
     };
 
@@ -222,23 +282,35 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
 
             <div style={styles.valuesList}>
                 {variant.values && variant.values.map((val, idx) => (
-                    <div key={idx} style={styles.valueTag} title={`${val.label} ${val.priceModifier ? `(${val.priceModifier} ₴)` : ''}`}>
+                    <div 
+                        key={idx} 
+                        style={styles.valueTag(idx === editingValueIndex)} 
+                        onClick={() => startEditing(idx)}
+                        title="Натисніть, щоб редагувати"
+                    >
                         <div style={styles.textContainer}>
                             <span style={styles.truncatedText}>
-                                {val.label}
+                                {idx === editingValueIndex ? '✏️ ' : ''}{val.label}
                             </span>
-                            {val.priceModifier !== 0 && (
-                                <span style={{
-                                    ...styles.priceText,
-                                    color: val.priceModifier > 0 ? 'var(--platform-success)' : 'var(--platform-danger)', 
-                                }}>
-                                    {val.priceModifier > 0 ? '+' : ''}{val.priceModifier} ₴
-                                </span>
-                            )}
+                            <div>
+                                {val.priceModifier !== 0 && (
+                                    <span style={{
+                                        ...styles.priceText,
+                                        color: val.priceModifier > 0 ? 'var(--platform-success)' : 'var(--platform-danger)', 
+                                    }}>
+                                        {val.priceModifier > 0 ? '+' : ''}{val.priceModifier} ₴
+                                    </span>
+                                )}
+                                {val.salePercentage > 0 && (
+                                    <span style={styles.saleText}>
+                                        -{val.salePercentage}%
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <button 
                             type="button" 
-                            onClick={() => handleRemoveValue(idx, val.label)} 
+                            onClick={(e) => handleRemoveValue(idx, val.label, e)} 
                             style={styles.removeValueBtn}
                             onMouseEnter={(e) => e.target.style.color = '#e53e3e'}
                             onMouseLeave={(e) => e.target.style.color = 'var(--platform-text-secondary)'}
@@ -252,37 +324,76 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
             <div style={{
                 borderTop: '1px dashed var(--platform-border-color)', 
                 paddingTop: '10px', 
-                marginTop: '10px'
+                marginTop: '10px',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gap: '8px',
+                alignItems: 'end'
             }}>
-                <label style={styles.label}>Значення (напр. XL)</label>
-                <input 
-                    type="text" 
-                    value={newValueLabel} 
-                    onChange={e => setNewValueLabel(e.target.value)} 
-                    onKeyDown={handleKeyDown}
-                    placeholder="XL, S, Червоний..." 
-                    style={styles.inputField}
-                />
-                
-                <label style={styles.label}>Вплив на ціну (₴)</label>
-                <input 
-                    type="number" 
-                    step="0.01"
-                    value={newValuePrice} 
-                    onChange={e => setNewValuePrice(e.target.value)} 
-                    onKeyDown={handleKeyDown}
-                    placeholder="+50 або -20" 
-                    style={styles.inputField}
-                />
+                <div style={{gridColumn: '1 / -1'}}>
+                    <span style={{fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--platform-text-primary)'}}>
+                        {editingValueIndex !== null ? `Редагування "${variant.values[editingValueIndex]?.label}"` : 'Додати нове значення'}
+                    </span>
+                </div>
 
-                <button type="button" onClick={addValue} style={styles.addButton}>
-                    Додати значення
-                </button>
+                <div>
+                    <label style={styles.label}>Значення</label>
+                    <input 
+                        type="text" 
+                        value={newValueLabel} 
+                        onChange={e => setNewValueLabel(e.target.value)} 
+                        onKeyDown={handleKeyDown}
+                        placeholder="XL" 
+                        style={{...styles.inputField, marginBottom: 0}}
+                    />
+                </div>
+                
+                <div>
+                    <label style={styles.label}>Ціна (₴)</label>
+                    <input 
+                        type="number" 
+                        step="0.01"
+                        value={newValuePrice} 
+                        onChange={e => setNewValuePrice(e.target.value)} 
+                        onKeyDown={handleKeyDown}
+                        placeholder="+/-" 
+                        style={{...styles.inputField, marginBottom: 0}}
+                    />
+                </div>
+
+                <div>
+                    <label style={styles.label}>Знижка (%)</label>
+                    <input 
+                        type="number" 
+                        min="0"
+                        max="100"
+                        value={newValueSale} 
+                        onChange={e => setNewValueSale(e.target.value)} 
+                        onKeyDown={handleKeyDown}
+                        placeholder="%" 
+                        style={{...styles.inputField, marginBottom: 0}}
+                    />
+                </div>
+
+                <div style={styles.buttonContainer}>
+                    <div style={styles.buttonWrapper}>
+                        <button type="button" onClick={handleSaveValue} style={styles.addButton}>
+                            {editingValueIndex !== null ? 'Зберегти' : 'Додати'}
+                        </button>
+                    </div>
+                    
+                    {editingValueIndex !== null && (
+                        <div style={styles.buttonWrapper}>
+                            <button type="button" onClick={resetInput} style={styles.cancelButton}>
+                                Скасувати
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
-
 
 const ProductManager = ({ siteId }) => {
     const [products, setProducts] = useState([]);
@@ -298,7 +409,8 @@ const ProductManager = ({ siteId }) => {
         stock_quantity: 1, 
         category_id: null, 
         image_url: '', 
-        variants: [] 
+        variants: [],
+        sale_percentage: 0
     };
     const [formData, setFormData] = useState(initialFormState);
 
@@ -372,7 +484,8 @@ const ProductManager = ({ siteId }) => {
             ...product, 
             image_url: img, 
             stock_quantity: product.stock_quantity || 0,
-            variants: Array.isArray(product.variants) ? product.variants : []
+            variants: Array.isArray(product.variants) ? product.variants : [],
+            sale_percentage: product.sale_percentage || 0
         });
     };
 
@@ -439,7 +552,7 @@ const ProductManager = ({ siteId }) => {
     };
 
     const editorCardStyle = {
-        flex: '0 0 420px', 
+        flex: '0 0 450px', 
         background: 'var(--platform-card-bg)',
         borderRadius: '16px',
         border: '1px solid var(--platform-border-color)',
@@ -531,21 +644,38 @@ const ProductManager = ({ siteId }) => {
         zIndex: 2
     });
 
+    const saleBadgeStyle = {
+        position: 'absolute',
+        top: '8px',
+        right: '45px',
+        background: '#fff5f5',
+        color: '#e53e3e',
+        padding: '4px 8px',
+        borderRadius: '6px',
+        fontSize: '0.75rem',
+        fontWeight: '700',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        zIndex: 2
+    };
+
     const deleteBtnStyle = {
+        background: 'rgba(229, 62, 62, 0.1)', 
+        border: '1px solid rgba(229, 62, 62, 0.2)', 
+        cursor: 'pointer', 
+        color: '#e53e3e', 
+        width: '32px', 
+        height: '32px', 
+        borderRadius: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        fontSize: '1.2rem',
+        fontWeight: 'bold',
+        transition: 'all 0.2s',
         position: 'absolute',
         top: '8px',
         right: '8px',
-        background: 'rgba(255, 255, 255, 0.95)',
-        border: '1px solid #e2e8f0',
-        color: '#e53e3e',
-        width: '32px',
-        height: '32px',
-        borderRadius: '8px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        fontSize: '1rem',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         zIndex: 2
     };
 
@@ -609,6 +739,14 @@ const ProductManager = ({ siteId }) => {
                                     type="number" style={inputStyle} 
                                     value={formData.stock_quantity} 
                                     onChange={e => setFormData({...formData, stock_quantity: parseInt(e.target.value)})} 
+                                />
+                            </div>
+                            <div style={{flex: 1}}>
+                                <label style={{...labelStyle, color: '#e53e3e'}}>Знижка (%)</label>
+                                <input 
+                                    type="number" min="0" max="100" style={{...inputStyle, borderColor: formData.sale_percentage > 0 ? '#e53e3e' : ''}}
+                                    value={formData.sale_percentage} 
+                                    onChange={e => setFormData({...formData, sale_percentage: parseInt(e.target.value)})} 
                                 />
                             </div>
                         </div>
@@ -752,20 +890,26 @@ const ProductManager = ({ siteId }) => {
                                 {product.stock_quantity > 0 ? `${product.stock_quantity} шт.` : 'Немає'}
                             </div>
 
+                            {product.sale_percentage > 0 && (
+                                <div style={saleBadgeStyle}>
+                                    -{product.sale_percentage}%
+                                </div>
+                            )}
+
                             <button 
                                 onClick={(e) => handleDelete(e, product.id)}
                                 style={deleteBtnStyle}
                                 title="Видалити"
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.background = '#fff5f5'; 
-                                    e.currentTarget.style.borderColor = '#fc8181'
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = '#e53e3e';
+                                    e.currentTarget.style.color = 'white';
                                 }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.background = 'rgba(255,255,255,0.95)'; 
-                                    e.currentTarget.style.borderColor = '#e2e8f0'
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(229, 62, 62, 0.1)';
+                                    e.currentTarget.style.color = '#e53e3e';
                                 }}
                             >
-                                🗑️
+                                ×
                             </button>
 
                             <img 
@@ -820,13 +964,20 @@ const ProductManager = ({ siteId }) => {
                                     justifyContent: 'space-between', 
                                     alignItems: 'center'
                                 }}>
-                                    <span style={{
-                                        fontWeight: 'bold', 
-                                        fontSize: '1.1rem', 
-                                        color: 'var(--platform-accent)'
-                                    }}>
-                                        {product.price} ₴
-                                    </span>
+                                    {product.sale_percentage > 0 ? (
+                                        <>
+                                            <span style={{textDecoration: 'line-through', fontSize: '0.85rem', color: 'var(--platform-text-secondary)', marginRight: '6px'}}>
+                                                {product.price} ₴
+                                            </span>
+                                            <span style={{fontWeight: 'bold', fontSize: '1.1rem', color: '#e53e3e'}}>
+                                                {Math.round(product.price * (1 - product.sale_percentage / 100))} ₴
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span style={{fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--platform-accent)'}}>
+                                            {product.price} ₴
+                                        </span>
+                                    )}
                                     {formData.id === product.id && (
                                         <span style={{
                                             fontSize: '0.7rem', 

@@ -33,9 +33,13 @@ const safeParseVariants = (variantsData) => {
 class Product {
     static async findById(productId) {
         const [rows] = await db.query(
-            `SELECT p.*, s.user_id, s.site_path
+            `SELECT p.*, 
+                    c.name as category_name, 
+                    c.discount_percentage as category_discount,
+                    s.user_id, s.site_path
              FROM products p
              JOIN sites s ON p.site_id = s.id
+             LEFT JOIN categories c ON p.category_id = c.id
              WHERE p.id = ?`,
             [productId]
         );
@@ -48,7 +52,9 @@ class Product {
 
     static async findBySiteId(siteId) {
         const [rows] = await db.query(`
-            SELECT p.*, c.name as category_name
+            SELECT p.*, 
+                   c.name as category_name,
+                   c.discount_percentage as category_discount
             FROM products p
             LEFT JOIN categories c ON p.category_id = c.id
             WHERE p.site_id = ?
@@ -63,24 +69,24 @@ class Product {
     }
 
     static async create(productData) {
-        const { site_id, name, description, price, image_path, category_id, stock_quantity, variants } = productData;
+        const { site_id, name, description, price, image_path, category_id, stock_quantity, variants, sale_percentage } = productData;
         
         const image_gallery = image_path ? JSON.stringify([image_path]) : null;
         const variantsJson = variants ? JSON.stringify(variants) : null;
 
         const [result] = await db.query(
-            'INSERT INTO products (site_id, name, description, price, image_gallery, category_id, stock_quantity, variants) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [site_id, name, description, price || 0, image_gallery, category_id || null, stock_quantity || null, variantsJson]
+            'INSERT INTO products (site_id, name, description, price, image_gallery, category_id, stock_quantity, variants, sale_percentage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [site_id, name, description, price || 0, image_gallery, category_id || null, stock_quantity || null, variantsJson, sale_percentage || 0]
         );
         
         return this.findById(result.insertId);
     }
 
     static async update(productId, productData) {
-        const { name, description, price, category_id = null, stock_quantity, image_gallery, variants } = productData;
+        const { name, description, price, category_id = null, stock_quantity, image_gallery, variants, sale_percentage } = productData;
         
-        let query = 'UPDATE products SET name = ?, description = ?, price = ?, category_id = ?, stock_quantity = ?';
-        const params = [name, description, price, category_id, stock_quantity];
+        let query = 'UPDATE products SET name = ?, description = ?, price = ?, category_id = ?, stock_quantity = ?, sale_percentage = ?';
+        const params = [name, description, price, category_id, stock_quantity, sale_percentage || 0];
         
         if ('image_gallery' in productData) {
             query += ', image_gallery = ?';

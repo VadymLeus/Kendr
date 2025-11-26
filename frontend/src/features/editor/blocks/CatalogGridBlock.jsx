@@ -13,6 +13,13 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
 
     const isSoldOut = product.stock_quantity === 0;
     const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+    
+    const basePrice = parseFloat(product.price);
+    const discountPercent = product.sale_percentage || 0;
+    const hasDiscount = discountPercent > 0;
+    const finalPrice = hasDiscount 
+        ? Math.round(basePrice * (1 - discountPercent / 100)) 
+        : basePrice;
 
     const cardStyleBase = {
         border: '1px solid var(--site-border-color)',
@@ -21,6 +28,7 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
         boxShadow: isEditorPreview ? '0 2px 8px rgba(0,0,0,0.05)' : '0 4px 12px rgba(0,0,0,0.08)',
         display: 'flex',
         overflow: 'hidden',
+        position: 'relative'
     };
     
     const cardStyle = isEditorPreview
@@ -60,6 +68,20 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
         color: isSoldOut ? 'var(--site-danger)' : 'var(--site-success)',
         flexGrow: 1
     };
+
+    const saleBadgeStyle = {
+        position: 'absolute',
+        top: '10px',
+        right: '10px',
+        background: '#e53e3e',
+        color: 'white',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontWeight: 'bold',
+        fontSize: '0.8rem',
+        zIndex: 2,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+    };
     
     const imageUrl = (Array.isArray(product.image_gallery) && product.image_gallery.length > 0)
         ? `${API_URL}${product.image_gallery[0]}`
@@ -89,11 +111,15 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
             }
             return;
         }
-        addToCart(product);
+        addToCart(product, {}, { finalPrice, originalPrice: basePrice, discount: discountPercent });
     };
 
     return (
         <div style={cardStyle} className="product-card">
+            {!isEditorPreview && hasDiscount && !isSoldOut && (
+                <div style={saleBadgeStyle}>-{discountPercent}%</div>
+            )}
+
             <ImageWrapper {...imageWrapperProps}>
                 <img
                     src={imageUrl}
@@ -119,15 +145,37 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
 
                 {!isEditorPreview ? (
                     <>
-                        <p style={{
-                            margin: '0 0 1rem 0',
-                            fontSize: '1.2em',
-                            fontWeight: 'bold',
-                            color: 'var(--site-accent)'
-                        }}>
-                            {product.price} грн.
-                        </p>
-                        <small style={{ color: 'var(--site-text-secondary)', marginBottom: '10px' }}>
+                        <div style={{ margin: '0 0 1rem 0' }}>
+                            {hasDiscount ? (
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                    <span style={{
+                                        fontSize: '1.2em',
+                                        fontWeight: 'bold',
+                                        color: '#e53e3e'
+                                    }}>
+                                        {finalPrice} грн.
+                                    </span>
+                                    <span style={{
+                                        fontSize: '0.9em',
+                                        textDecoration: 'line-through',
+                                        color: 'var(--site-text-secondary)'
+                                    }}>
+                                        {basePrice} грн.
+                                    </span>
+                                </div>
+                            ) : (
+                                <p style={{
+                                    margin: 0,
+                                    fontSize: '1.2em',
+                                    fontWeight: 'bold',
+                                    color: 'var(--site-accent)'
+                                }}>
+                                    {basePrice} грн.
+                                </p>
+                            )}
+                        </div>
+
+                        <small style={{ color: 'var(--site-text-secondary)', marginBottom: '10px', display: 'block' }}>
                             Категорія: {product.category_name || 'Не вказано'}
                         </small>
                         <p style={stockStyle}>
@@ -166,7 +214,7 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
                         color: 'var(--site-text-secondary)',
                         fontStyle: 'italic'
                     }}>
-                        {product.price} грн.
+                        {finalPrice} грн.
                     </p>
                 )}
             </div>

@@ -27,11 +27,13 @@ export const CartProvider = ({ children }) => {
         localStorage.setItem(cartKey, JSON.stringify(cartItems));
     }, [cartItems, user]);
 
-    const addToCart = (product, selectedOptions = {}, finalPrice = null) => {
+    const addToCart = (product, selectedOptions = {}, priceInfo = null) => {
         const optionsString = JSON.stringify(selectedOptions, Object.keys(selectedOptions).sort());
         const cartItemId = `${product.id}-${optionsString}`;
         
-        const priceToAdd = finalPrice !== null ? finalPrice : product.price;
+        const finalPrice = priceInfo ? priceInfo.finalPrice : product.price;
+        const originalPrice = priceInfo ? priceInfo.originalPrice : product.price;
+        const discount = priceInfo ? priceInfo.discount : 0;
 
         setCartItems(prevItems => {
             const existingItemIndex = prevItems.findIndex(item => item.cartItemId === cartItemId);
@@ -45,7 +47,9 @@ export const CartProvider = ({ children }) => {
                     ...product, 
                     cartItemId,
                     selectedOptions,
-                    price: priceToAdd,
+                    price: finalPrice,
+                    originalPrice: originalPrice,
+                    discountPercent: discount,
                     quantity: 1 
                 }];
             }
