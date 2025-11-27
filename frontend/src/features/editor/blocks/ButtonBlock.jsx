@@ -1,7 +1,8 @@
 // frontend/src/features/editor/blocks/ButtonBlock.jsx
 import React from 'react';
+import { resolveSiteLink } from '../../../utils/linkUtils';
 
-const ButtonBlock = ({ blockData, isEditorPreview, style }) => {
+const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { text, link, styleType, alignment, targetBlank } = blockData;
 
     const themeClass = styleType === 'secondary' ? 'btn-site-secondary' : 'btn-site-primary';
@@ -22,10 +23,12 @@ const ButtonBlock = ({ blockData, isEditorPreview, style }) => {
         }
     };
 
+    const finalLink = resolveSiteLink(link, siteData?.site_path);
+
     return (
         <div style={containerStyle}>
             <a 
-                href={link || '#'} 
+                href={finalLink} 
                 className={`btn-site ${themeClass}`}
                 target={targetBlank ? '_blank' : '_self'}
                 rel={targetBlank ? 'noopener noreferrer' : ''}

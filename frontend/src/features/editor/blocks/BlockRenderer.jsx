@@ -71,11 +71,15 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
         <div>
             {blocks.map((block, index) => {
                 const Component = blockMap[block.type];
+                
+                const elementId = block.data && block.data.anchorId ? block.data.anchorId : undefined;
+
                 if (!Component) {
                     console.warn(`Невідомий тип блоку: ${block.type}`);
                     return (
                         <div
                             key={block.block_id || index}
+                            id={elementId}
                             style={{
                                 padding: '1.5rem',
                                 background: isEditorPreview 
@@ -119,49 +123,48 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                 };
 
                 return (
-                    <Suspense
+                    <div 
                         key={block.block_id || index}
-                        fallback={
-                            <div style={{
-                                padding: '2rem 1rem',
-                                textAlign: 'center',
-                                background: bg,
-                                borderRadius: '8px',
-                                margin: '0.5rem 0',
-                                border: isEditorPreview 
-                                    ? `1px dashed ${borderColor}` 
-                                    : `1px solid ${borderColor}`,
-                                color: textSecondary
-                            }}>
-                                <div style={{ 
-                                    fontSize: '1.5rem', 
-                                    marginBottom: '0.5rem',
-                                    opacity: 0.7
-                                }}>
-                                    ⏳
-                                </div>
-                                <div style={{ fontWeight: '500' }}>
-                                    Завантаження блоку
-                                </div>
-                                <div style={{ 
-                                    fontSize: '0.9rem', 
-                                    marginTop: '0.25rem',
-                                    opacity: 0.8
-                                }}>
-                                    {block.type}
-                                </div>
-                            </div>
-                        }
+                        id={elementId}
+                        className="block-render-wrapper"
+                        style={{ width: '100%' }}
                     >
-                        <Component
-                            blockData={block.data}
-                            siteData={siteData}
-                            isEditorPreview={isEditorPreview}
-                            style={dynamicStyle} 
-                            {...props}
-                            block={block}
-                        />
-                    </Suspense>
+                        <Suspense
+                            fallback={
+                                <div style={{
+                                    padding: '2rem 1rem',
+                                    textAlign: 'center',
+                                    background: bg,
+                                    borderRadius: '8px',
+                                    margin: '0.5rem 0',
+                                    border: isEditorPreview 
+                                        ? `1px dashed ${borderColor}` 
+                                        : `1px solid ${borderColor}`,
+                                    color: textSecondary
+                                }}>
+                                    <div style={{ 
+                                        fontSize: '1.5rem', 
+                                        marginBottom: '0.5rem',
+                                        opacity: 0.7
+                                    }}>
+                                        ⏳
+                                    </div>
+                                    <div style={{ fontWeight: '500' }}>
+                                        Завантаження блоку
+                                    </div>
+                                </div>
+                            }
+                        >
+                            <Component
+                                blockData={block.data}
+                                siteData={siteData}
+                                isEditorPreview={isEditorPreview}
+                                style={dynamicStyle} 
+                                {...props}
+                                block={block}
+                            />
+                        </Suspense>
+                    </div>
                 );
             })}
         </div>

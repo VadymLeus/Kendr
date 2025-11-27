@@ -12,6 +12,11 @@ const inputStyle = {
     fontSize: '1rem', background: 'var(--platform-card-bg)', 
     color: 'var(--platform-text-primary)', boxSizing: 'border-box' 
 };
+const helpTextStyle = {
+    fontSize: '0.8rem',
+    color: 'var(--platform-text-secondary)',
+    marginTop: '0.25rem'
+};
 
 const ButtonSettings = ({ data, onChange }) => {
 
@@ -29,7 +34,11 @@ const ButtonSettings = ({ data, onChange }) => {
 
             <div style={formGroupStyle}>
                 <label style={labelStyle}>Посилання (URL):</label>
-                <input type="text" name="link" value={data.link || '#'} onChange={handleChange} style={inputStyle} />
+                <input type="text" name="link" value={data.link || '#'} onChange={handleChange} style={inputStyle} placeholder="/page або #anchor" />
+                <p style={helpTextStyle}>
+                    💡 <strong>/page</strong> - для внутрішніх сторінок<br/>
+                    ⚓ <strong>#anchor</strong> - для скролу до блоку
+                </p>
             </div>
 
             <div style={formGroupStyle}>

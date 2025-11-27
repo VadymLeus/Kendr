@@ -3,6 +3,7 @@ import React, { useState, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../providers/AuthContext';
 import { FavoritesContext } from '../../../providers/FavoritesContext';
+import { resolveSiteLink } from '../../../utils/linkUtils';
 
 const API_URL = 'http://localhost:5000';
 
@@ -127,16 +128,12 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
         backgroundColor: 'var(--site-card-bg)'
     };
     
-    const siteRoot = `/site/${siteData?.site_path}`;
+    const siteRoot = resolveSiteLink('/', siteData?.site_path);
     const homeLink = isEditorPreview ? '#' : siteRoot;
 
     const getNavLink = (link) => {
-        if (isEditorPreview || !link) return '#';
-        if (link.startsWith('http') || link.startsWith('//')) return link; 
-        if (link.startsWith('/site/')) return link;
-        const cleanLink = link.startsWith('/') ? link.substring(1) : link;
-        if (!cleanLink) return siteRoot;
-        return `${siteRoot}/${cleanLink}`;
+        if (isEditorPreview) return '#';
+        return resolveSiteLink(link, siteData?.site_path);
     };
 
     const isOwner = user && siteData && user.id === siteData.user_id;

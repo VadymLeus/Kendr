@@ -5,6 +5,7 @@ import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { resolveSiteLink } from '../../../utils/linkUtils';
 
 const API_URL = 'http://localhost:5000';
 
@@ -92,9 +93,11 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
         const imageToRender = <img src={item.src.startsWith('http') ? item.src : `${API_URL}${item.src}`} alt={item.alt || ''} style={singleImgStyle} />;
 
         if (mode === 'single' && link) {
+            const finalLink = resolveSiteLink(link, siteData?.site_path);
+            
             return (
                 <a 
-                    href={link} 
+                    href={finalLink} 
                     target={targetBlank ? '_blank' : '_self'} 
                     rel={targetBlank ? 'noopener noreferrer' : ''}
                     onClick={isEditorPreview ? (e) => e.preventDefault() : undefined}

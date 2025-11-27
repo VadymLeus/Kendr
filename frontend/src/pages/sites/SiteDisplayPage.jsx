@@ -1,12 +1,13 @@
 // frontend/src/pages/sites/SiteDisplayPage.jsx
 import React, { useContext, useEffect } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async'; // ДОДАНО
+import { Helmet } from 'react-helmet-async';
 import apiClient from '../../services/api';
 import BlockRenderer from '../../features/editor/blocks/BlockRenderer';
 import { AuthContext } from '../../providers/AuthContext';
 import NotFoundPage from '../../components/common/NotFoundPage';
 import MaintenancePage from '../../components/common/MaintenancePage';
+import useScrollToHash from '../../hooks/useScrollToHash'; // Імпорт хука
 
 const API_URL = 'http://localhost:5000'; // Для фавіконки
 
@@ -15,6 +16,9 @@ const SiteDisplayPage = () => {
     const { site_path } = useParams();
     const { user } = useContext(AuthContext);
     
+    // Активуємо скрол до якоря при завантаженні сторінки або зміні хеша
+    useScrollToHash();
+
     useEffect(() => {
         if (!isSiteLoading && siteData && siteData.page && siteData.page.is_homepage) {
             apiClient.get(`/sites/${site_path}`, { params: { increment_view: 'true' } })
@@ -45,17 +49,15 @@ const SiteDisplayPage = () => {
         return <NotFoundPage />;
     }
 
-    // --- ЛОГІКА SEO ---
     const page = siteData.page;
-    const titlePart = page.seo_title || page.name; // Назва сторінки
-    const sitePart = siteData.site_title_seo || siteData.title; // Назва сайту
+    const titlePart = page.seo_title || page.name;
+    const sitePart = siteData.site_title_seo || siteData.title;
     const finalTitle = `${titlePart} | ${sitePart}`;
     
     const description = page.seo_description || `Сторінка ${page.name} на сайті ${siteData.title}`;
     const favicon = siteData.favicon_url 
         ? (siteData.favicon_url.startsWith('http') ? siteData.favicon_url : `${API_URL}${siteData.favicon_url}`) 
         : '/icon-light.webp';
-    // ------------------
 
     let pageBlocks = [];
     if (Array.isArray(siteData.page.block_content)) {
@@ -108,14 +110,12 @@ const SiteDisplayPage = () => {
 
     return (
         <div className="site-root" style={layoutStyle}>
-            {/* SEO INJECTION */}
             <Helmet>
                 <title>{finalTitle}</title>
                 <meta name="description" content={description} />
                 {page.seo_keywords && <meta name="keywords" content={page.seo_keywords} />}
                 <link rel="icon" type="image/webp" href={favicon} />
                 
-                {/* Open Graph (для соцмереж) */}
                 <meta property="og:title" content={finalTitle} />
                 <meta property="og:description" content={description} />
                 <meta property="og:image" content={siteData.logo_url ? `${API_URL}${siteData.logo_url}` : favicon} />

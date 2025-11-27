@@ -87,6 +87,7 @@ const EditableBlockWrapper = ({
     const blockDomId = `block-${block.block_id}`;
     const isSelected = selectedBlockPath && selectedBlockPath.join(',') === path.join(',');
     const isHeaderBlock = block.type === 'header';
+    const anchorId = block.data && block.data.anchorId;
 
     const handleSelect = (e) => {
         e.stopPropagation();
@@ -215,6 +216,19 @@ const EditableBlockWrapper = ({
                 <span style={styles.headerText} title={blockType?.name}>
                     <span>{blockType?.icon}</span>
                     <span>{blockType?.name}</span>
+                    {anchorId && (
+                        <span style={{
+                            fontSize: '0.75rem',
+                            background: 'rgba(var(--platform-accent-rgb), 0.1)',
+                            color: 'var(--platform-accent)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            marginLeft: '8px',
+                            border: '1px solid var(--platform-accent)'
+                        }}>
+                            #{anchorId}
+                        </span>
+                    )}
                 </span>
                 
                 <div style={styles.buttonGroup}>

@@ -79,12 +79,6 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
     };
 
     const handleStyleUpdate = (newStyles, addToHistory = true) => {
-        console.log('SpacingControl onChange:', { 
-            currentStyles: selectedBlock.data.styles,
-            newStyles,
-            addToHistory 
-        });
-        
         const newData = { 
             ...selectedBlock.data, 
             styles: { 
@@ -95,7 +89,16 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
         onUpdateBlockData(selectedBlockPath, newData, addToHistory);
     };
 
-    console.log('Selected block styles:', selectedBlock.data.styles);
+    const handleAnchorChange = (e) => {
+        const rawValue = e.target.value;
+        const sanitized = rawValue.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
+        
+        const newData = {
+            ...selectedBlock.data,
+            anchorId: sanitized
+        };
+        onUpdateBlockData(selectedBlockPath, newData, true);
+    };
 
     return (
         <div>
@@ -112,6 +115,46 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                 }}>
                     Вигляд блоку
                 </h4>
+                
+                <div style={{ 
+                    background: 'var(--platform-card-bg)', 
+                    border: '1px solid var(--platform-border-color)',
+                    borderRadius: '4px',
+                    padding: '12px',
+                    marginBottom: '8px'
+                }}>
+                    <label style={{ 
+                        display: 'block', 
+                        marginBottom: '6px', 
+                        fontSize: '0.85rem', 
+                        fontWeight: '600',
+                        color: 'var(--platform-text-secondary)'
+                    }}>
+                        ID блоку (Якір):
+                    </label>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                        <span style={{color: 'var(--platform-text-secondary)', fontWeight: 'bold'}}>#</span>
+                        <input 
+                            type="text" 
+                            value={selectedBlock.data.anchorId || ''} 
+                            onChange={handleAnchorChange}
+                            placeholder="наприклад: contacts"
+                            style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                border: '1px solid var(--platform-border-color)',
+                                borderRadius: '4px',
+                                background: 'var(--platform-bg)',
+                                color: 'var(--platform-text-primary)',
+                                fontSize: '0.9rem'
+                            }}
+                        />
+                    </div>
+                    <small style={{display: 'block', marginTop: '4px', color: 'var(--platform-text-secondary)', fontSize: '0.75rem'}}>
+                        Використовуйте цей ID для посилань у меню (наприклад: #contacts).
+                    </small>
+                </div>
+
                 <SpacingControl 
                     styles={selectedBlock.data.styles || {}} 
                     onChange={handleStyleUpdate} 

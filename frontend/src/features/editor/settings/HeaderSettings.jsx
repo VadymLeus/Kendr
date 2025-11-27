@@ -147,9 +147,20 @@ const HeaderSettings = ({ data, onChange }) => {
 
             <div style={sectionStyle}>
                 <label style={labelStyle}>Пункти меню</label>
-                <p style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginBottom: '0.5rem'}}>
-                    Для внутрішніх сторінок: <code>delivery</code> (автоматично -&gt; <code>/site/name/delivery</code>).
-                </p>
+                <div style={{
+                    fontSize: '0.8rem', 
+                    color: 'var(--platform-text-secondary)', 
+                    marginBottom: '0.8rem',
+                    background: 'var(--platform-bg)',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px dashed var(--platform-border-color)'
+                }}>
+                    <strong>Як вказувати посилання:</strong><br/>
+                    • <code>/page</code> - внутрішня сторінка (напр. <code>/delivery</code>)<br/>
+                    • <code>#id</code> - якір (скрол) до блоку (напр. <code>#contacts</code>)
+                </div>
+                
                 {data.nav_items && data.nav_items.map((item) => (
                     <div key={item.id} style={navItemStyle}>
                         <div style={{ flex: 1 }}>
@@ -164,7 +175,7 @@ const HeaderSettings = ({ data, onChange }) => {
                                 type="text" 
                                 value={item.link} 
                                 onChange={(e) => handleNavItemChange(item.id, 'link', e.target.value)}
-                                placeholder="Посилання"
+                                placeholder="Посилання (/page або #anchor)"
                                 style={{ ...inputStyle, fontSize: '0.85rem' }}
                             />
                         </div>
