@@ -1,5 +1,6 @@
 // frontend/src/features/sites/tabs/SubmissionsTab.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../hooks/useConfirm';
@@ -11,6 +12,7 @@ const SubmissionsTab = ({ siteId }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSubmission, setSelectedSubmission] = useState(null);
     const { confirm } = useConfirm();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     useEffect(() => {
         fetchSubmissions();
@@ -29,6 +31,42 @@ const SubmissionsTab = ({ siteId }) => {
             toast.error('Помилка завантаження заявок');
         } finally {
             setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const idFromUrl = searchParams.get('submissionId');
+        if (idFromUrl && submissions.length > 0 && !selectedSubmission) {
+            const target = submissions.find(s => s.id.toString() === idFromUrl);
+            if (target) {
+                setSelectedSubmission(target);
+            }
+        }
+    }, [submissions, searchParams]);
+
+    const handleSelectSubmission = (submission) => {
+        setSelectedSubmission(submission);
+        setSearchParams(prev => {
+            prev.set('submissionId', submission.id);
+            return prev;
+        });
+    };
+
+    const handleTogglePin = async (id, e) => {
+        e.stopPropagation();
+        try {
+            const res = await apiClient.patch(`/form/${siteId}/${id}/pin`);
+            
+            setSubmissions(prev => prev.map(s => 
+                s.id === id ? { ...s, is_pinned: res.data.is_pinned } : s
+            ));
+            
+            if (selectedSubmission?.id === id) {
+                setSelectedSubmission(prev => ({ ...prev, is_pinned: res.data.is_pinned }));
+            }
+            
+        } catch (error) {
+            toast.error('Не вдалося змінити статус закріплення');
         }
     };
 
@@ -69,6 +107,10 @@ const SubmissionsTab = ({ siteId }) => {
                 setSubmissions(prev => prev.filter(s => s.id !== id));
                 if (selectedSubmission?.id === id) {
                     setSelectedSubmission(null);
+                    setSearchParams(prev => {
+                        prev.delete('submissionId');
+                        return prev;
+                    });
                 }
                 toast.success('Заявку видалено');
             } catch (error) {
@@ -78,7 +120,7 @@ const SubmissionsTab = ({ siteId }) => {
     };
 
     const filteredSubmissions = useMemo(() => {
-        return submissions.filter(sub => {
+        const filtered = submissions.filter(sub => {
             const matchesStatus = filterStatus === 'all' || sub.status === filterStatus;
             const searchLower = searchTerm.toLowerCase();
             const formData = sub.form_data || {};
@@ -87,6 +129,13 @@ const SubmissionsTab = ({ siteId }) => {
                                   (formData.subject || '').toLowerCase().includes(searchLower) ||
                                   (formData.message || '').toLowerCase().includes(searchLower);
             return matchesStatus && matchesSearch;
+        });
+
+        return filtered.sort((a, b) => {
+            if (a.is_pinned && !b.is_pinned) return -1;
+            if (!a.is_pinned && b.is_pinned) return 1;
+            
+            return new Date(b.created_at) - new Date(a.created_at);
         });
     }, [submissions, filterStatus, searchTerm]);
 
@@ -178,16 +227,34 @@ const SubmissionsTab = ({ siteId }) => {
         borderLeft: isSelected ? '4px solid var(--platform-accent)' : `1px solid var(--platform-border-color)`
     });
 
-    const dangerButton = {
-        background: 'none', 
-        border: '1px solid #e53e3e', 
-        color: '#e53e3e', 
-        padding: '8px 16px', 
-        borderRadius: '6px', 
+    const pinButtonStyle = (isPinned) => ({
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '1.2rem',
+        padding: '4px',
+        lineHeight: 1,
+        transition: 'transform 0.2s',
+        opacity: isPinned ? 1 : 0.2,
+        filter: isPinned ? 'none' : 'grayscale(100%)',
+        transform: isPinned ? 'rotate(-45deg)' : 'rotate(0deg)'
+    });
+
+    const deleteButtonStyle = {
+        background: 'rgba(229, 62, 62, 0.1)', 
+        border: '1px solid rgba(229, 62, 62, 0.2)', 
         cursor: 'pointer', 
-        fontSize: '0.8rem',
-        fontWeight: '500',
-        transition: 'all 0.2s ease'
+        color: '#e53e3e', 
+        width: '32px', 
+        height: '32px', 
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        fontSize: '1.2rem',
+        fontWeight: 'bold',
+        transition: 'all 0.2s'
     };
 
     const StatusButton = ({ status, onClick, isActive }) => (
@@ -281,7 +348,7 @@ const SubmissionsTab = ({ siteId }) => {
                                 <div 
                                     key={submission.id}
                                     style={submissionItemStyle(selectedSubmission?.id === submission.id)}
-                                    onClick={() => setSelectedSubmission(submission)}
+                                    onClick={() => handleSelectSubmission(submission)}
                                 >
                                     <div style={{
                                         display: 'flex',
@@ -297,12 +364,28 @@ const SubmissionsTab = ({ siteId }) => {
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            maxWidth: '180px'
+                                            maxWidth: '150px'
                                         }}>
                                             {submission.form_data.name}
                                         </div>
-                                        <div style={{fontSize: '0.7rem', opacity: 0.6}}>
-                                            {new Date(submission.created_at).toLocaleDateString()}
+                                        
+                                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                            <button
+                                                onClick={(e) => handleTogglePin(submission.id, e)}
+                                                style={pinButtonStyle(submission.is_pinned)}
+                                                title={submission.is_pinned ? "Відкріпити" : "Закріпити зверху"}
+                                                onMouseEnter={(e) => {
+                                                    if(!submission.is_pinned) e.target.style.opacity = 1;
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    if(!submission.is_pinned) e.target.style.opacity = 0.2;
+                                                }}
+                                            >
+                                                📌
+                                            </button>
+                                            <div style={{fontSize: '0.7rem', opacity: 0.6}}>
+                                                {new Date(submission.created_at).toLocaleDateString()}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -356,6 +439,19 @@ const SubmissionsTab = ({ siteId }) => {
                                         margin: '0 0 12px 0'
                                     }}>
                                         Заявка від {selectedSubmission.form_data.name}
+                                        {selectedSubmission.is_pinned && (
+                                            <span style={{
+                                                marginLeft: '8px',
+                                                fontSize: '0.8rem',
+                                                background: '#ecc94b',
+                                                color: '#744210',
+                                                padding: '2px 8px',
+                                                borderRadius: '12px',
+                                                fontWeight: '500'
+                                            }}>
+                                                📌 Закріплено
+                                            </span>
+                                        )}
                                     </h2>
                                     
                                     <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
@@ -389,11 +485,18 @@ const SubmissionsTab = ({ siteId }) => {
                                     
                                     <button 
                                         onClick={() => handleDelete(selectedSubmission.id)}
-                                        style={dangerButton}
-                                        onMouseEnter={e => e.target.style.backgroundColor = '#fff5f5'}
-                                        onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
+                                        style={deleteButtonStyle}
+                                        title="Видалити заявку"
+                                        onMouseEnter={(e) => {
+                                            e.target.style.background = '#e53e3e';
+                                            e.target.style.color = 'white';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.background = 'rgba(229, 62, 62, 0.1)';
+                                            e.target.style.color = '#e53e3e';
+                                        }}
                                     >
-                                        🗑️ Видалити заявку
+                                        ×
                                     </button>
                                 </div>
                             </div>

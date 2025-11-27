@@ -1,5 +1,6 @@
 // frontend/src/features/sites/shop/CategoryManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../hooks/useConfirm';
@@ -9,6 +10,7 @@ const CategoryManager = ({ siteId }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams();
     
     const [formData, setFormData] = useState({ id: null, name: '' });
     
@@ -32,6 +34,16 @@ const CategoryManager = ({ siteId }) => {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
+    useEffect(() => {
+        const catIdFromUrl = searchParams.get('categoryId');
+        if (!loading && catIdFromUrl && categories.length > 0) {
+            const catToEdit = categories.find(c => c.id.toString() === catIdFromUrl);
+            if (catToEdit && formData.id !== catToEdit.id) {
+                setFormData({ id: catToEdit.id, name: catToEdit.name });
+            }
+        }
+    }, [loading, categories, searchParams]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.name.trim()) return;
@@ -44,7 +56,7 @@ const CategoryManager = ({ siteId }) => {
                 await apiClient.post('/categories', { siteId, name: formData.name });
                 toast.success('Категорію додано');
             }
-            setFormData({ id: null, name: '' });
+            handleReset();
             fetchData();
         } catch (e) {
             toast.error('Помилка збереження');
@@ -53,6 +65,18 @@ const CategoryManager = ({ siteId }) => {
 
     const handleEdit = (category) => {
         setFormData({ id: category.id, name: category.name });
+        setSearchParams(prev => {
+            prev.set('categoryId', category.id);
+            return prev;
+        });
+    };
+
+    const handleReset = () => {
+        setFormData({ id: null, name: '' });
+        setSearchParams(prev => {
+            prev.delete('categoryId');
+            return prev;
+        });
     };
 
     const handleDelete = async (e, id) => {
@@ -65,7 +89,7 @@ const CategoryManager = ({ siteId }) => {
         })) {
             try {
                 await apiClient.delete(`/categories/${id}`);
-                if (formData.id === id) setFormData({ id: null, name: '' });
+                if (formData.id === id) handleReset();
                 fetchData();
                 toast.success('Видалено');
             } catch (err) {
@@ -221,7 +245,7 @@ const CategoryManager = ({ siteId }) => {
                         {formData.id && (
                             <button 
                                 type="button" 
-                                onClick={() => setFormData({ id: null, name: '' })}
+                                onClick={handleReset}
                                 style={{...primaryButton, background: 'transparent', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-primary)', width: 'auto'}}
                             >
                                 Відміна

@@ -1,9 +1,12 @@
 // frontend/src/features/editor/BlockEditor.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from './EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from './DraggableBlockItem';
 import { resolveAccentColor } from '../sites/tabs/ThemeSettingsTab';
+import ContextMenu from '../sites/components/ContextMenu';
+import { findBlockByPath } from './blockUtils';
+import { useConfirm } from '../../hooks/useConfirm';
 
 const adjustColor = (hex, percent) => {
     const num = parseInt(hex.replace('#', ''), 16);
@@ -38,6 +41,16 @@ const BlockEditor = ({
     isHeaderMode
 }) => {
     
+    const { confirm } = useConfirm();
+
+    const [contextMenu, setContextMenu] = useState({
+        visible: false,
+        x: 0,
+        y: 0,
+        path: null,
+        blockId: null
+    });
+
     const [, dropRef] = useDrop(() => ({
         accept: [DND_TYPE_NEW_BLOCK],
         drop: (item, monitor) => {
@@ -53,6 +66,80 @@ const BlockEditor = ({
             onAddBlock([blocks.length], item.blockType, item.presetData); 
         },
     }), [blocks.length, onAddBlock])[1];
+
+    const handleContextMenu = (e, path, blockId) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            path: path,
+            blockId: blockId
+        });
+    };
+
+    const handleCloseContextMenu = () => {
+        setContextMenu(prev => ({ ...prev, visible: false }));
+    };
+
+    const handleContextMenuAction = async (action) => {
+        const { path } = contextMenu;
+        if (!path) return;
+
+        handleCloseContextMenu();
+
+        switch (action) {
+            case 'edit':
+                onSelectBlock(path);
+                break;
+            case 'duplicate':
+                const blockToClone = findBlockByPath(blocks, path);
+                if (blockToClone) {
+                    const parentPath = path.slice(0, -1);
+                    const currentIndex = path[path.length - 1];
+                    const newPath = [...parentPath, currentIndex + 1];
+                    
+                    onAddBlock(newPath, blockToClone.type, { 
+                        isSavedBlock: true,
+                        content: blockToClone.data 
+                    });
+                }
+                break;
+            case 'delete':
+                const isConfirmed = await confirm({
+                    title: "Видалити блок?",
+                    message: "Ви впевнені, що хочете видалити цей блок? Цю дію не можна буде скасувати.",
+                    type: "danger",
+                    confirmLabel: "Видалити"
+                });
+
+                if (isConfirmed) {
+                    onDeleteBlock(path);
+                }
+                break;
+            case 'moveUp':
+                {
+                    const parentPath = path.slice(0, -1);
+                    const index = path[path.length - 1];
+                    if (index > 0) {
+                        const newPath = [...parentPath, index - 1];
+                        onMoveBlock(path, newPath);
+                    }
+                }
+                break;
+            case 'moveDown':
+                {
+                    const parentPath = path.slice(0, -1);
+                    const index = path[path.length - 1];
+                    const newPath = [...parentPath, index + 1];
+                    onMoveBlock(path, newPath);
+                }
+                break;
+            default:
+                break;
+        }
+    };
 
     const themeSettings = siteData?.theme_settings || {};
     const isSiteDark = siteData?.site_theme_mode === 'dark';
@@ -159,6 +246,7 @@ const BlockEditor = ({
                                 isCollapsed={collapsedBlocks.includes(block.block_id)}
                                 onToggleCollapse={onToggleCollapse}
                                 onBlockSaved={onBlockSaved}
+                                onContextMenu={handleContextMenu}
                             />
                         </React.Fragment>
                     ))}
@@ -215,10 +303,17 @@ const BlockEditor = ({
                 )}
             </div>
 
+            <ContextMenu 
+                visible={contextMenu.visible}
+                x={contextMenu.x}
+                y={contextMenu.y}
+                onClose={handleCloseContextMenu}
+                onAction={handleContextMenuAction}
+            />
+
             <style>
                 {`
                 .site-theme-preview {
-                    /* Ізолюємо стилі сайту всередині цього контейнера */
                     font-family: var(--site-font-main);
                 }
                 

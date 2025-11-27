@@ -19,13 +19,20 @@ const EditorSidebar = ({
     savedBlocksUpdateTrigger,
     isHeaderMode
 }) => {
-    const [activeTab, setActiveTab] = useState('add');
+    const [activeTab, setActiveTab] = useState(() => {
+        return localStorage.getItem('editorActiveTab') || 'add';
+    });
+
+    const handleTabChange = (tabName) => {
+        setActiveTab(tabName);
+        localStorage.setItem('editorActiveTab', tabName);
+    };
 
     useEffect(() => {
         if (isHeaderMode) {
             setActiveTab('settings');
         } else if (activeTab === 'settings' && !selectedBlockPath) {
-            setActiveTab('add');
+            handleTabChange('add');
         }
     }, [isHeaderMode, selectedBlockPath]);
 
@@ -133,11 +140,11 @@ const EditorSidebar = ({
             <nav style={{ display: 'flex', borderBottom: '1px solid var(--platform-border-color)' }}>
                 {!isHeaderMode && (
                     <>
-                        <button style={tabStyle('add')} onClick={() => setActiveTab('add')}>➕ Додати</button>
-                        <button style={tabStyle('layers')} onClick={() => setActiveTab('layers')}>🗂️ Шари</button>
+                        <button style={tabStyle('add')} onClick={() => handleTabChange('add')}>➕ Додати</button>
+                        <button style={tabStyle('layers')} onClick={() => handleTabChange('layers')}>🗂️ Шари</button>
                     </>
                 )}
-                <button style={tabStyle('settings')} onClick={() => setActiveTab('settings')}>⚙️ Налаш.</button>
+                <button style={tabStyle('settings')} onClick={() => handleTabChange('settings')}>⚙️ Налаш.</button>
             </nav>
 
             <div style={{ 

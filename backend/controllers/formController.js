@@ -96,6 +96,26 @@ exports.updateStatus = async (req, res, next) => {
     }
 };
 
+exports.toggleSubmissionPin = async (req, res, next) => {
+    try {
+        const { siteId, submissionId } = req.params;
+        
+        const site = await Site.findByIdAndUserId(siteId, req.user.id);
+        if (!site) {
+            return res.status(403).json({ message: 'Доступ заборонено.' });
+        }
+
+        const newPinState = await FormSubmission.togglePin(submissionId, siteId);
+        
+        res.json({ 
+            message: newPinState ? 'Заявку закріплено' : 'Заявку відкріплено', 
+            is_pinned: newPinState 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.deleteSubmission = async (req, res, next) => {
     try {
         const { siteId, submissionId } = req.params;

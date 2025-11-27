@@ -1,12 +1,23 @@
 // frontend/src/features/sites/tabs/ShopContentTab.jsx
-import React, { useState } from 'react';
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import CategoryManager from '../shop/CategoryManager';
 import ProductManager from '../shop/ProductManager';
 
 const ShopContentTab = ({ siteData }) => {
-    const [activeSubTab, setActiveSubTab] = useState('products');
+    const [searchParams, setSearchParams] = useSearchParams();
+    
+    const activeSubTab = searchParams.get('shopTab') || 'products';
 
-    // Modern Styles
+    const handleTabChange = (tabName) => {
+        setSearchParams(prev => {
+            prev.set('shopTab', tabName);
+            prev.delete('productId');
+            prev.delete('categoryId');
+            return prev;
+        });
+    };
+
     const containerStyle = { 
         maxWidth: '100%',
         margin: '0 auto',
@@ -84,14 +95,14 @@ const ShopContentTab = ({ siteData }) => {
             <div style={navStyle}>
                 <button 
                     style={tabBtnStyle(activeSubTab === 'products')} 
-                    onClick={() => setActiveSubTab('products')}
+                    onClick={() => handleTabChange('products')}
                 >
                     <span style={{fontSize: '1.1rem'}}>📦</span>
                     Товари
                 </button>
                 <button 
                     style={tabBtnStyle(activeSubTab === 'categories')} 
-                    onClick={() => setActiveSubTab('categories')}
+                    onClick={() => handleTabChange('categories')}
                 >
                     <span style={{fontSize: '1.1rem'}}>📂</span>
                     Категорії

@@ -33,13 +33,25 @@ const isLightColor = (hexColor) => {
 
 const Layout = () => {
     const { user, isAdmin, isLoading: isAuthLoading } = useContext(AuthContext);
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        const savedState = localStorage.getItem('sidebarCollapsed');
+        return savedState === 'true';
+    });
+
     const location = useLocation();
 
     const [siteData, setSiteData] = useState(null);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
     const currentSidebarWidth = isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
-    const handleToggleSidebar = () => setIsCollapsed(prev => !prev);
+
+    const handleToggleSidebar = () => {
+        setIsCollapsed(prev => {
+            const newState = !prev;
+            localStorage.setItem('sidebarCollapsed', newState.toString());
+            return newState;
+        });
+    };
 
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);

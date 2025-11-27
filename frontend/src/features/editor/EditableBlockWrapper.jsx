@@ -22,7 +22,8 @@ const EditableBlockWrapper = ({
     selectedBlockPath,
     isCollapsed,
     onToggleCollapse,
-    onBlockSaved
+    onBlockSaved,
+    onContextMenu
 }) => {
     const [isCompact, setIsCompact] = useState(window.innerWidth < 1024);
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -206,6 +207,7 @@ const EditableBlockWrapper = ({
             id={blockDomId}
             ref={wrapperRef}
             onClick={handleSelect}
+            onContextMenu={(e) => onContextMenu && onContextMenu(e, path, block.block_id)}
             style={styles.wrapper}
             className="editable-block-wrapper"
         >

@@ -30,7 +30,14 @@ const SiteDashboardPage = () => {
     const { site_path } = useParams();
     const { siteData, setSiteData, isSiteLoading } = useOutletContext();
     
-    const [activeTab, setActiveTab] = useState('editor');
+    const [activeTab, setActiveTab] = useState(() => {
+        return localStorage.getItem('dashboardActiveTab') || 'editor';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('dashboardActiveTab', activeTab);
+    }, [activeTab]);
+
     const [blocks, setBlocks] = useState([]);
     const [currentPageId, setCurrentPageId] = useState(null);
     const [isPageLoading, setIsPageLoading] = useState(true);

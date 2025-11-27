@@ -1,5 +1,6 @@
 // frontend/src/features/sites/shop/ProductManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import apiClient from '../../../services/api';
 import ImageInput from '../../media/ImageInput';
 import { toast } from 'react-toastify';
@@ -7,13 +8,32 @@ import { useConfirm } from '../../../hooks/useConfirm';
 
 const API_URL = 'http://localhost:5000';
 
-const VariantEditor = ({ variant, onChange, onRemove }) => {
+const VariantEditor = ({ variant, onChange, onRemove, index }) => {
     const [newValueLabel, setNewValueLabel] = useState('');
     const [newValuePrice, setNewValuePrice] = useState('');
     const [newValueSale, setNewValueSale] = useState('');
-    const [editingValueIndex, setEditingValueIndex] = useState(null);
     
+    const [searchParams, setSearchParams] = useSearchParams();
     const { confirm } = useConfirm();
+    const variantIdxParam = searchParams.get('variantIdx');
+    const valueIdxParam = searchParams.get('valueIdx');
+    
+    const editingValueIndex = (variantIdxParam === String(index) && valueIdxParam !== null) 
+        ? parseInt(valueIdxParam) 
+        : null;
+
+    useEffect(() => {
+        if (editingValueIndex !== null && variant.values && variant.values[editingValueIndex]) {
+            const val = variant.values[editingValueIndex];
+            setNewValueLabel(val.label);
+            setNewValuePrice(val.priceModifier || '');
+            setNewValueSale(val.salePercentage || '');
+        } else {
+            setNewValueLabel('');
+            setNewValuePrice('');
+            setNewValueSale('');
+        }
+    }, [editingValueIndex, variant.values]);
 
     const handleSaveValue = (e) => {
         if (e) e.preventDefault();
@@ -40,19 +60,20 @@ const VariantEditor = ({ variant, onChange, onRemove }) => {
         resetInput();
     };
 
-    const startEditing = (idx) => {
-        const val = variant.values[idx];
-        setNewValueLabel(val.label);
-        setNewValuePrice(val.priceModifier || '');
-        setNewValueSale(val.salePercentage || '');
-        setEditingValueIndex(idx);
+    const startEditing = (valIdx) => {
+        setSearchParams(prev => {
+            prev.set('variantIdx', String(index));
+            prev.set('valueIdx', String(valIdx));
+            return prev;
+        });
     };
 
     const resetInput = () => {
-        setNewValueLabel('');
-        setNewValuePrice('');
-        setNewValueSale('');
-        setEditingValueIndex(null);
+        setSearchParams(prev => {
+            prev.delete('variantIdx');
+            prev.delete('valueIdx');
+            return prev;
+        });
     };
 
     const handleRemoveValue = async (idx, label, e) => {
@@ -400,6 +421,7 @@ const ProductManager = ({ siteId }) => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const { confirm } = useConfirm();
+    const [searchParams, setSearchParams] = useSearchParams();
     
     const initialFormState = { 
         id: null, 
@@ -443,6 +465,16 @@ const ProductManager = ({ siteId }) => {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
+    useEffect(() => {
+        const prodIdFromUrl = searchParams.get('productId');
+        if (!loading && prodIdFromUrl && products.length > 0) {
+            const productToEdit = products.find(p => p.id.toString() === prodIdFromUrl);
+            if (productToEdit && formData.id !== productToEdit.id) {
+                openEditor(productToEdit, false);
+            }
+        }
+    }, [loading, products, searchParams]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.name || formData.price <= 0) {
@@ -475,7 +507,7 @@ const ProductManager = ({ siteId }) => {
         }
     };
 
-    const openEditor = (product) => {
+    const openEditor = (product, updateUrl = true) => {
         const img = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length) 
             ? product.image_gallery[0] 
             : (product.image_url || '');
@@ -487,10 +519,23 @@ const ProductManager = ({ siteId }) => {
             variants: Array.isArray(product.variants) ? product.variants : [],
             sale_percentage: product.sale_percentage || 0
         });
+
+        if (updateUrl) {
+            setSearchParams(prev => {
+                prev.set('productId', product.id);
+                return prev;
+            });
+        }
     };
 
     const resetForm = () => {
         setFormData(initialFormState);
+        setSearchParams(prev => {
+            prev.delete('productId');
+            prev.delete('variantIdx');
+            prev.delete('valueIdx');
+            return prev;
+        });
     };
 
     const handleDelete = async (e, id) => {
@@ -776,6 +821,7 @@ const ProductManager = ({ siteId }) => {
                             {formData.variants.map((variant, idx) => (
                                 <VariantEditor 
                                     key={variant.id || idx} 
+                                    index={idx}
                                     variant={variant} 
                                     onChange={(updated) => updateVariant(idx, updated)}
                                     onRemove={() => removeVariant(idx)}
