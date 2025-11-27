@@ -7,7 +7,7 @@ const parseSrcFromIframe = (embedCode) => {
     return (match && match[1]) ? match[1] : null;
 };
 
-const MapBlock = ({ blockData, isEditorPreview }) => {
+const MapBlock = ({ blockData, isEditorPreview, style }) => {
     const { embed_code, sizePreset = 'medium' } = blockData;
     const mapSrc = parseSrcFromIframe(embed_code);
 
@@ -32,7 +32,8 @@ const MapBlock = ({ blockData, isEditorPreview }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                ...style
             }}>
                 <span style={{ fontSize: '2.5rem' }}>🗺️</span>
                 <p style={{ margin: '0.5rem 0 0 0', fontWeight: '500', color: textPrimary }}>Блок карти</p> 
@@ -63,7 +64,8 @@ const MapBlock = ({ blockData, isEditorPreview }) => {
                 backgroundColor: cardBg,
                 borderRadius: '8px', 
                 overflow: 'hidden',
-                pointerEvents: 'none' 
+                pointerEvents: 'none',
+                ...style
             }}>
                 {iframe}
             </div>
@@ -71,7 +73,12 @@ const MapBlock = ({ blockData, isEditorPreview }) => {
     }
 
     return (
-        <div style={{ padding: '20px 0', maxWidth: maxWidth, margin: '0 auto' }}>
+        <div style={{ 
+            padding: '20px 0', 
+            maxWidth: maxWidth, 
+            margin: '0 auto',
+            ...style 
+        }}>
             {iframe}
         </div>
     );

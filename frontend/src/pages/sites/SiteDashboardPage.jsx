@@ -12,8 +12,6 @@ import ThemeSettingsTab from '../../features/sites/tabs/ThemeSettingsTab';
 import SubmissionsTab from '../../features/sites/tabs/SubmissionsTab';
 import GeneralSettingsTab from '../../features/sites/tabs/GeneralSettingsTab';
 import DashboardHeader from '../../components/layout/DashboardHeader';
-
-// Імпорт нового хука
 import useHistory from '../../hooks/useHistory';
 
 import { 
@@ -34,7 +32,6 @@ const SiteDashboardPage = () => {
     
     const [activeTab, setActiveTab] = useState('editor');
     
-    // ЗАМІНА useState на useHistory
     const [blocks, setBlocks, undo, redo, { canUndo, canRedo }] = useHistory([]);
     
     const [currentPageId, setCurrentPageId] = useState(null);
@@ -46,12 +43,9 @@ const SiteDashboardPage = () => {
     const isFooterMode = currentPageId === 'footer';
     const isHeaderMode = currentPageId === 'header';
 
-    // Слухач клавіатури для Ctrl+Z / Ctrl+Y
     useEffect(() => {
         const handleKeyDown = (e) => {
-            // Ігноруємо, якщо фокус на полі введення
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-            // Ігноруємо, якщо відкрита модалка (простий спосіб перевірки)
             if (document.querySelector('.ReactModal__Content')) return; 
 
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
@@ -92,7 +86,6 @@ const SiteDashboardPage = () => {
 
     const fetchPageContent = async (pageId) => {
         setIsPageLoading(true);
-        // setBlocks([], false); // Можна очистити, але краще дочекатися завантаження
         try {
             let content = [];
             if (pageId === 'footer' || pageId === 'header') {
@@ -109,7 +102,6 @@ const SiteDashboardPage = () => {
                 content = response.data.block_content || [];
                 if (typeof content === 'string') content = JSON.parse(content);
             }
-            // ВАЖЛИВО: false означає не записувати початковий стан в історію
             setBlocks(content, false);
         } catch (err) {
             console.error(err);
@@ -125,7 +117,6 @@ const SiteDashboardPage = () => {
         setSelectedBlockPath(null);
     };
 
-    // Всі функції модифікації автоматично записуються в історію, бо useHistory default isHistoryEvent=true
     const handleMoveBlock = (drag, hover) => setBlocks(prev => moveBlock(prev, drag, hover));
     const handleDropBlock = (item, path) => setBlocks(prev => handleDrop(prev, item, path));
     
@@ -139,7 +130,9 @@ const SiteDashboardPage = () => {
         setSelectedBlockPath(null);
     };
     
-    const handleUpdateBlockData = (path, data) => setBlocks(prev => updateBlockDataByPath(prev, path, data));
+    const handleUpdateBlockData = (path, data, addToHistory = true) => {
+        setBlocks(prev => updateBlockDataByPath(prev, path, data), addToHistory);
+    };
     
     const savePageContent = async (currentBlocks) => {
         const blocksToSave = currentBlocks || blocks; 
@@ -179,7 +172,6 @@ const SiteDashboardPage = () => {
                 siteData={siteData}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
-                // Передаємо пропси історії в хедер
                 undo={undo}
                 redo={redo}
                 canUndo={canUndo}

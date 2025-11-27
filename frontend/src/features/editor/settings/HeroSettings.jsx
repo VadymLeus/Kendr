@@ -1,5 +1,5 @@
 // frontend/src/features/editor/settings/HeroSettings.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ImageInput from '../../media/ImageInput';
 import { FONT_LIBRARY } from '../editorConfig';
 import CustomSelect from '../../../components/common/CustomSelect';
@@ -60,21 +60,56 @@ const HeroSettings = ({ data, onChange }) => {
         height: data.height || 'medium',
         fontFamily: data.fontFamily || 'global',
         theme_mode: data.theme_mode || 'auto',
-        overlay_opacity: data.overlay_opacity !== undefined ? data.overlay_opacity : 0.5
+        overlay_opacity: data.overlay_opacity !== undefined ? data.overlay_opacity : 0.5,
+        ...data
     };
+    
+    const [localTitle, setLocalTitle] = useState(safeData.title);
+    const [localSubtitle, setLocalSubtitle] = useState(safeData.subtitle);
+
+    useEffect(() => {
+        setLocalTitle(safeData.title);
+        setLocalSubtitle(safeData.subtitle);
+    }, [safeData.title, safeData.subtitle]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        onChange({ ...safeData, [name]: value });
+        onChange({ ...safeData, [name]: value }, true);
+    };
+
+    const handleOpacityChange = (e) => {
+        onChange({ ...safeData, overlay_opacity: parseFloat(e.target.value) }, false);
+    };
+
+    const handleOpacityCommit = (e) => {
+        onChange({ ...safeData, overlay_opacity: parseFloat(e.target.value) }, true);
+    };
+
+    const handleTitleChange = (e) => {
+        setLocalTitle(e.target.value);
+        onChange({ ...safeData, title: e.target.value }, false);
+    };
+
+    const handleTitleBlur = () => {
+        onChange({ ...safeData, title: localTitle }, true);
+    };
+
+    const handleSubtitleChange = (e) => {
+        setLocalSubtitle(e.target.value);
+        onChange({ ...safeData, subtitle: e.target.value }, false);
+    };
+
+    const handleSubtitleBlur = () => {
+        onChange({ ...safeData, subtitle: localSubtitle }, true);
     };
 
     const handleImageChange = (newUrl) => {
         const relativeUrl = newUrl.replace(/^http:\/\/localhost:5000/, '');
-        onChange({ ...safeData, bg_image: relativeUrl });
+        onChange({ ...safeData, bg_image: relativeUrl }, true);
     };
 
     const handleAlignmentChange = (alignment) => {
-        onChange({ ...safeData, alignment });
+        onChange({ ...safeData, alignment }, true);
     };
     
     const heightOptions = [
@@ -103,7 +138,7 @@ const HeroSettings = ({ data, onChange }) => {
                         <button 
                             type="button"
                             style={toggleButtonStyle(safeData.theme_mode === 'auto')}
-                            onClick={() => onChange({ ...safeData, theme_mode: 'auto' })}
+                            onClick={() => onChange({ ...safeData, theme_mode: 'auto' }, true)}
                             title="Як на сайті"
                         >
                             🌓 Авто
@@ -111,7 +146,7 @@ const HeroSettings = ({ data, onChange }) => {
                         <button 
                             type="button"
                             style={toggleButtonStyle(safeData.theme_mode === 'light')}
-                            onClick={() => onChange({ ...safeData, theme_mode: 'light' })}
+                            onClick={() => onChange({ ...safeData, theme_mode: 'light' }, true)}
                             title="Чорний текст на білому"
                         >
                             ☀️ Світла
@@ -119,7 +154,7 @@ const HeroSettings = ({ data, onChange }) => {
                         <button 
                             type="button"
                             style={toggleButtonStyle(safeData.theme_mode === 'dark')}
-                            onClick={() => onChange({ ...safeData, theme_mode: 'dark' })}
+                            onClick={() => onChange({ ...safeData, theme_mode: 'dark' }, true)}
                             title="Білий текст на темному"
                         >
                             🌙 Темна
@@ -141,7 +176,9 @@ const HeroSettings = ({ data, onChange }) => {
                         max="0.9" 
                         step="0.1" 
                         value={safeData.overlay_opacity}
-                        onChange={handleChange}
+                        onChange={handleOpacityChange}
+                        onMouseUp={handleOpacityCommit}
+                        onTouchEnd={handleOpacityCommit}
                         style={{ width: '100%', cursor: 'pointer' }}
                     />
                 </div>
@@ -202,8 +239,9 @@ const HeroSettings = ({ data, onChange }) => {
                     <input 
                         type="text" 
                         name="title" 
-                        value={safeData.title}
-                        onChange={handleChange}
+                        value={localTitle}
+                        onChange={handleTitleChange} 
+                        onBlur={handleTitleBlur}
                         placeholder="Головний заголовок"
                         style={inputStyle}
                     />
@@ -213,8 +251,9 @@ const HeroSettings = ({ data, onChange }) => {
                     <label style={labelStyle}>Підзаголовок:</label>
                     <textarea 
                         name="subtitle" 
-                        value={safeData.subtitle}
-                        onChange={handleChange}
+                        value={localSubtitle}
+                        onChange={handleSubtitleChange} 
+                        onBlur={handleSubtitleBlur}
                         placeholder="Короткий опис"
                         rows="3"
                         style={textareaStyle}

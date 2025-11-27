@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
 
-const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
+const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [status, setStatus] = useState({ loading: false, error: '', success: '' });
     
@@ -75,7 +75,8 @@ const FormBlock = ({ blockData, siteData, isEditorPreview }) => {
         border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
         maxWidth: '600px',
         margin: '0 auto',
-        borderRadius: '8px'
+        borderRadius: '8px',
+        ...style
     };
 
     return (

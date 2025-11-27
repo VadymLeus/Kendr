@@ -16,7 +16,7 @@ const formatBorderRadius = (radius) => {
     return radius; 
 };
 
-const ImageBlock = ({ blockData, isEditorPreview, siteData }) => {
+const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
     
     const siteBg = 'var(--site-bg)';
     const siteBorderColor = 'var(--site-border-color)';
@@ -226,7 +226,8 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData }) => {
         width: '100%',
         maxWidth: widthMap[width] || '700px',
         margin: '0 auto',
-        padding: 0
+        padding: 0,
+        ...style
     };
 
     return (

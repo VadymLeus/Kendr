@@ -15,6 +15,7 @@ import MapSettings from '../settings/MapSettings';
 import AccordionSettings from '../settings/AccordionSettings';
 import SocialIconsSettings from '../settings/SocialIconsSettings';
 import HeaderSettings from '../settings/HeaderSettings';
+import SpacingControl from '../settings/components/SpacingControl';
 
 const SettingsComponentMap = {
     categories: CategoriesSettings,
@@ -73,15 +74,61 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
         )
     }
 
-    const handleLiveUpdate = (newData) => {
-        onUpdateBlockData(selectedBlockPath, newData);
+    const handleLiveUpdate = (newData, addToHistory = true) => {
+        onUpdateBlockData(selectedBlockPath, newData, addToHistory);
     };
+
+    const handleStyleUpdate = (newStyles, addToHistory = true) => {
+        console.log('SpacingControl onChange:', { 
+            currentStyles: selectedBlock.data.styles,
+            newStyles,
+            addToHistory 
+        });
+        
+        const newData = { 
+            ...selectedBlock.data, 
+            styles: { 
+                ...selectedBlock.data.styles, 
+                ...newStyles 
+            }
+        };
+        onUpdateBlockData(selectedBlockPath, newData, addToHistory);
+    };
+
+    console.log('Selected block styles:', selectedBlock.data.styles);
 
     return (
         <div>
              <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>
                 Налаштування: {selectedBlock.type}
             </h3>
+            
+            <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ 
+                    fontSize: '0.9rem', 
+                    textTransform: 'uppercase', 
+                    color: 'var(--platform-text-secondary)', 
+                    marginBottom: '10px' 
+                }}>
+                    Вигляд блоку
+                </h4>
+                <SpacingControl 
+                    styles={selectedBlock.data.styles || {}} 
+                    onChange={handleStyleUpdate} 
+                />
+            </div>
+            
+            <hr style={{ border: 'none', borderTop: '1px solid var(--platform-border-color)', margin: '20px 0' }} />
+
+            <h4 style={{ 
+                fontSize: '0.9rem', 
+                textTransform: 'uppercase', 
+                color: 'var(--platform-text-secondary)', 
+                marginBottom: '10px' 
+            }}>
+                Контент та параметри
+            </h4>
+
             <SettingsComponent
                 data={selectedBlock.data}
                 onChange={handleLiveUpdate}

@@ -112,6 +112,12 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                     );
                 }
 
+                const styles = block.data?.styles || {};
+                const dynamicStyle = {
+                    paddingTop: styles.paddingTop ? `${styles.paddingTop}px` : '60px',
+                    paddingBottom: styles.paddingBottom ? `${styles.paddingBottom}px` : '60px'
+                };
+
                 return (
                     <Suspense
                         key={block.block_id || index}
@@ -151,6 +157,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                             blockData={block.data}
                             siteData={siteData}
                             isEditorPreview={isEditorPreview}
+                            style={dynamicStyle} 
                             {...props}
                             block={block}
                         />

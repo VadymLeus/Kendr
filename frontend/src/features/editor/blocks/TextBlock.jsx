@@ -1,10 +1,10 @@
 // frontend/src/features/editor/blocks/TextBlock.jsx
 import React from 'react';
 
-const TextBlock = ({ blockData, isEditorPreview }) => {
-    const { content, alignment = 'left', style = 'p', fontFamily } = blockData;
+const TextBlock = ({ blockData, isEditorPreview, style }) => {
+    const { content, alignment = 'left', style: textTag = 'p', fontFamily } = blockData;
     
-    const Tag = ['p', 'h1', 'h2', 'h3'].includes(style) ? style : 'p';
+    const Tag = ['p', 'h1', 'h2', 'h3'].includes(textTag) ? textTag : 'p';
     
     const textPrimary = 'var(--site-text-primary)';
     const textSecondary = 'var(--site-text-secondary)';
@@ -29,11 +29,13 @@ const TextBlock = ({ blockData, isEditorPreview }) => {
 
     return (
         <div style={{ 
-            padding: '20px',
             background: bgStyle,
             border: borderStyle, 
             borderRadius: '8px',
-            transition: 'background 0.3s ease'
+            transition: 'background 0.3s ease',
+            paddingLeft: '20px',
+            paddingRight: '20px',
+            ...style 
         }}>
             <Tag style={blockStyle}>
                 {content || (isEditorPreview ? 'Текстовий блок (порожній)' : '')}

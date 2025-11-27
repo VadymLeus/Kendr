@@ -4,15 +4,13 @@ import { Link } from 'react-router-dom';
 
 const API_URL = 'http://localhost:5000';
 
-const HeroBlock = ({ blockData, isEditorPreview }) => {
-    // Извлекаем данные из blockData
+const HeroBlock = ({ blockData, isEditorPreview, style }) => {
     const { 
         bg_image, title, subtitle, button_text, button_link, 
         alignment = 'center', height = 'medium', fontFamily, 
         theme_mode = 'auto', overlay_opacity = 0
     } = blockData;
 
-    // Определяем класс темы (он переопределит --site-* переменные локально, если нужно)
     let themeClass = '';
     if (theme_mode === 'dark') themeClass = 'block-theme-dark';
     if (theme_mode === 'light') themeClass = 'block-theme-light';
@@ -21,7 +19,6 @@ const HeroBlock = ({ blockData, isEditorPreview }) => {
         ? (bg_image.startsWith('http') ? bg_image : `${API_URL}${bg_image}`)
         : null;
 
-    // Маппинг высоты и выравнивания
     const heightMap = { 
         small: '300px', 
         medium: '500px', 
@@ -41,7 +38,6 @@ const HeroBlock = ({ blockData, isEditorPreview }) => {
         minHeight: '300px',
         backgroundImage: fullImageUrl ? `url(${fullImageUrl})` : 'none',
         
-        // ВАЖНО: Используем переменные сайта
         backgroundColor: 'var(--site-bg)', 
         color: 'var(--site-text-primary)',
         
@@ -51,7 +47,6 @@ const HeroBlock = ({ blockData, isEditorPreview }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: alignMap[alignment] || 'center',
-        padding: '20px',
         boxSizing: 'border-box',
         overflow: 'hidden'
     };
@@ -64,15 +59,12 @@ const HeroBlock = ({ blockData, isEditorPreview }) => {
         textAlign: alignment,
         padding: '0 20px',
         fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : 'var(--site-font-main, inherit)',
-        
-        // Текст наследует цвет от контейнера (который берет из --site-text-primary или переопределения темы)
         color: 'inherit' 
     };
     
     const buttonStyle = {
         display: 'inline-block',
         padding: '12px 32px',
-        // Кнопки используют акцент сайта
         backgroundColor: 'var(--site-accent)', 
         color: 'var(--site-accent-text)',
         borderRadius: 'var(--btn-radius, 8px)', 
@@ -86,7 +78,6 @@ const HeroBlock = ({ blockData, isEditorPreview }) => {
         boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
     };
 
-    // Компонент кнопки (span для превью, Link для сайта)
     const ButtonComponent = isEditorPreview ? 'span' : Link;
     const buttonProps = isEditorPreview ? {} : { to: button_link || '#' };
 
@@ -109,7 +100,6 @@ const HeroBlock = ({ blockData, isEditorPreview }) => {
                     fontWeight: '800',
                     margin: '0 0 1rem 0',
                     lineHeight: '1.1',
-                    // Заголовки тоже наследуют цвет, чтобы работать на темном фоне
                     color: 'inherit', 
                     textShadow: theme_mode === 'light' ? 'none' : '0 2px 4px rgba(0,0,0,0.3)'
                 }}>{title}</h1>}

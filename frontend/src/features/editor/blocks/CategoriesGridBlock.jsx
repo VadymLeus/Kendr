@@ -75,7 +75,7 @@ const CategoryItem = ({ item, isEditorPreview }) => {
     );
 };
 
-const CategoriesGridBlock = ({ blockData, isEditorPreview }) => {
+const CategoriesGridBlock = ({ blockData, isEditorPreview, style }) => {
     const { columns = 3, items = [] } = blockData;
 
     const textPrimary = 'var(--site-text-primary)';
@@ -91,7 +91,8 @@ const CategoriesGridBlock = ({ blockData, isEditorPreview }) => {
         ...(isEditorPreview && {
              border: `1px dashed ${borderColor}`,
              borderRadius: '8px'
-        })
+        }),
+        ...style
     };
 
     const gridStyle = {

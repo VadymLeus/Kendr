@@ -1,7 +1,7 @@
 // frontend/src/features/editor/blocks/FeaturesBlock.jsx
 import React from 'react';
 
-const FeaturesBlock = ({ blockData, isEditorPreview }) => {
+const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
     const { title, items = [], columns = 3 } = blockData;
     const wrapperStyle = {
         padding: '40px 20px',
@@ -9,6 +9,7 @@ const FeaturesBlock = ({ blockData, isEditorPreview }) => {
         backgroundColor: isEditorPreview ? 'var(--site-card-bg)' : 'transparent',
         border: isEditorPreview ? `1px dashed var(--site-border-color)` : 'none',
         borderRadius: isEditorPreview ? '8px' : '0',
+        ...style
     };
 
     const containerStyle = {

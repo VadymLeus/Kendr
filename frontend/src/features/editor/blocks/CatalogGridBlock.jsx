@@ -222,7 +222,7 @@ const ProductCard = ({ product, siteData, isEditorPreview }) => {
     );
 };
 
-const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
+const CatalogGridBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const allProducts = siteData?.products || [];
     
     const productsToDisplay = useMemo(() => {
@@ -267,12 +267,24 @@ const CatalogGridBlock = ({ blockData, siteData, isEditorPreview }) => {
         };
         
     const containerStyle = isEditorPreview
-        ? { padding: '10px', background: siteCardBg }
-        : { padding: '40px 20px', background: siteBg };
+        ? { 
+            padding: '10px', 
+            background: siteCardBg,
+            ...style
+        }
+        : { 
+            padding: '40px 20px', 
+            background: siteBg,
+            ...style
+        };
 
     if (productsToDisplay.length === 0 && !isEditorPreview) {
         return (
-            <div style={{ padding: '20px', textAlign: 'center' }}>
+            <div style={{ 
+                padding: '20px', 
+                textAlign: 'center',
+                ...style 
+            }}>
                 <h3>{blockData.title || 'Товари'}</h3>
                 <p style={{ color: siteTextSecondary }}>Немає товарів для відображення.</p>
             </div>

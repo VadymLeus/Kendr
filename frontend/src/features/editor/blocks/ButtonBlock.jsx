@@ -1,7 +1,7 @@
 // frontend/src/features/editor/blocks/ButtonBlock.jsx
 import React from 'react';
 
-const ButtonBlock = ({ blockData, isEditorPreview }) => {
+const ButtonBlock = ({ blockData, isEditorPreview, style }) => {
     const { text, link, styleType, alignment, targetBlank } = blockData;
 
     const themeClass = styleType === 'secondary' ? 'btn-site-secondary' : 'btn-site-primary';
@@ -12,7 +12,8 @@ const ButtonBlock = ({ blockData, isEditorPreview }) => {
         background: isEditorPreview ? 'var(--site-card-bg)' : 'transparent',
         border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
         borderRadius: isEditorPreview ? '8px' : '0',
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        ...style
     };
 
     const handleClick = (e) => {

@@ -2,7 +2,7 @@
 import React from 'react';
 import AccordionItem from './AccordionItem';
 
-const AccordionBlock = ({ blockData, isEditorPreview }) => {
+const AccordionBlock = ({ blockData, isEditorPreview, style }) => {
     const { items = [], fontFamily } = blockData;
     
     const containerStyle = {
@@ -13,7 +13,8 @@ const AccordionBlock = ({ blockData, isEditorPreview }) => {
         fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : 'var(--site-font-main, inherit)',
         
         border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
-        borderRadius: isEditorPreview ? '8px' : '0'
+        borderRadius: isEditorPreview ? '8px' : '0',
+        ...style
     };
 
     if (items.length === 0) {

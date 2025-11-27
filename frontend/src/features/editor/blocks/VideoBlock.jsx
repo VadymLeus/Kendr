@@ -24,7 +24,7 @@ const getEmbedUrl = (url) => {
     return embedUrl;
 };
 
-const VideoBlock = ({ blockData, isEditorPreview }) => {
+const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     const { url, sizePreset = 'medium' } = blockData;
     const embedUrl = getEmbedUrl(url);
 
@@ -42,7 +42,8 @@ const VideoBlock = ({ blockData, isEditorPreview }) => {
         background: isEditorPreview ? cardBg : 'transparent',
         borderRadius: '8px',
         overflow: 'hidden',
-        border: isEditorPreview ? `1px dashed ${borderColor}` : 'none'
+        border: isEditorPreview ? `1px dashed ${borderColor}` : 'none',
+        ...style
     };
 
     const responsiveContainerStyle = {

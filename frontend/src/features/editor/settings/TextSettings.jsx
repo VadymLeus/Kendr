@@ -1,5 +1,5 @@
 // frontend/src/features/editor/settings/TextSettings.jsx
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { FONT_LIBRARY } from '../editorConfig';
 import CustomSelect from '../../../components/common/CustomSelect';
 
@@ -34,14 +34,33 @@ const toggleButtonStyle = (isActive) => ({
 
 const TextSettings = ({ data, onChange }) => {
     const textareaRef = useRef(null);
+    
+    const [localContent, setLocalContent] = useState(data.content || '');
 
-    const handleChange = (e) => {
+    useEffect(() => {
+        setLocalContent(data.content || '');
+    }, [data.content]);
+
+    const handleContentChange = (e) => {
+        const val = e.target.value;
+        setLocalContent(val);
+        onChange({ ...data, content: val }, false);
+        autoResizeTextarea();
+    };
+
+    const handleContentBlur = () => {
+        if (localContent !== data.content) {
+             onChange({ ...data, content: localContent }, true);
+        }
+    };
+
+    const handleAttributeChange = (e) => {
         const { name, value } = e.target;
-        onChange({ ...data, [name]: value });
+        onChange({ ...data, [name]: value }, true); 
     };
     
     const handleAlignmentChange = (alignment) => {
-        onChange({ ...data, alignment });
+        onChange({ ...data, alignment }, true);
     };
 
     const autoResizeTextarea = () => {
@@ -54,7 +73,7 @@ const TextSettings = ({ data, onChange }) => {
 
     useEffect(() => {
         autoResizeTextarea();
-    }, [data.content]);
+    }, [localContent]);
 
     const styleOptions = [
         { value: 'p', label: 'Звичайний текст (p)' },
@@ -70,15 +89,15 @@ const TextSettings = ({ data, onChange }) => {
                 <textarea 
                     ref={textareaRef}
                     name="content" 
-                    value={data.content || ''} 
-                    onChange={handleChange} 
+                    value={localContent}
+                    onChange={handleContentChange} 
+                    onBlur={handleContentBlur}
                     placeholder="Введіть основний текст тут..."
                     style={{
                         ...inputStyle, 
                         minHeight: '150px',
                         overflow: 'hidden'
                     }}
-                    onInput={autoResizeTextarea}
                 />
             </div>
 
@@ -115,14 +134,14 @@ const TextSettings = ({ data, onChange }) => {
                     <CustomSelect 
                         name="style" 
                         value={data.style || 'p'} 
-                        onChange={handleChange}
+                        onChange={(e) => handleAttributeChange(e)}
                         options={styleOptions}
                         style={inputStyle}
                     />
                     <CustomSelect
                         name="fontFamily"
                         value={data.fontFamily || 'global'}
-                        onChange={handleChange}
+                        onChange={(e) => onChange({ ...data, fontFamily: e.target.value }, true)}
                         options={FONT_LIBRARY}
                         style={inputStyle}
                     />
