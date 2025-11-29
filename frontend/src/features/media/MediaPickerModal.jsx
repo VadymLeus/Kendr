@@ -141,10 +141,16 @@ const CropperStep = ({
     );
 };
 
-const UploadTab = ({ onUploadSuccess }) => {
+const UploadTab = ({ onUploadSuccess, allowedTypes = 'image' }) => {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const fileInputRef = useRef(null);
+
+    const getAcceptedTypes = () => {
+        if (allowedTypes === 'image') return 'image/*';
+        if (allowedTypes === 'video') return 'video/*';
+        return 'image/*,video/*';
+    };
 
     const handleFileChange = async (e) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -152,7 +158,7 @@ const UploadTab = ({ onUploadSuccess }) => {
             
             const maxSize = 15 * 1024 * 1024;
             if (file.size > maxSize) {
-                toast.error('Файл занадто великий (макс 15MB). Спробуйте зменшити розмір або обрати інший.');
+                toast.error('Файл занадто великий (макс 50MB). Спробуйте зменшити розмір або обрати інший.');
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 return;
             }
@@ -168,7 +174,7 @@ const UploadTab = ({ onUploadSuccess }) => {
                 });
                 
                 toast.success('Оригінал завантажено. Тепер обріжте зображення.');
-                onUploadSuccess(response.data.path_full, file.name);
+                onUploadSuccess(response.data.path_full, file.name, file.type);
 
             } catch (err) {
                 const msg = err.response?.data?.message || 'Помилка завантаження.';
@@ -185,7 +191,7 @@ const UploadTab = ({ onUploadSuccess }) => {
         <div style={tabContentStyle} className="custom-scrollbar">
             <input
                 type="file"
-                accept="image/*"
+                accept={getAcceptedTypes()}
                 onChange={handleFileChange}
                 ref={fileInputRef}
                 style={{ display: 'none' }}
@@ -195,7 +201,7 @@ const UploadTab = ({ onUploadSuccess }) => {
                 style={uploadBoxStyle} 
                 onClick={() => !uploading && fileInputRef.current?.click()}
             >
-                {uploading ? 'Завантаження...' : 'Натисніть, щоб вибрати зображення (макс 15MB)'}
+                {uploading ? 'Завантаження...' : `Натисніть, щоб вибрати файл (макс 15MB) - ${allowedTypes === 'image' ? 'зображення' : allowedTypes === 'video' ? 'відео' : 'зображення/відео'}`}
             </div>
             
             {error && <p style={{ color: 'var(--platform-danger)', marginTop: '1rem' }}>{error}</p>}
@@ -203,7 +209,7 @@ const UploadTab = ({ onUploadSuccess }) => {
     );
 };
 
-const LibraryTab = ({ onSelectImage }) => {
+const LibraryTab = ({ onSelectImage, allowedTypes = 'all' }) => {
     const [mediaFiles, setMediaFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -223,33 +229,59 @@ const LibraryTab = ({ onSelectImage }) => {
         fetchMedia();
     }, []);
 
+    const displayedFiles = mediaFiles.filter(file => {
+        if (allowedTypes === 'image') return file.mime_type.startsWith('image/');
+        if (allowedTypes === 'video') return file.mime_type.startsWith('video/');
+        return true; 
+    });
+
     const handleSelect = (file) => {
-        onSelectImage(file.path_full, file.original_file_name);
+        onSelectImage(file.path_full, file.original_file_name, file.mime_type);
     }
 
     return (
         <div style={tabContentStyle} className="custom-scrollbar">
             {loading ? <p style={{ color: 'var(--platform-text-secondary)' }}>Завантаження...</p> : 
              error ? <div style={{ color: 'var(--platform-danger)' }}>{error}</div> : 
-             mediaFiles.length === 0 ? <p style={{ color: 'var(--platform-text-secondary)' }}>Ваша медіатека порожня.</p> : (
+             displayedFiles.length === 0 ? <p style={{ color: 'var(--platform-text-secondary)' }}>Ваша медіатека порожня.</p> : (
                 <div style={mediaGridStyle}>
-                    {mediaFiles.map(file => (
-                        <div 
-                            key={file.id} 
-                            style={mediaGridItemStyle}
-                            onClick={() => handleSelect(file)}
-                        >
-                            <img 
-                                src={`${API_URL}${file.path_thumb}`} 
-                                alt={file.alt_text || file.original_file_name} 
-                                style={imageStyle}
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = "https://placehold.co/100x100/AAAAAA/FFFFFF?text=Помилка";
-                                }}
-                            />
-                        </div>
-                    ))}
+                    {displayedFiles.map(file => {
+                        const isVideo = file.mime_type.startsWith('video/');
+                        return (
+                            <div 
+                                key={file.id} 
+                                style={mediaGridItemStyle}
+                                onClick={() => handleSelect(file)}
+                            >
+                                {isVideo ? (
+                                    <>
+                                        <img 
+                                            src={`${API_URL}${file.path_thumb}`} 
+                                            alt={file.alt_text || file.original_file_name} 
+                                            style={imageStyle}
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = "https://placehold.co/100x100/AAAAAA/FFFFFF?text=Відео";
+                                            }}
+                                        />
+                                        <div style={videoOverlayStyle}>
+                                            <span style={videoIconStyle}>▶️</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <img 
+                                        src={`${API_URL}${file.path_thumb}`} 
+                                        alt={file.alt_text || file.original_file_name} 
+                                        style={imageStyle}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "https://placehold.co/100x100/AAAAAA/FFFFFF?text=Помилка";
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
              )}
         </div>
@@ -269,7 +301,7 @@ const DefaultLogosTab = ({ onSelectImage }) => {
     
     const handleSelect = (logoUrl) => {
         const finalPath = logoUrl.startsWith('http') ? logoUrl : `${API_URL}${logoUrl}`;
-        onSelectImage(finalPath, 'default');
+        onSelectImage(finalPath, 'default', 'image/jpeg');
     }
 
     return (
@@ -308,6 +340,7 @@ const MediaPickerModal = ({
     onSelectImage, 
     aspect, 
     circularCrop,
+    allowedTypes = 'image',
     defaultTab = 'library'
 }) => {
     const [activeTab, setActiveTab] = useState(defaultTab);
@@ -324,12 +357,16 @@ const MediaPickerModal = ({
         onClose();
     };
 
-    const handleImageSelection = (pathFull, fileName = 'media-file') => {
-        if (fileName === 'default') {
+    const handleImageSelection = (pathFull, fileName = 'media-file', mimeType = 'image/jpeg') => {
+        const isVideo = mimeType && mimeType.startsWith('video/');
+        const requestingVideo = allowedTypes === 'video';
+
+        if (isVideo || requestingVideo || !aspect) {
             onSelectImage(pathFull);
             handleClose();
             return;
         }
+
         setImageToCropSrc(`${API_URL}${pathFull}`);
         setImageFileName(fileName);
         setStep('crop');
@@ -394,7 +431,7 @@ const MediaPickerModal = ({
             <div style={modalOverlayStyle} onClick={handleClose}>
                 <div style={modalContainerStyle} onClick={e => e.stopPropagation()}>
                     <div style={modalHeaderStyle}>
-                        <h4 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>Вибір зображення</h4>
+                        <h4 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>Вибір медіа</h4>
                         <button onClick={handleClose} style={closeButtonStyle}>&times;</button>
                     </div>
                     
@@ -427,13 +464,19 @@ const MediaPickerModal = ({
                         flexDirection: 'column' 
                     }}>
                         {activeTab === 'library' && (
-                            <LibraryTab onSelectImage={handleImageSelection} />
+                            <LibraryTab 
+                                onSelectImage={(file) => handleImageSelection(file.path_full, file.original_file_name, file.mime_type)} 
+                                allowedTypes={allowedTypes}
+                            />
                         )}
                         {activeTab === 'default' && (
                             <DefaultLogosTab onSelectImage={handleImageSelection} />
                         )}
                         {activeTab === 'upload' && (
-                            <UploadTab onUploadSuccess={handleImageSelection} /> 
+                            <UploadTab 
+                                onUploadSuccess={handleImageSelection} 
+                                allowedTypes={allowedTypes}
+                            /> 
                         )}
                     </div>
                 </div>
@@ -555,6 +598,24 @@ const imageStyle = {
     height: '100%',
     objectFit: 'cover',
     display: 'block'
+};
+
+const videoOverlayStyle = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+};
+
+const videoIconStyle = {
+    fontSize: '24px',
+    color: 'white',
+    textShadow: '0 2px 4px rgba(0,0,0,0.5)'
 };
 
 export default MediaPickerModal;

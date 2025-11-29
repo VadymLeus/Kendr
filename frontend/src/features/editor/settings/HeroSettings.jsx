@@ -1,6 +1,7 @@
 // frontend/src/features/editor/settings/HeroSettings.jsx
 import React, { useState, useEffect } from 'react';
 import ImageInput from '../../media/ImageInput';
+import MediaInput from '../../media/MediaInput';
 import { FONT_LIBRARY } from '../editorConfig';
 import CustomSelect from '../../../components/common/CustomSelect';
 
@@ -18,7 +19,10 @@ const inputStyle = {
 const textareaStyle = {
     ...inputStyle,
     minHeight: '80px',
-    resize: 'vertical'
+    resize: 'vertical',
+    overflow: 'auto',
+    fontFamily: 'inherit',
+    lineHeight: '1.5'
 };
 const sectionTitleStyle = {
     fontSize: '1rem',
@@ -50,7 +54,9 @@ const toggleButtonStyle = (isActive) => ({
 const HeroSettings = ({ data, onChange }) => {
     
     const safeData = {
+        bg_type: data.bg_type || 'image',
         bg_image: data.bg_image || data.imageUrl || '',
+        bg_video: data.bg_video || '',
         overlay_color: data.overlay_color || 'rgba(0, 0, 0, 0.5)',
         title: data.title || '',
         subtitle: data.subtitle || '',
@@ -108,8 +114,17 @@ const HeroSettings = ({ data, onChange }) => {
         onChange({ ...safeData, bg_image: relativeUrl }, true);
     };
 
+    const handleVideoChange = (newUrl) => {
+        const relativeUrl = newUrl.replace(/^http:\/\/localhost:5000/, '');
+        onChange({ ...safeData, bg_video: relativeUrl }, true);
+    };
+
     const handleAlignmentChange = (alignment) => {
         onChange({ ...safeData, alignment }, true);
+    };
+
+    const handleChangeDirect = (name, value) => {
+        onChange({ ...safeData, [name]: value }, true);
     };
     
     const heightOptions = [
@@ -122,15 +137,68 @@ const HeroSettings = ({ data, onChange }) => {
     return (
         <div> 
             <div style={{ marginBottom: '2rem' }}>
-                <h4 style={sectionTitleStyle}>🖼️ Фон та вигляд</h4>
-                
+                <h4 style={sectionTitleStyle}>🖼️ Фон блоку</h4>
+
                 <div style={formGroupStyle}>
-                    <label style={labelStyle}>Фонове зображення:</label>
-                    <ImageInput 
-                        value={safeData.bg_image}
-                        onChange={handleImageChange} 
-                    />
+                    <label style={labelStyle}>Тип фону:</label>
+                    <div style={toggleButtonContainerStyle}>
+                        <button 
+                            type="button"
+                            style={toggleButtonStyle(safeData.bg_type === 'image')}
+                            onClick={() => handleChangeDirect('bg_type', 'image')}
+                        >
+                            🖼️ Картинка
+                        </button>
+                        <button 
+                            type="button"
+                            style={toggleButtonStyle(safeData.bg_type === 'video')}
+                            onClick={() => handleChangeDirect('bg_type', 'video')}
+                        >
+                            🎥 Відео
+                        </button>
+                    </div>
                 </div>
+
+                {safeData.bg_type === 'image' && (
+                    <div style={formGroupStyle}>
+                        <label style={labelStyle}>Зображення:</label>
+                        <div style={{height: '150px'}}>
+                            <ImageInput 
+                                value={safeData.bg_image}
+                                onChange={handleImageChange}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {safeData.bg_type === 'video' && (
+                    <>
+                        <div style={formGroupStyle}>
+                            <label style={labelStyle}>Відео файл (MP4/WebM):</label>
+                            <div style={{height: '150px'}}>
+                                <MediaInput 
+                                    type="video"
+                                    value={safeData.bg_video}
+                                    onChange={handleVideoChange}
+                                    placeholder="Завантажити відео"
+                                />
+                            </div>
+                            <small style={{display:'block', marginTop:5, color:'var(--platform-text-secondary)', fontSize: '0.8rem'}}>
+                                Рекомендовано: короткі зациклені відео до 15МБ.
+                            </small>
+                        </div>
+
+                        <div style={formGroupStyle}>
+                            <label style={labelStyle}>Постер (показується, поки відео вантажиться):</label>
+                            <div style={{height: '100px'}}>
+                                <ImageInput 
+                                    value={safeData.bg_image}
+                                    onChange={handleImageChange}
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 <div style={formGroupStyle}>
                     <label style={labelStyle}>🎨 Тема блоку (Контраст):</label>
@@ -138,7 +206,7 @@ const HeroSettings = ({ data, onChange }) => {
                         <button 
                             type="button"
                             style={toggleButtonStyle(safeData.theme_mode === 'auto')}
-                            onClick={() => onChange({ ...safeData, theme_mode: 'auto' }, true)}
+                            onClick={() => handleChangeDirect('theme_mode', 'auto')}
                             title="Як на сайті"
                         >
                             🌓 Авто
@@ -146,7 +214,7 @@ const HeroSettings = ({ data, onChange }) => {
                         <button 
                             type="button"
                             style={toggleButtonStyle(safeData.theme_mode === 'light')}
-                            onClick={() => onChange({ ...safeData, theme_mode: 'light' }, true)}
+                            onClick={() => handleChangeDirect('theme_mode', 'light')}
                             title="Чорний текст на білому"
                         >
                             ☀️ Світла
@@ -154,7 +222,7 @@ const HeroSettings = ({ data, onChange }) => {
                         <button 
                             type="button"
                             style={toggleButtonStyle(safeData.theme_mode === 'dark')}
-                            onClick={() => onChange({ ...safeData, theme_mode: 'dark' }, true)}
+                            onClick={() => handleChangeDirect('theme_mode', 'dark')}
                             title="Білий текст на темному"
                         >
                             🌙 Темна
@@ -320,6 +388,29 @@ const HeroSettings = ({ data, onChange }) => {
                     </div>
                 )}
             </div>
+
+            <style>
+                {`
+                textarea {
+                    overflow: auto !important;
+                    resize: vertical !important;
+                }
+                textarea::-webkit-scrollbar {
+                    width: 8px;
+                }
+                textarea::-webkit-scrollbar-track {
+                    background: var(--platform-bg);
+                    border-radius: 4px;
+                }
+                textarea::-webkit-scrollbar-thumb {
+                    background: var(--platform-border-color);
+                    border-radius: 4px;
+                }
+                textarea::-webkit-scrollbar-thumb:hover {
+                    background: var(--platform-text-secondary);
+                }
+                `}
+            </style>
         </div>
     );
 };

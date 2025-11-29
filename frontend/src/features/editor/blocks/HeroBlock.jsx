@@ -6,9 +6,19 @@ const API_URL = 'http://localhost:5000';
 
 const HeroBlock = ({ blockData, isEditorPreview, style }) => {
     const { 
-        bg_image, title, subtitle, button_text, button_link, 
-        alignment = 'center', height = 'medium', fontFamily, 
-        theme_mode = 'auto', overlay_opacity = 0
+        bg_type = 'image',
+        bg_image, 
+        bg_video,
+        title, 
+        subtitle, 
+        button_text, 
+        button_link, 
+        alignment = 'center', 
+        height = 'medium', 
+        fontFamily, 
+        theme_mode = 'auto', 
+        overlay_opacity = 0,
+        overlay_color = 'rgba(0, 0, 0, 0.5)'
     } = blockData;
 
     let themeClass = '';
@@ -17,6 +27,9 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
     
     const fullImageUrl = bg_image 
         ? (bg_image.startsWith('http') ? bg_image : `${API_URL}${bg_image}`)
+        : null;
+    const fullVideoUrl = bg_video 
+        ? (bg_video.startsWith('http') ? bg_video : `${API_URL}${bg_video}`)
         : null;
 
     const heightMap = { 
@@ -36,14 +49,8 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
         width: '100%',
         height: heightMap[height] || '500px',
         minHeight: '300px',
-        backgroundImage: fullImageUrl ? `url(${fullImageUrl})` : 'none',
-        
         backgroundColor: 'var(--site-bg)', 
         color: 'var(--site-text-primary)',
-        
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
         display: 'flex',
         alignItems: 'center',
         justifyContent: alignMap[alignment] || 'center',
@@ -68,7 +75,6 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
         backgroundColor: 'var(--site-accent)', 
         color: 'var(--site-accent-text)',
         borderRadius: 'var(--btn-radius, 8px)', 
-        
         textDecoration: 'none',
         border: 'none',
         fontSize: '1.1rem',
@@ -83,14 +89,49 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
 
     return (
         <div style={containerStyle} className={themeClass}>
+            
             <div style={{
                 position: 'absolute', 
-                top: 0, 
-                left: 0, 
-                right: 0, 
-                bottom: 0,
-                backgroundColor: '#000000', 
+                inset: 0, 
+                zIndex: 0
+            }}>
+                {bg_type === 'video' && fullVideoUrl ? (
+                    <video
+                        src={fullVideoUrl}
+                        poster={fullImageUrl}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                        }}
+                    />
+                ) : (
+                    <div style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: fullImageUrl ? `url(${fullImageUrl})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                    }} />
+                )}
+            </div>
+
+            <div style={{
+                position: 'absolute', 
+                inset: 0,
+                backgroundColor: '#000',
                 opacity: overlay_opacity, 
+                zIndex: 1
+            }}></div>
+            
+            <div style={{
+                position: 'absolute', 
+                inset: 0,
+                backgroundColor: overlay_color,
                 zIndex: 1
             }}></div>
 

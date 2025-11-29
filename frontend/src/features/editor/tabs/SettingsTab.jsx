@@ -1,6 +1,7 @@
 // frontend/src/features/editor/tabs/SettingsTab.jsx
 import React from 'react';
 import { findBlockByPath } from '../blockUtils';
+import SettingsGroup from '../settings/components/SettingsGroup';
 import ShowCaseSettings from '../settings/ShowCaseSettings';
 import FeaturesSettings from '../settings/FeaturesSettings';
 import CatalogSettings from '../settings/CatalogSettings';
@@ -115,23 +116,17 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                 Налаштування: {selectedBlock.type}
             </h3>
             
-            <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ 
-                    fontSize: '0.9rem', 
-                    textTransform: 'uppercase', 
-                    color: 'var(--platform-text-secondary)', 
-                    marginBottom: '10px' 
-                }}>
-                    Вигляд блоку
-                </h4>
+            <SettingsGroup title="📝 Основні налаштування" defaultOpen={true}>
+                <SettingsComponent
+                    data={selectedBlock.data}
+                    onChange={handleLiveUpdate}
+                    siteData={siteData}
+                />
+            </SettingsGroup>
+
+            <SettingsGroup title="🎨 Вигляд та ✨ Анімація" defaultOpen={false}>
                 
-                <div style={{ 
-                    background: 'var(--platform-card-bg)', 
-                    border: '1px solid var(--platform-border-color)',
-                    borderRadius: '4px',
-                    padding: '12px',
-                    marginBottom: '8px'
-                }}>
+                <div style={{ marginBottom: '16px' }}>
                     <label style={{ 
                         display: 'block', 
                         marginBottom: '6px', 
@@ -139,7 +134,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                         fontWeight: '600', 
                         color: 'var(--platform-text-secondary)'
                     }}>
-                        ID блоку:
+                        ID блоку (Якір):
                     </label>
                     <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                         <span style={{color: 'var(--platform-text-secondary)', fontWeight: 'bold'}}>#</span>
@@ -150,47 +145,34 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                             placeholder="наприклад: contacts"
                             style={{
                                 width: '100%',
-                                padding: '6px 8px',
+                                padding: '8px',
                                 border: '1px solid var(--platform-border-color)',
                                 borderRadius: '4px',
-                                background: 'var(--platform-bg)',
+                                background: 'var(--platform-card-bg)',
                                 color: 'var(--platform-text-primary)',
                                 fontSize: '0.9rem'
                             }}
                         />
                     </div>
                     <small style={{display: 'block', marginTop: '4px', color: 'var(--platform-text-secondary)', fontSize: '0.75rem'}}>
-                        Це ID для посилань у меню.
+                        Унікальне ID для навігації (меню).
                     </small>
                 </div>
 
-                <SpacingControl 
-                    styles={selectedBlock.data.styles || {}} 
-                    onChange={handleStyleUpdate} 
-                />
+                <div style={{ marginBottom: '16px' }}>
+                    <SpacingControl 
+                        styles={selectedBlock.data.styles || {}} 
+                        onChange={handleStyleUpdate} 
+                    />
+                </div>
 
-                <AnimationSettings 
-                    animationConfig={selectedBlock.data.animation} 
-                    onChange={handleAnimationUpdate} 
-                />
-            </div>
-            
-            <hr style={{ border: 'none', borderTop: '1px solid var(--platform-border-color)', margin: '20px 0' }} />
-
-            <h4 style={{ 
-                fontSize: '0.9rem', 
-                textTransform: 'uppercase', 
-                color: 'var(--platform-text-secondary)', 
-                marginBottom: '10px' 
-            }}>
-                Контент та параметри
-            </h4>
-
-            <SettingsComponent
-                data={selectedBlock.data}
-                onChange={handleLiveUpdate}
-                siteData={siteData}
-            />
+                <div>
+                    <AnimationSettings 
+                        animationConfig={selectedBlock.data.animation} 
+                        onChange={handleAnimationUpdate} 
+                    />
+                </div>
+            </SettingsGroup>
         </div>
     );
 };

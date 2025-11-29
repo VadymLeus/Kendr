@@ -15,32 +15,51 @@ exports.upload = async (req, res, next) => {
     try {
         const userId = req.user.id;
         const originalName = req.file.originalname;
-        const mimeType = 'image/webp';
+        const mimeType = req.file.mimetype;
         
+        const isVideo = mimeType.startsWith('video/');
         const baseFileName = `user-${userId}-${Date.now()}`;
-        const fullFileName = `${baseFileName}-full.webp`;
-        const thumbFileName = `${baseFileName}-thumb.webp`;
+        
+        let fullFileName, thumbFileName, fullDiskPath, thumbDiskPath, path_full, path_thumb;
+        let file_size_kb = 0;
 
-        const fullDiskPath = path.join(__dirname, '..', 'uploads', 'media', fullFileName);
-        const thumbDiskPath = path.join(__dirname, '..', 'uploads', 'media', thumbFileName);
+        if (isVideo) {
+            fullFileName = `${baseFileName}${path.extname(originalName)}`;
+            fullDiskPath = path.join(__dirname, '..', 'uploads', 'media', fullFileName);
+            
+            await fs.rename(tempPath, fullDiskPath);
+            
+            path_full = `/uploads/media/${fullFileName}`;
+            path_thumb = null;
 
-        const path_full = `/uploads/media/${fullFileName}`;
-        const path_thumb = `/uploads/media/${thumbFileName}`;
+            const stats = await fs.stat(fullDiskPath);
+            file_size_kb = Math.round(stats.size / 1024);
 
-        await sharp(tempPath)
-            .resize({ width: 1920, fit: 'inside', withoutEnlargement: true })
-            .webp({ quality: 80 })
-            .toFile(fullDiskPath);
+        } else {
+            fullFileName = `${baseFileName}-full.webp`;
+            thumbFileName = `${baseFileName}-thumb.webp`;
 
-        await sharp(tempPath)
-            .resize({ width: 300, fit: 'cover' })
-            .webp({ quality: 75 })
-            .toFile(thumbDiskPath);
+            fullDiskPath = path.join(__dirname, '..', 'uploads', 'media', fullFileName);
+            thumbDiskPath = path.join(__dirname, '..', 'uploads', 'media', thumbFileName);
 
-        const stats = await fs.stat(fullDiskPath);
-        const file_size_kb = Math.round(stats.size / 1024);
+            path_full = `/uploads/media/${fullFileName}`;
+            path_thumb = `/uploads/media/${thumbFileName}`;
 
-        await fs.unlink(tempPath);
+            await sharp(tempPath)
+                .resize({ width: 1920, fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 80 })
+                .toFile(fullDiskPath);
+
+            await sharp(tempPath)
+                .resize({ width: 300, fit: 'cover' })
+                .webp({ quality: 75 })
+                .toFile(thumbDiskPath);
+
+            const stats = await fs.stat(fullDiskPath);
+            file_size_kb = Math.round(stats.size / 1024);
+            
+            await fs.unlink(tempPath); 
+        }
 
         const mediaData = {
             userId,
@@ -52,13 +71,14 @@ exports.upload = async (req, res, next) => {
         };
         
         const newMedia = await Media.create(mediaData);
-
         res.status(201).json(newMedia);
 
     } catch (error) {
-        if (tempPath) {
-            try { await fs.unlink(tempPath); } catch (e) { console.error("Не вдалося видалити temp файл:", e); }
-        }
+        try { 
+            await fs.access(tempPath);
+            await fs.unlink(tempPath); 
+        } catch (e) {}
+        
         next(error);
     }
 };
@@ -87,7 +107,9 @@ exports.deleteMedia = async (req, res, next) => {
         }
 
         await deleteFile(media.path_full);
-        await deleteFile(media.path_thumb);
+        if (media.path_thumb) {
+            await deleteFile(media.path_thumb);
+        }
         
         await Media.delete(id);
 

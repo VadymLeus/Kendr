@@ -201,7 +201,7 @@ const SpacingControl = ({ styles = {}, onChange }) => {
 
             <div style={headerStyle}>
                 <div style={titleStyle}>
-                    <span style={{ fontSize: '1rem' }}>↕</span> ВІДСТУПИ (PX)
+                    <span style={{ fontSize: '1rem' }}>↕</span> ВІДСТУПИ
                 </div>
                 <button 
                     type="button"

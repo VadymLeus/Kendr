@@ -11,6 +11,7 @@ const MediaLibraryPage = () => {
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [filterType, setFilterType] = useState('all');
     const { confirm } = useConfirm();
 
     const fetchMedia = useCallback(async () => {
@@ -19,7 +20,6 @@ const MediaLibraryPage = () => {
             const response = await apiClient.get('/media');
             setMediaFiles(response.data);
         } catch (err) {
-            // Global error handled
         } finally {
             setLoading(false);
         }
@@ -45,7 +45,6 @@ const MediaLibraryPage = () => {
             setMediaFiles(prev => [response.data, ...prev]);
             toast.success('Файл успішно завантажено!');
         } catch (err) {
-            // Global error handled
         } finally {
             setUploading(false);
         }
@@ -70,7 +69,6 @@ const MediaLibraryPage = () => {
                 }
                 toast.success('Файл видалено');
             } catch (err) {
-                // Global error handled
             }
         }
     };
@@ -87,73 +85,120 @@ const MediaLibraryPage = () => {
         });
     };
 
+    const filteredFiles = mediaFiles.filter(file => {
+        if (filterType === 'all') return true;
+        if (filterType === 'image') return file.mime_type.startsWith('image/');
+        if (filterType === 'video') return file.mime_type.startsWith('video/');
+        return true;
+    });
+
+    const tabStyle = (isActive) => ({
+        padding: '8px 16px',
+        border: 'none',
+        borderBottom: isActive ? '2px solid var(--platform-accent)' : '2px solid transparent',
+        background: 'transparent',
+        color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+        cursor: 'pointer',
+        fontWeight: '500'
+    });
+
     return (
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: 'auto' }}>
             <h1 style={{ marginBottom: '1rem' }}>Медіатека</h1>
             <p className="text-secondary" style={{ marginBottom: '1.5rem' }}>
-                Тут зберігаються всі ваші завантажені зображення.
+                Тут зберігаються всі ваші завантажені зображення та відео.
             </p>
 
             <div className="card" style={{ marginBottom: '2rem' }}>
                 <label htmlFor="page-file-upload" className="btn btn-primary" style={{ cursor: 'pointer' }}>
-                    {uploading ? 'Завантаження...' : '➕ Завантажити нове зображення'}
+                    {uploading ? 'Завантаження...' : '➕ Завантажити новий файл'}
                 </label>
                 <input 
                     id="page-file-upload" 
                     type="file" 
                     onChange={handleFileChange} 
-                    accept="image/jpeg,image/png,image/webp" 
+                    accept="image/*,video/mp4,video/webm" 
                     disabled={uploading} 
                     style={{ display: 'none' }} 
                 />
             </div>
 
+            <div style={{ display: 'flex', marginBottom: '1rem', borderBottom: '1px solid var(--platform-border-color)' }}>
+                <button style={tabStyle(filterType === 'all')} onClick={() => setFilterType('all')}>Всі файли</button>
+                <button style={tabStyle(filterType === 'image')} onClick={() => setFilterType('image')}>Зображення</button>
+                <button style={tabStyle(filterType === 'video')} onClick={() => setFilterType('video')}>Відео</button>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: selectedFile ? '3fr 1fr' : '1fr', gap: '2rem' }}>
                 <div className="card">
-                    {loading ? <p>Завантаження...</p> : mediaFiles.length === 0 ? (
-                        <p className="text-secondary">Ваша медіатека порожня.</p>
+                    {loading ? <p>Завантаження...</p> : filteredFiles.length === 0 ? (
+                        <p className="text-secondary">
+                            {filterType === 'all' 
+                                ? 'Ваша медіатека порожня.' 
+                                : `Немає ${filterType === 'image' ? 'зображень' : 'відео'} у медіатеці.`}
+                        </p>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
-                            {mediaFiles.map(file => (
-                                <div 
-                                    key={file.id} 
-                                    style={{
-                                        aspectRatio: '1 / 1',
-                                        borderRadius: '8px',
-                                        overflow: 'hidden',
-                                        border: selectedFile?.id === file.id ? '3px solid var(--platform-accent)' : '3px solid var(--platform-border-color)',
-                                        cursor: 'pointer',
-                                        position: 'relative'
-                                    }}
-                                    onClick={() => handleSelectFile(file)}
-                                >
-                                    <img 
-                                        src={`${API_URL}${file.path_thumb}`} 
-                                        alt={file.alt_text || file.original_file_name} 
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
-                                    <button 
-                                        onClick={(e) => handleDelete(file.id, e)} 
+                            {filteredFiles.map(file => {
+                                const isVideo = file.mime_type.startsWith('video/');
+                                return (
+                                    <div 
+                                        key={file.id} 
                                         style={{
-                                            position: 'absolute', 
-                                            top: '5px', 
-                                            right: '5px',
-                                            background: 'rgba(0,0,0,0.6)', 
-                                            color: 'white',
-                                            border: 'none', 
-                                            borderRadius: '50%',
-                                            width: '24px', 
-                                            height: '24px', 
+                                            aspectRatio: '1 / 1',
+                                            borderRadius: '8px',
+                                            overflow: 'hidden',
+                                            border: selectedFile?.id === file.id ? '3px solid var(--platform-accent)' : '3px solid var(--platform-border-color)',
                                             cursor: 'pointer',
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center'
+                                            position: 'relative',
+                                            background: isVideo ? '#000' : 'transparent'
                                         }}
+                                        onClick={() => handleSelectFile(file)}
                                     >
-                                        &times;
-                                    </button>
-                                </div>
-                            ))}
+                                        {isVideo ? (
+                                            <div style={{
+                                                width: '100%', 
+                                                height: '100%', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                flexDirection: 'column',
+                                                background: '#1a1a1a'
+                                            }}>
+                                                <span style={{fontSize: '2rem'}}>🎥</span>
+                                                <span style={{fontSize: '0.7rem', color: 'white', marginTop: '5px'}}>VIDEO</span>
+                                            </div>
+                                        ) : (
+                                            <img 
+                                                src={`${API_URL}${file.path_thumb || file.path_full}`} 
+                                                alt={file.original_file_name} 
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        )}
+                                        
+                                        <button 
+                                            onClick={(e) => handleDelete(file.id, e)} 
+                                            style={{
+                                                position: 'absolute', 
+                                                top: '5px', 
+                                                right: '5px',
+                                                background: 'rgba(0,0,0,0.6)', 
+                                                color: 'white',
+                                                border: 'none', 
+                                                borderRadius: '50%',
+                                                width: '24px', 
+                                                height: '24px', 
+                                                cursor: 'pointer',
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            &times;
+                                        </button>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -161,18 +206,50 @@ const MediaLibraryPage = () => {
                 {selectedFile && (
                     <div className="card" style={{ position: 'sticky', top: '2rem' }}>
                         <h4>Деталі файлу</h4>
-                        <img 
-                            src={`${API_URL}${selectedFile.path_full}`} 
-                            alt="Вибране зображення" 
-                            style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }} 
-                        />
+                        {selectedFile.mime_type.startsWith('video/') ? (
+                            <video 
+                                src={`${API_URL}${selectedFile.path_full}`} 
+                                controls 
+                                style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }} 
+                            />
+                        ) : (
+                            <img 
+                                src={`${API_URL}${selectedFile.path_full}`} 
+                                alt="Preview" 
+                                style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }} 
+                            />
+                        )}
                         <div style={{ marginTop: '1rem' }}>
+                            <label>Назва файлу:</label>
+                            <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: 'var(--platform-text-secondary)' }}>
+                                {selectedFile.original_file_name}
+                            </p>
+                            
+                            <label>Тип:</label>
+                            <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: 'var(--platform-text-secondary)' }}>
+                                {selectedFile.mime_type.startsWith('video/') ? 'Відео' : 'Зображення'}
+                            </p>
+                            
+                            <label>Розмір:</label>
+                            <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: 'var(--platform-text-secondary)' }}>
+                                {selectedFile.file_size_kb} KB
+                            </p>
+
                             <label>URL (повний):</label>
                             <input 
                                 type="text" 
                                 readOnly 
                                 value={`${API_URL}${selectedFile.path_full}`} 
                                 onFocus={(e) => e.target.select()} 
+                                style={{
+                                    width: '100%',
+                                    padding: '0.5rem',
+                                    border: '1px solid var(--platform-border-color)',
+                                    borderRadius: '4px',
+                                    background: 'var(--platform-bg)',
+                                    color: 'var(--platform-text-primary)',
+                                    fontSize: '0.9rem'
+                                }}
                             />
                             <button 
                                 className="btn btn-secondary" 

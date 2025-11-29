@@ -12,13 +12,16 @@ ensureDirExists(tempUploadPath);
 ensureDirExists(mediaUploadPath);
 
 const mediaFileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|webp/;
-    const mimetype = allowedTypes.test(file.mimetype);
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    if (mimetype && extname) {
+    const allowedImageTypes = /jpeg|jpg|png|webp/;
+    const allowedVideoTypes = /mp4|webm/;
+    
+    const isImage = allowedImageTypes.test(file.mimetype) || allowedImageTypes.test(path.extname(file.originalname).toLowerCase());
+    const isVideo = allowedVideoTypes.test(file.mimetype) || allowedVideoTypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (isImage || isVideo) {
         return cb(null, true);
     }
-    cb(new Error('Помилка: Дозволені лише файли зображень (jpeg, png, webp)!'));
+    cb(new Error('Помилка: Дозволені лише зображення (jpeg, png, webp) та відео (mp4, webm)!'));
 };
 
 const tempStorage = multer.diskStorage({
@@ -26,14 +29,15 @@ const tempStorage = multer.diskStorage({
         cb(null, tempUploadPath);
     },
     filename: (req, file, cb) => {
-        cb(null, `temp-${req.user.id}-${Date.now()}${path.extname(file.originalname)}`);
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, `temp-${req.user.id}-${Date.now()}${ext}`);
     }
 });
 
 const mediaUpload = multer({
     storage: tempStorage,
     fileFilter: mediaFileFilter,
-    limits: { fileSize: 1024 * 1024 * 15 }
+    limits: { fileSize: 1024 * 1024 * 50 }
 });
 
 const memoryStorage = multer.memoryStorage();
