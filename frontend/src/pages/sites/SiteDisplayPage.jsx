@@ -7,16 +7,16 @@ import BlockRenderer from '../../features/editor/blocks/BlockRenderer';
 import { AuthContext } from '../../providers/AuthContext';
 import NotFoundPage from '../../components/common/NotFoundPage';
 import MaintenancePage from '../../components/common/MaintenancePage';
-import useScrollToHash from '../../hooks/useScrollToHash'; // Імпорт хука
+import useScrollToHash from '../../hooks/useScrollToHash';
+import CookieBanner from '../../features/sites/components/CookieBanner';
 
-const API_URL = 'http://localhost:5000'; // Для фавіконки
+const API_URL = 'http://localhost:5000';
 
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
     const { site_path } = useParams();
     const { user } = useContext(AuthContext);
     
-    // Активуємо скрол до якоря при завантаженні сторінки або зміні хеша
     useScrollToHash();
 
     useEffect(() => {
@@ -27,16 +27,10 @@ const SiteDisplayPage = () => {
     }, [isSiteLoading, siteData, site_path]);
 
     if (isSiteLoading) {
-        return (
-            <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh' }}>
-                Завантаження...
-            </div>
-        );
+        return <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh' }}>Завантаження...</div>;
     }
 
-    if (!siteData) {
-        return <NotFoundPage />;
-    }
+    if (!siteData) return <NotFoundPage />;
 
     const isOwner = user && user.id === siteData.user_id;
     const isAdmin = user && user.role === 'admin';
@@ -45,9 +39,7 @@ const SiteDisplayPage = () => {
         return <MaintenancePage logoUrl={siteData.logo_url} siteName={siteData.title} />;
     }
 
-    if (!siteData.page) {
-        return <NotFoundPage />;
-    }
+    if (!siteData.page) return <NotFoundPage />;
 
     const page = siteData.page;
     const titlePart = page.seo_title || page.name;
@@ -60,52 +52,37 @@ const SiteDisplayPage = () => {
         : '/icon-light.webp';
 
     let pageBlocks = [];
-    if (Array.isArray(siteData.page.block_content)) {
-        pageBlocks = siteData.page.block_content;
-    } else if (typeof siteData.page.block_content === 'string') {
-        try { pageBlocks = JSON.parse(siteData.page.block_content); } catch (e) {}
-    }
+    try {
+        pageBlocks = Array.isArray(siteData.page.block_content) 
+            ? siteData.page.block_content 
+            : JSON.parse(siteData.page.block_content || '[]');
+    } catch (e) {}
 
     let footerBlocks = [];
-    if (Array.isArray(siteData.footer_content)) {
-        footerBlocks = siteData.footer_content;
-    } else if (typeof siteData.footer_content === 'string') {
-        try { footerBlocks = JSON.parse(siteData.footer_content); } catch (e) {}
-    }
+    try {
+        footerBlocks = Array.isArray(siteData.footer_content) 
+            ? siteData.footer_content 
+            : JSON.parse(siteData.footer_content || '[]');
+    } catch (e) {}
 
     const layoutStyle = {
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh', 
-        width: '100%',
-        margin: 0,
-        padding: 0
+        display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', margin: 0, padding: 0
     };
 
     const mainContentStyle = {
-        flex: '1',
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%'
+        flex: '1', display: 'flex', flexDirection: 'column', width: '100%'
     };
 
     const footerStyle = {
         flexShrink: 0,
         backgroundColor: siteData.site_theme_mode === 'dark' ? '#1a202c' : '#f7fafc',
         borderTop: `1px solid ${siteData.site_theme_mode === 'dark' ? '#2d3748' : '#e2e8f0'}`,
-        width: '100%',
-        margin: 0,
-        padding: 0 
+        width: '100%', margin: 0, padding: 0 
     };
 
     const copyrightStyle = {
-        textAlign: 'center', 
-        padding: '1.5rem',
-        opacity: 0.5, 
-        fontSize: '0.8rem',
-        color: siteData.site_theme_mode === 'dark' ? '#a0aec0' : '#718096',
-        width: '100%',
-        boxSizing: 'border-box'
+        textAlign: 'center', padding: '1.5rem', opacity: 0.5, fontSize: '0.8rem',
+        color: siteData.site_theme_mode === 'dark' ? '#a0aec0' : '#718096', width: '100%', boxSizing: 'border-box'
     };
 
     return (
@@ -115,7 +92,6 @@ const SiteDisplayPage = () => {
                 <meta name="description" content={description} />
                 {page.seo_keywords && <meta name="keywords" content={page.seo_keywords} />}
                 <link rel="icon" type="image/webp" href={favicon} />
-                
                 <meta property="og:title" content={finalTitle} />
                 <meta property="og:description" content={description} />
                 <meta property="og:image" content={siteData.logo_url ? `${API_URL}${siteData.logo_url}` : favicon} />
@@ -130,11 +106,14 @@ const SiteDisplayPage = () => {
             {footerBlocks.length > 0 && (
                 <footer style={footerStyle}>
                     <BlockRenderer blocks={footerBlocks} siteData={siteData} />
-                    <div style={copyrightStyle}>
-                        Powered by Kendr
-                    </div>
+                    <div style={copyrightStyle}>Powered by Kendr</div>
                 </footer>
             )}
+
+            <CookieBanner 
+                settings={siteData.theme_settings?.cookie_banner} 
+                siteId={siteData.id} 
+            />
         </div>
     );
 };

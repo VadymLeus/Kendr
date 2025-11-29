@@ -237,7 +237,7 @@ const SiteDashboardPage = () => {
                                 />
                             )}
                             {activeTab === 'store' && <ShopContentTab siteData={siteData} />}
-                            {activeTab === 'theme' && <ThemeSettingsTab siteData={siteData} />}
+                            {activeTab === 'theme' && <ThemeSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} />}
                             {activeTab === 'crm' && <SubmissionsTab siteId={siteData.id} />}
                             {activeTab === 'settings' && (
                                 <GeneralSettingsTab 

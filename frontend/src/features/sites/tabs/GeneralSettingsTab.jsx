@@ -1,7 +1,6 @@
 // frontend/src/features/sites/tabs/GeneralSettingsTab.jsx
 import React, { useState } from 'react';
 import { useAutoSave } from '../../../hooks/useAutoSave';
-// ЗМІНА 1: Імпортуємо ImageInput замість ImageUploader
 import ImageInput from '../../media/ImageInput'; 
 import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
@@ -21,12 +20,33 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
             title: siteData.title,
             status: siteData.status,
             favicon_url: siteData.favicon_url || '', 
-            site_title_seo: siteData.site_title_seo || siteData.title
+            site_title_seo: siteData.site_title_seo || siteData.title,
+            theme_settings: siteData.theme_settings || {}
         }
     );
 
     const [slug, setSlug] = useState(siteData.site_path);
     const [isSavingSlug, setIsSavingSlug] = useState(false);
+
+    const cookieSettings = data.theme_settings?.cookie_banner || {
+        enabled: false,
+        text: "Ми використовуємо файли cookie для покращення роботи сайту.",
+        acceptText: "Прийняти",
+        rejectText: "Відхилити",
+        showReject: true,
+        position: "bottom"
+    };
+
+    const handleCookieChange = (field, value) => {
+        const updatedCookieSettings = { ...cookieSettings, [field]: value };
+        
+        const updatedThemeSettings = {
+            ...data.theme_settings,
+            cookie_banner: updatedCookieSettings
+        };
+
+        handleChange('theme_settings', updatedThemeSettings);
+    };
 
     const handleTitleChange = (e) => {
         const newTitle = e.target.value;
@@ -122,7 +142,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
             }
         }
     };
-
 
     const containerStyle = { 
         maxWidth: '800px', 
@@ -275,22 +294,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                         value={data.title}
                         onChange={handleTitleChange}
                         placeholder="Мій інтернет-магазин"
-                        onFocus={(e) => {
-                            e.target.style.borderColor = 'var(--platform-accent)';
-                            e.target.style.boxShadow = '0 0 0 2px var(--platform-accent)';
-                        }}
-                        onBlur={(e) => {
-                            e.target.style.borderColor = 'var(--platform-border-color)';
-                            e.target.style.boxShadow = 'none';
-                        }}
                     />
-                    <div style={{ 
-                        color: 'var(--platform-text-secondary)', 
-                        fontSize: '0.8rem', 
-                        marginTop: '6px' 
-                    }}>
-                        Ця назва відображається у шапці вашого сайту та в каталозі.
-                    </div>
                 </div>
 
                 <div style={inputGroupStyle}>
@@ -320,14 +324,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                             }}
                             value={slug}
                             onChange={handleSlugChange}
-                            onFocus={(e) => { 
-                                e.target.style.borderColor = 'var(--platform-accent)'; 
-                                e.target.style.boxShadow = '0 0 0 2px var(--platform-accent)'; 
-                            }}
-                            onBlur={(e) => { 
-                                e.target.style.borderColor = 'var(--platform-border-color)'; 
-                                e.target.style.boxShadow = 'none'; 
-                            }}
                         />
                         {slug !== siteData.site_path && (
                             <button 
@@ -355,112 +351,122 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
 
                 <div style={inputGroupStyle}>
                     <label style={labelStyle}>Статус сайту</label>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                        gap: '12px' 
-                    }}>
-                        {[
-                            { value: 'published', label: 'Опубліковано', description: 'Сайт доступний всім відвідувачам', icon: '🌍' },
-                            { value: 'draft', label: 'Чернетка', description: 'Сайт бачите тільки ви', icon: '📝' }
-                        ].map(option => (
-                            <div 
-                                key={option.value}
-                                onClick={() => handleChange('status', option.value)}
-                                style={{
-                                    border: `2px solid ${data.status === option.value ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
-                                    borderRadius: '12px',
-                                    padding: '16px',
-                                    cursor: 'pointer',
-                                    background: data.status === option.value ? 'rgba(var(--platform-accent-rgb), 0.05)' : 'var(--platform-bg)',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                <div style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '8px', 
-                                    marginBottom: '4px' 
-                                }}>
-                                    <span style={{fontSize: '1.2rem'}}>{option.icon}</span>
-                                    <span style={{ 
-                                        fontWeight: '600', 
-                                        color: data.status === option.value ? 'var(--platform-accent)' : 'var(--platform-text-primary)' 
-                                    }}>
-                                        {option.label}
-                                    </span>
-                                </div>
-                                <div style={{ 
-                                    fontSize: '0.8rem', 
-                                    color: 'var(--platform-text-secondary)', 
-                                    lineHeight: '1.4' 
-                                }}>
-                                    {option.description}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <select 
+                        value={data.status} 
+                        onChange={(e) => handleChange('status', e.target.value)}
+                        style={{ ...inputStyle, cursor: 'pointer' }}
+                    >
+                        <option value="draft">📝 Чернетка (Draft)</option>
+                        <option value="published">🌐 Опубліковано (Published)</option>
+                        <option value="suspended" disabled>⏸️ Призупинено (Suspended)</option>
+                    </select>
                 </div>
             </div>
 
             <div style={cardStyle}>
                 <div style={{marginBottom: '24px'}}>
-                    <h3 style={cardTitleStyle}>🎨 SEO та Брендинг</h3>
-                    <p style={cardSubtitleStyle}>Налаштування вигляду у пошукових системах та браузері</p>
+                    <h3 style={cardTitleStyle}>🍪 Конфіденційність</h3>
+                    <p style={cardSubtitleStyle}>Налаштування Cookie-банера та згоди користувачів</p>
                 </div>
 
-                <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-                    gap: '24px' 
-                }}>
-                    <div>
-                        <label style={labelStyle}>Favicon (Іконка сайту)</label>
-                        <div style={{ 
-                            height: '120px',
-                            width: '120px',
-                            marginBottom: '8px',
-                            display: 'block' 
-                        }}>
-                            <ImageInput 
-                                value={data.favicon_url}
-                                onChange={(url) => handleChange('favicon_url', url)}
+                <div style={inputGroupStyle}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '1rem', color: 'var(--platform-text-primary)' }}>
+                        <input 
+                            type="checkbox" 
+                            checked={cookieSettings.enabled} 
+                            onChange={(e) => handleCookieChange('enabled', e.target.checked)}
+                            style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                        />
+                        <span style={{ fontWeight: '500' }}>Ввімкнути Cookie-баннер</span>
+                    </label>
+                </div>
+
+                {cookieSettings.enabled && (
+                    <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+                        <div style={inputGroupStyle}>
+                            <label style={labelStyle}>Текст повідомлення</label>
+                            <textarea 
+                                value={cookieSettings.text}
+                                onChange={(e) => handleCookieChange('text', e.target.value)}
+                                style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+                                placeholder="Ми використовуємо cookies..."
                             />
                         </div>
-                        <div style={{ 
-                            fontSize: '0.8rem', 
-                            color: 'var(--platform-text-secondary)', 
-                            lineHeight: '1.4' 
-                        }}>
-                            Рекомендовано: квадратне зображення (PNG або ICO), мінімум 64x64px.
+
+                        <div style={inputGroupStyle}>
+                            <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input 
+                                    type="checkbox" 
+                                    checked={cookieSettings.showReject !== false} 
+                                    onChange={(e) => handleCookieChange('showReject', e.target.checked)}
+                                />
+                                Показати кнопку "Відхилити"
+                            </label>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div style={inputGroupStyle}>
+                                <label style={labelStyle}>Текст кнопки прийняття</label>
+                                <input 
+                                    type="text" 
+                                    value={cookieSettings.acceptText || cookieSettings.buttonText || ''}
+                                    onChange={(e) => handleCookieChange('acceptText', e.target.value)}
+                                    style={inputStyle}
+                                    placeholder="Прийняти"
+                                />
+                            </div>
+                            
+                            {(cookieSettings.showReject !== false) && (
+                                <div style={inputGroupStyle}>
+                                    <label style={labelStyle}>Текст кнопки відхилення</label>
+                                    <input 
+                                        type="text" 
+                                        value={cookieSettings.rejectText}
+                                        onChange={(e) => handleCookieChange('rejectText', e.target.value)}
+                                        style={inputStyle}
+                                        placeholder="Відхилити"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={inputGroupStyle}>
+                            <label style={labelStyle}>Позиція</label>
+                            <select 
+                                value={cookieSettings.position || 'bottom'}
+                                onChange={(e) => handleCookieChange('position', e.target.value)}
+                                style={{ ...inputStyle, cursor: 'pointer' }}
+                            >
+                                <option value="bottom">Внизу екрану</option>
+                                <option value="top">Вгорі екрану</option>
+                            </select>
                         </div>
                     </div>
+                )}
+            </div>
 
+            <div style={cardStyle}>
+                <div style={{marginBottom: '24px'}}>
+                    <h3 style={cardTitleStyle}>🎨 SEO та Брендинг</h3>
+                    <p style={cardSubtitleStyle}>Налаштування вигляду у пошукових системах</p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+                    <div>
+                        <label style={labelStyle}>Favicon</label>
+                        <div style={{ height: '120px', width: '120px', marginBottom: '8px' }}>
+                            <ImageInput value={data.favicon_url} onChange={(url) => handleChange('favicon_url', url)} />
+                        </div>
+                    </div>
                     <div>
                         <div style={inputGroupStyle}>
-                            <label style={labelStyle}>SEO Заголовок (Title Tag)</label>
+                            <label style={labelStyle}>SEO Заголовок</label>
                             <input 
                                 type="text" 
                                 style={inputStyle}
                                 value={data.site_title_seo}
                                 onChange={(e) => handleChange('site_title_seo', e.target.value)}
-                                placeholder="Головна | Мій Магазин"
-                                onFocus={(e) => { 
-                                    e.target.style.borderColor = 'var(--platform-accent)'; 
-                                    e.target.style.boxShadow = '0 0 0 2px var(--platform-accent)'; 
-                                }}
-                                onBlur={(e) => { 
-                                    e.target.style.borderColor = 'var(--platform-border-color)'; 
-                                    e.target.style.boxShadow = 'none'; 
-                                }}
                             />
-                            <div style={{ 
-                                color: 'var(--platform-text-secondary)', 
-                                fontSize: '0.8rem', 
-                                marginTop: '6px' 
-                            }}>
-                                Заголовок, який відображається у пошукових системах та вкладці браузера.
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -484,15 +490,14 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                             color: 'var(--platform-warning)', 
                             marginBottom: '8px' 
                         }}>
-                            🔄 Зміна дизайну (Reset)
+                            🔄 Зміна дизайну
                         </h3>
                         <p style={{ 
                             margin: 0, 
                             color: 'var(--platform-text-secondary)', 
                             fontSize: '0.9rem'
                         }}>
-                            Скинути поточну структуру сайту та застосувати інший шаблон. 
-                            <strong> Всі поточні сторінки будуть втрачені.</strong>
+                            Скинути поточну структуру та застосувати інший шаблон.
                         </p>
                     </div>
                     <button 
@@ -530,7 +535,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                             fontSize: '0.9rem', 
                             opacity: 0.8 
                         }}>
-                            Ці дії є незворотними. Будьте обережні.
+                            Видалення сайту є незворотним.
                         </p>
                     </div>
                     <button 
@@ -554,6 +559,10 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                     0% { opacity: 1; }
                     50% { opacity: 0.5; }
                     100% { opacity: 1; }
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
                 `}
             </style>
