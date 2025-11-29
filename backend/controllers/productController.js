@@ -26,6 +26,28 @@ exports.getProductsForSite = async (req, res, next) => {
     }
 };
 
+exports.getProducts = async (req, res, next) => {
+    try {
+        const { ids, category, limit, siteId } = req.query;
+        
+        let idList = null;
+        if (ids) {
+            idList = ids.split(',').filter(id => id.trim() !== '');
+        }
+
+        const products = await Product.findWithFilters({
+            ids: idList,
+            categoryId: category,
+            limit: limit,
+            siteId: siteId
+        });
+
+        res.json(products);
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.addProduct = async (req, res, next) => {
     const { site_id, name, description, price, category_id, stock_quantity, image_url, variants, sale_percentage } = req.body;
     const userId = req.user.id;

@@ -3,8 +3,8 @@ import React, { Suspense, lazy } from 'react';
 
 const HeroBlock = lazy(() => import('./HeroBlock'));
 const TextBlock = lazy(() => import('./TextBlock'));
-const CategoriesGridBlock = lazy(() => import('./CategoriesGridBlock'));
-const CatalogGridBlock = lazy(() => import('./CatalogGridBlock'));
+const ShowCaseBlock = lazy(() => import('./ShowCaseBlock'));
+const CatalogBlock = lazy(() => import('./CatalogBlock'));
 const FeaturesBlock = lazy(() => import('./FeaturesBlock'));
 const LayoutBlock = lazy(() => import('./LayoutBlock'));
 const ImageBlock = lazy(() => import('./ImageBlock'));
@@ -19,8 +19,8 @@ const HeaderBlock = lazy(() => import('./HeaderBlock'));
 const blockMap = {
     hero: HeroBlock,
     text: TextBlock,
-    categories: CategoriesGridBlock,
-    catalog_grid: CatalogGridBlock,
+    showcase: ShowCaseBlock,
+    catalog: CatalogBlock,
     features: FeaturesBlock,
     layout: LayoutBlock,
     image: ImageBlock,

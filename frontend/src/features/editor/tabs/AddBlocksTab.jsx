@@ -102,7 +102,7 @@ const actionBtnStyle = (color, isTop) => ({
 
 const layoutBlocks = BLOCK_LIBRARY.filter(b => b.type === 'layout');
 const basicBlocks = BLOCK_LIBRARY.filter(b => ['hero', 'text', 'image', 'button', 'form', 'features', 'video', 'map', 'accordion', 'social_icons'].includes(b.type));
-const ecommerceBlocks = BLOCK_LIBRARY.filter(b => ['catalog_grid', 'categories'].includes(b.type));
+const ecommerceBlocks = BLOCK_LIBRARY.filter(b => ['catalog', 'showcase'].includes(b.type));
 
 const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
     const [savedBlocks, setSavedBlocks] = useState([]);

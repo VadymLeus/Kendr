@@ -112,6 +112,47 @@ class Product {
         );
         return result;
     }
+
+    static async findWithFilters({ ids, categoryId, limit, siteId }) {
+        let query = `
+            SELECT p.*, c.name as category_name, c.discount_percentage as category_discount
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (siteId) {
+            query += ' AND p.site_id = ?';
+            params.push(siteId);
+        }
+
+        if (ids && ids.length > 0) {
+            const placeholders = ids.map(() => '?').join(',');
+            query += ` AND p.id IN (${placeholders})`;
+            params.push(...ids);
+        }
+
+        if (categoryId && categoryId !== 'all') {
+            query += ' AND p.category_id = ?';
+            params.push(categoryId);
+        }
+
+        query += ' ORDER BY p.created_at DESC';
+
+        if (limit) {
+            query += ' LIMIT ?';
+            params.push(parseInt(limit));
+        }
+
+        const [rows] = await db.query(query, params);
+        
+        return rows.map(product => {
+            product.image_gallery = safeParseGallery(product.image_gallery);
+            product.variants = safeParseVariants(product.variants);
+            return product;
+        });
+    }
 }
 
 module.exports = Product;

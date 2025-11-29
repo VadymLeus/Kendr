@@ -1,7 +1,7 @@
 // frontend/src/features/editor/tabs/SettingsTab.jsx
 import React from 'react';
 import { findBlockByPath } from '../blockUtils';
-import CategoriesSettings from '../settings/CategoriesSettings';
+import ShowCaseSettings from '../settings/ShowCaseSettings';
 import FeaturesSettings from '../settings/FeaturesSettings';
 import CatalogSettings from '../settings/CatalogSettings';
 import TextSettings from '../settings/TextSettings';
@@ -18,9 +18,9 @@ import HeaderSettings from '../settings/HeaderSettings';
 import SpacingControl from '../settings/components/SpacingControl';
 
 const SettingsComponentMap = {
-    categories: CategoriesSettings,
+    showcase: ShowCaseSettings,
     features: FeaturesSettings,
-    catalog_grid: CatalogSettings,
+    catalog: CatalogSettings,
     text: TextSettings,
     hero: HeroSettings,
     image: ImageSettings,
@@ -127,10 +127,10 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                         display: 'block', 
                         marginBottom: '6px', 
                         fontSize: '0.85rem', 
-                        fontWeight: '600',
+                        fontWeight: '600', 
                         color: 'var(--platform-text-secondary)'
                     }}>
-                        ID блоку (Якір):
+                        ID блоку:
                     </label>
                     <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                         <span style={{color: 'var(--platform-text-secondary)', fontWeight: 'bold'}}>#</span>
@@ -151,7 +151,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                         />
                     </div>
                     <small style={{display: 'block', marginTop: '4px', color: 'var(--platform-text-secondary)', fontSize: '0.75rem'}}>
-                        Використовуйте цей ID для посилань у меню (наприклад: #contacts).
+                        Це ID для посилань у меню.
                     </small>
                 </div>
 

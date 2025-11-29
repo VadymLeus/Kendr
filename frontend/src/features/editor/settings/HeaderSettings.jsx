@@ -158,7 +158,7 @@ const HeaderSettings = ({ data, onChange }) => {
                 }}>
                     <strong>Як вказувати посилання:</strong><br/>
                     • <code>/page</code> - внутрішня сторінка (напр. <code>/delivery</code>)<br/>
-                    • <code>#id</code> - якір (скрол) до блоку (напр. <code>#contacts</code>)
+                    • <code>#id</code> - скрол до блоку
                 </div>
                 
                 {data.nav_items && data.nav_items.map((item) => (

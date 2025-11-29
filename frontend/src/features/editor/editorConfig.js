@@ -5,7 +5,7 @@ export const BLOCK_LIBRARY = [
     { type: 'text', name: 'Текстовий блок', icon: '📝' },
     { type: 'image', name: 'Зображення', icon: '🏞️' },
     { type: 'button', name: 'Кнопка', icon: '🔘' },
-
+    { type: 'showcase', name: 'Вітрина', icon: '✨' },
     { 
         type: 'layout', 
         name: 'Макет (Колонки)', 
@@ -17,21 +17,13 @@ export const BLOCK_LIBRARY = [
             { preset: '25-25-25-25', name: '4 колонки (25/25/25/25)', columns: 4 },
         ]
     },
-
-    { type: 'categories', name: 'Вітрина категорій', icon: '🗂️' },
-    { type: 'catalog_grid', name: 'Сітка товарів', icon: '🛍️' },
+    { type: 'catalog', name: 'SPA Каталог', icon: '🛍️' },
     { type: 'features', name: 'Переваги', icon: '✅' },
     { type: 'form', name: 'Форма звʼязку', icon: '✉️' },
     { type: 'video', name: 'Відео', icon: '🎬' },
     { type: 'map', name: 'Мапа', icon: '🗺️' },
     { type: 'accordion', name: 'Акордеон', icon: '❓' },
     { type: 'social_icons', name: 'Соцмережі', icon: '📱' },
-    
-    { type: 'divider', name: 'Роздільник', icon: '➖' },
-    { type: 'spacer', name: 'Відступ', icon: '⏸️' },
-    { type: 'quote', name: 'Цитата', icon: '💬' },
-    { type: 'testimonials', name: 'Відгуки', icon: '⭐' },
-    
     { type: 'header', name: 'Глобальний Хедер', icon: '🔝', isSystem: true },
 ];
 
@@ -155,24 +147,31 @@ export const getDefaultBlockData = (type, options = {}) => {
                 block_theme: 'auto'
             };
 
-        case 'categories':
-            return { 
-                columns: 3,
-                items: [
-                    { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+1', title: 'Елемент 1', link: '#' },
-                    { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+2', title: 'Елемент 2', link: '#' },
-                    { id: generateBlockId(), image: 'https://placehold.co/300x300/EFEFEF/31343C?text=Елемент+3', title: 'Елемент 3', link: '#' }
-                ],
+        case 'showcase':
+            return {
+                title: 'Хіти продажів',
+                source_type: 'category',
+                category_id: 'all',
+                selected_product_ids: [],
+                columns: 4,
+                limit: 8,
                 block_theme: 'auto'
             };
 
-        case 'catalog_grid':
+        case 'catalog':
             return { 
-                title: 'Наші товари',
-                mode: 'auto',
-                category_id: 'all',
-                selectedProductIds: [],
-                excludedProductIds: [],
+                title: 'Каталог товарів',
+                
+                source_type: 'all',
+                root_category_id: null,
+
+                show_search: true,
+                show_category_filter: true,
+                show_sorting: true,
+
+                items_per_page: 12,
+                columns: 3,
+                
                 block_theme: 'auto'
             };
 
@@ -227,61 +226,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 telegram: '',
                 youtube: '',
                 tiktok: '',
-                block_theme: 'auto'
-            };
-
-        case 'divider':
-            return {
-                style: 'solid',
-                color: 'var(--site-border-color)',
-                thickness: '1px',
-                width: '100%',
-                alignment: 'center',
-                block_theme: 'auto'
-            };
-
-        case 'spacer':
-            return {
-                height: '40px',
-                responsive: {
-                    mobile: '20px',
-                    tablet: '30px'
-                },
-                block_theme: 'auto'
-            };
-
-        case 'quote':
-            return {
-                text: 'Це дуже надихаюча цитата, яка може мотивувати ваших відвідувачів.',
-                author: 'Автор цитати',
-                alignment: 'center',
-                fontFamily: 'global',
-                style: 'default',
-                block_theme: 'auto'
-            };
-
-        case 'testimonials':
-            return {
-                title: 'Що кажуть наші клієнти',
-                columns: 2,
-                items: [
-                    { 
-                        id: generateBlockId(), 
-                        name: 'Іван Петренко', 
-                        position: 'Клієнт',
-                        text: 'Дуже задоволений якістю обслуговування та продукції. Рекомендую всім!',
-                        rating: 5,
-                        avatar: ''
-                    },
-                    { 
-                        id: generateBlockId(), 
-                        name: 'Марія Коваленко', 
-                        position: 'Партнер',
-                        text: 'Професійний підхід та оперативність. Співпраця була дуже приємною.',
-                        rating: 4,
-                        avatar: ''
-                    }
-                ],
                 block_theme: 'auto'
             };
 
