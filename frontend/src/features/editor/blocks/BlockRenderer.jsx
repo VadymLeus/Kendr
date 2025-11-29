@@ -1,5 +1,6 @@
 // frontend/src/features/editor/blocks/BlockRenderer.jsx
 import React, { Suspense, lazy } from 'react';
+import AnimationWrapper from '../../sites/components/AnimationWrapper';
 
 const HeroBlock = lazy(() => import('./HeroBlock'));
 const TextBlock = lazy(() => import('./TextBlock'));
@@ -129,41 +130,43 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                         className="block-render-wrapper"
                         style={{ width: '100%' }}
                     >
-                        <Suspense
-                            fallback={
-                                <div style={{
-                                    padding: '2rem 1rem',
-                                    textAlign: 'center',
-                                    background: bg,
-                                    borderRadius: '8px',
-                                    margin: '0.5rem 0',
-                                    border: isEditorPreview 
-                                        ? `1px dashed ${borderColor}` 
-                                        : `1px solid ${borderColor}`,
-                                    color: textSecondary
-                                }}>
-                                    <div style={{ 
-                                        fontSize: '1.5rem', 
-                                        marginBottom: '0.5rem',
-                                        opacity: 0.7
+                        <AnimationWrapper animationConfig={block.data?.animation}>
+                            <Suspense
+                                fallback={
+                                    <div style={{
+                                        padding: '2rem 1rem',
+                                        textAlign: 'center',
+                                        background: bg,
+                                        borderRadius: '8px',
+                                        margin: '0.5rem 0',
+                                        border: isEditorPreview 
+                                            ? `1px dashed ${borderColor}` 
+                                            : `1px solid ${borderColor}`,
+                                        color: textSecondary
                                     }}>
-                                        ⏳
+                                        <div style={{ 
+                                            fontSize: '1.5rem', 
+                                            marginBottom: '0.5rem',
+                                            opacity: 0.7
+                                        }}>
+                                            ⏳
+                                        </div>
+                                        <div style={{ fontWeight: '500' }}>
+                                            Завантаження блоку
+                                        </div>
                                     </div>
-                                    <div style={{ fontWeight: '500' }}>
-                                        Завантаження блоку
-                                    </div>
-                                </div>
-                            }
-                        >
-                            <Component
-                                blockData={block.data}
-                                siteData={siteData}
-                                isEditorPreview={isEditorPreview}
-                                style={dynamicStyle} 
-                                {...props}
-                                block={block}
-                            />
-                        </Suspense>
+                                }
+                            >
+                                <Component
+                                    blockData={block.data}
+                                    siteData={siteData}
+                                    isEditorPreview={isEditorPreview}
+                                    style={dynamicStyle} 
+                                    {...props}
+                                    block={block}
+                                />
+                            </Suspense>
+                        </AnimationWrapper>
                     </div>
                 );
             })}

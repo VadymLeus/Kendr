@@ -1,5 +1,5 @@
 // frontend/src/features/editor/EditableBlockWrapper.jsx
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import BlockRenderer from './blocks/BlockRenderer';
 import { DND_TYPE_NEW_BLOCK } from './DraggableBlockItem';
@@ -25,6 +25,7 @@ const EditableBlockWrapper = ({
     onBlockSaved,
     onContextMenu
 }) => {
+    const ref = useRef(null);
     const [isCompact, setIsCompact] = useState(window.innerWidth < 1024);
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const { confirm } = useConfirm();
@@ -37,55 +38,79 @@ const EditableBlockWrapper = ({
 
     const [{ isDragging }, drag] = useDrag({
         type: DRAG_ITEM_TYPE_EXISTING,
-        item: { path, type: DRAG_ITEM_TYPE_EXISTING },
+        item: () => {
+            return { path, type: DRAG_ITEM_TYPE_EXISTING, id: block.block_id };
+        },
         collect: (monitor) => ({ isDragging: monitor.isDragging() }),
     });
 
-    const [{ isOver }, drop] = useDrop({
+    const [{ handlerId }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
-        hover(item, monitor) {
-            if (!monitor.canDrop()) return;
-            if (item.type === DRAG_ITEM_TYPE_EXISTING) {
-                const dragPath = item.path;
-                const hoverPath = path;
-                if (dragPath.join(',') === hoverPath.join(',')) return;
-                const dragParentPath = dragPath.slice(0, -1).join(',');
-                const hoverParentPath = hoverPath.slice(0, -1).join(',');
-                if (dragParentPath !== hoverParentPath) return;
-                onMoveBlock(dragPath, hoverPath);
-                item.path = hoverPath;
+        collect(monitor) {
+            return {
+                handlerId: monitor.getHandlerId(),
             }
+        },
+        hover(item, monitor) {
+            if (!ref.current) {
+                return;
+            }
+
+            const dragPath = item.path;
+            const hoverPath = path;
+            if (!dragPath || item.type === DND_TYPE_NEW_BLOCK) return;
+
+            if (dragPath.join(',') === hoverPath.join(',')) {
+                return;
+            }
+
+            const dragParentPath = dragPath.slice(0, -1).join(',');
+            const hoverParentPath = hoverPath.slice(0, -1).join(',');
+
+            if (dragParentPath === hoverParentPath) {
+                const dragIndex = dragPath[dragPath.length - 1];
+                const hoverIndex = hoverPath[hoverPath.length - 1];
+
+                const hoverBoundingRect = ref.current?.getBoundingClientRect();
+                
+                const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+                
+                const clientOffset = monitor.getClientOffset();
+            
+                const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+
+
+                if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+                    return;
+                }
+
+                if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+                    return;
+                }
+            }
+
+            onMoveBlock(dragPath, hoverPath);
+            
+            item.path = hoverPath;
         },
         drop(item, monitor) {
             if (monitor.didDrop()) return;
+            
             const dragType = monitor.getItemType();
-            if (!monitor.isOver({ shallow: true })) return;
-
-            if (dragType === DND_TYPE_NEW_BLOCK) {
+            
+            if (dragType === DND_TYPE_NEW_BLOCK && monitor.isOver({ shallow: true })) {
                 onAddBlock(path, item.blockType, item.presetData);
                 return { name: 'EditableBlockWrapper - New', path };
             }
-
-            if (dragType === DRAG_ITEM_TYPE_EXISTING) {
-                const dragPath = item.path;
-                const hoverPath = path;
-                if (dragPath.join(',') === hoverPath.join(',')) return;
-                const isDroppingOnSelf = hoverPath.join(',').startsWith(dragPath.join(',')) && hoverPath.length > dragPath.length;
-                if (isDroppingOnSelf) return;
-
-                onMoveBlock(dragPath, hoverPath);
-                item.path = hoverPath;
-                return { name: 'EditableBlockWrapper - Move', path };
-            }
         },
-        collect: (monitor) => ({ isOver: monitor.isOver({ shallow: true }) })
     });
 
-    const wrapperRef = useCallback(node => drag(drop(node)), [drag, drop]);
-    const opacity = isDragging ? 0.4 : 1;
+    drag(drop(ref));
+
+    const opacity = isDragging ? 0 : 1;
     const blockType = { name: block.type, icon: '⚙️' };
     const blockDomId = `block-${block.block_id}`;
-    const isSelected = selectedBlockPath && selectedBlockPath.join(',') === path.join(',');
+    const isSelected = selectedBlockPath && Array.isArray(selectedBlockPath) && Array.isArray(path) && selectedBlockPath.join(',') === path.join(',');
     const isHeaderBlock = block.type === 'header';
     const anchorId = block.data && block.data.anchorId;
 
@@ -133,6 +158,7 @@ const EditableBlockWrapper = ({
 
         } catch (error) {
             console.error(error);
+            toast.error('Помилка при збереженні');
         }
     };
 
@@ -146,18 +172,21 @@ const EditableBlockWrapper = ({
     const styles = {
         wrapper: {
             opacity,
-            cursor: 'move',
+            cursor: 'grab',
             position: 'relative',
             margin: '20px 0',
             border: isSelected 
                 ? '2px solid var(--platform-accent)' 
-                : (isOver ? '2px dashed var(--platform-accent)' : '2px dashed var(--platform-border-color)'),
+                : '2px dashed transparent',
             borderRadius: '8px',
             transition: 'all 0.2s ease',
             background: block.type === 'layout' ? 'transparent' : 'var(--platform-card-bg)',
-            boxShadow: block.type === 'layout' ? 'none' : '0 2px 4px rgba(0,0,0,0.05)',
+            boxShadow: isDragging ? 'none' : (block.type === 'layout' ? 'none' : '0 2px 4px rgba(0,0,0,0.05)'),
             maxWidth: '100%',
             overflowX: 'hidden'
+        },
+        wrapperHover: {
+             borderColor: 'var(--platform-border-color)'
         },
         header: {
             display: 'flex',
@@ -206,14 +235,21 @@ const EditableBlockWrapper = ({
     return (
         <div
             id={blockDomId}
-            ref={wrapperRef}
+            ref={ref}
             onClick={handleSelect}
             onContextMenu={(e) => onContextMenu && onContextMenu(e, path, block.block_id)}
-            style={styles.wrapper}
+            style={{
+                ...styles.wrapper,
+                border: isSelected 
+                    ? '2px solid var(--platform-accent)' 
+                    : '2px dashed var(--platform-border-color)'
+            }}
             className="editable-block-wrapper"
+            data-handler-id={handlerId}
         >
             <div style={styles.header} className="editable-block-header">
                 <span style={styles.headerText} title={blockType?.name}>
+                    <span style={{cursor: 'grab'}}>⠿</span>
                     <span>{blockType?.icon}</span>
                     <span>{blockType?.name}</span>
                     {anchorId && (

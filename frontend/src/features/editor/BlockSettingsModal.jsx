@@ -1,11 +1,12 @@
 // frontend/src/features/editor/BlockSettingsModal.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import BannerSettings from './settings/BannerSettings';
 import CategoriesSettings from './settings/CategoriesSettings';
 import FeaturesSettings from './settings/FeaturesSettings';
 import CatalogSettings from './settings/CatalogSettings';
 import TextSettings from './settings/TextSettings';
 import HeroSettings from './settings/HeroSettings';
+import AnimationSettings from './settings/components/AnimationSettings';
 
 const SettingsComponentMap = {
     banner: BannerSettings,
@@ -17,12 +18,26 @@ const SettingsComponentMap = {
 };
 
 const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
+    const [animationConfig, setAnimationConfig] = useState(
+        block?.data?.animation || { type: 'none', duration: 0.6, delay: 0 }
+    );
+
+    useEffect(() => {
+        if (isOpen && block) {
+            setAnimationConfig(block.data?.animation || { type: 'none', duration: 0.6, delay: 0 });
+        }
+    }, [isOpen, block]);
+
     if (!isOpen) return null;
 
     const SettingsComponent = SettingsComponentMap[block.type];
 
     const handleInternalSave = (newBlockData) => {
-        onSave(newBlockData);
+        const finalData = {
+            ...newBlockData,
+            animation: animationConfig
+        };
+        onSave(finalData);
         onClose();
     };
 
@@ -110,10 +125,16 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
         color: 'var(--site-text-primary)',
         border: '1px solid var(--site-border-color)'
     };
+    
+    const primaryButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--site-accent)',
+        color: 'var(--site-accent-text)'
+    };
 
     return (
         <div style={modalStyle} onClick={onClose}>
-            <div style={contentStyle} onClick={e => e.stopPropagation()}>
+            <div style={contentStyle} onClick={e => e.stopPropagation()} className="custom-scrollbar">
                 <div style={modalHeaderStyle}>
                     <h4 style={{ 
                         margin: 0,
@@ -138,12 +159,19 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
                 </div>
                 
                 {SettingsComponent ? (
-                    <SettingsComponent 
-                        initialData={block.data} 
-                        onSave={handleInternalSave} 
-                        onClose={onClose}
-                        siteData={siteData}
-                    />
+                    <>
+                        <SettingsComponent 
+                            initialData={block.data} 
+                            onSave={handleInternalSave} 
+                            onClose={onClose}
+                            siteData={siteData}
+                        />
+                        
+                        <AnimationSettings 
+                            animationConfig={animationConfig} 
+                            onChange={setAnimationConfig} 
+                        />
+                    </>
                 ) : (
                     <>
                         <p style={warningTextStyle}>
@@ -152,20 +180,24 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
                         <pre style={preStyle}>
                             {JSON.stringify(block.data, null, 2)}
                         </pre>
+                        
+                        <AnimationSettings 
+                            animationConfig={animationConfig} 
+                            onChange={setAnimationConfig} 
+                        />
+
                         <div style={buttonContainerStyle}>
                             <button 
                                 onClick={onClose}
                                 style={secondaryButtonStyle}
-                                onMouseEnter={(e) => {
-                                    e.target.style.borderColor = 'var(--site-accent)';
-                                    e.target.style.color = 'var(--site-accent)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.borderColor = 'var(--site-border-color)';
-                                    e.target.style.color = 'var(--site-text-primary)';
-                                }}
                             >
                                 Закрити
+                            </button>
+                            <button
+                                onClick={() => handleInternalSave(block.data)}
+                                style={primaryButtonStyle}
+                            >
+                                Зберегти
                             </button>
                         </div>
                     </>

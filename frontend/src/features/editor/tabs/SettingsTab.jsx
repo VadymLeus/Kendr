@@ -16,6 +16,7 @@ import AccordionSettings from '../settings/AccordionSettings';
 import SocialIconsSettings from '../settings/SocialIconsSettings';
 import HeaderSettings from '../settings/HeaderSettings';
 import SpacingControl from '../settings/components/SpacingControl';
+import AnimationSettings from '../settings/components/AnimationSettings';
 
 const SettingsComponentMap = {
     showcase: ShowCaseSettings,
@@ -89,6 +90,14 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
         onUpdateBlockData(selectedBlockPath, newData, addToHistory);
     };
 
+    const handleAnimationUpdate = (newAnimationConfig) => {
+        const newData = {
+            ...selectedBlock.data,
+            animation: newAnimationConfig
+        };
+        onUpdateBlockData(selectedBlockPath, newData, true);
+    };
+
     const handleAnchorChange = (e) => {
         const rawValue = e.target.value;
         const sanitized = rawValue.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
@@ -158,6 +167,11 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                 <SpacingControl 
                     styles={selectedBlock.data.styles || {}} 
                     onChange={handleStyleUpdate} 
+                />
+
+                <AnimationSettings 
+                    animationConfig={selectedBlock.data.animation} 
+                    onChange={handleAnimationUpdate} 
                 />
             </div>
             
