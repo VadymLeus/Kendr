@@ -59,31 +59,67 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
 
     if (!isOpen) return null;
 
-    const modalOverlayStyle = { 
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-        background: 'rgba(0,0,0,0.7)', display: 'flex', 
-        alignItems: 'center', justifyContent: 'center', zIndex: 2100
-    };
-    const modalContentStyle = { 
-        background: 'var(--platform-card-bg)', padding: '1.5rem', 
-        borderRadius: '12px', width: '90%', maxWidth: '500px', 
-        border: '1px solid var(--platform-border-color)', 
-        boxShadow: '0 5px 15px rgba(0,0,0,0.3)'
-    };
-    const inputStyle = {
-        width: '100%', padding: '0.75rem', border: '1px solid var(--platform-border-color)',
-        borderRadius: '4px', fontSize: '1rem', background: 'var(--platform-card-bg)',
-        color: 'var(--platform-text-primary)', marginBottom: '0.5rem',
-        transition: 'border-color 0.2s ease'
-    };
-    const labelStyle = {
-        display: 'block', marginBottom: '0.5rem', color: 'var(--platform-text-primary)', 
-        fontWeight: '500', fontSize: '0.9rem'
-    };
+    // Стили для кнопок
     const buttonStyle = {
-        padding: '10px 20px', border: 'none', borderRadius: '4px',
-        cursor: 'pointer', fontSize: '14px', fontWeight: '500',
+        padding: '10px 20px', 
+        border: 'none', 
+        borderRadius: '8px',
+        cursor: 'pointer', 
+        fontSize: '14px', 
+        fontWeight: '500',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const cancelButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        border: '1px solid var(--platform-border-color)'
+    };
+
+    const cancelButtonHoverStyle = {
+        background: 'var(--platform-hover-bg)',
+        borderColor: 'var(--platform-accent)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const submitButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)'
+    };
+
+    const submitButtonHoverStyle = {
+        background: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const inputStyle = {
+        width: '100%', 
+        padding: '0.75rem', 
+        border: '1px solid var(--platform-border-color)',
+        borderRadius: '8px', 
+        fontSize: '1rem', 
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)', 
+        marginBottom: '0.5rem',
         transition: 'all 0.2s ease'
+    };
+
+    const inputHoverStyle = {
+        borderColor: 'var(--platform-accent)',
+        boxShadow: '0 0 0 1px var(--platform-accent)'
+    };
+
+    const labelStyle = {
+        display: 'block', 
+        marginBottom: '0.5rem', 
+        color: 'var(--platform-text-primary)', 
+        fontWeight: '500', 
+        fontSize: '0.9rem'
     };
 
     const seoSectionStyle = {
@@ -102,7 +138,34 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
         marginBottom: '1rem',
         display: 'flex',
         alignItems: 'center',
-        gap: '5px'
+        gap: '5px',
+        transition: 'color 0.2s ease',
+        fontWeight: '500'
+    };
+
+    const toggleSeoBtnHoverStyle = {
+        color: 'var(--platform-accent-hover)'
+    };
+
+    const modalOverlayStyle = { 
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+        background: 'rgba(0,0,0,0.7)', display: 'flex', 
+        alignItems: 'center', justifyContent: 'center', zIndex: 2100
+    };
+    const modalContentStyle = { 
+        background: 'var(--platform-card-bg)', padding: '1.5rem', 
+        borderRadius: '12px', width: '90%', maxWidth: '500px', 
+        border: '1px solid var(--platform-border-color)', 
+        boxShadow: '0 5px 15px rgba(0,0,0,0.3)'
+    };
+
+    // Обработчики для hover эффектов
+    const handleMouseOver = (element, hoverStyle) => {
+        Object.assign(element.style, hoverStyle);
+    };
+
+    const handleMouseOut = (element, originalStyle) => {
+        Object.assign(element.style, originalStyle);
     };
 
     return (
@@ -129,6 +192,8 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                             placeholder="Про нас" 
                             disabled={loading}
                             required
+                            onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                         />
                     </div>
                     <div style={{marginBottom: '1.5rem'}}>
@@ -141,6 +206,8 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                             placeholder="about-us" 
                             disabled={loading}
                             required
+                            onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                         />
                         <small style={{
                             color: 'var(--platform-text-secondary)', 
@@ -152,12 +219,13 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                         </small>
                     </div>
 
-                    {/* Секція SEO */}
                     <div style={seoSectionStyle}>
                         <button 
                             type="button" 
                             onClick={() => setShowSeo(!showSeo)}
                             style={toggleSeoBtnStyle}
+                            onMouseOver={(e) => handleMouseOver(e.target, toggleSeoBtnHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, toggleSeoBtnStyle)}
                         >
                             {showSeo ? '▼' : '▶'} SEO Налаштування (для Google)
                         </button>
@@ -173,8 +241,10 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                                         value={seoTitle} 
                                         onChange={(e) => setSeoTitle(e.target.value)} 
                                         style={inputStyle} 
-                                        placeholder={name} // Placeholder як назва сторінки
+                                        placeholder={name}
                                         disabled={loading}
+                                        onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                        onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                                     />
                                 </div>
                                 <div style={{marginBottom: '1rem'}}>
@@ -187,6 +257,8 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                                         style={{...inputStyle, minHeight: '80px', resize: 'vertical'}} 
                                         placeholder="Короткий опис сторінки для пошукової видачі..."
                                         disabled={loading}
+                                        onMouseOver={(e) => handleMouseOver(e.target, {...inputStyle, minHeight: '80px', resize: 'vertical', ...inputHoverStyle})}
+                                        onMouseOut={(e) => handleMouseOut(e.target, {...inputStyle, minHeight: '80px', resize: 'vertical'})}
                                     />
                                 </div>
                             </div>
@@ -201,27 +273,20 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
                     }}>
                         <button 
                             type="button" 
-                            style={{
-                                ...buttonStyle,
-                                background: 'var(--platform-card-bg)',
-                                color: 'var(--platform-text-primary)',
-                                border: '1px solid var(--platform-border-color)',
-                                opacity: loading ? 0.6 : 1
-                            }}
+                            style={cancelButtonStyle}
                             onClick={onClose}
                             disabled={loading}
+                            onMouseOver={(e) => !loading && handleMouseOver(e.target, cancelButtonHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, {...cancelButtonStyle, opacity: loading ? 0.6 : 1})}
                         >
                             Скасувати
                         </button>
                         <button 
                             type="submit" 
-                            style={{
-                                ...buttonStyle,
-                                background: 'var(--platform-accent)',
-                                color: 'var(--platform-accent-text)',
-                                opacity: loading ? 0.6 : 1
-                            }}
+                            style={{...submitButtonStyle, opacity: loading ? 0.6 : 1}}
                             disabled={loading}
+                            onMouseOver={(e) => !loading && handleMouseOver(e.target, submitButtonHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, {...submitButtonStyle, opacity: loading ? 0.6 : 1})}
                         >
                             {loading ? '⏳' : page ? '💾 Зберегти' : '➕ Створити'}
                         </button>
@@ -315,6 +380,121 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPage, setEditingPage] = useState(null);
 
+    // Стили для кнопок
+    const buttonStyle = {
+        padding: '8px 16px', 
+        border: 'none', 
+        borderRadius: '8px', 
+        cursor: 'pointer',
+        fontSize: '12px', 
+        fontWeight: '500', 
+        transition: 'all 0.2s ease', 
+        whiteSpace: 'nowrap',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.25rem',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const editorButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        border: '1px solid var(--platform-border-color)'
+    };
+
+    const editorButtonHoverStyle = {
+        background: 'var(--platform-hover-bg)',
+        borderColor: 'var(--platform-accent)',
+        color: 'var(--platform-accent)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const settingsButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        border: '1px solid var(--platform-border-color)'
+    };
+
+    const settingsButtonHoverStyle = {
+        background: 'var(--platform-hover-bg)',
+        borderColor: 'var(--platform-accent)',
+        color: 'var(--platform-accent)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const homeButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        border: '1px solid var(--platform-border-color)'
+    };
+
+    const homeButtonHoverStyle = {
+        background: 'var(--platform-warning)',
+        color: 'white',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(237, 137, 54, 0.2)'
+    };
+
+    const deleteButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--platform-danger)',
+        color: 'white'
+    };
+
+    const deleteButtonHoverStyle = {
+        background: 'var(--platform-danger-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.2)'
+    };
+
+    const globalEditButtonStyle = {
+        ...buttonStyle,
+        background: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)'
+    };
+
+    const globalEditButtonHoverStyle = {
+        background: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const createButtonStyle = {
+        padding: '10px 20px', 
+        backgroundColor: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)', 
+        border: 'none',
+        borderRadius: '8px', 
+        cursor: 'pointer', 
+        fontSize: '14px',
+        fontWeight: '600', 
+        transition: 'all 0.2s ease',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const createButtonHoverStyle = {
+        backgroundColor: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    // Обработчики для hover эффектов
+    const handleMouseOver = (element, hoverStyle) => {
+        Object.assign(element.style, hoverStyle);
+    };
+
+    const handleMouseOut = (element, originalStyle) => {
+        Object.assign(element.style, originalStyle);
+    };
+
     const styles = {
         card: {
             background: 'var(--platform-card-bg)', 
@@ -342,30 +522,6 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
             borderBottom: '1px solid var(--platform-border-color)',
             color: 'var(--platform-text-primary)',
             fontSize: '0.9rem'
-        },
-        button: {
-            padding: '6px 12px', 
-            border: 'none', 
-            borderRadius: '4px', 
-            cursor: 'pointer',
-            fontSize: '12px', 
-            fontWeight: '500', 
-            transition: 'all 0.2s ease', 
-            whiteSpace: 'nowrap'
-        },
-        createButton: {
-            padding: '10px 20px', 
-            backgroundColor: 'var(--platform-accent)',
-            color: 'var(--platform-accent-text)', 
-            border: 'none',
-            borderRadius: '6px', 
-            cursor: 'pointer', 
-            fontSize: '14px',
-            fontWeight: '600', 
-            transition: 'background-color 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
         }
     };
 
@@ -397,8 +553,10 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                     📄 Керування сторінками
                 </h2>
                 <button 
-                    style={styles.createButton}
+                    style={createButtonStyle}
                     onClick={handleOpenCreate}
+                    onMouseOver={(e) => handleMouseOver(e.target, createButtonHoverStyle)}
+                    onMouseOut={(e) => handleMouseOut(e.target, createButtonStyle)}
                 >
                     ➕ Додати сторінку
                 </button>
@@ -465,63 +623,40 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                                 flexWrap: 'wrap'
                                             }}>
                                                 <button 
-                                                    style={{
-                                                        ...styles.button,
-                                                        background: 'var(--platform-card-bg)',
-                                                        color: 'var(--platform-text-primary)',
-                                                        border: '1px solid var(--platform-border-color)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.25rem'
-                                                    }}
+                                                    style={editorButtonStyle}
                                                     onClick={() => onEditPage(page.id)}
                                                     title="Редагувати вміст"
+                                                    onMouseOver={(e) => handleMouseOver(e.target, editorButtonHoverStyle)}
+                                                    onMouseOut={(e) => handleMouseOut(e.target, editorButtonStyle)}
                                                 >
                                                     ✏️ Редактор
                                                 </button>
                                                 <button 
-                                                    style={{
-                                                        ...styles.button,
-                                                        background: 'var(--platform-card-bg)',
-                                                        color: 'var(--platform-text-primary)',
-                                                        border: '1px solid var(--platform-border-color)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.25rem'
-                                                    }}
+                                                    style={settingsButtonStyle}
                                                     onClick={() => handleOpenEdit(page)}
                                                     title="Налаштування сторінки"
+                                                    onMouseOver={(e) => handleMouseOver(e.target, settingsButtonHoverStyle)}
+                                                    onMouseOut={(e) => handleMouseOut(e.target, settingsButtonStyle)}
                                                 >
                                                     ⚙️ Налаш.
                                                 </button>
                                                 {!page.is_homepage && (
                                                     <>
                                                         <button 
-                                                            style={{
-                                                                ...styles.button,
-                                                                background: 'var(--platform-card-bg)',
-                                                                color: 'var(--platform-text-primary)',
-                                                                border: '1px solid var(--platform-border-color)',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.25rem'
-                                                            }}
+                                                            style={homeButtonStyle}
                                                             onClick={() => handleSetHome(page.id, page.name)}
                                                             title="Зробити головною сторінкою"
+                                                            onMouseOver={(e) => handleMouseOver(e.target, homeButtonHoverStyle)}
+                                                            onMouseOut={(e) => handleMouseOut(e.target, homeButtonStyle)}
                                                         >
                                                             🏠 Головна
                                                         </button>
                                                         <button 
-                                                            style={{
-                                                                ...styles.button,
-                                                                background: 'var(--platform-danger)',
-                                                                color: 'white',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.25rem'
-                                                            }}
+                                                            style={deleteButtonStyle}
                                                             onClick={() => handleDelete(page)}
                                                             title="Видалити сторінку"
+                                                            onMouseOver={(e) => handleMouseOver(e.target, deleteButtonHoverStyle)}
+                                                            onMouseOut={(e) => handleMouseOut(e.target, deleteButtonStyle)}
                                                         >
                                                             🗑️ Видалити
                                                         </button>
@@ -559,16 +694,11 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                             </td>
                                             <td style={styles.td}>
                                                 <button 
-                                                    style={{
-                                                        ...styles.button,
-                                                        background: 'var(--platform-accent)',
-                                                        color: 'var(--platform-accent-text)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.25rem'
-                                                    }}
+                                                    style={globalEditButtonStyle}
                                                     onClick={onEditHeader}
                                                     title="Редагувати вміст хедера"
+                                                    onMouseOver={(e) => handleMouseOver(e.target, globalEditButtonHoverStyle)}
+                                                    onMouseOut={(e) => handleMouseOut(e.target, globalEditButtonStyle)}
                                                 >
                                                     🛠 Редагувати Хедер
                                                 </button>
@@ -586,16 +716,11 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                             </td>
                                             <td style={styles.td}>
                                                 <button 
-                                                    style={{
-                                                        ...styles.button,
-                                                        background: 'var(--platform-accent)',
-                                                        color: 'var(--platform-accent-text)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.25rem'
-                                                    }}
+                                                    style={globalEditButtonStyle}
                                                     onClick={onEditFooter}
                                                     title="Редагувати вміст футера"
+                                                    onMouseOver={(e) => handleMouseOver(e.target, globalEditButtonHoverStyle)}
+                                                    onMouseOut={(e) => handleMouseOut(e.target, globalEditButtonStyle)}
                                                 >
                                                     🛠 Редагувати Футер
                                                 </button>

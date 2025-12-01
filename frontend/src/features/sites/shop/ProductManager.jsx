@@ -115,39 +115,122 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
         }
     };
 
+    const primaryButton = {
+        background: 'var(--platform-accent)', 
+        color: 'var(--platform-accent-text)',
+        padding: '8px', 
+        borderRadius: '6px', 
+        border: 'none',
+        fontWeight: '600', 
+        cursor: 'pointer', 
+        width: '100%',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const primaryButtonHover = {
+        background: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const secondaryButton = {
+        background: 'transparent', 
+        border: '1px solid var(--platform-border-color)', 
+        color: 'var(--platform-text-primary)', 
+        width: 'auto',
+        padding: '8px',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+    };
+
+    const secondaryButtonHover = {
+        background: 'var(--platform-hover-bg)',
+        borderColor: 'var(--platform-accent)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+    };
+
+    const dangerButton = {
+        background: 'rgba(229, 62, 62, 0.1)', 
+        border: '1px solid rgba(229, 62, 62, 0.2)', 
+        cursor: 'pointer', 
+        color: '#e53e3e', 
+        width: '34px', 
+        height: '34px', 
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        fontSize: '1.2rem',
+        fontWeight: 'bold',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const dangerButtonHover = {
+        background: '#e53e3e',
+        color: 'white',
+        transform: 'scale(1.05)',
+        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.3)'
+    };
+
+    const removeValueBtnStyle = {
+        border: 'none', 
+        background: 'transparent', 
+        cursor: 'pointer', 
+        color: 'var(--platform-text-secondary)',
+        fontSize: '1.1rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0 0 0 4px',
+        flexShrink: 0,
+        transition: 'all 0.2s ease'
+    };
+
+    const removeValueBtnHover = {
+        color: '#e53e3e',
+        transform: 'scale(1.2)'
+    };
+
     const styles = {
         container: {
             border: '1px solid var(--platform-border-color)',
-            borderRadius: '8px',
-            padding: '12px',
+            borderRadius: '12px',
+            padding: '16px',
             marginBottom: '12px',
             background: 'var(--platform-bg)', 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            transition: 'all 0.2s ease'
         },
         header: { 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center', 
-            marginBottom: '10px',
-            gap: '8px',
+            marginBottom: '12px',
+            gap: '10px',
             width: '100%'
         },
         valuesList: { 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr',
-            gap: '8px', 
-            marginBottom: '10px' 
+            gap: '10px', 
+            marginBottom: '12px' 
         },
         valueTag: (isEditing) => ({
             background: isEditing ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
-            border: isEditing ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-            borderRadius: '4px',
-            padding: '6px 8px',
+            border: isEditing ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+            borderRadius: '8px',
+            padding: '8px 10px',
             fontSize: '0.85rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '6px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            gap: '8px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             minWidth: 0,
             cursor: 'pointer',
             transition: 'all 0.2s ease'
@@ -180,25 +263,30 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
         },
         inputField: { 
             width: '100%',
-            padding: '8px 10px', 
-            borderRadius: '4px', 
+            padding: '8px 12px', 
+            borderRadius: '8px', 
             border: '1px solid var(--platform-border-color)', 
             fontSize: '0.9rem', 
             background: 'var(--platform-card-bg)', 
             color: 'var(--platform-text-primary)',
             boxSizing: 'border-box',
-            marginBottom: '8px'
+            marginBottom: '8px',
+            transition: 'all 0.2s ease'
+        },
+        inputFieldHover: {
+            borderColor: 'var(--platform-accent)',
+            boxShadow: '0 0 0 1px var(--platform-accent)'
         },
         label: {
             fontSize: '0.8rem', 
             fontWeight: '500', 
             display: 'block', 
-            marginBottom: '4px', 
+            marginBottom: '6px', 
             color: 'var(--platform-text-secondary)'
         },
         optionNameInput: {
-            padding: '8px 10px', 
-            borderRadius: '4px', 
+            padding: '8px 12px', 
+            borderRadius: '8px', 
             border: '1px solid var(--platform-border-color)', 
             fontSize: '0.9rem', 
             background: 'var(--platform-card-bg)', 
@@ -206,63 +294,31 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
             fontWeight: 'bold', 
             flex: 1,
             boxSizing: 'border-box',
-            minWidth: 0
+            minWidth: 0,
+            transition: 'all 0.2s ease'
+        },
+        optionNameInputHover: {
+            borderColor: 'var(--platform-accent)',
+            boxShadow: '0 0 0 1px var(--platform-accent)'
         },
         addButton: {
-            width: '100%',
-            padding: '8px',
-            borderRadius: '4px',
+            ...primaryButton,
             background: editingValueIndex !== null ? '#ecc94b' : 'var(--platform-accent)',
             color: editingValueIndex !== null ? 'black' : 'var(--platform-accent-text)',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: '500',
-            marginTop: '4px'
+        },
+        addButtonHover: {
+            ...primaryButtonHover,
+            background: editingValueIndex !== null ? '#d69e2e' : 'var(--platform-accent-hover)',
         },
         cancelButton: {
-            width: '100%',
-            padding: '8px',
-            borderRadius: '4px',
-            background: 'transparent',
-            border: '1px solid var(--platform-border-color)',
-            color: 'var(--platform-text-secondary)',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            marginTop: '4px'
+            ...secondaryButton,
+            width: '100%'
         },
-        deleteButton: {
-            background: 'rgba(229, 62, 62, 0.1)', 
-            border: '1px solid rgba(229, 62, 62, 0.2)', 
-            cursor: 'pointer', 
-            color: '#e53e3e', 
-            width: '34px', 
-            height: '34px', 
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            fontSize: '1.2rem',
-            fontWeight: 'bold',
-            transition: 'all 0.2s'
-        },
-        removeValueBtn: {
-            border: 'none', 
-            background: 'transparent', 
-            cursor: 'pointer', 
-            color: 'var(--platform-text-secondary)',
-            fontSize: '1.1rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 0 0 4px',
-            flexShrink: 0
-        },
+        cancelButtonHover: secondaryButtonHover,
         buttonContainer: {
             display: 'flex',
             justifyContent: 'center',
-            gap: '8px',
+            gap: '10px',
             gridColumn: '1 / -1'
         },
         buttonWrapper: {
@@ -271,6 +327,14 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
             gap: '4px',
             flex: 1
         }
+    };
+
+    const handleMouseOver = (element, hoverStyle) => {
+        Object.assign(element.style, hoverStyle);
+    };
+
+    const handleMouseOut = (element, originalStyle) => {
+        Object.assign(element.style, originalStyle);
     };
 
     return (
@@ -282,20 +346,16 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
                     onChange={(e) => onChange({...variant, name: e.target.value})}
                     placeholder="Назва опції (напр. Розмір)"
                     style={styles.optionNameInput}
+                    onMouseOver={(e) => handleMouseOver(e.target, styles.optionNameInputHover)}
+                    onMouseOut={(e) => handleMouseOut(e.target, styles.optionNameInput)}
                 />
                 <button 
                     type="button" 
                     onClick={handleRemoveVariant} 
-                    style={styles.deleteButton}
+                    style={dangerButton}
                     title="Видалити опцію"
-                    onMouseEnter={(e) => {
-                        e.target.style.background = '#e53e3e';
-                        e.target.style.color = 'white';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.background = 'rgba(229, 62, 62, 0.1)';
-                        e.target.style.color = '#e53e3e';
-                    }}
+                    onMouseOver={(e) => handleMouseOver(e.target, dangerButtonHover)}
+                    onMouseOut={(e) => handleMouseOut(e.target, dangerButton)}
                 >
                     ×
                 </button>
@@ -308,6 +368,16 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
                         style={styles.valueTag(idx === editingValueIndex)} 
                         onClick={() => startEditing(idx)}
                         title="Натисніть, щоб редагувати"
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                            e.currentTarget.style.borderColor = 'var(--platform-accent)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+                            e.currentTarget.style.borderColor = idx === editingValueIndex ? 'var(--platform-accent)' : 'var(--platform-border-color)';
+                        }}
                     >
                         <div style={styles.textContainer}>
                             <span style={styles.truncatedText}>
@@ -332,9 +402,9 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
                         <button 
                             type="button" 
                             onClick={(e) => handleRemoveValue(idx, val.label, e)} 
-                            style={styles.removeValueBtn}
-                            onMouseEnter={(e) => e.target.style.color = '#e53e3e'}
-                            onMouseLeave={(e) => e.target.style.color = 'var(--platform-text-secondary)'}
+                            style={removeValueBtnStyle}
+                            onMouseOver={(e) => handleMouseOver(e.target, removeValueBtnHover)}
+                            onMouseOut={(e) => handleMouseOut(e.target, removeValueBtnStyle)}
                         >
                             ×
                         </button>
@@ -344,16 +414,16 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
 
             <div style={{
                 borderTop: '1px dashed var(--platform-border-color)', 
-                paddingTop: '10px', 
-                marginTop: '10px',
+                paddingTop: '12px', 
+                marginTop: '12px',
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr 1fr',
-                gap: '8px',
+                gap: '10px',
                 alignItems: 'end'
             }}>
                 <div style={{gridColumn: '1 / -1'}}>
                     <span style={{fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--platform-text-primary)'}}>
-                        {editingValueIndex !== null ? `Редагування "${variant.values[editingValueIndex]?.label}"` : 'Додати нове значення'}
+                        {editingValueIndex !== null ? `✏️ Редагування "${variant.values[editingValueIndex]?.label}"` : '➕ Додати нове значення'}
                     </span>
                 </div>
 
@@ -366,6 +436,8 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
                         onKeyDown={handleKeyDown}
                         placeholder="XL" 
                         style={{...styles.inputField, marginBottom: 0}}
+                        onMouseOver={(e) => handleMouseOver(e.target, styles.inputFieldHover)}
+                        onMouseOut={(e) => handleMouseOut(e.target, {...styles.inputField, marginBottom: 0})}
                     />
                 </div>
                 
@@ -379,6 +451,8 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
                         onKeyDown={handleKeyDown}
                         placeholder="+/-" 
                         style={{...styles.inputField, marginBottom: 0}}
+                        onMouseOver={(e) => handleMouseOver(e.target, styles.inputFieldHover)}
+                        onMouseOut={(e) => handleMouseOut(e.target, {...styles.inputField, marginBottom: 0})}
                     />
                 </div>
 
@@ -393,20 +467,34 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
                         onKeyDown={handleKeyDown}
                         placeholder="%" 
                         style={{...styles.inputField, marginBottom: 0}}
+                        onMouseOver={(e) => handleMouseOver(e.target, styles.inputFieldHover)}
+                        onMouseOut={(e) => handleMouseOut(e.target, {...styles.inputField, marginBottom: 0})}
                     />
                 </div>
 
                 <div style={styles.buttonContainer}>
                     <div style={styles.buttonWrapper}>
-                        <button type="button" onClick={handleSaveValue} style={styles.addButton}>
-                            {editingValueIndex !== null ? 'Зберегти' : 'Додати'}
+                        <button 
+                            type="button" 
+                            onClick={handleSaveValue} 
+                            style={styles.addButton}
+                            onMouseOver={(e) => handleMouseOver(e.target, styles.addButtonHover)}
+                            onMouseOut={(e) => handleMouseOut(e.target, styles.addButton)}
+                        >
+                            {editingValueIndex !== null ? '💾 Зберегти' : '➕ Додати'}
                         </button>
                     </div>
                     
                     {editingValueIndex !== null && (
                         <div style={styles.buttonWrapper}>
-                            <button type="button" onClick={resetInput} style={styles.cancelButton}>
-                                Скасувати
+                            <button 
+                                type="button" 
+                                onClick={resetInput} 
+                                style={styles.cancelButton}
+                                onMouseOver={(e) => handleMouseOver(e.target, styles.cancelButtonHover)}
+                                onMouseOut={(e) => handleMouseOut(e.target, styles.cancelButton)}
+                            >
+                                ↶ Скасувати
                             </button>
                         </div>
                     )}
@@ -630,6 +718,156 @@ const ProductManager = ({ siteId }) => {
         return matchesSearch && matchesCategory;
     });
 
+    const primaryButton = {
+        background: 'var(--platform-accent)', 
+        color: 'var(--platform-accent-text)',
+        padding: '10px', 
+        borderRadius: '8px', 
+        border: 'none',
+        fontWeight: '600', 
+        cursor: 'pointer', 
+        width: '100%',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const primaryButtonHover = {
+        background: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const secondaryButton = {
+        background: 'transparent', 
+        border: '1px solid var(--platform-border-color)', 
+        color: 'var(--platform-text-primary)', 
+        width: 'auto',
+        padding: '10px 16px',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+    };
+
+    const secondaryButtonHover = {
+        background: 'var(--platform-hover-bg)',
+        borderColor: 'var(--platform-accent)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+    };
+
+    const dangerButton = {
+        position: 'absolute',
+        top: '8px',
+        right: '8px',
+        background: 'rgba(255,255,255,0.9)',
+        border: '1px solid var(--platform-border-color)',
+        color: '#e53e3e',
+        width: '32px',
+        height: '32px',
+        borderRadius: '8px',
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        fontSize: '1.2rem',
+        fontWeight: 'bold',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        zIndex: 2
+    };
+
+    const dangerButtonHover = {
+        background: '#fff5f5',
+        borderColor: '#fc8181',
+        color: '#c53030',
+        transform: 'scale(1.1)',
+        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.2)'
+    };
+
+    const inputStyle = {
+        width: '100%', 
+        padding: '10px 12px', 
+        borderRadius: '8px',
+        border: '1px solid var(--platform-border-color)',
+        background: 'var(--platform-bg)', 
+        color: 'var(--platform-text-primary)',
+        boxSizing: 'border-box',
+        transition: 'all 0.2s ease'
+    };
+
+    const inputHoverStyle = {
+        borderColor: 'var(--platform-accent)',
+        boxShadow: '0 0 0 1px var(--platform-accent)'
+    };
+
+    const labelStyle = {
+        fontSize:'0.85rem', 
+        fontWeight:'500', 
+        marginBottom:'6px', 
+        display:'block', 
+        color: 'var(--platform-text-secondary)'
+    };
+
+    const removeThumbBtnStyle = {
+        position: 'absolute',
+        top: '4px',
+        right: '4px',
+        background: 'rgba(229, 62, 62, 0.9)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '50%',
+        width: '22px',
+        height: '22px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '12px',
+        zIndex: 5,
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+    };
+
+    const removeThumbBtnHover = {
+        background: '#c53030',
+        transform: 'scale(1.1)',
+        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.3)'
+    };
+
+    const makeCoverBtnStyle = {
+        position: 'absolute',
+        bottom: '4px',
+        right: '4px',
+        background: 'rgba(255, 255, 255, 0.9)',
+        color: '#ecc94b',
+        border: 'none',
+        borderRadius: '50%',
+        width: '26px',
+        height: '26px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '14px',
+        zIndex: 5,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+        transition: 'all 0.2s ease'
+    };
+
+    const makeCoverBtnHover = {
+        background: '#fff',
+        transform: 'scale(1.1)',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+    };
+
+    const handleMouseOver = (element, hoverStyle) => {
+        Object.assign(element.style, hoverStyle);
+    };
+
+    const handleMouseOut = (element, originalStyle) => {
+        Object.assign(element.style, originalStyle);
+    };
+
     const containerStyle = { 
         display: 'flex', 
         gap: '20px', 
@@ -649,7 +887,8 @@ const ProductManager = ({ siteId }) => {
         flexDirection: 'column', 
         height: '100%',
         boxSizing: 'border-box',
-        overflow: 'hidden' 
+        overflow: 'hidden',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
     };
 
     const scrollableFormStyle = {
@@ -658,7 +897,7 @@ const ProductManager = ({ siteId }) => {
         paddingRight: '8px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px'
+        gap: '14px'
     };
 
     const productsAreaStyle = {
@@ -666,11 +905,12 @@ const ProductManager = ({ siteId }) => {
         background: 'var(--platform-card-bg)',
         borderRadius: '16px',
         border: '1px solid var(--platform-border-color)',
-        padding: '20px',
+        padding: '24px',
         display: 'flex', 
         flexDirection: 'column', 
         overflow: 'hidden',
-        minWidth: 0
+        minWidth: 0,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
     };
 
     const productGridStyle = {
@@ -683,12 +923,11 @@ const ProductManager = ({ siteId }) => {
         height: '100%'
     };
 
-    const tileStyle = (isActive) => ({
+    const tileBaseStyle = {
         background: 'var(--platform-bg)',
         borderRadius: '12px',
-        border: isActive ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
         overflow: 'hidden',
-        transition: 'transform 0.2s, box-shadow 0.2s',
+        transition: 'all 0.2s ease',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
@@ -696,7 +935,19 @@ const ProductManager = ({ siteId }) => {
         height: '100%',
         minHeight: '280px',
         boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+    };
+
+    const tileStyle = (isActive) => ({
+        ...tileBaseStyle,
+        border: isActive ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+        boxShadow: isActive ? '0 4px 12px rgba(var(--platform-accent-rgb), 0.2)' : '0 2px 5px rgba(0,0,0,0.05)'
     });
+
+    const tileHoverStyle = {
+        transform: 'translateY(-3px)',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+        borderColor: 'var(--platform-accent)'
+    };
 
     const tileImageStyle = {
         width: '100%',
@@ -710,12 +961,12 @@ const ProductManager = ({ siteId }) => {
     };
 
     const tileContentStyle = {
-        padding: '12px',
+        padding: '14px',
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        gap: '8px'
+        gap: '10px'
     };
 
     const badgeStyle = (isStock) => ({
@@ -746,44 +997,6 @@ const ProductManager = ({ siteId }) => {
         zIndex: 2
     };
 
-    const deleteBtnStyle = {
-        background: 'rgba(229, 62, 62, 0.1)', 
-        border: '1px solid rgba(229, 62, 62, 0.2)', 
-        cursor: 'pointer', 
-        color: '#e53e3e', 
-        width: '32px', 
-        height: '32px', 
-        borderRadius: '8px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        fontSize: '1.2rem',
-        fontWeight: 'bold',
-        transition: 'all 0.2s',
-        position: 'absolute',
-        top: '8px',
-        right: '8px',
-        zIndex: 2
-    };
-
-    const inputStyle = {
-        width: '100%', padding: '10px 12px', borderRadius: '8px',
-        border: '1px solid var(--platform-border-color)',
-        background: 'var(--platform-bg)', color: 'var(--platform-text-primary)',
-        marginBottom: '0', boxSizing: 'border-box'
-    };
-
-    const labelStyle = {
-        fontSize:'0.85rem', fontWeight:'500', marginBottom:'4px', display:'block', color: 'var(--platform-text-secondary)'
-    };
-
-    const primaryButton = {
-        background: 'var(--platform-accent)', color: 'var(--platform-accent-text)',
-        padding: '10px', borderRadius: '8px', border: 'none',
-        fontWeight: '600', cursor: 'pointer', width: '100%'
-    };
-
     const galleryGridStyle = {
         display: 'flex',
         flexWrap: 'wrap',
@@ -797,50 +1010,14 @@ const ProductManager = ({ siteId }) => {
         position: 'relative',
         borderRadius: '8px',
         overflow: 'hidden',
-        border: '1px solid var(--platform-border-color)'
+        border: '1px solid var(--platform-border-color)',
+        transition: 'all 0.2s ease'
     };
 
     const thumbImgStyle = {
         width: '100%',
         height: '100%',
         objectFit: 'cover'
-    };
-
-    const removeThumbBtnStyle = {
-        position: 'absolute',
-        top: '2px',
-        right: '2px',
-        background: 'rgba(229, 62, 62, 0.9)',
-        color: 'white',
-        border: 'none',
-        borderRadius: '50%',
-        width: '20px',
-        height: '20px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '12px',
-        zIndex: 5
-    };
-
-    const makeCoverBtnStyle = {
-        position: 'absolute',
-        bottom: '2px',
-        right: '2px',
-        background: 'rgba(255, 255, 255, 0.9)',
-        color: '#ecc94b',
-        border: 'none',
-        borderRadius: '50%',
-        width: '24px',
-        height: '24px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '14px',
-        zIndex: 5,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
     };
 
     if (loading) return <div style={{padding: 40, textAlign: 'center'}}>Завантаження...</div>;
@@ -850,7 +1027,7 @@ const ProductManager = ({ siteId }) => {
             <div style={editorCardStyle}>
                 <div style={{marginBottom: '20px', flexShrink: 0}}>
                     <h3 style={{margin: '0 0 5px 0', fontSize: '1.2rem', color: 'var(--platform-text-primary)'}}>
-                        {formData.id ? '✏️ Редагування' : '➕ Новий товар'}
+                        {formData.id ? '✏️ Редагування товару' : '➕ Новий товар'}
                     </h3>
                     <p style={{margin: 0, fontSize: '0.85rem', color: 'var(--platform-text-secondary)'}}>
                         {formData.id ? 'Змініть дані та збережіть' : 'Заповніть картку товару'}
@@ -860,13 +1037,15 @@ const ProductManager = ({ siteId }) => {
                 <form onSubmit={handleSubmit} style={{flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
                     <div className="custom-scrollbar" style={scrollableFormStyle}>
                         <div>
-                            <label style={labelStyle}>Назва</label>
+                            <label style={labelStyle}>Назва товару</label>
                             <input 
                                 type="text" 
                                 style={inputStyle} 
                                 value={formData.name} 
                                 onChange={e => setFormData({...formData, name: e.target.value})} 
                                 required
+                                onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                             />
                         </div>
 
@@ -874,26 +1053,38 @@ const ProductManager = ({ siteId }) => {
                             <div style={{flex: 1}}>
                                 <label style={labelStyle}>Ціна (₴)</label>
                                 <input 
-                                    type="number" step="0.01" style={inputStyle} 
+                                    type="number" 
+                                    step="0.01" 
+                                    style={inputStyle} 
                                     value={formData.price} 
                                     onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} 
                                     required
+                                    onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                                 />
                             </div>
                             <div style={{flex: 1}}>
                                 <label style={labelStyle}>Склад</label>
                                 <input 
-                                    type="number" style={inputStyle} 
+                                    type="number" 
+                                    style={inputStyle} 
                                     value={formData.stock_quantity} 
                                     onChange={e => setFormData({...formData, stock_quantity: parseInt(e.target.value)})} 
+                                    onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                    onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                                 />
                             </div>
                             <div style={{flex: 1}}>
                                 <label style={{...labelStyle, color: '#e53e3e'}}>Знижка (%)</label>
                                 <input 
-                                    type="number" min="0" max="100" style={{...inputStyle, borderColor: formData.sale_percentage > 0 ? '#e53e3e' : ''}}
+                                    type="number" 
+                                    min="0" 
+                                    max="100" 
+                                    style={{...inputStyle, borderColor: formData.sale_percentage > 0 ? '#e53e3e' : ''}}
                                     value={formData.sale_percentage} 
                                     onChange={e => setFormData({...formData, sale_percentage: parseInt(e.target.value)})} 
+                                    onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                    onMouseOut={(e) => handleMouseOut(e.target, {...inputStyle, borderColor: formData.sale_percentage > 0 ? '#e53e3e' : ''})}
                                 />
                             </div>
                         </div>
@@ -904,6 +1095,8 @@ const ProductManager = ({ siteId }) => {
                                 style={inputStyle} 
                                 value={formData.category_id || ''} 
                                 onChange={e => setFormData({...formData, category_id: e.target.value || null})}
+                                onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                             >
                                 <option value="">Без категорії</option>
                                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -935,15 +1128,23 @@ const ProductManager = ({ siteId }) => {
                                             style={removeThumbBtnStyle}
                                             onClick={() => handleRemoveImage(idx)}
                                             title="Видалити"
+                                            onMouseOver={(e) => handleMouseOver(e.target, removeThumbBtnHover)}
+                                            onMouseLeave={(e) => handleMouseOut(e.target, removeThumbBtnStyle)}
                                         >
                                             ×
                                         </button>
 
                                         {idx === 0 ? (
                                             <div style={{
-                                                position: 'absolute', bottom: 0, left: 0, right: 0, 
-                                                background: 'rgba(0,0,0,0.6)', color: 'white', 
-                                                fontSize: '10px', textAlign: 'center', padding: '2px'
+                                                position: 'absolute', 
+                                                bottom: 0, 
+                                                left: 0, 
+                                                right: 0, 
+                                                background: 'rgba(0,0,0,0.6)', 
+                                                color: 'white', 
+                                                fontSize: '10px', 
+                                                textAlign: 'center', 
+                                                padding: '2px'
                                             }}>
                                                 Обкладинка
                                             </div>
@@ -953,6 +1154,8 @@ const ProductManager = ({ siteId }) => {
                                                 style={makeCoverBtnStyle}
                                                 onClick={() => handleMakeCover(idx)}
                                                 title="Зробити головним фото"
+                                                onMouseOver={(e) => handleMouseOver(e.target, makeCoverBtnHover)}
+                                                onMouseLeave={(e) => handleMouseOut(e.target, makeCoverBtnStyle)}
                                             >
                                                 ★
                                             </button>
@@ -964,12 +1167,16 @@ const ProductManager = ({ siteId }) => {
 
                         <div style={{
                             borderTop: '1px dashed var(--platform-border-color)', 
-                            paddingTop: '10px'
+                            paddingTop: '12px'
                         }}>
                             <label style={{
-                                fontSize:'0.9rem', fontWeight:'600', marginBottom:'8px', display:'block', color: 'var(--platform-text-primary)'
+                                fontSize:'0.9rem', 
+                                fontWeight:'600', 
+                                marginBottom:'10px', 
+                                display:'block', 
+                                color: 'var(--platform-text-primary)'
                             }}>
-                                Варіанти товару
+                                ⚙️ Варіанти товару
                             </label>
                             
                             {formData.variants.map((variant, idx) => (
@@ -991,7 +1198,18 @@ const ProductManager = ({ siteId }) => {
                                     border: '1px dashed var(--platform-accent)', 
                                     color: 'var(--platform-accent)', 
                                     cursor: 'pointer', 
-                                    textAlign: 'center'
+                                    textAlign: 'center',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.background = 'rgba(var(--platform-accent-rgb), 0.05)';
+                                    e.currentTarget.style.borderStyle = 'solid';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.borderStyle = 'dashed';
+                                    e.currentTarget.style.transform = 'translateY(0)';
                                 }}
                             >
                                 + Додати опцію (Розмір, Колір...)
@@ -999,32 +1217,35 @@ const ProductManager = ({ siteId }) => {
                         </div>
 
                         <div>
-                            <label style={labelStyle}>Опис</label>
+                            <label style={labelStyle}>Опис товару</label>
                             <textarea 
                                 style={{...inputStyle, minHeight: '80px', resize: 'vertical'}} 
                                 value={formData.description} 
                                 onChange={e => setFormData({...formData, description: e.target.value})}
+                                onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                onMouseOut={(e) => handleMouseOut(e.target, {...inputStyle, minHeight: '80px', resize: 'vertical'})}
                             />
                         </div>
                     </div>
 
                     <div style={{paddingTop: '20px', display: 'flex', gap: '10px', flexShrink: 0}}>
-                        <button type="submit" style={primaryButton}>
-                            {formData.id ? 'Зберегти' : 'Створити'}
+                        <button 
+                            type="submit" 
+                            style={primaryButton}
+                            onMouseOver={(e) => handleMouseOver(e.target, primaryButtonHover)}
+                            onMouseOut={(e) => handleMouseOut(e.target, primaryButton)}
+                        >
+                            {formData.id ? '💾 Зберегти зміни' : '➕ Створити товар'}
                         </button>
                         {formData.id && (
                             <button 
                                 type="button" 
                                 onClick={resetForm}
-                                style={{
-                                    ...primaryButton, 
-                                    background: 'transparent', 
-                                    border: '1px solid var(--platform-border-color)', 
-                                    color: 'var(--platform-text-primary)', 
-                                    width: 'auto'
-                                }}
+                                style={secondaryButton}
+                                onMouseOver={(e) => handleMouseOver(e.target, secondaryButtonHover)}
+                                onMouseOut={(e) => handleMouseOut(e.target, secondaryButton)}
                             >
-                                Відміна
+                                ↶ Відміна
                             </button>
                         )}
                     </div>
@@ -1042,15 +1263,19 @@ const ProductManager = ({ siteId }) => {
                 }}>
                     <div style={{display: 'flex', gap: '10px', flex: 1, minWidth: '200px'}}>
                         <input 
-                            placeholder="🔍 Пошук..." 
+                            placeholder="🔍 Пошук товару..." 
                             style={{...inputStyle, marginBottom: 0, width: '100%'}}
                             value={filters.search}
                             onChange={e => setFilters({...filters, search: e.target.value})}
+                            onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, {...inputStyle, marginBottom: 0, width: '100%'})}
                         />
                         <select 
                             style={{...inputStyle, marginBottom: 0, maxWidth: '180px'}}
                             value={filters.category}
                             onChange={e => setFilters({...filters, category: e.target.value})}
+                            onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, {...inputStyle, marginBottom: 0, maxWidth: '180px'})}
                         >
                             <option value="all">Всі категорії</option>
                             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1073,8 +1298,12 @@ const ProductManager = ({ siteId }) => {
                             key={product.id}
                             style={tileStyle(formData.id === product.id)}
                             onClick={() => openEditor(product)}
-                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                            onMouseEnter={(e) => {
+                                handleMouseOver(e.currentTarget, {...tileStyle(formData.id === product.id), ...tileHoverStyle});
+                            }}
+                            onMouseLeave={(e) => {
+                                handleMouseOut(e.currentTarget, tileStyle(formData.id === product.id));
+                            }}
                         >
                             <div style={badgeStyle(product.stock_quantity > 0)}>
                                 {product.stock_quantity > 0 ? `${product.stock_quantity} шт.` : 'Немає'}
@@ -1088,16 +1317,10 @@ const ProductManager = ({ siteId }) => {
 
                             <button 
                                 onClick={(e) => handleDelete(e, product.id)}
-                                style={deleteBtnStyle}
+                                style={dangerButton}
                                 title="Видалити"
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = '#e53e3e';
-                                    e.currentTarget.style.color = 'white';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'rgba(229, 62, 62, 0.1)';
-                                    e.currentTarget.style.color = '#e53e3e';
-                                }}
+                                onMouseOver={(e) => handleMouseOver(e.currentTarget, dangerButtonHover)}
+                                onMouseLeave={(e) => handleMouseOut(e.currentTarget, dangerButton)}
                             >
                                 ×
                             </button>
@@ -1116,7 +1339,7 @@ const ProductManager = ({ siteId }) => {
                                 <div>
                                     <div style={{
                                         fontWeight: '600', 
-                                        marginBottom: '4px', 
+                                        marginBottom: '6px', 
                                         lineHeight: '1.3', 
                                         fontSize: '0.95rem', 
                                         color: 'var(--platform-text-primary)',
@@ -1140,8 +1363,8 @@ const ProductManager = ({ siteId }) => {
                                             background: 'var(--platform-card-bg)', 
                                             border: '1px solid var(--platform-border-color)', 
                                             display: 'inline-block', 
-                                            padding: '2px 6px', 
-                                            borderRadius: '4px', 
+                                            padding: '2px 8px', 
+                                            borderRadius: '6px', 
                                             color: 'var(--platform-text-primary)'
                                         }}>
                                             🎨 {product.variants.length} опцій
@@ -1171,8 +1394,9 @@ const ProductManager = ({ siteId }) => {
                                     {formData.id === product.id && (
                                         <span style={{
                                             fontSize: '0.7rem', 
-                                            color: 'var(--platform-text-secondary)', 
-                                            fontStyle: 'italic'
+                                            color: 'var(--platform-accent)', 
+                                            fontStyle: 'italic',
+                                            fontWeight: '600'
                                         }}>
                                             Редагується...
                                         </span>
@@ -1187,9 +1411,11 @@ const ProductManager = ({ siteId }) => {
                             gridColumn: '1/-1', 
                             textAlign: 'center', 
                             color: 'var(--platform-text-secondary)', 
-                            marginTop: '40px'
+                            marginTop: '40px',
+                            padding: '40px'
                         }}>
-                            Товарів не знайдено 📦
+                            <div style={{fontSize: '3rem', marginBottom: '10px', opacity: 0.5}}>📦</div>
+                            {products.length === 0 ? 'Список порожній' : 'Товарів не знайдено'}
                         </div>
                     )}
                 </div>

@@ -9,14 +9,15 @@ class Media {
             path_thumb, 
             original_file_name, 
             mime_type, 
-            file_size_kb 
+            file_size_kb,
+            file_type 
         } = mediaData;
         
         const [result] = await db.query(
             `INSERT INTO user_media 
-             (user_id, path_full, path_thumb, original_file_name, alt_text, mime_type, file_size_kb) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [userId, path_full, path_thumb, original_file_name, null, mime_type, file_size_kb]
+             (user_id, path_full, path_thumb, original_file_name, alt_text, mime_type, file_size_kb, file_type) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, path_full, path_thumb, original_file_name, null, mime_type, file_size_kb, file_type || 'image']
         );
         
         return this.findById(result.insertId);

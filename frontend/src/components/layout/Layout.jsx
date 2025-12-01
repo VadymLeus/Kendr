@@ -9,6 +9,7 @@ import Footer from './Footer';
 import apiClient from '../../services/api';
 import { FONT_LIBRARY } from '../../features/editor/editorConfig';
 import { resolveAccentColor } from '../../features/sites/tabs/ThemeSettingsTab';
+import FontLoader from '../../features/sites/components/FontLoader';
 
 const EXPANDED_SIDEBAR_WIDTH = '220px';
 const COLLAPSED_SIDEBAR_WIDTH = '80px';
@@ -106,37 +107,6 @@ const Layout = () => {
         }
     }, [location.pathname]);
 
-    useEffect(() => {
-        if (siteData && siteData.theme_settings) {
-            const { font_heading, font_body } = siteData.theme_settings;
-            
-            const headingFontObj = FONT_LIBRARY.find(f => f.value === font_heading);
-            const bodyFontObj = FONT_LIBRARY.find(f => f.value === font_body);
-
-            const fontsToLoad = new Set();
-            if (headingFontObj && headingFontObj.googleFont) fontsToLoad.add(headingFontObj.googleFont);
-            if (bodyFontObj && bodyFontObj.googleFont) fontsToLoad.add(bodyFontObj.googleFont);
-
-            if (fontsToLoad.size > 0) {
-                const fontParams = Array.from(fontsToLoad)
-                    .map(fontName => `family=${fontName.replace(/ /g, '+')}:wght@400;500;600;700`)
-                    .join('&');
-                
-                const linkId = 'dynamic-google-fonts';
-                let linkElement = document.getElementById(linkId);
-
-                if (!linkElement) {
-                    linkElement = document.createElement('link');
-                    linkElement.id = linkId;
-                    linkElement.rel = 'stylesheet';
-                    document.head.appendChild(linkElement);
-                }
-                
-                linkElement.href = `https://fonts.googleapis.com/css2?${fontParams}&display=swap`;
-            }
-        }
-    }, [siteData]);
-
     if (isAuthLoading) {
         return (
             <div style={{
@@ -214,6 +184,13 @@ const Layout = () => {
             )}
 
             <div className="layout-content" style={layoutContentStyle}>
+                {siteData && siteData.theme_settings && (
+                    <FontLoader 
+                        fontHeading={siteData.theme_settings.font_heading}
+                        fontBody={siteData.theme_settings.font_body}
+                    />
+                )}
+
                 {shouldShowSiteHeader && (
                     <SiteHeader 
                         siteData={siteData} 

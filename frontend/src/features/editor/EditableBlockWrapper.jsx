@@ -28,6 +28,7 @@ const EditableBlockWrapper = ({
     const ref = useRef(null);
     const [isCompact, setIsCompact] = useState(window.innerWidth < 1024);
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const { confirm } = useConfirm();
 
     useEffect(() => {
@@ -169,6 +170,81 @@ const EditableBlockWrapper = ({
 
     const themeSettings = siteData?.theme_settings || {};
 
+    const actionButtonStyle = {
+        padding: isCompact ? '6px' : '6px 12px',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        fontSize: '12px',
+        fontWeight: '500',
+        transition: 'all 0.2s ease',
+        border: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: isCompact ? '30px' : 'auto',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+    };
+
+    const saveButtonStyle = {
+        ...actionButtonStyle,
+        background: 'var(--platform-card-bg)',
+        color: 'var(--platform-accent)',
+        border: '1px solid var(--platform-border-color)'
+    };
+
+    const saveButtonHoverStyle = {
+        background: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+    };
+
+    const collapseButtonStyle = {
+        ...actionButtonStyle,
+        background: 'var(--platform-text-secondary)',
+        color: 'white'
+    };
+
+    const collapseButtonHoverStyle = {
+        background: 'var(--platform-text-primary)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+    };
+
+    const settingsButtonStyle = {
+        ...actionButtonStyle,
+        background: 'var(--platform-accent)',
+        color: 'var(--platform-accent-text)'
+    };
+
+    const settingsButtonHoverStyle = {
+        background: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+    };
+
+    const deleteButtonStyle = {
+        ...actionButtonStyle,
+        background: 'var(--platform-danger)',
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: '14px'
+    };
+
+    const deleteButtonHoverStyle = {
+        background: 'var(--platform-danger-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 4px rgba(229, 62, 62, 0.2)'
+    };
+
+    const handleMouseOver = (element, hoverStyle) => {
+        Object.assign(element.style, hoverStyle);
+    };
+
+    const handleMouseOut = (element, originalStyle) => {
+        Object.assign(element.style, originalStyle);
+    };
+
     const styles = {
         wrapper: {
             opacity,
@@ -186,7 +262,8 @@ const EditableBlockWrapper = ({
             overflowX: 'hidden'
         },
         wrapperHover: {
-             borderColor: 'var(--platform-border-color)'
+            borderColor: 'var(--platform-accent)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         },
         header: {
             display: 'flex',
@@ -216,19 +293,6 @@ const EditableBlockWrapper = ({
             display: 'flex', 
             gap: '6px',
             flexShrink: 0
-        },
-        actionButton: {
-            padding: isCompact ? '6px' : '6px 12px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '12px',
-            fontWeight: '500',
-            transition: 'all 0.2s ease',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: isCompact ? '30px' : 'auto'
         }
     };
 
@@ -242,10 +306,15 @@ const EditableBlockWrapper = ({
                 ...styles.wrapper,
                 border: isSelected 
                     ? '2px solid var(--platform-accent)' 
-                    : '2px dashed var(--platform-border-color)'
+                    : isHovered 
+                    ? '2px dashed var(--platform-accent)' 
+                    : '2px dashed var(--platform-border-color)',
+                boxShadow: isHovered && !isDragging ? '0 4px 12px rgba(0,0,0,0.1)' : styles.wrapper.boxShadow
             }}
             className="editable-block-wrapper"
             data-handler-id={handlerId}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
             <div style={styles.header} className="editable-block-header">
                 <span style={styles.headerText} title={blockType?.name}>
@@ -271,13 +340,10 @@ const EditableBlockWrapper = ({
                     {!isHeaderBlock && (
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsSaveModalOpen(true); }}
-                            style={{
-                                ...styles.actionButton,
-                                background: 'var(--platform-card-bg)',
-                                color: 'var(--platform-accent)',
-                                border: '1px solid var(--platform-border-color)'
-                            }}
+                            style={saveButtonStyle}
                             title={originBlockInfo ? `Оновити "${originBlockInfo.name}"` : "Зберегти в бібліотеку"}
+                            onMouseOver={(e) => handleMouseOver(e.target, saveButtonHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, saveButtonStyle)}
                         >
                             💾
                         </button>
@@ -285,24 +351,20 @@ const EditableBlockWrapper = ({
 
                     <button 
                         onClick={(e) => { e.stopPropagation(); onToggleCollapse(block.block_id); }}
-                        style={{
-                            ...styles.actionButton,
-                            background: 'var(--platform-text-secondary)',
-                            color: 'white',
-                        }}
+                        style={collapseButtonStyle}
                         title={isCollapsed ? 'Розгорнути' : 'Згорнути'}
+                        onMouseOver={(e) => handleMouseOver(e.target, collapseButtonHoverStyle)}
+                        onMouseOut={(e) => handleMouseOut(e.target, collapseButtonStyle)}
                     >
                         {isCollapsed ? '🔽' : '🔼'}
                     </button>
 
                     <button 
                         onClick={handleSelect}
-                        style={{
-                            ...styles.actionButton,
-                            background: 'var(--platform-accent)',
-                            color: 'var(--platform-accent-text)',
-                        }}
+                        style={settingsButtonStyle}
                         title="Налаштування"
+                        onMouseOver={(e) => handleMouseOver(e.target, settingsButtonHoverStyle)}
+                        onMouseOut={(e) => handleMouseOut(e.target, settingsButtonStyle)}
                     >
                         {isCompact ? '⚙️' : 'Налаштування'}
                     </button>
@@ -311,13 +373,9 @@ const EditableBlockWrapper = ({
                         <button 
                             onClick={handleDelete}
                             title="Видалити блок"
-                            style={{
-                                ...styles.actionButton,
-                                background: 'var(--platform-danger)',
-                                color: 'white',
-                                fontWeight: 'bold',
-                                fontSize: '14px'
-                            }}
+                            style={deleteButtonStyle}
+                            onMouseOver={(e) => handleMouseOver(e.target, deleteButtonHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, deleteButtonStyle)}
                         >
                             &times;
                         </button>

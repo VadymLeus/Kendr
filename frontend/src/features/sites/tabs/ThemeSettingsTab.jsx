@@ -1,11 +1,11 @@
 // frontend/src/features/sites/tabs/ThemeSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
 import { useAutoSave } from '../../../hooks/useAutoSave';
-import { FONT_LIBRARY } from '../../editor/editorConfig';
 import SaveTemplateModal from '../components/SaveTemplateModal';
 import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../hooks/useConfirm';
+import FontPicker from '../components/FontPicker';
 
 const PRESET_COLORS = [
     { id: 'green', color: '#48bb78', name: 'Зелений' },
@@ -38,6 +38,8 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
     const [templates, setTemplates] = useState([]);
     const [loadingTemplates, setLoadingTemplates] = useState(false);
     const { confirm } = useConfirm();
+    
+    const [sharedFonts, setSharedFonts] = useState([]);
 
     const { data, handleChange, isSaving } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
@@ -58,7 +60,21 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
 
     useEffect(() => {
         fetchTemplates();
+        fetchSharedFonts();
     }, []);
+
+    const fetchSharedFonts = async () => {
+        try {
+            const res = await apiClient.get('/media');
+            const fonts = res.data.filter(f => 
+                f.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(f.original_file_name)
+            );
+            setSharedFonts(fonts);
+        } catch (error) {
+            console.error("Error fetching shared fonts", error);
+            toast.error('Помилка завантаження шрифтів');
+        }
+    };
 
     const fetchTemplates = async () => {
         setLoadingTemplates(true);
@@ -152,6 +168,81 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
         }
     };
 
+    const primaryButton = { 
+        background: 'var(--platform-accent)', 
+        color: 'white', 
+        padding: '10px 20px', 
+        borderRadius: '8px', 
+        border: 'none', 
+        fontWeight: '500', 
+        cursor: 'pointer', 
+        fontSize: '0.9rem', 
+        whiteSpace: 'nowrap',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const primaryButtonHover = {
+        background: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const secondaryButton = { 
+        background: 'transparent', 
+        border: '1px solid var(--platform-border-color)', 
+        color: 'var(--platform-text-primary)', 
+        padding: '8px 16px', 
+        borderRadius: '6px', 
+        cursor: 'pointer', 
+        fontSize: '0.8rem', 
+        fontWeight: '500',
+        transition: 'all 0.2s ease'
+    };
+
+    const secondaryButtonHover = {
+        background: 'var(--platform-hover-bg)',
+        borderColor: 'var(--platform-accent)',
+        color: 'var(--platform-accent)'
+    };
+
+    const dangerButton = { 
+        background: 'none', 
+        border: '1px solid #e53e3e', 
+        color: '#e53e3e', 
+        padding: '8px 16px', 
+        borderRadius: '6px', 
+        cursor: 'pointer', 
+        fontSize: '0.8rem', 
+        fontWeight: '500',
+        transition: 'all 0.2s ease'
+    };
+
+    const dangerButtonHover = {
+        background: '#e53e3e',
+        color: 'white',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.2)'
+    };
+
+    const exampleButtonStyle = (isPrimary = true) => ({
+        padding: '10px 20px', 
+        background: isPrimary ? currentAccentHex : 'transparent', 
+        color: isPrimary ? (isLightColor(currentAccentHex) ? '#000' : '#fff') : currentAccentHex, 
+        border: isPrimary ? 'none' : `1px solid ${currentAccentHex}`, 
+        borderRadius: data.theme_settings.button_radius, 
+        cursor: 'pointer', 
+        fontSize: '0.9rem', 
+        fontWeight: '500', 
+        transition: 'all 0.2s ease',
+        boxShadow: isPrimary ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+    });
+
+    const exampleButtonHover = (isPrimary = true) => ({
+        transform: 'translateY(-1px)',
+        boxShadow: isPrimary ? '0 2px 5px rgba(0,0,0,0.15)' : `0 2px 5px ${currentAccentHex}33`
+    });
+
     const container = { maxWidth: '800px', margin: '0 auto', padding: '0 16px' };
     const header = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '16px' };
     const card = { background: 'var(--platform-card-bg)', borderRadius: '16px', border: '1px solid var(--platform-border-color)', padding: '32px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)' };
@@ -160,9 +251,6 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
     const section = { marginBottom: '28px' };
     const templateCard = { background: 'var(--platform-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '8px', padding: '16px', marginBottom: '12px', transition: 'all 0.2s ease' };
     const inputStyle = { width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--platform-border-color)', background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', fontSize: '0.9rem', boxSizing: 'border-box' };
-    const primaryButton = { background: 'var(--platform-accent)', color: 'white', padding: '10px 20px', borderRadius: '6px', border: 'none', fontWeight: '500', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' };
-    const secondaryButton = { background: 'transparent', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-primary)', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500' };
-    const dangerButton = { background: 'none', border: '1px solid #e53e3e', color: '#e53e3e', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500' };
 
     return (
         <div style={container}>
@@ -194,6 +282,18 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                             boxShadow: data.site_theme_mode === 'light' ? `0 4px 20px ${currentAccentHex}33` : 'none'
                         }}
                         onClick={() => updateSetting('site_theme_mode', 'light')}
+                        onMouseOver={(e) => {
+                            if (data.site_theme_mode !== 'light') {
+                                e.currentTarget.style.borderColor = currentAccentHex;
+                                e.currentTarget.style.boxShadow = `0 4px 20px ${currentAccentHex}33`;
+                            }
+                        }}
+                        onMouseOut={(e) => {
+                            if (data.site_theme_mode !== 'light') {
+                                e.currentTarget.style.borderColor = 'var(--platform-border-color)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }
+                        }}
                     >
                         <div style={{ height: '120px', marginBottom: '12px', borderRadius: '8px', overflow: 'hidden' }}>
                             <div style={{ height: '100%', background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', padding: '12px' }}>
@@ -220,6 +320,18 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                             boxShadow: data.site_theme_mode === 'dark' ? `0 4px 20px ${currentAccentHex}33` : 'none'
                         }}
                         onClick={() => updateSetting('site_theme_mode', 'dark')}
+                        onMouseOver={(e) => {
+                            if (data.site_theme_mode !== 'dark') {
+                                e.currentTarget.style.borderColor = currentAccentHex;
+                                e.currentTarget.style.boxShadow = `0 4px 20px ${currentAccentHex}33`;
+                            }
+                        }}
+                        onMouseOut={(e) => {
+                            if (data.site_theme_mode !== 'dark') {
+                                e.currentTarget.style.borderColor = 'var(--platform-border-color)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }
+                        }}
                     >
                         <div style={{ height: '120px', marginBottom: '12px', borderRadius: '8px', overflow: 'hidden' }}>
                             <div style={{ height: '100%', background: 'linear-gradient(135deg, #1a202c 0%, #2d3748 100%)', padding: '12px' }}>
@@ -261,6 +373,18 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                                         transform: data.site_theme_accent === a.id ? 'scale(1.05)' : 'scale(1)'
                                     }}
                                     title={a.name}
+                                    onMouseOver={(e) => {
+                                        if (data.site_theme_accent !== a.id) {
+                                            e.target.style.transform = 'scale(1.1)';
+                                            e.target.style.boxShadow = `0 0 0 2px ${a.color}`;
+                                        }
+                                    }}
+                                    onMouseOut={(e) => {
+                                        if (data.site_theme_accent !== a.id) {
+                                            e.target.style.transform = 'scale(1)';
+                                            e.target.style.boxShadow = 'none';
+                                        }
+                                    }}
                                 />
                             </div>
                         ))}
@@ -277,6 +401,24 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                                     transform: !isPreset ? 'scale(1.05)' : 'scale(1)'
                                 }}
                                 title="Власний колір"
+                                onMouseOver={(e) => {
+                                    if (isPreset) {
+                                        e.currentTarget.style.borderColor = currentAccentHex;
+                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                    } else {
+                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                        e.currentTarget.style.boxShadow = `0 0 0 2px ${currentAccentHex}`;
+                                    }
+                                }}
+                                onMouseOut={(e) => {
+                                    if (isPreset) {
+                                        e.currentTarget.style.borderColor = 'var(--platform-border-color)';
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                    } else {
+                                        e.currentTarget.style.transform = 'scale(1.05)';
+                                        e.currentTarget.style.boxShadow = `0 0 0 2px ${currentAccentHex}`;
+                                    }
+                                }}
                             >
                                 <input 
                                     type="color" 
@@ -295,52 +437,64 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                 </div>
 
                 <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'var(--platform-bg)', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
-                    <button style={{ padding: '10px 20px', background: currentAccentHex, color: isLightColor(currentAccentHex) ? '#000' : '#fff', border: 'none', borderRadius: data.theme_settings.button_radius, cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500', transition: 'all 0.2s ease' }}>Основна кнопка</button>
-                    <button style={{ padding: '10px 20px', background: 'transparent', color: currentAccentHex, border: `1px solid ${currentAccentHex}`, borderRadius: data.theme_settings.button_radius, cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500', transition: 'all 0.2s ease' }}>Другорядна кнопка</button>
+                    <button 
+                        style={exampleButtonStyle(true)}
+                        onMouseOver={(e) => Object.assign(e.target.style, exampleButtonHover(true))}
+                        onMouseOut={(e) => Object.assign(e.target.style, exampleButtonStyle(true))}
+                    >
+                        Основна кнопка
+                    </button>
+                    <button 
+                        style={exampleButtonStyle(false)}
+                        onMouseOver={(e) => Object.assign(e.target.style, exampleButtonHover(false))}
+                        onMouseOut={(e) => Object.assign(e.target.style, exampleButtonStyle(false))}
+                    >
+                        Другорядна кнопка
+                    </button>
                     <div style={{ padding: '8px 12px', background: currentAccentHex + '20', color: currentAccentHex, borderRadius: data.theme_settings.button_radius, fontSize: '0.8rem', fontWeight: '500' }}>Фоновий елемент</div>
                 </div>
             </div>
 
             <div style={card}>
                 <h3 style={cardTitle}>Типографіка</h3>
-                <p style={{margin: '0 0 20px 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>Оберіть шрифти для заголовків та основного тексту</p>
+                <p style={{margin: '0 0 20px 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>
+                    Оберіть шрифти для заголовків та основного тексту. 
+                    Ви можете використовувати Google Fonts або завантажити власні файли.
+                </p>
                 
                 <div style={section}>
-                    <label style={label}>Шрифт заголовків</label>
-                    <select
+                    <FontPicker 
+                        label="Шрифт заголовків"
                         value={data.theme_settings.font_heading}
-                        onChange={(e) => handleThemeSettingChange('font_heading', e.target.value)}
-                        className="theme-select"
-                        style={{...inputStyle, marginBottom: '16px'}}
-                    >
-                        {FONT_LIBRARY.filter(f => f.value !== 'global').map(font => (
-                            <option key={font.value} value={font.value}>{font.label}</option>
-                        ))}
-                    </select>
+                        onChange={(val) => handleThemeSettingChange('font_heading', val)}
+                        type="heading"
+                        externalFonts={sharedFonts}
+                        onExternalChange={fetchSharedFonts}
+                    />
+                    
                     <div style={{ padding: '16px', background: 'var(--platform-bg)', borderRadius: '6px', border: '1px solid var(--platform-border-color)', fontFamily: data.theme_settings.font_heading, fontSize: '1.1rem', fontWeight: '600', color: 'var(--platform-text-primary)' }}>
-                        Заголовок сторінки
+                        Приклад заголовку: Заголовок сторінки
                     </div>
                 </div>
 
                 <div style={section}>
-                    <label style={label}>Шрифт тексту</label>
-                    <select
+                    <FontPicker 
+                        label="Шрифт тексту"
                         value={data.theme_settings.font_body}
-                        onChange={(e) => handleThemeSettingChange('font_body', e.target.value)}
-                        className="theme-select"
-                        style={{...inputStyle, marginBottom: '16px'}}
-                    >
-                        {FONT_LIBRARY.filter(f => f.value !== 'global').map(font => (
-                            <option key={font.value} value={font.value}>{font.label}</option>
-                        ))}
-                    </select>
+                        onChange={(val) => handleThemeSettingChange('font_body', val)}
+                        type="body"
+                        externalFonts={sharedFonts} 
+                        onExternalChange={fetchSharedFonts} 
+                    />
+
                     <div style={{ padding: '16px', background: 'var(--platform-bg)', borderRadius: '6px', border: '1px solid var(--platform-border-color)', fontFamily: data.theme_settings.font_body, fontSize: '0.95rem', lineHeight: '1.5', color: 'var(--platform-text-primary)' }}>
-                        Основний текст сторінки - це приклад того, як буде виглядати ваший текст на сайті. Тут ви можете побачити міжрядковий інтервал, розмір шрифту та загальний вигляд.
+                        Приклад тексту: Основний текст сторінки - це приклад того, як буде виглядати ваший текст на сайті. Тут ви можете побачити міжрядковий інтервал, розмір шрифту та загальний вигляд.
                     </div>
                 </div>
 
                 <div style={section}>
                     <label style={label}>Радіус закруглення кнопок</label>
+                    
                     <input 
                         type="text" 
                         value={data.theme_settings.button_radius}
@@ -348,6 +502,33 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                         placeholder="Наприклад: 8px або 0.5rem"
                         style={inputStyle}
                     />
+
+                    <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'var(--platform-bg)', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
+                        <button 
+                            style={exampleButtonStyle(true)}
+                            onMouseOver={(e) => Object.assign(e.target.style, exampleButtonHover(true))}
+                            onMouseOut={(e) => Object.assign(e.target.style, exampleButtonStyle(true))}
+                        >
+                            Кнопка
+                        </button>
+                        <button 
+                            style={exampleButtonStyle(false)}
+                            onMouseOver={(e) => Object.assign(e.target.style, exampleButtonHover(false))}
+                            onMouseOut={(e) => Object.assign(e.target.style, exampleButtonStyle(false))}
+                        >
+                            Кнопка
+                        </button>
+                        <div style={{ 
+                            padding: '8px 12px', 
+                            background: currentAccentHex + '20', 
+                            color: currentAccentHex, 
+                            borderRadius: data.theme_settings.button_radius, 
+                            fontSize: '0.8rem', 
+                            fontWeight: '500' 
+                        }}>
+                            Елемент
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -358,7 +539,14 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                         <p style={{ margin: 0, color: 'var(--platform-text-secondary)', fontSize: '0.9rem' }}>Зберігайте поточний дизайн як шаблон для подальшого використання</p>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '16px' }}>
-                        <button onClick={() => setIsTemplateModalOpen(true)} style={primaryButton}>Зберегти поточний шаблон</button>
+                        <button 
+                            onClick={() => setIsTemplateModalOpen(true)} 
+                            style={primaryButton}
+                            onMouseOver={(e) => Object.assign(e.target.style, primaryButtonHover)}
+                            onMouseOut={(e) => Object.assign(e.target.style, primaryButton)}
+                        >
+                            Зберегти поточний шаблон
+                        </button>
                     </div>
                 </div>
 
@@ -374,8 +562,22 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                                         <div style={{ fontSize: '0.85rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4' }}>{template.description || 'Опис відсутній'}</div>
                                     </div>
                                     <div style={{display: 'flex', gap: '8px', marginLeft: '16px'}}>
-                                        <button onClick={() => handleApplyTemplate(template)} style={secondaryButton}>Застосувати</button>
-                                        <button onClick={() => handleDeleteTemplate(template.id, template.name)} style={dangerButton}>Видалити</button>
+                                        <button 
+                                            onClick={() => handleApplyTemplate(template)} 
+                                            style={secondaryButton}
+                                            onMouseOver={(e) => Object.assign(e.target.style, secondaryButtonHover)}
+                                            onMouseOut={(e) => Object.assign(e.target.style, secondaryButton)}
+                                        >
+                                            Застосувати
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteTemplate(template.id, template.name)} 
+                                            style={dangerButton}
+                                            onMouseOver={(e) => Object.assign(e.target.style, dangerButtonHover)}
+                                            onMouseOut={(e) => Object.assign(e.target.style, dangerButton)}
+                                        >
+                                            Видалити
+                                        </button>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginTop: '8px' }}>

@@ -106,6 +106,121 @@ const CategoryManager = ({ siteId }) => {
         c.name.toLowerCase().includes(search.toLowerCase())
     );
 
+    const primaryButton = {
+        background: 'var(--platform-accent)', 
+        color: 'var(--platform-accent-text)',
+        padding: '10px', 
+        borderRadius: '8px', 
+        border: 'none',
+        fontWeight: '600', 
+        cursor: 'pointer', 
+        width: '100%',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const primaryButtonHover = {
+        background: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+
+    const secondaryButton = {
+        background: 'transparent', 
+        border: '1px solid var(--platform-border-color)', 
+        color: 'var(--platform-text-primary)', 
+        width: 'auto',
+        padding: '10px 16px',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+    };
+
+    const secondaryButtonHover = {
+        background: 'var(--platform-hover-bg)',
+        borderColor: 'var(--platform-accent)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+    };
+
+    const cardBaseStyle = {
+        background: 'var(--platform-bg)',
+        borderRadius: '12px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        position: 'relative',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+    };
+
+    const cardStyle = (isActive) => ({
+        ...cardBaseStyle,
+        border: isActive ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+        boxShadow: isActive ? '0 4px 12px rgba(var(--platform-accent-rgb), 0.2)' : '0 2px 4px rgba(0,0,0,0.05)'
+    });
+
+    const cardHoverStyle = {
+        transform: 'translateY(-3px)',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+        borderColor: 'var(--platform-accent)'
+    };
+
+    const deleteBtnStyle = {
+        position: 'absolute',
+        top: '8px',
+        right: '8px',
+        background: 'rgba(255,255,255,0.9)',
+        border: '1px solid var(--platform-border-color)',
+        color: '#e53e3e',
+        width: '28px',
+        height: '28px',
+        borderRadius: '6px',
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        fontSize: '0.8rem',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const deleteBtnHoverStyle = {
+        background: '#fff5f5',
+        borderColor: '#fc8181',
+        color: '#c53030',
+        transform: 'scale(1.1)',
+        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.2)'
+    };
+
+    const inputStyle = {
+        width: '100%', 
+        padding: '10px 12px', 
+        borderRadius: '8px',
+        border: '1px solid var(--platform-border-color)',
+        background: 'var(--platform-bg)', 
+        color: 'var(--platform-text-primary)',
+        marginBottom: '12px', 
+        boxSizing: 'border-box',
+        transition: 'all 0.2s ease'
+    };
+
+    const inputHoverStyle = {
+        borderColor: 'var(--platform-accent)',
+        boxShadow: '0 0 0 1px var(--platform-accent)'
+    };
+
+    const handleMouseOver = (element, hoverStyle) => {
+        Object.assign(element.style, hoverStyle);
+    };
+
+    const handleMouseOut = (element, originalStyle) => {
+        Object.assign(element.style, originalStyle);
+    };
+
     const containerStyle = { 
         display: 'flex', 
         gap: '20px', 
@@ -122,7 +237,8 @@ const CategoryManager = ({ siteId }) => {
         padding: '24px',
         display: 'flex', 
         flexDirection: 'column',
-        height: 'fit-content'
+        height: 'fit-content',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
     };
 
     const listAreaStyle = {
@@ -133,7 +249,8 @@ const CategoryManager = ({ siteId }) => {
         padding: '24px',
         display: 'flex', 
         flexDirection: 'column', 
-        overflow: 'hidden'
+        overflow: 'hidden',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
     };
 
     const gridStyle = {
@@ -144,20 +261,6 @@ const CategoryManager = ({ siteId }) => {
         padding: '4px',
         alignContent: 'start'
     };
-
-    const cardStyle = (isActive) => ({
-        background: 'var(--platform-bg)',
-        borderRadius: '12px',
-        border: isActive ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-        cursor: 'pointer',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        position: 'relative'
-    });
 
     const iconStyle = {
         fontSize: '2.5rem',
@@ -179,35 +282,6 @@ const CategoryManager = ({ siteId }) => {
         padding: '2px 8px',
         borderRadius: '10px',
         marginTop: '4px'
-    };
-
-    const inputStyle = {
-        width: '100%', padding: '10px 12px', borderRadius: '8px',
-        border: '1px solid var(--platform-border-color)',
-        background: 'var(--platform-bg)', color: 'var(--platform-text-primary)',
-        marginBottom: '12px', boxSizing: 'border-box'
-    };
-
-    const primaryButton = {
-        background: 'var(--platform-accent)', color: 'var(--platform-accent-text)',
-        padding: '10px', borderRadius: '8px', border: 'none',
-        fontWeight: '600', cursor: 'pointer', width: '100%'
-    };
-
-    const deleteBtnStyle = {
-        position: 'absolute',
-        top: '8px',
-        right: '8px',
-        background: 'rgba(255,255,255,0.8)',
-        border: '1px solid #e2e8f0',
-        color: '#e53e3e',
-        width: '24px',
-        height: '24px',
-        borderRadius: '6px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        fontSize: '0.8rem'
     };
 
     if (loading) return <div style={{padding: 40, textAlign: 'center'}}>Завантаження...</div>;
@@ -236,17 +310,26 @@ const CategoryManager = ({ siteId }) => {
                         placeholder="Наприклад: Смартфони"
                         required
                         autoFocus
+                        onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                        onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                     />
 
                     <div style={{marginTop: '10px', display: 'flex', gap: '10px'}}>
-                        <button type="submit" style={primaryButton}>
+                        <button 
+                            type="submit" 
+                            style={primaryButton}
+                            onMouseOver={(e) => handleMouseOver(e.target, primaryButtonHover)}
+                            onMouseOut={(e) => handleMouseOut(e.target, primaryButton)}
+                        >
                             {formData.id ? 'Зберегти' : 'Додати'}
                         </button>
                         {formData.id && (
                             <button 
                                 type="button" 
                                 onClick={handleReset}
-                                style={{...primaryButton, background: 'transparent', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-primary)', width: 'auto'}}
+                                style={secondaryButton}
+                                onMouseOver={(e) => handleMouseOver(e.target, secondaryButtonHover)}
+                                onMouseOut={(e) => handleMouseOut(e.target, secondaryButton)}
                             >
                                 Відміна
                             </button>
@@ -263,6 +346,8 @@ const CategoryManager = ({ siteId }) => {
                         style={{...inputStyle, marginBottom: 0, width: '250px'}}
                         value={search}
                         onChange={e => setSearch(e.target.value)}
+                        onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                        onMouseOut={(e) => handleMouseOut(e.target, {...inputStyle, marginBottom: 0, width: '250px'})}
                     />
                     
                     <div style={{fontWeight: 'bold', color: 'var(--platform-text-primary)', whiteSpace: 'nowrap'}}>
@@ -283,15 +368,15 @@ const CategoryManager = ({ siteId }) => {
                             key={cat.id} 
                             style={cardStyle(formData.id === cat.id)}
                             onClick={() => handleEdit(cat)}
-                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                            onMouseEnter={(e) => handleMouseOver(e.currentTarget, {...cardStyle(formData.id === cat.id), ...cardHoverStyle})}
+                            onMouseLeave={(e) => handleMouseOut(e.currentTarget, cardStyle(formData.id === cat.id))}
                         >
                             <button 
                                 onClick={(e) => handleDelete(e, cat.id)}
                                 style={deleteBtnStyle}
                                 title="Видалити"
-                                onMouseEnter={e => {e.currentTarget.style.background = '#fff5f5'; e.currentTarget.style.borderColor = '#fc8181'}}
-                                onMouseLeave={e => {e.currentTarget.style.background = 'rgba(255,255,255,0.8)'; e.currentTarget.style.borderColor = '#e2e8f0'}}
+                                onMouseOver={(e) => handleMouseOver(e.currentTarget, deleteBtnHoverStyle)}
+                                onMouseLeave={(e) => handleMouseOut(e.currentTarget, deleteBtnStyle)}
                             >
                                 🗑️
                             </button>

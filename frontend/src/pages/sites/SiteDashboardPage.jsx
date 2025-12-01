@@ -151,7 +151,7 @@ const SiteDashboardPage = () => {
                     block_content: blocksToSave
                 });
             }
-            toast.success('✅ Зміни успішно збережено!');
+            toast.success('Зміни успішно збережено!');
         } catch (error) {
             console.error("Помилка при збереженні:", error);
             toast.error('❌ Не вдалося зберегти зміни. Спробуйте ще раз.');

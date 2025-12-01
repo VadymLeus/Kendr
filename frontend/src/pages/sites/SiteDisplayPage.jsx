@@ -9,6 +9,7 @@ import NotFoundPage from '../../components/common/NotFoundPage';
 import MaintenancePage from '../../components/common/MaintenancePage';
 import useScrollToHash from '../../hooks/useScrollToHash';
 import CookieBanner from '../../features/sites/components/CookieBanner';
+import FontLoader from '../../features/sites/components/FontLoader';
 
 const API_URL = 'http://localhost:5000';
 
@@ -98,6 +99,13 @@ const SiteDisplayPage = () => {
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.href} />
             </Helmet>
+
+            {siteData && siteData.theme_settings && (
+                <FontLoader 
+                    fontHeading={siteData.theme_settings.font_heading}
+                    fontBody={siteData.theme_settings.font_body}
+                />
+            )}
 
             <main style={mainContentStyle}>
                 <BlockRenderer blocks={pageBlocks} siteData={siteData} />

@@ -143,6 +143,72 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
         }
     };
 
+    const primaryButton = { 
+        background: 'var(--platform-accent)', 
+        color: 'white', 
+        padding: '10px 20px', 
+        borderRadius: '8px', 
+        border: 'none', 
+        fontWeight: '500', 
+        cursor: 'pointer', 
+        fontSize: '0.9rem', 
+        whiteSpace: 'nowrap',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    };
+
+    const primaryButtonHover = {
+        background: 'var(--platform-accent-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+    };
+    
+    const dangerButton = { 
+        background: '#e53e3e', 
+        color: 'white', 
+        padding: '12px 24px', 
+        borderRadius: '8px', 
+        border: 'none', 
+        fontWeight: '600', 
+        cursor: 'pointer', 
+        fontSize: '0.9rem',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(229, 62, 62, 0.2)'
+    };
+
+    const dangerButtonHover = {
+        background: '#c53030',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.3)'
+    };
+
+    const warningButton = {
+        background: 'var(--platform-warning)',
+        color: 'white',
+        padding: '12px 24px',
+        borderRadius: '8px',
+        border: 'none',
+        fontWeight: '600',
+        cursor: 'pointer',
+        fontSize: '0.9rem',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 1px 3px rgba(237, 137, 54, 0.2)'
+    };
+
+    const warningButtonHover = {
+        background: 'var(--platform-warning-hover)',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 5px rgba(237, 137, 54, 0.3)'
+    };
+
+    const handleMouseOver = (element, hoverStyle) => {
+        Object.assign(element.style, hoverStyle);
+    };
+
+    const handleMouseOut = (element, originalStyle) => {
+        Object.assign(element.style, originalStyle);
+    };
+
     const containerStyle = { 
         maxWidth: '800px', 
         margin: '0 auto', 
@@ -204,39 +270,15 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
         boxSizing: 'border-box', 
         transition: 'all 0.2s ease' 
     };
-    
-    const primaryButton = { 
-        background: 'var(--platform-accent)', 
-        color: 'white', 
-        padding: '10px 20px', 
-        borderRadius: '8px', 
-        border: 'none', 
-        fontWeight: '500', 
-        cursor: 'pointer', 
-        fontSize: '0.9rem', 
-        whiteSpace: 'nowrap' 
-    };
-    
-    const dangerButton = { 
-        background: '#e53e3e', 
-        color: 'white', 
-        padding: '12px 24px', 
-        borderRadius: '8px', 
-        border: 'none', 
-        fontWeight: '600', 
-        cursor: 'pointer', 
-        fontSize: '0.9rem' 
+
+    const inputHoverStyle = {
+        borderColor: 'var(--platform-accent)',
+        boxShadow: '0 0 0 1px var(--platform-accent)'
     };
 
-    const warningButton = {
-        background: 'var(--platform-warning)',
-        color: 'white',
-        padding: '12px 24px',
-        borderRadius: '8px',
-        border: 'none',
-        fontWeight: '600',
-        cursor: 'pointer',
-        fontSize: '0.9rem'
+    const selectStyle = {
+        ...inputStyle,
+        cursor: 'pointer'
     };
 
     return (
@@ -294,6 +336,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                         value={data.title}
                         onChange={handleTitleChange}
                         placeholder="Мій інтернет-магазин"
+                        onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                        onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                     />
                 </div>
 
@@ -324,6 +368,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                             }}
                             value={slug}
                             onChange={handleSlugChange}
+                            onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                            onMouseOut={(e) => handleMouseOut(e.target, {...inputStyle, flex: 1, fontWeight: '500'})}
                         />
                         {slug !== siteData.site_path && (
                             <button 
@@ -333,6 +379,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                                     ...primaryButton, 
                                     opacity: isSavingSlug ? 0.7 : 1 
                                 }}
+                                onMouseOver={(e) => !isSavingSlug && handleMouseOver(e.target, primaryButtonHover)}
+                                onMouseOut={(e) => handleMouseOut(e.target, {...primaryButton, opacity: isSavingSlug ? 0.7 : 1})}
                             >
                                 {isSavingSlug ? '...' : 'Зберегти'}
                             </button>
@@ -354,7 +402,9 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                     <select 
                         value={data.status} 
                         onChange={(e) => handleChange('status', e.target.value)}
-                        style={{ ...inputStyle, cursor: 'pointer' }}
+                        style={selectStyle}
+                        onMouseOver={(e) => handleMouseOver(e.target, {...selectStyle, ...inputHoverStyle})}
+                        onMouseOut={(e) => handleMouseOut(e.target, selectStyle)}
                     >
                         <option value="draft">📝 Чернетка (Draft)</option>
                         <option value="published">🌐 Опубліковано (Published)</option>
@@ -390,6 +440,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                                 onChange={(e) => handleCookieChange('text', e.target.value)}
                                 style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
                                 placeholder="Ми використовуємо cookies..."
+                                onMouseOver={(e) => handleMouseOver(e.target, {...inputStyle, minHeight: '80px', resize: 'vertical', ...inputHoverStyle})}
+                                onMouseOut={(e) => handleMouseOut(e.target, {...inputStyle, minHeight: '80px', resize: 'vertical'})}
                             />
                         </div>
 
@@ -413,6 +465,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                                     onChange={(e) => handleCookieChange('acceptText', e.target.value)}
                                     style={inputStyle}
                                     placeholder="Прийняти"
+                                    onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                    onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                                 />
                             </div>
                             
@@ -425,6 +479,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                                         onChange={(e) => handleCookieChange('rejectText', e.target.value)}
                                         style={inputStyle}
                                         placeholder="Відхилити"
+                                        onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                        onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                                     />
                                 </div>
                             )}
@@ -435,7 +491,9 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                             <select 
                                 value={cookieSettings.position || 'bottom'}
                                 onChange={(e) => handleCookieChange('position', e.target.value)}
-                                style={{ ...inputStyle, cursor: 'pointer' }}
+                                style={selectStyle}
+                                onMouseOver={(e) => handleMouseOver(e.target, {...selectStyle, ...inputHoverStyle})}
+                                onMouseOut={(e) => handleMouseOut(e.target, selectStyle)}
                             >
                                 <option value="bottom">Внизу екрану</option>
                                 <option value="top">Вгорі екрану</option>
@@ -466,6 +524,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                                 style={inputStyle}
                                 value={data.site_title_seo}
                                 onChange={(e) => handleChange('site_title_seo', e.target.value)}
+                                onMouseOver={(e) => handleMouseOver(e.target, inputHoverStyle)}
+                                onMouseOut={(e) => handleMouseOut(e.target, inputStyle)}
                             />
                         </div>
                     </div>
@@ -503,6 +563,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                     <button 
                         onClick={() => setIsTemplateModalOpen(true)} 
                         style={warningButton}
+                        onMouseOver={(e) => handleMouseOver(e.target, warningButtonHover)}
+                        onMouseOut={(e) => handleMouseOut(e.target, warningButton)}
                     >
                         Змінити шаблон
                     </button>
@@ -541,6 +603,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                     <button 
                         onClick={handleDeleteSite} 
                         style={dangerButton}
+                        onMouseOver={(e) => handleMouseOver(e.target, dangerButtonHover)}
+                        onMouseOut={(e) => handleMouseOut(e.target, dangerButton)}
                     >
                         Видалити сайт
                     </button>

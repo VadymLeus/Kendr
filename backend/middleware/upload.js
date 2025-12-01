@@ -11,17 +11,37 @@ const mediaUploadPath = path.join(__dirname, '..', 'uploads', 'media');
 ensureDirExists(tempUploadPath);
 ensureDirExists(mediaUploadPath);
 
-const mediaFileFilter = (req, file, cb) => {
-    const allowedImageTypes = /jpeg|jpg|png|webp/;
-    const allowedVideoTypes = /mp4|webm/;
-    
-    const isImage = allowedImageTypes.test(file.mimetype) || allowedImageTypes.test(path.extname(file.originalname).toLowerCase());
-    const isVideo = allowedVideoTypes.test(file.mimetype) || allowedVideoTypes.test(path.extname(file.originalname).toLowerCase());
+const allowedFontTypes = [
+    'font/ttf', 'application/x-font-ttf', 'application/font-sfnt',
+    'font/otf', 'application/x-font-opentype', 'application/vnd.ms-opentype',
+    'font/woff', 'application/font-woff', 'application/octet-stream',
+    'font/woff2', 'application/font-woff2', 'application/x-woff',
+    'application/x-font-woff'
+];
 
-    if (isImage || isVideo) {
+const mediaFileFilter = (req, file, cb) => {
+    const allowedImageTypes = /jpeg|jpg|png|webp|gif/;
+    const allowedVideoTypes = /mp4|webm|ogg/;
+    
+    const ext = path.extname(file.originalname).toLowerCase();
+    const isImage = allowedImageTypes.test(file.mimetype) || allowedImageTypes.test(ext);
+    const isVideo = allowedVideoTypes.test(file.mimetype) || allowedVideoTypes.test(ext);
+    const isFont = allowedFontTypes.includes(file.mimetype) || /\.(ttf|otf|woff|woff2)$/i.test(ext);
+
+    console.log('File upload attempt:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        extension: ext,
+        isImage,
+        isVideo,
+        isFont
+    });
+
+    if (isImage || isVideo || isFont) {
         return cb(null, true);
     }
-    cb(new Error('Помилка: Дозволені лише зображення (jpeg, png, webp) та відео (mp4, webm)!'));
+    
+    cb(new Error(`Помилка: Непідтримуваний тип файлу. Дозволені: зображення (JPEG, PNG, WebP), відео (MP4, WebM) та шрифти (TTF, OTF, WOFF, WOFF2)!`));
 };
 
 const tempStorage = multer.diskStorage({
@@ -30,30 +50,35 @@ const tempStorage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname).toLowerCase();
-        cb(null, `temp-${req.user.id}-${Date.now()}${ext}`);
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-]/g, '_');
+        cb(null, `temp-${req.user.id}-${Date.now()}-${safeName}`);
     }
 });
 
 const mediaUpload = multer({
     storage: tempStorage,
     fileFilter: mediaFileFilter,
-    limits: { fileSize: 1024 * 1024 * 50 }
+    limits: { 
+        fileSize: 1024 * 1024 * 50,
+        files: 10
+    }
 });
 
 const memoryStorage = multer.memoryStorage();
-const fileFilter = (req, file, cb) => {
+const imageFileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const mimetype = allowedTypes.test(file.mimetype);
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    
     if (mimetype && extname) {
         return cb(null, true);
     }
-    cb(new Error('Помилка: Дозволені лише файли зображень (jpeg, png, gif, webp)!'));
+    cb(new Error('Помилка: Дозволені лише файли зображень (JPEG, PNG, GIF, WebP)!'));
 };
 
 const upload = multer({
     storage: memoryStorage,
-    fileFilter: fileFilter,
+    fileFilter: imageFileFilter,
     limits: { fileSize: 1024 * 1024 * 15 }
 });
 

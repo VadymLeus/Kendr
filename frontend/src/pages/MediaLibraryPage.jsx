@@ -89,6 +89,7 @@ const MediaLibraryPage = () => {
         if (filterType === 'all') return true;
         if (filterType === 'image') return file.mime_type.startsWith('image/');
         if (filterType === 'video') return file.mime_type.startsWith('video/');
+        if (filterType === 'font') return file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name);
         return true;
     });
 
@@ -102,31 +103,45 @@ const MediaLibraryPage = () => {
         fontWeight: '500'
     });
 
+    const fontIconStyle = {
+        fontSize: '2rem',
+        color: 'var(--platform-text-primary)',
+        background: 'var(--platform-bg)',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        border: '1px solid var(--platform-border-color)'
+    };
+
     return (
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: 'auto' }}>
             <h1 style={{ marginBottom: '1rem' }}>Медіатека</h1>
             <p className="text-secondary" style={{ marginBottom: '1.5rem' }}>
-                Тут зберігаються всі ваші завантажені зображення та відео.
+                Тут зберігаються всі ваші завантажені зображення, відео та шрифти.
             </p>
 
             <div className="card" style={{ marginBottom: '2rem' }}>
                 <label htmlFor="page-file-upload" className="btn btn-primary" style={{ cursor: 'pointer' }}>
-                    {uploading ? 'Завантаження...' : '➕ Завантажити новий файл'}
+                    {uploading ? 'Завантаження...' : '➕ Завантажити файл'}
                 </label>
                 <input 
                     id="page-file-upload" 
                     type="file" 
                     onChange={handleFileChange} 
-                    accept="image/*,video/mp4,video/webm" 
+                    accept="image/*,video/mp4,video/webm,.ttf,.otf,.woff,.woff2" 
                     disabled={uploading} 
                     style={{ display: 'none' }} 
                 />
             </div>
 
             <div style={{ display: 'flex', marginBottom: '1rem', borderBottom: '1px solid var(--platform-border-color)' }}>
-                <button style={tabStyle(filterType === 'all')} onClick={() => setFilterType('all')}>Всі файли</button>
+                <button style={tabStyle(filterType === 'all')} onClick={() => setFilterType('all')}>Всі</button>
                 <button style={tabStyle(filterType === 'image')} onClick={() => setFilterType('image')}>Зображення</button>
                 <button style={tabStyle(filterType === 'video')} onClick={() => setFilterType('video')}>Відео</button>
+                <button style={tabStyle(filterType === 'font')} onClick={() => setFilterType('font')}>🅰️ Шрифти</button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: selectedFile ? '3fr 1fr' : '1fr', gap: '2rem' }}>
@@ -135,12 +150,14 @@ const MediaLibraryPage = () => {
                         <p className="text-secondary">
                             {filterType === 'all' 
                                 ? 'Ваша медіатека порожня.' 
-                                : `Немає ${filterType === 'image' ? 'зображень' : 'відео'} у медіатеці.`}
+                                : `Немає ${filterType === 'image' ? 'зображень' : filterType === 'video' ? 'відео' : 'шрифтів'} у медіатеці.`}
                         </p>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
                             {filteredFiles.map(file => {
                                 const isVideo = file.mime_type.startsWith('video/');
+                                const isFont = file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name);
+                                
                                 return (
                                     <div 
                                         key={file.id} 
@@ -167,6 +184,13 @@ const MediaLibraryPage = () => {
                                             }}>
                                                 <span style={{fontSize: '2rem'}}>🎥</span>
                                                 <span style={{fontSize: '0.7rem', color: 'white', marginTop: '5px'}}>VIDEO</span>
+                                            </div>
+                                        ) : isFont ? (
+                                            <div style={fontIconStyle}>
+                                                <span>Aa</span>
+                                                <span style={{fontSize: '0.6rem', marginTop: '5px', color: 'var(--platform-text-secondary)'}}>
+                                                    {file.original_file_name.split('.').pop().toUpperCase()}
+                                                </span>
                                             </div>
                                         ) : (
                                             <img 
@@ -212,6 +236,10 @@ const MediaLibraryPage = () => {
                                 controls 
                                 style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }} 
                             />
+                        ) : (selectedFile.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(selectedFile.original_file_name)) ? (
+                            <div style={{...fontIconStyle, height: '150px', fontSize: '3rem', borderRadius: '8px'}}>
+                                Aa
+                            </div>
                         ) : (
                             <img 
                                 src={`${API_URL}${selectedFile.path_full}`} 
@@ -227,7 +255,8 @@ const MediaLibraryPage = () => {
                             
                             <label>Тип:</label>
                             <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: 'var(--platform-text-secondary)' }}>
-                                {selectedFile.mime_type.startsWith('video/') ? 'Відео' : 'Зображення'}
+                                {selectedFile.mime_type.startsWith('video/') ? 'Відео' : 
+                                 selectedFile.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(selectedFile.original_file_name) ? 'Шрифт' : 'Зображення'}
                             </p>
                             
                             <label>Розмір:</label>
