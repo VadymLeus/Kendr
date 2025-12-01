@@ -2,7 +2,6 @@
 const Product = require('../models/Product');
 const Site = require('../models/Site');
 const { deleteFile } = require('../utils/fileUtils');
-const Media = require('../models/Media');
 
 exports.getProductById = async (req, res, next) => {
     try {
@@ -49,7 +48,7 @@ exports.getProducts = async (req, res, next) => {
 };
 
 exports.addProduct = async (req, res, next) => {
-    const { site_id, name, description, price, category_id, stock_quantity, image_url, variants, sale_percentage } = req.body;
+    const { site_id, name, description, price, category_id, stock_quantity, image_gallery, variants, sale_percentage } = req.body;
     const userId = req.user.id;
     
     try {
@@ -58,16 +57,24 @@ exports.addProduct = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для додавання товарів на цей сайт.' });
         }
         
+        let galleryData = [];
+        if (Array.isArray(image_gallery)) {
+            galleryData = image_gallery;
+        } else if (typeof image_gallery === 'string') {
+            galleryData = [image_gallery];
+        }
+
         const newProduct = await Product.create({ 
             site_id, 
             name, 
             description, 
             price, 
-            image_path: image_url,
+            image_path: galleryData.length > 0 ? galleryData[0] : null,
             category_id, 
             stock_quantity,
             variants,
-            sale_percentage
+            sale_percentage,
+            image_gallery: JSON.stringify(galleryData)
         });
         
         res.status(201).json(newProduct);
@@ -78,7 +85,7 @@ exports.addProduct = async (req, res, next) => {
 
 exports.updateProduct = async (req, res, next) => {
     const { productId } = req.params;
-    const { name, description, price, category_id, stock_quantity, image_url, variants, sale_percentage } = req.body;
+    const { name, description, price, category_id, stock_quantity, image_gallery, variants, sale_percentage } = req.body;
     const userId = req.user.id;
 
     try {
@@ -94,8 +101,8 @@ exports.updateProduct = async (req, res, next) => {
 
         const updateData = { name, description, price, category_id, stock_quantity, variants, sale_percentage };
 
-        if (image_url !== undefined) {
-            updateData.image_gallery = image_url ? JSON.stringify([image_url]) : null;
+        if (image_gallery !== undefined) {
+            updateData.image_gallery = JSON.stringify(Array.isArray(image_gallery) ? image_gallery : [image_gallery]);
         }
 
         await Product.update(productId, updateData);
@@ -121,7 +128,6 @@ exports.deleteProduct = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для видалення товарів на цьому сайті.' });
         }
         
-        const imageGallery = product.image_gallery;
         await Product.delete(productId);
 
         res.json({ message: 'Товар успішно видалено.' });
@@ -149,7 +155,7 @@ exports.addToGallery = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для зміни цього товару.' });
         }
 
-        const currentGallery = product.image_gallery;
+        const currentGallery = product.image_gallery || [];
         const updatedGallery = [...currentGallery, newImagePath];
         
         await Product.update(productId, { 
@@ -179,13 +185,12 @@ exports.removeFromGallery = async (req, res, next) => {
         const site = await Site.findByIdAndUserId(product.site_id, userId);
         if (!site) return res.status(403).json({ message: 'У вас немає прав для зміни цього товару.' });
 
-        const currentGallery = product.image_gallery;
+        const currentGallery = product.image_gallery || [];
         const updatedGallery = currentGallery.filter(img => img !== imagePath);
         
         await Product.update(productId, { 
             image_gallery: JSON.stringify(updatedGallery) 
         });
-        await deleteFile(imagePath);
 
         res.json({ 
             message: 'Зображення видалено з галереї.',

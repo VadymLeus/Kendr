@@ -158,7 +158,7 @@ const UploadTab = ({ onUploadSuccess, allowedTypes = 'image' }) => {
             
             const maxSize = 15 * 1024 * 1024;
             if (file.size > maxSize) {
-                toast.error('Файл занадто великий (макс 50MB). Спробуйте зменшити розмір або обрати інший.');
+                toast.error('Файл занадто великий (макс 15MB). Спробуйте зменшити розмір або обрати інший.');
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 return;
             }
@@ -193,6 +193,7 @@ const UploadTab = ({ onUploadSuccess, allowedTypes = 'image' }) => {
                 type="file"
                 accept={getAcceptedTypes()}
                 onChange={handleFileChange}
+                onClick={(e) => { e.target.value = null; }}
                 ref={fileInputRef}
                 style={{ display: 'none' }}
             />
@@ -236,7 +237,8 @@ const LibraryTab = ({ onSelectImage, allowedTypes = 'all' }) => {
     });
 
     const handleSelect = (file) => {
-        onSelectImage(file.path_full, file.original_file_name, file.mime_type);
+        const imageUrl = file.path_full || file.url || file.path || file.file_path || '';
+        onSelectImage(imageUrl, file.original_file_name, file.mime_type);
     }
 
     return (
@@ -300,7 +302,8 @@ const DefaultLogosTab = ({ onSelectImage }) => {
     }, []);
     
     const handleSelect = (logoUrl) => {
-        const finalPath = logoUrl.startsWith('http') ? logoUrl : `${API_URL}${logoUrl}`;
+        const safeLogoUrl = logoUrl || '';
+        const finalPath = safeLogoUrl.startsWith('http') ? safeLogoUrl : `${API_URL}${safeLogoUrl}`;
         onSelectImage(finalPath, 'default', 'image/jpeg');
     }
 
@@ -358,16 +361,21 @@ const MediaPickerModal = ({
     };
 
     const handleImageSelection = (pathFull, fileName = 'media-file', mimeType = 'image/jpeg') => {
+        const safePathFull = pathFull || '';
         const isVideo = mimeType && mimeType.startsWith('video/');
         const requestingVideo = allowedTypes === 'video';
 
         if (isVideo || requestingVideo || !aspect) {
-            onSelectImage(pathFull);
+            onSelectImage(safePathFull);
             handleClose();
             return;
         }
 
-        setImageToCropSrc(`${API_URL}${pathFull}`);
+        const fullSrc = safePathFull.startsWith('http') 
+            ? safePathFull 
+            : `${API_URL}${safePathFull}`;
+
+        setImageToCropSrc(fullSrc);
         setImageFileName(fileName);
         setStep('crop');
     };
@@ -465,7 +473,7 @@ const MediaPickerModal = ({
                     }}>
                         {activeTab === 'library' && (
                             <LibraryTab 
-                                onSelectImage={(file) => handleImageSelection(file.path_full, file.original_file_name, file.mime_type)} 
+                                onSelectImage={handleImageSelection} 
                                 allowedTypes={allowedTypes}
                             />
                         )}

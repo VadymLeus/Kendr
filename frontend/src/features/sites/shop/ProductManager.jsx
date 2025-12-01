@@ -430,7 +430,7 @@ const ProductManager = ({ siteId }) => {
         price: 0, 
         stock_quantity: 1, 
         category_id: null, 
-        image_url: '', 
+        image_gallery: [],
         variants: [],
         sale_percentage: 0
     };
@@ -452,7 +452,10 @@ const ProductManager = ({ siteId }) => {
             const productsData = (pRes.data || []).map(p => ({
                 ...p,
                 variants: Array.isArray(p.variants) ? p.variants : 
-                         (typeof p.variants === 'string' ? JSON.parse(p.variants) : [])
+                         (typeof p.variants === 'string' ? JSON.parse(p.variants) : []),
+                image_gallery: Array.isArray(p.image_gallery) ? p.image_gallery : 
+                             (typeof p.image_gallery === 'string' ? JSON.parse(p.image_gallery) : 
+                             (p.image_url ? [p.image_url] : []))
             }));
             setProducts(productsData);
             setCategories(cRes.data || []);
@@ -508,13 +511,18 @@ const ProductManager = ({ siteId }) => {
     };
 
     const openEditor = (product, updateUrl = true) => {
-        const img = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length) 
-            ? product.image_gallery[0] 
-            : (product.image_url || '');
-        
+        let gallery = [];
+        if (Array.isArray(product.image_gallery)) {
+            gallery = product.image_gallery;
+        } else if (typeof product.image_gallery === 'string') {
+            try { gallery = JSON.parse(product.image_gallery); } catch (e) { gallery = []; }
+        } else if (product.image_url) {
+            gallery = [product.image_url];
+        }
+
         setFormData({ 
             ...product, 
-            image_url: img, 
+            image_gallery: gallery,
             stock_quantity: product.stock_quantity || 0,
             variants: Array.isArray(product.variants) ? product.variants : [],
             sale_percentage: product.sale_percentage || 0
@@ -577,6 +585,41 @@ const ProductManager = ({ siteId }) => {
     const removeVariant = (idx) => {
         const newVariants = formData.variants.filter((_, i) => i !== idx);
         setFormData(prev => ({ ...prev, variants: newVariants }));
+    };
+
+    const handleAddImage = (e) => {
+        let val = e.target.value;
+        if (typeof val !== 'string') {
+            console.warn('Отримано не рядок у image_url:', val);
+            val = ''; 
+        }
+        const relativeUrl = val.replace(API_URL, '');
+        
+        if (relativeUrl && !formData.image_gallery.includes(relativeUrl)) {
+            setFormData(prev => ({
+                ...prev,
+                image_gallery: [...prev.image_gallery, relativeUrl]
+            }));
+        }
+    };
+
+    const handleRemoveImage = (indexToRemove) => {
+        setFormData(prev => ({
+            ...prev,
+            image_gallery: prev.image_gallery.filter((_, index) => index !== indexToRemove)
+        }));
+    };
+
+    const handleMakeCover = (index) => {
+        if (index === 0) return;
+        setFormData(prev => {
+            const newGallery = [...prev.image_gallery];
+            const targetImage = newGallery[index];
+            newGallery.splice(index, 1);
+            newGallery.unshift(targetImage);
+            return { ...prev, image_gallery: newGallery };
+        });
+        toast.info("Обкладинку змінено");
     };
 
     const filteredProducts = products.filter(product => {
@@ -741,6 +784,65 @@ const ProductManager = ({ siteId }) => {
         fontWeight: '600', cursor: 'pointer', width: '100%'
     };
 
+    const galleryGridStyle = {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '10px',
+        marginTop: '10px'
+    };
+
+    const thumbnailStyle = {
+        width: '80px',
+        height: '80px',
+        position: 'relative',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        border: '1px solid var(--platform-border-color)'
+    };
+
+    const thumbImgStyle = {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover'
+    };
+
+    const removeThumbBtnStyle = {
+        position: 'absolute',
+        top: '2px',
+        right: '2px',
+        background: 'rgba(229, 62, 62, 0.9)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '50%',
+        width: '20px',
+        height: '20px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '12px',
+        zIndex: 5
+    };
+
+    const makeCoverBtnStyle = {
+        position: 'absolute',
+        bottom: '2px',
+        right: '2px',
+        background: 'rgba(255, 255, 255, 0.9)',
+        color: '#ecc94b',
+        border: 'none',
+        borderRadius: '50%',
+        width: '24px',
+        height: '24px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '14px',
+        zIndex: 5,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+    };
+
     if (loading) return <div style={{padding: 40, textAlign: 'center'}}>Завантаження...</div>;
 
     return (
@@ -808,6 +910,58 @@ const ProductManager = ({ siteId }) => {
                             </select>
                         </div>
 
+                        <div>
+                            <label style={labelStyle}>Галерея зображень</label>
+                            
+                            <div style={{marginBottom: '10px'}}>
+                                <ImageInput 
+                                    value=""
+                                    onChange={handleAddImage}
+                                    aspect={1}
+                                />
+                            </div>
+
+                            <div style={galleryGridStyle}>
+                                {formData.image_gallery.map((img, idx) => (
+                                    <div key={idx} style={thumbnailStyle}>
+                                        <img 
+                                            src={`${API_URL}${img}`} 
+                                            alt={`img-${idx}`} 
+                                            style={thumbImgStyle} 
+                                        />
+                                        
+                                        <button 
+                                            type="button" 
+                                            style={removeThumbBtnStyle}
+                                            onClick={() => handleRemoveImage(idx)}
+                                            title="Видалити"
+                                        >
+                                            ×
+                                        </button>
+
+                                        {idx === 0 ? (
+                                            <div style={{
+                                                position: 'absolute', bottom: 0, left: 0, right: 0, 
+                                                background: 'rgba(0,0,0,0.6)', color: 'white', 
+                                                fontSize: '10px', textAlign: 'center', padding: '2px'
+                                            }}>
+                                                Обкладинка
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                style={makeCoverBtnStyle}
+                                                onClick={() => handleMakeCover(idx)}
+                                                title="Зробити головним фото"
+                                            >
+                                                ★
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         <div style={{
                             borderTop: '1px dashed var(--platform-border-color)', 
                             paddingTop: '10px'
@@ -851,16 +1005,6 @@ const ProductManager = ({ siteId }) => {
                                 value={formData.description} 
                                 onChange={e => setFormData({...formData, description: e.target.value})}
                             />
-                        </div>
-
-                        <div>
-                            <label style={labelStyle}>Фото</label>
-                            <div style={{height: '120px'}}>
-                                <ImageInput 
-                                    value={formData.image_url ? `${API_URL}${formData.image_url}` : ''}
-                                    onChange={(url) => setFormData({...formData, image_url: url.replace(API_URL, '')})}
-                                />
-                            </div>
                         </div>
                     </div>
 

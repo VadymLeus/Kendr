@@ -1,5 +1,5 @@
 // frontend/src/features/editor/blocks/CatalogBlock.jsx
-import React, { useState, useEffect, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../../../services/api';
 import { CartContext } from '../../../providers/CartContext';
@@ -7,13 +7,26 @@ import { AuthContext } from '../../../providers/AuthContext';
 
 const API_URL = 'http://localhost:5000';
 
-const ProductCard = ({ product, isEditorPreview }) => {
+const ProductCard = ({ product, isEditorPreview, siteData }) => {
     const { addToCart } = useContext(CartContext);
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-
-    const imgUrl = product.image_gallery?.[0] ? `${API_URL}${product.image_gallery[0]}` : 'https://placehold.co/300';
     
+    const [activeImgIndex, setActiveImgIndex] = useState(0);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const intervalRef = useRef(null);
+
+    const images = useMemo(() => {
+        if (product.image_gallery && product.image_gallery.length > 0) {
+            return product.image_gallery.map(img => 
+                img.startsWith('http') ? img : `${API_URL}${img}`
+            );
+        }
+        return ['https://placehold.co/300'];
+    }, [product.image_gallery]);
+
+    const isOwner = user && siteData && user.id === siteData.user_id;
+
     const hasDiscount = product.sale_percentage > 0;
     const finalPrice = product.price ? (hasDiscount 
         ? Math.round(product.price * (1 - product.sale_percentage / 100)) 
@@ -21,6 +34,30 @@ const ProductCard = ({ product, isEditorPreview }) => {
 
     const isSoldOut = product.stock_quantity === 0;
     const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+
+    const handleMouseEnter = () => {
+        if (isEditorPreview || images.length <= 1) return;
+        
+        intervalRef.current = setInterval(() => {
+            setIsTransitioning(true);
+            setTimeout(() => {
+                setActiveImgIndex(prev => (prev + 1) % images.length);
+                setIsTransitioning(false);
+            }, 300);
+        }, 2000);
+    };
+
+    const handleMouseLeave = () => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+        setIsTransitioning(true);
+        setTimeout(() => {
+            setActiveImgIndex(0);
+            setIsTransitioning(false);
+        }, 300);
+    };
 
     const handleAction = (e) => {
         e.preventDefault();
@@ -32,12 +69,12 @@ const ProductCard = ({ product, isEditorPreview }) => {
         }
 
         if (!user) {
-            const isConfirmed = confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?");
-            if (isConfirmed) {
+            if (confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
                 navigate('/login');
             }
             return;
         }
+        
         addToCart(product, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
     };
 
@@ -57,63 +94,157 @@ const ProductCard = ({ product, isEditorPreview }) => {
                 transition: 'transform 0.2s',
                 position: 'relative'
             }}
-            onMouseEnter={e => !isEditorPreview && (e.currentTarget.style.transform = 'translateY(-4px)')}
-            onMouseLeave={e => !isEditorPreview && (e.currentTarget.style.transform = 'translateY(0)')}
+            onMouseEnter={(e) => {
+                if(!isEditorPreview) e.currentTarget.style.transform = 'translateY(-4px)';
+                handleMouseEnter();
+            }}
+            onMouseLeave={(e) => {
+                if(!isEditorPreview) e.currentTarget.style.transform = 'translateY(0)';
+                handleMouseLeave();
+            }}
             >
-                <div style={{position: 'relative', paddingTop: '100%', overflow: 'hidden'}}>
-                    <img 
-                        src={imgUrl} 
-                        alt={product.name}
-                        style={{
-                            position: 'absolute', top: 0, left: 0,
-                            width: '100%', height: '100%', objectFit: 'cover',
-                            filter: isSoldOut ? 'grayscale(100%)' : 'none',
-                            opacity: isSoldOut ? 0.8 : 1
-                        }}
-                    />
+                <div style={{
+                    position: 'relative', 
+                    paddingTop: '100%', 
+                    overflow: 'hidden',
+                    backgroundColor: 'var(--site-card-bg)'
+                }}>
+                    
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%'
+                    }}>
+                        {images.map((imgSrc, idx) => (
+                            <img 
+                                key={idx}
+                                src={imgSrc} 
+                                alt={product.name}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    opacity: idx === activeImgIndex ? 1 : 0,
+                                    transform: `scale(${idx === activeImgIndex ? 1 : 1.02})`,
+                                    transition: 'all 0.5s ease-in-out',
+                                    transitionProperty: 'opacity, transform',
+                                    willChange: 'opacity, transform',
+                                    filter: isSoldOut ? 'grayscale(100%)' : 'none'
+                                }}
+                            />
+                        ))}
+                    </div>
+
+                    {images.length > 1 && !isSoldOut && (
+                        <div style={{
+                            position: 'absolute', 
+                            bottom: '10px', 
+                            left: 0, 
+                            right: 0,
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            gap: '4px', 
+                            zIndex: 2
+                        }}>
+                            {images.map((_, idx) => (
+                                <div key={idx} style={{
+                                    width: '6px', 
+                                    height: '6px', 
+                                    borderRadius: '50%',
+                                    background: idx === activeImgIndex ? 'var(--site-accent)' : 'rgba(255,255,255,0.6)',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                                    transition: 'all 0.3s ease',
+                                    transform: idx === activeImgIndex ? 'scale(1.2)' : 'scale(1)'
+                                }} />
+                            ))}
+                        </div>
+                    )}
+
                     {hasDiscount && !isSoldOut && (
                         <div style={{
-                            position: 'absolute', top: '8px', right: '8px',
-                            background: '#e53e3e', color: 'white',
-                            padding: '4px 8px', borderRadius: '4px',
-                            fontSize: '0.8rem', fontWeight: 'bold'
+                            position: 'absolute', 
+                            top: '8px', 
+                            right: '8px',
+                            background: '#e53e3e', 
+                            color: 'white',
+                            padding: '4px 8px', 
+                            borderRadius: '4px',
+                            fontSize: '0.8rem', 
+                            fontWeight: 'bold', 
+                            zIndex: 3,
+                            transition: 'transform 0.2s ease'
                         }}>
                             -{product.sale_percentage}%
                         </div>
                     )}
+
                     {isSoldOut && (
                         <div style={{
-                            position: 'absolute', inset: 0,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            position: 'absolute', 
+                            inset: 0,
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
                             background: 'rgba(255,255,255,0.6)',
-                            color: '#555', fontWeight: 'bold'
+                            color: '#555', 
+                            fontWeight: 'bold', 
+                            zIndex: 3
                         }}>
                             Закінчився
                         </div>
                     )}
                 </div>
                 
-                <div style={{padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column'}}>
+                <div style={{
+                    padding: '1rem', 
+                    flex: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column'
+                }}>
                     <h4 style={{
                         margin: '0 0 8px 0', 
                         fontSize: '1rem', 
                         color: 'var(--site-text-primary)',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis', 
+                        whiteSpace: 'nowrap'
                     }}>
                         {product.name}
                     </h4>
                     
-                    <div style={{marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <div style={{
+                        marginTop: 'auto', 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center'
+                    }}>
                         <div>
                             {hasDiscount ? (
                                 <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span style={{color: '#e53e3e', fontWeight: 'bold'}}>{finalPrice} ₴</span>
-                                    <span style={{textDecoration: 'line-through', fontSize: '0.8rem', color: 'var(--site-text-secondary)'}}>
+                                    <span style={{
+                                        color: '#e53e3e', 
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {finalPrice} ₴
+                                    </span>
+                                    <span style={{
+                                        textDecoration: 'line-through', 
+                                        fontSize: '0.8rem', 
+                                        color: 'var(--site-text-secondary)'
+                                    }}>
                                         {product.price} ₴
                                     </span>
                                 </div>
                             ) : (
-                                <span style={{color: 'var(--site-text-primary)', fontWeight: 'bold'}}>
+                                <span style={{
+                                    color: 'var(--site-text-primary)', 
+                                    fontWeight: 'bold'
+                                }}>
                                     {product.price} ₴
                                 </span>
                             )}
@@ -121,23 +252,25 @@ const ProductCard = ({ product, isEditorPreview }) => {
                         
                         <button
                             onClick={handleAction}
+                            disabled={isSoldOut || (isOwner && !hasVariants)}
+                            title={isOwner ? "Ви власник цього товару" : ""}
                             style={{
-                                background: 'var(--site-accent)',
+                                background: isOwner ? 'var(--site-text-secondary)' : 'var(--site-accent)',
                                 color: 'var(--site-accent-text)',
                                 border: 'none',
                                 borderRadius: '4px',
                                 width: '32px',
                                 height: '32px',
-                                cursor: 'pointer',
+                                cursor: (isSoldOut || isOwner) ? 'not-allowed' : 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 fontSize: '1.2rem',
-                                opacity: isSoldOut ? 0.5 : 1
+                                opacity: (isSoldOut || isOwner) ? 0.5 : 1,
+                                transition: 'all 0.2s ease'
                             }}
-                            disabled={isSoldOut && !hasVariants}
                         >
-                            {hasVariants ? '⚙️' : '+'}
+                            {isOwner ? '👤' : (hasVariants ? '⚙️' : '+')}
                         </button>
                     </div>
                 </div>
@@ -371,10 +504,9 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         gridTemplateColumns: `repeat(${safeColumns}, 1fr)`,
         gap: '20px',
         marginBottom: '2rem',
-        '@media (max-width: 768px)': {
-            gridTemplateColumns: 'repeat(2, 1fr)'
-        }
     };
+
+    const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
 
     const paginationStyle = {
         display: 'flex',
@@ -395,13 +527,25 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
     return (
         <div style={containerStyle} id={`catalog-${blockData.block_id || 'preview'}`}>
+            <style>{`
+                @media (max-width: 768px) {
+                    .${uniqueClass} {
+                        grid-template-columns: repeat(2, 1fr) !important;
+                    }
+                }
+                @media (max-width: 480px) {
+                    .${uniqueClass} {
+                        grid-template-columns: 1fr !important;
+                    }
+                }
+            `}</style>
+
             {title && (
                 <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--site-text-primary)' }}>
                     {title}
                 </h2>
             )}
 
-            {/* Зона A: Тулбар - оновлено як в ProductPickerModal */}
             {(show_search || show_category_filter || show_sorting) && (
                 <div style={filtersRowStyle}>
                     {show_search && (
@@ -459,7 +603,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 </div>
             )}
 
-            {/* Зона B: Сітка */}
             {loading ? (
                 <div style={{textAlign: 'center', padding: '40px', color: 'var(--site-text-secondary)'}}>
                     Завантаження каталогу...
@@ -491,18 +634,18 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     )}
                 </div>
             ) : (
-                <div style={gridStyle}>
+                <div className={uniqueClass} style={gridStyle}>
                     {paginatedProducts.map(product => (
                         <ProductCard 
                             key={product.id} 
                             product={product} 
-                            isEditorPreview={isEditorPreview} 
+                            isEditorPreview={isEditorPreview}
+                            siteData={siteData}
                         />
                     ))}
                 </div>
             )}
 
-            {/* Зона C: Пагинація */}
             {totalPages > 1 && (
                 <div style={paginationStyle}>
                     <button 
