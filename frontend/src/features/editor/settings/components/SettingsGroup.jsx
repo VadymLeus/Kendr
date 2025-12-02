@@ -1,8 +1,22 @@
 // frontend/src/features/editor/settings/components/SettingsGroup.jsx
 import React, { useState } from 'react';
 
-const SettingsGroup = ({ title, children, defaultOpen = false, icon }) => {
-    const [isOpen, setIsOpen] = useState(defaultOpen);
+const SettingsGroup = ({ title, children, defaultOpen = false, icon, storageKey }) => {
+    const storageId = storageKey ? `group_state_${storageKey}` : null;
+
+    const [isOpen, setIsOpen] = useState(() => {
+        if (!storageId) return defaultOpen;
+        const saved = localStorage.getItem(storageId);
+        return saved !== null ? JSON.parse(saved) : defaultOpen;
+    });
+
+    const toggle = () => {
+        const newState = !isOpen;
+        setIsOpen(newState);
+        if (storageId) {
+            localStorage.setItem(storageId, JSON.stringify(newState));
+        }
+    };
 
     const wrapperStyle = {
         border: '1px solid var(--platform-border-color)',
@@ -46,7 +60,7 @@ const SettingsGroup = ({ title, children, defaultOpen = false, icon }) => {
 
     return (
         <div style={wrapperStyle}>
-            <div onClick={() => setIsOpen(!isOpen)} style={headerStyle}>
+            <div onClick={toggle} style={headerStyle}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     {icon && <span style={iconStyle}>{icon}</span>}
                     <span>{title}</span>

@@ -4,10 +4,17 @@ import { useSearchParams } from 'react-router-dom';
 import CategoryManager from '../shop/CategoryManager';
 import ProductManager from '../shop/ProductManager';
 
-const ShopContentTab = ({ siteData }) => {
+const ShopContentTab = ({ siteData, onSavingChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const [isShopSaving, setIsShopSaving] = React.useState(false);
     
     const activeSubTab = searchParams.get('shopTab') || 'products';
+
+    React.useEffect(() => {
+        if (onSavingChange) {
+            onSavingChange(isShopSaving);
+        }
+    }, [isShopSaving, onSavingChange]);
 
     const handleTabChange = (tabName) => {
         setSearchParams(prev => {
@@ -90,6 +97,26 @@ const ShopContentTab = ({ siteData }) => {
                     <h2 style={titleStyle}>Управління магазином</h2>
                     <p style={subtitleStyle}>Керування товарами та категоріями вашого інтернет-магазину</p>
                 </div>
+                
+                {isShopSaving && (
+                    <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        color: 'var(--platform-accent)', 
+                        fontWeight: '500', 
+                        fontSize: '0.9rem' 
+                    }}>
+                        <div style={{ 
+                            width: '8px', 
+                            height: '8px', 
+                            borderRadius: '50%', 
+                            background: 'var(--platform-accent)', 
+                            animation: 'pulse 1.5s ease-in-out infinite' 
+                        }}></div>
+                        Збереження...
+                    </div>
+                )}
             </div>
 
             <div style={navStyle}>
@@ -110,9 +137,29 @@ const ShopContentTab = ({ siteData }) => {
             </div>
 
             <div style={contentCardStyle}>
-                {activeSubTab === 'products' && <ProductManager siteId={siteData.id} />}
-                {activeSubTab === 'categories' && <CategoryManager siteId={siteData.id} />}
+                {activeSubTab === 'products' && (
+                    <ProductManager 
+                        siteId={siteData.id} 
+                        onSavingChange={setIsShopSaving}
+                    />
+                )}
+                {activeSubTab === 'categories' && (
+                    <CategoryManager 
+                        siteId={siteData.id} 
+                        onSavingChange={setIsShopSaving}
+                    />
+                )}
             </div>
+            
+            <style>
+                {`
+                @keyframes pulse {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                    100% { opacity: 1; }
+                }
+                `}
+            </style>
         </div>
     );
 };

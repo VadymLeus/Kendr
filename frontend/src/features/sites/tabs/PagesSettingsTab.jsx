@@ -4,7 +4,7 @@ import apiClient from "../../../services/api";
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../hooks/useConfirm';
 
-const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
+const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavingChange }) => {
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
     const [seoTitle, setSeoTitle] = useState('');
@@ -31,7 +31,9 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
             return;
         }
 
+        if (onSavingChange) onSavingChange(true);
         setLoading(true);
+
         try {
             const payload = { 
                 name, 
@@ -54,12 +56,14 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
             toast.error(err.response?.data?.message || 'Помилка збереження');
         } finally {
             setLoading(false);
+            setTimeout(() => {
+                if (onSavingChange) onSavingChange(false);
+            }, 500);
         }
     };
 
     if (!isOpen) return null;
 
-    // Стили для кнопок
     const buttonStyle = {
         padding: '10px 20px', 
         border: 'none', 
@@ -159,7 +163,6 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
         boxShadow: '0 5px 15px rgba(0,0,0,0.3)'
     };
 
-    // Обработчики для hover эффектов
     const handleMouseOver = (element, hoverStyle) => {
         Object.assign(element.style, hoverStyle);
     };
@@ -297,7 +300,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate }) => {
     );
 };
 
-const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEditHeader }) => {
+const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEditHeader, onSavingChange }) => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const { confirm } = useConfirm();
@@ -354,6 +357,8 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
 
         if (!isConfirmed) return;
 
+        if (onSavingChange) onSavingChange(true);
+
         try {
             await apiClient.delete(`/pages/${page.id}`);
             fetchPages();
@@ -362,10 +367,16 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
         } catch (err) {
             console.error('Помилка видалення сторінки:', err);
             toast.error('Не вдалося видалити сторінку');
+        } finally {
+            setTimeout(() => {
+                if (onSavingChange) onSavingChange(false);
+            }, 500);
         }
     };
 
     const handleSetHome = async (pageId, pageName) => {
+        if (onSavingChange) onSavingChange(true);
+
         try {
             await apiClient.post(`/pages/${pageId}/set-home`);
             fetchPages();
@@ -374,13 +385,16 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
         } catch (err) {
             console.error('Помилка встановлення головної сторінки:', err);
             toast.error('Не вдалося встановити головну сторінку');
+        } finally {
+            setTimeout(() => {
+                if (onSavingChange) onSavingChange(false);
+            }, 500);
         }
     };
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPage, setEditingPage] = useState(null);
 
-    // Стили для кнопок
     const buttonStyle = {
         padding: '8px 16px', 
         border: 'none', 
@@ -473,7 +487,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
         cursor: 'pointer', 
         fontSize: '14px',
         fontWeight: '600', 
-        transition: 'all 0.2s ease',
+transition: 'all 0.2s ease',
         display: 'flex',
         alignItems: 'center',
         gap: '0.5rem',
@@ -486,7 +500,6 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
         boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
     };
 
-    // Обработчики для hover эффектов
     const handleMouseOver = (element, hoverStyle) => {
         Object.assign(element.style, hoverStyle);
     };
@@ -533,7 +546,8 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                 onSave={handleSaveSuccess}
                 page={editingPage}
                 siteId={siteId}
-                onPageUpdate={onPageUpdate} 
+                onPageUpdate={onPageUpdate}
+                onSavingChange={onSavingChange}
             />
 
             <div style={{

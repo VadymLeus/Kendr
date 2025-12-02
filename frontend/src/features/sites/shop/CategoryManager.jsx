@@ -5,7 +5,7 @@ import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../hooks/useConfirm';
 
-const CategoryManager = ({ siteId }) => {
+const CategoryManager = ({ siteId, onSavingChange }) => {
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -46,7 +46,12 @@ const CategoryManager = ({ siteId }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.name.trim()) return;
+        if (!formData.name.trim()) {
+            toast.warning("Введіть назву категорії");
+            return;
+        }
+
+        if (onSavingChange) onSavingChange(true);
 
         try {
             if (formData.id) {
@@ -59,7 +64,12 @@ const CategoryManager = ({ siteId }) => {
             handleReset();
             fetchData();
         } catch (e) {
+            console.error('Помилка збереження:', e);
             toast.error('Помилка збереження');
+        } finally {
+            setTimeout(() => {
+                if (onSavingChange) onSavingChange(false);
+            }, 500);
         }
     };
 
@@ -79,21 +89,28 @@ const CategoryManager = ({ siteId }) => {
         });
     };
 
-    const handleDelete = async (e, id) => {
+    const handleDelete = async (e, id, name) => {
         e.stopPropagation();
         if (await confirm({ 
             title: 'Видалити категорію?', 
-            message: 'Товари залишаться, але будуть "Без категорії".', 
+            message: `Ви впевнені, що хочете видалити категорію "${name}"? Товари залишаться, але будуть "Без категорії".`, 
             type: 'danger',
             confirmLabel: 'Видалити'
         })) {
+            if (onSavingChange) onSavingChange(true);
+
             try {
                 await apiClient.delete(`/categories/${id}`);
                 if (formData.id === id) handleReset();
                 fetchData();
-                toast.success('Видалено');
+                toast.success('Категорію видалено');
             } catch (err) {
-                toast.error('Не вдалося видалити');
+                console.error('Помилка видалення:', err);
+                toast.error('Не вдалося видалити категорію');
+            } finally {
+                setTimeout(() => {
+                    if (onSavingChange) onSavingChange(false);
+                }, 500);
             }
         }
     };
@@ -372,7 +389,7 @@ const CategoryManager = ({ siteId }) => {
                             onMouseLeave={(e) => handleMouseOut(e.currentTarget, cardStyle(formData.id === cat.id))}
                         >
                             <button 
-                                onClick={(e) => handleDelete(e, cat.id)}
+                                onClick={(e) => handleDelete(e, cat.id, cat.name)}
                                 style={deleteBtnStyle}
                                 title="Видалити"
                                 onMouseOver={(e) => handleMouseOver(e.currentTarget, deleteBtnHoverStyle)}

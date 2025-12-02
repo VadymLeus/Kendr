@@ -8,7 +8,7 @@ import { useConfirm } from '../../../hooks/useConfirm';
 
 const API_URL = 'http://localhost:5000';
 
-const VariantEditor = ({ variant, onChange, onRemove, index }) => {
+const VariantEditor = ({ variant, onChange, onRemove, index, onSavingChange }) => {
     const [newValueLabel, setNewValueLabel] = useState('');
     const [newValuePrice, setNewValuePrice] = useState('');
     const [newValueSale, setNewValueSale] = useState('');
@@ -87,10 +87,18 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
         });
 
         if (isConfirmed) {
-            const newValues = variant.values.filter((_, i) => i !== idx);
-            onChange({ ...variant, values: newValues });
+            if (onSavingChange) onSavingChange(true);
             
-            if (editingValueIndex === idx) resetInput();
+            try {
+                const newValues = variant.values.filter((_, i) => i !== idx);
+                onChange({ ...variant, values: newValues });
+                
+                if (editingValueIndex === idx) resetInput();
+            } finally {
+                setTimeout(() => {
+                    if (onSavingChange) onSavingChange(false);
+                }, 300);
+            }
         }
     };
 
@@ -104,7 +112,15 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
         });
 
         if (isConfirmed) {
-            onRemove();
+            if (onSavingChange) onSavingChange(true);
+            
+            try {
+                onRemove();
+            } finally {
+                setTimeout(() => {
+                    if (onSavingChange) onSavingChange(false);
+                }, 300);
+            }
         }
     };
 
@@ -504,7 +520,7 @@ const VariantEditor = ({ variant, onChange, onRemove, index }) => {
     );
 };
 
-const ProductManager = ({ siteId }) => {
+const ProductManager = ({ siteId, onSavingChange }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -582,6 +598,8 @@ const ProductManager = ({ siteId }) => {
             }))
         };
         
+        if (onSavingChange) onSavingChange(true);
+        
         try {
             if (formData.id) {
                 await apiClient.put(`/products/${formData.id}`, payload);
@@ -595,6 +613,10 @@ const ProductManager = ({ siteId }) => {
         } catch (e) {
             console.error('Помилка збереження:', e);
             toast.error('Помилка збереження');
+        } finally {
+            setTimeout(() => {
+                if (onSavingChange) onSavingChange(false);
+            }, 500);
         }
     };
 
@@ -642,6 +664,8 @@ const ProductManager = ({ siteId }) => {
             type: 'danger',
             confirmLabel: "Видалити"
         })) {
+            if (onSavingChange) onSavingChange(true);
+            
             try {
                 await apiClient.delete(`/products/${id}`);
                 fetchData();
@@ -651,6 +675,10 @@ const ProductManager = ({ siteId }) => {
                 toast.success('Товар видалено');
             } catch (err) {
                 toast.error('Помилка видалення');
+            } finally {
+                setTimeout(() => {
+                    if (onSavingChange) onSavingChange(false);
+                }, 500);
             }
         }
     };
@@ -1186,6 +1214,7 @@ const ProductManager = ({ siteId }) => {
                                     variant={variant} 
                                     onChange={(updated) => updateVariant(idx, updated)}
                                     onRemove={() => removeVariant(idx)}
+                                    onSavingChange={onSavingChange}
                                 />
                             ))}
 

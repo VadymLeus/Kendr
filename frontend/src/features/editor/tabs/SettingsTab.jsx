@@ -110,13 +110,19 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
         onUpdateBlockData(selectedBlockPath, newData, true);
     };
 
+    const blockKey = selectedBlock.block_id || selectedBlock.type;
+
     return (
         <div>
              <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>
                 Налаштування: {selectedBlock.type}
             </h3>
             
-            <SettingsGroup title="📝 Основні налаштування" defaultOpen={true}>
+            <SettingsGroup 
+                title="📝 Основні налаштування" 
+                defaultOpen={true}
+                storageKey={`main_${blockKey}`}
+            >
                 <SettingsComponent
                     data={selectedBlock.data}
                     onChange={handleLiveUpdate}
@@ -124,7 +130,11 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                 />
             </SettingsGroup>
 
-            <SettingsGroup title="🎨 Вигляд та ✨ Анімація" defaultOpen={false}>
+            <SettingsGroup 
+                title="🎨 Вигляд та ✨ Анімація" 
+                defaultOpen={false}
+                storageKey={`style_${blockKey}`}
+            >
                 
                 <div style={{ marginBottom: '16px' }}>
                     <label style={{ 

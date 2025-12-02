@@ -1,6 +1,5 @@
 // frontend/src/features/sites/tabs/ThemeSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
-import { useAutoSave } from '../../../hooks/useAutoSave';
 import SaveTemplateModal from '../components/SaveTemplateModal';
 import apiClient from '../../../services/api';
 import { toast } from 'react-toastify';
@@ -37,13 +36,30 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [templates, setTemplates] = useState([]);
     const [loadingTemplates, setLoadingTemplates] = useState(false);
+    const [sharedFonts, setSharedFonts] = useState([]);
     const { confirm } = useConfirm();
     
-    const [sharedFonts, setSharedFonts] = useState([]);
+    const [themeData, setThemeData] = useState({
+        site_theme_mode: siteData.site_theme_mode || 'light',
+        site_theme_accent: siteData.site_theme_accent || 'orange',
+        theme_settings: siteData.theme_settings || {
+            font_heading: "'Roboto Mono', monospace",
+            font_body: "'Roboto Mono', monospace",
+            button_radius: '8px',
+        }
+    });
 
-    const { data, handleChange, isSaving } = useAutoSave(
-        `/sites/${siteData.site_path}/settings`,
-        {
+    const currentAccentHex = resolveAccentColor(themeData.site_theme_accent);
+    const isPreset = PRESET_COLORS.some(p => p.id === themeData.site_theme_accent);
+    const currentPreset = PRESET_COLORS.find(p => p.id === themeData.site_theme_accent);
+
+    useEffect(() => {
+        fetchTemplates();
+        fetchSharedFonts();
+    }, []);
+
+    useEffect(() => {
+        setThemeData({
             site_theme_mode: siteData.site_theme_mode || 'light',
             site_theme_accent: siteData.site_theme_accent || 'orange',
             theme_settings: siteData.theme_settings || {
@@ -51,17 +67,8 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                 font_body: "'Roboto Mono', monospace",
                 button_radius: '8px',
             }
-        }
-    );
-
-    const currentAccentHex = resolveAccentColor(data.site_theme_accent);
-    const isPreset = PRESET_COLORS.some(p => p.id === data.site_theme_accent);
-    const currentPreset = PRESET_COLORS.find(p => p.id === data.site_theme_accent);
-
-    useEffect(() => {
-        fetchTemplates();
-        fetchSharedFonts();
-    }, []);
+        });
+    }, [siteData]);
 
     const fetchSharedFonts = async () => {
         try {
@@ -89,20 +96,33 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
         }
     };
 
-    const updateSetting = (key, value) => {
-        handleChange(key, value);
+    const updateThemeSetting = (key, value) => {
+        const newData = { ...themeData, [key]: value };
+        setThemeData(newData);
+        
         if (onUpdate) {
             onUpdate({ [key]: value });
         }
     };
 
-    const handleThemeSettingChange = (key, value) => {
-        const newThemeSettings = { ...data.theme_settings, [key]: value };
-        updateSetting('theme_settings', newThemeSettings);
+    const updateThemeSettings = (key, value) => {
+        const newThemeSettings = { 
+            ...themeData.theme_settings, 
+            [key]: value 
+        };
+        const newData = { 
+            ...themeData, 
+            theme_settings: newThemeSettings 
+        };
+        setThemeData(newData);
+        
+        if (onUpdate) {
+            onUpdate({ theme_settings: newThemeSettings });
+        }
     };
 
     const handleColorChange = (colorValue) => {
-        updateSetting('site_theme_accent', colorValue);
+        updateThemeSetting('site_theme_accent', colorValue);
     };
 
     const handleSaveTemplate = async (name, description, overwriteId) => {
@@ -168,69 +188,12 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
         }
     };
 
-    const primaryButton = { 
-        background: 'var(--platform-accent)', 
-        color: 'white', 
-        padding: '10px 20px', 
-        borderRadius: '8px', 
-        border: 'none', 
-        fontWeight: '500', 
-        cursor: 'pointer', 
-        fontSize: '0.9rem', 
-        whiteSpace: 'nowrap',
-        transition: 'all 0.2s ease',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    };
-
-    const primaryButtonHover = {
-        background: 'var(--platform-accent-hover)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
-    };
-
-    const secondaryButton = { 
-        background: 'transparent', 
-        border: '1px solid var(--platform-border-color)', 
-        color: 'var(--platform-text-primary)', 
-        padding: '8px 16px', 
-        borderRadius: '6px', 
-        cursor: 'pointer', 
-        fontSize: '0.8rem', 
-        fontWeight: '500',
-        transition: 'all 0.2s ease'
-    };
-
-    const secondaryButtonHover = {
-        background: 'var(--platform-hover-bg)',
-        borderColor: 'var(--platform-accent)',
-        color: 'var(--platform-accent)'
-    };
-
-    const dangerButton = { 
-        background: 'none', 
-        border: '1px solid #e53e3e', 
-        color: '#e53e3e', 
-        padding: '8px 16px', 
-        borderRadius: '6px', 
-        cursor: 'pointer', 
-        fontSize: '0.8rem', 
-        fontWeight: '500',
-        transition: 'all 0.2s ease'
-    };
-
-    const dangerButtonHover = {
-        background: '#e53e3e',
-        color: 'white',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.2)'
-    };
-
     const exampleButtonStyle = (isPrimary = true) => ({
         padding: '10px 20px', 
         background: isPrimary ? currentAccentHex : 'transparent', 
         color: isPrimary ? (isLightColor(currentAccentHex) ? '#000' : '#fff') : currentAccentHex, 
         border: isPrimary ? 'none' : `1px solid ${currentAccentHex}`, 
-        borderRadius: data.theme_settings.button_radius, 
+        borderRadius: themeData.theme_settings.button_radius, 
         cursor: 'pointer', 
         fontSize: '0.9rem', 
         fontWeight: '500', 
@@ -259,12 +222,6 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                     <h2 style={{ fontSize: '1.5rem', fontWeight: '600', margin: '0 0 4px 0', color: 'var(--platform-text-primary)' }}>Тема та Стиль</h2>
                     <p style={{ color: 'var(--platform-text-secondary)', margin: 0, fontSize: '0.9rem' }}>Налаштування зовнішнього вигляду вашого сайту</p>
                 </div>
-                {isSaving && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--platform-accent)', fontWeight: '500', fontSize: '0.9rem' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--platform-accent)', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
-                        Збереження...
-                    </div>
-                )}
             </div>
 
             <div style={card}>
@@ -273,23 +230,23 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '16px' }}>
                     <div 
                         style={{
-                            border: `2px solid ${data.site_theme_mode === 'light' ? currentAccentHex : 'var(--platform-border-color)'}`,
+                            border: `2px solid ${themeData.site_theme_mode === 'light' ? currentAccentHex : 'var(--platform-border-color)'}`,
                             borderRadius: '12px',
                             padding: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             background: 'var(--platform-bg)',
-                            boxShadow: data.site_theme_mode === 'light' ? `0 4px 20px ${currentAccentHex}33` : 'none'
+                            boxShadow: themeData.site_theme_mode === 'light' ? `0 4px 20px ${currentAccentHex}33` : 'none'
                         }}
-                        onClick={() => updateSetting('site_theme_mode', 'light')}
+                        onClick={() => updateThemeSetting('site_theme_mode', 'light')}
                         onMouseOver={(e) => {
-                            if (data.site_theme_mode !== 'light') {
+                            if (themeData.site_theme_mode !== 'light') {
                                 e.currentTarget.style.borderColor = currentAccentHex;
                                 e.currentTarget.style.boxShadow = `0 4px 20px ${currentAccentHex}33`;
                             }
                         }}
                         onMouseOut={(e) => {
-                            if (data.site_theme_mode !== 'light') {
+                            if (themeData.site_theme_mode !== 'light') {
                                 e.currentTarget.style.borderColor = 'var(--platform-border-color)';
                                 e.currentTarget.style.boxShadow = 'none';
                             }
@@ -311,23 +268,23 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                     
                     <div 
                         style={{
-                            border: `2px solid ${data.site_theme_mode === 'dark' ? currentAccentHex : 'var(--platform-border-color)'}`,
+                            border: `2px solid ${themeData.site_theme_mode === 'dark' ? currentAccentHex : 'var(--platform-border-color)'}`,
                             borderRadius: '12px',
                             padding: '16px',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             background: 'var(--platform-bg)',
-                            boxShadow: data.site_theme_mode === 'dark' ? `0 4px 20px ${currentAccentHex}33` : 'none'
+                            boxShadow: themeData.site_theme_mode === 'dark' ? `0 4px 20px ${currentAccentHex}33` : 'none'
                         }}
-                        onClick={() => updateSetting('site_theme_mode', 'dark')}
+                        onClick={() => updateThemeSetting('site_theme_mode', 'dark')}
                         onMouseOver={(e) => {
-                            if (data.site_theme_mode !== 'dark') {
+                            if (themeData.site_theme_mode !== 'dark') {
                                 e.currentTarget.style.borderColor = currentAccentHex;
                                 e.currentTarget.style.boxShadow = `0 4px 20px ${currentAccentHex}33`;
                             }
                         }}
                         onMouseOut={(e) => {
-                            if (data.site_theme_mode !== 'dark') {
+                            if (themeData.site_theme_mode !== 'dark') {
                                 e.currentTarget.style.borderColor = 'var(--platform-border-color)';
                                 e.currentTarget.style.boxShadow = 'none';
                             }
@@ -367,20 +324,20 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                                     onClick={() => handleColorChange(a.id)}
                                     style={{
                                         width: '40px', height: '40px', borderRadius: '8px', background: a.color,
-                                        border: data.site_theme_accent === a.id ? `3px solid var(--platform-card-bg)` : '2px solid var(--platform-border-color)',
-                                        boxShadow: data.site_theme_accent === a.id ? `0 0 0 2px ${a.color}` : 'none',
+                                        border: themeData.site_theme_accent === a.id ? `3px solid var(--platform-card-bg)` : '2px solid var(--platform-border-color)',
+                                        boxShadow: themeData.site_theme_accent === a.id ? `0 0 0 2px ${a.color}` : 'none',
                                         cursor: 'pointer', transition: 'all 0.2s ease',
-                                        transform: data.site_theme_accent === a.id ? 'scale(1.05)' : 'scale(1)'
+                                        transform: themeData.site_theme_accent === a.id ? 'scale(1.05)' : 'scale(1)'
                                     }}
                                     title={a.name}
                                     onMouseOver={(e) => {
-                                        if (data.site_theme_accent !== a.id) {
+                                        if (themeData.site_theme_accent !== a.id) {
                                             e.target.style.transform = 'scale(1.1)';
                                             e.target.style.boxShadow = `0 0 0 2px ${a.color}`;
                                         }
                                     }}
                                     onMouseOut={(e) => {
-                                        if (data.site_theme_accent !== a.id) {
+                                        if (themeData.site_theme_accent !== a.id) {
                                             e.target.style.transform = 'scale(1)';
                                             e.target.style.boxShadow = 'none';
                                         }
@@ -451,7 +408,7 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                     >
                         Другорядна кнопка
                     </button>
-                    <div style={{ padding: '8px 12px', background: currentAccentHex + '20', color: currentAccentHex, borderRadius: data.theme_settings.button_radius, fontSize: '0.8rem', fontWeight: '500' }}>Фоновий елемент</div>
+                    <div style={{ padding: '8px 12px', background: currentAccentHex + '20', color: currentAccentHex, borderRadius: themeData.theme_settings.button_radius, fontSize: '0.8rem', fontWeight: '500' }}>Фоновий елемент</div>
                 </div>
             </div>
 
@@ -465,14 +422,14 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                 <div style={section}>
                     <FontPicker 
                         label="Шрифт заголовків"
-                        value={data.theme_settings.font_heading}
-                        onChange={(val) => handleThemeSettingChange('font_heading', val)}
+                        value={themeData.theme_settings.font_heading}
+                        onChange={(val) => updateThemeSettings('font_heading', val)}
                         type="heading"
                         externalFonts={sharedFonts}
                         onExternalChange={fetchSharedFonts}
                     />
                     
-                    <div style={{ padding: '16px', background: 'var(--platform-bg)', borderRadius: '6px', border: '1px solid var(--platform-border-color)', fontFamily: data.theme_settings.font_heading, fontSize: '1.1rem', fontWeight: '600', color: 'var(--platform-text-primary)' }}>
+                    <div style={{ padding: '16px', background: 'var(--platform-bg)', borderRadius: '6px', border: '1px solid var(--platform-border-color)', fontFamily: themeData.theme_settings.font_heading, fontSize: '1.1rem', fontWeight: '600', color: 'var(--platform-text-primary)' }}>
                         Приклад заголовку: Заголовок сторінки
                     </div>
                 </div>
@@ -480,14 +437,14 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                 <div style={section}>
                     <FontPicker 
                         label="Шрифт тексту"
-                        value={data.theme_settings.font_body}
-                        onChange={(val) => handleThemeSettingChange('font_body', val)}
+                        value={themeData.theme_settings.font_body}
+                        onChange={(val) => updateThemeSettings('font_body', val)}
                         type="body"
                         externalFonts={sharedFonts} 
                         onExternalChange={fetchSharedFonts} 
                     />
 
-                    <div style={{ padding: '16px', background: 'var(--platform-bg)', borderRadius: '6px', border: '1px solid var(--platform-border-color)', fontFamily: data.theme_settings.font_body, fontSize: '0.95rem', lineHeight: '1.5', color: 'var(--platform-text-primary)' }}>
+                    <div style={{ padding: '16px', background: 'var(--platform-bg)', borderRadius: '6px', border: '1px solid var(--platform-border-color)', fontFamily: themeData.theme_settings.font_body, fontSize: '0.95rem', lineHeight: '1.5', color: 'var(--platform-text-primary)' }}>
                         Приклад тексту: Основний текст сторінки - це приклад того, як буде виглядати ваший текст на сайті. Тут ви можете побачити міжрядковий інтервал, розмір шрифту та загальний вигляд.
                     </div>
                 </div>
@@ -497,8 +454,8 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                     
                     <input 
                         type="text" 
-                        value={data.theme_settings.button_radius}
-                        onChange={(e) => handleThemeSettingChange('button_radius', e.target.value)}
+                        value={themeData.theme_settings.button_radius}
+                        onChange={(e) => updateThemeSettings('button_radius', e.target.value)}
                         placeholder="Наприклад: 8px або 0.5rem"
                         style={inputStyle}
                     />
@@ -522,7 +479,7 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                             padding: '8px 12px', 
                             background: currentAccentHex + '20', 
                             color: currentAccentHex, 
-                            borderRadius: data.theme_settings.button_radius, 
+                            borderRadius: themeData.theme_settings.button_radius, 
                             fontSize: '0.8rem', 
                             fontWeight: '500' 
                         }}>
@@ -541,9 +498,29 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                     <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '16px' }}>
                         <button 
                             onClick={() => setIsTemplateModalOpen(true)} 
-                            style={primaryButton}
-                            onMouseOver={(e) => Object.assign(e.target.style, primaryButtonHover)}
-                            onMouseOut={(e) => Object.assign(e.target.style, primaryButton)}
+                            style={{
+                                background: 'var(--platform-accent)', 
+                                color: 'white', 
+                                padding: '10px 20px', 
+                                borderRadius: '8px', 
+                                border: 'none', 
+                                fontWeight: '500', 
+                                cursor: 'pointer', 
+                                fontSize: '0.9rem', 
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s ease',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}
+                            onMouseOver={(e) => {
+                                e.target.style.background = 'var(--platform-accent-hover)';
+                                e.target.style.transform = 'translateY(-1px)';
+                                e.target.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.background = 'var(--platform-accent)';
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                            }}
                         >
                             Зберегти поточний шаблон
                         </button>
@@ -564,17 +541,55 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                                     <div style={{display: 'flex', gap: '8px', marginLeft: '16px'}}>
                                         <button 
                                             onClick={() => handleApplyTemplate(template)} 
-                                            style={secondaryButton}
-                                            onMouseOver={(e) => Object.assign(e.target.style, secondaryButtonHover)}
-                                            onMouseOut={(e) => Object.assign(e.target.style, secondaryButton)}
+                                            style={{
+                                                background: 'transparent', 
+                                                border: '1px solid var(--platform-border-color)', 
+                                                color: 'var(--platform-text-primary)', 
+                                                padding: '8px 16px', 
+                                                borderRadius: '6px', 
+                                                cursor: 'pointer', 
+                                                fontSize: '0.8rem', 
+                                                fontWeight: '500',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseOver={(e) => {
+                                                e.target.style.background = 'var(--platform-hover-bg)';
+                                                e.target.style.borderColor = 'var(--platform-accent)';
+                                                e.target.style.color = 'var(--platform-accent)';
+                                            }}
+                                            onMouseOut={(e) => {
+                                                e.target.style.background = 'transparent';
+                                                e.target.style.borderColor = 'var(--platform-border-color)';
+                                                e.target.style.color = 'var(--platform-text-primary)';
+                                            }}
                                         >
                                             Застосувати
                                         </button>
                                         <button 
                                             onClick={() => handleDeleteTemplate(template.id, template.name)} 
-                                            style={dangerButton}
-                                            onMouseOver={(e) => Object.assign(e.target.style, dangerButtonHover)}
-                                            onMouseOut={(e) => Object.assign(e.target.style, dangerButton)}
+                                            style={{
+                                                background: 'none', 
+                                                border: '1px solid #e53e3e', 
+                                                color: '#e53e3e', 
+                                                padding: '8px 16px', 
+                                                borderRadius: '6px', 
+                                                cursor: 'pointer', 
+                                                fontSize: '0.8rem', 
+                                                fontWeight: '500',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseOver={(e) => {
+                                                e.target.style.background = '#e53e3e';
+                                                e.target.style.color = 'white';
+                                                e.target.style.transform = 'translateY(-1px)';
+                                                e.target.style.boxShadow = '0 2px 5px rgba(229, 62, 62, 0.2)';
+                                            }}
+                                            onMouseOut={(e) => {
+                                                e.target.style.background = 'none';
+                                                e.target.style.color = '#e53e3e';
+                                                e.target.style.transform = 'translateY(0)';
+                                                e.target.style.boxShadow = 'none';
+                                            }}
                                         >
                                             Видалити
                                         </button>
@@ -595,7 +610,6 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
             </div>
 
             <SaveTemplateModal isOpen={isTemplateModalOpen} onClose={() => setIsTemplateModalOpen(false)} onSave={handleSaveTemplate} templates={templates} />
-            <style>{`@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }`}</style>
         </div>
     );
 };

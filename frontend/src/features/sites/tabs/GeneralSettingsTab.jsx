@@ -14,7 +14,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
     const [slugError, setSlugError] = useState('');
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
-    const { data, handleChange, isSaving } = useAutoSave(
+    const { data, handleChange } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
         {
             title: siteData.title,
@@ -301,25 +301,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
                         Керування основними параметрами вашого сайту
                     </p>
                 </div>
-                {isSaving && (
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        color: 'var(--platform-accent)', 
-                        fontWeight: '500', 
-                        fontSize: '0.9rem' 
-                    }}>
-                        <div style={{ 
-                            width: '8px', 
-                            height: '8px', 
-                            borderRadius: '50%', 
-                            background: 'var(--platform-accent)', 
-                            animation: 'pulse 1.5s ease-in-out infinite' 
-                        }}></div>
-                        Збереження...
-                    </div>
-                )}
             </div>
 
             <div style={cardStyle}>
@@ -619,11 +600,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate }) => {
 
             <style>
                 {`
-                @keyframes pulse {
-                    0% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                    100% { opacity: 1; }
-                }
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(-10px); }
                     to { opacity: 1; transform: translateY(0); }
