@@ -1,3 +1,4 @@
+// frontend/src/common/components/ui/Input.jsx
 import React from 'react';
 
 export const Input = ({ 

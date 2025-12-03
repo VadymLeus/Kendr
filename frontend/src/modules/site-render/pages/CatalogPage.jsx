@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { debounce } from 'lodash';
 import apiClient from '../../../common/services/api';
+import SiteCoverDisplay from '../../../common/components/ui/SiteCoverDisplay';
 
 const CatalogPage = () => {
     const [sites, setSites] = useState([]);
@@ -138,17 +139,15 @@ const CatalogPage = () => {
                             onMouseEnter={(e) => Object.assign(e.currentTarget.style, siteCardHoverStyle)}
                             onMouseLeave={(e) => Object.assign(e.currentTarget.style, siteCardStyle)}
                         >
-                            <img 
-                                src={site.templateThumbnail || 'https://placehold.co/400x250/EFEFEF/31343C?text=Preview'} 
-                                alt={site.title} 
-                                style={{ 
-                                    width: '100%', 
-                                    height: '180px', 
-                                    objectFit: 'cover', 
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--platform-border-color)'
-                                }}
-                            />
+                            <div style={{ 
+                                width: '100%', 
+                                height: '180px', 
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                border: '1px solid var(--platform-border-color)'
+                            }}>
+                                <SiteCoverDisplay site={site} />
+                            </div>
                             <h3 style={{ 
                                 marginTop: '1rem', 
                                 marginBottom: '0.5rem',

@@ -3,10 +3,11 @@ const db = require('../db');
 const { deleteFile } = require('../utils/fileUtils');
 
 class Site {
-  static async getPublic(searchTerm = '', userId = null) {
+static async getPublic(searchTerm = '', userId = null) {
     let query = `
         SELECT
             s.id, s.site_path, s.title, s.logo_url, s.status,
+            s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode, -- Додані поля
             u.username AS author
         FROM sites s
         JOIN users u ON s.user_id = u.id
@@ -120,7 +121,9 @@ class Site {
       header_content,
       footer_content,
       favicon_url,
-      site_title_seo
+      site_title_seo,
+      cover_image,
+      cover_layout
     } = data;
     
     const safeStringify = (obj) => {
@@ -148,6 +151,8 @@ class Site {
         safeStringify(footer_content),
         safeFaviconUrl,
         site_title_seo || null,
+        cover_image || null,
+        cover_layout || 'centered',
         siteId
     ];
 
@@ -162,7 +167,9 @@ class Site {
             header_content = ?,
             footer_content = ?,
             favicon_url = ?, 
-            site_title_seo = ?
+            site_title_seo = ?,
+            cover_image = ?, 
+            cover_layout = ?
         WHERE id = ?
     `;
     
@@ -223,9 +230,10 @@ class Site {
     return result;
   }
 
-  static async getUserSites(userId) {
+static async getUserSites(userId) {
     const [rows] = await db.query(`
-      SELECT s.id, s.site_path, s.title, s.logo_url, s.status
+      SELECT s.id, s.site_path, s.title, s.logo_url, s.status, 
+             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode -- Додано
       FROM sites s 
        WHERE s.user_id = ? 
       ORDER BY s.created_at DESC

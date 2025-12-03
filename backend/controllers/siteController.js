@@ -280,7 +280,9 @@ exports.updateSiteSettings = async (req, res, next) => {
             header_content, 
             footer_content,
             favicon_url,
-            site_title_seo
+            site_title_seo,
+            cover_image,
+            cover_layout
         } = req.body;
 
         const processJsonField = (newField, currentField) => {
@@ -323,7 +325,10 @@ exports.updateSiteSettings = async (req, res, next) => {
             footer_content: processJsonField(footer_content, site.footer_content),
             
             favicon_url: favicon_url !== undefined ? favicon_url : site.favicon_url,
-            site_title_seo: site_title_seo !== undefined ? site_title_seo : site.site_title_seo
+            site_title_seo: site_title_seo !== undefined ? site_title_seo : site.site_title_seo,
+            
+            cover_image: cover_image !== undefined ? cover_image : site.cover_image,
+            cover_layout: cover_layout !== undefined ? cover_layout : site.cover_layout
         });
         
         if (Array.isArray(tags)) {

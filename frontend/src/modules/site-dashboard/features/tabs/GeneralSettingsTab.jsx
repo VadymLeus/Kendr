@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAutoSave } from '../../../../common/hooks/useAutoSave';
 import ImageInput from '../../../media/components/ImageInput'; 
+import SiteCoverDisplay from '../../../../common/components/ui/SiteCoverDisplay';
 import apiClient from '../../../../common/services/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +23,9 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             status: siteData.status,
             favicon_url: siteData.favicon_url || '', 
             site_title_seo: siteData.site_title_seo || siteData.title,
-            theme_settings: siteData.theme_settings || {}
+            theme_settings: siteData.theme_settings || {},
+            cover_image: siteData.cover_image || '',
+            cover_layout: siteData.cover_layout || 'centered'
         }
     );
 
@@ -265,6 +268,147 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
 
             <div style={cardStyle}>
                 <div style={{marginBottom: '24px'}}>
+                    <h3 style={cardTitleStyle}>🖼️ Розумна Обкладинка</h3>
+                    <p style={cardSubtitleStyle}>Ця картка відображається в каталозі сайтів та при поширенні посилання.</p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
+                    
+                    <div>
+                        <label style={{ 
+                            display: 'block', 
+                            marginBottom: '10px', 
+                            fontWeight: '600', 
+                            color: 'var(--platform-text-primary)',
+                            fontSize: '0.9rem' 
+                        }}>
+                            Попередній перегляд:
+                        </label>
+                        <div style={{ 
+                            width: '100%', 
+                            aspectRatio: '1.6 / 1',
+                            border: '1px solid var(--platform-border-color)',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                        }}>
+                            <SiteCoverDisplay 
+                                site={{
+                                    ...siteData,
+                                    title: data.title,
+                                    cover_image: data.cover_image,
+                                    cover_layout: data.cover_layout
+                                }} 
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        
+                        <div style={{ 
+                            padding: '16px', 
+                            background: 'var(--platform-bg)', 
+                            borderRadius: '10px', 
+                            border: '1px solid var(--platform-border-color)' 
+                        }}>
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                                <label style={{ fontWeight: '600', fontSize: '0.9rem', color: 'var(--platform-text-primary)' }}>
+                                    Власне зображення
+                                </label>
+                                {data.cover_image && (
+                                    <button 
+                                        onClick={() => handleChange('cover_image', '')}
+                                        style={{
+                                            background: 'none', border: 'none', color: '#e53e3e',
+                                            cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500',
+                                            padding: 0
+                                        }}
+                                    >
+                                        🗑 Видалити
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {data.cover_image ? (
+                                <div style={{ fontSize: '0.9rem', color: 'var(--platform-success)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>✅</span> Зображення завантажено
+                                </div>
+                            ) : (
+                                <div style={{ height: '50px' }}>
+                                    <ImageInput 
+                                        value={data.cover_image}
+                                        onChange={(e) => handleChange('cover_image', e.target.value)}
+                                        aspect={1.6}
+                                        triggerStyle={{
+                                            border: '1px dashed var(--platform-border-color)',
+                                            borderRadius: '6px',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            height: '100%', cursor: 'pointer', color: 'var(--platform-text-secondary)',
+                                            background: 'var(--platform-card-bg)', fontSize: '0.9rem'
+                                        }}
+                                    >
+                                        <span>📷 Завантажити обкладинку...</span>
+                                    </ImageInput>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ 
+                            opacity: data.cover_image ? 0.5 : 1, 
+                            pointerEvents: data.cover_image ? 'none' : 'auto',
+                            transition: 'opacity 0.2s ease'
+                        }}>
+                            <label style={{ 
+                                display: 'block', 
+                                marginBottom: '10px', 
+                                fontWeight: '600', 
+                                color: 'var(--platform-text-primary)',
+                                fontSize: '0.9rem' 
+                            }}>
+                                Стиль генератора:
+                            </label>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                                {[
+                                    { id: 'centered', label: 'Стандарт', icon: '⬇️' },
+                                    { id: 'centered_reverse', label: 'Реверс', icon: '⬆️' },
+                                    { id: 'classic', label: 'Класика', icon: '⬅️' },
+                                    { id: 'reverse', label: 'Справа', icon: '➡️' },
+                                    { id: 'minimal', label: 'Текст', icon: '📝' },
+                                    { id: 'logo_only', label: 'Лого', icon: '🖼️' },
+                                ].map(layout => (
+                                    <button
+                                        key={layout.id}
+                                        onClick={() => handleChange('cover_layout', layout.id)}
+                                        style={{
+                                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                            padding: '10px',
+                                            background: data.cover_layout === layout.id ? 'var(--platform-accent)' : 'var(--platform-bg)',
+                                            color: data.cover_layout === layout.id ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
+                                            border: data.cover_layout === layout.id ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '0.8rem',
+                                            transition: 'all 0.2s ease',
+                                            boxShadow: data.cover_layout === layout.id ? '0 2px 5px rgba(0,0,0,0.1)' : 'none'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '1.2rem', marginBottom: '4px' }}>{layout.icon}</span>
+                                        {layout.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <small style={{ display: 'block', marginTop: '10px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
+                                Використовує кольори з налаштувань теми сайту.
+                            </small>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div style={cardStyle}>
+                <div style={{marginBottom: '24px'}}>
                     <h3 style={cardTitleStyle}>🍪 Конфіденційність</h3>
                     <p style={cardSubtitleStyle}>Налаштування Cookie-банера та згоди користувачів</p>
                 </div>
@@ -277,7 +421,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                             onChange={(e) => handleCookieChange('enabled', e.target.checked)}
                             style={{ width: '20px', height: '20px', cursor: 'pointer' }}
                         />
-                        <span style={{ fontWeight: '500' }}>Ввімкнути Cookie-баннер</span>
+                        <span style={{ fontWeight: '500' }}>Ввімкнути Cookie-банер</span>
                     </label>
                 </div>
 

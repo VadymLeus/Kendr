@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
+import SiteCoverDisplay from '../../../common/components/ui/SiteCoverDisplay';
 import apiClient from '../../../common/services/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../common/hooks/useConfirm';
@@ -125,35 +126,48 @@ const MySitesPage = () => {
                                 key={site.id} 
                                 style={isSuspended ? suspendedSiteCardStyle : siteCardStyle}
                             >
-                                <div>
-                                    <h4 style={{ 
-                                        margin: '0 0 0.5rem 0',
-                                        color: 'var(--platform-text-primary)'
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
+                                    <div style={{ 
+                                        width: '80px', 
+                                        height: '50px', 
+                                        borderRadius: '4px', 
+                                        overflow: 'hidden', 
+                                        flexShrink: 0, 
+                                        border: '1px solid var(--platform-border-color)' 
                                     }}>
-                                        {site.title}
-                                    </h4>
-                                    <p style={{ 
-                                        color: 'var(--platform-text-secondary)', 
-                                        margin: 0,
-                                        fontSize: '0.9rem'
-                                    }}>
-                                        Адреса: <a 
-                                            href={`/site/${site.site_path}`} 
-                                            style={{ color: 'var(--platform-accent)' }}
-                                        >
-                                            {`/site/${site.site_path}`}
-                                        </a>
-                                    </p>
-                                    {isSuspended && (
+                                        <SiteCoverDisplay site={site} />
+                                    </div>
+
+                                    <div>
+                                        <h4 style={{ 
+                                            margin: '0 0 0.5rem 0',
+                                            color: 'var(--platform-text-primary)'
+                                        }}>
+                                            {site.title}
+                                        </h4>
                                         <p style={{ 
-                                            color: 'var(--platform-warning)', 
-                                            fontWeight: 'bold', 
-                                            margin: '5px 0 0 0',
+                                            color: 'var(--platform-text-secondary)', 
+                                            margin: 0,
                                             fontSize: '0.9rem'
                                         }}>
-                                            Сайт призупинено
+                                            Адреса: <a 
+                                                href={`/site/${site.site_path}`} 
+                                                style={{ color: 'var(--platform-accent)' }}
+                                            >
+                                                {`/site/${site.site_path}`}
+                                            </a>
                                         </p>
-                                    )}
+                                        {isSuspended && (
+                                            <p style={{ 
+                                                color: 'var(--platform-warning)', 
+                                                fontWeight: 'bold', 
+                                                margin: '5px 0 0 0',
+                                                fontSize: '0.9rem'
+                                            }}>
+                                                Сайт призупинено
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                     {isSuspended ? (
