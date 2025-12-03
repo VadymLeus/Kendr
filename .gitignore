@@ -19,6 +19,10 @@ pnpm-debug.log*
 
 # Папка з файлами, завантаженими користувачами
 /backend/uploads/
+/frontend/src/modules/admin/Directory for extension
+/frontend/src/modules/auth/Directory for extension
+/frontend/src/modules/shop/Directory for extension
+/frontend/src/modules/support/Directory for extension
 
 # Папка збірки фронтенду
 /dist

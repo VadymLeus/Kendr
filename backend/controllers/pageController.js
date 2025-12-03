@@ -99,7 +99,7 @@ exports.updatePageContent = async (req, res, next) => {
 exports.updatePageSettings = async (req, res, next) => {
     try {
         const { pageId } = req.params;
-        const { name, slug } = req.body;
+        const { name, slug, seo_title, seo_description, seo_keywords } = req.body;
         const userId = req.user.id;
 
         if (!name || !slug) {
@@ -114,7 +114,7 @@ exports.updatePageSettings = async (req, res, next) => {
             return res.status(403).json({ message: 'Доступ заборонено.' });
         }
 
-        await Page.updateSettings(pageId, { name, slug });
+        await Page.updateSettings(pageId, { name, slug, seo_title, seo_description, seo_keywords });
         res.json({ message: 'Налаштування сторінки оновлено.' });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {

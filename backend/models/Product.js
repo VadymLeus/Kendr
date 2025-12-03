@@ -18,24 +18,43 @@ const safeParseGallery = (galleryData) => {
     return [];
 };
 
+const safeParseVariants = (variantsData) => {
+    if (!variantsData) return null;
+    if (typeof variantsData === 'string') {
+        try {
+            return JSON.parse(variantsData);
+        } catch (e) {
+            return null;
+        }
+    }
+    return variantsData;
+};
+
 class Product {
     static async findById(productId) {
         const [rows] = await db.query(
-            `SELECT p.*, s.user_id, s.site_path
+            `SELECT p.*, 
+                    c.name as category_name, 
+                    c.discount_percentage as category_discount,
+                    s.user_id, s.site_path
              FROM products p
              JOIN sites s ON p.site_id = s.id
+             LEFT JOIN categories c ON p.category_id = c.id
              WHERE p.id = ?`,
             [productId]
         );
         if (!rows[0]) return null;
 
         rows[0].image_gallery = safeParseGallery(rows[0].image_gallery);
+        rows[0].variants = safeParseVariants(rows[0].variants);
         return rows[0];
     }
 
     static async findBySiteId(siteId) {
         const [rows] = await db.query(`
-            SELECT p.*, c.name as category_name
+            SELECT p.*, 
+                   c.name as category_name,
+                   c.discount_percentage as category_discount
             FROM products p
             LEFT JOIN categories c ON p.category_id = c.id
             WHERE p.site_id = ?
@@ -44,32 +63,39 @@ class Product {
         
         return rows.map(product => {
             product.image_gallery = safeParseGallery(product.image_gallery);
+            product.variants = safeParseVariants(product.variants);
             return product;
         });
     }
 
     static async create(productData) {
-        const { site_id, name, description, price, image_path, category_id, stock_quantity } = productData;
+        const { site_id, name, description, price, image_path, category_id, stock_quantity, variants, sale_percentage } = productData;
         
         const image_gallery = image_path ? JSON.stringify([image_path]) : null;
+        const variantsJson = variants ? JSON.stringify(variants) : null;
 
         const [result] = await db.query(
-            'INSERT INTO products (site_id, name, description, price, image_gallery, category_id, stock_quantity) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [site_id, name, description, price || 0, image_gallery, category_id || null, stock_quantity || null]
+            'INSERT INTO products (site_id, name, description, price, image_gallery, category_id, stock_quantity, variants, sale_percentage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [site_id, name, description, price || 0, image_gallery, category_id || null, stock_quantity || null, variantsJson, sale_percentage || 0]
         );
         
         return this.findById(result.insertId);
     }
 
     static async update(productId, productData) {
-        const { name, description, price, category_id = null, stock_quantity, image_gallery } = productData;
+        const { name, description, price, category_id = null, stock_quantity, image_gallery, variants, sale_percentage } = productData;
         
-        let query = 'UPDATE products SET name = ?, description = ?, price = ?, category_id = ?, stock_quantity = ?';
-        const params = [name, description, price, category_id, stock_quantity];
+        let query = 'UPDATE products SET name = ?, description = ?, price = ?, category_id = ?, stock_quantity = ?, sale_percentage = ?';
+        const params = [name, description, price, category_id, stock_quantity, sale_percentage || 0];
         
         if ('image_gallery' in productData) {
             query += ', image_gallery = ?';
             params.push(image_gallery);
+        }
+
+        if ('variants' in productData) {
+            query += ', variants = ?';
+            params.push(variants ? JSON.stringify(variants) : null);
         }
         
         query += ' WHERE id = ?';
@@ -85,6 +111,47 @@ class Product {
             [productId]
         );
         return result;
+    }
+
+    static async findWithFilters({ ids, categoryId, limit, siteId }) {
+        let query = `
+            SELECT p.*, c.name as category_name, c.discount_percentage as category_discount
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (siteId) {
+            query += ' AND p.site_id = ?';
+            params.push(siteId);
+        }
+
+        if (ids && ids.length > 0) {
+            const placeholders = ids.map(() => '?').join(',');
+            query += ` AND p.id IN (${placeholders})`;
+            params.push(...ids);
+        }
+
+        if (categoryId && categoryId !== 'all') {
+            query += ' AND p.category_id = ?';
+            params.push(categoryId);
+        }
+
+        query += ' ORDER BY p.created_at DESC';
+
+        if (limit) {
+            query += ' LIMIT ?';
+            params.push(parseInt(limit));
+        }
+
+        const [rows] = await db.query(query, params);
+        
+        return rows.map(product => {
+            product.image_gallery = safeParseGallery(product.image_gallery);
+            product.variants = safeParseVariants(product.variants);
+            return product;
+        });
     }
 }
 

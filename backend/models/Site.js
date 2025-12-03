@@ -3,10 +3,11 @@ const db = require('../db');
 const { deleteFile } = require('../utils/fileUtils');
 
 class Site {
-  static async getPublic(searchTerm = '', userId = null) {
+static async getPublic(searchTerm = '', userId = null) {
     let query = `
         SELECT
             s.id, s.site_path, s.title, s.logo_url, s.status,
+            s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode, -- Додані поля
             u.username AS author
         FROM sites s
         JOIN users u ON s.user_id = u.id
@@ -37,7 +38,7 @@ class Site {
     const [rows] = await db.query(`
         SELECT
              s.id, s.site_path, s.title, s.logo_url, s.status, s.deletion_scheduled_for,
-            u.username AS author
+             u.username AS author
         FROM sites s
         JOIN users u ON s.user_id = u.id
         ORDER BY s.updated_at DESC
@@ -50,7 +51,8 @@ class Site {
         SELECT
             s.id, s.user_id, s.title, s.logo_url, s.status,
             s.view_count, s.site_theme_mode, s.site_theme_accent,
-            s.site_path, s.theme_settings, s.header_settings, s.footer_content, s.footer_layout
+            s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout,
+            s.favicon_url, s.site_title_seo
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -62,8 +64,8 @@ class Site {
         if (typeof site.theme_settings === 'string') {
             site.theme_settings = JSON.parse(site.theme_settings);
         }
-        if (typeof site.header_settings === 'string') {
-            site.header_settings = JSON.parse(site.header_settings);
+        if (typeof site.header_content === 'string') {
+            site.header_content = JSON.parse(site.header_content);
         }
         if (typeof site.footer_content === 'string') {
             site.footer_content = JSON.parse(site.footer_content);
@@ -71,8 +73,8 @@ class Site {
     } catch (error) {
         console.error('Error parsing JSON fields for site:', sitePath, error);
         site.theme_settings = site.theme_settings || {};
-        site.header_settings = site.header_settings || {};
-        site.footer_content = site.footer_content || {};
+        site.header_content = site.header_content || [];
+        site.footer_content = site.footer_content || [];
     }
 
     const [productRows] = await db.query(`
@@ -116,8 +118,12 @@ class Site {
       site_theme_mode, 
       site_theme_accent, 
       theme_settings, 
-      header_settings, 
-      footer_content 
+      header_content,
+      footer_content,
+      favicon_url,
+      site_title_seo,
+      cover_image,
+      cover_layout
     } = data;
     
     const safeStringify = (obj) => {
@@ -130,14 +136,23 @@ class Site {
       }
     };
 
+    let safeFaviconUrl = null;
+    if (typeof favicon_url === 'string') {
+        safeFaviconUrl = favicon_url;
+    }
+
     const params = [
         title, 
         status, 
         site_theme_mode || 'light',
         site_theme_accent || 'orange',
         safeStringify(theme_settings),
-        safeStringify(header_settings),
+        safeStringify(header_content),
         safeStringify(footer_content),
+        safeFaviconUrl,
+        site_title_seo || null,
+        cover_image || null,
+        cover_layout || 'centered',
         siteId
     ];
 
@@ -149,8 +164,12 @@ class Site {
             site_theme_mode = ?, 
             site_theme_accent = ?,
             theme_settings = ?,
-            header_settings = ?,
-            footer_content = ?
+            header_content = ?,
+            footer_content = ?,
+            favicon_url = ?, 
+            site_title_seo = ?,
+            cover_image = ?, 
+            cover_layout = ?
         WHERE id = ?
     `;
     
@@ -211,9 +230,10 @@ class Site {
     return result;
   }
 
-  static async getUserSites(userId) {
+static async getUserSites(userId) {
     const [rows] = await db.query(`
-      SELECT s.id, s.site_path, s.title, s.logo_url, s.status
+      SELECT s.id, s.site_path, s.title, s.logo_url, s.status, 
+             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode -- Додано
       FROM sites s 
        WHERE s.user_id = ? 
       ORDER BY s.created_at DESC

@@ -11,6 +11,8 @@ router.get('/catalog', verifyTokenOptional, siteController.getSites);
 router.get('/templates', siteController.getTemplates);
 router.get('/default-logos', siteController.getDefaultLogos);
 
+router.put('/:site_path/rename', verifyToken, siteController.renameSite);
+
 router.get('/:siteId/pages', verifyToken, pageController.getPagesForSite);
 router.post('/:siteId/pages', verifyToken, pageController.createPage);
 
@@ -21,5 +23,7 @@ router.post('/create', verifyToken, upload.single('logo'), processAndSaveLogo(64
 router.put('/:site_path/settings', verifyToken, siteController.updateSiteSettings);
 router.delete('/:site_path', verifyToken, siteController.deleteSite);
 router.get('/my-suspended', verifyToken, siteController.getMySuspendedSites);
+
+router.put('/:siteId/reset-template', verifyToken, siteController.resetSiteToTemplate);
 
 module.exports = router;
