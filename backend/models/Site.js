@@ -37,7 +37,7 @@ class Site {
     const [rows] = await db.query(`
         SELECT
              s.id, s.site_path, s.title, s.logo_url, s.status, s.deletion_scheduled_for,
-            u.username AS author
+             u.username AS author
         FROM sites s
         JOIN users u ON s.user_id = u.id
         ORDER BY s.updated_at DESC
@@ -51,7 +51,7 @@ class Site {
             s.id, s.user_id, s.title, s.logo_url, s.status,
             s.view_count, s.site_theme_mode, s.site_theme_accent,
             s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout,
-            s.favicon_url, s.site_title_seo  -- ДОДАНО: нові поля
+            s.favicon_url, s.site_title_seo
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -133,6 +133,11 @@ class Site {
       }
     };
 
+    let safeFaviconUrl = null;
+    if (typeof favicon_url === 'string') {
+        safeFaviconUrl = favicon_url;
+    }
+
     const params = [
         title, 
         status, 
@@ -141,7 +146,7 @@ class Site {
         safeStringify(theme_settings),
         safeStringify(header_content),
         safeStringify(footer_content),
-        favicon_url || null,
+        safeFaviconUrl,
         site_title_seo || null,
         siteId
     ];
