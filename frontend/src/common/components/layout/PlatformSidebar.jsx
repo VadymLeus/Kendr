@@ -139,16 +139,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                     <span>{isCollapsed ? '🖼️' : 'Медіатека'}</span>
                 </NavLink>
                 <NavLink 
-                    to="/favorites" 
-                    onClick={(e) => handleProtectedLinkClick(e, '/favorites')}
-                    style={({ isActive }) => ({ 
-                        ...navLinkBaseStyle, 
-                        ...(isActive ? activeNavLinkStyle : {}) 
-                    })}
-                >
-                    <span>{isCollapsed ? '⭐' : 'Обране'}</span>
-                </NavLink>
-                <NavLink 
                     to="/create-site" 
                     onClick={(e) => handleProtectedLinkClick(e, '/create-site')}
                     style={({ isActive }) => ({ 

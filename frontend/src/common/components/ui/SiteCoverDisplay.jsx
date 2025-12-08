@@ -25,7 +25,8 @@ const SiteCoverDisplay = ({ site, style, className }) => {
     } = site;
 
     const fullCoverImage = cover_image 
-        ? (cover_image.startsWith('http') ? cover_image : `${API_URL}${cover_image}`) 
+        ? (cover_image.startsWith('http') 
+            ? cover_image : `${API_URL}${cover_image}`) 
         : null;
 
     const fullLogoUrl = logo_url 
@@ -34,7 +35,6 @@ const SiteCoverDisplay = ({ site, style, className }) => {
 
     const accentColor = PRESET_COLORS[site_theme_accent] || site_theme_accent || '#ed8936';
     const isDark = site_theme_mode === 'dark';
-
     const wrapperStyle = {
         width: '100%',
         height: '100%',
@@ -45,7 +45,7 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         justifyContent: 'center',
         padding: '20px',
         boxSizing: 'border-box',
-        backgroundColor: isDark ? '#2d3748' : '#f7fafc',
+        background: isDark ? '#2d3748' : '#f7fafc',
         color: isDark ? '#fff' : '#1a202c',
         transition: 'all 0.3s ease',
         ...style

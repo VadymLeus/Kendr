@@ -30,7 +30,6 @@ import MySitesPage from '../modules/site-dashboard/pages/MySitesPage';
 import ProfilePage from '../modules/profile/pages/ProfilePage';
 import CartPage from '../modules/shop/pages/CartPage';
 import ProductDetailPage from '../modules/shop/pages/ProductDetailPage';
-import FavoritesPage from '../modules/shop/pages/FavoritesPage';
 import NewTicketPage from '../modules/support/pages/NewTicketPage';
 import AppealPage from '../modules/support/pages/AppealPage';
 import MyTicketsPage from '../modules/support/pages/MyTicketsPage';
@@ -69,7 +68,6 @@ function App() {
 
                             <Route element={<AdminAccessGuard />}>
                                 <Route path="/my-sites" element={<MySitesPage />} />
-                                <Route path="/favorites" element={<FavoritesPage />} />
                                 <Route path="/create-site" element={<CreateSitePage />} />
                                 <Route path="/cart" element={<CartPage />} />
                                 <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />

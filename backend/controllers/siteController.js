@@ -34,13 +34,21 @@ const regenerateBlockIds = (blocks) => {
 
 exports.getSites = async (req, res, next) => {
     try {
-        const { search, scope } = req.query;
+        const { search, scope, tag, sort, onlyFavorites } = req.query;
         let userId = null;
-        if (scope === 'my') {
-            if (!req.user) return res.status(401).json({ message: 'Потрібна авторизація.' });
+        
+        if (req.user) {
             userId = req.user.id;
         }
-        const sites = await Site.getPublic(search, userId);
+
+        const sites = await Site.getPublic({ 
+            searchTerm: search, 
+            userId: scope === 'my' ? userId : null,
+            tag, 
+            sort,
+            onlyFavorites: onlyFavorites === 'true',
+            currentUserId: userId
+        });
         res.json(sites);
     } catch (error) {
         next(error);
@@ -203,7 +211,6 @@ exports.createSite = async (req, res, next) => {
 exports.getSiteByPath = async (req, res, next) => {
     try {
         const { site_path, slug } = req.params;
-        const { increment_view } = req.query;
 
         const site = await Site.findByPath(site_path);
         if (!site) {
@@ -243,15 +250,19 @@ exports.getSiteByPath = async (req, res, next) => {
             });
         }
 
-        if (increment_view === 'true' && page.is_homepage && !req.user) {
-            Site.incrementViewCount(site.id);
-        }
+        const [tags] = await db.query(`
+            SELECT t.id, t.name 
+            FROM tags t
+            JOIN site_tags st ON t.id = st.tag_id
+            WHERE st.site_id = ?
+        `, [site.id]);
 
         res.json({ 
             ...site, 
             page_content: page.block_content,
             page_id: page.id,
-            page: page
+            page: page,
+            tags: tags
         });
 
     } catch (error) {
@@ -507,5 +518,35 @@ exports.resetSiteToTemplate = async (req, res, next) => {
         next(error);
     } finally {
         connection.release();
+    }
+};
+
+exports.getUserSites = async (req, res, next) => {
+    try {
+        const sites = await Site.getUserSites(req.user.id);
+        res.json(sites);
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.toggleSitePin = async (req, res, next) => {
+    try {
+        const { siteId } = req.params;
+        const userId = req.user.id;
+
+        const site = await Site.findByIdAndUserId(siteId, userId);
+        if (!site) {
+            return res.status(404).json({ message: 'Сайт не знайдено або у вас немає прав.' });
+        }
+
+        const newState = await Site.togglePin(siteId);
+        
+        res.json({ 
+            message: newState ? 'Сайт закріплено' : 'Сайт відкріплено', 
+            is_pinned: newState 
+        });
+    } catch (error) {
+        next(error);
     }
 };

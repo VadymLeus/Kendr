@@ -1,4 +1,3 @@
-// frontend/src/modules/site-dashboard/features/tabs/GeneralSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
 import { useAutoSave } from '../../../../common/hooks/useAutoSave';
 import ImageInput from '../../../media/components/ImageInput'; 
@@ -15,8 +14,11 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const { confirm } = useConfirm();
     const [slugError, setSlugError] = useState('');
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+    
+    const [availableTags, setAvailableTags] = useState([]);
+    const [selectedTags, setSelectedTags] = useState([]);
 
-    const { data, handleChange, isSaving } = useAutoSave(
+    const { data, handleChange, isSaving, setData } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
         {
             title: siteData.title,
@@ -25,7 +27,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             site_title_seo: siteData.site_title_seo || siteData.title,
             theme_settings: siteData.theme_settings || {},
             cover_image: siteData.cover_image || '',
-            cover_layout: siteData.cover_layout || 'centered'
+            cover_layout: siteData.cover_layout || 'centered',
+            tags: []
         }
     );
 
@@ -33,10 +36,64 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const [isSavingSlug, setIsSavingSlug] = useState(false);
 
     useEffect(() => {
+        if (siteData) {
+            setData(prev => ({
+                ...prev,
+                cover_image: siteData.cover_image || '',
+                cover_layout: siteData.cover_layout || 'centered',
+                title: siteData.title,
+                status: siteData.status,
+                favicon_url: siteData.favicon_url || '',
+                site_title_seo: siteData.site_title_seo || siteData.title,
+                theme_settings: siteData.theme_settings || {}
+            }));
+            
+            setSlug(siteData.site_path);
+            
+            if (siteData.tags) {
+                const tagIds = siteData.tags.map(t => t.id);
+                setSelectedTags(tagIds);
+            }
+        }
+    }, [siteData, setData]);
+
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const res = await apiClient.get('/tags');
+                setAvailableTags(res.data);
+                
+                if (siteData.tags && selectedTags.length === 0) {
+                    const tagIds = siteData.tags.map(t => t.id);
+                    setSelectedTags(tagIds);
+                }
+            } catch (err) {
+                console.error("Failed to load tags", err);
+            }
+        };
+        fetchTags();
+    }, []);
+
+    useEffect(() => {
         if (onSavingChange) {
             onSavingChange(isSaving || isSavingSlug);
         }
     }, [isSaving, isSavingSlug, onSavingChange]);
+
+    const handleTagToggle = (tagId) => {
+        let newTags;
+        if (selectedTags.includes(tagId)) {
+            newTags = selectedTags.filter(id => id !== tagId);
+        } else {
+            if (selectedTags.length >= 5) {
+                toast.warning("Максимум 5 тегів");
+                return;
+            }
+            newTags = [...selectedTags, tagId];
+        }
+        setSelectedTags(newTags);
+        handleChange('tags', newTags);
+    };
 
     const cookieSettings = data.theme_settings?.cookie_banner || {
         enabled: false,
@@ -190,6 +247,51 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     onChange={handleTitleChange}
                     placeholder="Мій інтернет-магазин"
                 />
+
+                <div style={{ marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <label style={{ fontWeight: '500', color: 'var(--platform-text-primary)', fontSize: '0.9rem', margin: 0 }}>
+                            Категорії / Теги <span style={{ color: selectedTags.length >= 5 ? 'var(--platform-warning)' : 'var(--platform-text-secondary)' }}>({selectedTags.length}/5)</span>
+                        </label>
+                        {selectedTags.length > 0 && (
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    setSelectedTags([]);
+                                    handleChange('tags', []);
+                                }}
+                                style={{
+                                    background: 'none', border: 'none', color: 'var(--platform-danger)', 
+                                    fontSize: '0.8rem', cursor: 'pointer', padding: 0
+                                }}
+                            >
+                                Очистити
+                            </button>
+                        )}
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', background: 'var(--platform-bg)', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
+                        {availableTags.map(tag => {
+                            const isActive = selectedTags.includes(tag.id);
+                            return (
+                                <button
+                                    key={tag.id}
+                                    onClick={() => handleTagToggle(tag.id)}
+                                    type="button"
+                                    style={{
+                                        padding: '6px 12px', borderRadius: '20px', border: '1px solid',
+                                        borderColor: isActive ? 'var(--platform-accent)' : 'var(--platform-border-color)',
+                                        background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
+                                        color: isActive ? 'white' : 'var(--platform-text-primary)',
+                                        cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s'
+                                    }}
+                                >
+                                    #{tag.name}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
 
                 <div style={{ marginBottom: '24px' }}>
                     <label style={{ 

@@ -3,34 +3,88 @@ const db = require('../db');
 const { deleteFile } = require('../utils/fileUtils');
 
 class Site {
-static async getPublic(searchTerm = '', userId = null) {
+  static async getPublic({ searchTerm = '', userId = null, tag = null, sort = 'new', onlyFavorites = false, currentUserId = null }) {
     let query = `
-        SELECT
-            s.id, s.site_path, s.title, s.logo_url, s.status,
-            s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode, -- Додані поля
-            u.username AS author
+        SELECT DISTINCT
+            s.id, s.site_path, s.title, s.logo_url, s.status, s.view_count, s.created_at,
+            s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
+            s.is_pinned, 
+            u.username AS author, u.avatar_url AS author_avatar
         FROM sites s
         JOIN users u ON s.user_id = u.id
+        LEFT JOIN site_tags st ON s.id = st.site_id 
     `;
+    
+    if (onlyFavorites && currentUserId) {
+        query += ` JOIN user_favorites uf ON s.id = uf.site_id AND uf.user_id = ${db.escape(currentUserId)} `;
+    }
+    
     const params = [];
+    const conditions = [];
 
     if (userId) {
-        query += ' WHERE s.user_id = ?';
+        conditions.push('s.user_id = ?');
         params.push(userId);
-        if (searchTerm) {
-            query += ' AND s.title LIKE ?';
-            params.push(`%${searchTerm}%`);
-        }
-    } 
-    else {
-         query += " WHERE s.status = 'published'";
-        if (searchTerm) {
-            query += ' AND s.title LIKE ?';
-            params.push(`%${searchTerm}%`);
+    } else {
+        conditions.push("s.status = 'published'");
+    }
+
+    if (searchTerm) {
+        conditions.push('s.title LIKE ?');
+        params.push(`%${searchTerm}%`);
+    }
+
+    if (tag) {
+        conditions.push('st.tag_id = ?');
+        params.push(tag);
+    }
+
+    if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    let orderByClause = 'ORDER BY s.is_pinned DESC, s.created_at DESC';
+
+    if (sort) {
+        if (sort === 'popular') {
+            orderByClause = 'ORDER BY s.is_pinned DESC, s.view_count DESC, s.created_at DESC';
+        } else {
+            const parts = sort.split(':');
+            if (parts.length === 2) {
+                const field = parts[0];
+                const dir = parts[1].toUpperCase();
+
+                const allowedFields = {
+                    'created_at': 's.created_at',
+                    'view_count': 's.view_count',
+                    'title': 's.title',
+                    'author': 'u.username',
+                    'popularity': 's.view_count'
+                };
+
+                const validDir = (dir === 'ASC' || dir === 'DESC') ? dir : 'DESC';
+
+                if (allowedFields[field]) {
+                    orderByClause = `ORDER BY s.is_pinned DESC, ${allowedFields[field]} ${validDir}`;
+                }
+            }
         }
     }
-    query += ' ORDER BY s.created_at DESC';
+
+    query += ` ${orderByClause}`;
+
     const [rows] = await db.query(query, params);
+
+    for (let site of rows) {
+        const [tags] = await db.query(`
+            SELECT t.id, t.name 
+            FROM tags t
+            JOIN site_tags st ON t.id = st.tag_id
+            WHERE st.site_id = ?
+        `, [site.id]);
+        site.tags = tags;
+    }
+
     return rows;
   }
 
@@ -52,7 +106,8 @@ static async getPublic(searchTerm = '', userId = null) {
             s.id, s.user_id, s.title, s.logo_url, s.status,
             s.view_count, s.site_theme_mode, s.site_theme_accent,
             s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout,
-            s.favicon_url, s.site_title_seo
+            s.favicon_url, s.site_title_seo,
+            s.cover_image, s.cover_layout
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -197,6 +252,7 @@ static async getPublic(searchTerm = '', userId = null) {
     try {
         await connection.beginTransaction();
         await connection.query('DELETE FROM site_tags WHERE site_id = ?', [siteId]);
+        
         if (tagIds.length > 0) {
             const values = tagIds.map(tagId => [siteId, tagId]);
             await connection.query('INSERT INTO site_tags (site_id, tag_id) VALUES ?', [values]);
@@ -230,14 +286,26 @@ static async getPublic(searchTerm = '', userId = null) {
     return result;
   }
 
-static async getUserSites(userId) {
+  static async getUserSites(userId) {
     const [rows] = await db.query(`
       SELECT s.id, s.site_path, s.title, s.logo_url, s.status, 
-             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode -- Додано
+             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
+             s.is_pinned, s.view_count, s.created_at
       FROM sites s 
-       WHERE s.user_id = ? 
-      ORDER BY s.created_at DESC
+      WHERE s.user_id = ? 
+      ORDER BY s.is_pinned DESC, s.updated_at DESC
     `, [userId]);
+    
+    for (let site of rows) {
+        const [tags] = await db.query(`
+            SELECT t.id, t.name 
+            FROM tags t
+            JOIN site_tags st ON t.id = st.tag_id
+            WHERE st.site_id = ?
+        `, [site.id]);
+        site.tags = tags;
+    }
+    
     return rows;
   }
 
@@ -247,6 +315,19 @@ static async getUserSites(userId) {
       [userId]
     );
     return rows;
+  }
+
+  static async togglePin(siteId) {
+    await db.query(
+        'UPDATE sites SET is_pinned = NOT is_pinned WHERE id = ?',
+        [siteId]
+    );
+    
+    const [rows] = await db.query(
+        'SELECT is_pinned FROM sites WHERE id = ?', 
+        [siteId]
+    );
+    return rows[0] ? !!rows[0].is_pinned : false;
   }
 }
 
