@@ -2,8 +2,17 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
+import { IconUser } from '../ui/Icons';
 
 const API_URL = 'http://localhost:5000';
+
+const getAvatarUrl = (url) => {
+    if (!url) return 'https://placehold.co/100';
+    if (url.startsWith('http') || url.startsWith('https')) {
+        return url;
+    }
+    return `${API_URL}${url}`;
+};
 
 const UserMenu = ({ isCollapsed }) => {
     const { user, logout, isAdmin } = useContext(AuthContext);
@@ -123,7 +132,7 @@ const UserMenu = ({ isCollapsed }) => {
             {user ? (
                 <div ref={dropdownRef}>
                     <img 
-                        src={`${API_URL}${user.avatar_url}`} 
+                        src={getAvatarUrl(user.avatar_url)} 
                         alt={`Аватар ${user.username}`}
                         onClick={() => setIsDropdownOpen(prev => !prev)}
                         style={avatarStyles} 
@@ -178,17 +187,26 @@ const UserMenu = ({ isCollapsed }) => {
                     )}
                 </div>
             ) : (
-                isCollapsed ? (
-                    <>
-                        <Link to="/login" style={linkStyles}>В</Link>
-                        <Link to="/register" style={linkStyles}>Р</Link>
-                    </>
-                ) : (
-                    <>
-                        <Link to="/login" style={linkStyles}>Увійти</Link>
-                        <Link to="/register" style={linkStyles}>Реєстрація</Link>
-                    </>
-                )
+                <Link 
+                    to="/login" 
+                    style={{
+                        ...linkStyles,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: isCollapsed ? '0' : '8px',
+                        padding: '8px 16px',
+                        backgroundColor: 'var(--platform-card-bg)',
+                        border: '1px solid var(--platform-border-color)',
+                        borderRadius: '8px',
+                        width: isCollapsed ? '40px' : 'auto',
+                        height: isCollapsed ? '40px' : 'auto'
+                    }}
+                    title="Авторизація"
+                >
+                    <IconUser size={18} />
+                    {!isCollapsed && <span>Авторизація</span>}
+                </Link>
             )}
         </div>
     );

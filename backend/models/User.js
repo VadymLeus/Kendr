@@ -1,14 +1,18 @@
 // backend/models/User.js
-const db = require('../db');
+const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 class User {
-    static async create({ username, email, password, avatar_url }) {
-        const salt = await bcrypt.genSalt(10);
-        const password_hash = await bcrypt.hash(password, salt);
+    static async create({ username, email, password, avatar_url, is_verified, verification_token }) {
+        let password_hash = null;
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            password_hash = await bcrypt.hash(password, salt);
+        }
+
         const [result] = await db.query(
-            'INSERT INTO users (username, email, password_hash, avatar_url) VALUES (?, ?, ?, ?)',
-            [username, email, password_hash, avatar_url]
+            'INSERT INTO users (username, email, password_hash, avatar_url, is_verified, verification_token) VALUES (?, ?, ?, ?, ?, ?)',
+            [username, email, password_hash, avatar_url, is_verified || 0, verification_token || null]
         );
         return { id: result.insertId, username, email, avatar_url };
     }
@@ -91,6 +95,28 @@ class User {
     static async deleteById(userId) {
         const [result] = await db.query('DELETE FROM users WHERE id = ?', [userId]);
         return result;
+    }
+    
+    static async findByLoginInput(loginInput) {
+        const [rows] = await db.query(
+            'SELECT * FROM users WHERE email = ? OR username = ?',
+            [loginInput, loginInput]
+        );
+        return rows[0];
+    }
+
+    static async findByVerificationToken(token) {
+        const [rows] = await db.query('SELECT * FROM users WHERE verification_token = ?', [token]);
+        return rows[0];
+    }
+
+    static async verifyUser(userId) {
+        await db.query('UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?', [userId]);
+    }
+
+    static async hasPassword(id) {
+        const [rows] = await db.query('SELECT password_hash FROM users WHERE id = ?', [id]);
+        return rows[0] && rows[0].password_hash !== null;
     }
 }
 

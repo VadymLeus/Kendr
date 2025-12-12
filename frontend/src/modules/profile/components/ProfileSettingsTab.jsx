@@ -6,8 +6,17 @@ import apiClient from '../../../common/services/api';
 import AvatarModal from './AvatarModal';
 import { toast } from 'react-toastify';
 import ImageUploader from '../../../common/components/ui/ImageUploader';
+import { validatePassword } from '../../../common/utils/validationUtils';
 
 const API_URL = 'http://localhost:5000';
+
+const getAvatarUrl = (url) => {
+    if (!url) return 'https://placehold.co/100';
+    if (url.startsWith('http') || url.startsWith('https')) {
+        return url;
+    }
+    return `${API_URL}${url}`;
+};
 
 const ProfileSettingsTab = () => {
     const { user, updateUser } = useContext(AuthContext);
@@ -27,13 +36,23 @@ const ProfileSettingsTab = () => {
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+    const passwordValidation = validatePassword(formData.newPassword);
+
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         
         try {
-            if (!formData.currentPassword) {
-                toast.warning('Для внесення змін необхідно ввести поточний пароль.');
+            const hasPassword = user?.has_password;
+            
+            if (hasPassword && formData.newPassword && !formData.currentPassword) {
+                toast.warning('Для зміни пароля введіть поточний пароль.');
+                setIsLoading(false);
+                return;
+            }
+
+            if (formData.newPassword && !passwordValidation.isValid) {
+                toast.warning('Новий пароль занадто слабкий (мін. 8 символів, 1 цифра, 1 велика літера).');
                 setIsLoading(false);
                 return;
             }
@@ -41,7 +60,7 @@ const ProfileSettingsTab = () => {
             const profileUpdateData = {
                 username: formData.username,
                 newPassword: formData.newPassword || undefined,
-                currentPassword: formData.currentPassword
+                currentPassword: formData.currentPassword || undefined
             };
 
             const response = await apiClient.put('/users/profile/update', profileUpdateData);
@@ -85,6 +104,7 @@ const ProfileSettingsTab = () => {
 
     if (!user) return null;
 
+    const hasPassword = user?.has_password;
     const gridContainerStyle = { 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', 
@@ -107,6 +127,12 @@ const ProfileSettingsTab = () => {
         border: '1px solid var(--platform-border-color)', 
         background: 'var(--platform-card-bg)', 
         color: 'var(--platform-text-primary)' 
+    };
+    
+    const labelStyle = { 
+        display: 'block', 
+        color: 'var(--platform-text-primary)', 
+        marginBottom: '0.5rem' 
     };
 
     return (
@@ -134,7 +160,7 @@ const ProfileSettingsTab = () => {
                         >
                             <div style={{ position: 'relative', display: 'inline-block' }}>
                                 <img 
-                                    src={`${API_URL}${user.avatar_url}`} 
+                                    src={getAvatarUrl(user.avatar_url)} 
                                     alt="avatar" 
                                     style={{ 
                                         width: '120px', 
@@ -192,11 +218,7 @@ const ProfileSettingsTab = () => {
                     <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Змініть ім'я користувача.</p>
                     <form onSubmit={handleUpdateProfile}>
                         <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ 
-                                display: 'block', 
-                                color: 'var(--platform-text-primary)', 
-                                marginBottom: '0.5rem' 
-                            }}>
+                            <label style={labelStyle}>
                                 Ім'я користувача
                             </label>
                             <input 
@@ -219,51 +241,58 @@ const ProfileSettingsTab = () => {
                 </div>
 
                 <div style={tileStyle}>
-                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Змінити пароль</h3>
-                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Зробіть пароль більш надійним.</p>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>
+                        {hasPassword ? 'Змінити пароль' : 'Створити пароль'}
+                    </h3>
+                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>
+                        {hasPassword 
+                            ? 'Зробіть пароль більш надійним.' 
+                            : 'Додайте пароль, щоб входити не тільки через Google.'}
+                    </p>
+                    
                     <form onSubmit={handleUpdateProfile}>
                         <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ 
-                                display: 'block', 
-                                color: 'var(--platform-text-primary)', 
-                                marginBottom: '0.5rem' 
-                            }}>
-                                Новий пароль
-                            </label>
+                            <label style={labelStyle}>Новий пароль</label>
                             <input 
                                 type="password" 
                                 name="newPassword" 
                                 value={formData.newPassword} 
                                 onChange={handleChange} 
                                 style={inputStyle} 
-                                placeholder="Залиште пустим, якщо не міняєте" 
+                                placeholder={hasPassword ? "Залиште пустим, якщо не міняєте" : "Придумайте пароль"} 
                             />
+                            {formData.newPassword && (
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                    <span style={{ fontSize: '0.75rem', color: passwordValidation.length ? 'var(--platform-success)' : 'var(--platform-text-secondary)' }}>
+                                        {passwordValidation.length ? '✓' : '○'} 8+ символів
+                                    </span>
+                                    <span style={{ fontSize: '0.75rem', color: passwordValidation.number ? 'var(--platform-success)' : 'var(--platform-text-secondary)' }}>
+                                        {passwordValidation.number ? '✓' : '○'} Цифра
+                                    </span>
+                                    <span style={{ fontSize: '0.75rem', color: passwordValidation.capital ? 'var(--platform-success)' : 'var(--platform-text-secondary)' }}>
+                                        {passwordValidation.capital ? '✓' : '○'} Велика літера
+                                    </span>
+                                </div>
+                            )}
                         </div>
-                         <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ 
-                                display: 'block', 
-                                color: 'var(--platform-text-primary)', 
-                                marginBottom: '0.5rem' 
-                            }}>
-                                Поточний пароль
-                            </label>
-                            <input 
-                                type="password" 
-                                name="currentPassword" 
-                                value={formData.currentPassword} 
-                                onChange={handleChange} 
-                                style={inputStyle} 
-                                required 
-                                placeholder="Обов'язково для змін"
-                            />
-                        </div>
-                        <button 
-                            type="submit" 
-                            className="btn btn-primary" 
-                            style={{ width: '100%' }} 
-                            disabled={isLoading}
-                        >
-                            {isLoading ? 'Збереження...' : 'Змінити пароль'}
+
+                        {hasPassword && (
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={labelStyle}>Поточний пароль</label>
+                                <input 
+                                    type="password" 
+                                    name="currentPassword" 
+                                    value={formData.currentPassword} 
+                                    onChange={handleChange} 
+                                    style={inputStyle} 
+                                    required={!!formData.newPassword}
+                                    placeholder="Для підтвердження"
+                                />
+                            </div>
+                        )}
+
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isLoading}>
+                            {isLoading ? 'Збереження...' : (hasPassword ? 'Змінити пароль' : 'Встановити пароль')}
                         </button>
                     </form>
                 </div>

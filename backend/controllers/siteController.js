@@ -2,7 +2,8 @@
 const Site = require('../models/Site');
 const Page = require('../models/Page');
 const UserTemplate = require('../models/UserTemplate');
-const db = require('../db');
+const db = require('../config/db');
+
 const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');

@@ -1,5 +1,5 @@
 // backend/models/FormSubmission.js
-const db = require('../db');
+const db = require('../config/db');
 
 class FormSubmission {
     static async create(siteId, formData) {

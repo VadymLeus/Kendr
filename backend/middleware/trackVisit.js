@@ -1,6 +1,6 @@
 // backend/middleware/trackVisit.js
 const crypto = require('crypto');
-const db = require('../db');
+const db = require('../config/db');
 const jwt = require('jsonwebtoken');
 
 const trackVisit = async (req, res, next) => {

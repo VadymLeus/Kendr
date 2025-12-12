@@ -1,7 +1,7 @@
 // backend/controllers/pageController.js
 const Page = require('../models/Page');
 const Site = require('../models/Site');
-const db = require('../db');
+const db = require('../config/db');
 
 exports.getPagesForSite = async (req, res, next) => {
     try {

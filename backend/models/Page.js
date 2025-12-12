@@ -1,5 +1,5 @@
 // backend/models/Page.js
-const db = require('../db');
+const db = require('../config/db');
 
 class Page {
     static async create(pageData) {

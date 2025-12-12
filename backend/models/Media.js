@@ -1,5 +1,5 @@
 // backend/models/Media.js
-const db = require('../db');
+const db = require('../config/db');
 
 class Media {
     static async create(mediaData) {

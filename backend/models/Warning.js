@@ -1,5 +1,5 @@
 // backend/models/Warning.js
-const db = require('../db');
+const db = require('../config/db');
 
 class Warning {
     // Створити нове попередження

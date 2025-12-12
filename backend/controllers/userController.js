@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
+const db = require('../config/db');
 
 exports.getPublicProfile = async (req, res, next) => {
     const user = await User.findByUsername(req.params.username);
@@ -29,18 +30,18 @@ exports.updateProfile = async (req, res, next) => {
     const { username, newPassword, currentPassword, platform_theme_mode, platform_theme_accent } = req.body;
     const userId = req.user.id;
 
-    const currentUser = await User.findById(userId);
+    const [userRows] = await db.query('SELECT * FROM users WHERE id = ?', [userId]);
+    const currentUser = userRows[0];
     if (!currentUser) return res.status(404).json({ message: 'Користувача не знайдено.' });
 
     const requiresPasswordCheck = (username && username !== currentUser.username) || newPassword;
     
-    if (requiresPasswordCheck) {
+    if (requiresPasswordCheck && currentUser.password_hash) {
         if (!currentPassword) {
             return res.status(400).json({ message: 'Для зміни імені або пароля потрібен поточний пароль.' });
         }
         
-        const userForAuth = await User.findByEmail(currentUser.email);
-        const isMatch = await bcrypt.compare(currentPassword, userForAuth.password_hash);
+        const isMatch = await bcrypt.compare(currentPassword, currentUser.password_hash);
         if (!isMatch) {
             return res.status(401).json({ message: 'Невірний поточний пароль.' });
         }
@@ -53,13 +54,58 @@ exports.updateProfile = async (req, res, next) => {
         }
     }
 
-    const updateData = { username };
-    if (newPassword) updateData.password = newPassword;
-    if (platform_theme_mode) updateData.platform_theme_mode = platform_theme_mode;
-    if (platform_theme_accent) updateData.platform_theme_accent = platform_theme_accent;
+    let passwordHashToSave = undefined;
+    if (newPassword) {
+        const salt = await bcrypt.genSalt(10);
+        passwordHashToSave = await bcrypt.hash(newPassword, salt);
+    }
 
-    const updatedUser = await User.update(userId, updateData);
-    res.json({ message: 'Профіль успішно оновлено!', user: updatedUser });
+    let queryParts = [];
+    const params = [];
+
+    if (username) {
+        queryParts.push('username = ?');
+        params.push(username);
+    }
+    if (passwordHashToSave) {
+        queryParts.push('password_hash = ?');
+        params.push(passwordHashToSave);
+    }
+    if (platform_theme_mode) {
+        queryParts.push('platform_theme_mode = ?');
+        params.push(platform_theme_mode);
+    }
+    if (platform_theme_accent) {
+        queryParts.push('platform_theme_accent = ?');
+        params.push(platform_theme_accent);
+    }
+
+    if (queryParts.length === 0) {
+        const updatedUser = await User.findById(userId);
+        return res.json({ message: 'Профіль успішно оновлено!', user: updatedUser });
+    }
+
+    let query = `UPDATE users SET ${queryParts.join(', ')} WHERE id = ?`;
+    params.push(userId);
+    
+    await db.query(query, params);
+    const updatedUser = await User.findById(userId);
+    
+    const hasPassword = passwordHashToSave ? true : !!currentUser.password_hash;
+    
+    res.json({ 
+        message: 'Профіль успішно оновлено!', 
+        user: {
+            id: updatedUser.id,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            avatar_url: updatedUser.avatar_url,
+            role: updatedUser.role,
+            platform_theme_mode: updatedUser.platform_theme_mode,
+            platform_theme_accent: updatedUser.platform_theme_accent,
+            has_password: hasPassword
+        }
+    });
 };
 
 exports.updateAvatarUrl = async (req, res, next) => {

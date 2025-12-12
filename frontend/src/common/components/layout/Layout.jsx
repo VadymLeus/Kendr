@@ -6,8 +6,8 @@ import PlatformSidebar from './PlatformSidebar';
 import AdminSidebar from './AdminSidebar';
 import SiteHeader from './SiteHeader';
 import Footer from './Footer';
+import TitleManager from './TitleManager';
 import apiClient from '../../services/api';
-import { FONT_LIBRARY } from '../../../modules/site-editor/core/editorConfig';
 import { resolveAccentColor } from '../../../modules/site-dashboard/features/tabs/ThemeSettingsTab';
 import FontLoader from '../../../modules/site-render/components/FontLoader';
 
@@ -177,6 +177,8 @@ const Layout = () => {
     
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
+            <TitleManager siteData={siteData} key={location.pathname} />
+
             {isAdmin ? (
                 <AdminSidebar isCollapsed={isCollapsed} onToggle={handleToggleSidebar} />
             ) : (

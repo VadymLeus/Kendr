@@ -470,7 +470,7 @@ const CreateSitePage = () => {
                         <span style={{ fontSize: '0.95rem' }}>
                             Я ознайомився та погоджуюся з{" "}
                             <Link 
-                                to="/rules" 
+                                to="/rules?from=create-site" 
                                 target="_blank" 
                                 style={{ fontWeight: 'bold', color: 'var(--platform-accent)' }}
                             >

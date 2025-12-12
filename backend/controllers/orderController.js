@@ -1,5 +1,5 @@
 // backend/controllers/orderController.js
-const db = require('../db');
+const db = require('../config/db');
 
 exports.processCheckout = async (req, res, next) => {
     const { cartItems } = req.body;

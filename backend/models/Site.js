@@ -1,5 +1,5 @@
 // backend/models/Site.js
-const db = require('../db');
+const db = require('../config/db');
 const { deleteFile } = require('../utils/fileUtils');
 
 class Site {

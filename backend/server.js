@@ -23,6 +23,7 @@ const savedBlockRoutes = require('./routes/savedBlockRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const verifyToken = require('./middleware/verifyToken');
 const userTemplateRoutes = require('./routes/userTemplateRoutes');
+const passport = require('./config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,9 +33,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(passport.initialize());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Маршрути API
 app.use('/api/auth', authRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/pages', pageRoutes);
