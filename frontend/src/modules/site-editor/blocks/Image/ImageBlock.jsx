@@ -23,12 +23,11 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
     const siteBorderColor = 'var(--site-border-color)';
     const siteAccent = 'var(--site-accent)';
     const siteTextSecondary = 'var(--site-text-secondary)';
-
     const isOldStructure = !blockData.mode && blockData.imageUrl;
     
     const mode = isOldStructure ? 'single' : blockData.mode || 'single';
     const items = (isOldStructure || !Array.isArray(blockData.items) || blockData.items.length === 0)
-        ? [{ id: 'compat1', src: blockData.imageUrl, alt: blockData.alt }]
+        ? (blockData.imageUrl ? [{ id: 'compat1', src: blockData.imageUrl, alt: blockData.alt }] : [])
         : blockData.items;
 
     const { 
@@ -59,6 +58,7 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
 
     const renderSingle = () => {
         const item = items[0];
+        
         if (!item || !item.src) {
              return isEditorPreview ? (
                  <div style={{
@@ -67,10 +67,15 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
                      background: siteBg, 
                      border: `1px dashed ${siteBorderColor}`,
                      borderRadius: formatBorderRadius(borderRadius),
-                     aspectRatio: '16/9',
-                     color: siteTextSecondary
+                     color: siteTextSecondary,
+                     display: 'flex',
+                     flexDirection: 'column',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     gap: '10px'
                  }}>
-                     Оберіть зображення в налаштуваннях
+                     <div style={{fontSize: '2rem'}}>🖼️</div>
+                     <div>Додайте зображення в налаштуваннях</div>
                  </div>
              ) : null;
         }
@@ -90,7 +95,8 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
             aspectRatio: 'none'
         };
         
-        const imageToRender = <img src={item.src.startsWith('http') ? item.src : `${API_URL}${item.src}`} alt={item.alt || ''} style={singleImgStyle} />;
+        const fullUrl = item.src.startsWith('http') ? item.src : `${API_URL}${item.src}`;
+        const imageToRender = <img src={fullUrl} alt={item.alt || ''} style={singleImgStyle} />;
 
         if (mode === 'single' && link) {
             const finalLink = resolveSiteLink(link, siteData?.site_path);
@@ -111,10 +117,11 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
     };
 
     const renderSlider = () => {
+        if (items.length === 0) return renderSingle();
+
         const settings = settings_slider;
         const paginationProp = settings.pagination ? { clickable: true } : false;
         const autoplayProp = settings.autoplay ? { delay: 3000, disableOnInteraction: false } : false;
-        
         const accentColor = siteAccent; 
 
         const swiperNavStyles = `
@@ -128,9 +135,10 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
         `;
         
         const swiperWrapperStyle = isEditorPreview ? {
-            border: `2px dashed ${siteBorderColor}`,
-            padding: '1rem',
+            border: `1px dashed ${siteBorderColor}`,
+            padding: '4px',
             background: siteBg,
+            borderRadius: formatBorderRadius(borderRadius)
         } : {};
 
         return (
@@ -140,14 +148,14 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
                     modules={[Navigation, Pagination, Autoplay]}
                     navigation={settings.navigation}
                     pagination={paginationProp}
-                    loop={settings.loop}
+                    loop={settings.loop && items.length > 1}
                     autoplay={autoplayProp}
                     className={`my-block-swiper-${blockData.block_id}`}
-                    allowTouchMove={!isEditorPreview} 
+                    allowTouchMove={true} 
                     style={{'--swiper-navigation-size': '20px', borderRadius: formatBorderRadius(borderRadius), overflow: 'hidden'}}
                 >
-                    {items.map(item => (
-                        <SwiperSlide key={item.id}>
+                    {items.map((item, idx) => (
+                        <SwiperSlide key={item.id || idx}>
                             <div style={{ aspectRatio: '16 / 9', width: '100%', overflow: 'hidden', borderRadius: formatBorderRadius(borderRadius) }}>
                                 {renderImage(item)}
                             </div>
@@ -159,10 +167,13 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
     };
 
     const renderGrid = () => {
+        if (items.length === 0) return renderSingle();
+
         const gridWrapperStyle = isEditorPreview ? {
-            border: `2px dashed ${siteBorderColor}`,
-            padding: '1rem',
+            border: `1px dashed ${siteBorderColor}`,
+            padding: '8px',
             background: siteBg,
+            borderRadius: formatBorderRadius(borderRadius)
         } : {};
         
         const columns = settings_grid.columns || 3;
@@ -171,30 +182,21 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
         const itemRelativeWidth = `calc((100% - ${columns - 1} * ${gap}) / ${columns})`;
         
         return (
-             <div style={{
-                 ...gridWrapperStyle,
-                 padding: isEditorPreview ? '1rem 0 0 0' : '0' 
-             }}>
-                 {isEditorPreview && (
-                     <p style={{textAlign: 'center', color: siteTextSecondary, fontWeight: 'bold', margin: '0 0 1rem 0'}}>
-                         [Сітка: {columns} колонки]
-                     </p>
-                 )}
-                 
+             <div style={gridWrapperStyle}>
                  <div style={{ 
                      display: 'flex', 
                      flexWrap: 'wrap', 
                      gap: gap, 
-                     justifyContent: 'center',
-                     width: '100%',
-                     margin: '0 auto' 
+                     justifyContent: 'flex-start',
+                     width: '100%'
                  }}>
-                     {items.map(item => (
-                         <div key={item.id} style={{
+                     {items.map((item, idx) => (
+                         <div key={item.id || idx} style={{
                              width: itemRelativeWidth, 
                              aspectRatio: '1 / 1', 
                              overflow: 'hidden', 
-                             borderRadius: formatBorderRadius(borderRadius)
+                             borderRadius: formatBorderRadius(borderRadius),
+                             position: 'relative'
                          }}>
                              {renderImage(item)}
                          </div>

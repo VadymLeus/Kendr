@@ -10,18 +10,10 @@ const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, trig
 
     const safeValue = typeof value === 'string' ? value : '';
 
-    const handleSelectImage = (input) => {
-        let safeUrl = input;
-
-        if (typeof input === 'object' && input !== null) {
-            safeUrl = input.path_full || input.url || input.path || '';
-        }
-
-        safeUrl = String(safeUrl || '');
-
+    const handleSelectImage = (fileUrl, fileData) => {
         const syntheticEvent = {
             target: {
-                value: safeUrl
+                value: fileUrl
             }
         };
 
@@ -118,9 +110,8 @@ const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, trig
                 <MediaPickerModal 
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    onSelectImage={handleSelectImage}
+                    onSelect={handleSelectImage}
                     aspect={aspect}
-                    circularCrop={circularCrop}
                 />
             </>
         );
@@ -168,9 +159,9 @@ const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, trig
             <MediaPickerModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSelectImage={handleSelectImage}
+                onSelect={handleSelectImage}
                 aspect={aspect}
-                circularCrop={circularCrop}
+                allowedTypes="image"
             />
         </div>
     );

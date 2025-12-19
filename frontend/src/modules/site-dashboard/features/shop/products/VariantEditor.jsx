@@ -1,5 +1,4 @@
 // frontend/src/modules/site-dashboard/features/shop/products/VariantEditor.jsx
-
 import React, { memo, useCallback, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useConfirm } from '../../../../../common/hooks/useConfirm';

@@ -55,7 +55,8 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
         alignItems: 'center',
         justifyContent: alignMap[alignment] || 'center',
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        ...style 
     };
 
     const contentStyle = {

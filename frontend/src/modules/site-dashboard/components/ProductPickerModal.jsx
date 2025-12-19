@@ -2,6 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../common/services/api';
 import { toast } from 'react-toastify';
+import { 
+    IconSearch, IconX, IconCheck, IconSortAsc, IconSortDesc, 
+    IconSort, IconTrash, IconFilter, IconEmptyBox 
+} from '../../../common/components/ui/Icons';
+import CustomSelect from '../../../common/components/ui/CustomSelect';
 
 const API_URL = 'http://localhost:5000';
 
@@ -100,8 +105,8 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     };
 
     const getSortIcon = (field) => {
-        if (sortBy !== field) return '⇵';
-        return sortOrder === 'asc' ? '↑' : '↓';
+        if (sortBy !== field) return <IconSort size={14} />;
+        return sortOrder === 'asc' ? <IconSortAsc size={14} /> : <IconSortDesc size={14} />;
     };
 
     const filteredProducts = products.filter(p => {
@@ -135,64 +140,77 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
 
     const overlayStyle = {
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.7)', zIndex: 3000,
+        background: 'rgba(0,0,0,0.5)', zIndex: 3000,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '1rem'
+        padding: '1rem', backdropFilter: 'blur(3px)'
     };
 
     const modalStyle = {
         background: 'var(--platform-card-bg)', 
-        width: '900px', maxWidth: '95%', maxHeight: '90vh',
-        borderRadius: '12px', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)', border: '1px solid var(--platform-border-color)',
+        width: '900px', 
+        maxWidth: '95%', 
+        height: '650px',
+        maxHeight: '90vh',
+        borderRadius: '12px', 
+        display: 'flex', 
+        flexDirection: 'column',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)', 
+        border: '1px solid var(--platform-border-color)',
         overflow: 'hidden'
     };
 
     const headerStyle = {
-        padding: '1.5rem', borderBottom: '1px solid var(--platform-border-color)',
-        display: 'flex', flexDirection: 'column', gap: '1rem',
+        padding: '1.2rem 1.5rem', 
+        borderBottom: '1px solid var(--platform-border-color)',
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
         background: 'var(--platform-bg)'
     };
 
-    const filtersRowStyle = {
+    const toolbarStyle = {
+        padding: '1rem 1.5rem',
+        borderBottom: '1px solid var(--platform-border-color)',
         display: 'flex',
         flexWrap: 'wrap',
         gap: '12px',
-        alignItems: 'center'
+        alignItems: 'center',
+        background: 'var(--platform-card-bg)'
     };
 
     const searchContainerStyle = {
         position: 'relative',
-        flex: '2 1 200px',
+        flex: '2 1 250px',
         minWidth: '200px'
     };
 
     const selectWrapperStyle = {
-        flex: '1 1 150px',
-        minWidth: '150px'
+        flex: '1 1 200px',
+        minWidth: '180px'
     };
 
     const inputStyle = {
-        padding: '10px 40px 10px 12px', borderRadius: '8px', 
+        padding: '10px 36px 10px 36px', 
+        borderRadius: '8px', 
         border: '1px solid var(--platform-border-color)',
-        background: 'var(--platform-card-bg)', color: 'var(--platform-text-primary)', 
+        background: 'var(--platform-bg)', 
+        color: 'var(--platform-text-primary)', 
         fontSize: '0.9rem', width: '100%',
         transition: 'border-color 0.2s',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        outline: 'none'
+    };
+
+    const searchIconStyle = {
+        position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+        color: 'var(--platform-text-secondary)', pointerEvents: 'none'
     };
 
     const clearButtonStyle = {
         position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
         background: 'none', border: 'none', color: 'var(--platform-text-secondary)',
-        cursor: 'pointer', fontSize: '1.2rem', padding: '4px',
+        cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center',
         borderRadius: '4px', transition: 'color 0.2s'
-    };
-
-    const selectStyle = {
-        ...inputStyle,
-        cursor: 'pointer',
-        appearance: 'menulist',
-        paddingRight: '12px'
     };
 
     const sortButtonsContainerStyle = {
@@ -206,7 +224,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     const sortButtonStyle = (isActive) => ({
         padding: '8px 12px', borderRadius: '6px', 
         border: `1px solid ${isActive ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
-        background: isActive ? 'rgba(var(--platform-accent-rgb), 0.1)' : 'var(--platform-card-bg)',
+        background: isActive ? 'rgba(var(--platform-accent-rgb), 0.1)' : 'var(--platform-bg)',
         color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-primary)',
         cursor: 'pointer', fontSize: '0.85rem',
         display: 'flex', alignItems: 'center', gap: '6px',
@@ -215,39 +233,46 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     });
 
     const listStyle = {
-        flex: 1, overflowY: 'auto', padding: '1rem'
+        flex: 1, 
+        overflowY: 'auto', 
+        padding: '1.5rem',
+        background: 'var(--platform-bg)'
     };
 
     const footerStyle = {
-        padding: '1.25rem 1.5rem', borderTop: '1px solid var(--platform-border-color)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        background: 'var(--platform-bg)',
+        padding: '1.25rem 1.5rem', 
+        borderTop: '1px solid var(--platform-border-color)',
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        background: 'var(--platform-card-bg)',
         flexWrap: 'wrap',
         gap: '10px'
     };
 
     const itemStyle = (isSelected) => ({
         display: 'flex', alignItems: 'center', gap: '12px',
-        padding: '12px', borderRadius: '8px', marginBottom: '8px',
-        border: isSelected ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-        background: isSelected ? 'rgba(var(--platform-accent-rgb), 0.08)' : 'var(--platform-card-bg)',
+        padding: '10px 14px', borderRadius: '8px', marginBottom: '8px',
+        border: isSelected ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+        background: isSelected ? 'rgba(var(--platform-accent-rgb), 0.05)' : 'var(--platform-card-bg)',
         cursor: 'pointer', transition: 'all 0.2s ease',
         transform: isSelected ? 'translateX(2px)' : 'none'
     });
 
     const checkboxStyle = {
-        width: '18px', height: '18px', borderRadius: '4px',
+        width: '20px', height: '20px', borderRadius: '5px',
         border: '2px solid var(--platform-border-color)',
         background: 'var(--platform-bg)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all 0.2s'
+        transition: 'all 0.2s',
+        color: 'white',
+        flexShrink: 0
     };
 
     const checkedStyle = {
         ...checkboxStyle,
         borderColor: 'var(--platform-accent)',
         background: 'var(--platform-accent)',
-        color: 'var(--platform-accent-text)'
     };
 
     const buttonStyle = {
@@ -271,19 +296,14 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     };
 
     const closeHeaderBtnStyle = {
-        background: 'rgba(229, 62, 62, 0.1)', 
-        border: '1px solid rgba(229, 62, 62, 0.2)', 
-        fontSize: '1.2rem',
-        cursor: 'pointer', 
-        color: '#e53e3e',
-        width: '32px',
-        height: '32px',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        color: 'var(--platform-text-secondary)',
+        padding: '6px',
         borderRadius: '6px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.2s',
-        lineHeight: 1
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all 0.2s'
     };
 
     const selectAllButtonStyle = {
@@ -292,125 +312,116 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         padding: '8px 12px',
         color: 'var(--platform-accent)',
         borderColor: 'var(--platform-accent)',
-        background: 'var(--platform-card-bg)',
+        background: 'transparent',
         transition: 'all 0.2s ease'
-    };
-
-    const selectAllButtonHoverStyle = {
-        background: 'var(--platform-accent)',
-        color: 'var(--platform-accent-text)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
     };
 
     const clearSelectionButtonStyle = {
         ...secondaryButtonStyle,
-        color: '#f56565',
-        borderColor: '#f56565',
+        color: '#e53e3e',
+        borderColor: '#e53e3e',
         fontSize: '0.85rem',
         padding: '8px 12px',
-        background: 'var(--platform-card-bg)',
+        background: 'transparent',
+        display: 'flex', alignItems: 'center', gap: '6px',
         transition: 'all 0.2s ease'
     };
 
-    const clearSelectionButtonHoverStyle = {
-        background: '#f56565',
-        color: 'white',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 4px 8px rgba(245, 101, 101, 0.2)'
-    };
+    const categoryOptions = [
+        { value: 'all', label: 'Всі категорії' },
+        ...categories.map(cat => ({ value: cat.id, label: cat.name }))
+    ];
 
     return (
         <div style={overlayStyle} onClick={onClose}>
             <div style={modalStyle} onClick={e => e.stopPropagation()}>
+                
                 <div style={headerStyle}>
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                        <div>
-                            <h3 style={{margin: 0, color: 'var(--platform-text-primary)', fontSize: '1.25rem'}}>
-                                Вибір товарів
-                            </h3>
-                            <p style={{margin: '4px 0 0 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>
-                                Оберіть товари для відображення у вітрині (макс. 20)
-                            </p>
+                    <div>
+                        <h3 style={{margin: 0, color: 'var(--platform-text-primary)', fontSize: '1.25rem'}}>
+                            Вибір товарів
+                        </h3>
+                        <p style={{margin: '4px 0 0 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>
+                            Оберіть до 20 товарів для відображення
+                        </p>
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        style={closeHeaderBtnStyle}
+                        onMouseEnter={e => {
+                            e.target.style.background = 'rgba(229, 62, 62, 0.1)';
+                            e.target.style.color = '#e53e3e';
+                        }}
+                        onMouseLeave={e => {
+                            e.target.style.background = 'transparent';
+                            e.target.style.color = 'var(--platform-text-secondary)';
+                        }}
+                        title="Закрити"
+                    >
+                        <IconX size={20} />
+                    </button>
+                </div>
+
+                <div style={toolbarStyle}>
+                    <div style={searchContainerStyle}>
+                        <div style={searchIconStyle}>
+                            <IconSearch size={16} />
                         </div>
-                        
-                        <button 
-                            onClick={onClose}
-                            style={closeHeaderBtnStyle}
-                            onMouseEnter={e => {
-                                e.target.style.background = '#e53e3e';
-                                e.target.style.color = 'white';
-                            }}
-                            onMouseLeave={e => {
-                                e.target.style.background = 'rgba(229, 62, 62, 0.1)';
-                                e.target.style.color = '#e53e3e';
-                            }}
-                            title="Закрити"
-                        >
-                            ✕
-                        </button>
+                        <input 
+                            type="text" 
+                            placeholder="Пошук товарів..." 
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            style={inputStyle}
+                            onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'}
+                            onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'}
+                        />
+                        {searchTerm && (
+                            <button 
+                                onClick={clearSearch}
+                                style={clearButtonStyle}
+                                title="Очистити пошук"
+                            >
+                                <IconX size={14} />
+                            </button>
+                        )}
                     </div>
                     
-                    <div style={filtersRowStyle}>
-                        <div style={searchContainerStyle}>
-                            <input 
-                                type="text" 
-                                placeholder="🔍 Пошук товарів..." 
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                style={inputStyle}
-                                onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'}
-                                onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'}
-                            />
-                            {searchTerm && (
-                                <button 
-                                    onClick={clearSearch}
-                                    style={clearButtonStyle}
-                                    title="Очистити пошук"
-                                >
-                                    ×
-                                </button>
-                            )}
-                        </div>
-                        
-                        <div style={selectWrapperStyle}>
-                            <select 
-                                value={selectedCategory} 
-                                onChange={e => setSelectedCategory(e.target.value)}
-                                style={selectStyle}
-                            >
-                                <option value="all">Всі категорії</option>
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                        </div>
+                    <div style={selectWrapperStyle}>
+                        <CustomSelect 
+                            value={selectedCategory} 
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            options={categoryOptions}
+                            style={{...inputStyle, padding: '10px 12px'}}
+                        />
+                    </div>
 
-                        <div style={sortButtonsContainerStyle}>
-                            <button 
-                                onClick={() => toggleSort('name')}
-                                style={sortButtonStyle(sortBy === 'name')}
-                            >
-                                A-Z {getSortIcon('name')}
-                            </button>
-                            <button 
-                                onClick={() => toggleSort('price')}
-                                style={sortButtonStyle(sortBy === 'price')}
-                            >
-                                Ціна {getSortIcon('price')}
-                            </button>
-                        </div>
+                    <div style={sortButtonsContainerStyle}>
+                        <button 
+                            onClick={() => toggleSort('name')}
+                            style={sortButtonStyle(sortBy === 'name')}
+                        >
+                            A-Z {getSortIcon('name')}
+                        </button>
+                        <button 
+                            onClick={() => toggleSort('price')}
+                            style={sortButtonStyle(sortBy === 'price')}
+                        >
+                            Ціна {getSortIcon('price')}
+                        </button>
                     </div>
                 </div>
 
                 <div style={listStyle} className="custom-scrollbar">
                     {loading ? (
-                        <div style={{textAlign: 'center', padding: '2rem', color: 'var(--platform-text-secondary)'}}>
+                        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--platform-text-secondary)'}}>
+                            <div className="animate-spin" style={{marginBottom: '10px'}}>⏳</div>
                             Завантаження товарів...
                         </div>
                     ) : sortedProducts.length === 0 ? (
-                        <div style={{textAlign: 'center', padding: '2rem', color: 'var(--platform-text-secondary)'}}>
-                            {searchTerm || selectedCategory !== 'all' ? 'Товарів за вашим запитом не знайдено' : 'Товарів не знайдено'}
+                        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--platform-text-secondary)'}}>
+                            <IconEmptyBox size={48} style={{opacity: 0.5, marginBottom: '1rem'}}/>
+                            {searchTerm || selectedCategory !== 'all' ? 'Нічого не знайдено за фільтрами' : 'Список товарів порожній'}
                         </div>
                     ) : (
                         sortedProducts.map(product => {
@@ -425,7 +436,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                     onClick={() => toggleProduct(product.id)}
                                 >
                                     <div style={isSelected ? checkedStyle : checkboxStyle}>
-                                        {isSelected && '✓'}
+                                        {isSelected && <IconCheck size={14} />}
                                     </div>
                                     <img 
                                         src={imgUrl} 
@@ -435,14 +446,18 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                             height: '48px', 
                                             objectFit: 'cover', 
                                             borderRadius: '6px',
-                                            border: '1px solid var(--platform-border-color)'
+                                            border: '1px solid var(--platform-border-color)',
+                                            background: 'var(--platform-bg)'
                                         }} 
                                     />
-                                    <div style={{flex: 1}}>
+                                    <div style={{flex: 1, minWidth: 0}}>
                                         <div style={{
                                             fontWeight: '500', 
                                             color: 'var(--platform-text-primary)',
-                                            marginBottom: '4px'
+                                            marginBottom: '4px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
                                         }}>
                                             {product.name}
                                         </div>
@@ -453,16 +468,17 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                             color: 'var(--platform-text-secondary)',
                                             alignItems: 'center'
                                         }}>
-                                            <span style={{fontWeight: '500'}}>{product.price} грн</span>
+                                            <span style={{fontWeight: '600', color: 'var(--platform-text-primary)'}}>{product.price} грн</span>
                                             {category && (
                                                 <span style={{
                                                     background: 'var(--platform-bg)',
                                                     padding: '2px 8px',
                                                     borderRadius: '12px',
                                                     border: '1px solid var(--platform-border-color)',
-                                                    fontSize: '0.75rem'
+                                                    fontSize: '0.75rem',
+                                                    display: 'flex', alignItems: 'center', gap: '4px'
                                                 }}>
-                                                    📁 {category.name}
+                                                    <IconFilter size={10} /> {category.name}
                                                 </span>
                                             )}
                                         </div>
@@ -483,12 +499,14 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                             onClick={selectAllFiltered}
                             style={selectAllButtonStyle}
                             onMouseEnter={e => {
-                                Object.assign(e.target.style, selectAllButtonHoverStyle);
+                                e.target.style.background = 'var(--platform-accent)';
+                                e.target.style.color = 'var(--platform-accent-text)';
                             }}
                             onMouseLeave={e => {
-                                Object.assign(e.target.style, selectAllButtonStyle);
+                                e.target.style.background = 'transparent';
+                                e.target.style.color = 'var(--platform-accent)';
                             }}
-                            title="Додати всі відфільтровані товари до вибору"
+                            title="Додати всі відфільтровані"
                         >
                             + Всі ({sortedProducts.length})
                         </button>
@@ -498,13 +516,15 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                 onClick={clearSelection}
                                 style={clearSelectionButtonStyle}
                                 onMouseEnter={e => {
-                                    Object.assign(e.target.style, clearSelectionButtonHoverStyle);
+                                    e.target.style.background = '#e53e3e';
+                                    e.target.style.color = 'white';
                                 }}
                                 onMouseLeave={e => {
-                                    Object.assign(e.target.style, clearSelectionButtonStyle);
+                                    e.target.style.background = 'transparent';
+                                    e.target.style.color = '#e53e3e';
                                 }}
                             >
-                                × Очистити
+                                <IconTrash size={14} /> Очистити
                             </button>
                         )}
                     </div>
@@ -519,7 +539,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                             onClick={handleSave} 
                             style={primaryButtonStyle}
                         >
-                            Зберегти ({selectedIds.size})
+                            Зберегти
                         </button>
                     </div>
                 </div>

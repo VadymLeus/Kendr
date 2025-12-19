@@ -1,4 +1,4 @@
-// frontend/src/common/components/uiCustomSelect.jsx
+// frontend/src/common/components/ui/CustomSelect.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -91,7 +91,8 @@ const CustomSelect = ({ name, value, onChange, options, placeholder = "Обер�
         fontSize: '0.7rem',
         marginLeft: '8px',
         transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-        transition: 'transform 0.2s'
+        transition: 'transform 0.2s',
+        color: 'var(--platform-text-secondary)'
     };
 
     return (

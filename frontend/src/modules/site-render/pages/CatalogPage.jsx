@@ -205,7 +205,6 @@ const CatalogPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTag, setSelectedTag] = useState(null);
     const [sortOption, setSortOption] = useState('created_at:desc');
-    const [viewMode, setViewMode] = useState('grid');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
     const [searchParams, setSearchParams] = useSearchParams();
     
@@ -304,8 +303,6 @@ const CatalogPage = () => {
                 onClearSearch={handleClearSearch}
                 sortOption={sortOption}
                 onSortChange={setSortOption}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
                 tags={tags}
                 selectedTag={selectedTag}
                 onTagSelect={setSelectedTag}
@@ -319,15 +316,16 @@ const CatalogPage = () => {
                         onClick={() => setHideMySites(!hideMySites)}
                         style={{
                             padding: '8px 10px',
-                            borderRadius: '6px',
+                            borderRadius: '8px',
                             border: '1px solid var(--platform-border-color)',
-                            background: hideMySites ? 'var(--platform-danger)' : 'var(--platform-card-bg)',
+                            background: hideMySites ? 'var(--platform-danger)' : 'var(--platform-bg)',
                             color: hideMySites ? 'white' : 'var(--platform-text-secondary)',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             transition: 'all 0.2s',
-                            boxShadow: hideMySites ? '0 2px 5px rgba(0,0,0,0.1)' : 'none'
+                            height: '38px',
+                            boxSizing: 'border-box'
                         }}
                         title={hideMySites ? "Показати мої сайти" : "Приховати мої сайти"}
                     >
@@ -350,26 +348,18 @@ const CatalogPage = () => {
                 </div>
             ) : (
                <>
-                   {viewMode === 'grid' ? (
-                       <div className="sites-grid">
-                           {visibleSites.map(site => (
-                               <SiteGridCard 
-                                   key={site.id} 
-                                   site={site} 
-                                   onTagClick={handleTagClick}
-                                   formatDate={formatDate}
-                                   isFavorite={favoriteSiteIds.has(site.id)}
-                                   onToggleFavorite={handleToggleFavorite}
-                               />
-                           ))}
-                       </div>
-                   ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                             {visibleSites.map(site => (
-                               <SiteGridCard key={site.id} site={site} onTagClick={handleTagClick} formatDate={formatDate} isFavorite={favoriteSiteIds.has(site.id)} onToggleFavorite={handleToggleFavorite} />
-                           ))}
-                        </div>
-                   )}
+                   <div className="sites-grid">
+                       {visibleSites.map(site => (
+                           <SiteGridCard 
+                               key={site.id} 
+                               site={site} 
+                               onTagClick={handleTagClick}
+                               formatDate={formatDate}
+                               isFavorite={favoriteSiteIds.has(site.id)}
+                               onToggleFavorite={handleToggleFavorite}
+                           />
+                       ))}
+                   </div>
 
                    {filteredSites.length > visibleCount && (
                         <div style={{ textAlign: 'center', marginTop: '2rem' }}>

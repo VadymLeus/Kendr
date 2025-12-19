@@ -400,7 +400,6 @@ const MySitesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTag, setSelectedTag] = useState(null);
     const [sortOption, setSortOption] = useState('created_at:desc');
-    const [viewMode, setViewMode] = useState('grid');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
     const [onlyPinned, setOnlyPinned] = useState(false);
 
@@ -539,8 +538,6 @@ const MySitesPage = () => {
                 onClearSearch={handleClearSearch}
                 sortOption={sortOption}
                 onSortChange={setSortOption}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
                 tags={tags}
                 selectedTag={selectedTag}
                 onTagSelect={setSelectedTag}
@@ -579,7 +576,7 @@ const MySitesPage = () => {
                                 formatDate={formatDate} 
                                 onDelete={handleDeleteSite}
                                 onToggleStatus={handleStatusChange}
-                                onTogglePin={handleTogglePin} 
+                                onTogglePin={handleTogglePin}
                             />
                         ))}
                     </div>

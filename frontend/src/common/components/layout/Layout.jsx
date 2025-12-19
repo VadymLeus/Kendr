@@ -58,8 +58,11 @@ const Layout = () => {
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
     const productMatch = location.pathname.match(/^\/product\/([^/]+)/);
     
+    const mediaLibraryMatch = location.pathname === '/media-library';
+
     const shouldShowSiteHeader = !!(publicMatch || productMatch);
-    const shouldShowFooter = !isAdmin && !dashboardMatch && !publicMatch && !productMatch;
+    
+    const shouldShowFooter = !isAdmin && !dashboardMatch && !publicMatch && !productMatch && !mediaLibraryMatch;
     
     useEffect(() => {
         const fetchSiteData = async () => {
@@ -171,7 +174,7 @@ const Layout = () => {
     }
 
     const layoutContentStyle = {
-        overflowY: dashboardMatch ? 'hidden' : 'auto',
+        overflowY: (dashboardMatch || mediaLibraryMatch) ? 'hidden' : 'auto',
         width: '100%'
     };
     

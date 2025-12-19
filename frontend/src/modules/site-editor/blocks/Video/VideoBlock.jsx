@@ -1,8 +1,12 @@
 // frontend/src/modules/site-editor/blocks/Video/VideoBlock.jsx
 import React from 'react';
 
+const API_URL = 'http://localhost:5000';
+
 const getEmbedUrl = (url) => {
     if (!url) return null;
+    if (url.startsWith('/')) return null;
+
     let embedUrl = null;
     let videoId = null;
     try {
@@ -27,6 +31,8 @@ const getEmbedUrl = (url) => {
 const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     const { url, sizePreset = 'medium' } = blockData;
     const embedUrl = getEmbedUrl(url);
+    
+    const isLocalVideo = url && (url.startsWith('/') || url.match(/\.(mp4|webm|ogg|mov)$/i));
 
     const textSecondary = 'var(--site-text-secondary)';
     const borderColor = 'var(--site-border-color)';
@@ -54,11 +60,11 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
         backgroundColor: '#000'
     };
 
-    const iframeStyle = {
+    const elementStyle = {
         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none'
     };
 
-    if (!embedUrl) {
+    if (!embedUrl && !isLocalVideo) {
         return (
             <div style={{
                 ...wrapperStyle,
@@ -75,7 +81,7 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
                 <div style={{ textAlign: 'center', color: textSecondary }}>
                     <span style={{ fontSize: '2rem' }}>🎬</span>
                     <p style={{ margin: '0.5rem 0 0 0', color: 'var(--site-text-primary)' }}>Блок Відео</p>
-                    <small style={{ color: textSecondary }}>Вставте посилання YouTube або Vimeo у налаштуваннях.</small>
+                    <small style={{ color: textSecondary }}>Оберіть відео з бібліотеки або вставте посилання (YouTube, Vimeo).</small>
                 </div>
             </div>
         );
@@ -87,20 +93,22 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
                 <div style={wrapperStyle}>
                     <div style={responsiveContainerStyle}>
                         <div style={{
-                            ...iframeStyle, 
+                            ...elementStyle, 
                             display: 'flex', 
                             flexDirection: 'column', 
                             alignItems: 'center', 
                             justifyContent: 'center',
-                            background: '#333', 
+                            background: '#222', 
                             color: 'white', 
                             padding: '1rem', 
                             textAlign: 'center'
                         }}>
-                            <span style={{ fontSize: '2.5rem' }}>🎬</span>
-                            <p style={{ margin: '0.5rem 0 0 0' }}>Попередній перегляд (Клікніть, щоб редагувати)</p>
+                            <span style={{ fontSize: '2.5rem' }}>{isLocalVideo ? '📹' : '▶️'}</span>
+                            <p style={{ margin: '0.5rem 0 0 0' }}>
+                                {isLocalVideo ? 'Локальне відео' : 'Зовнішнє відео'}
+                            </p>
                             <small style={{ wordBreak: 'break-all', opacity: 0.7, fontSize: '0.75rem' }}>
-                                {embedUrl}
+                                {url}
                             </small>
                         </div>
                     </div>
@@ -113,14 +121,23 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
         <div style={{ padding: '20px 0' }}>
             <div style={wrapperStyle}>
                 <div style={responsiveContainerStyle}>
-                    <iframe
-                        style={iframeStyle}
-                        src={embedUrl}
-                        title="Embedded video"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                    ></iframe>
+                    {isLocalVideo ? (
+                        <video 
+                            src={url.startsWith('http') ? url : `${API_URL}${url}`} 
+                            controls 
+                            playsInline
+                            style={{...elementStyle, objectFit: 'contain'}}
+                        />
+                    ) : (
+                        <iframe
+                            style={elementStyle}
+                            src={embedUrl}
+                            title="Embedded video"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    )}
                 </div>
             </div>
         </div>
