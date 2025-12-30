@@ -2,18 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../../common/services/api';
 import ProductPickerModal from '../../../site-dashboard/components/ProductPickerModal';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '1rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box'
-};
+import { commonStyles } from '../../components/common/SettingsUI';
+import CustomSelect from '../../../../common/components/ui/CustomSelect';
 
 const ShowCaseSettings = ({ data, onChange, siteData }) => {
     const [categories, setCategories] = useState([]);
@@ -36,53 +26,57 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
         onChange({ ...data, selected_product_ids: ids });
     };
 
+    const sourceTypeOptions = [
+        { value: 'category', label: 'Автоматично (з категорії)' },
+        { value: 'manual', label: 'Вручну (вибір товарів)' }
+    ];
+
+    const categoryOptions = [
+        { value: 'all', label: 'Всі категорії' },
+        ...categories.map(cat => ({ value: cat.id, label: cat.name }))
+    ];
+
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Заголовок вітрини:</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Заголовок вітрини:</label>
                 <input 
                     type="text" 
                     name="title" 
                     value={data.title || ''} 
                     onChange={handleChange} 
                     placeholder="Напр. Хіти продажів"
-                    style={inputStyle}
+                    style={commonStyles.input}
                 />
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Джерело товарів:</label>
-                <select 
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Джерело товарів:</label>
+                <CustomSelect 
                     name="source_type" 
                     value={data.source_type || 'category'} 
                     onChange={handleChange} 
-                    style={inputStyle}
-                >
-                    <option value="category">Автоматично (з категорії)</option>
-                    <option value="manual">Вручну (вибір товарів)</option>
-                </select>
+                    options={sourceTypeOptions}
+                    style={commonStyles.input}
+                />
             </div>
 
             <hr style={{margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
 
             {data.source_type === 'category' ? (
                 <>
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>Категорія:</label>
-                        <select 
+                    <div style={commonStyles.formGroup}>
+                        <label style={commonStyles.label}>Категорія:</label>
+                        <CustomSelect 
                             name="category_id" 
                             value={data.category_id || 'all'} 
                             onChange={handleChange} 
-                            style={inputStyle}
-                        >
-                            <option value="all">Всі категорії</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
+                            options={categoryOptions}
+                            style={commonStyles.input}
+                        />
                     </div>
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>Кількість товарів ({data.limit || 8}):</label>
+                    <div style={commonStyles.formGroup}>
+                        <label style={commonStyles.label}>Кількість товарів ({data.limit || 8}):</label>
                         <input 
                             type="range" 
                             name="limit" 
@@ -97,8 +91,8 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                     </div>
                 </>
             ) : (
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Обрані товари:</label>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Обрані товари:</label>
                     <div style={{marginBottom: '1rem', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>
                         Вибрано: {data.selected_product_ids?.length || 0}
                     </div>
@@ -108,10 +102,14 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                         style={{
                             width: '100%', padding: '10px', 
                             background: 'var(--platform-accent)', color: 'white',
-                            border: 'none', borderRadius: '6px', cursor: 'pointer'
+                            border: 'none', borderRadius: '6px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                            fontWeight: '500', transition: 'opacity 0.2s'
                         }}
+                        onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+                        onMouseLeave={(e) => e.target.style.opacity = '1'}
                     >
-                        ➕ Обрати товари
+                        <span>➕</span> Обрати товари
                     </button>
                     
                     <ProductPickerModal 
@@ -126,8 +124,8 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
 
             <hr style={{margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Кількість колонок ({data.columns || 4}):</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Кількість колонок ({data.columns || 4}):</label>
                 <input 
                     type="range" 
                     name="columns" 

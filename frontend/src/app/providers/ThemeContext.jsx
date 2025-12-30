@@ -59,11 +59,10 @@ export const ThemeProvider = ({ children }) => {
         localStorage.setItem('themeAccent', platformAccent);
 
         if (user) {
-            updateUser({ platform_theme_mode: mode });
+            updateUser({ ...user, platform_theme_mode: mode });
             try {
-                await apiClient.put('/users/profile/update', { 
-                    platform_theme_mode: mode,
-                    currentPassword: null
+                await apiClient.put('/users/profile', { 
+                    platform_theme_mode: mode
                 });
             } catch (error) {
                 console.error("Помилка збереження режиму теми:", error);
@@ -82,11 +81,10 @@ export const ThemeProvider = ({ children }) => {
         localStorage.setItem('themeAccent', accent);
 
         if (user) {
-            updateUser({ platform_theme_accent: accent });
+            updateUser({ ...user, platform_theme_accent: accent });
             try {
-                await apiClient.put('/users/profile/update', { 
-                    platform_theme_accent: accent,
-                    currentPassword: null
+                await apiClient.put('/users/profile', { 
+                    platform_theme_accent: accent
                 });
             } catch (error) {
                 console.error("Помилка збереження акцентного кольору:", error);

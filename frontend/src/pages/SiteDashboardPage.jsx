@@ -95,6 +95,8 @@ const SiteDashboardPage = () => {
         settings: false
     });
 
+    const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
+
     const isFooterMode = currentPageId === 'footer';
     const isHeaderMode = currentPageId === 'header';
 
@@ -105,6 +107,10 @@ const SiteDashboardPage = () => {
         }));
     }, []);
 
+    const handleBlockSaved = useCallback(() => {
+        setSavedBlocksUpdateTrigger(prev => prev + 1);
+    }, []);
+
     useEffect(() => {
         const anyComponentSaving = Object.values(componentsSaving).some(saving => saving);
         setIsSaving(anyComponentSaving);
@@ -113,7 +119,7 @@ const SiteDashboardPage = () => {
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-            if (document.querySelector('.ReactModal__Content')) return; 
+            if (document.querySelector('.ReactModal__Content')) return;
 
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
                 if (e.shiftKey) {
@@ -204,7 +210,7 @@ const SiteDashboardPage = () => {
         if (siteData) {
             if (!allPages.length) {
                 apiClient.get(`/sites/${siteData.id}/pages`)
-                   .then(res => {
+                    .then(res => {
                         const pages = res.data;
                         setAllPages(pages);
                         
@@ -397,6 +403,7 @@ const SiteDashboardPage = () => {
                                         collapsedBlocks={collapsedBlocks}
                                         onToggleCollapse={toggleBlockCollapse}
                                         isHeaderMode={isHeaderMode}
+                                        onBlockSaved={handleBlockSaved}
                                     />
                                 )}
                             </div>
@@ -411,12 +418,13 @@ const SiteDashboardPage = () => {
                             onUpdateBlockData={handleUpdateBlockData}
                             onSave={savePageContent}
                             allPages={[
-                                { id: 'header', name: '🔝 Глобальний Хедер' },
+                                { id: 'header', name: 'Глобальний Хедер' },
                                 ...allPages, 
-                                { id: 'footer', name: '🔻 Глобальний Футер' }
+                                { id: 'footer', name: 'Глобальний Футер' }
                             ]}
                             currentPageId={currentPageId}
                             onSelectPage={(id) => handleEditPage(id)}
+                            savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
                             isHeaderMode={isHeaderMode}
                         />
                     </>

@@ -6,8 +6,9 @@ import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../common/services/api';
 import { toast } from 'react-toastify';
 import { Input, Button } from '../../../common/components/ui';
-import AvatarModal from '../../profile/components/AvatarModal';
-import { IconArrowLeft, IconCheck, IconMailOpen, IconTrash, IconPlus } from '../../../common/components/ui/Icons';
+import Avatar from '../../../common/components/ui/Avatar';
+import ImageUploader from '../../../common/components/ui/ImageUploader';
+import { IconArrowLeft, IconCheck, IconMailOpen, IconTrash, IconCamera, IconUpload } from '../../../common/components/ui/Icons';
 import { validatePassword } from '../../../common/utils/validationUtils';
 
 const API_URL = 'http://localhost:5000';
@@ -25,14 +26,14 @@ const PasswordStrengthMeter = ({ password }) => {
         if (score === 0) return 'var(--platform-border-color)';
         if (score === 1) return '#e53e3e';
         if (score === 2) return '#ecc94b';
-        return '#48bb78';
+        if (score === 3) return '#48bb78';
     };
 
     const getStrengthLabel = () => {
         if (score === 0) return 'Пароль';
         if (score === 1) return 'Слабкий';
         if (score === 2) return 'Середній';
-        return 'Надійний';
+        if (score === 3) return 'Надійний';
     };
 
     const barStyle = (index) => ({
@@ -68,6 +69,7 @@ const AuthPage = () => {
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
+    const [isAvatarUploading, setIsAvatarUploading] = useState(false);
 
     const [formData, setFormData] = useState({
         loginInput: '',
@@ -79,7 +81,6 @@ const AuthPage = () => {
     const [forgotEmail, setForgotEmail] = useState('');
     const [pendingEmail, setPendingEmail] = useState('');
     
-    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
     const [avatarData, setAvatarData] = useState({
         file: null,
         url: null,
@@ -104,15 +105,19 @@ const AuthPage = () => {
         window.location.href = `${API_URL}/api/auth/google`;
     };
 
-    const handleAvatarSelect = (data) => {
-        if (data.type === 'file') {
-            setAvatarData({ file: data.file, url: null, preview: data.previewUrl });
-        } else if (data.type === 'default') {
-            setAvatarData({ file: null, url: data.url, preview: data.previewUrl });
-        }
+    const handleAvatarUpload = (file) => {
+        setIsAvatarUploading(true);
+        const previewUrl = URL.createObjectURL(file);
+        setAvatarData({ 
+            file: file, 
+            url: null, 
+            preview: previewUrl 
+        });
+        setIsAvatarUploading(false);
     };
 
-    const handleRemoveAvatar = () => {
+    const handleRemoveAvatar = (e) => {
+        if(e) e.stopPropagation();
         setAvatarData({ file: null, url: null, preview: null });
     };
 
@@ -156,11 +161,13 @@ const AuthPage = () => {
             regData.append('username', formData.username);
             regData.append('email', formData.email);
             regData.append('password', formData.password);
+            
             if (avatarData.file) {
                 regData.append('avatar', avatarData.file);
             } else if (avatarData.url) {
                 regData.append('avatar_url', avatarData.url);
             }
+            
             await apiClient.post('/auth/register', regData);
             setPendingEmail(formData.email);
             setView('pending_verification');
@@ -234,6 +241,74 @@ const AuthPage = () => {
                 grid-template-columns: 1fr !important;
                 gap: 1rem !important;
             }
+            .auth-card {
+                padding: 1.5rem !important;
+            }
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        .avatar-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 1px solid var(--platform-border-color);
+            background: var(--platform-bg);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .avatar-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            backdrop-filter: blur(2px);
+            cursor: pointer;
+        }
+
+        .avatar-wrapper:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        .trash-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            transition: background 0.2s, opacity 0.2s;
+            opacity: 0;
+            transform: translate(20%, -20%);
+        }
+
+        .avatar-wrapper:hover .trash-btn {
+            opacity: 1;
+        }
+
+        .trash-btn:hover {
+            background: var(--platform-danger) !important;
         }
     `;
 
@@ -263,38 +338,11 @@ const AuthPage = () => {
         boxShadow: '0 2px 5px rgba(0,0,0,0.1)' 
     };
 
-    const avatarPlaceholderStyle = {
-        width: '80px', height: '80px', 
-        borderRadius: '50%', 
-        background: 'var(--platform-bg)', 
-        border: '1px solid var(--platform-border-color)', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        margin: '0 auto 1.5rem auto'
-    };
-
-    const avatarPreviewContainer = {
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        gap: '15px', 
-        padding: '10px', 
-        background: 'var(--platform-bg)', 
-        borderRadius: '12px', 
-        border: '1px solid var(--platform-border-color)',
-        marginBottom: '1.5rem'
-    };
-
     if (view === 'pending_verification') {
         return (
             <div style={pageContainerStyle}>
-                <Helmet>
-                    <title>{getPageTitle()}</title>
-                </Helmet>
-                <div style={{...cardStyle, maxWidth: '420px'}}>
+                <Helmet><title>{getPageTitle()}</title></Helmet>
+                <div style={{...cardStyle, maxWidth: '420px'}} className="auth-card">
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--platform-accent)' }}>
                         <IconMailOpen size={64} />
                     </div>
@@ -312,10 +360,8 @@ const AuthPage = () => {
     if (view === 'forgot') {
         return (
             <div style={pageContainerStyle}>
-                <Helmet>
-                    <title>{getPageTitle()}</title>
-                </Helmet>
-                <div style={{...cardStyle, maxWidth: '420px'}}>
+                <Helmet><title>{getPageTitle()}</title></Helmet>
+                <div style={{...cardStyle, maxWidth: '420px'}} className="auth-card">
                     <button onClick={() => setView('login')} style={{ position: 'absolute', top: '30px', left: '30px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--platform-text-secondary)' }}>
                         <IconArrowLeft size={24} />
                     </button>
@@ -337,11 +383,7 @@ const AuthPage = () => {
             </Helmet>
             <style>{mobileRegisterStyle}</style>
             
-            {isAvatarModalOpen && (
-                <AvatarModal onClose={() => setIsAvatarModalOpen(false)} onAvatarUpdate={handleAvatarSelect} mode="select" />
-            )}
-
-            <div style={cardStyle}>
+            <div style={cardStyle} className="auth-card">
                 <h2 style={titleStyle}>{isRegister ? 'Реєстрація' : 'Вхід'}</h2>
                 <p style={subTitleStyle}>{isRegister ? 'Створіть свій профіль на Kendr' : 'З поверненням до платформи!'}</p>
 
@@ -363,35 +405,49 @@ const AuthPage = () => {
                             <div>
                                 <h4 style={{margin: '0 0 1rem 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase'}}>Особисті дані</h4>
                                 
-                                {avatarData.preview ? (
-                                    <div style={avatarPreviewContainer}>
-                                        <img src={avatarData.preview} alt="Avatar" style={{width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--platform-border-color)'}} />
-                                        <img src={avatarData.preview} alt="Avatar" style={{width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--platform-border-color)', opacity: 0.8}} />
-                                        <img src={avatarData.preview} alt="Avatar" style={{width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--platform-border-color)', opacity: 0.6}} />
-                                        
-                                        <button 
-                                            type="button" 
-                                            onClick={handleRemoveAvatar} 
-                                            className="btn btn-danger" 
-                                            style={{
-                                                padding: '8px', 
-                                                borderRadius: '8px',
-                                            }}
-                                            title="Видалити"
+                                <div className="avatar-wrapper">
+                                    <div className="avatar-circle">
+                                        <ImageUploader 
+                                            onUpload={handleAvatarUpload}
+                                            aspect={1}
+                                            circularCrop={true}
+                                            uploading={isAvatarUploading}
+                                            triggerStyle={{ width: '100%', height: '100%', display: 'block' }}
                                         >
-                                            <IconTrash size={16}/>
+                                            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                                                <Avatar 
+                                                    url={avatarData.preview} 
+                                                    name={formData.username || 'User'} 
+                                                    size={100} 
+                                                    fontSize="40px"
+                                                    style={{ width: '100%', height: '100%' }}
+                                                />
+                                                
+                                                <div className="avatar-overlay">
+                                                    {avatarData.preview ? (
+                                                         <IconUpload size={20} />
+                                                    ) : (
+                                                         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                                            <IconCamera size={24} style={{marginBottom: '4px'}}/>
+                                                            <span style={{fontSize: '10px'}}>Завантажити</span>
+                                                         </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </ImageUploader>
+                                    </div>
+
+                                    {avatarData.preview && (
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveAvatar}
+                                            className="trash-btn"
+                                            title="Видалити фото"
+                                        >
+                                            <IconTrash size={12} />
                                         </button>
-                                    </div>
-                                ) : (
-                                    <div 
-                                        onClick={() => setIsAvatarModalOpen(true)} 
-                                        style={avatarPlaceholderStyle} 
-                                        className="avatar-placeholder"
-                                        title="Завантажити фото"
-                                    >
-                                        <IconPlus size={24} color="var(--platform-text-secondary)" />
-                                    </div>
-                                )}
+                                    )}
+                                </div>
 
                                 <Input name="username" label="Ім'я користувача" placeholder="Логін" value={formData.username} onChange={handleChange} required />
                                 <Input name="email" label="Email адреса" type="email" placeholder="example@mail.com" value={formData.email} onChange={handleChange} required />
@@ -440,9 +496,7 @@ const AuthPage = () => {
             </div>
 
             <style>{`
-                .google-btn:hover { background-color: #f7f7f7 !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; }
-                .avatar-placeholder:hover { border-color: var(--platform-accent) !important; color: var(--platform-accent) !important; transform: scale(1.05); }
-                .avatar-placeholder:hover svg { color: var(--platform-accent) !important; }
+                .google-btn:hover { background-color: #f7f7f7 !important; transform: translateY(-1px); boxShadow: 0 4px 12px rgba(0,0,0,0.15) !important; }
             `}</style>
         </div>
     );

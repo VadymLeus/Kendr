@@ -7,16 +7,7 @@ import AvatarModal from './AvatarModal';
 import { toast } from 'react-toastify';
 import ImageUploader from '../../../common/components/ui/ImageUploader';
 import { validatePassword } from '../../../common/utils/validationUtils';
-
-const API_URL = 'http://localhost:5000';
-
-const getAvatarUrl = (url) => {
-    if (!url) return 'https://placehold.co/100';
-    if (url.startsWith('http') || url.startsWith('https')) {
-        return url;
-    }
-    return `${API_URL}${url}`;
-};
+import Avatar from '../../../common/components/ui/Avatar';
 
 const ProfileSettingsTab = () => {
     const { user, updateUser } = useContext(AuthContext);
@@ -159,17 +150,15 @@ const ProfileSettingsTab = () => {
                             uploading={isAvatarUploading}
                         >
                             <div style={{ position: 'relative', display: 'inline-block' }}>
-                                <img 
-                                    src={getAvatarUrl(user.avatar_url)} 
-                                    alt="avatar" 
-                                    style={{ 
-                                        width: '120px', 
-                                        height: '120px', 
-                                        borderRadius: '50%', 
-                                        cursor: 'pointer', 
+                                <Avatar 
+                                    url={user.avatar_url} 
+                                    name={user.username} 
+                                    size={120} 
+                                    style={{
+                                        cursor: 'pointer',
                                         border: '3px solid var(--platform-accent)',
                                         opacity: isAvatarUploading ? 0.5 : 1
-                                    }} 
+                                    }}
                                 />
                                 {isAvatarUploading && (
                                     <div style={{ 

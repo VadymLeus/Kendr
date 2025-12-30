@@ -2,6 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../common/services/api';
+import { Button } from '../../../common/components/ui/Button';
+import { IconAlertTriangle, IconGavel, IconArrowRight } from '../../../common/components/ui/Icons';
+import { Helmet } from 'react-helmet-async';
+import { IconCheckCircle } from '../../../common/components/ui/Icons'; 
+
 
 const AppealPage = () => {
     const [suspendedSites, setSuspendedSites] = useState([]);
@@ -26,83 +31,113 @@ const AppealPage = () => {
         borderRadius: '12px',
         background: 'var(--platform-card-bg)',
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
     };
 
-    const warningTextStyle = {
+    const warningBoxStyle = {
+        background: 'rgba(221, 107, 32, 0.1)',
         color: 'var(--platform-warning)',
-        fontWeight: 'bold',
-        margin: '0.5rem 0'
+        padding: '12px',
+        borderRadius: '8px',
+        fontSize: '0.9rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        border: '1px solid rgba(221, 107, 32, 0.2)'
     };
 
     if (loading) return (
-        <div style={{ 
-            padding: '2rem', 
-            textAlign: 'center', 
-            color: 'var(--platform-text-secondary)' 
-        }}>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--platform-text-secondary)' }}>
             Завантаження...
         </div>
     );
 
     return (
         <div style={containerStyle}>
-            <h2 style={{ 
-                color: 'var(--platform-text-primary)', 
-                marginBottom: '0.5rem' 
-            }}>
-                Оскарження блокування
-            </h2>
-            <p style={{ 
-                color: 'var(--platform-text-secondary)',
-                marginBottom: '2rem'
-            }}>
-                Тут показані ваші сайти, які були призупинені адміністрацією.
-            </p>
+            <Helmet>
+                <title>Оскарження блокування | Kendr</title>
+            </Helmet>
+
+            <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{ 
+                    color: 'var(--platform-text-primary)', 
+                    marginBottom: '0.5rem',
+                    fontSize: '2rem',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                }}>
+                    <IconGavel size={32} style={{ color: 'var(--platform-danger)' }} />
+                    Оскарження блокування
+                </h2>
+                <p style={{ color: 'var(--platform-text-secondary)', fontSize: '1.1rem' }}>
+                    Тут показані ваші сайти, які були призупинені адміністрацією через порушення правил.
+                </p>
+            </div>
+
             {suspendedSites.length === 0 ? (
                 <div style={{ 
                     textAlign: 'center', 
-                    padding: '3rem',
+                    padding: '4rem 2rem',
                     background: 'var(--platform-card-bg)',
-                    borderRadius: '12px',
+                    borderRadius: '16px',
                     border: '1px solid var(--platform-border-color)'
                 }}>
-                    <p style={{ 
-                        color: 'var(--platform-text-secondary)',
-                        marginBottom: '1.5rem'
-                    }}>
-                        У вас немає призупинених сайтів.
+                    <div style={{ marginBottom: '1.5rem', color: 'var(--platform-success)' }}>
+                        <IconCheckCircle size={48} />
+                    </div>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
+                        У вас немає призупинених сайтів
+                    </h3>
+                    <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '2rem' }}>
+                        Це чудово! Ви дотримуєтесь правил платформи.
                     </p>
-                    <Link to="/my-sites">
-                        <button className="btn btn-primary">
+                    <Link to="/my-sites" style={{ textDecoration: 'none' }}>
+                        <Button variant="primary" icon={<IconArrowRight size={18}/>}>
                             Перейти до моїх сайтів
-                        </button>
+                        </Button>
                     </Link>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {suspendedSites.map(site => (
                         <div key={site.id} style={siteCardStyle}>
-                            <h4 style={{ 
-                                margin: '0 0 0.5rem 0',
-                                color: 'var(--platform-text-primary)'
-                            }}>
-                                {site.title}
-                            </h4>
-                            <p style={{ 
-                                color: 'var(--platform-text-secondary)',
-                                margin: '0.25rem 0'
-                            }}>
-                                Адреса: {site.site_path}
-                            </p>
-                            <p style={warningTextStyle}>
-                                Заплановане видалення: {new Date(site.deletion_scheduled_for).toLocaleString()}
-                            </p>
-                            <Link to="/support/new-ticket" state={{ site: site }}>
-                                <button className="btn btn-primary">
-                                    Оскаржити
-                                </button>
-                            </Link>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                                <div>
+                                    <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--platform-text-primary)', fontSize: '1.25rem' }}>
+                                        {site.title}
+                                    </h4>
+                                    <p style={{ color: 'var(--platform-text-secondary)', margin: 0, fontSize: '0.95rem' }}>
+                                        Адреса: <strong>{site.site_path}</strong>
+                                    </p>
+                                </div>
+                                <Button 
+                                    variant="danger" 
+                                    size="sm" 
+                                    style={{ cursor: 'default', opacity: 1 }}
+                                >
+                                    Suspended
+                                </Button>
+                            </div>
+
+                            <div style={warningBoxStyle}>
+                                <IconAlertTriangle size={20} />
+                                <span>
+                                    Заплановане видалення: <strong>{new Date(site.deletion_scheduled_for).toLocaleDateString()}</strong>
+                                </span>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                                <Link to="/support/new-ticket" state={{ site: site }} style={{ textDecoration: 'none' }}>
+                                    <Button variant="primary">
+                                        Подати апеляцію
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     ))}
                 </div>

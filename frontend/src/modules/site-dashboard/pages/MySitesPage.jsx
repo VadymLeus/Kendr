@@ -9,11 +9,27 @@ import { useConfirm } from '../../../common/hooks/useConfirm';
 import { 
   IconEdit, IconExternalLink, IconTrash, IconPlus, IconEye, IconCalendar, 
   IconSad, IconLoading, IconDotsVertical, IconGlobe, IconGlobeOff, 
-  IconFileText, IconPause, IconPin
+  IconFileText, IconPause, IconPin, IconStar 
 } from '../../../common/components/ui/Icons';
 import SiteFilters from '../../../common/components/ui/SiteFilters';
 
 const ITEMS_PER_PAGE = 16;
+
+const overlayButtonStyle = {
+    background: 'rgba(0, 0, 0, 0.4)',
+    backdropFilter: 'blur(4px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '50%',
+    width: '32px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: 'white',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+};
 
 const SiteStatusBadge = ({ status }) => {
     const config = {
@@ -69,7 +85,7 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
     const isPublished = site.status === 'published';
 
     return (
-        <div ref={menuRef} style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
+        <div ref={menuRef} style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 20 }}>
             <button 
                 onClick={(e) => {
                     e.preventDefault();
@@ -77,21 +93,11 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
                     setIsOpen(!isOpen);
                 }}
                 style={{
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    color: 'var(--platform-text-secondary)',
-                    transition: 'transform 0.2s'
+                    ...overlayButtonStyle,
+                    background: isOpen ? 'var(--platform-accent)' : overlayButtonStyle.background
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                onMouseEnter={e => !isOpen && (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)')}
+                onMouseLeave={e => !isOpen && (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)')}
                 title="Меню дій"
             >
                 <IconDotsVertical size={18} />
@@ -103,15 +109,15 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
                     right: 0,
                     top: '100%',
                     marginTop: '5px',
-                    background: 'var(--platform-card-bg)',
+                    background: 'var(--platform-card-bg)', 
                     border: '1px solid var(--platform-border-color)',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                     minWidth: '200px',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    padding: '4px 0'
+                    padding: '4px'
                 }}>
                     {isPublished && (
                         <a
@@ -131,7 +137,8 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
                                 alignItems: 'center',
                                 gap: '10px',
                                 width: '100%',
-                                textDecoration: 'none'
+                                textDecoration: 'none',
+                                boxSizing: 'border-box'
                             }}
                             onMouseEnter={e => e.target.style.background = 'var(--platform-bg)'}
                             onMouseLeave={e => e.target.style.background = 'none'}
@@ -223,28 +230,17 @@ const SiteGridCard = ({ site, onTagClick, formatDate, onDelete, onToggleStatus, 
                     onTogglePin(site.id);
                 }}
                 style={{
+                    ...overlayButtonStyle,
                     position: 'absolute',
-                    top: '10px',
-                    left: '10px', 
-                    zIndex: 10,
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    color: isPinned ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                    transition: 'transform 0.2s'
+                    top: '12px', left: '12px', zIndex: 20,
+                    color: isPinned ? '#FFD700' : 'white',
+                    borderColor: isPinned ? '#FFD700' : 'rgba(255, 255, 255, 0.1)'
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)'}
                 title={isPinned ? "Відкріпити" : "Закріпити зверху"}
             >
-                <IconPin size={18} filled={isPinned} />
+                <IconStar size={18} filled={isPinned} />
             </button>
 
             <SiteCardMenu site={site} onToggleStatus={onToggleStatus} onDelete={onDelete} />

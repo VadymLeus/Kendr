@@ -1,17 +1,7 @@
 // frontend/src/modules/site-editor/blocks/Button/ButtonSettings.jsx
 import React from 'react';
+import { commonStyles, ToggleGroup, ToggleSwitch } from '../../components/common/SettingsUI';
 
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '1rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box' 
-};
 const helpTextStyle = {
     fontSize: '0.8rem',
     color: 'var(--platform-text-secondary)',
@@ -20,49 +10,72 @@ const helpTextStyle = {
 
 const ButtonSettings = ({ data, onChange }) => {
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        onChange({ ...data, [name]: type === 'checkbox' ? checked : value });
+    const handleChange = (name, value) => {
+        onChange({ ...data, [name]: value });
     };
+
+    const alignOptions = [
+        { value: 'left', label: '⬅️ Ліво' },
+        { value: 'center', label: '⏺️ Центр' },
+        { value: 'right', label: '➡️ Право' },
+    ];
+
+    const styleOptions = [
+        { value: 'primary', label: 'Основна' },
+        { value: 'secondary', label: 'Другорядна' },
+    ];
 
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Текст кнопки:</label>
-                <input type="text" name="text" value={data.text || ''} onChange={handleChange} style={inputStyle} />
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Текст кнопки:</label>
+                <input 
+                    type="text" 
+                    value={data.text || ''} 
+                    onChange={(e) => handleChange('text', e.target.value)} 
+                    style={commonStyles.input} 
+                />
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Посилання (URL):</label>
-                <input type="text" name="link" value={data.link || '#'} onChange={handleChange} style={inputStyle} placeholder="/page або #anchor" />
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Посилання (URL):</label>
+                <input 
+                    type="text" 
+                    value={data.link || '#'} 
+                    onChange={(e) => handleChange('link', e.target.value)} 
+                    style={commonStyles.input} 
+                    placeholder="/page або #anchor" 
+                />
                 <p style={helpTextStyle}>
                     💡 <strong>/page</strong> - для внутрішніх сторінок<br/>
                     ⚓ <strong>#anchor</strong> - для скролу до блоку
                 </p>
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={{...labelStyle, display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                    <input type="checkbox" name="targetBlank" checked={data.targetBlank || false} onChange={handleChange} style={{width: 'auto'}} />
-                    Відкривати у новій вкладці
-                </label>
+            <div style={commonStyles.formGroup}>
+                <ToggleSwitch 
+                    checked={data.targetBlank || false}
+                    onChange={(val) => handleChange('targetBlank', val)}
+                    label="Відкривати у новій вкладці"
+                />
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Стиль кнопки:</label>
-                <select name="styleType" value={data.styleType || 'primary'} onChange={handleChange} style={inputStyle}>
-                    <option value="primary">Основна (Primary)</option>
-                    <option value="secondary">Другорядна (Secondary)</option>
-                </select>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Стиль кнопки:</label>
+                <ToggleGroup 
+                    options={styleOptions}
+                    value={data.styleType || 'primary'}
+                    onChange={(val) => handleChange('styleType', val)}
+                />
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Вирівнювання:</label>
-                <select name="alignment" value={data.alignment || 'center'} onChange={handleChange} style={inputStyle}>
-                    <option value="left">По лівому краю</option>
-                    <option value="center">По центру</option>
-                    <option value="right">По правому краю</option>
-                </select>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Вирівнювання:</label>
+                <ToggleGroup 
+                    options={alignOptions}
+                    value={data.alignment || 'center'}
+                    onChange={(val) => handleChange('alignment', val)}
+                />
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 // frontend/src/modules/site-editor/blocks/Footer/FooterSettings.jsx
 import React, { useState } from 'react';
+import { commonStyles } from '../../components/common/SettingsUI';
 
 const FooterSettings = ({ initialData, onSave, onClose }) => {
     const [data, setData] = useState(initialData);
@@ -16,34 +17,37 @@ const FooterSettings = ({ initialData, onSave, onClose }) => {
 
     return (
         <form onSubmit={handleSave}>
-            <div className="form-group">
-                <label>Основний текст (наприклад, копірайт):</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Основний текст (наприклад, копірайт):</label>
                 <input 
                     type="text" 
                     name="copyright" 
                     value={data.copyright || `© ${new Date().getFullYear()} Ваш Сайт. Всі права захищені.`} 
                     onChange={handleChange} 
                     required 
+                    style={commonStyles.input}
                 />
             </div>
             
-            <div className="form-group">
-                <label>Посилання на політику конфіденційності:</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Посилання на політику конфіденційності:</label>
                 <input 
                     type="url" 
                     name="privacyLink" 
                     value={data.privacyLink || '#'} 
                     onChange={handleChange} 
+                    style={commonStyles.input}
                 />
             </div>
 
-            <div className="form-group">
-                <label>Посилання на умови використання:</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Посилання на умови використання:</label>
                 <input 
                     type="url" 
                     name="termsLink" 
                     value={data.termsLink || '#'} 
                     onChange={handleChange} 
+                    style={commonStyles.input}
                 />
             </div>
 

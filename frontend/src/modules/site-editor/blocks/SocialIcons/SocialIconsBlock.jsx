@@ -1,7 +1,7 @@
 // frontend/src/modules/site-editor/blocks/SocialIcons/SocialIconsBlock.jsx
 import React from 'react';
 
-const IconWrapper = ({ children, href, isEditorPreview }) => (
+const IconWrapper = ({ children, href, isEditorPreview, baseColor }) => (
     <a
         href={href}
         target="_blank"
@@ -10,7 +10,7 @@ const IconWrapper = ({ children, href, isEditorPreview }) => (
         style={{
             display: 'inline-block',
             margin: '0 8px',
-            color: 'var(--site-text-primary)', 
+            color: baseColor, 
             textDecoration: 'none',
             opacity: isEditorPreview ? 0.8 : 1, 
             transition: 'color 0.2s ease, transform 0.2s ease'
@@ -20,7 +20,7 @@ const IconWrapper = ({ children, href, isEditorPreview }) => (
             e.currentTarget.style.transform = 'scale(1.1)';
         }}
         onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--site-text-primary)';
+            e.currentTarget.style.color = baseColor;
             e.currentTarget.style.transform = 'scale(1)';
         }}
     >
@@ -37,7 +37,11 @@ const YouTubeIcon = () => <path d="M21.582 6.186A2.69 2.69 0 0 0 19.7 4.298C18.0
 const TikTokIcon = () => <path d="M12.525 0.02c1.31-.02 2.61-.01 3.91.02.3.01.6.02.89.02.23.01.47.01.7.02.5.01 1 .03 1.5.05.24.01.48.02.72.04.24.01.48.03.72.05.49.03.98.07 1.46.13.48.05.96.12 1.44.21.48.09.95.20 1.41.33.46.13.91.28 1.35.45.43.17.86.37 1.27.59.4.22.8.48 1.18.76.38.28.74.60 1.08.96.34.36.65.75.94 1.17.29.42.55.87.78 1.34.23.47.43.96.59 1.47.16.51.29 1.04.38 1.58.10.54.17 1.09.21 1.64.04.55.05 1.10.05 1.65 0 .56-.01 1.11-.04 1.67-.03.56-.09 1.11-.18 1.66-.09.55-.22 1.09-.39 1.62-.17.53-.38 1.05-.63 1.55-.25.50-.54.98-.87 1.43-.33.45-.70.88-1.10 1.28-.40.40-.84.78-1.30 1.13-.47.35-.96.67-1.47.97-.51.30-1.04.57-1.58.80-.54.23-1.09.43-1.64.60-.55.17-1.10.30-1.65-.41-.56.11-1.11.20-1.67.26-.56.06-1.11.10-1.66.13-.55.03-1.10.04-1.65.04h-.45c-.55 0-1.10-.01-1.65-.04-.55-.03-1.10-.07-1.65-.13-.55-.06-1.10-.13-1.64-.21-.54-.08-1.08-.19-1.61-.32-.53-.13-1.05-.29-1.56-.48-.51-.19-1.01-.41-1.50-.66-.49-.25-.96-.54-1.42-.85-.45-.31-.89-.66-1.30-.10.04-.41-.39-.78-.73-1.16-.34-.38-.66-.79-.95-1.23-.29-.44-.55-.90-.79-1.38-.24-.48-.45-.98-.63-1.49-.18-.51-.33-1.04-.45-1.57-.12-.53-.21-1.07-.27-1.61-.06-.54-.10-1.08-.11-1.62 0-.55.01-1.10.04-1.65.03-.56.09-1.11.18-1.66.09-.55.22-1.09.39-1.62.17-.53.38-1.05.63-1.55.25-.50.54-.98.87-1.43.33-.45.70-.88 1.10-1.28.40-.40.84-.78 1.30-1.13.47-.35.96-.67 1.47-.97.51-.30 1.04-.57 1.58-.80.54-.23 1.09-.43 1.64-.60.55-.17 1.10-.30 1.65-.41.56-.11 1.11-.20 1.67-.26.56-.06 1.11-.10 1.66-.13.55-.03 1.10-.04 1.65-.04h.45c.15 0 .3 0 .45 0s.3 0 .45 0z"></path>;
 
 const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
-    const { alignment, facebook, instagram, telegram, youtube, tiktok } = blockData;
+    const { alignment, theme_mode = 'auto', facebook, instagram, telegram, youtube, tiktok } = blockData;
+
+    let baseColor = 'var(--site-text-primary)';
+    if (theme_mode === 'light') baseColor = '#1a202c';
+    if (theme_mode === 'dark') baseColor = '#ffffff';
 
     const socialMap = {
         facebook: { href: facebook, icon: <FacebookIcon /> },
@@ -89,7 +93,7 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
         }}>
             {Object.values(socialMap).map((net, index) => (
                 net.href ? (
-                    <IconWrapper key={index} href={net.href} isEditorPreview={isEditorPreview}>
+                    <IconWrapper key={index} href={net.href} isEditorPreview={isEditorPreview} baseColor={baseColor}>
                         {net.icon}
                     </IconWrapper>
                 ) : null

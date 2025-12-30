@@ -2,7 +2,6 @@
 const db = require('../config/db');
 
 class Warning {
-    // Створити нове попередження
     static async create(userId, siteId, reason = null) {
         await db.query(
             'INSERT INTO user_warnings (user_id, site_id, reason_note) VALUES (?, ?, ?)',

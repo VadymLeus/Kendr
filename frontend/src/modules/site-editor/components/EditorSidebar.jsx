@@ -1,8 +1,21 @@
 // frontend/src/modules/site-editor/components/EditorSidebar.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AddBlocksTab from '../tabs/AddBlocksTab';
 import LayersTab from '../tabs/LayersTab';
 import SettingsTab from '../tabs/SettingsTab';
+import CustomSelect from '../../../common/components/ui/CustomSelect';
+
+import { 
+    IconSave, 
+    IconPlus, 
+    IconLayers, 
+    IconSettings, 
+    IconArrowLeft,
+    IconStar,
+    IconLayoutHeader,
+    IconLayoutFooter,
+    IconFile
+} from '../../../common/components/ui/Icons';
 
 const EditorSidebar = ({
     blocks,
@@ -46,6 +59,34 @@ const EditorSidebar = ({
         onSave(blocks);
     };
 
+    const pageOptions = useMemo(() => {
+        return (allPages || []).map(page => {
+            let icon = IconFile;
+            let iconStyle = {};
+            let iconProps = {};
+            let label = page.name;
+
+            if (page.id === 'header') {
+                icon = IconLayoutHeader;
+            } else if (page.id === 'footer') {
+                icon = IconLayoutFooter;
+            } else if (page.is_homepage) {
+                icon = IconStar;
+                iconStyle = { color: 'var(--platform-accent)', fill: 'var(--platform-accent)' };
+                iconProps = { filled: true };
+            }
+
+            return {
+                value: page.id,
+                label: label,
+                icon: icon,
+                iconStyle: iconStyle,
+                iconProps: iconProps
+            };
+        });
+    }, [allPages]);
+
+
     const saveButtonStyle = {
         width: '100%',
         backgroundColor: 'var(--platform-accent)',
@@ -57,7 +98,11 @@ const EditorSidebar = ({
         fontWeight: '600',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px'
     };
 
     const saveButtonHoverStyle = {
@@ -77,7 +122,11 @@ const EditorSidebar = ({
         fontWeight: activeTab === tabName ? '600' : '400',
         transition: 'all 0.2s ease',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '6px'
     });
 
     const tabHoverStyle = (tabName) => ({
@@ -89,23 +138,6 @@ const EditorSidebar = ({
         padding: '1rem',
         borderBottom: '1px solid var(--platform-border-color)',
         background: 'var(--platform-card-bg)'
-    };
-    
-    const selectStyle = {
-        width: '100%',
-        padding: '0.75rem',
-        border: '1px solid var(--platform-border-color)',
-        borderRadius: '6px',
-        background: 'var(--platform-bg)',
-        color: 'var(--platform-text-primary)',
-        fontWeight: '500',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease'
-    };
-
-    const selectHoverStyle = {
-        borderColor: 'var(--platform-accent)',
-        boxShadow: '0 0 0 1px var(--platform-accent)'
     };
 
     const handleMouseOver = (element, hoverStyle) => {
@@ -133,10 +165,10 @@ const EditorSidebar = ({
                 <button
                     onClick={handleSave}
                     style={saveButtonStyle}
-                    onMouseOver={(e) => handleMouseOver(e.target, saveButtonHoverStyle)}
-                    onMouseOut={(e) => handleMouseOut(e.target, saveButtonStyle)}
+                    onMouseOver={(e) => handleMouseOver(e.currentTarget, saveButtonHoverStyle)}
+                    onMouseOut={(e) => handleMouseOut(e.currentTarget, saveButtonStyle)}
                 >
-                    💾 Зберегти зміни
+                    <IconSave size={18} /> Зберегти зміни
                 </button>
             </div>
 
@@ -150,8 +182,8 @@ const EditorSidebar = ({
                 }}>
                     Поточна сторінка:
                 </label>
-                <select
-                    style={selectStyle}
+                
+                <CustomSelect 
                     value={currentPageId || ''}
                     onChange={(e) => {
                         const val = e.target.value;
@@ -161,16 +193,10 @@ const EditorSidebar = ({
                             onSelectPage(parseInt(val, 10));
                         }
                     }}
+                    options={pageOptions}
+                    placeholder="Оберіть сторінку"
                     disabled={!allPages || allPages.length === 0}
-                    onMouseOver={(e) => handleMouseOver(e.target, selectHoverStyle)}
-                    onMouseOut={(e) => handleMouseOut(e.target, selectStyle)}
-                >
-                    {(allPages || []).map(page => (
-                        <option key={page.id} value={page.id}>
-                            {page.is_homepage ? `🏠 ${page.name}` : page.name}
-                        </option>
-                    ))}
-                </select>
+                />
             </div>
 
             <nav style={{ 
@@ -183,28 +209,28 @@ const EditorSidebar = ({
                         <button 
                             style={tabStyle('add')} 
                             onClick={() => handleTabChange('add')}
-                            onMouseOver={(e) => handleMouseOver(e.target, tabHoverStyle('add'))}
-                            onMouseOut={(e) => handleMouseOut(e.target, tabStyle('add'))}
+                            onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('add'))}
+                            onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('add'))}
                         >
-                            ➕ Додати
+                            <IconPlus size={16} /> Додати
                         </button>
                         <button 
                             style={tabStyle('layers')} 
                             onClick={() => handleTabChange('layers')}
-                            onMouseOver={(e) => handleMouseOver(e.target, tabHoverStyle('layers'))}
-                            onMouseOut={(e) => handleMouseOut(e.target, tabStyle('layers'))}
+                            onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('layers'))}
+                            onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('layers'))}
                         >
-                            🗂️ Шари
+                            <IconLayers size={16} /> Шари
                         </button>
                     </>
                 )}
                 <button 
                     style={tabStyle('settings')} 
                     onClick={() => handleTabChange('settings')}
-                    onMouseOver={(e) => handleMouseOver(e.target, tabHoverStyle('settings'))}
-                    onMouseOut={(e) => handleMouseOut(e.target, tabStyle('settings'))}
+                    onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('settings'))}
+                    onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('settings'))}
                 >
-                    ⚙️ Налаш.
+                    <IconSettings size={16} /> Налаш.
                 </button>
             </nav>
 
@@ -212,7 +238,7 @@ const EditorSidebar = ({
                  overflowY: 'auto', 
                  flex: 1, 
                  padding: '1rem',
-                 background: 'var(--platform-sidebar-bg)'
+                 background: 'var(--platform-sidebar-bg)',
              }}
                  className="custom-scrollbar"
             >
@@ -254,7 +280,9 @@ const EditorSidebar = ({
                                 e.currentTarget.style.boxShadow = 'none';
                             }}
                             >
-                                <p>👈 Натисніть на блок хедера зліва, щоб налаштувати його.</p>
+                                <p style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                                    <IconArrowLeft size={16} /> Натисніть на блок хедера зліва, щоб налаштувати його.
+                                </p>
                             </div>
                         )}
                         <SettingsTab 

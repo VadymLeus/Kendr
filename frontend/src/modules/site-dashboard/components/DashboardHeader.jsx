@@ -332,7 +332,7 @@ const DashboardHeader = ({
                     font-weight: 500;
                 }
 
-                @media (max-width: 1400px) {
+                @media (max-width: 1600px) {
                     .header-left,
                     .header-right {
                         width: auto;

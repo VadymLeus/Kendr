@@ -3,6 +3,7 @@ const FormSubmission = require('../models/FormSubmission');
 const Site = require('../models/Site');
 const User = require('../models/User');
 const { sendSubmissionNotification } = require('../utils/emailService');
+const db = require('../config/db');
 
 exports.submitForm = async (req, res, next) => {
     try {
@@ -15,7 +16,7 @@ exports.submitForm = async (req, res, next) => {
 
         const submissionId = await FormSubmission.create(siteId, req.body);
 
-        const [siteRows] = await require('../db').query(
+        const [siteRows] = await db.query(
             'SELECT user_id, title FROM sites WHERE id = ?', [siteId]
         );
 
@@ -77,7 +78,7 @@ exports.updateStatus = async (req, res, next) => {
         const site = await Site.findByIdAndUserId(siteId, req.user.id);
         if (!site) return res.status(403).json({ message: 'Доступ заборонено.' });
 
-        const [rows] = await require('../db').query('SELECT form_data FROM form_submissions WHERE id = ?', [submissionId]);
+        const [rows] = await db.query('SELECT form_data FROM form_submissions WHERE id = ?', [submissionId]);
         if (!rows[0]) return res.status(404).json({ message: 'Заявку не знайдено' });
 
         let formData = rows[0].form_data;
@@ -85,7 +86,7 @@ exports.updateStatus = async (req, res, next) => {
 
         formData.status = status;
 
-        await require('../db').query(
+        await db.query(
             'UPDATE form_submissions SET form_data = ? WHERE id = ?', 
             [JSON.stringify(formData), submissionId]
         );

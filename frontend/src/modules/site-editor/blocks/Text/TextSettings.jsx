@@ -2,39 +2,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { FONT_LIBRARY } from '../../core/editorConfig';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '1rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box',
-    resize: 'none'
-};
-const toggleButtonContainerStyle = {
-    display: 'flex',
-    borderRadius: '6px',
-    border: '1px solid var(--platform-border-color)',
-    overflow: 'hidden'
-};
-const toggleButtonStyle = (isActive) => ({
-    flex: 1,
-    padding: '0.75rem',
-    border: 'none',
-    background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
-    color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
-    cursor: 'pointer',
-    fontWeight: isActive ? 'bold' : 'normal',
-    transition: 'background 0.2s, color 0.2s'
-});
+import { commonStyles, ToggleGroup } from '../../components/common/SettingsUI';
 
 const TextSettings = ({ data, onChange }) => {
     const textareaRef = useRef(null);
-    
     const [localContent, setLocalContent] = useState(data.content || '');
 
     useEffect(() => {
@@ -82,10 +53,16 @@ const TextSettings = ({ data, onChange }) => {
         { value: 'h3', label: 'Заголовок 3 (h3)' }
     ];
 
+    const alignOptions = [
+        { value: 'left', label: 'Ліво' },
+        { value: 'center', label: 'Центр' },
+        { value: 'right', label: 'Право' }
+    ];
+
     return (
         <div>
-            <div className="form-group" style={formGroupStyle}>
-                <label style={labelStyle}>Вміст блоку:</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Вміст блоку:</label>
                 <textarea 
                     ref={textareaRef}
                     name="content" 
@@ -94,56 +71,39 @@ const TextSettings = ({ data, onChange }) => {
                     onBlur={handleContentBlur}
                     placeholder="Введіть основний текст тут..."
                     style={{
-                        ...inputStyle, 
+                        ...commonStyles.input, 
                         minHeight: '150px',
+                        resize: 'none',
                         overflow: 'hidden'
                     }}
                 />
             </div>
 
-            <div className="form-group" style={formGroupStyle}>
-                <label style={labelStyle}>Вирівнювання:</label>
-                <div style={toggleButtonContainerStyle}>
-                    <button 
-                        type="button" 
-                        style={toggleButtonStyle(data.alignment === 'left' || !data.alignment)} 
-                        onClick={() => handleAlignmentChange('left')}
-                    >
-                        Ліво
-                    </button>
-                    <button 
-                        type="button" 
-                        style={toggleButtonStyle(data.alignment === 'center')} 
-                        onClick={() => handleAlignmentChange('center')}
-                    >
-                        Центр
-                    </button>
-                    <button 
-                        type="button" 
-                        style={toggleButtonStyle(data.alignment === 'right')} 
-                        onClick={() => handleAlignmentChange('right')}
-                    >
-                        Право
-                    </button>
-                </div>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Вирівнювання:</label>
+                <ToggleGroup 
+                    options={alignOptions}
+                    value={data.alignment || 'left'}
+                    onChange={handleAlignmentChange}
+                />
             </div>
 
-            <div className="form-group" style={formGroupStyle}>
-                <label style={labelStyle}>Стиль та Шрифт:</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Стиль та Шрифт:</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <CustomSelect 
                         name="style" 
                         value={data.style || 'p'} 
-                        onChange={(e) => handleAttributeChange(e)}
+                        onChange={handleAttributeChange}
                         options={styleOptions}
-                        style={inputStyle}
+                        style={commonStyles.input}
                     />
                     <CustomSelect
                         name="fontFamily"
                         value={data.fontFamily || 'global'}
                         onChange={(e) => onChange({ ...data, fontFamily: e.target.value }, true)}
                         options={FONT_LIBRARY}
-                        style={inputStyle}
+                        style={commonStyles.input}
                     />
                 </div>
             </div>

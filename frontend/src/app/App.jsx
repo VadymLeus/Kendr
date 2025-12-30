@@ -9,10 +9,7 @@ import { ConfirmProvider } from './providers/ConfirmContext';
 
 import Layout from '../common/components/layout/Layout';
 
-import AdminRouteGuard from './guards/AdminRouteGuard';
-import PublicOnlyRouteGuard from './guards/PublicOnlyRouteGuard';
-import AdminAccessGuard from './guards/AdminAccessGuard';
-import AuthenticatedRouteGuard from './guards/AuthenticatedRouteGuard';
+import ProtectedRoute from './guards/ProtectedRoute';
 
 import HomePage from '../pages/HomePage';
 import RulesPage from '../pages/RulesPage';
@@ -47,7 +44,7 @@ function App() {
                 <Routes>
                     <Route element={<Layout />}>
                         
-                        <Route element={<PublicOnlyRouteGuard />}>
+                        <Route element={<ProtectedRoute onlyPublic={true} />}>
                             <Route path="/login" element={<AuthPage />} />
                             <Route path="/register" element={<AuthPage />} />
                             <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -63,12 +60,12 @@ function App() {
                         <Route path="/auth/success" element={<AuthSuccessPage />} />
                         <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-                        <Route element={<AuthenticatedRouteGuard />}>
+                        <Route element={<ProtectedRoute />}>
                             <Route path="/settings" element={<SettingsPage />} />
                             <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
                         </Route>
 
-                        <Route element={<AdminAccessGuard />}>
+                        <Route element={<ProtectedRoute excludeAdmin={true} />}>
                             <Route path="/my-sites" element={<MySitesPage />} />
                             <Route path="/create-site" element={<CreateSitePage />} />
                             <Route path="/cart" element={<CartPage />} />
@@ -80,7 +77,7 @@ function App() {
                             <Route path="/support/my-tickets" element={<MyTicketsPage />} />
                         </Route>
 
-                        <Route element={<AdminRouteGuard />}>
+                        <Route element={<ProtectedRoute requireAdmin={true} />}>
                             <Route path="/admin" element={<AdminDashboardPage />} />
                             <Route path="/admin/support" element={<AdminSupportPage />} />
                         </Route>

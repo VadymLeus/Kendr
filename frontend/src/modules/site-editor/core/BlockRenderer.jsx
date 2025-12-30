@@ -1,6 +1,7 @@
 // frontend/src/modules/site-editor/core/BlockRenderer.jsx
 import React, { Suspense, lazy } from 'react';
 import AnimationWrapper from '../../site-render/components/AnimationWrapper';
+import { IconAlertTriangle, IconConstruction, IconLoading } from '../../../common/components/ui/Icons';
 
 const HeroBlock = lazy(() => import('../blocks/Hero/HeroBlock'));
 const TextBlock = lazy(() => import('../blocks/Text/TextBlock'));
@@ -53,7 +54,9 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                 margin: '1rem 0',
                 border: isEditorPreview ? `1px dashed ${borderColor}` : 'none'
             }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.7 }}>🏗️</div>
+                <div style={{ marginBottom: '1rem', opacity: 0.7, display: 'flex', justifyContent: 'center' }}>
+                    <IconConstruction size={48} />
+                </div>
                 <h3 style={{ 
                     color: textPrimary, 
                     marginBottom: '0.5rem',
@@ -99,9 +102,10 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                         >
                             <div style={{ 
                                 fontSize: '1.5rem', 
-                                marginBottom: '0.5rem' 
+                                marginBottom: '0.5rem',
+                                display: 'flex', justifyContent: 'center'
                             }}>
-                                ⚠️
+                                <IconAlertTriangle size={32} />
                             </div>
                             <div style={{ fontWeight: '500' }}>
                                 Невідомий тип блоку
@@ -145,11 +149,11 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                                         color: textSecondary
                                     }}>
                                         <div style={{ 
-                                            fontSize: '1.5rem', 
                                             marginBottom: '0.5rem',
-                                            opacity: 0.7
+                                            opacity: 0.7,
+                                            display: 'flex', justifyContent: 'center'
                                         }}>
-                                            ⏳
+                                            <IconLoading size={24} />
                                         </div>
                                         <div style={{ fontWeight: '500' }}>
                                             Завантаження блоку

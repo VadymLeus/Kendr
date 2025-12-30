@@ -1,33 +1,6 @@
 // frontend/src/modules/site-editor/blocks/SocialIcons/SocialIconsSettings.jsx
 import React from 'react';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '0.9rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box'
-};
-const toggleButtonContainerStyle = {
-    display: 'flex',
-    borderRadius: '6px',
-    border: '1px solid var(--platform-border-color)',
-    overflow: 'hidden'
-};
-const toggleButtonStyle = (isActive) => ({
-    flex: 1,
-    padding: '0.75rem',
-    border: 'none',
-    background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
-    color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
-    cursor: 'pointer',
-    fontWeight: isActive ? 'bold' : 'normal',
-    transition: 'background 0.2s, color 0.2s'
-});
+import { commonStyles, ToggleGroup, SectionTitle } from '../../components/common/SettingsUI';
 
 const socialNetworks = [
     { key: 'facebook', name: 'Facebook' },
@@ -46,46 +19,58 @@ const SocialIconsSettings = ({ data, onChange }) => {
         onChange({ ...data, alignment });
     };
 
+    const handleThemeChange = (theme_mode) => {
+        onChange({ ...data, theme_mode });
+    };
+
+    const alignOptions = [
+        { value: 'left', label: 'Ліво' },
+        { value: 'center', label: 'Центр' },
+        { value: 'right', label: 'Право' }
+    ];
+
+    const themeOptions = [
+        { value: 'auto', label: '🌓 Авто' },
+        { value: 'light', label: '☀️ Темні іконки' },
+        { value: 'dark', label: '🌙 Світлі іконки' },
+    ];
+
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Вирівнювання:</label>
-                <div style={toggleButtonContainerStyle}>
-                    <button 
-                        type="button" 
-                        style={toggleButtonStyle(data.alignment === 'left' || !data.alignment)} 
-                        onClick={() => handleAlignmentChange('left')}
-                    >
-                        Ліво
-                    </button>
-                    <button 
-                        type="button" 
-                        style={toggleButtonStyle(data.alignment === 'center')} 
-                        onClick={() => handleAlignmentChange('center')}
-                    >
-                        Центр
-                    </button>
-                    <button 
-                        type="button" 
-                        style={toggleButtonStyle(data.alignment === 'right')} 
-                        onClick={() => handleAlignmentChange('right')}
-                    >
-                        Право
-                    </button>
-                </div>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Вирівнювання:</label>
+                <ToggleGroup 
+                    options={alignOptions}
+                    value={data.alignment || 'left'}
+                    onChange={handleAlignmentChange}
+                />
+            </div>
+
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Колір іконок:</label>
+                <ToggleGroup 
+                    options={themeOptions}
+                    value={data.theme_mode || 'auto'}
+                    onChange={handleThemeChange}
+                />
+                <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
+                    Оберіть "Темні іконки" для світлого фону, "Світлі" для темного.
+                </small>
             </div>
 
             <hr style={{margin: '2rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
 
+            <SectionTitle>Посилання</SectionTitle>
+
             {socialNetworks.map(net => (
-                <div style={formGroupStyle} key={net.key}>
-                    <label style={{...labelStyle, fontSize: '0.9rem'}}>{net.name} URL:</label>
+                <div style={commonStyles.formGroup} key={net.key}>
+                    <label style={commonStyles.label}>{net.name} URL:</label>
                     <input
                         type="text"
                         name={net.key}
                         value={data[net.key] || ''}
                         onChange={handleChange}
-                        style={inputStyle}
+                        style={commonStyles.input}
                         placeholder={`https://www.${net.key.toLowerCase()}.com/...`}
                     />
                 </div>

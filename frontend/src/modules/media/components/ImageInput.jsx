@@ -1,36 +1,76 @@
 // frontend/src/modules/media/components/ImageInput.jsx
 import React, { useState } from 'react';
 import MediaPickerModal from './MediaPickerModal';
+import ImageCropperModal from "../../../common/components/ui/ImageCropperModal";
+import apiClient from "../../../common/services/api";
+import { toast } from 'react-toastify';
+import { IconUpload, IconX } from "../../../common/components/ui/Icons";
 
 const API_URL = 'http://localhost:5000';
 
-const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, triggerStyle = null, children }) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+const ImageInput = ({ 
+    value, 
+    onChange, 
+    aspect = null, 
+    circularCrop = false, 
+    triggerStyle = null, 
+    children 
+}) => {
+    const [isPickerOpen, setIsPickerOpen] = useState(false);
+    const [isCropperOpen, setIsCropperOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState(null);
     const [isHovered, setIsHovered] = useState(false);
 
     const safeValue = typeof value === 'string' ? value : '';
 
-    const handleSelectImage = (fileUrl, fileData) => {
+    const handleSelectFromPicker = (file) => {
+        if (!file) return;
+
+        const fullPath = `${API_URL}${file.path_full}`;
+
+        if (aspect) {
+            setCropImageSrc(fullPath);
+            setIsPickerOpen(false);
+            setIsCropperOpen(true);
+        } else {
+            triggerChange(file.path_full);
+            setIsPickerOpen(false);
+        }
+    };
+
+    const handleCropComplete = async (croppedFile) => {
+        const formData = new FormData();
+        formData.append('mediaFile', croppedFile);
+
+        try {
+            const res = await apiClient.post('/media/upload', formData);
+            if (res.data && res.data.path_full) {
+                triggerChange(res.data.path_full);
+                toast.success('Зображення оновлено');
+            }
+        } catch (error) {
+            console.error("Upload cropped error:", error);
+            toast.error('Помилка завантаження обробленого зображення');
+        } finally {
+            setIsCropperOpen(false);
+            setCropImageSrc(null);
+        }
+    };
+
+    const triggerChange = (newValue) => {
         const syntheticEvent = {
             target: {
-                value: fileUrl
+                value: newValue
             }
         };
-
         if (onChange) {
             onChange(syntheticEvent);
         }
-        setIsModalOpen(false);
     };
 
     const handleClear = (e) => {
         e.stopPropagation();
-        const syntheticEvent = {
-            target: {
-                value: ''
-            }
-        };
-        onChange(syntheticEvent);
+        triggerChange('');
     };
 
     const defaultContainerStyle = {
@@ -83,9 +123,9 @@ const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, trig
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        fontSize: '14px',
         zIndex: 10,
-        transition: 'background 0.2s'
+        transition: 'background 0.2s',
+        padding: 0
     };
 
     const overlayStyle = {
@@ -104,14 +144,24 @@ const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, trig
     if (children) {
         return (
             <>
-                <div onClick={() => setIsModalOpen(true)} style={triggerStyle}>
+                <div onClick={() => setIsPickerOpen(true)} style={triggerStyle}>
                     {children}
                 </div>
+                
                 <MediaPickerModal 
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onSelect={handleSelectImage}
+                    isOpen={isPickerOpen}
+                    onClose={() => setIsPickerOpen(false)}
+                    onSelect={handleSelectFromPicker}
+                    allowedTypes={['image']}
+                />
+
+                <ImageCropperModal 
+                    isOpen={isCropperOpen}
+                    onClose={() => setIsCropperOpen(false)}
+                    imageSrc={cropImageSrc}
+                    onCropComplete={handleCropComplete}
                     aspect={aspect}
+                    circularCrop={circularCrop}
                 />
             </>
         );
@@ -121,7 +171,7 @@ const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, trig
         <div className="image-input-container" style={{height: '100%'}}>
             <div 
                 style={appliedContainerStyle}
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => setIsPickerOpen(true)}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
@@ -136,7 +186,7 @@ const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, trig
                                 e.target.src = "https://placehold.co/400x300?text=Error"; 
                             }}
                         />
-                        <div style={overlayStyle}>🖊️ Змінити</div>
+                        <div style={overlayStyle}>Змінити</div>
                         <button 
                             type="button" 
                             style={deleteButtonStyle}
@@ -145,23 +195,31 @@ const ImageInput = ({ value, onChange, aspect = null, circularCrop = false, trig
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--platform-danger)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'}
                         >
-                            ✕
+                            <IconX size={14} />
                         </button>
                     </>
                 ) : (
                     <div style={placeholderStyle}>
-                        <span style={{fontSize: '1.5rem'}}>📷</span>
+                        <IconUpload size={24} style={{ opacity: 0.7 }} />
                         <span>Вибрати фото...</span>
                     </div>
                 )}
             </div>
             
             <MediaPickerModal 
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSelect={handleSelectImage}
+                isOpen={isPickerOpen}
+                onClose={() => setIsPickerOpen(false)}
+                onSelect={handleSelectFromPicker}
+                allowedTypes={['image']}
+            />
+
+            <ImageCropperModal 
+                isOpen={isCropperOpen}
+                onClose={() => setIsCropperOpen(false)}
+                imageSrc={cropImageSrc}
+                onCropComplete={handleCropComplete}
                 aspect={aspect}
-                allowedTypes="image"
+                circularCrop={circularCrop}
             />
         </div>
     );

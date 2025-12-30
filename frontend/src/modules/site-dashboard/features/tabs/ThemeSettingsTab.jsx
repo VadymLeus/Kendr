@@ -1,44 +1,16 @@
-// frontend/src/modules/site-dashboard/features/tabs/ThemeSettingsTab.jsx
+// frontend/src/modules/site-dashboard/tabs/ThemeSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
-import SaveTemplateModal from '../../components/SaveTemplateModal';
-import apiClient from '../../../../common/services/api';
-import { toast } from 'react-toastify';
-import { useConfirm } from '../../../../common/hooks/useConfirm';
 import FontPicker from '../../../site-render/components/FontPicker';
-
-const PRESET_COLORS = [
-    { id: 'green', color: '#48bb78', name: 'Зелений' },
-    { id: 'orange', color: '#ed8936', name: 'Помаранчевий' },
-    { id: 'blue', color: '#4299e1', name: 'Синій' },
-    { id: 'red', color: '#f56565', name: 'Червоний' },
-    { id: 'purple', color: '#9f7aea', name: 'Фіолетовий' },
-    { id: 'yellow', color: '#ecc94b', name: 'Жовтий' },
-    { id: 'gray', color: '#718096', name: 'Сірий' },
-    { id: 'black', color: '#000000', name: 'Чорний' },
-];
-
-export const resolveAccentColor = (val) => {
-    const preset = PRESET_COLORS.find(p => p.id === val);
-    return preset ? preset.color : (val || '#ed8936');
-};
-
-const isLightColor = (hexColor) => {
-    if (!hexColor) return false;
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    return brightness > 128;
-};
+import RangeSlider from '../../../../common/components/ui/RangeSlider';
+import ThemeModeSelector from '../../../../common/components/ui/ThemeModeSelector';
+import AccentColorSelector from '../../../../common/components/ui/AccentColorSelector';
+import { resolveAccentColor, isLightColor } from '../../../../common/utils/themeUtils';
+import { 
+    IconPalette, 
+    IconType 
+} from '../../../../common/components/ui/Icons';
 
 const ThemeSettingsTab = ({ siteData, onUpdate }) => {
-    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-    const [templates, setTemplates] = useState([]);
-    const [loadingTemplates, setLoadingTemplates] = useState(false);
-    const [sharedFonts, setSharedFonts] = useState([]);
-    const { confirm } = useConfirm();
-    
     const [themeData, setThemeData] = useState({
         site_theme_mode: siteData.site_theme_mode || 'light',
         site_theme_accent: siteData.site_theme_accent || 'orange',
@@ -50,13 +22,6 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
     });
 
     const currentAccentHex = resolveAccentColor(themeData.site_theme_accent);
-    const isPreset = PRESET_COLORS.some(p => p.id === themeData.site_theme_accent);
-    const currentPreset = PRESET_COLORS.find(p => p.id === themeData.site_theme_accent);
-
-    useEffect(() => {
-        fetchTemplates();
-        fetchSharedFonts();
-    }, []);
 
     useEffect(() => {
         setThemeData({
@@ -70,353 +35,86 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
         });
     }, [siteData]);
 
-    const fetchSharedFonts = async () => {
-        try {
-            const res = await apiClient.get('/media');
-            const fonts = res.data.filter(f => 
-                f.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(f.original_file_name)
-            );
-            setSharedFonts(fonts);
-        } catch (error) {
-            console.error("Error fetching shared fonts", error);
-            toast.error('Помилка завантаження шрифтів');
-        }
-    };
-
-    const fetchTemplates = async () => {
-        setLoadingTemplates(true);
-        try {
-            const res = await apiClient.get('/templates/personal');
-            setTemplates(res.data);
-        } catch (error) {
-            console.error("Error fetching templates:", error);
-            toast.error('Помилка завантаження шаблонів');
-        } finally {
-            setLoadingTemplates(false);
-        }
-    };
-
     const updateThemeSetting = (key, value) => {
         const newData = { ...themeData, [key]: value };
         setThemeData(newData);
-        
-        if (onUpdate) {
-            onUpdate({ [key]: value });
-        }
+        if (onUpdate) onUpdate({ [key]: value });
     };
 
     const updateThemeSettings = (key, value) => {
-        const newThemeSettings = { 
-            ...themeData.theme_settings, 
-            [key]: value 
-        };
-        const newData = { 
-            ...themeData, 
-            theme_settings: newThemeSettings 
-        };
+        const newThemeSettings = { ...themeData.theme_settings, [key]: value };
+        const newData = { ...themeData, theme_settings: newThemeSettings };
         setThemeData(newData);
-        
-        if (onUpdate) {
-            onUpdate({ theme_settings: newThemeSettings });
-        }
+        if (onUpdate) onUpdate({ theme_settings: newThemeSettings });
     };
 
-    const handleColorChange = (colorValue) => {
-        updateThemeSetting('site_theme_accent', colorValue);
+    const container = { maxWidth: '900px', margin: '0 auto', padding: '0 16px' };
+    const header = { marginBottom: '2rem' };
+    const card = { 
+        background: 'var(--platform-card-bg)', 
+        borderRadius: '16px', 
+        border: '1px solid var(--platform-border-color)', 
+        padding: '32px', 
+        marginBottom: '24px', 
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)' 
     };
+    const cardTitle = { fontSize: '1.3rem', fontWeight: '600', color: 'var(--platform-text-primary)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '10px' };
+    const section = { marginBottom: '32px' };
 
-    const handleSaveTemplate = async (name, description, overwriteId) => {
-        try {
-            if (overwriteId) {
-                await apiClient.put(`/templates/personal/${overwriteId}`, {
-                    siteId: siteData.id,
-                    templateName: name,
-                    description
-                });
-                toast.success(`Шаблон "${name}" оновлено!`);
-            } else {
-                await apiClient.post('/templates/personal', {
-                    siteId: siteData.id,
-                    templateName: name,
-                    description
-                });
-                toast.success(`Шаблон "${name}" створено!`);
-            }
-            setIsTemplateModalOpen(false);
-            fetchTemplates();
-        } catch (error) {
-            toast.error('Помилка збереження шаблону');
-        }
-    };
-
-    const handleDeleteTemplate = async (id, name) => {
-        const isConfirmed = await confirm({
-            title: "Видалити шаблон?",
-            message: `Ви впевнені, що хочете видалити шаблон "${name}"?`,
-            type: "danger",
-            confirmLabel: "Видалити"
-        });
-
-        if (isConfirmed) {
-            try {
-                await apiClient.delete(`/templates/personal/${id}`);
-                toast.success("Шаблон видалено");
-                fetchTemplates();
-            } catch (error) {
-                toast.error("Не вдалося видалити шаблон");
-            }
-        }
-    };
-
-    const handleApplyTemplate = async (template) => {
-        const isConfirmed = await confirm({
-            title: "Застосувати шаблон?",
-            message: `Поточні налаштування теми будуть замінені на шаблон "${template.name}". Продовжити?`,
-            confirmLabel: "Застосувати"
-        });
-
-        if (isConfirmed) {
-            try {
-                await apiClient.post(`/templates/personal/${template.id}/apply`, {
-                    siteId: siteData.id
-                });
-                toast.success(`Шаблон "${template.name}" застосовано!`);
-                window.location.reload();
-            } catch (error) {
-                toast.error("Помилка застосування шаблону");
-            }
-        }
-    };
-
-    const exampleButtonStyle = (isPrimary = true) => ({
-        padding: '10px 20px', 
+    const exampleButtonStyle = (isPrimary) => ({
+        minHeight: '56px',
+        padding: '0 32px', 
         background: isPrimary ? currentAccentHex : 'transparent', 
         color: isPrimary ? (isLightColor(currentAccentHex) ? '#000' : '#fff') : currentAccentHex, 
         border: isPrimary ? 'none' : `1px solid ${currentAccentHex}`, 
         borderRadius: themeData.theme_settings.button_radius, 
-        cursor: 'pointer', 
-        fontSize: '0.9rem', 
-        fontWeight: '500', 
-        transition: 'all 0.2s ease',
-        boxShadow: isPrimary ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+        cursor: 'default', 
+        fontSize: '1rem', 
+        fontWeight: '500',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: isPrimary ? '0 4px 10px rgba(0,0,0,0.15)' : 'none'
     });
-
-    const exampleButtonHover = (isPrimary = true) => ({
-        transform: 'translateY(-1px)',
-        boxShadow: isPrimary ? '0 2px 5px rgba(0,0,0,0.15)' : `0 2px 5px ${currentAccentHex}33`
-    });
-
-    const container = { maxWidth: '800px', margin: '0 auto', padding: '0 16px' };
-    const header = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '16px' };
-    const card = { background: 'var(--platform-card-bg)', borderRadius: '16px', border: '1px solid var(--platform-border-color)', padding: '32px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)' };
-    const cardTitle = { fontSize: '1.3rem', fontWeight: '600', color: 'var(--platform-text-primary)', margin: '0 0 8px 0' };
-    const label = { display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--platform-text-primary)', fontSize: '0.9rem' };
-    const section = { marginBottom: '28px' };
-    const templateCard = { background: 'var(--platform-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '8px', padding: '16px', marginBottom: '12px', transition: 'all 0.2s ease' };
-    const inputStyle = { width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--platform-border-color)', background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', fontSize: '0.9rem', boxSizing: 'border-box' };
 
     return (
         <div style={container}>
             <div style={header}>
-                <div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', margin: '0 0 4px 0', color: 'var(--platform-text-primary)' }}>Тема та Стиль</h2>
-                    <p style={{ color: 'var(--platform-text-secondary)', margin: 0, fontSize: '0.9rem' }}>Налаштування зовнішнього вигляду вашого сайту</p>
-                </div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '600', margin: '0 0 4px 0', color: 'var(--platform-text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <IconPalette size={28} />
+                    Тема та Стиль
+                </h2>
+                <p style={{ color: 'var(--platform-text-secondary)', margin: 0, fontSize: '0.9rem', paddingLeft: '38px' }}>
+                    Налаштування зовнішнього вигляду вашого сайту
+                </p>
             </div>
 
             <div style={card}>
-                <h3 style={cardTitle}>Тема інтерфейсу</h3>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '16px' }}>
-                    <div 
-                        style={{
-                            border: `2px solid ${themeData.site_theme_mode === 'light' ? currentAccentHex : 'var(--platform-border-color)'}`,
-                            borderRadius: '12px',
-                            padding: '16px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            background: 'var(--platform-bg)',
-                            boxShadow: themeData.site_theme_mode === 'light' ? `0 4px 20px ${currentAccentHex}33` : 'none'
-                        }}
-                        onClick={() => updateThemeSetting('site_theme_mode', 'light')}
-                        onMouseOver={(e) => {
-                            if (themeData.site_theme_mode !== 'light') {
-                                e.currentTarget.style.borderColor = currentAccentHex;
-                                e.currentTarget.style.boxShadow = `0 4px 20px ${currentAccentHex}33`;
-                            }
-                        }}
-                        onMouseOut={(e) => {
-                            if (themeData.site_theme_mode !== 'light') {
-                                e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                                e.currentTarget.style.boxShadow = 'none';
-                            }
-                        }}
-                    >
-                        <div style={{ height: '120px', marginBottom: '12px', borderRadius: '8px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', padding: '12px' }}>
-                                <div style={{ height: '20px', background: currentAccentHex, borderRadius: '4px', marginBottom: '12px', opacity: 0.7 }}></div>
-                                <div style={{ display: 'flex', gap: '8px', height: 'calc(100% - 32px)' }}>
-                                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.8)', borderRadius: '4px' }}></div>
-                                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.8)', borderRadius: '4px' }}></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500', color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
-                            <span style={{fontSize: '1.1rem'}}>☀️</span> Світла
-                        </div>
-                    </div>
-                    
-                    <div 
-                        style={{
-                            border: `2px solid ${themeData.site_theme_mode === 'dark' ? currentAccentHex : 'var(--platform-border-color)'}`,
-                            borderRadius: '12px',
-                            padding: '16px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            background: 'var(--platform-bg)',
-                            boxShadow: themeData.site_theme_mode === 'dark' ? `0 4px 20px ${currentAccentHex}33` : 'none'
-                        }}
-                        onClick={() => updateThemeSetting('site_theme_mode', 'dark')}
-                        onMouseOver={(e) => {
-                            if (themeData.site_theme_mode !== 'dark') {
-                                e.currentTarget.style.borderColor = currentAccentHex;
-                                e.currentTarget.style.boxShadow = `0 4px 20px ${currentAccentHex}33`;
-                            }
-                        }}
-                        onMouseOut={(e) => {
-                            if (themeData.site_theme_mode !== 'dark') {
-                                e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                                e.currentTarget.style.boxShadow = 'none';
-                            }
-                        }}
-                    >
-                        <div style={{ height: '120px', marginBottom: '12px', borderRadius: '8px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', background: 'linear-gradient(135deg, #1a202c 0%, #2d3748 100%)', padding: '12px' }}>
-                                <div style={{ height: '20px', background: currentAccentHex, borderRadius: '4px', marginBottom: '12px', opacity: 0.7 }}></div>
-                                <div style={{ display: 'flex', gap: '8px', height: 'calc(100% - 32px)' }}>
-                                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}></div>
-                                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500', color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
-                            <span style={{fontSize: '1.1rem'}}>🌙</span> Темна
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div style={card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h3 style={cardTitle}>Акцентний колір</h3>
-                    <div style={{ fontSize: '0.9rem', color: currentAccentHex, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: currentAccentHex, border: '1px solid var(--platform-border-color)' }}></div>
-                        {currentPreset ? currentPreset.name : 'Власний колір'}
-                        {!isPreset && <span style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem'}}>({currentAccentHex})</span>}
-                    </div>
-                </div>
-                
                 <div style={section}>
-                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '8px 0', justifyContent: 'center' }}>
-                        {PRESET_COLORS.map(a => (
-                            <div key={a.id} style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <button 
-                                    onClick={() => handleColorChange(a.id)}
-                                    style={{
-                                        width: '40px', height: '40px', borderRadius: '8px', background: a.color,
-                                        border: themeData.site_theme_accent === a.id ? `3px solid var(--platform-card-bg)` : '2px solid var(--platform-border-color)',
-                                        boxShadow: themeData.site_theme_accent === a.id ? `0 0 0 2px ${a.color}` : 'none',
-                                        cursor: 'pointer', transition: 'all 0.2s ease',
-                                        transform: themeData.site_theme_accent === a.id ? 'scale(1.05)' : 'scale(1)'
-                                    }}
-                                    title={a.name}
-                                    onMouseOver={(e) => {
-                                        if (themeData.site_theme_accent !== a.id) {
-                                            e.target.style.transform = 'scale(1.1)';
-                                            e.target.style.boxShadow = `0 0 0 2px ${a.color}`;
-                                        }
-                                    }}
-                                    onMouseOut={(e) => {
-                                        if (themeData.site_theme_accent !== a.id) {
-                                            e.target.style.transform = 'scale(1)';
-                                            e.target.style.boxShadow = 'none';
-                                        }
-                                    }}
-                                />
-                            </div>
-                        ))}
-                        
-                        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <label 
-                                style={{
-                                    width: '40px', height: '40px', borderRadius: '8px', cursor: 'pointer',
-                                    border: !isPreset ? `3px solid var(--platform-card-bg)` : '2px dashed var(--platform-border-color)',
-                                    boxShadow: !isPreset ? `0 0 0 2px ${currentAccentHex}` : 'none',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    backgroundColor: !isPreset ? currentAccentHex : 'transparent',
-                                    position: 'relative', transition: 'all 0.2s ease',
-                                    transform: !isPreset ? 'scale(1.05)' : 'scale(1)'
-                                }}
-                                title="Власний колір"
-                                onMouseOver={(e) => {
-                                    if (isPreset) {
-                                        e.currentTarget.style.borderColor = currentAccentHex;
-                                        e.currentTarget.style.transform = 'scale(1.1)';
-                                    } else {
-                                        e.currentTarget.style.transform = 'scale(1.1)';
-                                        e.currentTarget.style.boxShadow = `0 0 0 2px ${currentAccentHex}`;
-                                    }
-                                }}
-                                onMouseOut={(e) => {
-                                    if (isPreset) {
-                                        e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                                        e.currentTarget.style.transform = 'scale(1)';
-                                    } else {
-                                        e.currentTarget.style.transform = 'scale(1.05)';
-                                        e.currentTarget.style.boxShadow = `0 0 0 2px ${currentAccentHex}`;
-                                    }
-                                }}
-                            >
-                                <input 
-                                    type="color" 
-                                    value={currentAccentHex}
-                                    onChange={(e) => handleColorChange(e.target.value)} 
-                                    style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-                                />
-                                {!isPreset ? (
-                                    <span style={{ fontSize: '14px', color: isLightColor(currentAccentHex) ? '#000' : '#fff', textShadow: isLightColor(currentAccentHex) ? 'none' : '0 1px 2px rgba(0,0,0,0.5)' }}>✎</span>
-                                ) : (
-                                    <span style={{ fontSize: '20px', color: 'var(--platform-text-secondary)', lineHeight: 1 }}>+</span>
-                                )}
-                            </label>
-                        </div>
-                    </div>
+                    <h3 style={cardTitle}>Тема інтерфейсу</h3>
+                    <ThemeModeSelector 
+                        currentMode={themeData.site_theme_mode}
+                        accentColor={themeData.site_theme_accent}
+                        onChange={(mode) => updateThemeSetting('site_theme_mode', mode)}
+                    />
                 </div>
 
-                <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'var(--platform-bg)', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
-                    <button 
-                        style={exampleButtonStyle(true)}
-                        onMouseOver={(e) => Object.assign(e.target.style, exampleButtonHover(true))}
-                        onMouseOut={(e) => Object.assign(e.target.style, exampleButtonStyle(true))}
-                    >
-                        Основна кнопка
-                    </button>
-                    <button 
-                        style={exampleButtonStyle(false)}
-                        onMouseOver={(e) => Object.assign(e.target.style, exampleButtonHover(false))}
-                        onMouseOut={(e) => Object.assign(e.target.style, exampleButtonStyle(false))}
-                    >
-                        Другорядна кнопка
-                    </button>
-                    <div style={{ padding: '8px 12px', background: currentAccentHex + '20', color: currentAccentHex, borderRadius: themeData.theme_settings.button_radius, fontSize: '0.8rem', fontWeight: '500' }}>Фоновий елемент</div>
+                <div style={{...section, marginBottom: 0}}>
+                    <AccentColorSelector 
+                        value={themeData.site_theme_accent}
+                        onChange={(val) => updateThemeSetting('site_theme_accent', val)}
+                        enableCustom={true}
+                    />
                 </div>
             </div>
 
             <div style={card}>
-                <h3 style={cardTitle}>Типографіка</h3>
-                <p style={{margin: '0 0 20px 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>
-                    Оберіть шрифти для заголовків та основного тексту. 
-                    Ви можете використовувати Google Fonts або завантажити власні файли.
+                <h3 style={cardTitle}>
+                    <IconType size={22} style={{ color: 'var(--platform-accent)' }} />
+                    Типографіка
+                </h3>
+                <p style={{margin: '0 0 24px 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>
+                    Оберіть шрифти для заголовків та основного тексту.
                 </p>
                 
                 <div style={section}>
@@ -425,191 +123,81 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
                         value={themeData.theme_settings.font_heading}
                         onChange={(val) => updateThemeSettings('font_heading', val)}
                         type="heading"
-                        externalFonts={sharedFonts}
-                        onExternalChange={fetchSharedFonts}
                     />
-                    
-                    <div style={{ padding: '16px', background: 'var(--platform-bg)', borderRadius: '6px', border: '1px solid var(--platform-border-color)', fontFamily: themeData.theme_settings.font_heading, fontSize: '1.1rem', fontWeight: '600', color: 'var(--platform-text-primary)' }}>
-                        Приклад заголовку: Заголовок сторінки
-                    </div>
                 </div>
 
-                <div style={section}>
+                <div style={{...section, marginBottom: 0}}>
                     <FontPicker 
                         label="Шрифт тексту"
                         value={themeData.theme_settings.font_body}
                         onChange={(val) => updateThemeSettings('font_body', val)}
                         type="body"
-                        externalFonts={sharedFonts} 
-                        onExternalChange={fetchSharedFonts} 
                     />
-
-                    <div style={{ padding: '16px', background: 'var(--platform-bg)', borderRadius: '6px', border: '1px solid var(--platform-border-color)', fontFamily: themeData.theme_settings.font_body, fontSize: '0.95rem', lineHeight: '1.5', color: 'var(--platform-text-primary)' }}>
-                        Приклад тексту: Основний текст сторінки - це приклад того, як буде виглядати ваший текст на сайті. Тут ви можете побачити міжрядковий інтервал, розмір шрифту та загальний вигляд.
-                    </div>
-                </div>
-
-                <div style={section}>
-                    <label style={label}>Радіус закруглення кнопок</label>
-                    
-                    <input 
-                        type="text" 
-                        value={themeData.theme_settings.button_radius}
-                        onChange={(e) => updateThemeSettings('button_radius', e.target.value)}
-                        placeholder="Наприклад: 8px або 0.5rem"
-                        style={inputStyle}
-                    />
-
-                    <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'var(--platform-bg)', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
-                        <button 
-                            style={exampleButtonStyle(true)}
-                            onMouseOver={(e) => Object.assign(e.target.style, exampleButtonHover(true))}
-                            onMouseOut={(e) => Object.assign(e.target.style, exampleButtonStyle(true))}
-                        >
-                            Кнопка
-                        </button>
-                        <button 
-                            style={exampleButtonStyle(false)}
-                            onMouseOver={(e) => Object.assign(e.target.style, exampleButtonHover(false))}
-                            onMouseOut={(e) => Object.assign(e.target.style, exampleButtonStyle(false))}
-                        >
-                            Кнопка
-                        </button>
-                        <div style={{ 
-                            padding: '8px 12px', 
-                            background: currentAccentHex + '20', 
-                            color: currentAccentHex, 
-                            borderRadius: themeData.theme_settings.button_radius, 
-                            fontSize: '0.8rem', 
-                            fontWeight: '500' 
-                        }}>
-                            Елемент
-                        </div>
-                    </div>
                 </div>
             </div>
 
             <div style={card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
+                <h3 style={cardTitle}>Стиль кнопок</h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) 1fr', gap: '40px', alignItems: 'center' }}>
+                    
                     <div>
-                        <h3 style={cardTitle}>Мої шаблони</h3>
-                        <p style={{ margin: 0, color: 'var(--platform-text-secondary)', fontSize: '0.9rem' }}>Зберігайте поточний дизайн як шаблон для подальшого використання</p>
+                        <p style={{ color: 'var(--platform-text-secondary)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.5' }}>
+                            Налаштуйте радіус закруглення кнопок. 
+                            <br/>
+                            <span style={{fontSize: '0.8rem', opacity: 0.7}}>
+                                *Примітка: для стандартних кнопок будь-яке значення вище 50% висоти зробить їх "пігулками".
+                            </span>
+                        </p>
+                        
+                        <RangeSlider 
+                            label="Радіус закруглення"
+                            value={themeData.theme_settings.button_radius}
+                            onChange={(val) => updateThemeSettings('button_radius', val)}
+                            min={0}
+                            max={50}
+                        />
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '16px' }}>
-                        <button 
-                            onClick={() => setIsTemplateModalOpen(true)} 
-                            style={{
-                                background: 'var(--platform-accent)', 
-                                color: 'white', 
-                                padding: '10px 20px', 
-                                borderRadius: '8px', 
-                                border: 'none', 
-                                fontWeight: '500', 
-                                cursor: 'pointer', 
-                                fontSize: '0.9rem', 
-                                whiteSpace: 'nowrap',
-                                transition: 'all 0.2s ease',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                            }}
-                            onMouseOver={(e) => {
-                                e.target.style.background = 'var(--platform-accent-hover)';
-                                e.target.style.transform = 'translateY(-1px)';
-                                e.target.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
-                            }}
-                            onMouseOut={(e) => {
-                                e.target.style.background = 'var(--platform-accent)';
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                            }}
-                        >
-                            Зберегти поточний шаблон
-                        </button>
+
+                    <div style={{ 
+                        padding: '24px', 
+                        background: 'var(--platform-bg)', 
+                        border: '1px dashed var(--platform-border-color)', 
+                        borderRadius: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                    }}>
+                        <div style={{ 
+                            fontSize: '0.75rem', 
+                            textTransform: 'uppercase', 
+                            color: 'var(--platform-text-secondary)', 
+                            letterSpacing: '0.1em', 
+                            fontWeight: 600,
+                            marginBottom: '4px'
+                        }}>
+                            Попередній перегляд
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+                            <button style={{
+                                ...exampleButtonStyle(true),
+                                transition: 'all 0.2s',
+                                transform: 'scale(1.05)'
+                            }}>
+                                Головна дія
+                            </button>
+                            
+                            <button style={exampleButtonStyle(false)}>
+                                Скасувати
+                            </button>
+                        </div>
                     </div>
+
                 </div>
-
-                {loadingTemplates ? (
-                    <div style={{textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)'}}>Завантаження шаблонів...</div>
-                ) : templates.length > 0 ? (
-                    <div>
-                        {templates.map(template => (
-                            <div key={template.id} style={templateCard}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                    <div style={{flex: 1}}>
-                                        <div style={{ fontWeight: '600', color: 'var(--platform-text-primary)', fontSize: '1rem', marginBottom: '4px' }}>{template.name}</div>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4' }}>{template.description || 'Опис відсутній'}</div>
-                                    </div>
-                                    <div style={{display: 'flex', gap: '8px', marginLeft: '16px'}}>
-                                        <button 
-                                            onClick={() => handleApplyTemplate(template)} 
-                                            style={{
-                                                background: 'transparent', 
-                                                border: '1px solid var(--platform-border-color)', 
-                                                color: 'var(--platform-text-primary)', 
-                                                padding: '8px 16px', 
-                                                borderRadius: '6px', 
-                                                cursor: 'pointer', 
-                                                fontSize: '0.8rem', 
-                                                fontWeight: '500',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                            onMouseOver={(e) => {
-                                                e.target.style.background = 'var(--platform-hover-bg)';
-                                                e.target.style.borderColor = 'var(--platform-accent)';
-                                                e.target.style.color = 'var(--platform-accent)';
-                                            }}
-                                            onMouseOut={(e) => {
-                                                e.target.style.background = 'transparent';
-                                                e.target.style.borderColor = 'var(--platform-border-color)';
-                                                e.target.style.color = 'var(--platform-text-primary)';
-                                            }}
-                                        >
-                                            Застосувати
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDeleteTemplate(template.id, template.name)} 
-                                            style={{
-                                                background: 'none', 
-                                                border: '1px solid #e53e3e', 
-                                                color: '#e53e3e', 
-                                                padding: '8px 16px', 
-                                                borderRadius: '6px', 
-                                                cursor: 'pointer', 
-                                                fontSize: '0.8rem', 
-                                                fontWeight: '500',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                            onMouseOver={(e) => {
-                                                e.target.style.background = '#e53e3e';
-                                                e.target.style.color = 'white';
-                                                e.target.style.transform = 'translateY(-1px)';
-                                                e.target.style.boxShadow = '0 2px 5px rgba(229, 62, 62, 0.2)';
-                                            }}
-                                            onMouseOut={(e) => {
-                                                e.target.style.background = 'none';
-                                                e.target.style.color = '#e53e3e';
-                                                e.target.style.transform = 'translateY(0)';
-                                                e.target.style.boxShadow = 'none';
-                                            }}
-                                        >
-                                            Видалити
-                                        </button>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginTop: '8px' }}>
-                                    <span>Створено: {new Date(template.created_at).toLocaleDateString()}</span>
-                                    {template.updated_at !== template.created_at && <span>Оновлено: {new Date(template.updated_at).toLocaleDateString()}</span>}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--platform-text-secondary)', fontSize: '0.9rem', border: '1px dashed var(--platform-border-color)', borderRadius: '8px' }}>
-                        У вас ще немає збережених шаблонів
-                    </div>
-                )}
             </div>
-
-            <SaveTemplateModal isOpen={isTemplateModalOpen} onClose={() => setIsTemplateModalOpen(false)} onSave={handleSaveTemplate} templates={templates} />
         </div>
     );
 };

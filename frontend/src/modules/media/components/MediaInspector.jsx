@@ -9,6 +9,7 @@ import {
     IconExternalLink,
     IconX 
 } from '../../../common/components/ui/Icons';
+import { Button } from '../../../common/components/ui/Button';
 import apiClient from '../../../common/services/api';
 import { toast } from 'react-toastify';
 
@@ -116,20 +117,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             background: 'var(--platform-bg)',
             flexShrink: 0
         },
-        closeButton: {
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            width: '32px',
-            height: '32px',
-            transition: 'all 0.2s',
-            fontSize: '1.2rem',
-            color: 'var(--platform-text-secondary)',
-        },
         previewArea: {
             padding: '20px',
             background: 'var(--platform-bg)',
@@ -200,23 +187,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             marginTop: '16px',
             paddingTop: '16px',
             borderTop: '1px solid var(--platform-border-color)'
-        },
-        actionBtnBase: {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            padding: '8px',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            fontWeight: 500,
-            textDecoration: 'none',
-            width: '100%',
-            boxSizing: 'border-box',
-            transition: 'all 0.2s',
-            background: 'var(--platform-card-bg)',
-            color: 'var(--platform-text-primary)',
         }
     };
 
@@ -271,46 +241,16 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
 
     return (
         <div style={styles.container}>
-            <style>{`
-                .media-action-btn {
-                    border: 1px solid var(--platform-border-color);
-                    background-color: var(--platform-card-bg);
-                    color: var(--platform-text-primary);
-                }
-                .media-action-btn:hover {
-                    border-color: var(--platform-accent);
-                    color: var(--platform-accent);
-                    background-color: rgba(59, 130, 246, 0.05);
-                }
-                
-                .media-action-btn-danger {
-                    border: 1px solid #feb2b2;
-                    background-color: #fff5f5;
-                    color: #e53e3e;
-                }
-                .media-action-btn-danger:hover {
-                    background-color: #e53e3e;
-                    color: white;
-                    border-color: #e53e3e;
-                }
-                
-                .close-btn:hover {
-                    background-color: #fff5f5 !important;
-                    color: #e53e3e !important;
-                    transform: rotate(90deg);
-                }
-            `}</style>
-            
             <div style={styles.header}>
                 <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Властивості файлу</span>
-                <button 
+                <Button 
+                    variant="ghost" 
                     onClick={onClose} 
-                    style={styles.closeButton}
-                    className="close-btn"
                     title="Закрити"
+                    style={{ padding: 0, width: '32px', height: '32px', borderRadius: '50%', minWidth: 'auto' }}
                 >
                     <IconX size={20} />
-                </button>
+                </Button>
             </div>
 
             <div style={styles.previewArea}>
@@ -377,41 +317,41 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                 </div>
 
                 <div style={styles.actionsGrid}>
-                    <button 
+                    <Button 
+                        variant="outline"
                         onClick={copyUrl} 
-                        className="media-action-btn"
-                        style={styles.actionBtnBase}
                         title="Копіювати посилання"
+                        style={{ width: '100%', justifyContent: 'center' }}
                     >
                         {IconCopy ? <IconCopy size={16}/> : '🔗'} Копіювати
-                    </button>
+                    </Button>
                     
-                    <button 
+                    <Button 
+                        variant="outline"
                         onClick={openInNewWindow} 
-                        className="media-action-btn"
-                        style={styles.actionBtnBase}
                         title="Відкрити в новій вкладці"
+                        style={{ width: '100%', justifyContent: 'center' }}
                     >
                         {IconExternalLink ? <IconExternalLink size={16}/> : '↗'} Відкрити
-                    </button>
+                    </Button>
 
-                    <button 
+                    <Button 
+                        variant="outline"
                         onClick={handleForceDownload} 
-                        className="media-action-btn"
-                        style={styles.actionBtnBase}
                         title="Завантажити файл на комп'ютер"
+                        style={{ width: '100%', justifyContent: 'center' }}
                     >
                         <IconDownload size={16} /> Завантажити
-                    </button>
+                    </Button>
 
-                    <button 
+                    <Button 
+                        variant="danger"
                         onClick={() => onDelete(file)} 
-                        className="media-action-btn-danger"
-                        style={styles.actionBtnBase}
                         title="Видалити назавжди"
+                        style={{ width: '100%', justifyContent: 'center' }}
                     >
                         <IconTrash size={16} /> Видалити
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

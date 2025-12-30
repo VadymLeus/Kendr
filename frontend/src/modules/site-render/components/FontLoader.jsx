@@ -22,6 +22,7 @@ const FontLoader = ({ fontHeading, fontBody }) => {
             return {
                 isCustom: true,
                 name: fontName,
+                link: null,
                 style: `
                     @font-face {
                         font-family: '${fontName}';
@@ -37,6 +38,7 @@ const FontLoader = ({ fontHeading, fontBody }) => {
             return {
                 isCustom: false,
                 name: fontFamily,
+                style: null,
                 link: `https://fonts.googleapis.com/css2?family=${cleanName.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`
             };
         }

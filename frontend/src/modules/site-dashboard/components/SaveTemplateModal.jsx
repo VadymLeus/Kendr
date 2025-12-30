@@ -1,7 +1,15 @@
 // frontend/src/modules/site-dashboard/components/SaveTemplateModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../../../common/services/api';
 import { useConfirm } from '../../../common/hooks/useConfirm';
+import { Input, Button } from '../../../common/components/ui';
+import { 
+    IconSave, 
+    IconLayout, 
+    IconFileText, 
+    IconLoader,
+    IconCheck
+} from '../../../common/components/ui/Icons';
 
 const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
     const [name, setName] = useState('');
@@ -9,10 +17,14 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
     const [existingTemplates, setExistingTemplates] = useState([]);
     const [checking, setChecking] = useState(false);
     const { confirm } = useConfirm();
+    const overlayRef = useRef(null);
 
     useEffect(() => {
         if (isOpen) {
             setChecking(true);
+            setName('');
+            setDescription('');
+            
             apiClient.get('/templates/personal')
                 .then(res => setExistingTemplates(res.data))
                 .catch(err => console.error("Помилка перевірки шаблонів", err))
@@ -32,98 +44,156 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
             const isConfirmed = await confirm({
                 title: "Шаблон вже існує",
                 message: `Шаблон з назвою "${name}" вже існує. Оновити його вміст поточним станом сайту?`,
-                confirmLabel: "Оновити",
+                confirmLabel: "Оновити шаблон",
                 type: "warning"
             });
             
             if (isConfirmed) {
                 onSave(name, description, duplicate.id);
-                handleClose();
+                onClose();
             }
         } else {
             onSave(name, description, null);
-            handleClose();
+            onClose();
         }
     };
 
-    const handleClose = () => {
-        setName('');
-        setDescription('');
-        onClose();
+    const overlayStyle = {
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 2100, backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease-out'
     };
 
-    const styles = {
-        overlay: {
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
-            backdropFilter: 'blur(4px)'
-        },
-        content: {
-            background: 'var(--platform-card-bg)', padding: '2rem', borderRadius: '16px',
-            width: '450px', maxWidth: '90%', border: '1px solid var(--platform-border-color)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.2)'
-        },
-        input: {
-            width: '100%', padding: '0.8rem', marginBottom: '1rem',
-            border: '1px solid var(--platform-border-color)', borderRadius: '8px',
-            background: 'var(--platform-bg)', color: 'var(--platform-text-primary)',
-            boxSizing: 'border-box', fontSize: '1rem'
-        },
-        label: {
-            display: 'block', marginBottom: '0.5rem', color: 'var(--platform-text-primary)', fontWeight: '600', fontSize: '0.9rem'
-        },
-        btnGroup: {
-            display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1.5rem'
-        },
-        btnPrimary: {
-            padding: '10px 20px', borderRadius: '8px', border: 'none',
-            background: 'var(--platform-accent)', color: 'var(--platform-accent-text)',
-            cursor: 'pointer', fontWeight: '600'
-        },
-        btnSecondary: {
-            padding: '10px 20px', borderRadius: '8px', border: '1px solid var(--platform-border-color)',
-            background: 'transparent', color: 'var(--platform-text-primary)',
-            cursor: 'pointer', fontWeight: '600'
-        }
+    const modalStyle = {
+        backgroundColor: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
+        border: '1px solid var(--platform-border-color)',
+        borderRadius: '16px',
+        width: '90%', maxWidth: '460px',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+        animation: 'slideUp 0.3s ease-out',
+        boxSizing: 'border-box'
+    };
+
+    const contentStyle = { padding: '24px 24px 8px 24px' };
+    
+    const headerStyle = { display: 'flex', gap: '16px', alignItems: 'flex-start' };
+    
+    const iconBoxStyle = {
+        width: '48px', height: '48px', borderRadius: '12px',
+        backgroundColor: 'rgba(66, 153, 225, 0.1)', 
+        color: 'var(--platform-accent)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+    };
+
+    const footerStyle = {
+        padding: '16px 24px',
+        display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px',
+        backgroundColor: 'var(--platform-bg)',
+        borderTop: '1px solid var(--platform-border-color)',
+        marginTop: '16px'
     };
 
     return (
-        <div style={styles.overlay} onClick={handleClose}>
-            <div style={styles.content} onClick={e => e.stopPropagation()}>
-                <h3 style={{color: 'var(--platform-text-primary)', marginTop: 0, marginBottom: '1.5rem', fontSize: '1.5rem'}}>💾 Зберегти як шаблон</h3>
-                
-                <form onSubmit={handleSubmit}>
-                    <div>
-                        <label style={styles.label}>Назва шаблону</label>
-                        <input 
-                            style={styles.input} 
-                            value={name} 
-                            onChange={e => setName(e.target.value)} 
-                            placeholder="Наприклад: Літній розпродаж"
-                            required
-                            autoFocus
-                            disabled={checking}
-                        />
-                    </div>
-                    
-                    <div>
-                        <label style={styles.label}>Опис (необов'язково)</label>
-                        <input 
-                            style={styles.input} 
-                            value={description} 
-                            onChange={e => setDescription(e.target.value)} 
-                            placeholder="Короткий опис призначення..."
-                            disabled={checking}
-                        />
+        <div 
+            ref={overlayRef}
+            style={overlayStyle} 
+            onMouseDown={(e) => {
+                overlayRef.current.isSelfClick = (e.target === overlayRef.current);
+            }}
+            onMouseUp={(e) => {
+                if (e.target === overlayRef.current && overlayRef.current.isSelfClick) {
+                    onClose();
+                }
+            }}
+        >
+            <style>{`
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUp { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+            `}</style>
+            
+            <div style={modalStyle}>
+                <div style={contentStyle}>
+                    <div style={headerStyle}>
+                        <div style={iconBoxStyle}>
+                            <IconSave size={24} />
+                        </div>
+                        <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px'}}>
+                            <h3 style={{fontSize: '1.15rem', fontWeight: '600', margin: 0}}>
+                                Зберегти як шаблон
+                            </h3>
+                            <p style={{margin: 0, fontSize: '0.95rem', color: 'var(--platform-text-secondary)', lineHeight: '1.5'}}>
+                                Збережіть поточний дизайн сайту як шаблон для майбутнього використання.
+                            </p>
+                        </div>
                     </div>
 
-                    <div style={styles.btnGroup}>
-                        <button type="button" onClick={handleClose} style={styles.btnSecondary}>Скасувати</button>
-                        <button type="submit" style={{...styles.btnPrimary, opacity: (!name.trim() || checking) ? 0.7 : 1}} disabled={!name.trim() || checking}>
-                            {checking ? 'Перевірка...' : 'Зберегти'}
-                        </button>
+                    <div style={{marginTop: '24px'}}>
+                        <form id="save-template-form" onSubmit={handleSubmit}>
+                            <div style={{marginBottom: '16px'}}>
+                                <Input 
+                                    label="Назва шаблону"
+                                    value={name}
+                                    onChange={e => setName(e.target.value)}
+                                    placeholder="Наприклад: Літній розпродаж"
+                                    required
+                                    autoFocus
+                                    disabled={checking}
+                                    icon={<IconLayout size={18} />}
+                                />
+                            </div>
+                            
+                            <div>
+                                <Input 
+                                    label="Опис (необов'язково)"
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                    placeholder="Короткий опис призначення..."
+                                    disabled={checking}
+                                    icon={<IconFileText size={18} />}
+                                />
+                            </div>
+
+                            {name && existingTemplates.some(t => t.name.toLowerCase() === name.trim().toLowerCase()) && (
+                                <div style={{ 
+                                    marginTop: '16px',
+                                    fontSize: '0.85rem', 
+                                    color: 'var(--platform-warning)', 
+                                    background: 'rgba(236, 201, 75, 0.1)', 
+                                    padding: '10px 12px', 
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--platform-warning)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}>
+                                    Шаблон з такою назвою вже існує.
+                                </div>
+                            )}
+                        </form>
                     </div>
-                </form>
+                </div>
+
+                <div style={footerStyle}>
+                    <Button 
+                        variant="outline" 
+                        onClick={onClose}
+                    >
+                        Скасувати
+                    </Button>
+                    <Button 
+                        type="submit" 
+                        form="save-template-form"
+                        disabled={!name.trim() || checking}
+                        icon={checking ? <IconLoader className="animate-spin" size={18} /> : <IconCheck size={18} />}
+                    >
+                        {checking ? 'Завантаження...' : 'Зберегти'}
+                    </Button>
+                </div>
             </div>
         </div>
     );

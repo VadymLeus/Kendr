@@ -8,12 +8,29 @@ import {
   IconStar, IconUserOff, IconDotsVertical
 } from '../../../common/components/ui/Icons';
 import SiteFilters from '../../../common/components/ui/SiteFilters';
+import { Button } from '../../../common/components/ui/Button';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { FavoritesContext } from '../../../app/providers/FavoritesContext';
 import { toast } from 'react-toastify';
 
 const ITEMS_PER_PAGE = 16;
 const API_URL = 'http://localhost:5000';
+
+const overlayButtonStyle = {
+    background: 'rgba(0, 0, 0, 0.4)',
+    backdropFilter: 'blur(4px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '50%',
+    width: '32px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: 'white',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+};
 
 const CatalogCardMenu = ({ site }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +47,7 @@ const CatalogCardMenu = ({ site }) => {
     }, [isOpen]);
 
     return (
-        <div ref={menuRef} style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
+        <div ref={menuRef} style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 20 }}>
             <button 
                 onClick={(e) => {
                     e.preventDefault();
@@ -38,21 +55,11 @@ const CatalogCardMenu = ({ site }) => {
                     setIsOpen(!isOpen);
                 }}
                 style={{
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    color: 'var(--platform-text-secondary)',
-                    transition: 'transform 0.2s'
+                    ...overlayButtonStyle,
+                    background: isOpen ? 'var(--platform-accent)' : overlayButtonStyle.background
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                onMouseEnter={e => !isOpen && (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)')}
+                onMouseLeave={e => !isOpen && (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)')}
                 title="Меню"
             >
                 <IconDotsVertical size={18} />
@@ -67,12 +74,12 @@ const CatalogCardMenu = ({ site }) => {
                     background: 'var(--platform-card-bg)',
                     border: '1px solid var(--platform-border-color)',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                     minWidth: '180px',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    padding: '4px 0'
+                    padding: '4px'
                 }}>
                     <a
                         href={`/site/${site.site_path}`}
@@ -91,10 +98,11 @@ const CatalogCardMenu = ({ site }) => {
                             alignItems: 'center',
                             gap: '10px',
                             width: '100%',
-                            textDecoration: 'none'
+                            textDecoration: 'none',
+                            boxSizing: 'border-box'
                         }}
-                        onMouseEnter={e => e.target.style.background = 'var(--platform-bg)'}
-                        onMouseLeave={e => e.target.style.background = 'none'}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--platform-bg)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
                     >
                         <IconExternalLink size={16} /> Відвідати
                     </a>
@@ -135,8 +143,16 @@ const SiteGridCard = ({ site, onTagClick, formatDate, isFavorite, onToggleFavori
              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)'; }}>
             
             <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(site.id); }}
-                style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10, background: 'rgba(255, 255, 255, 0.9)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', color: isFavorite ? 'var(--platform-accent)' : 'var(--platform-text-secondary)', transition: 'transform 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} title={isFavorite ? "Видалити з обраних" : "Додати в обрані"}>
+                style={{
+                    ...overlayButtonStyle,
+                    position: 'absolute', 
+                    top: '12px', left: '12px', zIndex: 20,
+                    color: isFavorite ? '#FFD700' : 'white',
+                    borderColor: isFavorite ? '#FFD700' : 'rgba(255, 255, 255, 0.1)'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)'}
+                title={isFavorite ? "Видалити з обраних" : "Додати в обрані"}>
                 <IconStar size={18} filled={isFavorite} />
             </button>
 
@@ -148,10 +164,25 @@ const SiteGridCard = ({ site, onTagClick, formatDate, isFavorite, onToggleFavori
 
             <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '0.75rem' }}>
+                    
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>НАЗВА</div>
-                        <Link to={`/site/${site.site_path}`} style={{ textDecoration: 'none' }}>
-                            <div style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--platform-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', lineHeight: '1.3' }}>{site.title}</div>
+                        <Link to={`/site/${site.site_path}`} style={{ textDecoration: 'none' }} title={site.title}>
+                            <div style={{ 
+                                fontSize: '1.1rem', 
+                                fontWeight: '600', 
+                                color: 'var(--platform-text-primary)', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis', 
+                                display: '-webkit-box', 
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical', 
+                                lineHeight: '1.3',
+                                wordBreak: 'break-word',
+                                minHeight: '2.6em'
+                            }}>
+                                {site.title}
+                            </div>
                         </Link>
                     </div>
                     
@@ -159,7 +190,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, isFavorite, onToggleFavori
                         <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>АВТОР</div>
                         <Link to={`/profile/${site.author}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '2px', borderRadius: '6px', width: 'fit-content', color: isAuthorHovered ? 'var(--platform-accent)' : 'var(--platform-text-primary)', transition: 'color 0.2s ease' }} onMouseEnter={() => setIsAuthorHovered(true)} onMouseLeave={() => setIsAuthorHovered(false)}>
                             {userAvatarUrl ? <img src={userAvatarUrl} alt={site.author} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--platform-border-color)', flexShrink: 0 }} /> : <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--platform-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--platform-accent-text)', fontSize: '0.7rem', fontWeight: '600', flexShrink: 0 }}>{site.author ? site.author.charAt(0).toUpperCase() : 'U'}</div>}
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>{site.author}</span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500', maxWidth: '100px' }}>{site.author}</span>
                         </Link>
                     </div>
                 </div>
@@ -312,25 +343,15 @@ const CatalogPage = () => {
                 starTitle={onlyFavorites ? "Показати всі" : "Тільки обрані"}
                 
                 extraButtons={user && (
-                    <button
+                    <Button 
+                        variant="toggle-danger"
+                        active={hideMySites}
                         onClick={() => setHideMySites(!hideMySites)}
-                        style={{
-                            padding: '8px 10px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--platform-border-color)',
-                            background: hideMySites ? 'var(--platform-danger)' : 'var(--platform-bg)',
-                            color: hideMySites ? 'white' : 'var(--platform-text-secondary)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            transition: 'all 0.2s',
-                            height: '38px',
-                            boxSizing: 'border-box'
-                        }}
                         title={hideMySites ? "Показати мої сайти" : "Приховати мої сайти"}
+                        style={{ height: '38px', width: '38px' }}
                     >
                         <IconUserOff size={16} />
-                    </button>
+                    </Button>
                 )}
             />
 
@@ -344,28 +365,28 @@ const CatalogPage = () => {
                     <div style={{ marginBottom: '1rem', color: 'var(--platform-text-secondary)', display: 'flex', justifyContent: 'center' }}><IconSad size={64} /></div>
                     <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Нічого не знайдено</h3>
                     <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '1.5rem' }}>Спробуйте змінити параметри пошуку</p>
-                    <button onClick={handleClearSearch} className="btn btn-primary" style={{ padding: '10px 24px', borderRadius: '8px', background: 'var(--platform-accent)', color: 'white', fontWeight: '600' }}>Очистити фільтри</button>
+                    <Button onClick={handleClearSearch} variant="primary">Очистити фільтри</Button>
                 </div>
             ) : (
                <>
-                   <div className="sites-grid">
-                       {visibleSites.map(site => (
-                           <SiteGridCard 
-                               key={site.id} 
-                               site={site} 
-                               onTagClick={handleTagClick}
-                               formatDate={formatDate}
-                               isFavorite={favoriteSiteIds.has(site.id)}
-                               onToggleFavorite={handleToggleFavorite}
-                           />
-                       ))}
-                   </div>
+                    <div className="sites-grid">
+                        {visibleSites.map(site => (
+                            <SiteGridCard 
+                                key={site.id} 
+                                site={site} 
+                                onTagClick={handleTagClick}
+                                formatDate={formatDate}
+                                isFavorite={favoriteSiteIds.has(site.id)}
+                                onToggleFavorite={handleToggleFavorite}
+                            />
+                        ))}
+                    </div>
 
-                   {filteredSites.length > visibleCount && (
+                    {filteredSites.length > visibleCount && (
                         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                            <button onClick={handleLoadMore} className="btn btn-secondary" style={{ padding: '12px 30px', fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                            <Button onClick={handleLoadMore} variant="secondary" style={{ padding: '12px 30px' }}>
                                 <IconPlus size={16} /> Завантажити ще ({filteredSites.length - visibleCount})
-                            </button>
+                            </Button>
                         </div>
                     )}
                </>

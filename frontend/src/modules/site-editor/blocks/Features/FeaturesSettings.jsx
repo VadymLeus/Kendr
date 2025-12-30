@@ -2,81 +2,24 @@
 import React, { useState } from 'react';
 import { generateBlockId } from '../../core/editorConfig';
 import { useConfirm } from '../../../../common/hooks/useConfirm';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '1rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box'
-};
-const textareaStyle = {
-    ...inputStyle,
-    minHeight: '100px',
-    resize: 'vertical'
-};
+import CustomSelect from '../../../../common/components/ui/CustomSelect';
+import { commonStyles, SectionTitle } from '../../components/common/SettingsUI';
 
 const itemWrapperStyle = {
-    border: '1px solid var(--platform-border-color)',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    background: 'var(--platform-card-bg)',
-    overflow: 'hidden'
+    border: '1px solid var(--platform-border-color)', borderRadius: '8px',
+    marginBottom: '1rem', background: 'var(--platform-card-bg)', overflow: 'hidden'
 };
 
 const itemHeaderStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0.75rem 1rem',
-    cursor: 'pointer',
-    background: 'var(--platform-bg)',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '0.75rem 1rem', cursor: 'pointer', background: 'var(--platform-bg)',
     borderBottom: '1px solid var(--platform-border-color)'
 };
 
-const itemHeaderTitleStyle = {
-    fontWeight: '500',
-    color: 'var(--platform-text-primary)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-};
-
-const itemBodyStyle = {
-    padding: '1.5rem'
-};
-
-const iconButtonStyle = {
-    background: 'none',
-    border: 'none',
-    color: 'var(--platform-danger)',
-    cursor: 'pointer',
-    padding: '0.5rem',
-    borderRadius: '4px',
-    fontSize: '1.1rem',
-    lineHeight: '1'
-};
-
 const iconPresetGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
-    gap: '0.5rem',
-    marginTop: '0.75rem'
+    display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
+    gap: '0.5rem', marginTop: '0.75rem'
 };
-
-const iconPresetButtonStyle = {
-    ...iconButtonStyle,
-    border: '1px solid var(--platform-border-color)',
-    color: 'var(--platform-text-primary)',
-    fontSize: '1.25rem',
-    background: 'var(--platform-card-bg)',
-    transition: 'background 0.2s ease'
-};
-
 
 const FeaturesSettings = ({ data, onChange }) => {
     const [openIndex, setOpenIndex] = useState(null);
@@ -102,9 +45,7 @@ const FeaturesSettings = ({ data, onChange }) => {
         }
         const newItem = { 
             id: generateBlockId(), 
-            icon: '⭐', 
-            title: 'Нова перевага', 
-            text: 'Короткий опис' 
+            icon: '⭐', title: 'Нова перевага', text: 'Короткий опис' 
         };
         onChange({ ...data, items: [...(data.items || []), newItem] });
         setOpenIndex((data.items || []).length);
@@ -131,44 +72,52 @@ const FeaturesSettings = ({ data, onChange }) => {
         setOpenIndex(openIndex === index ? null : index);
     };
 
+    const columnOptions = [
+        { value: 1, label: '1 колонка' },
+        { value: 2, label: '2 колонки' },
+        { value: 3, label: '3 колонки' },
+        { value: 4, label: '4 колонки' },
+    ];
+
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Заголовок розділу:</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Заголовок розділу:</label>
                 <input 
                     type="text" 
                     name="title"
                     value={data.title || 'Наші переваги'} 
                     onChange={handleDataChange}
-                    style={inputStyle}
+                    style={commonStyles.input}
                 />
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Кількість колонок:</label>
-                <select name="columns" value={data.columns || 3} onChange={handleDataChange} style={inputStyle}>
-                    <option value={1}>1 колонка</option>
-                    <option value="2">2 колонки</option>
-                    <option value="3">3 колонки</option>
-                    <option value="4">4 колонки</option>
-                </select>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Кількість колонок:</label>
+                <CustomSelect 
+                    name="columns" 
+                    value={data.columns || 3} 
+                    onChange={(e) => onChange({ ...data, columns: parseInt(e.target.value) })}
+                    options={columnOptions}
+                    style={commonStyles.input}
+                />
             </div>
 
-            <hr style={{margin: '2rem 0'}} />
-
-            <label style={labelStyle}>Список переваг ({(data.items || []).length} / 8):</label>
+            <SectionTitle>
+                Список переваг ({(data.items || []).length} / 8)
+            </SectionTitle>
             
             {(data.items || []).map((item, index) => (
                 <div key={item.id || index} style={itemWrapperStyle}>
                     <div style={itemHeaderStyle} onClick={() => toggleItem(index)}>
-                        <span style={itemHeaderTitleStyle}>
+                        <span style={{ fontWeight: '500', color: 'var(--platform-text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <span style={{fontSize: '1.2rem'}}>{item.icon}</span>
                             <span>{item.title}</span>
                         </span>
 
                         <button 
                             onClick={(e) => handleRemoveFeature(e, index)} 
-                            style={iconButtonStyle}
+                            style={{ background: 'none', border: 'none', color: 'var(--platform-danger)', cursor: 'pointer', fontSize: '1.1rem' }}
                             title="Видалити"
                         >
                             ❌
@@ -176,14 +125,14 @@ const FeaturesSettings = ({ data, onChange }) => {
                     </div>
 
                     {openIndex === index && (
-                        <div style={itemBodyStyle}>
-                            <div style={formGroupStyle}>
-                                <label style={labelStyle}>Іконка:</label>
+                        <div style={{ padding: '1.5rem' }}>
+                            <div style={commonStyles.formGroup}>
+                                <label style={commonStyles.label}>Іконка:</label>
                                 <input 
                                     type="text" 
                                     value={item.icon} 
                                     onChange={(e) => handleFeatureChange(index, 'icon', e.target.value)} 
-                                    style={inputStyle}
+                                    style={commonStyles.input}
                                     maxLength="5"
                                 />
                                 <div style={iconPresetGridStyle}>
@@ -191,7 +140,13 @@ const FeaturesSettings = ({ data, onChange }) => {
                                         <button
                                             key={icon}
                                             type="button"
-                                            style={iconPresetButtonStyle}
+                                            style={{
+                                                border: '1px solid var(--platform-border-color)',
+                                                color: 'var(--platform-text-primary)',
+                                                fontSize: '1.25rem',
+                                                background: 'var(--platform-card-bg)',
+                                                cursor: 'pointer', borderRadius: '4px', padding: '0.5rem'
+                                            }}
                                             onClick={() => handleFeatureChange(index, 'icon', icon)}
                                         >
                                             {icon}
@@ -200,22 +155,22 @@ const FeaturesSettings = ({ data, onChange }) => {
                                 </div>
                             </div>
 
-                            <div style={formGroupStyle}>
-                                <label style={labelStyle}>Заголовок:</label>
+                            <div style={commonStyles.formGroup}>
+                                <label style={commonStyles.label}>Заголовок:</label>
                                 <input 
                                     type="text" 
                                     value={item.title} 
                                     onChange={(e) => handleFeatureChange(index, 'title', e.target.value)} 
-                                    style={inputStyle}
+                                    style={commonStyles.input}
                                 />
                             </div>
                             
-                            <div style={formGroupStyle}>
-                                <label style={labelStyle}>Опис:</label>
+                            <div style={commonStyles.formGroup}>
+                                <label style={commonStyles.label}>Опис:</label>
                                 <textarea 
                                     value={item.text} 
                                     onChange={(e) => handleFeatureChange(index, 'text', e.target.value)} 
-                                    style={textareaStyle}
+                                    style={{...commonStyles.textarea, minHeight: '100px'}}
                                 />
                             </div>
                         </div>
@@ -228,16 +183,14 @@ const FeaturesSettings = ({ data, onChange }) => {
                 onClick={handleAddFeature}
                 disabled={(data.items || []).length >= 8}
                 style={{
-                    ...inputStyle,
+                    width: '100%', padding: '0.6rem', marginTop: '0.5rem',
+                    background: 'var(--platform-card-bg)', border: '1px dashed var(--platform-border-color)',
                     cursor: (data.items || []).length >= 8 ? 'not-allowed' : 'pointer',
-                    background: 'var(--platform-accent)',
-                    color: 'var(--platform-accent-text)',
-                    textAlign: 'center',
-                    fontWeight: 500,
+                    color: 'var(--platform-text-primary)',
                     opacity: (data.items || []).length >= 8 ? 0.7 : 1
                 }}
             >
-                + Додати перевагу
+                ➕ Додати перевагу
             </button>
         </div>
     );

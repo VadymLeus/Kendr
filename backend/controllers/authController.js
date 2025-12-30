@@ -3,8 +3,6 @@ const User = require('../models/User');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailService');
 const db = require('../config/db');
 
@@ -27,34 +25,21 @@ exports.register = async (req, res, next) => {
             return res.status(400).json({ message: "Це ім'я користувача вже зайняте." });
         }
 
-        let avatar_url;
+        let avatar_url = null;
 
         if (req.file) {
             avatar_url = `/uploads/avatars/custom/${req.file.filename}`;
         } else if (selected_avatar_url) {
             avatar_url = selected_avatar_url;
-        } else {
-            const defaultAvatarsDir = path.join(__dirname, '..', 'uploads', 'avatars', 'default');
-            try {
-                const defaultAvatars = fs.readdirSync(defaultAvatarsDir);
-                if (defaultAvatars.length > 0) {
-                    const randomAvatar = defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)];
-                    avatar_url = `/uploads/avatars/default/${randomAvatar}`;
-                } else {
-                    avatar_url = '/uploads/avatars/default/avatar1.png';
-                }
-            } catch (e) {
-                avatar_url = '/uploads/avatars/default/avatar1.png';
-            }
         }
 
         const verificationToken = crypto.randomBytes(32).toString('hex');
 
-        const user = await User.create({ 
+        await User.create({ 
             username, 
             email, 
             password, 
-            avatar_url, 
+            avatar_url,
             is_verified: 0, 
             verification_token: verificationToken 
         });
@@ -77,7 +62,6 @@ exports.register = async (req, res, next) => {
 exports.verifyEmail = async (req, res, next) => {
     try {
         const { token } = req.body;
-        
         if (!token) return res.status(400).json({ message: 'Токен відсутній' });
 
         const user = await User.findByVerificationToken(token);
@@ -123,6 +107,8 @@ exports.login = async (req, res, next) => {
         await User.updateLastLogin(user.id);
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
         
+        const hasPassword = !!user.password_hash;
+
         res.json({
             token,
             user: { 
@@ -133,7 +119,7 @@ exports.login = async (req, res, next) => {
                 role: user.role,
                 platform_theme_mode: user.platform_theme_mode,
                 platform_theme_accent: user.platform_theme_accent,
-                has_password: true
+                has_password: hasPassword
             }
         });
     } catch (error) {
@@ -231,7 +217,7 @@ exports.getMe = async (req, res, next) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
 
-        const hasPassword = !!user.password_hash;
+        const hasPassword = await User.hasPassword(req.user.id);
 
         res.json({
             id: user.id, 
@@ -241,6 +227,15 @@ exports.getMe = async (req, res, next) => {
             role: user.role,
             platform_theme_mode: user.platform_theme_mode,
             platform_theme_accent: user.platform_theme_accent,
+            platform_bg_url: user.platform_bg_url,
+            platform_bg_blur: user.platform_bg_blur,
+            platform_bg_brightness: user.platform_bg_brightness,
+            bio: user.bio,
+            social_telegram: user.social_telegram,
+            social_instagram: user.social_instagram,
+            social_website: user.social_website,
+            is_profile_public: user.is_profile_public,
+            phone_number: user.phone_number,
             has_password: hasPassword
         });
     } catch (error) {

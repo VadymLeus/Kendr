@@ -1,4 +1,4 @@
-// frontend/src/modules/media/components/MediaInput.jsx
+// frontend/src/modules/media/components/MediaPickerModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../../../common/services/api';
 import { toast } from 'react-toastify';
@@ -41,7 +41,18 @@ const MediaPickerModal = ({
             
             const filtered = data.filter(f => {
                 if (allowedTypes.includes('all')) return true;
-                return allowedTypes.includes(f.file_type);
+
+                return allowedTypes.some(type => {
+                    if (f.file_type === type) return true;
+                    
+                    if (f.mime_type === type) return true;
+
+                    if (type.startsWith('.')) {
+                        return f.original_file_name.toLowerCase().endsWith(type.toLowerCase());
+                    }
+                    
+                    return false;
+                });
             });
             
             setFiles(filtered);
@@ -73,21 +84,7 @@ const MediaPickerModal = ({
         const validFiles = newFiles.filter(f => f !== null);
         
         if (validFiles.length > 0) {
-            const filteredNew = validFiles.filter(f => allowedTypes.includes('all') || allowedTypes.includes(f.file_type));
-            
-            if (filteredNew.length > 0) {
-                setFiles(prev => [...filteredNew, ...prev]);
-                if (!multiple) {
-                    setSelectedIds(new Set([filteredNew[0].id]));
-                    setActiveFile(filteredNew[0]);
-                } else {
-                    setSelectedIds(prev => {
-                        const next = new Set(prev);
-                        filteredNew.forEach(f => next.add(f.id));
-                        return next;
-                    });
-                }
-            }
+            await fetchMedia(); 
             toast.success(`Завантажено ${validFiles.length} файлів`);
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -115,13 +112,11 @@ const MediaPickerModal = ({
         onClose();
     };
 
-    const getFileIcon = (type) => {
-        switch (type) {
-            case 'video': return <IconVideo size={40} />;
-            case 'font': return <IconType size={40} />;
-            case 'audio': return <IconMusic size={40} />;
-            default: return <IconFileText size={40} />;
-        }
+    const getFileIcon = (type, mime) => {
+        if (type === 'video') return <IconVideo size={40} />;
+        if (type === 'font' || (mime && mime.includes('font'))) return <IconType size={40} />;
+        if (type === 'audio') return <IconMusic size={40} />;
+        return <IconFileText size={40} />;
     };
 
     if (!isOpen) return null;
@@ -170,7 +165,11 @@ const MediaPickerModal = ({
                         {loading ? (
                             <div className={styles.emptyState}>Завантаження...</div>
                         ) : filteredFiles.length === 0 ? (
-                            <div className={styles.emptyState}>Нічого не знайдено</div>
+                            <div className={styles.emptyState}>
+                                {files.length === 0 
+                                    ? `Немає файлів типу: ${allowedTypes.join(', ')}` 
+                                    : 'Нічого не знайдено за запитом'}
+                            </div>
                         ) : (
                             <div className={styles.grid}>
                                 {filteredFiles.map(file => {
@@ -186,7 +185,7 @@ const MediaPickerModal = ({
                                                 <img src={`${API_URL}${file.path_full}`} alt="" />
                                             ) : (
                                                 <div className={styles.filePlaceholder}>
-                                                    {getFileIcon(file.file_type)}
+                                                    {getFileIcon(file.file_type, file.mime_type)}
                                                 </div>
                                             )}
                                             {isSelected && <div className={styles.check}><IconCheck size={14} /></div>}
@@ -205,7 +204,7 @@ const MediaPickerModal = ({
                                     <img src={`${API_URL}${activeFile.path_full}`} alt="" />
                                 ) : (
                                     <div className={styles.sidebarPlaceholder}>
-                                        {getFileIcon(activeFile.file_type)}
+                                        {getFileIcon(activeFile.file_type, activeFile.mime_type)}
                                         <span>{activeFile.file_type.toUpperCase()}</span>
                                     </div>
                                 )}

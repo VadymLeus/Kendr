@@ -1,7 +1,8 @@
 // frontend/src/modules/site-editor/components/BlockLayerItem.jsx
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { BLOCK_LIBRARY } from "../core/editorConfig";
+import { IconSettings, IconTrash, IconLayoutHeader, IconHelpCircle } from "../../../common/components/ui/Icons";
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
@@ -13,7 +14,11 @@ const BlockLayerItem = ({
     onDeleteBlock
 }) => {
     const ref = useRef(null);
-    const blockInfo = BLOCK_LIBRARY.find(b => b.type === block.type) || { name: block.type, icon: '❓' };
+    
+    const blockInfo = BLOCK_LIBRARY.find(b => b.type === block.type) || { 
+        name: block.type, 
+        icon: <IconHelpCircle size={16} /> 
+    };
 
     const styles = {
         layerItem: {
@@ -53,7 +58,10 @@ const BlockLayerItem = ({
         icon: {
             fontSize: '1rem',
             opacity: 0.8,
-            flexShrink: 0
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            color: 'var(--platform-accent)'
         },
         name: {
             flex: 1,
@@ -69,7 +77,10 @@ const BlockLayerItem = ({
             padding: '0.25rem',
             borderRadius: '4px',
             transition: 'all 0.2s ease',
-            flexShrink: 0
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
         },
         settingsButton: {
             color: 'var(--platform-text-secondary)'
@@ -131,7 +142,7 @@ const BlockLayerItem = ({
                 {block.data.columns.map((column, colIndex) => (
                     <div key={colIndex}>
                         <div style={styles.columnLabel}>
-                            <span>📑</span>
+                            <IconLayoutHeader size={14} />
                             <span>Колонка {colIndex + 1}</span>
                             <small style={{ marginLeft: 'auto', opacity: 0.7 }}>
                                 {column.length} блок(ів)
@@ -166,14 +177,14 @@ const BlockLayerItem = ({
                 onClick={handleSelectAndScroll}
                 onMouseEnter={(e) => {
                     if (!isDragging) {
-                        e.target.style.transform = 'translateX(4px)';
-                        e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+                        e.currentTarget.style.transform = 'translateX(4px)';
+                        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
                     }
                 }}
                 onMouseLeave={(e) => {
                     if (!isDragging) {
-                        e.target.style.transform = 'translateX(0)';
-                        e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
                     }
                 }}
             >
@@ -185,38 +196,32 @@ const BlockLayerItem = ({
                 <button 
                     title="Налаштування" 
                     onClick={handleSelectAndScroll}
-                    style={{
-                        ...styles.button,
-                        ...styles.settingsButton
-                    }}
+                    style={{ ...styles.button, ...styles.settingsButton }}
                     onMouseEnter={(e) => {
-                        e.target.style.background = 'var(--platform-bg)';
-                        e.target.style.color = 'var(--platform-accent)';
+                        e.currentTarget.style.background = 'var(--platform-bg)';
+                        e.currentTarget.style.color = 'var(--platform-accent)';
                     }}
                     onMouseLeave={(e) => {
-                        e.target.style.background = 'none';
-                        e.target.style.color = 'var(--platform-text-secondary)';
+                        e.currentTarget.style.background = 'none';
+                        e.currentTarget.style.color = 'var(--platform-text-secondary)';
                     }}
                 >
-                    ⚙️
+                    <IconSettings size={16} />
                 </button>
                 <button 
                     title="Видалити" 
                     onClick={handleDelete} 
-                    style={{
-                        ...styles.button,
-                        ...styles.deleteButton
-                    }}
+                    style={{ ...styles.button, ...styles.deleteButton }}
                     onMouseEnter={(e) => {
-                        e.target.style.background = 'var(--platform-danger)';
-                        e.target.style.color = 'white';
+                        e.currentTarget.style.background = 'var(--platform-danger)';
+                        e.currentTarget.style.color = 'white';
                     }}
                     onMouseLeave={(e) => {
-                        e.target.style.background = 'none';
-                        e.target.style.color = 'var(--platform-danger)';
+                        e.currentTarget.style.background = 'none';
+                        e.currentTarget.style.color = 'var(--platform-danger)';
                     }}
                 >
-                    ❌
+                    <IconTrash size={16} />
                 </button>
             </div>
             {nestedBlocks}

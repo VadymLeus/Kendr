@@ -1,9 +1,22 @@
 // frontend/src/modules/site-render/components/FontPicker.jsx
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '../../../common/services/api';
 import { toast } from 'react-toastify';
 import { FONT_LIBRARY } from '../../site-editor/core/editorConfig';
 import { useConfirm } from '../../../common/hooks/useConfirm';
+import { Button } from '../../../common/components/ui/Button';
+import { 
+    IconSearch, 
+    IconPlus, 
+    IconTrash, 
+    IconEdit, 
+    IconCheck, 
+    IconFont,
+    IconGlobe,
+    IconFolder
+} from '../../../common/components/ui/Icons';
+
+import MediaPickerModal from '../../media/components/MediaPickerModal';
 
 const API_URL = 'http://localhost:5000';
 
@@ -11,160 +24,185 @@ const FontPicker = ({
     label, 
     value, 
     onChange, 
-    type = 'heading', 
-    externalFonts, 
-    onExternalChange 
+    type = 'heading'
 }) => {
     const [localFonts, setLocalFonts] = useState([]); 
     const [searchTerm, setSearchTerm] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
     const [previewFont, setPreviewFont] = useState(value);
     
-    const [editingId, setEditingId] = useState(null);
-    const [editName, setEditName] = useState('');
-    
-    const fileInputRef = useRef(null);
-    const { confirm } = useConfirm();
-
-    const activeFonts = externalFonts || localFonts;
-
-    const refreshFonts = () => {
-        if (onExternalChange) {
-            onExternalChange();
-        } else {
-            fetchLocalFonts();
-        }
-    };
-
-    const fetchLocalFonts = async () => {
+    const [sections, setSections] = useState(() => {
         try {
-            const res = await apiClient.get('/media');
-            const fonts = res.data.filter(f => 
-                f.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(f.original_file_name)
-            );
-            setLocalFonts(fonts);
-        } catch (error) {
-            console.error("Error fetching fonts", error);
+            const saved = localStorage.getItem('fontPickerSections');
+            return saved ? JSON.parse(saved) : { custom: true, google: true };
+        } catch (e) {
+            return { custom: true, google: true };
         }
-    };
+    });
 
     useEffect(() => {
-        if (!externalFonts) {
-            fetchLocalFonts();
-        }
-    }, [externalFonts]);
+        localStorage.setItem('fontPickerSections', JSON.stringify(sections));
+    }, [sections]);
+
+    const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+    const [editingListId, setEditingListId] = useState(null); 
+    const [editName, setEditName] = useState('');
+    
+    const { confirm } = useConfirm();
+
+    useEffect(() => {
+        const initCurrentFont = async () => {
+            const isCustomPath = value && value.includes('/uploads/');
+            const alreadyInList = localFonts.some(f => f.path_full === value);
+
+            if (isCustomPath && !alreadyInList) {
+                try {
+                    const res = await apiClient.get('/media');
+                    const found = res.data.find(f => f.path_full === value);
+                    const listId = `auto-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+
+                    if (found) {
+                        setLocalFonts(prev => [...prev, { ...found, listId, label: found.alt_text || found.original_file_name }]);
+                    } else {
+                        const fileName = value.split('/').pop();
+                        setLocalFonts(prev => [...prev, {
+                            id: `temp-${Date.now()}`,
+                            listId,
+                            path_full: value,
+                            original_file_name: fileName,
+                            alt_text: fileName,
+                            label: fileName
+                        }]);
+                    }
+                } catch (e) {
+                    console.error("Error syncing current font", e);
+                }
+            }
+        };
+
+        initCurrentFont();
+    }, [value]);
 
     useEffect(() => {
         setPreviewFont(value);
     }, [value]);
 
-    const handleUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
 
-        const formData = new FormData();
-        formData.append('mediaFile', file);
-        setIsUploading(true);
+    const toggleSection = (section) => {
+        setSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
-        try {
-            await apiClient.post('/media/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            toast.success('Шрифт завантажено!');
-            
-            refreshFonts(); 
-            
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Помилка завантаження');
-        } finally {
-            setIsUploading(false);
-            if(fileInputRef.current) fileInputRef.current.value = '';
+    const handleMediaSelect = (file) => {
+        const selectedFile = Array.isArray(file) ? file[0] : file;
+        if (!selectedFile) return;
+
+        const isFont = selectedFile.file_type === 'font' || 
+                       selectedFile.mime_type?.includes('font') || 
+                       /\.(ttf|otf|woff|woff2)$/i.test(selectedFile.original_file_name);
+        
+        if (!isFont) {
+            toast.warning('Файл може не працювати як шрифт');
+        }
+
+        const newListItem = {
+            ...selectedFile,
+            listId: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            label: selectedFile.alt_text || selectedFile.original_file_name
+        };
+
+        setLocalFonts(prev => [newListItem, ...prev]);
+        onChange(selectedFile.path_full);
+        setIsMediaModalOpen(false);
+        toast.success('Шрифт додано');
+        
+        if (!sections.custom) {
+            setSections(prev => ({ ...prev, custom: true }));
         }
     };
 
-    const handleDelete = async (id, name, e) => {
+    const handleDelete = async (listId, name, e) => {
         e.stopPropagation();
         
         const isConfirmed = await confirm({
             title: "Видалити шрифт?",
-            message: `Ви впевнені, що хочете видалити шрифт "${name}"?`,
+            message: `Ви впевнені, що хочете прибрати шрифт "${name}" зі списку?`,
             type: "danger",
             confirmLabel: "Видалити"
         });
-        
+
         if (!isConfirmed) return;
-        
-        try {
-            await apiClient.delete(`/media/${id}`);
+
+        setLocalFonts(prev => {
+            const itemToDelete = prev.find(f => f.listId === listId);
+            const newList = prev.filter(f => f.listId !== listId);
             
-            refreshFonts();
-            
-            if (!externalFonts) {
-                setLocalFonts(prev => prev.filter(f => f.id !== id));
+            if (itemToDelete && value === itemToDelete.path_full) {
+                const sameFontExists = newList.some(f => f.path_full === itemToDelete.path_full);
+                if (!sameFontExists) {
+                    onChange("'Inter', sans-serif"); 
+                    toast.info('Шрифт скинуто на стандартний');
+                }
             }
+            return newList;
+        });
+    };
 
-            toast.success('Шрифт видалено');
-            if (value && value.includes(id)) {
-                onChange("'Inter', sans-serif"); 
+    const startEditing = (listId, currentLabel, e) => {
+        e.stopPropagation();
+        setEditingListId(listId);
+        setEditName(currentLabel);
+    };
+
+    const saveName = (listId, e) => {
+        e.stopPropagation();
+        if (!editName.trim()) {
+            setEditingListId(null);
+            return;
+        }
+
+        setLocalFonts(prev => prev.map(f => {
+            if (f.listId === listId) {
+                return { ...f, label: editName };
             }
-        } catch (error) {
-            toast.error('Помилка видалення');
-        }
+            return f;
+        }));
+        setEditingListId(null);
     };
 
-    const startEditing = (font, e) => {
-        e.stopPropagation();
-        setEditingId(font.id);
-        setEditName(font.alt_text || font.original_file_name);
-    };
-
-    const saveName = async (id, e) => {
-        e.stopPropagation();
-        try {
-            await apiClient.put(`/media/${id}`, { alt_text: editName });
-            
-            refreshFonts();
-
-            setEditingId(null);
-            toast.success('Назву оновлено');
-        } catch (error) {
-            toast.error('Помилка перейменування');
-        }
-    };
 
     const { customList, googleList } = useMemo(() => {
         const lowerSearch = searchTerm.toLowerCase();
 
-        const custom = activeFonts.map(f => ({
-            id: f.id,
-            label: f.alt_text || f.original_file_name,
-            value: f.path_full,
+        const custom = localFonts.filter(f => 
+            (f.label || f.original_file_name).toLowerCase().includes(lowerSearch)
+        ).map(f => ({
+            ...f,
             isCustom: true,
-            originalObj: f
-        })).filter(f => f.label.toLowerCase().includes(lowerSearch));
+            value: f.path_full 
+        }));
 
-        const google = FONT_LIBRARY.filter(f => f.value !== 'global').map(f => ({
-            id: f.value,
-            label: f.label,
-            value: f.value,
-            isCustom: false
-        })).filter(f => f.label.toLowerCase().includes(lowerSearch));
+        const google = FONT_LIBRARY.filter(f => f.value !== 'global')
+            .filter(f => f.label.toLowerCase().includes(lowerSearch))
+            .map(f => ({
+                id: f.value,
+                listId: f.value, 
+                label: f.label,
+                value: f.value,
+                isCustom: false
+            }));
 
         return { customList: custom, googleList: google };
-    }, [activeFonts, searchTerm]);
+    }, [localFonts, searchTerm]);
 
     useEffect(() => {
         if (!previewFont || previewFont === 'global') return;
-
         const loadFontPreview = async () => {
             const isCustom = previewFont.includes('/uploads/');
             const previewEl = document.getElementById(`font-preview-${type}`);
             
             if (isCustom) {
                 const url = previewFont.startsWith('http') ? previewFont : `${API_URL}${previewFont}`;
-                const familyName = `Preview-${Date.now()}`;
+                const familyName = `Preview-${Date.now()}`; 
                 const fontFace = new FontFace(familyName, `url(${url})`);
-                
                 try {
                     const loadedFace = await fontFace.load();
                     document.fonts.add(loadedFace);
@@ -174,7 +212,6 @@ const FontPicker = ({
                 }
             } else {
                 const cleanName = previewFont.split(',')[0].replace(/['"]/g, '');
-                
                 const linkId = `google-font-preview-${cleanName.replace(/\s+/g, '-')}`;
                 if (!document.getElementById(linkId)) {
                     const link = document.createElement('link');
@@ -183,34 +220,32 @@ const FontPicker = ({
                     link.rel = 'stylesheet';
                     document.head.appendChild(link);
                 }
-
                 if (previewEl) previewEl.style.fontFamily = cleanName;
             }
         };
-
         loadFontPreview();
     }, [previewFont, type]);
 
-    const handleHover = (fontValue) => {
-        setPreviewFont(fontValue);
-    };
-
     const containerStyle = {
         border: '1px solid var(--platform-border-color)',
-        borderRadius: '8px',
+        borderRadius: '12px',
         background: 'var(--platform-card-bg)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        height: '420px'
+        height: '460px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
     };
 
     const headerStyle = {
-        padding: '12px',
+        padding: '16px',
         borderBottom: '1px solid var(--platform-border-color)',
         background: 'var(--platform-bg)',
         display: 'flex',
-        gap: '8px'
+        alignItems: 'center',
+        gap: '12px',
+        width: '100%',
+        boxSizing: 'border-box'
     };
 
     const bodyStyle = {
@@ -220,7 +255,7 @@ const FontPicker = ({
     };
 
     const listStyle = {
-        width: '50%',
+        width: '45%',
         borderRight: '1px solid var(--platform-border-color)',
         overflowY: 'auto',
         display: 'flex',
@@ -229,8 +264,8 @@ const FontPicker = ({
     };
 
     const previewAreaStyle = {
-        width: '50%',
-        padding: '20px',
+        width: '55%',
+        padding: '24px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -242,218 +277,175 @@ const FontPicker = ({
     };
 
     const sectionHeaderStyle = {
-        padding: '8px 12px',
+        padding: '12px 16px',
         background: 'var(--platform-bg)',
-        color: 'var(--platform-text-secondary)',
-        fontSize: '0.75rem',
-        fontWeight: 'bold',
+        color: 'var(--platform-text-primary)', 
+        fontSize: '0.8rem',
+        fontWeight: '700',
         textTransform: 'uppercase',
-        letterSpacing: '0.5px',
+        letterSpacing: '0.05em',
         borderBottom: '1px solid var(--platform-border-color)',
         borderTop: '1px solid var(--platform-border-color)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1
-    };
-
-    const listItemStyle = (isActive) => ({
-        padding: '10px 12px',
-        borderBottom: '1px solid var(--platform-border-color)',
-        cursor: 'pointer',
-        background: isActive ? 'var(--platform-accent)' : 'transparent',
-        color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
-        fontSize: '0.9rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        transition: 'background 0.2s'
-    });
-
-    const searchInputStyle = {
-        flex: 1,
-        padding: '8px 10px',
-        borderRadius: '6px',
-        border: '1px solid var(--platform-border-color)',
-        fontSize: '0.9rem',
-        background: 'var(--platform-card-bg)',
-        color: 'var(--platform-text-primary)'
-    };
-
-    const addButtonStyle = {
-        padding: '8px 16px',
-        fontSize: '0.85rem',
-        whiteSpace: 'nowrap',
-        background: 'var(--platform-accent)',
-        color: 'var(--platform-accent-text)',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        fontWeight: '500',
-        transition: 'all 0.2s ease',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    };
-
-    const addButtonHoverStyle = {
-        background: 'var(--platform-accent-hover)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
-    };
-
-    const iconBtnStyle = {
-        background: 'none', 
-        border: 'none', 
         cursor: 'pointer', 
-        opacity: 0.7, 
-        fontSize: '1rem', 
-        padding: '4px',
-        color: 'inherit',
-        borderRadius: '4px',
-        transition: 'all 0.2s ease'
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        userSelect: 'none',
+        transition: 'background 0.2s'
     };
+
+    const renderArrow = (isOpen) => (
+        <div style={{ 
+            transition: 'transform 0.2s ease', 
+            transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: 0.6
+        }}>
+           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        </div>
+    );
 
     return (
         <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--platform-text-primary)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: '600', color: 'var(--platform-text-primary)', fontSize: '0.95rem' }}>
+                <IconFont size={16} />
                 {label}
             </label>
             
             <div style={containerStyle}>
                 <div style={headerStyle}>
-                    <input 
-                        type="text" 
-                        placeholder="🔍 Пошук..." 
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        style={searchInputStyle}
-                    />
-                    <button 
-                        onClick={() => fileInputRef.current.click()}
-                        style={addButtonStyle}
-                        disabled={isUploading}
-                        onMouseOver={(e) => {
-                            if (!isUploading) {
-                                Object.assign(e.target.style, addButtonHoverStyle);
-                            }
-                        }}
-                        onMouseOut={(e) => {
-                            Object.assign(e.target.style, addButtonStyle);
-                        }}
+                    <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+                        <div style={{ 
+                            position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', 
+                            color: 'var(--platform-text-secondary)', pointerEvents: 'none'
+                        }}>
+                            <IconSearch size={16} />
+                        </div>
+                        <input 
+                            type="text" 
+                            placeholder="Пошук шрифту..." 
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            style={{
+                                width: '100%', padding: '8px 12px 8px 36px', borderRadius: '8px',
+                                border: '1px solid var(--platform-border-color)', fontSize: '0.9rem',
+                                background: 'var(--platform-card-bg)', color: 'var(--platform-text-primary)',
+                                outline: 'none', height: '36px', boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
+                    
+                    <Button 
+                        size="sm" 
+                        onClick={() => setIsMediaModalOpen(true)}
+                        style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                     >
-                        {isUploading ? '⏳' : '➕'} Додати
-                    </button>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        style={{display: 'none'}}
-                        accept=".ttf,.otf,.woff,.woff2"
-                        onChange={handleUpload}
-                    />
+                        <IconPlus size={16} />
+                        Додати
+                    </Button>
                 </div>
 
                 <div style={bodyStyle}>
                     <div style={listStyle} className="custom-scrollbar">
                         
                         {customList.length > 0 && (
-                            <>
-                                <div style={sectionHeaderStyle}>📂 Мої шрифти</div>
-                                {customList.map((font) => (
-                                    <div 
-                                        key={font.id}
-                                        style={listItemStyle(value === font.value)}
-                                        onMouseEnter={() => handleHover(font.value)}
-                                        onClick={() => onChange(font.value)}
-                                    >
-                                        {editingId === font.id ? (
-                                            <input 
-                                                type="text" 
-                                                value={editName}
-                                                onChange={e => setEditName(e.target.value)}
-                                                onClick={e => e.stopPropagation()}
-                                                onKeyDown={e => e.key === 'Enter' && saveName(font.id, e)}
-                                                onBlur={(e) => saveName(font.id, e)}
-                                                autoFocus
-                                                style={{
-                                                    width: '100%', 
-                                                    padding: '4px 6px', 
-                                                    borderRadius: '4px', 
-                                                    border: '1px solid var(--platform-border-color)',
-                                                    background: 'var(--platform-card-bg)',
-                                                    color: 'var(--platform-text-primary)'
-                                                }}
-                                            />
-                                        ) : (
-                                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
-                                                {font.label}
-                                            </span>
-                                        )}
-
-                                        <div style={{ display: 'flex', gap: '4px' }}>
-                                            <button 
-                                                style={iconBtnStyle} 
-                                                onClick={(e) => startEditing(font.originalObj, e)}
-                                                title="Перейменувати"
-                                                onMouseOver={(e) => {
-                                                    e.target.style.background = 'var(--platform-hover-bg)';
-                                                    e.target.style.opacity = '1';
-                                                }}
-                                                onMouseOut={(e) => {
-                                                    e.target.style.background = 'none';
-                                                    e.target.style.opacity = '0.7';
-                                                }}
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button 
-                                                style={{
-                                                    ...iconBtnStyle, 
-                                                    color: value === font.value ? 'inherit' : 'var(--platform-danger)'
-                                                }} 
-                                                onClick={(e) => handleDelete(font.id, font.label, e)}
-                                                title="Видалити"
-                                                onMouseOver={(e) => {
-                                                    e.target.style.background = 'var(--platform-hover-bg)';
-                                                    e.target.style.opacity = '1';
-                                                }}
-                                                onMouseOut={(e) => {
-                                                    e.target.style.background = 'none';
-                                                    e.target.style.opacity = '0.7';
-                                                }}
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </>
+                            <div 
+                                style={{...sectionHeaderStyle, borderTop: 'none'}}
+                                onClick={() => toggleSection('custom')}
+                                className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <IconFolder size={14} style={{ color: '#EAB308' }} />
+                                    Власні шрифти ({customList.length})
+                                </div>
+                                {renderArrow(sections.custom)}
+                            </div>
                         )}
 
-                        <div style={{
-                            ...sectionHeaderStyle, 
-                            borderTop: customList.length > 0 ? '1px solid var(--platform-border-color)' : 'none'
-                        }}>
-                            🌐 Стандартні (Google)
-                        </div>
-                        {googleList.map((font) => (
-                            <div 
-                                key={font.id}
-                                style={listItemStyle(value === font.value)}
-                                onMouseEnter={() => handleHover(font.value)}
-                                onClick={() => onChange(font.value)}
-                            >
-                                <span style={{ flex: 1 }}>{font.label}</span>
+                        {sections.custom && customList.map((font) => {
+                            const isActive = value === font.value;
+                            return (
+                                <div 
+                                    key={font.listId}
+                                    className={`font-item group ${isActive ? 'active' : ''}`}
+                                    onMouseEnter={() => setPreviewFont(font.value)}
+                                    onClick={() => onChange(font.value)}
+                                >
+                                    {editingListId === font.listId ? (
+                                        <input 
+                                            type="text" 
+                                            value={editName}
+                                            onChange={e => setEditName(e.target.value)}
+                                            onClick={e => e.stopPropagation()}
+                                            onKeyDown={e => e.key === 'Enter' && saveName(font.listId, e)}
+                                            onBlur={(e) => saveName(font.listId, e)}
+                                            autoFocus
+                                            style={{
+                                                width: '100%', padding: '4px 8px', borderRadius: '4px', 
+                                                border: '1px solid var(--platform-accent)',
+                                                background: 'var(--platform-bg)', color: 'var(--platform-text-primary)'
+                                            }}
+                                        />
+                                    ) : (
+                                        <span className="font-label">
+                                            {font.label}
+                                        </span>
+                                    )}
+
+                                    <div className="actions-group">
+                                        <button 
+                                            onClick={(e) => startEditing(font.listId, font.label, e)}
+                                            title="Перейменувати"
+                                            className="action-btn"
+                                        >
+                                            <IconEdit size={14} />
+                                        </button>
+                                        <button 
+                                            onClick={(e) => handleDelete(font.listId, font.label, e)}
+                                            title="Прибрати зі списку"
+                                            className="action-btn delete"
+                                        >
+                                            <IconTrash size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        <div 
+                            style={{
+                                ...sectionHeaderStyle, 
+                                borderTop: customList.length > 0 ? '1px solid var(--platform-border-color)' : 'none'
+                            }}
+                            onClick={() => toggleSection('google')}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <IconGlobe size={14} />
+                                Стандартні (Google)
                             </div>
-                        ))}
+                            {renderArrow(sections.google)}
+                        </div>
+
+                        {sections.google && googleList.map((font) => {
+                            const isActive = value === font.value;
+                            return (
+                                <div 
+                                    key={font.listId}
+                                    className={`font-item ${isActive ? 'active' : ''}`}
+                                    onMouseEnter={() => setPreviewFont(font.value)}
+                                    onClick={() => onChange(font.value)}
+                                >
+                                    <span className="font-label">{font.label}</span>
+                                    {isActive && <IconCheck size={16} />}
+                                </div>
+                            );
+                        })}
                         
                         {googleList.length === 0 && customList.length === 0 && (
-                            <div style={{ 
-                                padding: '20px', 
-                                textAlign: 'center', 
-                                color: 'var(--platform-text-secondary)', 
-                                fontSize: '0.85rem' 
-                            }}>
+                            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontSize: '0.85rem' }}>
                                 Нічого не знайдено
                             </div>
                         )}
@@ -463,59 +455,130 @@ const FontPicker = ({
                         <div 
                             id={`font-preview-${type}`}
                             style={{ 
-                                transition: 'font-family 0.1s ease',
-                                wordBreak: 'break-word'
+                                transition: 'font-family 0.1s ease', wordBreak: 'break-word',
+                                flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center'
                             }}
                         >
-                            <h2 style={{ margin: '0 0 10px 0', fontWeight: 'normal' }}>Aa Bb Cc</h2>
-                            <p style={{ fontSize: '2.5rem', margin: 0, fontWeight: 'bold' }}>123</p>
-                            <p style={{ 
-                                fontSize: '0.9rem', 
-                                margin: '20px 0 0 0', 
-                                opacity: 0.8, 
-                                lineHeight: 1.5 
-                            }}>
+                            <h2 style={{ margin: '0 0 16px 0', fontWeight: 'normal', fontSize: '2rem' }}>Aa Bb Cc</h2>
+                            <p style={{ fontSize: '3.5rem', margin: 0, fontWeight: 'bold', lineHeight: 1 }}>123</p>
+                            <p style={{ fontSize: '0.95rem', margin: '24px 0 0 0', opacity: 0.8, lineHeight: 1.6, maxWidth: '280px', marginInline: 'auto' }}>
                                 {type === 'heading' 
-                                    ? 'Це приклад заголовку. Оберіть шрифт зі списку, щоб побачити результат.' 
-                                    : 'Це приклад основного тексту. Чудовий шрифт покращує читабельність контенту.'}
+                                    ? 'Заголовок привертає увагу та структурує контент на сторінці.' 
+                                    : 'Основний текст має бути розбірливим для комфортного читання.'}
                             </p>
                         </div>
                         
                         {previewFont !== value && (
-                            <div style={{ 
-                                position: 'absolute', 
-                                bottom: '15px', 
-                                fontSize: '0.8rem', 
-                                color: 'var(--platform-accent-text)',
-                                background: 'var(--platform-accent)', 
-                                padding: '6px 12px', 
-                                borderRadius: '20px',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                                animation: 'fadeIn 0.2s ease-out',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                            }} 
-                            onClick={() => onChange(previewFont)}
-                            onMouseOver={(e) => {
-                                e.target.style.background = 'var(--platform-accent-hover)';
-                                e.target.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseOut={(e) => {
-                                e.target.style.background = 'var(--platform-accent)';
-                                e.target.style.transform = 'translateY(0)';
-                            }}
-                            >
-                                Натисніть, щоб застосувати
+                            <div style={{ marginTop: '20px', animation: 'fadeIn 0.2s ease-out' }}>
+                                <Button 
+                                    onClick={() => onChange(previewFont)}
+                                    style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                >
+                                    Застосувати цей шрифт
+                                </Button>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+
+            {isMediaModalOpen && (
+                <MediaPickerModal 
+                    isOpen={isMediaModalOpen}
+                    onClose={() => setIsMediaModalOpen(false)}
+                    onSelect={handleMediaSelect}
+                    allowedTypes={['font', 'font/ttf', 'font/otf', '.ttf', '.otf', '.woff', '.woff2']}
+                    title="Оберіть файл шрифту"
+                />
+            )}
             
             <style>{`
                 @keyframes fadeIn { 
                     from { opacity: 0; transform: translateY(5px); } 
                     to { opacity: 1; transform: translateY(0); } 
+                }
+
+                .font-item {
+                    padding: 8px 12px 8px 16px;
+                    border-bottom: 1px solid var(--platform-border-color);
+                    cursor: pointer;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    transition: all 0.2s;
+                    min-height: 42px;
+                    color: var(--platform-text-primary);
+                    font-size: 0.9rem;
+                    background: transparent;
+                }
+
+                .font-item:hover {
+                    background: rgba(0,0,0,0.02);
+                }
+
+                .font-item.active {
+                    background: var(--platform-accent);
+                    color: var(--platform-accent-text);
+                    font-weight: 500;
+                }
+
+                .font-label {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    flex: 1;
+                    padding-right: 10px;
+                }
+
+                .actions-group {
+                    display: flex;
+                    gap: 4px;
+                }
+
+                .action-btn {
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    padding: 6px;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                    color: var(--platform-text-secondary);
+                    opacity: 0.7;
+                }
+
+                .font-item.active .action-btn {
+                    color: currentColor;
+                    opacity: 0.9;
+                }
+
+                .font-item:not(.active) .action-btn:hover {
+                    background: rgba(255,255,255,0.1);
+                    color: var(--platform-text-primary);
+                    opacity: 1;
+                }
+
+                .font-item:not(.active) .action-btn.delete:hover {
+                    background: rgba(220, 38, 38, 0.15);
+                    color: #ef4444;
+                    opacity: 1;
+                }
+
+                .font-item.active .action-btn:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    opacity: 1;
+                }
+
+                .font-item.active .action-btn.delete:hover {
+                    background: #ffffff;
+                    color: #dc2626 !important;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
+
+                [data-theme='dark'] .font-item:not(.active) .action-btn:hover {
+                    background: rgba(255,255,255,0.1);
                 }
             `}</style>
         </div>

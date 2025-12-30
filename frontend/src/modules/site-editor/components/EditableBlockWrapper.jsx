@@ -1,5 +1,5 @@
 // frontend/src/modules/site-editor/components/EditableBlockWrapper.jsx
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import BlockRenderer from '../core/BlockRenderer';
 import { DND_TYPE_NEW_BLOCK } from './DraggableBlockItem';
@@ -7,6 +7,15 @@ import apiClient from '../../../common/services/api';
 import SaveBlockModal from './SaveBlockModal';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../common/hooks/useConfirm';
+import { 
+    IconSettings, 
+    IconTrash, 
+    IconSave, 
+    IconGripVertical, 
+    IconChevronDown, 
+    IconChevronUp,
+    IconHelpCircle
+} from '../../../common/components/ui/Icons';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
@@ -53,17 +62,11 @@ const EditableBlockWrapper = ({
             }
         },
         hover(item, monitor) {
-            if (!ref.current) {
-                return;
-            }
-
+            if (!ref.current) return;
             const dragPath = item.path;
             const hoverPath = path;
             if (!dragPath || item.type === DND_TYPE_NEW_BLOCK) return;
-
-            if (dragPath.join(',') === hoverPath.join(',')) {
-                return;
-            }
+            if (dragPath.join(',') === hoverPath.join(',')) return;
 
             const dragParentPath = dragPath.slice(0, -1).join(',');
             const hoverParentPath = hoverPath.slice(0, -1).join(',');
@@ -71,34 +74,21 @@ const EditableBlockWrapper = ({
             if (dragParentPath === hoverParentPath) {
                 const dragIndex = dragPath[dragPath.length - 1];
                 const hoverIndex = hoverPath[hoverPath.length - 1];
-
                 const hoverBoundingRect = ref.current?.getBoundingClientRect();
-                
                 const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-                
                 const clientOffset = monitor.getClientOffset();
-            
                 const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
-
-                if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-                    return;
-                }
-
-                if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-                    return;
-                }
+                if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
+                if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
             }
 
             onMoveBlock(dragPath, hoverPath);
-            
             item.path = hoverPath;
         },
         drop(item, monitor) {
             if (monitor.didDrop()) return;
-            
             const dragType = monitor.getItemType();
-            
             if (dragType === DND_TYPE_NEW_BLOCK && monitor.isOver({ shallow: true })) {
                 onAddBlock(path, item.blockType, item.presetData);
                 return { name: 'EditableBlockWrapper - New', path };
@@ -109,7 +99,7 @@ const EditableBlockWrapper = ({
     drag(drop(ref));
 
     const opacity = isDragging ? 0 : 1;
-    const blockType = { name: block.type, icon: '⚙️' };
+    const blockType = { name: block.type, icon: <IconSettings size={14} /> };
     const blockDomId = `block-${block.block_id}`;
     const isSelected = selectedBlockPath && Array.isArray(selectedBlockPath) && Array.isArray(path) && selectedBlockPath.join(',') === path.join(',');
     const isHeaderBlock = block.type === 'header';
@@ -131,7 +121,7 @@ const EditableBlockWrapper = ({
 
         if (isConfirmed) {
             onDeleteBlock(path);
-            toast.info("🗑️ Блок видалено");
+            toast.info("Блок видалено");
         }
     };
 
@@ -140,109 +130,66 @@ const EditableBlockWrapper = ({
             const targetId = targetOverrideId || block._library_origin_id;
 
             if (mode === 'overwrite' && targetId) {
-                 await apiClient.put(`/saved-blocks/${targetId}`, {
-                    content: block.data
-                });
-                toast.success(`✅ Блок успішно оновлено в бібліотеці!`);
+                 await apiClient.put(`/saved-blocks/${targetId}`, { content: block.data });
+                toast.success(`Блок успішно оновлено в бібліотеці!`);
             } else {
                 await apiClient.post('/saved-blocks', {
                     name: name,
                     type: block.type,
                     content: block.data
                 });
-                toast.success('✅ Блок успішно збережено в бібліотеку!');
+                toast.success('Блок успішно збережено в бібліотеку!');
             }
-
-            if (onBlockSaved) {
-                onBlockSaved();
-            }
-
+            if (onBlockSaved) onBlockSaved();
         } catch (error) {
             console.error(error);
             toast.error('Помилка при збереженні');
         }
     };
 
-    const originBlockInfo = block._library_origin_id ? { 
-        id: block._library_origin_id, 
-        name: block._library_name 
-    } : null;
-
+    const originBlockInfo = block._library_origin_id ? { id: block._library_origin_id, name: block._library_name } : null;
     const themeSettings = siteData?.theme_settings || {};
 
-    const actionButtonStyle = {
-        padding: isCompact ? '6px' : '6px 12px',
+    const baseBtnStyle = {
+        background: 'transparent',
+        border: '1px solid var(--platform-border-color)',
+        color: 'var(--platform-text-secondary)',
+        padding: isCompact ? '6px' : '6px 10px',
         borderRadius: '6px',
         cursor: 'pointer',
-        fontSize: '12px',
-        fontWeight: '500',
-        transition: 'all 0.2s ease',
-        border: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minWidth: isCompact ? '30px' : 'auto',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+        transition: 'all 0.2s ease',
+        fontSize: '12px',
+        fontWeight: '500',
+        gap: '6px'
     };
 
-    const saveButtonStyle = {
-        ...actionButtonStyle,
-        background: 'var(--platform-card-bg)',
-        color: 'var(--platform-accent)',
-        border: '1px solid var(--platform-border-color)'
+    const handleBtnHover = (e, type) => {
+        const style = e.currentTarget.style;
+        if (type === 'danger') {
+            style.background = 'var(--platform-danger)';
+            style.color = '#fff';
+            style.borderColor = 'var(--platform-danger)';
+        } else if (type === 'primary') {
+            style.background = 'var(--platform-accent)';
+            style.color = 'var(--platform-accent-text)';
+            style.borderColor = 'var(--platform-accent)';
+        } else {
+            style.background = 'var(--platform-hover-bg)';
+            style.color = 'var(--platform-text-primary)';
+            style.borderColor = 'var(--platform-accent)';
+        }
+        style.transform = 'translateY(-1px)';
     };
 
-    const saveButtonHoverStyle = {
-        background: 'var(--platform-accent)',
-        color: 'var(--platform-accent-text)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-    };
-
-    const collapseButtonStyle = {
-        ...actionButtonStyle,
-        background: 'var(--platform-text-secondary)',
-        color: 'white'
-    };
-
-    const collapseButtonHoverStyle = {
-        background: 'var(--platform-text-primary)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-    };
-
-    const settingsButtonStyle = {
-        ...actionButtonStyle,
-        background: 'var(--platform-accent)',
-        color: 'var(--platform-accent-text)'
-    };
-
-    const settingsButtonHoverStyle = {
-        background: 'var(--platform-accent-hover)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-    };
-
-    const deleteButtonStyle = {
-        ...actionButtonStyle,
-        background: 'var(--platform-danger)',
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: '14px'
-    };
-
-    const deleteButtonHoverStyle = {
-        background: 'var(--platform-danger-hover)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 4px rgba(229, 62, 62, 0.2)'
-    };
-
-    const handleMouseOver = (element, hoverStyle) => {
-        Object.assign(element.style, hoverStyle);
-    };
-
-    const handleMouseOut = (element, originalStyle) => {
-        Object.assign(element.style, originalStyle);
+    const handleBtnOut = (e) => {
+        const style = e.currentTarget.style;
+        style.background = 'transparent';
+        style.borderColor = 'var(--platform-border-color)';
+        style.color = 'var(--platform-text-secondary)';
+        style.transform = 'translateY(0)';
     };
 
     const styles = {
@@ -251,19 +198,14 @@ const EditableBlockWrapper = ({
             cursor: 'grab',
             position: 'relative',
             margin: '20px 0',
-            border: isSelected 
-                ? '2px solid var(--platform-accent)' 
-                : '2px dashed transparent',
+            border: isSelected ? '2px solid var(--platform-accent)' : 
+                   isHovered ? '2px dashed var(--platform-accent)' : 
+                   '2px dashed var(--platform-border-color)',
             borderRadius: '8px',
             transition: 'all 0.2s ease',
             background: block.type === 'layout' ? 'transparent' : 'var(--platform-card-bg)',
-            boxShadow: isDragging ? 'none' : (block.type === 'layout' ? 'none' : '0 2px 4px rgba(0,0,0,0.05)'),
+            boxShadow: isHovered && !isDragging ? '0 4px 12px rgba(0,0,0,0.1)' : '0 2px 4px rgba(0,0,0,0.05)',
             maxWidth: '100%',
-            overflowX: 'hidden'
-        },
-        wrapperHover: {
-            borderColor: 'var(--platform-accent)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         },
         header: {
             display: 'flex',
@@ -273,26 +215,14 @@ const EditableBlockWrapper = ({
             background: 'var(--platform-card-bg)',
             borderBottom: '1px solid var(--platform-border-color)',
             borderRadius: '8px 8px 0 0',
-            transition: 'all 0.2s ease',
             gap: '10px'
         },
         headerText: {
             fontSize: '14px', 
             fontWeight: '500', 
             color: 'var(--platform-text-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            flex: 1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            minWidth: 0
-        },
-        buttonGroup: {
-            display: 'flex', 
-            gap: '6px',
-            flexShrink: 0
+            display: 'flex', alignItems: 'center', gap: '8px',
+            flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'
         }
     };
 
@@ -302,15 +232,7 @@ const EditableBlockWrapper = ({
             ref={ref}
             onClick={handleSelect}
             onContextMenu={(e) => onContextMenu && onContextMenu(e, path, block.block_id)}
-            style={{
-                ...styles.wrapper,
-                border: isSelected 
-                    ? '2px solid var(--platform-accent)' 
-                    : isHovered 
-                    ? '2px dashed var(--platform-accent)' 
-                    : '2px dashed var(--platform-border-color)',
-                boxShadow: isHovered && !isDragging ? '0 4px 12px rgba(0,0,0,0.1)' : styles.wrapper.boxShadow
-            }}
+            style={styles.wrapper}
             className="editable-block-wrapper"
             data-handler-id={handlerId}
             onMouseEnter={() => setIsHovered(true)}
@@ -318,79 +240,69 @@ const EditableBlockWrapper = ({
         >
             <div style={styles.header} className="editable-block-header">
                 <span style={styles.headerText} title={blockType?.name}>
-                    <span style={{cursor: 'grab'}}>⠿</span>
-                    <span>{blockType?.icon}</span>
+                    <span style={{cursor: 'grab', display: 'flex', alignItems: 'center', color: 'var(--platform-text-secondary)'}}>
+                        <IconGripVertical size={16} />
+                    </span>
+                    <span style={{display: 'flex', alignItems: 'center', color: 'var(--platform-accent)'}}>
+                        {block.icon || <IconHelpCircle size={16} />} 
+                    </span>
                     <span>{blockType?.name}</span>
                     {anchorId && (
-                        <span style={{
-                            fontSize: '0.75rem',
-                            background: 'rgba(var(--platform-accent-rgb), 0.1)',
-                            color: 'var(--platform-accent)',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            marginLeft: '8px',
-                            border: '1px solid var(--platform-accent)'
-                        }}>
+                        <span style={{ fontSize: '0.75rem', background: 'rgba(var(--platform-accent-rgb), 0.1)', color: 'var(--platform-accent)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--platform-accent)' }}>
                             #{anchorId}
                         </span>
                     )}
                 </span>
                 
-                <div style={styles.buttonGroup}>
+                <div style={{display: 'flex', gap: '4px'}}>
                     {!isHeaderBlock && (
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsSaveModalOpen(true); }}
-                            style={saveButtonStyle}
+                            style={baseBtnStyle}
                             title={originBlockInfo ? `Оновити "${originBlockInfo.name}"` : "Зберегти в бібліотеку"}
-                            onMouseOver={(e) => handleMouseOver(e.target, saveButtonHoverStyle)}
-                            onMouseOut={(e) => handleMouseOut(e.target, saveButtonStyle)}
+                            onMouseEnter={(e) => handleBtnHover(e, 'default')}
+                            onMouseLeave={handleBtnOut}
                         >
-                            💾
+                            <IconSave size={16} />
                         </button>
                     )}
 
                     <button 
                         onClick={(e) => { e.stopPropagation(); onToggleCollapse(block.block_id); }}
-                        style={collapseButtonStyle}
+                        style={baseBtnStyle}
                         title={isCollapsed ? 'Розгорнути' : 'Згорнути'}
-                        onMouseOver={(e) => handleMouseOver(e.target, collapseButtonHoverStyle)}
-                        onMouseOut={(e) => handleMouseOut(e.target, collapseButtonStyle)}
+                        onMouseEnter={(e) => handleBtnHover(e, 'default')}
+                        onMouseLeave={handleBtnOut}
                     >
-                        {isCollapsed ? '🔽' : '🔼'}
+                        {isCollapsed ? <IconChevronDown size={16} /> : <IconChevronUp size={16} />}
                     </button>
 
                     <button 
                         onClick={handleSelect}
-                        style={settingsButtonStyle}
+                        style={baseBtnStyle}
                         title="Налаштування"
-                        onMouseOver={(e) => handleMouseOver(e.target, settingsButtonHoverStyle)}
-                        onMouseOut={(e) => handleMouseOut(e.target, settingsButtonStyle)}
+                        onMouseEnter={(e) => handleBtnHover(e, 'primary')}
+                        onMouseLeave={handleBtnOut}
                     >
-                        {isCompact ? '⚙️' : 'Налаштування'}
+                        {isCompact ? <IconSettings size={16} /> : <><IconSettings size={16} /> Налаштування</>}
                     </button>
 
                     {!isHeaderBlock && (
                         <button 
                             onClick={handleDelete}
                             title="Видалити блок"
-                            style={deleteButtonStyle}
-                            onMouseOver={(e) => handleMouseOver(e.target, deleteButtonHoverStyle)}
-                            onMouseOut={(e) => handleMouseOut(e.target, deleteButtonStyle)}
+                            style={baseBtnStyle}
+                            onMouseEnter={(e) => handleBtnHover(e, 'danger')}
+                            onMouseLeave={handleBtnOut}
                         >
-                            &times;
+                            <IconTrash size={16} />
                         </button>
                     )}
                 </div>
             </div>
 
             {isCollapsed ? (
-                <div style={{
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    background: 'var(--platform-bg)',
-                    color: 'var(--platform-text-secondary)',
-                    borderRadius: '0 0 8px 8px'
-                }}>
+                <div style={{ padding: '1.5rem', textAlign: 'center', background: 'var(--platform-bg)', color: 'var(--platform-text-secondary)', borderRadius: '0 0 8px 8px' }}>
                     <small>Вміст блоку згорнуто</small>
                 </div>
             ) : (
@@ -402,10 +314,10 @@ const EditableBlockWrapper = ({
                         background: 'var(--platform-card-bg)',
                         color: 'var(--platform-text-primary)',
                         ...(block.type === 'layout' && { background: 'transparent' }),
+                        borderRadius: '0 0 8px 8px',
                         '--font-heading': themeSettings.font_heading || "'Inter', sans-serif",
                         '--font-body': themeSettings.font_body || "'Inter', sans-serif",
                         '--btn-radius': themeSettings.button_radius || '8px',
-                        borderRadius: '0 0 8px 8px',
                     }}
                 >
                     <BlockRenderer 

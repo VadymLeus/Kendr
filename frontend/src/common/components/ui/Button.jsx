@@ -1,89 +1,209 @@
 // frontend/src/common/components/ui/Button.jsx
-import React from 'react';
+import React, { useState } from 'react';
 
-export const Button = ({ 
-  children, 
-  variant = 'primary', 
+const VARIANTS = {
+    primary: {
+        base: {
+            background: 'var(--platform-accent)',
+            color: 'white',
+            border: 'none',
+        },
+        hover: {
+            background: 'var(--platform-accent-hover)',
+        }
+    },
+    danger: {
+        base: {
+            background: '#e53e3e',
+            color: 'white',
+            border: 'none',
+        },
+        hover: {
+            background: '#c53030',
+        }
+    },
+    warning: {
+        base: {
+            background: 'var(--platform-warning)',
+            color: 'white',
+            border: 'none',
+        },
+        hover: {
+            background: 'var(--platform-warning-hover)',
+        }
+    },
+    'secondary-danger': {
+        base: {
+            background: '#fff5f5',
+            color: '#c53030',
+            border: '1px solid #fc8181',
+        },
+        hover: {
+            background: '#fee2e2',
+            color: '#9b2c2c',
+            border: '1px solid #f87171',
+        }
+    },
+    outline: {
+        base: {
+            background: 'transparent',
+            color: 'var(--platform-text-primary)',
+            border: '1px solid var(--platform-border-color)',
+        },
+        hover: {
+            border: '1px solid var(--platform-accent)',
+            color: 'var(--platform-accent)',
+            background: 'color-mix(in srgb, var(--platform-accent), transparent 90%)',
+        }
+    },
+    ghost: {
+        base: {
+            background: 'transparent',
+            color: 'var(--platform-text-primary)',
+            border: '1px solid transparent',
+        },
+        hover: {
+            background: 'rgba(0,0,0,0.05)',
+            color: 'var(--platform-text-primary)',
+        }
+    },
+    'square-danger': {
+        base: {
+            background: 'var(--platform-card-bg)',
+            color: 'var(--platform-text-secondary)',
+            border: '1px solid var(--platform-border-color)',
+            padding: 0,
+            width: '38px',
+            height: '38px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        hover: {
+            background: '#e53e3e',
+            color: 'white',
+            border: '1px solid #e53e3e',
+        }
+    },
+    'square-accent': {
+        base: {
+            background: 'var(--platform-card-bg)',
+            color: 'var(--platform-text-secondary)',
+            border: '1px solid var(--platform-border-color)',
+            padding: 0,
+            width: '38px',
+            height: '38px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        hover: {
+            background: 'var(--platform-card-bg)',
+            border: '1px solid var(--platform-accent)',
+            color: 'var(--platform-accent)',
+        },
+        activeState: {
+            border: '1px solid var(--platform-accent)',
+            color: 'var(--platform-accent)',
+            background: 'color-mix(in srgb, var(--platform-accent), transparent 90%)'
+        }
+    },
+    'toggle-danger': {
+        base: {
+            background: 'var(--platform-bg)',
+            color: 'var(--platform-text-secondary)',
+            border: '1px solid var(--platform-border-color)',
+            padding: 0,
+            width: '38px',
+            height: '38px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        hover: {
+            borderColor: 'var(--platform-danger)',
+            color: 'var(--platform-danger)',
+            background: 'var(--platform-bg)',
+        },
+        activeState: {
+            background: 'var(--platform-danger)',
+            borderColor: 'var(--platform-danger)',
+            color: 'white',
+        },
+        activeHover: {
+            background: '#c53030',
+            borderColor: '#c53030',
+            color: 'white'
+        }
+    }
+};
+
+export const Button = ({
+  children,
+  variant = 'primary',
   disabled = false,
+  active = false,
   type = 'button',
   onClick,
   style,
-  ...props 
+  className,
+  title,
+  icon,
+  ...props
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   const baseStyle = {
     padding: '10px 20px',
     borderRadius: '8px',
-    border: 'none',
     fontWeight: '500',
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontSize: '0.9rem',
     whiteSpace: 'nowrap',
     transition: 'all 0.2s ease',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: 'none',
     opacity: disabled ? 0.7 : 1,
-    ...style
+    outline: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    justifyContent: 'center',
   };
 
-  const variants = {
-    primary: {
-      background: 'var(--platform-accent)',
-      color: 'white',
-      '&:hover:not(:disabled)': {
-        background: 'var(--platform-accent-hover)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
-      }
-    },
-    danger: {
-      background: '#e53e3e',
-      color: 'white',
-      '&:hover:not(:disabled)': {
-        background: '#c53030',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 5px rgba(229, 62, 62, 0.3)'
-      }
-    },
-    warning: {
-      background: 'var(--platform-warning)',
-      color: 'white',
-      '&:hover:not(:disabled)': {
-        background: 'var(--platform-warning-hover)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 5px rgba(237, 137, 54, 0.3)'
-      }
+  const variantConfig = VARIANTS[variant] || VARIANTS.primary;
+
+  let finalStyle = { ...baseStyle, ...variantConfig.base };
+
+  if (style) {
+    finalStyle = { ...finalStyle, ...style };
+  }
+
+  if (active && variantConfig.activeState) {
+    finalStyle = { ...finalStyle, ...variantConfig.activeState };
+  }
+
+  if (isHovered && !disabled) {
+    if (active && variantConfig.activeHover) {
+        finalStyle = { ...finalStyle, ...variantConfig.activeHover };
     }
-  };
-
-  const variantStyle = variants[variant] || variants.primary;
+    else if (variantConfig.hover) {
+        finalStyle = { ...finalStyle, ...variantConfig.hover };
+    }
+  }
 
   return (
     <button
       type={type}
+      className={className}
       onClick={onClick}
       disabled={disabled}
-      style={{
-        ...baseStyle,
-        background: variantStyle.background,
-        color: variantStyle.color,
-      }}
-      onMouseOver={(e) => {
-        if (!disabled && variantStyle['&:hover:not(:disabled)']) {
-          Object.assign(e.target.style, variantStyle['&:hover:not(:disabled)']);
-        }
-      }}
-      onMouseOut={(e) => {
-        if (!disabled) {
-          Object.assign(e.target.style, {
-            ...baseStyle,
-            background: variantStyle.background,
-            color: variantStyle.color,
-            transform: 'none',
-            boxShadow: baseStyle.boxShadow
-          });
-        }
-      }}
+      style={finalStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      title={title}
       {...props}
     >
+      {icon && icon}
       {children}
     </button>
   );

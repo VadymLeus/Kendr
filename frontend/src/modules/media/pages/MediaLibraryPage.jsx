@@ -5,6 +5,7 @@ import MediaGridItem from '../components/MediaGridItem';
 import MediaInspector from '../components/MediaInspector';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../common/hooks/useConfirm';
+import { Button, Input, Select } from '../../../common/components/ui'; 
 import { 
     IconUpload, 
     IconSearch, 
@@ -16,7 +17,6 @@ import {
     IconType,
     IconMusic,
     IconStar,
-    IconTag,
     IconCheck,
     IconCalendar,
     IconDownload,
@@ -35,17 +35,15 @@ const FORMATS_BY_TYPE = {
 };
 
 const SORT_OPTIONS = [
-    { value: 'date', label: 'За датою', icon: <IconCalendar size={14} /> },
-    { value: 'size', label: 'За розміром', icon: <IconFileText size={14} /> },
-    { value: 'name', label: 'За назвою', icon: <IconType size={14} /> }
+    { value: 'date', label: 'За датою', icon: IconCalendar },
+    { value: 'size', label: 'За розміром', icon: IconFileText },
+    { value: 'name', label: 'За назвою', icon: IconType }
 ];
 
 const MediaLibraryPage = () => {
-    // --- State ---
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // --- Фільтри та Сортування ---
     const [searchQuery, setSearchQuery] = useState('');
     const [activeType, setActiveType] = useState('all'); 
     const [activeFormat, setActiveFormat] = useState(null);
@@ -55,10 +53,6 @@ const MediaLibraryPage = () => {
     const [onlyFavorites, setOnlyFavorites] = useState(false); 
     const [visibleCount, setVisibleCount] = useState(48);
     
-    const [isSortOpen, setIsSortOpen] = useState(false);
-    const sortRef = useRef(null);
-    
-    // Вибір
     const [selectedFile, setSelectedFile] = useState(null);
     const [checkedFiles, setCheckedFiles] = useState(new Set());
     
@@ -70,19 +64,8 @@ const MediaLibraryPage = () => {
     const fileInputRef = useRef(null);
     const { confirm } = useConfirm();
 
-    // --- Завантаження даних ---
     useEffect(() => {
         fetchMedia();
-    }, []);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sortRef.current && !sortRef.current.contains(event.target)) {
-                setIsSortOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const fetchMedia = async () => {
@@ -104,7 +87,6 @@ const MediaLibraryPage = () => {
         setActiveFormat(null);
     }, [activeType]);
 
-    // --- Логіка фільтрації ---
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
@@ -162,7 +144,6 @@ const MediaLibraryPage = () => {
     const visibleFiles = filteredFiles.slice(0, visibleCount);
     const remainingCount = filteredFiles.length - visibleFiles.length;
 
-    // --- Handlers ---
     const handleLoadMore = () => setVisibleCount(prev => prev + 48);
 
     const handleClearFilters = () => {
@@ -243,7 +224,6 @@ const MediaLibraryPage = () => {
         }
     };
 
-    // --- Масові дії та Вибір ---
     const handleSelectAll = () => {
         if (checkedFiles.size === filteredFiles.length && filteredFiles.length > 0) {
             setCheckedFiles(new Set());
@@ -398,11 +378,10 @@ const MediaLibraryPage = () => {
             margin: '-2rem', 
             width: 'calc(100% + 4rem)',
             height: 'calc(100vh - 64px + 4rem)', 
-            maxHeight: 'calc(100vh - 64px + 4rem)',
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: 'var(--platform-bg, #ffffff)',
-            color: 'var(--platform-text-primary, #111827)',
+            backgroundColor: 'var(--platform-bg)',
+            color: 'var(--platform-text-primary)',
             overflow: 'hidden', 
             position: 'relative',
         },
@@ -411,9 +390,9 @@ const MediaLibraryPage = () => {
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            borderBottom: '1px solid var(--platform-border-color, #e5e7eb)',
+            borderBottom: '1px solid var(--platform-border-color)',
             flexShrink: 0,
-            backgroundColor: 'var(--platform-bg, #ffffff)',
+            backgroundColor: 'var(--platform-bg)',
             height: '60px', 
         },
         workspace: {
@@ -431,8 +410,8 @@ const MediaLibraryPage = () => {
         },
         filtersBar: {
             padding: '12px 24px',
-            borderBottom: '1px solid var(--platform-border-color, #e5e7eb)',
-            backgroundColor: 'var(--platform-bg, #ffffff)',
+            borderBottom: '1px solid var(--platform-border-color)',
+            backgroundColor: 'var(--platform-bg)',
             flexShrink: 0, 
             zIndex: 10,
             display: 'flex',
@@ -444,14 +423,14 @@ const MediaLibraryPage = () => {
             gap: '12px',
             alignItems: 'center',
             width: '100%',
+            flexWrap: 'wrap',
         },
         bottomFilterRow: {
             display: 'flex', 
             gap: '8px', 
-            overflowX: 'auto', 
-            paddingBottom: '4px', 
-            scrollbarWidth: 'none',
-            alignItems: 'center'
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            paddingTop: '4px'
         },
         filesGridArea: {
             flex: 1,
@@ -462,13 +441,13 @@ const MediaLibraryPage = () => {
         statusBar: {
             padding: '0 24px',
             height: '40px', 
-            borderTop: '1px solid var(--platform-border-color, #e5e7eb)',
-            backgroundColor: 'var(--platform-bg, #ffffff)',
+            borderTop: '1px solid var(--platform-border-color)',
+            backgroundColor: 'var(--platform-bg)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             fontSize: '0.8rem',
-            color: 'var(--platform-text-secondary, #6b7280)',
+            color: 'var(--platform-text-secondary)',
             flexShrink: 0, 
             marginTop: 'auto'
         },
@@ -477,27 +456,11 @@ const MediaLibraryPage = () => {
             alignItems: 'center',
             gap: '8px', 
             padding: '4px 8px', 
-            background: 'var(--platform-card-bg)',
+            background: 'transparent',
             border: '1px solid var(--platform-border-color)',
             borderRadius: '6px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             transition: 'all 0.2s'
         },
-        bulkBtn: (variant) => ({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.8rem',
-            fontWeight: 500,
-            color: variant === 'delete' ? '#e53e3e' : 'var(--platform-text-primary)',
-            padding: '6px 8px',
-            borderRadius: '4px',
-            transition: 'all 0.2s',
-            whiteSpace: 'nowrap'
-        }),
         fileNameTruncated: {
             maxWidth: '300px', 
             whiteSpace: 'nowrap',
@@ -508,8 +471,8 @@ const MediaLibraryPage = () => {
         },
         sidebar: {
             width: '360px',
-            borderLeft: '1px solid var(--platform-border-color, #e5e7eb)',
-            backgroundColor: 'var(--platform-bg, #ffffff)',
+            borderLeft: '1px solid var(--platform-border-color)',
+            backgroundColor: 'var(--platform-bg)',
             display: 'flex',
             flexDirection: 'column',
             zIndex: 40,
@@ -517,159 +480,6 @@ const MediaLibraryPage = () => {
             overflowY: 'auto',
             boxShadow: '-4px 0 16px rgba(0,0,0,0.03)'
         },
-        searchWrapper: {
-            position: 'relative',
-            flex: 1, 
-            minWidth: '200px', 
-        },
-        searchInput: {
-            width: '100%',
-            padding: '10px 36px',
-            borderRadius: '8px',
-            border: '1px solid var(--platform-border-color)',
-            background: 'var(--platform-bg)',
-            color: 'var(--platform-text-primary)',
-            fontSize: '0.95rem',
-            outline: 'none',
-            transition: 'border-color 0.2s',
-            height: '38px', 
-            boxSizing: 'border-box'
-        },
-        filterChip: (isActive) => ({
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '6px 14px', borderRadius: '20px',
-            fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer',
-            border: isActive 
-                ? '1px solid var(--platform-accent, #3b82f6)' 
-                : '1px solid var(--platform-border-color, #e5e7eb)',
-            backgroundColor: isActive 
-                ? 'rgba(var(--platform-accent-rgb, 59, 130, 246), 0.1)' 
-                : 'transparent',
-            color: isActive 
-                ? 'var(--platform-accent, #3b82f6)' 
-                : 'var(--platform-text-secondary, #6b7280)',
-            whiteSpace: 'nowrap',
-            flexShrink: 0 
-        }),
-        subFilterChip: (isActive) => ({
-            padding: '4px 10px',
-            borderRadius: '6px',
-            fontSize: '0.8rem',
-            cursor: 'pointer',
-            border: 'none',
-            background: isActive ? 'var(--platform-text-primary)' : 'rgba(0,0,0,0.05)',
-            color: isActive ? 'var(--platform-bg)' : 'var(--platform-text-secondary)',
-            transition: 'all 0.2s',
-            textTransform: 'uppercase',
-            fontWeight: 600,
-            flexShrink: 0 
-        }),
-        iconButton: (isActive) => ({
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '38px', borderRadius: '8px', cursor: 'pointer',
-            border: isActive 
-                ? '1px solid var(--platform-accent, #3b82f6)'
-                : '1px solid var(--platform-border-color, #e5e7eb)',
-            backgroundColor: isActive 
-                ? 'rgba(var(--platform-accent-rgb, 59, 130, 246), 0.1)'
-                : 'var(--platform-card-bg, #fff)',
-            color: isActive 
-                ? 'var(--platform-accent, #3b82f6)'
-                : 'var(--platform-text-secondary, #6b7280)',
-            transition: 'all 0.2s',
-            flexShrink: 0 
-        }),
-        sortContainer: {
-            display: 'flex', 
-            gap: '0.5rem', 
-            alignItems: 'center',
-            background: 'var(--platform-bg)',
-            padding: '4px',
-            borderRadius: '8px',
-            border: '1px solid var(--platform-border-color)',
-            flexShrink: 0 
-        },
-        sortTrigger: {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '8px 12px',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            color: 'var(--platform-text-primary, #111827)',
-            minWidth: '130px',
-            gap: '8px',
-            userSelect: 'none'
-        },
-        sortDropdown: {
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            left: 0,
-            width: '100%',
-            minWidth: '150px',
-            backgroundColor: 'var(--platform-card-bg, #ffffff)',
-            border: '1px solid var(--platform-border-color, #e5e7eb)',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            zIndex: 100,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '4px'
-        },
-        sortOption: (isActive) => ({
-            padding: '8px 12px',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            color: isActive ? 'var(--platform-accent, #3b82f6)' : 'var(--platform-text-primary, #111827)',
-            backgroundColor: isActive ? 'rgba(var(--platform-accent-rgb, 59, 130, 246), 0.05)' : 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderRadius: '4px',
-            transition: 'background-color 0.2s'
-        }),
-        sortDirectionBtn: {
-            padding: '8px 10px', 
-            borderRadius: '6px', 
-            border: 'none', 
-            background: 'var(--platform-card-bg)', 
-            color: 'var(--platform-text-primary)', 
-            cursor: 'pointer', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            minWidth: '40px',
-            transition: 'all 0.2s',
-            fontSize: '1.1rem',
-            fontWeight: 'bold'
-        },
-        clearButton: {
-            padding: '0',
-            borderRadius: '8px',
-            border: '1px solid var(--platform-border-color)',
-            background: 'var(--platform-card-bg)',
-            color: 'var(--platform-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '38px', 
-            height: '38px',
-            transition: 'all 0.2s',
-            opacity: 1,
-            flexShrink: 0 
-        },
-        loadMoreButton: {
-            padding: '10px 24px',
-            borderRadius: '30px',
-            backgroundColor: 'var(--platform-card-bg)', 
-            border: '1px solid var(--platform-border-color)',
-            color: 'var(--platform-text-primary)', 
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            transition: 'all 0.2s'
-        }
     };
 
     return (
@@ -680,31 +490,13 @@ const MediaLibraryPage = () => {
             onDragLeave={onDragLeave} 
             onDrop={onDrop}
         >
-            <style>{`
-                .bulk-btn:hover {
-                    background: rgba(0,0,0,0.05) !important;
-                }
-                .bulk-btn.delete:hover {
-                    background: #fff5f5 !important;
-                }
-                
-                @media (max-width: 1000px) {
-                    .bulk-text {
-                        display: none;
-                    }
-                    .bulk-btn {
-                        padding: 6px !important;
-                    }
-                }
-            `}</style>
-
             {isDragging && (
                 <div style={{
                     position: 'absolute', inset: 0, zIndex: 100,
                     backgroundColor: 'rgba(var(--platform-accent-rgb, 59, 130, 246), 0.1)',
-                    border: '4px dashed var(--platform-accent, #3b82f6)',
+                    border: '4px dashed var(--platform-accent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--platform-accent, #3b82f6)', fontSize: '1.5rem', fontWeight: 'bold',
+                    color: 'var(--platform-accent)', fontSize: '1.5rem', fontWeight: 'bold',
                     pointerEvents: 'none' 
                 }}>
                     Перетягніть файли сюди
@@ -714,20 +506,13 @@ const MediaLibraryPage = () => {
             <div style={styles.header}>
                 <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Медіатека</h1>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
-                        className="btn-primary"
+                    <Button 
+                        variant="primary"
                         onClick={() => fileInputRef.current.click()}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: '8px',
-                            padding: '8px 16px', borderRadius: '8px',
-                            backgroundColor: 'var(--platform-accent, #3b82f6)',
-                            color: '#fff', border: 'none', cursor: 'pointer',
-                            fontSize: '0.9rem'
-                        }}
                     >
                         <IconUpload size={18} /> 
                         <span>Завантажити</span>
-                    </button>
+                    </Button>
                     <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleUpload} />
                 </div>
             </div>
@@ -739,147 +524,84 @@ const MediaLibraryPage = () => {
                     <div style={styles.filtersBar}>
                         
                         <div style={styles.topFilterRow}>
-                            <div style={styles.searchWrapper}>
-                                <button 
-                                    onClick={() => {}} 
-                                    style={{
-                                        position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
-                                        background: 'transparent', border: 'none', color: 'var(--platform-text-secondary)',
-                                        display: 'flex', alignItems: 'center', padding: 0
-                                    }}
-                                >
-                                    <IconSearch size={18} />
-                                </button>
-                                
-                                <input 
-                                    type="text"
+                            <div style={{ flex: '1 1 200px', minWidth: '200px' }}>
+                                <Input 
                                     placeholder="Пошук файлів..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    style={styles.searchInput}
+                                    leftIcon={<IconSearch size={18} />}
+                                    rightIcon={searchQuery ? <IconX size={16} onClick={() => setSearchQuery('')} style={{cursor: 'pointer'}} /> : null}
+                                    wrapperStyle={{ marginBottom: 0 }}
+                                    style={{ height: '38px' }}
                                 />
-                                
-                                {searchQuery && (
-                                    <button 
-                                        onClick={() => setSearchQuery('')} 
-                                        style={{
-                                            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-                                            background: 'transparent', border: 'none', cursor: 'pointer',
-                                            color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center', padding: 0
-                                        }}
-                                    >
-                                        <IconX size={16} />
-                                    </button>
-                                )}
                             </div>
 
-                            <div style={styles.sortContainer}>
-                                <div style={{ position: 'relative' }} ref={sortRef}>
-                                    <div 
-                                        style={styles.sortTrigger}
-                                        onClick={() => setIsSortOpen(!isSortOpen)}
-                                    >
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            {SORT_OPTIONS.find(opt => opt.value === sortKey)?.icon}
-                                            {SORT_OPTIONS.find(opt => opt.value === sortKey)?.label || 'Сортування'}
-                                        </span>
-                                        <span style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', transform: isSortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-                                            ▼
-                                        </span>
-                                    </div>
-                                    
-                                    {isSortOpen && (
-                                        <div style={styles.sortDropdown}>
-                                            {SORT_OPTIONS.map(opt => {
-                                                const isActive = sortKey === opt.value;
-                                                return (
-                                                    <div
-                                                        key={opt.value}
-                                                        style={styles.sortOption(isActive)}
-                                                        onClick={() => {
-                                                            setSortKey(opt.value);
-                                                            setIsSortOpen(false);
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.03)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
-                                                        }}
-                                                    >
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                            {opt.icon}
-                                                            {opt.label}
-                                                        </div>
-                                                        {isActive && (
-                                                            <span style={{ color: 'var(--platform-accent)' }}>
-                                                                {IconCheck ? <IconCheck size={14} /> : '✓'}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                flexWrap: 'wrap', 
+                                marginLeft: 'auto',
+                                flexShrink: 0
+                            }}>
+                                <div style={{ width: '180px' }}>
+                                    <Select 
+                                        value={sortKey}
+                                        onChange={(e) => setSortKey(e.target.value)}
+                                        options={SORT_OPTIONS}
+                                        placeholder="Сортування"
+                                        style={{ height: '38px', padding: '6px 10px' }}
+                                    />
                                 </div>
                                 
-                                <button 
+                                <Button 
+                                    variant="outline"
                                     onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')} 
-                                    style={styles.sortDirectionBtn}
                                     title={sortDirection === 'asc' ? "За зростанням" : "За спаданням"}
+                                    style={{ height: '38px', width: '38px', padding: 0, background: 'var(--platform-card-bg)' }}
                                 >
-                                    {sortDirection === 'desc' ? '↓' : '↑'}
-                                </button>
+                                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                                </Button>
+
+                                <Button
+                                    variant="square-accent"
+                                    active={onlyFavorites}
+                                    onClick={() => setOnlyFavorites(prev => !prev)}
+                                    title="Тільки обрані"
+                                    style={{ height: '38px', width: '38px' }}
+                                >
+                                    <IconStar size={20} filled={onlyFavorites} />
+                                </Button>
+
+                                <Button 
+                                    variant="square-danger"
+                                    onClick={handleClearFilters}
+                                    title="Очистити всі фільтри"
+                                    style={{ height: '38px', width: '38px' }}
+                                >
+                                    <IconClear size={18} />
+                                </Button>
                             </div>
-
-                            <button 
-                                onClick={() => setOnlyFavorites(prev => !prev)} 
-                                style={{...styles.iconButton(onlyFavorites), height: '38px'}}
-                                title="Тільки обрані"
-                                onMouseEnter={(e) => {
-                                    if (!onlyFavorites) {
-                                        e.currentTarget.style.borderColor = 'var(--platform-accent)';
-                                        e.currentTarget.style.color = 'var(--platform-accent)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!onlyFavorites) {
-                                        e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                                        e.currentTarget.style.color = 'var(--platform-text-secondary)';
-                                    }
-                                }}
-                            >
-                                <IconStar size={20} filled={onlyFavorites} />
-                            </button>
-
-                            <button 
-                                onClick={handleClearFilters}
-                                style={styles.clearButton}
-                                title="Очистити всі фільтри"
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = '#e53e3e';
-                                    e.currentTarget.style.color = 'white';
-                                    e.currentTarget.style.borderColor = '#e53e3e';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'var(--platform-card-bg)';
-                                    e.currentTarget.style.color = 'var(--platform-text-secondary)';
-                                    e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                                }}
-                            >
-                                <IconClear size={18} />
-                            </button>
                         </div>
 
                         <div style={styles.bottomFilterRow}>
                             {filterTypes.map(type => (
-                                <button
+                                <Button
                                     key={type.id}
+                                    variant="outline"
                                     onClick={() => { setActiveType(type.id); setVisibleCount(48); }}
-                                    style={styles.filterChip(activeType === type.id)}
+                                    style={{
+                                        borderRadius: '20px',
+                                        padding: '6px 14px',
+                                        fontSize: '0.85rem',
+                                        height: '32px',
+                                        border: activeType === type.id ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+                                        color: activeType === type.id ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                                        background: activeType === type.id ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent'
+                                    }}
                                 >
                                     {type.icon && <type.icon size={14} />} {type.label}
-                                </button>
+                                </Button>
                             ))}
                             
                             {activeType !== 'all' && FORMATS_BY_TYPE[activeType]?.length > 0 && (
@@ -887,13 +609,23 @@ const MediaLibraryPage = () => {
                                     <div style={{ width: '1px', height: '24px', background: 'var(--platform-border-color)', margin: '0 8px', flexShrink: 0 }}></div>
                                     
                                     {FORMATS_BY_TYPE[activeType].map(fmt => (
-                                        <button
+                                        <Button
                                             key={fmt}
+                                            variant="outline"
                                             onClick={() => setActiveFormat(activeFormat === fmt ? null : fmt)}
-                                            style={styles.subFilterChip(activeFormat === fmt)}
+                                            style={{
+                                                borderRadius: '6px', 
+                                                padding: '4px 10px',
+                                                fontSize: '0.8rem',
+                                                height: '32px',
+                                                textTransform: 'uppercase',
+                                                border: activeFormat === fmt ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+                                                color: activeFormat === fmt ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                                                background: activeFormat === fmt ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent'
+                                            }}
                                         >
                                             {fmt}
-                                        </button>
+                                        </Button>
                                     ))}
                                 </>
                             )}
@@ -905,39 +637,27 @@ const MediaLibraryPage = () => {
                         className="custom-scrollbar" 
                     >
                         {loading ? (
-                            <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>Завантаження...</div>
+                            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}>Завантаження...</div>
                         ) : filteredFiles.length === 0 ? (
                             <div style={{ 
                                 textAlign: 'center', padding: '60px 20px', 
-                                border: '2px dashed #e5e7eb', borderRadius: '16px', color: '#6b7280', marginTop: '24px',
+                                border: '2px dashed var(--platform-border-color)', borderRadius: '16px', color: 'var(--platform-text-secondary)', marginTop: '24px',
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
                             }}>
                                 <IconSearch size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
                                 <p style={{ margin: 0, marginBottom: '16px' }}>Файлів не знайдено</p>
-                                <button 
+                                <Button 
+                                    variant="primary"
                                     onClick={handleClearFilters}
-                                    style={{
-                                        padding: '8px 16px',
-                                        background: 'var(--platform-accent)',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        fontWeight: 500,
-                                        fontSize: '0.9rem',
-                                        transition: 'opacity 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => e.target.style.opacity = 0.9}
-                                    onMouseLeave={(e) => e.target.style.opacity = 1}
                                 >
                                     Очистити фільтри
-                                </button>
+                                </Button>
                             </div>
                         ) : (
                             <>
                                 <div style={{ 
                                     display: 'grid', 
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
                                     gap: '16px'
                                 }}>
                                     {visibleFiles.map((file, index) => (
@@ -954,20 +674,13 @@ const MediaLibraryPage = () => {
                                 </div>
                                 {remainingCount > 0 && (
                                     <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', marginBottom: '20px' }}>
-                                        <button 
+                                        <Button 
+                                            variant="outline"
                                             onClick={handleLoadMore}
-                                            style={styles.loadMoreButton}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.borderColor = 'var(--platform-accent)';
-                                                e.currentTarget.style.color = 'var(--platform-accent)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                                                e.currentTarget.style.color = 'var(--platform-text-primary)';
-                                            }}
+                                            style={{ borderRadius: '30px' }}
                                         >
                                             Показати ще ({remainingCount})
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
                             </>
@@ -980,22 +693,18 @@ const MediaLibraryPage = () => {
                                 Всього: {files.length} {filteredFiles.length !== files.length && `(Знайдено: ${filteredFiles.length})`}
                             </span>
                             
-                            <button 
+                            <Button 
+                                variant="ghost"
                                 onClick={handleSelectAll}
                                 style={{
-                                    display: 'flex', alignItems: 'center', gap: '6px',
-                                    border: 'none', background: 'none',
                                     fontSize: '0.8rem', fontWeight: 600,
-                                    cursor: 'pointer', color: 'var(--platform-accent)',
-                                    padding: '4px 8px', borderRadius: '6px',
-                                    transition: 'background 0.2s'
+                                    color: 'var(--platform-accent)',
+                                    padding: '4px 8px', borderRadius: '6px'
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(var(--platform-accent-rgb, 59, 130, 246), 0.1)'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
                             >
                                 <IconCheck size={14} />
                                 {checkedFiles.size === filteredFiles.length && filteredFiles.length > 0 ? 'Зняти все' : 'Вибрати все'}
-                            </button>
+                            </Button>
                         </div>
 
                         {checkedFiles.size > 0 && (
@@ -1006,31 +715,37 @@ const MediaLibraryPage = () => {
                                 
                                 <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }}></div>
                                 
-                                <button 
-                                    style={styles.bulkBtn('normal')} 
-                                    className="bulk-btn"
+                                <Button 
+                                    variant="ghost"
                                     onClick={handleBulkDownload}
                                     title={checkedFiles.size > 1 ? "Завантажити архівом (послідовно)" : "Завантажити"}
+                                    style={{
+                                        fontSize: '0.8rem', fontWeight: 500, color: 'var(--platform-text-primary)',
+                                        padding: '6px 8px', borderRadius: '4px'
+                                    }}
                                 >
                                     <IconDownload size={14} />
                                     <span className="bulk-text">
                                         {checkedFiles.size > 1 ? 'Завантажити архівом' : 'Завантажити'}
                                     </span>
-                                </button>
+                                </Button>
                                 
                                 <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }}></div>
                                 
-                                <button 
-                                    style={styles.bulkBtn('delete')}
-                                    className="bulk-btn delete"
+                                <Button 
+                                    variant="ghost"
                                     onClick={handleBulkDelete}
                                     title="Видалити вибрані"
+                                    style={{
+                                        fontSize: '0.8rem', fontWeight: 500, color: '#e53e3e',
+                                        padding: '6px 8px', borderRadius: '4px'
+                                    }}
                                 >
                                     <IconTrash size={14} />
                                     <span className="bulk-text">
                                         Видалити
                                     </span>
-                                </button>
+                                </Button>
                             </div>
                         )}
                         

@@ -3,6 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -24,7 +28,7 @@ html {
   --platform-warning: #dd6b20;
 
   --platform-logo-url: url('/icon-dark.webp');
-  --sidebar-width: 220px;
+  --sidebar-width: 280px;
 
   --site-bg: #ffffff;
   --site-header-bg: #f7fafc;
@@ -200,11 +204,11 @@ body {
 
 .layout-content {
   margin-left: var(--sidebar-width);
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.2, 0, 0, 1);
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: overlay;
   overflow-x: hidden;
   flex: 1;
 }
@@ -508,6 +512,12 @@ hr {
     .category-grid-container {
         grid-template-columns: 1fr;
     }
+}
+
+.editor-canvas-scroll-area,
+.custom-scrollbar {
+  overflow-y: overlay;
+  scrollbar-gutter: stable;
 }
 
 .editor-canvas-scroll-area::-webkit-scrollbar,

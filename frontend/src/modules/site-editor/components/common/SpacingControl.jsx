@@ -1,26 +1,18 @@
 // frontend/src/modules/site-editor/components/common/SpacingControl.jsx
 import React, { useState, useEffect } from 'react';
+import RangeSlider from '../../../../common/components/ui/RangeSlider';
+import { IconArrowUp, IconArrowDown } from '../../../../common/components/ui/Icons';
 
 const SpacingControl = ({ styles = {}, onChange }) => {
     const defaultPadding = 60;
-    const minPadding = 1;
+    const minPadding = 0;
     const maxPadding = 200; 
 
     const getSafeValue = (val) => {
-        if (val === undefined || val === null) {
-            return defaultPadding;
-        }
-        
-        if (val === '') {
-            return defaultPadding;
-        }
-        
+        if (val === undefined || val === null) return defaultPadding;
+        if (val === '') return defaultPadding;
         const parsed = parseInt(val, 10);
-        
-        if (isNaN(parsed) || parsed < minPadding || parsed > maxPadding) {
-            return defaultPadding;
-        }
-        
+        if (isNaN(parsed)) return defaultPadding;
         return parsed;
     };
     
@@ -33,17 +25,9 @@ const SpacingControl = ({ styles = {}, onChange }) => {
         setPaddingBottom(getSafeValue(styles.paddingBottom));
     }, [styles.paddingTop, styles.paddingBottom]);
 
-    const handleChange = (key, value) => {
-        if (value === '') {
-            if (key === 'paddingTop') setPaddingTop('');
-            else setPaddingBottom('');
-            return;
-        }
-
-        const val = parseInt(value, 10);
-        if (isNaN(val)) return;
-        
-        const finalValue = Math.max(minPadding, Math.min(val, maxPadding));
+    const handleSliderChange = (key, valueStr) => {
+        const val = parseInt(valueStr, 10);
+        const finalValue = isNaN(val) ? 0 : Math.max(minPadding, Math.min(val, maxPadding));
         
         if (key === 'paddingTop') {
             setPaddingTop(finalValue);
@@ -68,221 +52,72 @@ const SpacingControl = ({ styles = {}, onChange }) => {
         }
     };
 
-    const handleCommit = () => {
-        const finalTop = paddingTop === '' ? defaultPadding : 
-                        Math.max(minPadding, Math.min(paddingTop, maxPadding));
-        const finalBottom = paddingBottom === '' ? defaultPadding : 
-                           Math.max(minPadding, Math.min(paddingBottom, maxPadding));
+    const LinkIcon = () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+        </svg>
+    );
 
-        setPaddingTop(finalTop);
-        setPaddingBottom(finalBottom);
-
-        onChange({
-            ...styles,
-            paddingTop: finalTop,
-            paddingBottom: finalBottom
-        }, true);
-    };
-
-    const containerStyle = {
-        background: 'var(--platform-card-bg)', 
-        border: '1px solid var(--platform-border-color)',
-        borderRadius: '4px',
-        padding: '12px',
-        marginTop: '8px'
-    };
-
-    const headerStyle = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '12px'
-    };
-
-    const titleStyle = {
-        fontSize: '0.85rem',
-        fontWeight: '600',
-        color: 'var(--platform-text-secondary)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px'
-    };
-
-    const linkBtnStyle = {
-        background: isLinked ? 'rgba(var(--platform-accent-rgb), 0.15)' : 'transparent',
-        border: '1px solid transparent',
-        borderColor: isLinked ? 'var(--platform-accent)' : 'var(--platform-border-color)',
-        color: isLinked ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        padding: '4px 8px',
-        fontSize: '0.8rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-        transition: 'all 0.2s ease',
-        fontWeight: isLinked ? '600' : '400'
-    };
-
-    const gridRowStyle = {
-        display: 'grid',
-        gridTemplateColumns: '24px 1fr 50px',
-        gap: '12px',
-        alignItems: 'center',
-        marginBottom: '8px'
-    };
-
-    const iconLabelStyle = {
-        color: 'var(--platform-text-secondary)',
-        fontSize: '1.2rem',
-        display: 'flex',
-        justifyContent: 'center',
-        opacity: 0.8
-    };
-
-    const sliderStyle = {
-        width: '100%',
-        cursor: 'pointer',
-        accentColor: 'var(--platform-accent)',
-        height: '4px',
-        borderRadius: '2px'
-    };
-
-    const numberInputStyle = {
-        width: '100%',
-        background: 'var(--platform-bg)', 
-        border: '1px solid var(--platform-border-color)',
-        color: 'var(--platform-text-primary)',
-        borderRadius: '4px',
-        padding: '4px',
-        fontSize: '0.85rem',
-        textAlign: 'center',
-        outline: 'none',
-        appearance: 'textfield',
-        MozAppearance: 'textfield'
-    };
+    const UnlinkIcon = () => (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity: 0.5}}>
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            <line x1="2" y1="2" x2="22" y2="22"></line>
+        </svg>
+    );
 
     return (
-        <div style={containerStyle}>
-            <style>{`
-                /* Стилізація слайдера */
-                input[type=range].custom-slider {
-                    -webkit-appearance: none; 
-                    background: transparent; 
-                }
-                input[type=range].custom-slider::-webkit-slider-thumb {
-                    -webkit-appearance: none;
-                    height: 14px;
-                    width: 14px;
-                    border-radius: 50%;
-                    background: var(--platform-accent);
-                    cursor: pointer;
-                    margin-top: -5px; 
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                    border: 2px solid var(--platform-card-bg);
-                }
-                input[type=range].custom-slider::-webkit-slider-runnable-track {
-                    width: 100%;
-                    height: 4px;
-                    cursor: pointer;
-                    background: var(--platform-border-color);
-                    border-radius: 2px;
-                }
-                
-                /* Приховуємо стрілки (spinners) в number input */
-                input[type=number]::-webkit-outer-spin-button,
-                input[type=number]::-webkit-inner-spin-button {
-                    -webkit-appearance: none;
-                    margin: 0;
-                }
-            `}</style>
-
-            <div style={headerStyle}>
-                <div style={titleStyle}>
-                    <span style={{ fontSize: '1rem' }}>↕</span> ВІДСТУПИ
-                </div>
+        <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--platform-text-primary)' }}>Внутрішні відступи</label>
                 <button 
                     type="button"
                     onClick={() => setIsLinked(!isLinked)}
-                    style={linkBtnStyle}
                     title={isLinked ? "Роз'єднати" : "Зв'язати верх і низ"}
+                    style={{
+                        background: isLinked ? 'var(--platform-accent)' : 'transparent',
+                        border: isLinked ? 'none' : '1px solid var(--platform-border-color)',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        color: isLinked ? '#fff' : 'var(--platform-text-secondary)',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s',
+                        width: '28px',
+                        height: '28px'
+                    }}
                 >
-                    <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{isLinked ? '🔗' : '🔓'}</span>
+                    {isLinked ? <LinkIcon /> : <UnlinkIcon />}
                 </button>
             </div>
 
-            <div style={gridRowStyle}>
-                <div style={iconLabelStyle} title="Відступ зверху">
-                    <span style={{ fontSize: '14px' }}>⬆</span>
+            <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
+                    <IconArrowUp size={14} /> Верх
                 </div>
-                
-                <input
-                    type="range"
+                <RangeSlider 
+                    value={paddingTop} 
+                    onChange={(val) => handleSliderChange('paddingTop', val)}
                     min={minPadding}
                     max={maxPadding}
-                    step="1"
-                    value={paddingTop === '' ? defaultPadding : paddingTop}
-                    onChange={(e) => handleChange('paddingTop', e.target.value)}
-                    onMouseUp={handleCommit}
-                    onTouchEnd={handleCommit}
-                    className="custom-slider"
-                    style={sliderStyle}
+                    unit="px"
                 />
-                
-                <div style={{ position: 'relative' }}>
-                    <input
-                        type="number"
-                        min={minPadding}
-                        max={maxPadding}
-                        value={paddingTop}
-                        onChange={(e) => handleChange('paddingTop', e.target.value)}
-                        onBlur={handleCommit}
-                        style={numberInputStyle}
-                    />
-                </div>
             </div>
 
-            <div style={{ ...gridRowStyle, marginBottom: 0 }}>
-                <div style={iconLabelStyle} title="Відступ знизу">
-                    <span style={{ fontSize: '14px' }}>⬇</span>
+            <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
+                    <IconArrowDown size={14} /> Низ
                 </div>
-                
-                <input
-                    type="range"
+                <RangeSlider 
+                    value={paddingBottom} 
+                    onChange={(val) => handleSliderChange('paddingBottom', val)}
                     min={minPadding}
                     max={maxPadding}
-                    step="1"
-                    value={paddingBottom === '' ? defaultPadding : paddingBottom}
-                    onChange={(e) => handleChange('paddingBottom', e.target.value)}
-                    onMouseUp={handleCommit}
-                    onTouchEnd={handleCommit}
-                    className="custom-slider"
-                    style={sliderStyle}
+                    unit="px"
                 />
-                
-                <div style={{ position: 'relative' }}>
-                    <input
-                        type="number"
-                        min={minPadding}
-                        max={maxPadding}
-                        value={paddingBottom}
-                        onChange={(e) => handleChange('paddingBottom', e.target.value)}
-                        onBlur={handleCommit}
-                        style={numberInputStyle}
-                    />
-                </div>
-            </div>
-
-            <div style={{
-                fontSize: '0.75rem',
-                color: 'var(--platform-text-secondary)',
-                textAlign: 'center',
-                marginTop: '8px',
-                opacity: 0.7
-            }}>
-                Діапазон: {minPadding}px - {maxPadding}px
             </div>
         </div>
     );

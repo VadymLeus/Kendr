@@ -1,19 +1,8 @@
 // frontend/src/modules/site-editor/blocks/Map/MapSettings.jsx
 import React from 'react';
+import { commonStyles } from '../../components/common/SettingsUI';
+import CustomSelect from '../../../../common/components/ui/CustomSelect';
 
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const textareaStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '0.9rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box',
-    minHeight: '150px', resize: 'vertical', fontFamily: 'monospace',
-    lineHeight: '1.6'
-};
 const helpTextStyle = {
     color: 'var(--platform-text-secondary)',
     fontSize: '0.8rem',
@@ -22,28 +11,32 @@ const helpTextStyle = {
     lineHeight: '1.4'
 };
 
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '1rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box'
-};
-
 const MapSettings = ({ data, onChange }) => {
-
     const handleChange = (e) => {
         onChange({ ...data, [e.target.name]: e.target.value });
     };
 
+    const sizeOptions = [
+        { value: 'small', label: 'Маленька' },
+        { value: 'medium', label: 'Середня' },
+        { value: 'large', label: 'Велика' }
+    ];
+
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Вбудований код карти (iframe)</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Вбудований код карти (iframe)</label>
                 <textarea
                     name="embed_code"
                     value={data.embed_code || ''}
                     onChange={handleChange}
-                    style={textareaStyle}
+                    style={{
+                        ...commonStyles.input,
+                        minHeight: '150px',
+                        resize: 'vertical',
+                        fontFamily: 'monospace',
+                        lineHeight: '1.6'
+                    }}
                     placeholder="Вставте сюди код <iframe ...> з Google Maps..."
                     rows="6"
                 />
@@ -52,18 +45,15 @@ const MapSettings = ({ data, onChange }) => {
                 </p>
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Розмір карти:</label>
-                <select
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Розмір карти:</label>
+                <CustomSelect
                     name="sizePreset"
                     value={data.sizePreset || 'medium'}
                     onChange={handleChange}
-                    style={inputStyle}
-                >
-                    <option value="small">Маленька</option>
-                    <option value="medium">Середня</option>
-                    <option value="large">Велика</option>
-                </select>
+                    options={sizeOptions}
+                    style={commonStyles.input}
+                />
             </div>
         </div>
     );

@@ -1,22 +1,8 @@
 // frontend/src/modules/site-editor/blocks/Catalog/CatalogSettings.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../../common/services/api';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500', fontSize: '0.9rem' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.7rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '0.9rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box'
-};
-const checkboxRowStyle = {
-    display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem', cursor: 'pointer',
-    color: 'var(--platform-text-primary)', fontSize: '0.9rem'
-};
+import { commonStyles, ToggleSwitch, SectionTitle } from '../../components/common/SettingsUI';
+import CustomSelect from '../../../../common/components/ui/CustomSelect';
 
 const CatalogSettings = ({ data, onChange, siteData }) => {
     const [categories, setCategories] = useState([]);
@@ -47,88 +33,79 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
         });
     };
 
+    const handleSwitchChange = (name, val) => {
+        onChange({ ...data, [name]: val });
+    };
+
+    const sourceTypeOptions = [
+        { value: 'all', label: 'Весь магазин (Всі товари)' },
+        { value: 'category', label: 'З конкретної категорії' }
+    ];
+
+    const categoryOptions = [
+        { value: "", label: "-- Оберіть категорію --" },
+        ...categories.map(cat => ({ value: cat.id, label: cat.name }))
+    ];
+
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Заголовок блоку:</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Заголовок блоку:</label>
                 <input 
                     type="text" 
                     name="title" 
                     value={data.title || ''} 
                     onChange={handleChange} 
                     placeholder="Напр. Наш Каталог"
-                    style={inputStyle}
+                    style={commonStyles.input}
                 />
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Джерело товарів:</label>
-                <select 
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Джерело товарів:</label>
+                <CustomSelect 
                     name="source_type" 
                     value={data.source_type || 'all'} 
-                    onChange={handleChange} 
-                    style={inputStyle}
-                >
-                    <option value="all">Весь магазин (Всі товари)</option>
-                    <option value="category">З конкретної категорії</option>
-                </select>
+                    onChange={(e) => onChange({ ...data, source_type: e.target.value })}
+                    options={sourceTypeOptions}
+                    style={commonStyles.input}
+                />
                 
                 {data.source_type === 'category' && (
                     <div style={{ marginTop: '10px' }}>
-                        <label style={{...labelStyle, fontSize: '0.8rem'}}>Оберіть кореневу категорію:</label>
-                        <select 
+                        <label style={{...commonStyles.label, fontSize: '0.8rem'}}>Оберіть кореневу категорію:</label>
+                        <CustomSelect 
                             name="root_category_id" 
                             value={data.root_category_id || ''} 
-                            onChange={handleChange} 
-                            style={inputStyle}
-                        >
-                            <option value="">-- Оберіть категорію --</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
+                            onChange={(e) => onChange({ ...data, root_category_id: e.target.value })}
+                            options={categoryOptions}
+                            style={commonStyles.input}
+                        />
                     </div>
                 )}
             </div>
 
-            <hr style={{margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
+            <SectionTitle>Інструменти для клієнта</SectionTitle>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Інструменти для клієнта:</label>
-                <label style={checkboxRowStyle}>
-                    <input 
-                        type="checkbox" 
-                        name="show_search" 
-                        checked={data.show_search !== false} 
-                        onChange={handleChange} 
-                    />
-                    Показувати рядок пошуку
-                </label>
-                <label style={checkboxRowStyle}>
-                    <input 
-                        type="checkbox" 
-                        name="show_category_filter" 
-                        checked={data.show_category_filter !== false} 
-                        onChange={handleChange} 
-                    />
-                    Показувати фільтр категорій
-                </label>
-                <label style={checkboxRowStyle}>
-                    <input 
-                        type="checkbox" 
-                        name="show_sorting" 
-                        checked={data.show_sorting !== false} 
-                        onChange={handleChange} 
-                    />
-                    Показувати сортування
-                </label>
-            </div>
+            <ToggleSwitch 
+                checked={data.show_search !== false}
+                onChange={(val) => handleSwitchChange('show_search', val)}
+                label="Показувати рядок пошуку"
+            />
+            <ToggleSwitch 
+                checked={data.show_category_filter !== false}
+                onChange={(val) => handleSwitchChange('show_category_filter', val)}
+                label="Показувати фільтр категорій"
+            />
+            <ToggleSwitch 
+                checked={data.show_sorting !== false}
+                onChange={(val) => handleSwitchChange('show_sorting', val)}
+                label="Показувати сортування"
+            />
 
-            <hr style={{margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
+            <SectionTitle>Налаштування відображення</SectionTitle>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Налаштування відображення:</label>
-                
+            <div style={commonStyles.formGroup}>
                 <div style={{marginBottom: '1rem'}}>
                     <label style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', display: 'block', marginBottom: '4px'}}>
                         Товарів на одній сторінці (4-100):
@@ -140,7 +117,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                         value={data.items_per_page === 0 ? '' : data.items_per_page || ''} 
                         onChange={handleChange} 
                         placeholder="12 (за замовчуванням)"
-                        style={inputStyle}
+                        style={commonStyles.input}
                     />
                 </div>
 

@@ -2,8 +2,6 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const db = require('../config/db');
-const path = require('path');
-const { downloadImage, ensureDirExists } = require('../utils/fileUtils');
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -21,41 +19,21 @@ passport.use(new GoogleStrategy({
         const email = profile.emails[0].value;
         const [userByEmail] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
 
-        let avatar_url = '/uploads/avatars/default/avatar1.png';
-        let mediaId = null;
-
+        let avatar_url = null;
         if (profile.photos && profile.photos.length > 0) {
-            try {
-                const googlePhotoUrl = profile.photos[0].value;
-                const filename = `google-${profile.id}-${Date.now()}.jpg`;
-                const uploadDir = path.join(__dirname, '..', 'uploads', 'media');
-                const relativePath = `/uploads/media/${filename}`;
-                
-                await ensureDirExists(uploadDir);
-                await downloadImage(googlePhotoUrl, path.join(uploadDir, filename));
-                
-                avatar_url = relativePath;
-            } catch (imgError) {
-                console.error("Google avatar download failed:", imgError);
-            }
+            avatar_url = profile.photos[0].value;
         }
 
         if (userByEmail.length > 0) {
             const user = userByEmail[0];
+            const newAvatar = user.avatar_url ? user.avatar_url : avatar_url;
+
             await db.query(
                 'UPDATE users SET google_id = ?, is_verified = 1, avatar_url = ? WHERE id = ?', 
-                [profile.id, avatar_url, user.id]
+                [profile.id, newAvatar, user.id]
             );
             
-            if (avatar_url.includes('google-')) {
-                 await db.query(
-                    `INSERT INTO user_media (user_id, path_full, path_thumb, original_file_name, mime_type, file_size_kb, file_type) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [user.id, avatar_url, avatar_url, 'google_avatar.jpg', 'image/jpeg', 0, 'image']
-                );
-            }
-            
-            return done(null, { ...user, google_id: profile.id, is_verified: 1, avatar_url });
+            return done(null, { ...user, google_id: profile.id, is_verified: 1, avatar_url: newAvatar });
         }
 
         const baseUsername = profile.displayName.replace(/\s+/g, '_');
@@ -72,18 +50,8 @@ passport.use(new GoogleStrategy({
             [uniqueUsername, email, profile.id, avatar_url, 1, null]
         );
         
-        const newUserId = result.insertId;
-
-        if (avatar_url.includes('google-')) {
-             await db.query(
-                `INSERT INTO user_media (user_id, path_full, path_thumb, original_file_name, mime_type, file_size_kb, file_type) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [newUserId, avatar_url, avatar_url, 'google_avatar.jpg', 'image/jpeg', 0, 'image']
-            );
-        }
-
         const newUser = {
-            id: newUserId,
+            id: result.insertId,
             username: uniqueUsername,
             email: email,
             role: 'user',

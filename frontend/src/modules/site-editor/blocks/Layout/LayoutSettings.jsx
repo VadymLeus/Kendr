@@ -1,33 +1,7 @@
 // frontend/src/modules/site-editor/blocks/Layout/LayoutSettings.jsx
 import React from 'react';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '1rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box' 
-};
-const toggleButtonContainerStyle = {
-    display: 'flex',
-    borderRadius: '6px',
-    border: '1px solid var(--platform-border-color)',
-    overflow: 'hidden'
-};
-const toggleButtonStyle = (isActive) => ({
-    flex: 1,
-    padding: '0.75rem',
-    border: 'none',
-    background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
-    color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
-    cursor: 'pointer',
-    fontWeight: isActive ? 'bold' : 'normal',
-    transition: 'background 0.2s, color 0.2s'
-});
+import { commonStyles, ToggleGroup } from '../../components/common/SettingsUI';
+import CustomSelect from '../../../../common/components/ui/CustomSelect';
 
 const PRESETS = [
     { preset: '50-50', name: '50% / 50%', columns: 2 },
@@ -93,62 +67,65 @@ const LayoutSettings = ({ data, onChange }) => {
 
     const isHorizontal = data.direction === 'row' || !data.direction;
     const isVertical = data.direction === 'column';
+
+    const directionOptions = [
+        { value: 'row', label: 'Горизонтально' },
+        { value: 'column', label: 'Вертикально' }
+    ];
+
+    const presetOptions = PRESETS.map(p => ({
+        value: p.preset,
+        label: `${p.name} (${p.columns} ${p.columns === 1 ? 'колонка' : (p.columns > 1 && p.columns < 5 ? 'колонки' : 'колонок')})`
+    }));
+
+    const verticalAlignOptions = [
+        { value: 'top', label: 'Вгорі' },
+        { value: 'middle', label: 'Посередині' },
+        { value: 'bottom', label: 'Внизу' }
+    ];
+
+    const horizontalAlignOptions = [
+        { value: 'start', label: 'Ліворуч' },
+        { value: 'center', label: 'По центру' },
+        { value: 'end', label: 'Праворуч' }
+    ];
     
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Напрямок:</label>
-                <div style={toggleButtonContainerStyle}>
-                    <button
-                        type="button"
-                        style={toggleButtonStyle(isHorizontal)}
-                        onClick={() => handleDirectionChange('row')}
-                    >
-                        Горизонтально
-                    </button>
-                    <button
-                        type="button"
-                        style={toggleButtonStyle(isVertical)}
-                        onClick={() => handleDirectionChange('column')}
-                    >
-                        Вертикально
-                    </button>
-                </div>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Напрямок:</label>
+                <ToggleGroup 
+                    options={directionOptions}
+                    value={data.direction || 'row'}
+                    onChange={handleDirectionChange}
+                />
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Пресет колонок:</label>
-                <select
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Пресет колонок:</label>
+                <CustomSelect
                     name="preset"
                     value={data.preset || '50-50'}
                     onChange={handlePresetChange}
-                    style={inputStyle}
-                >
-                    {PRESETS.map(p => (
-                        <option key={p.preset} value={p.preset}>
-                            {p.name} ({p.columns} {p.columns === 1 ? 'колонка' : (p.columns > 1 && p.columns < 5 ? 'колонки' : 'колонок')})
-                        </option>
-                    ))}
-                </select>
+                    options={presetOptions}
+                    style={commonStyles.input}
+                />
             </div>
             
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>
                     Вирівнювання:
                 </label>
                 
                 {isHorizontal && (
                     <>
-                        <select
+                        <CustomSelect
                             name="verticalAlign"
                             value={data.verticalAlign || 'top'}
                             onChange={handleChange}
-                            style={inputStyle}
-                        >
-                            <option value="top">Вгорі</option>
-                            <option value="middle">Посередині</option>
-                            <option value="bottom">Внизу</option>
-                        </select>
+                            options={verticalAlignOptions}
+                            style={commonStyles.input}
+                        />
                         <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block'}}>
                             Вирівнює вміст колонок по вертикалі, якщо вони різної висоти
                         </small>
@@ -157,22 +134,38 @@ const LayoutSettings = ({ data, onChange }) => {
 
                 {isVertical && (
                     <>
-                        <select
+                        <CustomSelect
                             name="horizontalAlign"
                             value={data.horizontalAlign || 'start'}
                             onChange={handleChange}
-                            style={inputStyle}
-                        >
-                            <option value="start">Ліворуч</option>
-                            <option value="center">По центру</option>
-                            <option value="end">Праворуч</option>
-                        </select>
+                            options={horizontalAlignOptions}
+                            style={commonStyles.input}
+                        />
                         <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block'}}>
                             Вирівнює вміст вкладених блоків по горизонталі
                         </small>
                     </>
                 )}
             </div>
+
+            <style>
+                {`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                    height: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: var(--platform-border-color);
+                    border-radius: 3px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: var(--platform-text-secondary);
+                }
+                `}
+            </style>
         </div>
     );
 };

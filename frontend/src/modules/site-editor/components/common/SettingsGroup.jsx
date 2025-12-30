@@ -1,5 +1,6 @@
 // frontend/src/modules/site-editor/components/common/SettingsGroup.jsx
 import React, { useState } from 'react';
+import { IconChevronDown, IconChevronRight } from '../../../../common/components/ui/Icons';
 
 const SettingsGroup = ({ title, children, defaultOpen = false, icon, storageKey }) => {
     const storageId = storageKey ? `group_state_${storageKey}` : null;
@@ -18,60 +19,49 @@ const SettingsGroup = ({ title, children, defaultOpen = false, icon, storageKey 
         }
     };
 
-    const wrapperStyle = {
+    const containerStyle = {
+        marginBottom: '16px',
         border: '1px solid var(--platform-border-color)',
         borderRadius: '8px',
-        marginBottom: '12px',
-        overflow: 'hidden',
-        backgroundColor: 'var(--platform-card-bg)',
-        transition: 'all 0.2s ease'
+        overflow: 'hidden'
     };
 
     const headerStyle = {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         padding: '12px 16px',
         cursor: 'pointer',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontWeight: '600',
-        fontSize: '0.9rem',
-        color: 'var(--platform-text-primary)',
-        backgroundColor: 'rgba(0, 0, 0, 0.02)',
-        userSelect: 'none'
-    };
-
-    const contentStyle = {
-        padding: '16px',
-        borderTop: '1px solid var(--platform-border-color)',
-        display: isOpen ? 'block' : 'none',
-        backgroundColor: 'var(--platform-bg)'
-    };
-
-    const iconStyle = {
-        marginRight: '8px',
-        fontSize: '1.1em'
-    };
-
-    const arrowStyle = {
-        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-        transition: 'transform 0.2s ease',
-        color: 'var(--platform-text-secondary)'
+        userSelect: 'none',
+        color: isOpen ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)',
+        background: 'transparent',
+        transition: 'all 0.2s ease',
+        borderBottom: isOpen ? '1px solid var(--platform-border-color)' : 'none'
     };
 
     return (
-        <div style={wrapperStyle}>
-            <div onClick={toggle} style={headerStyle}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    {icon && <span style={iconStyle}>{icon}</span>}
-                    <span>{title}</span>
+        <div style={containerStyle}>
+            <div style={headerStyle} onClick={toggle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', fontSize: '0.9rem' }}>
+                    {icon && <span style={{ color: isOpen ? 'var(--platform-accent)' : 'inherit', display: 'flex' }}>{icon}</span>}
+                    {title}
                 </div>
-                <span style={arrowStyle}>▼</span>
+                <div style={{ color: 'var(--platform-text-secondary)', display: 'flex' }}>
+                    {isOpen ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+                </div>
             </div>
+            
             {isOpen && (
-                <div style={contentStyle}>
+                <div style={{ 
+                    padding: '16px',
+                    animation: 'slideDown 0.2s ease-out'
+                }}>
                     {children}
                 </div>
             )}
+            <style>{`
+                @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+            `}</style>
         </div>
     );
 };

@@ -1,48 +1,11 @@
 // frontend/src/modules/site-editor/blocks/Video/VideoSettings.jsx
 import React, { useState } from 'react';
 import MediaPickerModal from '../../../media/components/MediaPickerModal';
-import { 
-    IconVideo, IconTrash, IconPlus, IconCheck
-} from '../../../../common/components/ui/Icons';
+import { IconTrash, IconPlus } from '../../../../common/components/ui/Icons';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
+import { commonStyles, ToggleGroup } from '../../components/common/SettingsUI';
 
 const API_URL = 'http://localhost:5000';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500', fontSize: '0.9rem'
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '0.9rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box',
-    outline: 'none'
-};
-
-const toggleContainerStyle = {
-    display: 'flex',
-    background: 'var(--platform-bg)',
-    padding: '4px',
-    borderRadius: '8px',
-    border: '1px solid var(--platform-border-color)',
-    marginBottom: '1rem'
-};
-
-const toggleBtnStyle = (isActive) => ({
-    flex: 1,
-    padding: '8px',
-    border: 'none',
-    background: isActive ? 'var(--platform-card-bg)' : 'transparent',
-    color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    fontSize: '0.9rem',
-    boxShadow: isActive ? '0 2px 5px rgba(0,0,0,0.05)' : 'none',
-    transition: 'all 0.2s'
-});
 
 const videoPreviewStyle = {
     width: '100%',
@@ -81,6 +44,11 @@ const VideoSettings = ({ data, onChange }) => {
         { value: 'large', label: 'На всю ширину' },
     ];
 
+    const sourceOptions = [
+        { value: 'link', label: '🔗 Посилання' },
+        { value: 'library', label: '📁 Медіатека' }
+    ];
+
     return (
         <div>
             <MediaPickerModal 
@@ -92,24 +60,13 @@ const VideoSettings = ({ data, onChange }) => {
                 title="Виберіть відео"
             />
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Джерело відео:</label>
-                <div style={toggleContainerStyle}>
-                    <button 
-                        type="button" 
-                        style={toggleBtnStyle(sourceType === 'link')}
-                        onClick={() => setSourceType('link')}
-                    >
-                        🔗 Посилання
-                    </button>
-                    <button 
-                        type="button" 
-                        style={toggleBtnStyle(sourceType === 'library')}
-                        onClick={() => setSourceType('library')}
-                    >
-                        📁 Медіатека
-                    </button>
-                </div>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Джерело відео:</label>
+                <ToggleGroup 
+                    options={sourceOptions}
+                    value={sourceType}
+                    onChange={setSourceType}
+                />
 
                 {sourceType === 'link' ? (
                     <div>
@@ -117,7 +74,7 @@ const VideoSettings = ({ data, onChange }) => {
                             type="text" 
                             value={data.url || ''} 
                             onChange={(e) => handleChange('url', e.target.value)} 
-                            style={inputStyle} 
+                            style={commonStyles.input} 
                             placeholder="https://www.youtube.com/watch?v=..."
                         />
                         <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', display: 'block', marginTop: '6px'}}>
@@ -202,18 +159,15 @@ const VideoSettings = ({ data, onChange }) => {
                 )}
             </div>
             
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Розмір відео:</label>
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Розмір відео:</label>
                 <CustomSelect 
                     name="sizePreset" 
                     value={data.sizePreset || 'medium'} 
                     onChange={(e) => handleChange('sizePreset', e.target.value)} 
                     options={sizeOptions}
-                    style={inputStyle}
+                    style={commonStyles.input}
                 />
-                <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '6px', display: 'block'}}>
-                    Максимальна ширина контейнера відео.
-                </small>
             </div>
         </div>
     );
