@@ -1,6 +1,6 @@
 // frontend/src/common/components/ui/Input.jsx
-import React, { useState } from 'react';
-import { IconEye, IconEyeOff, IconX } from './Icons';
+import React, { useState, useRef } from 'react';
+import { IconEye, IconEyeOff, IconX, IconChevronUp, IconChevronDown } from './Icons';
 
 export const Input = ({ 
   label, 
@@ -18,33 +18,74 @@ export const Input = ({
   rightIcon,
   maxLength,
   showCounter = false,
+  min,
+  max,
+  step = 1,
   ...props 
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef(null);
 
   const isPasswordType = type === 'password';
+  const isNumberType = type === 'number';
+  
   const inputType = isPasswordType ? (showPassword ? 'text' : 'password') : type;
   
   const currentLength = value ? String(value).length : 0;
-  const showClearButton = !disabled && currentLength > 0 && !rightIcon;
+  const showClearButton = !disabled && currentLength > 0 && !rightIcon && !isNumberType;
+
+  const triggerChange = (newValue) => {
+    if (disabled) return;
+    const syntheticEvent = { target: { name: name, value: newValue } };
+    onChange(syntheticEvent);
+  };
 
   const handleClear = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    const syntheticEvent = { target: { name: name, value: '' } };
-    onChange(syntheticEvent);
+    triggerChange('');
+    if (inputRef.current) inputRef.current.focus();
+  };
+
+  const handleIncrement = (e) => {
+    e.preventDefault(); 
+    if (disabled) return;
+    let currentVal = value === '' ? 0 : parseFloat(value);
+    if (isNaN(currentVal)) currentVal = 0;
+    
+    let nextVal = currentVal + Number(step);
+    if (max !== undefined && nextVal > max) nextVal = max;
+    
+    nextVal = Math.round(nextVal * 100) / 100;
+    
+    triggerChange(nextVal);
+  };
+
+  const handleDecrement = (e) => {
+    e.preventDefault();
+    if (disabled) return;
+    let currentVal = value === '' ? 0 : parseFloat(value);
+    if (isNaN(currentVal)) currentVal = 0;
+
+    let nextVal = currentVal - Number(step);
+    if (min !== undefined && nextVal < min) nextVal = min;
+    
+    nextVal = Math.round(nextVal * 100) / 100;
+
+    triggerChange(nextVal);
   };
 
   let paddingRight = 12;
   if (isPasswordType) paddingRight += 32;
   if (showClearButton) paddingRight += 32;
   if (rightIcon) paddingRight += 32;
+  
+  if (isNumberType && !disabled) paddingRight += 24; 
 
   let paddingLeft = 12;
   if (leftIcon) paddingLeft += 32;
 
-  // FIX: Определяем, нужно ли вообще показывать нижнюю панель
   const hasBottomContent = error || maxLength || showCounter;
 
   return (
@@ -61,6 +102,16 @@ export const Input = ({
                 outline: none;
                 box-sizing: border-box; 
             }
+            
+            .custom-input::-webkit-outer-spin-button,
+            .custom-input::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            .custom-input[type=number] {
+                -moz-appearance: textfield;
+            }
+
             .custom-input:hover:not(:disabled) { border-color: var(--platform-accent); }
             .custom-input:focus:not(:disabled) {
                 border-color: var(--platform-accent);
@@ -77,6 +128,20 @@ export const Input = ({
                 height: 28px; width: 28px;
             }
             .input-btn-icon:hover { color: var(--platform-text-primary); background: rgba(0,0,0,0.05); }
+
+            .number-controls {
+                display: flex; flex-direction: column; 
+                height: 100%; justify-content: center;
+                margin-right: 4px;
+            }
+            .number-btn {
+                flex: 1; display: flex; align-items: center; justify-content: center;
+                cursor: pointer; color: var(--platform-text-secondary);
+                background: transparent; border: none; padding: 0;
+                transition: color 0.2s; height: 50%; width: 20px;
+            }
+            .number-btn:hover { color: var(--platform-accent); background: var(--platform-hover-bg); border-radius: 2px; }
+            .number-btn:active { opacity: 0.7; }
         `}</style>
 
       {label && (
@@ -93,6 +158,7 @@ export const Input = ({
         )}
 
         <input
+          ref={inputRef}
           name={name}
           type={inputType}
           value={value}
@@ -100,6 +166,9 @@ export const Input = ({
           placeholder={placeholder}
           disabled={disabled}
           maxLength={maxLength}
+          min={min}
+          max={max}
+          step={step}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className={`custom-input ${error ? 'has-error' : ''}`}
@@ -113,7 +182,7 @@ export const Input = ({
           {...props}
         />
         
-        <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '2px', zIndex: 5 }}>
+        <div style={{ position: 'absolute', right: '8px', top: '0', bottom: '0', display: 'flex', alignItems: 'center', gap: '2px', zIndex: 5 }}>
            {rightIcon && (
                <div className="input-btn-icon" style={{ cursor: 'default' }}>
                    {rightIcon}
@@ -131,10 +200,20 @@ export const Input = ({
                      {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
                 </button>
             )}
+
+            {isNumberType && !disabled && (
+                <div className="number-controls">
+                    <button type="button" onClick={handleIncrement} className="number-btn" tabIndex={-1}>
+                        <IconChevronUp size={12} />
+                    </button>
+                    <button type="button" onClick={handleDecrement} className="number-btn" tabIndex={-1}>
+                        <IconChevronDown size={12} />
+                    </button>
+                </div>
+            )}
         </div>
       </div>
       
-      {/* FIX: Рендерим нижний блок, ТОЛЬКО если есть контент (ошибка или счетчик) */}
       {hasBottomContent && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '4px', minHeight: '18px' }}>
             <div style={{ flex: 1 }}>

@@ -1,5 +1,4 @@
 /* frontend/src/modules/shop/pages/ProductDetailPage.module.css */
-
 .pageWrapper {
     background-color: var(--site-bg);
     min-height: 100vh;
@@ -39,6 +38,25 @@
     overflow-y: auto;
     padding-right: 5px;
 }
+
+.thumbnailsCol::-webkit-scrollbar,
+.descriptionContent::-webkit-scrollbar {
+    width: 6px;
+}
+.thumbnailsCol::-webkit-scrollbar-track,
+.descriptionContent::-webkit-scrollbar-track {
+    background: transparent;
+}
+.thumbnailsCol::-webkit-scrollbar-thumb,
+.descriptionContent::-webkit-scrollbar-thumb {
+    background-color: var(--site-accent);
+    border-radius: 3px;
+}
+.thumbnailsCol::-webkit-scrollbar-thumb:hover,
+.descriptionContent::-webkit-scrollbar-thumb:hover {
+    background-color: var(--site-accent-hover);
+}
+
 
 .thumbnailBox {
     width: 100%;
@@ -202,16 +220,11 @@
     color: var(--site-text-secondary);
     display: flex;
     align-items: center;
-    gap: 6px;
-}
-
-.categoryTag::before {
-    content: "|";
-    opacity: 0.5;
-}
-
-.categoryName {
-    font-size: 0.9rem;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding-left: 12px;
+    border-left: 1px solid var(--site-border-color);
 }
 
 .chipButton {
@@ -464,6 +477,8 @@
         height: 80px !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
+        padding-right: 0 !important;
+        padding-bottom: 5px !important;
     }
     
     .mainImageBox {

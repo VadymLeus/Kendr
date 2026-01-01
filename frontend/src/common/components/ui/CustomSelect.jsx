@@ -60,7 +60,7 @@ const CustomSelect = ({
                 top: openUpwards ? 'auto' : `${rect.bottom + 6}px`,
                 bottom: openUpwards ? `${window.innerHeight - rect.top + 6}px` : 'auto',
                 maxHeight: '300px',
-                overflowY: 'auto',
+                overflow: 'auto',
                 background: 'var(--platform-card-bg)',
                 border: '1px solid var(--platform-border-color)',
                 borderRadius: '8px',
@@ -79,11 +79,16 @@ const CustomSelect = ({
     };
 
     const isMinimal = variant === 'minimal';
+    
     const styles = `
-        .custom-select-menu::-webkit-scrollbar { width: 6px; }
+        .custom-select-menu::-webkit-scrollbar { width: 6px; height: 6px; }
+        
         .custom-select-menu::-webkit-scrollbar-track { background: transparent; }
         .custom-select-menu::-webkit-scrollbar-thumb { background-color: var(--platform-border-color); border-radius: 3px; }
         .custom-select-menu::-webkit-scrollbar-thumb:hover { background-color: var(--platform-accent); }
+        
+        .custom-select-menu::-webkit-scrollbar-corner { background: transparent; }
+
         .custom-select-option {
             padding: 10px 12px;
             cursor: pointer;
@@ -91,13 +96,27 @@ const CustomSelect = ({
             color: var(--platform-text-primary);
             border-radius: 6px;
             display: flex;
-            alignItems: center;
+            align-items: center;
             gap: 8px;
             transition: all 0.15s ease;
+            white-space: nowrap;
         }
-        .custom-select-option:hover { background-color: var(--platform-accent); color: var(--platform-accent-text); }
-        .custom-select-option:hover svg { stroke: var(--platform-accent-text); opacity: 1 !important; }
-        .custom-select-option.selected { background-color: color-mix(in srgb, var(--platform-accent) 10%, transparent); color: var(--platform-accent); fontWeight: 500; }
+
+        .custom-select-option:hover { 
+            background-color: var(--platform-accent); 
+            color: white; 
+        }
+        
+        .custom-select-option:hover svg { 
+            stroke: white; 
+            opacity: 1 !important; 
+        }
+        
+        .custom-select-option.selected { 
+            background-color: color-mix(in srgb, var(--platform-accent) 10%, transparent); 
+            color: var(--platform-accent); 
+            font-weight: 500; 
+        }
     `;
 
     return (
@@ -156,11 +175,13 @@ const CustomSelect = ({
                                             {...(opt.iconProps || {})}
                                         />
                                     )} 
-                                    <span style={{flex: 1}}>{opt.label}</span>
+                                    <span>{opt.label}</span> 
                                     {isSelected && (
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                            <polyline points="20 6 9 17 4 12" />
-                                        </svg>
+                                        <div style={{ marginLeft: 'auto', paddingLeft: '8px' }}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                        </div>
                                     )}
                                 </div>
                             );

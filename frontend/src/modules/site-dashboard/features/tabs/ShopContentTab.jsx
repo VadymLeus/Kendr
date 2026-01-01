@@ -1,8 +1,8 @@
-// frontend/src/modules/site-dashboard/tabs/ShopContentTab.jsx
+// frontend/src/modules/site-dashboard/features/tabs/ShopContentTab.jsx
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import CategoryManager from '../shop/CategoryManager';
-import ProductManager from '../shop/products/ProductManager';
+import ProductManager from '../shop/ProductManager'; 
 import { Button } from '../../../../common/components/ui/Button'; 
 import { IconGrid, IconFolder } from '../../../../common/components/ui/Icons';
 

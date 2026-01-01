@@ -6,6 +6,7 @@ import apiClient from '../../../common/services/api';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import BlockRenderer from '../../../modules/site-editor/core/BlockRenderer';
+import { IconFolder } from '../../../common/components/ui/Icons';
 import styles from './ProductDetailPage.module.css';
 
 const API_URL = 'http://localhost:5000';
@@ -374,6 +375,28 @@ const ProductDetailPage = () => {
         ${isDragging ? styles.dragging : ''}
     `;
 
+    const siteScrollbarStyles = `
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--site-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--site-accent);
+            border-radius: 4px;
+            border: 2px solid var(--site-bg);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--site-accent-hover);
+        }
+        
+        * {
+            scrollbar-color: var(--site-accent) var(--site-bg);
+        }
+    `;
+
     return (
         <div className={styles.pageWrapper} style={getButtonStyle()}>
             <Helmet>
@@ -383,6 +406,8 @@ const ProductDetailPage = () => {
                 <meta property="og:image" content={galleryImages[0]} />
                 <meta property="og:description" content={product.description?.substring(0, 150) || product.name} />
             </Helmet>
+            
+            <style>{siteScrollbarStyles}</style>
 
             <div className={styles.mainContent}>
                 <div className={`${styles.productGrid} product-grid-layout`}>
@@ -472,9 +497,10 @@ const ProductDetailPage = () => {
                                 </div>
                                 
                                 {product.category_name && (
-                                    <span className={styles.categoryTag}>
-                                        <span className={styles.categoryName}>📂 {product.category_name}</span>
-                                    </span>
+                                    <div className={styles.categoryTag}>
+                                        <IconFolder size={18} style={{color: 'var(--site-accent)'}} />
+                                        <span>{product.category_name}</span>
+                                    </div>
                                 )}
                             </div>
                         </div>
