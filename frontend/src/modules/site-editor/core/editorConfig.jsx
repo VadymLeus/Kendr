@@ -1,4 +1,4 @@
-// frontend/src/modules/site-editor/core/editorConfig.jsx
+// frontend/src/modules/site-editor/core/editorConfig.js
 import React from 'react';
 import { 
     IconImage, IconFileText, IconCursorClick, IconStar, 
@@ -112,13 +112,7 @@ export const getDefaultBlockData = (type, options = {}) => {
         case 'image':
             return { 
                 mode: 'single',
-                items: [
-                    { 
-                        id: generateBlockId(), 
-                        src: 'https://placehold.co/1000x500/EFEFEF/31343C?text=Ваше+зображення',
-                        alt: 'Опис зображення'
-                    }
-                ],
+                items: [],
                 width: 'medium',
                 objectFit: 'contain',
                 borderRadius: '0px',
@@ -181,10 +175,10 @@ export const getDefaultBlockData = (type, options = {}) => {
         case 'features':
             return { 
                 title: 'Наші переваги',
-                columns: 3,
+                columns: 2,
                 items: [
-                    { id: generateBlockId(), icon: '🌟', title: 'Особливість 1', text: 'Короткий опис' },
-                    { id: generateBlockId(), icon: '💡', title: 'Особливість 2', text: 'Короткий опис' }
+                    { id: generateBlockId(), icon: 'star', title: 'Особливість 1', text: 'Короткий опис' },
+                    { id: generateBlockId(), icon: 'zap', title: 'Особливість 2', text: 'Короткий опис' }
                 ],
                 block_theme: 'auto'
             };

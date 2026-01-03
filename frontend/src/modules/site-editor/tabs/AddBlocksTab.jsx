@@ -1,4 +1,4 @@
-// frontend/src/modules/site-editor/core/AddBlocksTab.jsx
+// frontend/src/modules/site-editor/tabs/AddBlocksTab.jsx
 import React, { useState, useEffect } from 'react';
 import DraggableBlockItem from "../components/DraggableBlockItem";
 import { BLOCK_LIBRARY } from "../core/editorConfig";

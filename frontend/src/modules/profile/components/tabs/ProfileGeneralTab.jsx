@@ -14,8 +14,8 @@ import {
     IconPhone, 
     IconTrash, 
     IconCamera, 
-    IconShield, // Залишив для карток
-    IconAlertCircle, // Додав для Danger Zone
+    IconShield,
+    IconAlertCircle,
     IconCheck,
     IconUpload 
 } from '../../../../common/components/ui/Icons';
@@ -41,8 +41,6 @@ const ProfileGeneralTab = () => {
     }, [user]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    // Оновлення текстових даних
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -58,7 +56,6 @@ const ProfileGeneralTab = () => {
         }
     };
 
-    // Завантаження фото
     const handleAvatarUpload = async (file) => {
         setIsAvatarUploading(true);
         try {
@@ -74,7 +71,6 @@ const ProfileGeneralTab = () => {
         }
     };
 
-    // Видалення фото
     const handleDeleteAvatar = async (e) => {
         if (e) e.stopPropagation();
         try {
@@ -86,7 +82,6 @@ const ProfileGeneralTab = () => {
         }
     };
 
-    // Видалення акаунту
     const handleDeleteAccount = () => {
         confirm({
             title: 'Видалити акаунт?',
@@ -108,8 +103,6 @@ const ProfileGeneralTab = () => {
     };
 
     if (!user) return null;
-
-    // --- Styles ---
     const containerStyle = {
         maxWidth: '900px',
         margin: '0 auto',
@@ -133,9 +126,8 @@ const ProfileGeneralTab = () => {
         flexDirection: 'column'
     };
     
-    // Стилі для заголовків карток
     const sectionTitleStyle = {
-        fontSize: '1.25rem', // Трохи збільшив шрифт заголовка
+        fontSize: '1.25rem',
         fontWeight: '600',
         color: 'var(--platform-text-primary)',
         margin: '0 0 4px 0',
@@ -149,7 +141,7 @@ const ProfileGeneralTab = () => {
         color: 'var(--platform-text-secondary)',
         marginBottom: '1.5rem',
         lineHeight: '1.5',
-        margin: 0 // Скидання марджина для універсальності
+        margin: 0 
     };
 
     return (
@@ -157,8 +149,8 @@ const ProfileGeneralTab = () => {
             <style>{`
                 .avatar-wrapper {
                     position: relative;
-                    width: 160px; /* ЗБІЛЬШЕНО з 120px */
-                    height: 160px; /* ЗБІЛЬШЕНО з 120px */
+                    width: 160px;
+                    height: 160px;
                     margin: 0 auto;
                 }
 
@@ -198,7 +190,7 @@ const ProfileGeneralTab = () => {
                     color: white;
                     border: none;
                     border-radius: 50%;
-                    width: 32px; /* Трохи збільшив кнопку */
+                    width: 32px;
                     height: 32px;
                     display: flex;
                     align-items: center;
@@ -220,8 +212,6 @@ const ProfileGeneralTab = () => {
             `}</style>
 
             <div style={gridLayout}>
-                
-                {/* --- КАРТКА 1: АВАТАР --- */}
                 <div style={cardStyle}>
                     <div style={{ marginBottom: '24px' }}>
                         <h3 style={sectionTitleStyle}>
@@ -255,8 +245,8 @@ const ProfileGeneralTab = () => {
                                         <Avatar 
                                             url={user.avatar_url} 
                                             name={user.username} 
-                                            size={160} // ЗБІЛЬШЕНО
-                                            fontSize="64px" // ЗБІЛЬШЕНО
+                                            size={160}
+                                            fontSize="64px"
                                             style={{ width: '100%', height: '100%' }}
                                         />
                                         
@@ -290,8 +280,6 @@ const ProfileGeneralTab = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* --- КАРТКА 2: ОСНОВНА ІНФОРМАЦІЯ --- */}
                 <div style={cardStyle}>
                     <div style={{ marginBottom: '24px' }}>
                         <h3 style={sectionTitleStyle}>
@@ -342,13 +330,12 @@ const ProfileGeneralTab = () => {
                     </form>
                 </div>
 
-                {/* --- КАРТКА 3: НЕБЕЗПЕЧНА ЗОНА (РЕДИЗАЙН) --- */}
                 <div style={{ 
                     ...cardStyle, 
                     borderColor: '#fed7d7', 
                     background: 'linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%)',
                     gridColumn: '1 / -1',
-                    padding: '32px' // Збільшений паддінг як в прикладі
+                    padding: '32px'
                 }}>
                     <div style={{ 
                         display: 'flex', 

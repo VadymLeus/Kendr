@@ -1,173 +1,218 @@
 // frontend/src/modules/site-editor/blocks/Video/VideoSettings.jsx
-import React, { useState } from 'react';
-import MediaPickerModal from '../../../media/components/MediaPickerModal';
-import { IconTrash, IconPlus } from '../../../../common/components/ui/Icons';
+import React from 'react';
+import MediaInput from '../../../media/components/MediaInput';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
-import { commonStyles, ToggleGroup } from '../../components/common/SettingsUI';
+import { commonStyles, SectionTitle, ToggleSwitch } from '../../components/common/SettingsUI';
+import RangeSlider from '../../../../common/components/ui/RangeSlider';
+import { 
+    IconVideo, 
+    IconPalette, 
+    IconCheck,
+    IconMaximize,
+    IconSettings,
+    IconPlay,
+    IconVolumeX,
+    IconRepeat
+} from '../../../../common/components/ui/Icons';
 
-const API_URL = 'http://localhost:5000';
-
-const videoPreviewStyle = {
-    width: '100%',
-    aspectRatio: '16/9',
-    background: '#000',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: '1px solid var(--platform-border-color)',
-    marginBottom: '10px'
+const isLightColor = (color) => {
+    if (!color || color === 'transparent') return true;
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return brightness > 155;
 };
 
+const OVERLAY_PRESETS = [
+    { id: 'transparent', name: 'Без заливки', isNone: true },
+    { id: '#000000', name: 'Чорний' },
+    { id: '#ffffff', name: 'Білий' },
+    { id: '#1a202c', name: 'Темний' },
+    { id: '#2c5282', name: 'Синій' },
+    { id: '#276749', name: 'Зелений' },
+    { id: '#742a2a', name: 'Червоний' },
+];
+
 const VideoSettings = ({ data, onChange }) => {
-    const initialSource = data.url && data.url.startsWith('/') ? 'library' : 'link';
-    const [sourceType, setSourceType] = useState(initialSource);
-    const [isPickerOpen, setIsPickerOpen] = useState(false);
-
-    const handleChange = (name, value) => {
-        onChange({ ...data, [name]: value });
+    
+    const safeData = {
+        url: data.url || '',
+        overlay_color: data.overlay_color || '#000000', 
+        overlay_opacity: (data.overlay_opacity !== undefined && !isNaN(data.overlay_opacity)) ? parseFloat(data.overlay_opacity) : 0.5,
+        height: data.height || 'medium',
+        autoplay: data.autoplay !== undefined ? data.autoplay : true,
+        muted: data.muted !== undefined ? data.muted : true,
+        loop: data.loop !== undefined ? data.loop : true,
+        controls: data.controls !== undefined ? data.controls : false,
+        
+        ...data
     };
 
-    const handleMediaSelect = (file) => {
-        const selected = Array.isArray(file) ? file[0] : file;
-        if (selected) {
-            handleChange('url', selected.path_full);
-        }
-        setIsPickerOpen(false);
+    const updateData = (updates) => onChange({ ...safeData, ...updates }, true);
+    const sliderValue = Math.round((1 - safeData.overlay_opacity) * 100);
+    const handleTransparencyChange = (newValue) => {
+        const transparency = parseFloat(newValue); 
+        const opacity = 1 - (transparency / 100);
+        onChange({ ...safeData, overlay_opacity: opacity }, false); 
+    };
+    
+    const handleColorChange = (colorValue) => {
+        onChange({ ...safeData, overlay_color: colorValue }, true);
     };
 
-    const sizeOptions = [
-        { value: 'small', label: 'Маленьке (400px)' },
-        { value: 'medium', label: 'Середнє (650px)' },
-        { value: 'large', label: 'На всю ширину' },
+    const handleVideoChange = (newUrl) => {
+        const urlStr = typeof newUrl === 'string' ? newUrl : '';
+        const relativeUrl = urlStr.replace(/^http:\/\/localhost:5000/, '');
+        updateData({ url: relativeUrl });
+    };
+
+    const heightOptions = [
+        { value: 'small', label: 'Маленька (300px)' },
+        { value: 'medium', label: 'Середня (500px)' },
+        { value: 'large', label: 'Велика (700px)' },
+        { value: 'full', label: 'На весь екран' },
     ];
 
-    const sourceOptions = [
-        { value: 'link', label: '🔗 Посилання' },
-        { value: 'library', label: '📁 Медіатека' }
-    ];
+    const isPreset = OVERLAY_PRESETS.some(p => p.id === safeData.overlay_color);
+    const isTransparent = safeData.overlay_color === 'transparent';
 
     return (
-        <div>
-            <MediaPickerModal 
-                isOpen={isPickerOpen}
-                onClose={() => setIsPickerOpen(false)}
-                onSelect={handleMediaSelect}
-                multiple={false}
-                allowedTypes={['video']}
-                title="Виберіть відео"
-            />
-
-            <div style={commonStyles.formGroup}>
-                <label style={commonStyles.label}>Джерело відео:</label>
-                <ToggleGroup 
-                    options={sourceOptions}
-                    value={sourceType}
-                    onChange={setSourceType}
-                />
-
-                {sourceType === 'link' ? (
-                    <div>
-                        <input 
-                            type="text" 
-                            value={data.url || ''} 
-                            onChange={(e) => handleChange('url', e.target.value)} 
-                            style={commonStyles.input} 
-                            placeholder="https://www.youtube.com/watch?v=..."
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div>
+                <SectionTitle icon={<IconVideo size={18}/>}>Відео контент</SectionTitle>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Відео файл</label>
+                    <div style={{height: '150px', marginBottom: '8px'}}>
+                        <MediaInput 
+                            type="video"
+                            value={safeData.url}
+                            onChange={handleVideoChange}
+                            placeholder="Завантажити відео"
                         />
-                        <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', display: 'block', marginTop: '6px'}}>
-                            Підтримуються: YouTube, Vimeo.
-                        </small>
                     </div>
-                ) : (
-                    <div>
-                        {data.url && data.url.startsWith('/') ? (
-                            <div>
-                                <div style={videoPreviewStyle}>
-                                    <video 
-                                        src={`${API_URL}${data.url}`} 
-                                        style={{width: '100%', height: '100%', objectFit: 'contain'}} 
-                                        controls={false}
-                                    />
-                                    <button 
-                                        onClick={() => handleChange('url', '')}
-                                        style={{
-                                            position: 'absolute', top: 5, right: 5,
-                                            background: 'rgba(229, 62, 62, 0.9)', color: 'white',
-                                            border: 'none', borderRadius: '50%', width: 24, height: 24,
-                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                        }}
-                                        title="Видалити"
-                                    >
-                                        <IconTrash size={12} />
-                                    </button>
-                                </div>
-                                <div style={{display: 'flex', gap: '10px'}}>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setIsPickerOpen(true)}
-                                        style={{
-                                            flex: 1, padding: '8px', borderRadius: '6px',
-                                            border: '1px solid var(--platform-border-color)',
-                                            background: 'var(--platform-card-bg)',
-                                            color: 'var(--platform-text-primary)',
-                                            cursor: 'pointer', fontSize: '0.9rem'
-                                        }}
-                                    >
-                                        Змінити відео
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
+                </div>
+            </div>
+
+            <div>
+                <SectionTitle icon={<IconSettings size={18}/>}>Поведінка плеєра</SectionTitle>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    
+                    <ToggleSwitch 
+                        checked={safeData.autoplay}
+                        onChange={(val) => updateData({ autoplay: val, muted: val ? true : safeData.muted })}
+                        label="Автоплей (Autoplay)"
+                        icon={<IconPlay size={16}/>}
+                    />
+                    {safeData.autoplay && (
+                        <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '-8px', marginLeft: '34px' }}>
+                            Більшість браузерів вимагають "Без звуку" для автоплею.
+                        </small>
+                    )}
+
+                    <ToggleSwitch 
+                        checked={safeData.muted}
+                        onChange={(val) => updateData({ muted: val })}
+                        label="Без звуку (Muted)"
+                        icon={<IconVolumeX size={16}/>}
+                    />
+
+                    <ToggleSwitch 
+                        checked={safeData.loop}
+                        onChange={(val) => updateData({ loop: val })}
+                        label="Зациклити (Loop)"
+                        icon={<IconRepeat size={16}/>}
+                    />
+
+                    <ToggleSwitch 
+                        checked={safeData.controls}
+                        onChange={(val) => updateData({ controls: val })}
+                        label="Показувати елементи керування"
+                        icon={<IconSettings size={16}/>}
+                    />
+                </div>
+            </div>
+
+            <div>
+                <SectionTitle icon={<IconPalette size={18}/>}>Вигляд та Фон</SectionTitle>
+
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Колір накладання</label>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                        {OVERLAY_PRESETS.map(preset => (
                             <button 
-                                type="button"
-                                onClick={() => setIsPickerOpen(true)}
+                                key={preset.id}
+                                onClick={() => handleColorChange(preset.id)}
+                                title={preset.name}
                                 style={{
-                                    width: '100%',
-                                    height: '120px',
-                                    borderRadius: '8px',
-                                    border: '2px dashed var(--platform-border-color)',
-                                    background: 'var(--platform-bg)',
-                                    color: 'var(--platform-text-secondary)',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '8px',
-                                    transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.borderColor = 'var(--platform-accent)';
-                                    e.currentTarget.style.color = 'var(--platform-accent)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                                    e.currentTarget.style.color = 'var(--platform-text-secondary)';
+                                    width: '36px', height: '36px', 
+                                    borderRadius: '8px', 
+                                    background: preset.isNone ? 'transparent' : preset.id,
+                                    backgroundImage: preset.isNone ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)' : 'none',
+                                    backgroundSize: preset.isNone ? '8px 8px' : 'auto',
+                                    backgroundPosition: preset.isNone ? '0 0, 0 4px, 4px -4px, -4px 0px' : 'center',
+                                    border: safeData.overlay_color === preset.id 
+                                        ? `2px solid var(--platform-text-primary)` 
+                                        : '1px solid var(--platform-border-color)',
+                                    cursor: 'pointer', 
+                                    transform: safeData.overlay_color === preset.id ? 'scale(1.1)' : 'scale(1)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                                    position: 'relative'
                                 }}
                             >
-                                <IconPlus size={24} />
-                                <span>Обрати з бібліотеки</span>
+                                {safeData.overlay_color === preset.id && (
+                                    <IconCheck size={14} style={{ color: (preset.isNone || isLightColor(preset.id)) ? 'black' : 'white' }} />
+                                )}
                             </button>
-                        )}
-                        <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', display: 'block', marginTop: '6px'}}>
-                            MP4, WebM, OGG. Макс. розмір залежить від налаштувань сервера.
-                        </small>
+                        ))}
+                        
+                        <label style={{
+                            width: '36px', height: '36px', borderRadius: '8px', cursor: 'pointer',
+                            border: (!isPreset && !isTransparent) ? `2px solid var(--platform-text-primary)` : '1px dashed var(--platform-border-color)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            backgroundColor: (!isPreset && !isTransparent) ? safeData.overlay_color : 'transparent',
+                            transform: (!isPreset && !isTransparent) ? 'scale(1.1)' : 'scale(1)',
+                            position: 'relative'
+                        }}>
+                            <input 
+                                type="color" 
+                                value={(!isTransparent && safeData.overlay_color.length === 7) ? safeData.overlay_color : '#000000'}
+                                onChange={(e) => handleColorChange(e.target.value)} 
+                                style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', top:0, left:0 }}
+                            />
+                            <span style={{ fontSize: '14px', lineHeight: 1, color: isLightColor(safeData.overlay_color) ? 'black' : 'white' }}>✎</span>
+                        </label>
                     </div>
-                )}
-            </div>
-            
-            <div style={commonStyles.formGroup}>
-                <label style={commonStyles.label}>Розмір відео:</label>
-                <CustomSelect 
-                    name="sizePreset" 
-                    value={data.sizePreset || 'medium'} 
-                    onChange={(e) => handleChange('sizePreset', e.target.value)} 
-                    options={sizeOptions}
-                    style={commonStyles.input}
-                />
+                </div>
+
+                <div style={{
+                    ...commonStyles.formGroup, 
+                    opacity: isTransparent ? 0.5 : 1, 
+                    pointerEvents: isTransparent ? 'none' : 'auto',
+                    transition: 'opacity 0.2s'
+                }}>
+                    <label style={{...commonStyles.label, display: 'flex', justifyContent: 'space-between'}}>
+                        <span>Прозорість заливки</span>
+                        <span style={{color: 'var(--platform-accent)'}}>{sliderValue}%</span>
+                    </label>
+                    <RangeSlider 
+                        value={sliderValue}
+                        onChange={handleTransparencyChange} 
+                        min={0} max={100} step={5} unit="%"
+                    />
+                </div>
+                
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Висота блоку</label>
+                    <CustomSelect 
+                        name="height" 
+                        value={safeData.height} 
+                        onChange={(e) => updateData({ height: e.target.value })} 
+                        options={heightOptions}
+                        leftIcon={<IconMaximize size={16}/>}
+                    />
+                </div>
             </div>
         </div>
     );

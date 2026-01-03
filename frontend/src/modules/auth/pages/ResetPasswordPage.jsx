@@ -68,7 +68,6 @@ const ResetPasswordPage = () => {
                             onChange={e => setPassword(e.target.value)} 
                             required 
                         />
-                        {/* Візуальні індикатори */}
                         {password && (
                             <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                                 <Badge active={passwordChecks.length} text="8+ симв." />

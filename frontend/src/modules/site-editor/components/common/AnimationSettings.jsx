@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
 import RangeSlider from '../../../../common/components/ui/RangeSlider';
+import { Switch } from '../../../../common/components/ui/Switch'; 
+import { IconPlay, IconClock, IconHourglass, IconRepeat } from '../../../../common/components/ui/Icons';
 
 const AnimationSettings = ({ animationConfig, onChange }) => {
     const defaultConfig = {
@@ -39,22 +41,23 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
         { value: "zoomIn", label: "Масштабування (Zoom In)" }
     ];
 
-    const rowStyle = {
-        marginBottom: '20px'
-    };
-
     const labelStyle = {
-        display: 'block',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
         fontSize: '0.85rem',
-        fontWeight: '500',
+        fontWeight: '600',
         color: 'var(--platform-text-primary)',
-        marginBottom: '8px'
+        marginBottom: '10px'
     };
 
     return (
-        <div>
-            <div style={rowStyle}>
-                <label style={labelStyle}>Ефект появи</label>
+        <div style={{ background: 'var(--platform-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
+            <div style={{ marginBottom: '24px' }}>
+                <label style={labelStyle}>
+                    <IconPlay size={16} style={{ color: 'var(--platform-accent)' }} /> 
+                    Ефект появи
+                </label>
                 <CustomSelect 
                     value={config.type} 
                     onChange={(e) => handleChange('type', e.target.value)}
@@ -64,14 +67,12 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
             </div>
 
             {config.type !== 'none' && (
-                <div style={{ 
-                    paddingLeft: '12px', 
-                    borderLeft: '2px solid var(--platform-border-color)',
-                    marginLeft: '4px'
-                }}>
-                    <div style={rowStyle}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div>
+                        <div style={{ ...labelStyle, marginBottom: '4px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)' }}>
+                            <IconClock size={14} /> Тривалість: <span style={{ color: 'var(--platform-text-primary)' }}>{config.duration}s</span>
+                        </div>
                         <RangeSlider 
-                            label="Тривалість"
                             value={Math.round((config.duration || 0.6) * 1000)} 
                             onChange={(val) => handleTimeChange('duration', val)}
                             min={100} 
@@ -81,9 +82,11 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                         />
                     </div>
 
-                    <div style={rowStyle}>
+                    <div>
+                        <div style={{ ...labelStyle, marginBottom: '4px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)' }}>
+                            <IconHourglass size={14} /> Затримка: <span style={{ color: 'var(--platform-text-primary)' }}>{config.delay}s</span>
+                        </div>
                         <RangeSlider 
-                            label="Затримка"
                             value={Math.round((config.delay || 0) * 1000)} 
                             onChange={(val) => handleTimeChange('delay', val)}
                             min={0} 
@@ -93,19 +96,22 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                         />
                     </div>
 
-                    <div style={{ marginTop: '12px' }}>
-                        <label style={{ 
-                            display: 'flex', alignItems: 'center', gap: '8px', 
-                            cursor: 'pointer', userSelect: 'none', fontSize: '0.9rem' 
-                        }}>
-                            <input
-                                type="checkbox"
-                                checked={config.repeat || false}
-                                onChange={(e) => handleChange('repeat', e.target.checked)}
-                                style={{ accentColor: 'var(--platform-accent)', width: '16px', height: '16px' }}
-                            />
-                            <span style={{ color: 'var(--platform-text-primary)' }}>Програвати щоразу (Loop)</span>
-                        </label>
+                    <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        marginTop: '10px',
+                        paddingTop: '16px',
+                        borderTop: '1px dashed var(--platform-border-color)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <IconRepeat size={16} style={{ color: 'var(--platform-text-secondary)' }} />
+                            <span style={{ fontSize: '0.9rem', color: 'var(--platform-text-primary)' }}>Зациклити анімацію</span>
+                        </div>
+                        <Switch 
+                            checked={config.repeat || false}
+                            onChange={(e) => handleChange('repeat', e.target.checked)}
+                        />
                     </div>
                 </div>
             )}

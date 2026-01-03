@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../../../../common/services/api';
-import { useConfirm } from '../../../../common/hooks/useConfirm';
+import ConfirmModal from '../../../../common/components/ui/ConfirmModal'; 
 import { Input } from '../../../../common/components/ui/Input';
 import { Button } from '../../../../common/components/ui/Button';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
@@ -210,7 +210,7 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
 const ProductTable = memo(({ 
     products, categories, loading, filters, setFilters, 
     sortOrder, setSortOrder, sortFields, onSelect, 
-    onCreate, selectedId, API_URL 
+    onCreate, onDelete, selectedId, API_URL 
 }) => {
     const categoryOptions = [
         { value: 'all', label: 'Всі категорії' },
@@ -279,13 +279,21 @@ const ProductTable = memo(({
                         <Button 
                             variant="outline" 
                             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                            style={{ width: '38px', height: '38px', padding: 0, background: 'var(--platform-card-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            style={{ 
+                                width: '42px', 
+                                height: '42px', 
+                                padding: 0, 
+                                background: 'var(--platform-card-bg)', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                            }}
                         >
                             <span style={{fontSize: '1.2rem', lineHeight: 1}}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
                         </Button>
                     </div>
                 </div>
-                <Button onClick={onCreate} icon={<IconPlus size={18}/>}>Додати</Button>
+                <Button onClick={onCreate} icon={<IconPlus size={18}/>} style={{height: '42px'}}>Додати</Button>
             </div>
 
             <div className="custom-scrollbar" style={styles.scrollArea}>
@@ -298,10 +306,39 @@ const ProductTable = memo(({
                                  ) : <IconImage size={32} style={{opacity: 0.2}} />}
                                  
                                  <div style={{position: 'absolute', top: '8px', left: '8px', padding: '2px 8px', background: 'rgba(255,255,255,0.9)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', color: product.stock_quantity > 0 ? '#10b981' : '#ef4444', zIndex: 2}}>
-                                    {product.stock_quantity} шт.
+                                     {product.stock_quantity} шт.
                                  </div>
+                                 
+                                 <button
+                                     onClick={(e) => {
+                                         e.stopPropagation();
+                                         onDelete(product);
+                                     }}
+                                     className="delete-card-btn"
+                                     style={{
+                                         position: 'absolute',
+                                         top: '8px',
+                                         right: '8px',
+                                         width: '28px',
+                                         height: '28px',
+                                         borderRadius: '50%',
+                                         background: 'white',
+                                         border: '1px solid #e2e8f0',
+                                         display: 'flex',
+                                         alignItems: 'center',
+                                         justifyContent: 'center',
+                                         cursor: 'pointer',
+                                         zIndex: 10,
+                                         color: '#ef4444',
+                                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                     }}
+                                     title="Видалити"
+                                 >
+                                    <IconX size={16} />
+                                 </button>
+
                                  {selectedId === product.id && (
-                                    <div style={{position: 'absolute', top: '8px', right: '8px', color: 'var(--platform-accent)', background: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 2}}>
+                                    <div style={{position: 'absolute', top: '8px', right: '42px', color: 'var(--platform-accent)', background: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 2}}>
                                         <IconCheckCircle size={20} />
                                     </div>
                                  )}
@@ -332,7 +369,10 @@ const ProductTable = memo(({
                     </div>
                 )}
             </div>
-            <style>{`.product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: var(--platform-accent) !important; }`}</style>
+            <style>{`
+                .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: var(--platform-accent) !important; }
+                .delete-card-btn:hover { background: #fee2e2 !important; border-color: #ef4444 !important; transform: scale(1.1); transition: all 0.2s; }
+            `}</style>
         </div>
     );
 });
@@ -480,7 +520,22 @@ const ProductEditorPanel = ({
                             }} />
                          ))}
                     </div>
-                    <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Опис товару..." style={{width:'100%', minHeight:'100px', padding:'10px', borderRadius:'8px', border:'1px solid var(--platform-border-color)', background:'var(--platform-bg)', color:'var(--platform-text-primary)'}} />
+                    <textarea 
+                        className="custom-scrollbar"
+                        value={formData.description} 
+                        onChange={e => setFormData({...formData, description: e.target.value})} 
+                        placeholder="Опис товару..." 
+                        style={{
+                            width:'100%', 
+                            minHeight:'100px', 
+                            padding:'10px', 
+                            borderRadius:'8px', 
+                            border:'1px solid var(--platform-border-color)', 
+                            background:'var(--platform-bg)', 
+                            color:'var(--platform-text-primary)',
+                            resize: 'vertical'
+                        }} 
+                    />
                 </div>
                 <div style={{padding: '16px 24px', borderTop: '1px solid var(--platform-border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'var(--platform-bg)'}}>
                     <Button type="button" variant="secondary-danger" onClick={handleClearForm} style={{justifyContent: 'center'}}><IconX/> Скасувати</Button>
@@ -500,6 +555,7 @@ const ProductManager = ({ siteId, onSavingChange }) => {
     const [isPanelOpen, setIsPanelOpen] = useState(true);
     const [activeProduct, setActiveProduct] = useState(null); 
     const [sortOrder, setSortOrder] = useState('asc');
+    const [productToDelete, setProductToDelete] = useState(null);
 
     useEffect(() => {
         const prodIdFromUrl = searchParams.get('productId');
@@ -566,38 +622,68 @@ const ProductManager = ({ siteId, onSavingChange }) => {
         }
     }, [setSearchParams]);
 
+    const handleRequestDelete = useCallback((product) => {
+        setProductToDelete(product);
+    }, []);
+
+    const handleConfirmDelete = useCallback(() => {
+        if (productToDelete) {
+            handleDelete(productToDelete.id, () => {
+                if (activeProduct && activeProduct.id === productToDelete.id) {
+                    handleClosePanel();
+                    setActiveProduct(null);
+                }
+            });
+            setProductToDelete(null);
+        }
+    }, [productToDelete, handleDelete, activeProduct, handleClosePanel]);
+
     return (
-        <SplitViewLayout
-            isOpen={isPanelOpen}
-            onToggle={setIsPanelOpen}
-            sidebar={
-                <ProductTable
-                    products={processedProducts}
-                    categories={categories}
-                    loading={loading}
-                    filters={filters}
-                    setFilters={setFilters}
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    sortFields={SORT_FIELDS}
-                    onSelect={handleProductSelect}
-                    onCreate={handleCreateNew}
-                    selectedId={activeProduct?.id}
-                    API_URL={API_URL}
-                />
-            }
-            content={
-                <ProductEditorPanel
-                    productToEdit={activeProduct}
-                    siteId={siteId}
-                    categories={categories}
-                    onSuccess={fetchData}
-                    onClose={handleClosePanel}
-                    onCancel={handleCancelForm}
-                    onSavingChange={onSavingChange}
-                />
-            }
-        />
+        <>
+            <SplitViewLayout
+                isOpen={isPanelOpen}
+                onToggle={setIsPanelOpen}
+                sidebar={
+                    <ProductTable
+                        products={processedProducts}
+                        categories={categories}
+                        loading={loading}
+                        filters={filters}
+                        setFilters={setFilters}
+                        sortOrder={sortOrder}
+                        setSortOrder={setSortOrder}
+                        sortFields={SORT_FIELDS}
+                        onSelect={handleProductSelect}
+                        onCreate={handleCreateNew}
+                        onDelete={handleRequestDelete}
+                        selectedId={activeProduct?.id}
+                        API_URL={API_URL}
+                    />
+                }
+                content={
+                    <ProductEditorPanel
+                        productToEdit={activeProduct}
+                        siteId={siteId}
+                        categories={categories}
+                        onSuccess={fetchData}
+                        onClose={handleClosePanel}
+                        onCancel={handleCancelForm}
+                        onSavingChange={onSavingChange}
+                    />
+                }
+            />
+            
+            <ConfirmModal
+                isOpen={!!productToDelete}
+                title="Видалення товару"
+                message={`Ви впевнені, що хочете видалити товар "${productToDelete?.name}"? Цю дію неможливо скасувати.`}
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setProductToDelete(null)}
+                type="danger"
+            />
+        </>
     );
 };
 

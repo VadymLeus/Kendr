@@ -1,9 +1,10 @@
 // frontend/src/modules/site-editor/blocks/Header/HeaderBlock.jsx
-import React, { useState, useContext } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { FavoritesContext } from '../../../../app/providers/FavoritesContext';
 import { resolveSiteLink } from '../../../../common/utils/linkUtils';
+import { IconSettings, IconStar, IconList } from '../../../../common/components/ui/Icons';
 
 const API_URL = 'http://localhost:5000';
 
@@ -72,7 +73,8 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
         alignItems: 'center',
         marginLeft: nav_alignment === 'left' ? '0' : 'auto',
         marginRight: nav_alignment === 'right' ? '0' : 'auto',
-        justifyContent: nav_alignment === 'center' ? 'center' : 'flex-start'
+        justifyContent: nav_alignment === 'center' ? 'center' : 'flex-start',
+        width: nav_alignment === 'center' ? '100%' : 'auto'
     };
 
     const getNavLinkStyle = () => {
@@ -80,7 +82,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
             textDecoration: 'none',
             fontWeight: '500',
             fontSize: '0.95rem',
-            transition: 'all 0.2s',
+            transition: 'all 0.2s ease',
             cursor: isEditorPreview ? 'default' : 'pointer',
             display: 'inline-block'
         };
@@ -107,25 +109,27 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
         background: 'transparent',
         border: 'none',
         cursor: isEditorPreview ? 'default' : 'pointer',
-        fontSize: '1.2rem',
         color: 'inherit',
         marginLeft: '1rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: 'transform 0.2s',
-        flexShrink: 0
+        transition: 'all 0.2s ease',
+        flexShrink: 0,
+        padding: '8px',
+        borderRadius: '50%' 
     };
 
     const ownerButtonStyle = {
         ...actionButtonStyle,
         fontSize: '0.9rem',
         border: `1px solid var(--site-border-color)`, 
-        padding: '0.5rem 1rem',
-        borderRadius: '6px',
+        padding: '6px 12px',
+        borderRadius: '6px', 
         textDecoration: 'none',
         gap: '0.5rem',
-        backgroundColor: 'var(--site-card-bg)'
+        backgroundColor: 'var(--site-card-bg)',
+        fontWeight: 500
     };
     
     const siteRoot = resolveSiteLink('/', siteData?.site_path);
@@ -201,8 +205,20 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
                         style={ownerButtonStyle}
                         title="Перейти в панель управління"
                         onClick={e => isEditorPreview && e.preventDefault()}
+                        onMouseEnter={(e) => {
+                            if (!isEditorPreview) {
+                                e.currentTarget.style.borderColor = 'var(--site-accent)';
+                                e.currentTarget.style.backgroundColor = 'var(--site-bg)';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isEditorPreview) {
+                                e.currentTarget.style.borderColor = 'var(--site-border-color)';
+                                e.currentTarget.style.backgroundColor = 'var(--site-card-bg)';
+                            }
+                        }}
                     >
-                        <span>⚙️</span>
+                        <IconSettings size={18} />
                         <span>Налаштування</span>
                     </ActionWrapper>
                 ) : (
@@ -210,25 +226,35 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview }) => {
                         style={actionButtonStyle}
                         onClick={handleToggleFavorite}
                         title={isFavorite ? "Видалити з обраних" : "Додати в обрані"}
-                        onMouseEnter={e => e.target.style.transform = 'scale(1.2)'}
-                        onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+                        onMouseEnter={(e) => {
+                            if (!isEditorPreview) {
+                                e.currentTarget.style.transform = 'scale(1.1)';
+                                e.currentTarget.style.backgroundColor = 'var(--site-hover-bg, rgba(0,0,0,0.05))';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isEditorPreview) {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                        }}
                     >
                         {isFavorite 
-                            ? <span style={{ color: 'var(--site-accent)' }}>★</span>
-                            : <span style={{ opacity: 0.5 }}>☆</span>
+                            ? <IconStar size={24} filled style={{ color: 'var(--site-accent)' }} />
+                            : <IconStar size={24} style={{ color: 'var(--site-accent)' }} />
                         }
                     </button>
                 )}
             </div>
 
             <div className="mobile-burger" style={{ display: 'none' }}>
-                ☰
+                <IconList size={28} />
             </div>
 
             <style>{`
                 @media (max-width: 768px) {
                     .desktop-nav { display: none !important; }
-                    .mobile-burger { display: block !important; cursor: pointer; font-size: 1.5rem; margin-left: auto; }
+                    .mobile-burger { display: block !important; cursor: pointer; margin-left: auto; }
                 }
             `}</style>
         </header>

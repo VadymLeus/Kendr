@@ -4,6 +4,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../../../../common/services/api';
 import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
+import { Input } from '../../../../common/components/ui/Input'; 
+import { 
+    IconSearch, IconClear, IconSortAsc, IconSortDesc, 
+    IconShoppingBag, IconUser, IconSettings
+} from '../../../../common/components/ui/Icons';
 
 const API_URL = 'http://localhost:5000';
 
@@ -18,33 +23,34 @@ const ProductCard = ({ product, isEditorPreview, siteData }) => {
 
     const images = useMemo(() => {
         if (product.image_gallery && product.image_gallery.length > 0) {
-            return product.image_gallery.map(img => 
+            let gallery = typeof product.image_gallery === 'string' 
+                ? JSON.parse(product.image_gallery) 
+                : product.image_gallery;
+
+            return gallery.map(img => 
                 img.startsWith('http') ? img : `${API_URL}${img}`
             );
         }
-        return ['https://placehold.co/300'];
+        return ['https://placehold.co/300?text=No+Image'];
     }, [product.image_gallery]);
 
     const isOwner = user && siteData && user.id === siteData.user_id;
-
     const hasDiscount = product.sale_percentage > 0;
     const finalPrice = product.price ? (hasDiscount 
         ? Math.round(product.price * (1 - product.sale_percentage / 100)) 
         : product.price) : 0;
-
     const isSoldOut = product.stock_quantity === 0;
     const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
 
     const handleMouseEnter = () => {
         if (isEditorPreview || images.length <= 1) return;
-        
         intervalRef.current = setInterval(() => {
             setIsTransitioning(true);
             setTimeout(() => {
                 setActiveImgIndex(prev => (prev + 1) % images.length);
                 setIsTransitioning(false);
             }, 300);
-        }, 2000);
+        }, 1500);
     };
 
     const handleMouseLeave = () => {
@@ -69,7 +75,7 @@ const ProductCard = ({ product, isEditorPreview, siteData }) => {
         }
 
         if (!user) {
-            if (confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
+            if (window.confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
                 navigate('/login');
             }
             return;
@@ -85,79 +91,57 @@ const ProductCard = ({ product, isEditorPreview, siteData }) => {
         >
             <div style={{
                 border: '1px solid var(--site-border-color)',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 overflow: 'hidden',
                 background: 'var(--site-card-bg)',
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                transition: 'transform 0.2s',
+                transition: 'transform 0.2s, box-shadow 0.2s',
                 position: 'relative'
             }}
             onMouseEnter={(e) => {
-                if(!isEditorPreview) e.currentTarget.style.transform = 'translateY(-4px)';
+                if(!isEditorPreview) {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.1)';
+                }
                 handleMouseEnter();
             }}
             onMouseLeave={(e) => {
-                if(!isEditorPreview) e.currentTarget.style.transform = 'translateY(0)';
+                if(!isEditorPreview) {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                }
                 handleMouseLeave();
             }}
             >
-                <div style={{
-                    position: 'relative', 
-                    paddingTop: '100%', 
-                    overflow: 'hidden',
-                    backgroundColor: 'var(--site-card-bg)'
-                }}>
-                    
-                    <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%'
-                    }}>
-                        {images.map((imgSrc, idx) => (
-                            <img 
-                                key={idx}
-                                src={imgSrc} 
-                                alt={product.name}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    opacity: idx === activeImgIndex ? 1 : 0,
-                                    transform: `scale(${idx === activeImgIndex ? 1 : 1.02})`,
-                                    transition: 'all 0.5s ease-in-out',
-                                    transitionProperty: 'opacity, transform',
-                                    willChange: 'opacity, transform',
-                                    filter: isSoldOut ? 'grayscale(100%)' : 'none'
-                                }}
-                            />
-                        ))}
-                    </div>
+                <div style={{ position: 'relative', paddingTop: '100%', overflow: 'hidden', backgroundColor: 'var(--site-bg)' }}>
+                    {images.map((imgSrc, idx) => (
+                        <img 
+                            key={idx}
+                            src={imgSrc} 
+                            alt={product.name}
+                            style={{
+                                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                                objectFit: 'contain', 
+                                opacity: idx === activeImgIndex ? 1 : 0,
+                                transform: `scale(${idx === activeImgIndex ? 1 : 1.05})`,
+                                transition: 'all 0.5s ease-in-out',
+                                filter: isSoldOut ? 'grayscale(100%)' : 'none',
+                                padding: '12px', boxSizing: 'border-box'
+                            }}
+                        />
+                    ))}
 
                     {images.length > 1 && !isSoldOut && (
                         <div style={{
-                            position: 'absolute', 
-                            bottom: '10px', 
-                            left: 0, 
-                            right: 0,
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            gap: '4px', 
-                            zIndex: 2
+                            position: 'absolute', bottom: '10px', left: 0, right: 0,
+                            display: 'flex', justifyContent: 'center', gap: '4px', zIndex: 2
                         }}>
                             {images.map((_, idx) => (
                                 <div key={idx} style={{
-                                    width: '6px', 
-                                    height: '6px', 
-                                    borderRadius: '50%',
-                                    background: idx === activeImgIndex ? 'var(--site-accent)' : 'rgba(255,255,255,0.6)',
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                                    width: '6px', height: '6px', borderRadius: '50%',
+                                    background: idx === activeImgIndex ? 'var(--site-accent)' : 'rgba(0,0,0,0.1)',
                                     transition: 'all 0.3s ease',
                                     transform: idx === activeImgIndex ? 'scale(1.2)' : 'scale(1)'
                                 }} />
@@ -167,17 +151,11 @@ const ProductCard = ({ product, isEditorPreview, siteData }) => {
 
                     {hasDiscount && !isSoldOut && (
                         <div style={{
-                            position: 'absolute', 
-                            top: '8px', 
-                            right: '8px',
-                            background: '#e53e3e', 
-                            color: 'white',
-                            padding: '4px 8px', 
-                            borderRadius: '4px',
-                            fontSize: '0.8rem', 
-                            fontWeight: 'bold', 
-                            zIndex: 3,
-                            transition: 'transform 0.2s ease'
+                            position: 'absolute', top: '10px', right: '10px',
+                            background: '#e53e3e', color: 'white',
+                            padding: '4px 8px', borderRadius: '6px',
+                            fontSize: '0.75rem', fontWeight: 'bold', zIndex: 3,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                         }}>
                             -{product.sale_percentage}%
                         </div>
@@ -185,92 +163,61 @@ const ProductCard = ({ product, isEditorPreview, siteData }) => {
 
                     {isSoldOut && (
                         <div style={{
-                            position: 'absolute', 
-                            inset: 0,
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            background: 'rgba(255,255,255,0.6)',
-                            color: '#555', 
-                            fontWeight: 'bold', 
-                            zIndex: 3
+                            position: 'absolute', inset: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: 'rgba(255,255,255,0.8)',
+                            color: '#555', fontWeight: 'bold', zIndex: 3,
+                            backdropFilter: 'blur(2px)'
                         }}>
                             Закінчився
                         </div>
                     )}
                 </div>
                 
-                <div style={{
-                    padding: '1rem', 
-                    flex: 1, 
-                    display: 'flex', 
-                    flexDirection: 'column'
-                }}>
+                <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <h4 style={{
-                        margin: '0 0 8px 0', 
-                        fontSize: '1rem', 
-                        color: 'var(--site-text-primary)',
-                        overflow: 'hidden', 
-                        textOverflow: 'ellipsis', 
-                        whiteSpace: 'nowrap'
+                        margin: '0 0 8px 0', fontSize: '1rem', color: 'var(--site-text-primary)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '600'
                     }}>
                         {product.name}
                     </h4>
                     
-                    <div style={{
-                        marginTop: 'auto', 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center'
-                    }}>
+                    <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                             {hasDiscount ? (
                                 <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span style={{
-                                        color: '#e53e3e', 
-                                        fontWeight: 'bold'
-                                    }}>
-                                        {finalPrice} ₴
-                                    </span>
-                                    <span style={{
-                                        textDecoration: 'line-through', 
-                                        fontSize: '0.8rem', 
-                                        color: 'var(--site-text-secondary)'
-                                    }}>
+                                    <span style={{ color: '#e53e3e', fontWeight: 'bold', fontSize: '1.1rem' }}>{finalPrice} ₴</span>
+                                    <span style={{ textDecoration: 'line-through', fontSize: '0.85rem', color: 'var(--site-text-secondary)' }}>
                                         {product.price} ₴
                                     </span>
                                 </div>
                             ) : (
-                                <span style={{
-                                    color: 'var(--site-text-primary)', 
-                                    fontWeight: 'bold'
-                                }}>
-                                    {product.price} ₴
-                                </span>
+                                <span style={{ color: 'var(--site-text-primary)', fontWeight: 'bold', fontSize: '1.1rem' }}>{product.price} ₴</span>
                             )}
                         </div>
                         
                         <button
                             onClick={handleAction}
                             disabled={isSoldOut || (isOwner && !hasVariants)}
-                            title={isOwner ? "Ви власник цього товару" : ""}
                             style={{
                                 background: isOwner ? 'var(--site-text-secondary)' : 'var(--site-accent)',
                                 color: 'var(--site-accent-text)',
-                                border: 'none',
-                                borderRadius: '4px',
-                                width: '32px',
-                                height: '32px',
+                                border: 'none', borderRadius: '8px',
+                                width: '36px', height: '36px',
                                 cursor: (isSoldOut || isOwner) ? 'not-allowed' : 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1.2rem',
-                                opacity: (isSoldOut || isOwner) ? 0.5 : 1,
-                                transition: 'all 0.2s ease'
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '1.2rem', opacity: (isSoldOut || isOwner) ? 0.6 : 1,
+                                transition: 'all 0.2s ease',
+                                boxShadow: isOwner ? 'none' : '0 4px 10px rgba(var(--site-accent-rgb), 0.3)'
                             }}
                         >
-                            {isOwner ? '👤' : (hasVariants ? '⚙️' : '+')}
+                            {isOwner ? (
+                                <IconUser size={20} />
+                            ) : hasVariants ? (
+                                <IconSettings size={20} />
+                            ) : (
+                                '+'
+                            )}
                         </button>
                     </div>
                 </div>
@@ -294,23 +241,13 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const [currentPage, setCurrentPage] = useState(1);
 
     const { 
-        title, 
-        source_type = 'all', 
-        root_category_id, 
-        show_search = true, 
-        show_category_filter = true, 
-        show_sorting = true,
-        items_per_page, 
-        columns
+        title, source_type = 'all', root_category_id, 
+        show_search = true, show_category_filter = true, show_sorting = true,
+        items_per_page, columns
     } = blockData;
 
-    const safeItemsPerPage = (parseInt(items_per_page, 10) > 0 && parseInt(items_per_page, 10) <= 100) 
-        ? parseInt(items_per_page, 10) 
-        : 12;
-
-    const safeColumns = (parseInt(columns, 10) >= 1 && parseInt(columns, 10) <= 6) 
-        ? parseInt(columns, 10) 
-        : 3;
+    const safeItemsPerPage = (parseInt(items_per_page, 10) > 0 && parseInt(items_per_page, 10) <= 100) ? parseInt(items_per_page, 10) : 12;
+    const safeColumns = (parseInt(columns, 10) >= 1 && parseInt(columns, 10) <= 6) ? parseInt(columns, 10) : 3;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -320,11 +257,9 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 const catRes = await apiClient.get(`/categories/site/${siteData.id}`);
                 setAvailableCategories(catRes.data);
                 let params = { siteId: siteData.id, limit: 1000 }; 
-                
                 if (source_type === 'category' && root_category_id) {
                     params.category = root_category_id;
                 }
-
                 const prodRes = await apiClient.get('/products', { params });
                 setProducts(prodRes.data);
             } catch (error) {
@@ -333,21 +268,26 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, [siteData?.id, source_type, root_category_id]);
 
-    const getSortIcon = (field) => {
-        if (filters.sortBy !== field) return '⇵';
-        return filters.sortOrder === 'asc' ? '↑' : '↓';
+    const toggleSortOrder = () => {
+        setFilters(prev => ({ ...prev, sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' }));
+        setCurrentPage(1);
     };
 
-    const toggleSort = (field) => {
-        if (filters.sortBy === field) {
-            setFilters(prev => ({ ...prev, sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' }));
-        } else {
-            setFilters(prev => ({ ...prev, sortBy: field, sortOrder: 'asc' }));
-        }
+    const handleSortFieldChange = (val) => {
+        setFilters(prev => ({ ...prev, sortBy: val, sortOrder: 'asc' }));
+        setCurrentPage(1);
+    };
+
+    const handleClearAll = () => {
+        setFilters({
+            searchQuery: "",
+            selectedCategoryId: "all",
+            sortBy: "name",
+            sortOrder: "asc"
+        });
         setCurrentPage(1);
     };
 
@@ -357,8 +297,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         if (filters.searchQuery) {
             const q = filters.searchQuery.toLowerCase();
             result = result.filter(p => 
-                p.name.toLowerCase().includes(q) || 
-                (p.description && p.description.toLowerCase().includes(q))
+                p.name.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q))
             );
         }
 
@@ -368,20 +307,13 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
         result.sort((a, b) => {
             let aValue, bValue;
-            
             if (filters.sortBy === 'name') {
                 aValue = a.name.toLowerCase();
                 bValue = b.name.toLowerCase();
-                const aIsCyrillic = /[а-яіїєґ]/.test(aValue);
-                const bIsCyrillic = /[а-яіїєґ]/.test(bValue);
-                
-                if (aIsCyrillic && !bIsCyrillic) return 1;
-                if (!aIsCyrillic && bIsCyrillic) return -1;
             } else if (filters.sortBy === 'price') {
-                aValue = a.price || 0;
-                bValue = b.price || 0;
+                aValue = parseFloat(a.price) || 0;
+                bValue = parseFloat(b.price) || 0;
             }
-            
             if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
             if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
             return 0;
@@ -391,20 +323,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     }, [products, filters]);
 
     const totalPages = Math.ceil(processedProducts.length / safeItemsPerPage);
-    const paginatedProducts = processedProducts.slice(
-        (currentPage - 1) * safeItemsPerPage,
-        currentPage * safeItemsPerPage
-    );
-
-    const handleSearch = (val) => {
-        setFilters(prev => ({ ...prev, searchQuery: val }));
-        setCurrentPage(1);
-    };
-
-    const handleCategoryChange = (val) => {
-        setFilters(prev => ({ ...prev, selectedCategoryId: val }));
-        setCurrentPage(1);
-    };
+    const paginatedProducts = processedProducts.slice((currentPage - 1) * safeItemsPerPage, currentPage * safeItemsPerPage);
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
@@ -415,218 +334,159 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     };
 
     const containerStyle = {
-        padding: '40px 20px',
-        maxWidth: '1200px',
+        padding: '60px 20px',
+        maxWidth: '1280px',
         margin: '0 auto',
         backgroundColor: isEditorPreview ? 'var(--site-bg)' : 'transparent',
         border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
         ...style
     };
 
-    const filtersRowStyle = {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '12px',
-        alignItems: 'center',
-        marginBottom: '2rem'
-    };
-
-    const searchContainerStyle = {
-        position: 'relative',
-        flex: '2 1 200px',
-        minWidth: '200px'
-    };
-
-    const selectWrapperStyle = {
-        flex: '1 1 150px',
-        minWidth: '150px'
-    };
-
-    const inputStyle = {
-        padding: '10px 40px 10px 12px', 
-        borderRadius: '8px', 
-        border: '1px solid var(--site-border-color)',
-        background: 'var(--site-card-bg)', 
-        color: 'var(--site-text-primary)', 
-        fontSize: '0.9rem', 
-        width: '100%',
-        transition: 'border-color 0.2s',
-        boxSizing: 'border-box'
-    };
-
-    const clearButtonStyle = {
-        position: 'absolute', 
-        right: '8px', 
-        top: '50%', 
-        transform: 'translateY(-50%)',
-        background: 'none', 
-        border: 'none', 
-        color: 'var(--site-text-secondary)',
-        cursor: 'pointer', 
-        fontSize: '1.2rem', 
-        padding: '4px',
-        borderRadius: '4px', 
-        transition: 'color 0.2s'
-    };
-
-    const selectStyle = {
-        ...inputStyle,
-        cursor: 'pointer',
-        appearance: 'menulist',
-        paddingRight: '12px'
-    };
-
-    const sortButtonsContainerStyle = {
-        display: 'flex',
-        gap: '8px',
-        justifyContent: 'flex-end',
-        flex: '0 0 auto',
-        marginLeft: 'auto'
-    };
-
-    const sortButtonStyle = (isActive) => ({
-        padding: '8px 12px', 
-        borderRadius: '6px', 
-        border: `1px solid ${isActive ? 'var(--site-accent)' : 'var(--site-border-color)'}`,
-        background: isActive ? 'rgba(var(--site-accent-rgb), 0.1)' : 'var(--site-card-bg)',
-        color: isActive ? 'var(--site-accent)' : 'var(--site-text-primary)',
-        cursor: 'pointer', 
-        fontSize: '0.85rem',
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '6px',
-        transition: 'all 0.2s',
-        whiteSpace: 'nowrap'
-    });
-
-    const gridStyle = {
-        display: 'grid',
-        gridTemplateColumns: `repeat(${safeColumns}, 1fr)`,
-        gap: '20px',
-        marginBottom: '2rem',
-    };
-
     const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
+    const showFilters = show_search || show_category_filter || show_sorting;
 
-    const paginationStyle = {
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '0.5rem',
-        marginTop: '2rem'
+    const filterBtnStyle = {
+        height: '38px', minWidth: '38px', padding: '0 12px',
+        background: 'var(--site-card-bg)', border: '1px solid var(--site-border-color)',
+        borderRadius: '8px', color: 'var(--site-text-primary)',
+        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+        fontSize: '0.9rem', transition: 'all 0.2s'
     };
-
-    const pageBtnStyle = (isActive) => ({
-        padding: '0.5rem 1rem',
-        border: isActive ? 'none' : '1px solid var(--site-border-color)',
-        background: isActive ? 'var(--site-accent)' : 'var(--site-card-bg)',
-        color: isActive ? 'var(--site-accent-text)' : 'var(--site-text-primary)',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontWeight: isActive ? 'bold' : 'normal'
-    });
+    
+    const iconBtnStyle = { ...filterBtnStyle, padding: 0, width: '38px' };
 
     return (
         <div style={containerStyle} id={`catalog-${blockData.block_id || 'preview'}`}>
             <style>{`
-                @media (max-width: 768px) {
-                    .${uniqueClass} {
-                        grid-template-columns: repeat(2, 1fr) !important;
-                    }
+                @media (max-width: 1024px) { .${uniqueClass} { grid-template-columns: repeat(${Math.min(3, safeColumns)}, 1fr) !important; } }
+                @media (max-width: 768px) { .${uniqueClass} { grid-template-columns: repeat(2, 1fr) !important; } }
+                @media (max-width: 480px) { .${uniqueClass} { grid-template-columns: 1fr !important; } }
+                
+                .catalog-select-wrapper { position: relative; }
+                .catalog-select-wrapper::after {
+                    content: '▼'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+                    font-size: 0.6rem; color: var(--site-text-secondary); pointer-events: none;
                 }
-                @media (max-width: 480px) {
-                    .${uniqueClass} {
-                        grid-template-columns: 1fr !important;
-                    }
+                .catalog-select {
+                    appearance: none; -webkit-appearance: none;
+                    height: 38px; padding: 0 30px 0 12px;
+                    background: var(--site-card-bg); border: 1px solid var(--site-border-color);
+                    border-radius: 8px; color: var(--site-text-primary);
+                    font-size: 0.9rem; width: 100%; cursor: pointer; outline: none;
                 }
+                .catalog-select:focus { border-color: var(--site-accent); }
             `}</style>
 
             {title && (
-                <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--site-text-primary)' }}>
+                <h2 style={{ textAlign: 'center', marginBottom: '2rem', color: 'var(--site-text-primary)', fontSize: '2rem' }}>
                     {title}
                 </h2>
             )}
 
-            {(show_search || show_category_filter || show_sorting) && (
-                <div style={filtersRowStyle}>
-                    {show_search && (
-                        <div style={searchContainerStyle}>
-                            <input 
-                                type="text" 
-                                placeholder="🔍 Пошук товарів..." 
-                                value={filters.searchQuery}
-                                onChange={e => handleSearch(e.target.value)}
-                                style={inputStyle}
-                            />
-                            {filters.searchQuery && (
-                                <button 
-                                    onClick={() => handleSearch('')}
-                                    style={clearButtonStyle}
-                                    title="Очистити пошук"
-                                >
-                                    ×
-                                </button>
-                            )}
-                        </div>
-                    )}
-                    
-                    {show_category_filter && (
-                        <div style={selectWrapperStyle}>
-                            <select 
-                                value={filters.selectedCategoryId}
-                                onChange={e => handleCategoryChange(e.target.value)}
-                                style={selectStyle}
-                            >
-                                <option value="all">Всі категорії</option>
-                                {availableCategories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
+            {showFilters && (
+                <div style={{
+                    zIndex: 10, marginBottom: '2rem',
+                    background: 'var(--site-card-bg)',
+                    padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--site-border-color)',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: '0.75rem'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        
+                        {show_search && (
+                            <div style={{ flex: '1 1 200px', minWidth: '200px' }}>
+                                <Input 
+                                    placeholder="Пошук..." 
+                                    value={filters.searchQuery} 
+                                    onChange={(e) => {
+                                        setFilters(prev => ({ ...prev, searchQuery: e.target.value }));
+                                        setCurrentPage(1);
+                                    }}
+                                    leftIcon={<IconSearch size={18} />}
+                                    wrapperStyle={{ marginBottom: 0 }}
+                                    style={{ height: '38px', background: 'var(--site-bg)', border: '1px solid var(--site-border-color)' }} 
+                                />
+                            </div>
+                        )}
 
-                    {show_sorting && (
-                        <div style={sortButtonsContainerStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flexShrink: 0, marginLeft: 'auto' }}>
+                            
+                            {show_category_filter && availableCategories.length > 0 && (
+                                <div className="catalog-select-wrapper" style={{ width: '180px' }}>
+                                    <select 
+                                        className="catalog-select"
+                                        value={filters.selectedCategoryId}
+                                        onChange={(e) => {
+                                            setFilters(prev => ({ ...prev, selectedCategoryId: e.target.value }));
+                                            setCurrentPage(1);
+                                        }}
+                                    >
+                                        <option value="all">Всі категорії</option>
+                                        {availableCategories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {show_sorting && (
+                                <>
+                                    <div className="catalog-select-wrapper" style={{ width: '150px' }}>
+                                        <select 
+                                            className="catalog-select"
+                                            value={filters.sortBy}
+                                            onChange={(e) => handleSortFieldChange(e.target.value)}
+                                        >
+                                            <option value="name">За назвою</option>
+                                            <option value="price">За ціною</option>
+                                        </select>
+                                    </div>
+
+                                    <button 
+                                        onClick={toggleSortOrder} 
+                                        style={iconBtnStyle}
+                                        title={filters.sortOrder === 'desc' ? "За спаданням" : "За зростанням"}
+                                        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--site-accent)'}
+                                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--site-border-color)'}
+                                    >
+                                        {filters.sortOrder === 'asc' ? <IconSortAsc size={18}/> : <IconSortDesc size={18}/>}
+                                    </button>
+                                </>
+                            )}
+
                             <button 
-                                onClick={() => toggleSort('name')}
-                                style={sortButtonStyle(filters.sortBy === 'name')}
+                                onClick={handleClearAll} 
+                                style={{ ...iconBtnStyle, borderColor: '#e53e3e', color: '#e53e3e' }}
+                                title="Очистити фільтри"
+                                onMouseEnter={e => e.currentTarget.style.background = '#e53e3e10'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             >
-                                A-Z {getSortIcon('name')}
-                            </button>
-                            <button 
-                                onClick={() => toggleSort('price')}
-                                style={sortButtonStyle(filters.sortBy === 'price')}
-                            >
-                                Ціна {getSortIcon('price')}
+                                <IconClear size={18} />
                             </button>
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
 
             {loading ? (
-                <div style={{textAlign: 'center', padding: '40px', color: 'var(--site-text-secondary)'}}>
-                    Завантаження каталогу...
+                <div style={{textAlign: 'center', padding: '60px', color: 'var(--site-text-secondary)'}}>
+                    <div className="animate-spin" style={{ display: 'inline-block', marginBottom: '10px' }}>⏳</div>
+                    <div>Завантаження каталогу...</div>
                 </div>
             ) : paginatedProducts.length === 0 ? (
                 <div style={{
-                    textAlign: 'center', 
-                    padding: '60px 20px', 
-                    color: 'var(--site-text-secondary)',
-                    border: '1px dashed var(--site-border-color)',
-                    borderRadius: '8px'
+                    textAlign: 'center', padding: '80px 20px', color: 'var(--site-text-secondary)',
+                    border: '1px dashed var(--site-border-color)', borderRadius: '12px',
+                    backgroundColor: 'var(--site-card-bg)'
                 }}>
-                    <div style={{fontSize: '3rem', marginBottom: '1rem'}}>😔</div>
-                    <p>Товарів не знайдено</p>
-                    {filters.searchQuery && (
+                    <IconShoppingBag size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                    <p style={{ fontSize: '1.1rem' }}>Товарів не знайдено</p>
+                    {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
                         <button 
-                            onClick={() => handleSearch('')}
+                            onClick={handleClearAll}
                             style={{
-                                marginTop: '10px',
-                                background: 'transparent',
-                                border: 'none',
-                                color: 'var(--site-accent)',
-                                textDecoration: 'underline',
-                                cursor: 'pointer'
+                                marginTop: '10px', background: 'transparent', border: 'none',
+                                color: 'var(--site-accent)', textDecoration: 'underline', cursor: 'pointer',
+                                fontSize: '0.9rem'
                             }}
                         >
                             Очистити пошук
@@ -634,7 +494,12 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     )}
                 </div>
             ) : (
-                <div className={uniqueClass} style={gridStyle}>
+                <div className={uniqueClass} style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${safeColumns}, 1fr)`,
+                    gap: '24px',
+                    marginBottom: '3rem',
+                }}>
                     {paginatedProducts.map(product => (
                         <ProductCard 
                             key={product.id} 
@@ -647,25 +512,33 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             )}
 
             {totalPages > 1 && (
-                <div style={paginationStyle}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem' }}>
                     <button 
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        style={{...pageBtnStyle(false), opacity: currentPage === 1 ? 0.5 : 1}}
+                        style={{
+                            ...filterBtnStyle, padding: '0 16px',
+                            opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+                        }}
                     >
-                        &lt;
+                        Назад
                     </button>
                     
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
-                        const showEllipsis = totalPages > 7 && 
-                            ((page > 2 && page < currentPage - 1) || (page > currentPage + 1 && page < totalPages - 1));
+                        const isActive = currentPage === page;
+                        const showEllipsis = totalPages > 7 && ((page > 2 && page < currentPage - 1) || (page > currentPage + 1 && page < totalPages - 1));
                         
                         if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
                             return (
                                 <button
                                     key={page}
                                     onClick={() => handlePageChange(page)}
-                                    style={pageBtnStyle(currentPage === page)}
+                                    style={{
+                                        ...iconBtnStyle,
+                                        borderColor: isActive ? 'var(--site-accent)' : 'var(--site-border-color)',
+                                        background: isActive ? 'var(--site-accent)' : 'var(--site-card-bg)',
+                                        color: isActive ? 'var(--site-accent-text)' : 'var(--site-text-primary)',
+                                    }}
                                 >
                                     {page}
                                 </button>
@@ -681,9 +554,12 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     <button 
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        style={{...pageBtnStyle(false), opacity: currentPage === totalPages ? 0.5 : 1}}
+                        style={{
+                            ...filterBtnStyle, padding: '0 16px',
+                            opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
+                        }}
                     >
-                        &gt;
+                        Далі
                     </button>
                 </div>
             )}

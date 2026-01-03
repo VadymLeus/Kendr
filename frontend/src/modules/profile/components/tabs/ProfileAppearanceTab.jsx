@@ -6,8 +6,6 @@ import AccentColorSelector from '../../../../common/components/ui/AccentColorSel
 
 const ProfileAppearanceTab = () => {
     const { platformMode, setPlatformMode, platformAccent, setPlatformAccent } = useContext(ThemeContext);
-    
-    // --- STYLES ---
     const container = { maxWidth: '800px', margin: '0 auto' };
     const card = { 
         background: 'var(--platform-card-bg)', 
@@ -44,7 +42,7 @@ const ProfileAppearanceTab = () => {
                      <AccentColorSelector 
                         value={platformAccent}
                         onChange={setPlatformAccent}
-                        enableCustom={false} // В профиле используем только пресеты
+                        enableCustom={false}
                     />
                 </div>
             </div>

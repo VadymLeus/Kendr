@@ -1,6 +1,7 @@
 // frontend/src/modules/site-editor/blocks/Accordion/AccordionBlock.jsx
 import React from 'react';
 import AccordionItem from './AccordionItem';
+import { IconHelpCircle } from '../../../../common/components/ui/Icons';
 
 const AccordionBlock = ({ blockData, isEditorPreview, style }) => {
     const { items = [], fontFamily } = blockData;
@@ -24,11 +25,18 @@ const AccordionBlock = ({ blockData, isEditorPreview, style }) => {
                 textAlign: 'center', 
                 padding: '3rem',
                 border: '1px dashed var(--platform-border-color)',
-                backgroundColor: 'rgba(0,0,0,0.02)'
+                backgroundColor: 'var(--site-card-bg)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px'
             }}>
-                <span style={{fontSize: '2rem'}}>❓</span>
-                 <h4 style={{color: 'var(--platform-text-primary)', margin: '1rem 0 0.5rem 0'}}>Акордеон</h4>
-                <p style={{color: 'var(--platform-text-secondary)', margin: 0}}>
+                <div style={{ color: 'var(--site-accent)', opacity: 0.7 }}>
+                     <IconHelpCircle size={48} />
+                </div>
+                 <h4 style={{color: 'var(--site-text-primary)', margin: 0}}>Акордеон</h4>
+                <p style={{color: 'var(--site-text-secondary)', margin: 0}}>
                      Блок порожній. Додайте елементи у налаштуваннях.
                 </p>
             </div>

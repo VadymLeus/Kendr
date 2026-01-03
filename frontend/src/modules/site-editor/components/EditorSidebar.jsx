@@ -10,7 +10,6 @@ import {
     IconPlus, 
     IconLayers, 
     IconSettings, 
-    IconArrowLeft,
     IconStar,
     IconLayoutHeader,
     IconLayoutFooter,
@@ -259,39 +258,12 @@ const EditorSidebar = ({
                 )}
                 
                 {activeTab === 'settings' && (
-                    <>
-                        {isHeaderMode && !selectedBlockPath && (
-                            <div style={{ 
-                                textAlign: 'center', 
-                                color: 'var(--platform-text-secondary)', 
-                                padding: '1rem',
-                                border: '1px dashed var(--platform-border-color)',
-                                borderRadius: '8px',
-                                marginBottom: '1rem',
-                                background: 'var(--platform-card-bg)',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseOver={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--platform-accent)';
-                                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                            }}
-                            onMouseOut={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                                e.currentTarget.style.boxShadow = 'none';
-                            }}
-                            >
-                                <p style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
-                                    <IconArrowLeft size={16} /> Натисніть на блок хедера зліва, щоб налаштувати його.
-                                </p>
-                            </div>
-                        )}
-                        <SettingsTab 
-                            blocks={blocks}
-                            selectedBlockPath={selectedBlockPath}
-                            onUpdateBlockData={onUpdateBlockData}
-                            siteData={siteData}
-                        />
-                    </>
+                    <SettingsTab 
+                        blocks={blocks}
+                        selectedBlockPath={selectedBlockPath}
+                        onUpdateBlockData={onUpdateBlockData}
+                        siteData={siteData}
+                    />
                 )}
             </div>
         </div>

@@ -1,19 +1,21 @@
 // frontend/src/modules/site-editor/components/common/SpacingControl.jsx
 import React, { useState, useEffect } from 'react';
 import RangeSlider from '../../../../common/components/ui/RangeSlider';
-import { IconArrowUp, IconArrowDown } from '../../../../common/components/ui/Icons';
+import { 
+    IconArrowUp, 
+    IconArrowDown, 
+    IconLink, 
+    IconUnlink 
+} from '../../../../common/components/ui/Icons';
 
 const SpacingControl = ({ styles = {}, onChange }) => {
     const defaultPadding = 60;
     const minPadding = 0;
-    const maxPadding = 200; 
-
+    const maxPadding = 240;
     const getSafeValue = (val) => {
-        if (val === undefined || val === null) return defaultPadding;
-        if (val === '') return defaultPadding;
+        if (val === undefined || val === null || val === '') return defaultPadding;
         const parsed = parseInt(val, 10);
-        if (isNaN(parsed)) return defaultPadding;
-        return parsed;
+        return isNaN(parsed) ? defaultPadding : parsed;
     };
     
     const [paddingTop, setPaddingTop] = useState(getSafeValue(styles.paddingTop));
@@ -25,99 +27,91 @@ const SpacingControl = ({ styles = {}, onChange }) => {
         setPaddingBottom(getSafeValue(styles.paddingBottom));
     }, [styles.paddingTop, styles.paddingBottom]);
 
-    const handleSliderChange = (key, valueStr) => {
-        const val = parseInt(valueStr, 10);
+    const handleSliderChange = (key, value) => {
+        const val = typeof value === 'string' ? parseInt(value, 10) : value;
         const finalValue = isNaN(val) ? 0 : Math.max(minPadding, Math.min(val, maxPadding));
         
+        let newStyles = { ...styles };
+
         if (key === 'paddingTop') {
             setPaddingTop(finalValue);
-            if (isLinked) setPaddingBottom(finalValue);
-            
-            const newStyles = { 
-                ...styles, 
-                paddingTop: finalValue, 
-                ...(isLinked && { paddingBottom: finalValue }) 
-            };
-            onChange(newStyles, false);
+            newStyles.paddingTop = finalValue;
+            if (isLinked) {
+                setPaddingBottom(finalValue);
+                newStyles.paddingBottom = finalValue;
+            }
         } else {
             setPaddingBottom(finalValue);
-            if (isLinked) setPaddingTop(finalValue);
-
-            const newStyles = { 
-                ...styles, 
-                paddingBottom: finalValue,
-                ...(isLinked && { paddingTop: finalValue })
-            };
-            onChange(newStyles, false);
+            newStyles.paddingBottom = finalValue;
+            if (isLinked) {
+                setPaddingTop(finalValue);
+                newStyles.paddingTop = finalValue;
+            }
         }
+        
+        onChange(newStyles, false); 
     };
 
-    const LinkIcon = () => (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-        </svg>
-    );
-
-    const UnlinkIcon = () => (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity: 0.5}}>
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            <line x1="2" y1="2" x2="22" y2="22"></line>
-        </svg>
-    );
-
     return (
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--platform-text-primary)' }}>Внутрішні відступи</label>
+        <div style={{ background: 'var(--platform-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <label style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--platform-text-primary)' }}>
+                    Внутрішні відступи
+                </label>
+                
                 <button 
                     type="button"
                     onClick={() => setIsLinked(!isLinked)}
-                    title={isLinked ? "Роз'єднати" : "Зв'язати верх і низ"}
+                    title={isLinked ? "Роз'єднати значення" : "Зв'язати верх і низ"}
                     style={{
-                        background: isLinked ? 'var(--platform-accent)' : 'transparent',
-                        border: isLinked ? 'none' : '1px solid var(--platform-border-color)',
-                        borderRadius: '4px',
+                        background: isLinked ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                        border: isLinked ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+                        borderRadius: '6px',
                         cursor: 'pointer',
-                        color: isLinked ? '#fff' : 'var(--platform-text-secondary)',
-                        padding: '4px',
+                        color: isLinked ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                        padding: '6px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         transition: 'all 0.2s',
-                        width: '28px',
-                        height: '28px'
+                        width: '32px',
+                        height: '32px'
                     }}
                 >
-                    {isLinked ? <LinkIcon /> : <UnlinkIcon />}
+                    {isLinked ? <IconLink size={16} /> : <IconUnlink size={16} />}
                 </button>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
-                    <IconArrowUp size={14} /> Верх
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem', fontWeight: '500' }}>
+                        <IconArrowUp size={14} /> 
+                        <span>Відступ зверху: <span style={{ color: 'var(--platform-text-primary)' }}>{paddingTop}px</span></span>
+                    </div>
+                    <RangeSlider 
+                        value={paddingTop} 
+                        onChange={(val) => handleSliderChange('paddingTop', val)}
+                        min={minPadding}
+                        max={maxPadding}
+                        step={10}
+                        unit="px"
+                    />
                 </div>
-                <RangeSlider 
-                    value={paddingTop} 
-                    onChange={(val) => handleSliderChange('paddingTop', val)}
-                    min={minPadding}
-                    max={maxPadding}
-                    unit="px"
-                />
-            </div>
 
-            <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem' }}>
-                    <IconArrowDown size={14} /> Низ
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem', fontWeight: '500' }}>
+                        <IconArrowDown size={14} />
+                        <span>Відступ знизу: <span style={{ color: 'var(--platform-text-primary)' }}>{paddingBottom}px</span></span>
+                    </div>
+                    <RangeSlider 
+                        value={paddingBottom} 
+                        onChange={(val) => handleSliderChange('paddingBottom', val)}
+                        min={minPadding}
+                        max={maxPadding}
+                        step={10}
+                        unit="px"
+                    />
                 </div>
-                <RangeSlider 
-                    value={paddingBottom} 
-                    onChange={(val) => handleSliderChange('paddingBottom', val)}
-                    min={minPadding}
-                    max={maxPadding}
-                    unit="px"
-                />
             </div>
         </div>
     );

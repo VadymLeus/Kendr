@@ -1,4 +1,4 @@
-// frontend/src/modules/site-editor/core/LayersTab.jsx
+// frontend/src/modules/site-editor/tabs/LayersTab.jsx
 import React from 'react';
 import BlockLayerItem from '../components/BlockLayerItem';
 import { IconLayers, IconAlertCircle } from '../../../common/components/ui/Icons';

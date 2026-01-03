@@ -1,5 +1,5 @@
 // frontend/src/modules/profile/pages/ProfilePage.jsx
-import React, { useState, useContext, useEffect } from 'react'; // 1. Добавили useEffect
+import React, { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 
@@ -18,15 +18,11 @@ import {
 
 const SettingsPage = () => {
     const { user } = useContext(AuthContext);
-
-    // 2. Инициализируем состояние, читая из localStorage.
-    // Если там пусто, по умолчанию будет 'general'.
     const [activeTab, setActiveTab] = useState(() => {
         const savedTab = localStorage.getItem('settings_active_tab');
         return savedTab || 'general';
     });
 
-    // 3. Сохраняем выбранную вкладку в localStorage при каждом изменении activeTab
     useEffect(() => {
         localStorage.setItem('settings_active_tab', activeTab);
     }, [activeTab]);
@@ -39,7 +35,6 @@ const SettingsPage = () => {
     ];
 
     return (
-        /* Головний контейнер на всю ширину та висоту без відступів */
         <div style={{ 
             minHeight: '100vh', 
             display: 'flex', 
@@ -49,18 +44,12 @@ const SettingsPage = () => {
             margin: 0, 
             padding: 0 
         }}>
-            
-            {/* --- HEADER --- */}
             <header className="settings-header">
-                
-                {/* Left: Title */}
                 <div className="header-left">
                     <div className="page-title">
                         Налаштування
                     </div>
                 </div>
-
-                {/* Center: Tabs */}
                 <div className="header-center">
                     <nav className="header-tabs">
                         {tabs.map(tab => (
@@ -77,7 +66,6 @@ const SettingsPage = () => {
                     </nav>
                 </div>
 
-                {/* Right: View Profile Button */}
                 <div className="header-right">
                     {user && (
                         <Link 
@@ -93,7 +81,6 @@ const SettingsPage = () => {
                 </div>
             </header>
 
-            {/* --- CONTENT AREA --- */}
             <div className="settings-content-wrapper">
                 <div className="settings-content-container">
                     {activeTab === 'general' && <ProfileGeneralTab />}
@@ -104,7 +91,6 @@ const SettingsPage = () => {
             </div>
 
             <style>{`
-                /* Стилі Header ідентичні DashboardHeader */
                 .settings-header {
                     display: flex;
                     justify-content: space-between;
@@ -144,7 +130,6 @@ const SettingsPage = () => {
                     min-width: 0;
                 }
 
-                /* Стилі табів */
                 .header-tabs {
                     display: flex;
                     background: var(--platform-bg);
@@ -205,9 +190,8 @@ const SettingsPage = () => {
                     gap: 12px;
                     min-width: 200px;
                     justify-content: flex-end;
-                }
+                    }
 
-                /* Кнопка "Переглянути" - дизайн як у DashboardHeader */
                 .preview-btn {
                     display: flex;
                     align-items: center;
@@ -241,7 +225,6 @@ const SettingsPage = () => {
                     font-weight: 500;
                 }
 
-                /* Контентна частина */
                 .settings-content-wrapper {
                     flex: 1;
                     width: 100%;
@@ -256,7 +239,6 @@ const SettingsPage = () => {
                     margin: 0 auto;
                 }
 
-                /* Адаптивність */
                 @media (max-width: 1400px) {
                     .header-left, .header-right {
                         min-width: auto;

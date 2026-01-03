@@ -41,7 +41,7 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
         left: 0,
         right: 0,
         background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)',
-        padding: '28px 10px 0px', 
+        padding: '28px 10px 10px', 
         color: 'white',
         fontSize: '0.85rem',
         whiteSpace: 'nowrap',
@@ -50,7 +50,7 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
         opacity: selected || isChecked ? 1 : 0, 
         transition: 'opacity 0.2s',
         zIndex: 10,
-        lineHeight: '1.5', 
+        lineHeight: '1.2', 
         pointerEvents: 'none' 
     };
 
@@ -102,11 +102,29 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
         
         if (isVideo) {
             return (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#2d3748', position: 'relative' }}>
+                <div style={{ 
+                    width: '100%', height: '100%', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    background: '#1a202c',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
                     <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-                    <IconVideo size={48} color="rgba(255,255,255,0.2)" />
-                    <div style={{ position: 'absolute', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', padding: '12px', backdropFilter: 'blur(4px)' }}>
-                        <IconPlay size={32} color="white"/>
+                    
+                    <div style={{position: 'absolute', opacity: 0.1, transform: 'scale(1.5)'}}>
+                         <IconVideo size={100} color="white" />
+                    </div>
+
+                    <div style={{ 
+                        background: 'rgba(255,255,255,0.15)', 
+                        borderRadius: '50%', 
+                        padding: '16px', 
+                        backdropFilter: 'blur(4px)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        zIndex: 2,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <IconPlay size={32} color="white" style={{marginLeft: '4px'}}/>
                     </div>
                 </div>
             );

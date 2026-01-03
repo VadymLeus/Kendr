@@ -2,6 +2,16 @@
 import React from 'react';
 import { commonStyles, ToggleGroup } from '../../components/common/SettingsUI';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
+import { 
+    IconColumns, 
+    IconRows,
+    IconAlignLeft,
+    IconAlignCenter,
+    IconAlignRight,
+    IconAlignTop,
+    IconAlignMiddle,
+    IconAlignBottom
+} from '../../../../common/components/ui/Icons';
 
 const PRESETS = [
     { preset: '50-50', name: '50% / 50%', columns: 2 },
@@ -51,8 +61,12 @@ const LayoutSettings = ({ data, onChange }) => {
         });
     };
     
-    const handleChange = (e) => {
-        onChange({ ...data, [e.target.name]: e.target.value, direction: data.direction || 'row' });
+    const handleChange = (name, value) => {
+        onChange({ 
+            ...data, 
+            [name]: value, 
+            direction: data.direction || 'row' 
+        });
     };
 
     const handleDirectionChange = (direction) => {
@@ -67,33 +81,38 @@ const LayoutSettings = ({ data, onChange }) => {
 
     const isHorizontal = data.direction === 'row' || !data.direction;
     const isVertical = data.direction === 'column';
-
     const directionOptions = [
-        { value: 'row', label: 'Горизонтально' },
-        { value: 'column', label: 'Вертикально' }
+        { 
+            value: 'row', 
+            label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><IconColumns size={16}/> Рядок</div> 
+        },
+        { 
+            value: 'column', 
+            label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><IconRows size={16}/> Стовпчик</div> 
+        }
     ];
 
     const presetOptions = PRESETS.map(p => ({
         value: p.preset,
-        label: `${p.name} (${p.columns} ${p.columns === 1 ? 'колонка' : (p.columns > 1 && p.columns < 5 ? 'колонки' : 'колонок')})`
+        label: `${p.name}`
     }));
 
     const verticalAlignOptions = [
-        { value: 'top', label: 'Вгорі' },
-        { value: 'middle', label: 'Посередині' },
-        { value: 'bottom', label: 'Внизу' }
+        { value: 'top', label: <IconAlignTop size={18} title="Вгорі"/> },
+        { value: 'middle', label: <IconAlignMiddle size={18} title="Посередині"/> },
+        { value: 'bottom', label: <IconAlignBottom size={18} title="Внизу"/> }
     ];
 
     const horizontalAlignOptions = [
-        { value: 'start', label: 'Ліворуч' },
-        { value: 'center', label: 'По центру' },
-        { value: 'end', label: 'Праворуч' }
+        { value: 'start', label: <IconAlignLeft size={18} title="Ліворуч"/> },
+        { value: 'center', label: <IconAlignCenter size={18} title="По центру"/> },
+        { value: 'end', label: <IconAlignRight size={18} title="Праворуч"/> }
     ];
     
     return (
         <div>
             <div style={commonStyles.formGroup}>
-                <label style={commonStyles.label}>Напрямок:</label>
+                <label style={commonStyles.label}>Напрямок вмісту</label>
                 <ToggleGroup 
                     options={directionOptions}
                     value={data.direction || 'row'}
@@ -102,70 +121,47 @@ const LayoutSettings = ({ data, onChange }) => {
             </div>
 
             <div style={commonStyles.formGroup}>
-                <label style={commonStyles.label}>Пресет колонок:</label>
+                <label style={commonStyles.label}>Схема колонок</label>
                 <CustomSelect
                     name="preset"
                     value={data.preset || '50-50'}
                     onChange={handlePresetChange}
                     options={presetOptions}
-                    style={commonStyles.input}
+                    placeholder="Оберіть схему"
                 />
             </div>
             
-            <div style={commonStyles.formGroup}>
+            <div style={{...commonStyles.formGroup, marginBottom: 0}}>
                 <label style={commonStyles.label}>
-                    Вирівнювання:
+                    {isHorizontal ? 'Вертикальне вирівнювання' : 'Горизонтальне вирівнювання'}
                 </label>
                 
                 {isHorizontal && (
                     <>
-                        <CustomSelect
-                            name="verticalAlign"
-                            value={data.verticalAlign || 'top'}
-                            onChange={handleChange}
+                        <ToggleGroup
                             options={verticalAlignOptions}
-                            style={commonStyles.input}
+                            value={data.verticalAlign || 'top'}
+                            onChange={(val) => handleChange('verticalAlign', val)}
                         />
-                        <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block'}}>
-                            Вирівнює вміст колонок по вертикалі, якщо вони різної висоти
-                        </small>
+                        <div style={{fontSize: '0.75rem', color: 'var(--platform-text-secondary)', marginTop: '8px', lineHeight: '1.4'}}>
+                            Вказує, як вирівнювати блоки по вертикалі, якщо вони мають різну висоту.
+                        </div>
                     </>
                 )}
 
                 {isVertical && (
                     <>
-                        <CustomSelect
-                            name="horizontalAlign"
-                            value={data.horizontalAlign || 'start'}
-                            onChange={handleChange}
+                        <ToggleGroup
                             options={horizontalAlignOptions}
-                            style={commonStyles.input}
+                            value={data.horizontalAlign || 'start'}
+                            onChange={(val) => handleChange('horizontalAlign', val)}
                         />
-                        <small style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block'}}>
-                            Вирівнює вміст вкладених блоків по горизонталі
-                        </small>
+                        <div style={{fontSize: '0.75rem', color: 'var(--platform-text-secondary)', marginTop: '8px', lineHeight: '1.4'}}>
+                            Вказує, як вирівнювати блоки по ширині контейнера.
+                        </div>
                     </>
                 )}
             </div>
-
-            <style>
-                {`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                    height: 6px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: var(--platform-border-color);
-                    border-radius: 3px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: var(--platform-text-secondary);
-                }
-                `}
-            </style>
         </div>
     );
 };

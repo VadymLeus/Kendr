@@ -4,6 +4,7 @@ import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../../components/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../../components/DraggableBlockItem';
 import BlockRenderer from '../../core/BlockRenderer';
+import { IconPlus } from '../../../../common/components/ui/Icons'; 
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
@@ -59,9 +60,8 @@ const getLayoutStyles = (direction = 'row', preset, verticalAlign = 'top', horiz
 };
 
 const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock }) => {
-    const siteAccent = 'var(--site-accent)';
-    const siteBorderColor = 'var(--site-border-color)';
-    const siteTextSecondary = 'var(--site-text-secondary)';
+    const siteAccent = 'var(--platform-accent)'; 
+    const siteBorderColor = 'var(--platform-border-color)';
 
     const [{ isOver, canDrop }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
@@ -132,16 +132,21 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
 
     const columnStyle = {
         minHeight: '150px',
-        padding: '10px',
+        padding: '12px',
         borderRadius: '8px',
-        border: isOver && canDrop ? `2px dashed ${siteAccent}` : `2px dashed ${siteBorderColor}`,
-        transition: 'background-color 0.2s ease, border-color 0.2s ease',
-        backgroundColor: isOver && canDrop ? 'var(--site-card-bg-hover, rgba(0, 0, 0, 0.05))' : 'transparent',
+        border: isOver && canDrop 
+            ? `2px dashed ${siteAccent}` 
+            : `1px dashed ${siteBorderColor}`,
+        transition: 'all 0.2s ease',
+        backgroundColor: isOver && canDrop 
+            ? 'rgba(66, 153, 225, 0.05)' 
+            : 'transparent',
         width: '100%', 
         boxSizing: 'border-box',
         overflow: 'hidden', 
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        position: 'relative'
     };
 
     const contentWrapperStyle = {
@@ -160,16 +165,33 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         <div ref={setRefs} style={columnStyle}>
             <div ref={contentRef} style={contentWrapperStyle}>
                 {children}
+                
                 {React.Children.count(children) === 0 && (
                     <div style={{ 
-                        textAlign: 'center', 
-                        color: siteTextSecondary, 
-                        paddingTop: '50px',
-                        fontSize: '14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '120px',
+                        color: 'var(--platform-text-secondary)',
+                        opacity: 0.6,
                         pointerEvents: 'none',
-                        backgroundColor: 'transparent'
+                        textAlign: 'center'
                     }}>
-                        Перетягніть блоки сюди
+                        <div style={{ 
+                            width: '40px', 
+                            height: '40px', 
+                            borderRadius: '50%', 
+                            border: '1px solid var(--platform-border-color)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginBottom: '8px',
+                            background: 'var(--platform-bg)'
+                        }}>
+                            <IconPlus size={20} />
+                        </div>
+                        <span style={{ fontSize: '0.85rem' }}>Перетягніть блок сюди</span>
                     </div>
                 )}
             </div>

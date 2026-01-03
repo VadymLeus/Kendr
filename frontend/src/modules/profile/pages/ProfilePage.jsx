@@ -33,8 +33,6 @@ const ProfilePage = () => {
             try {
                 setLoading(true);
                 setErrorStatus(null);
-                
-                // ВАЖЛИВО: Додаємо suppressToast: true, щоб глобальний тост не з'являвся при 403
                 const response = await apiClient.get(`/users/${username}`, {
                     suppressToast: true
                 });
@@ -54,8 +52,6 @@ const ProfilePage = () => {
     }, [username]);
 
     const isOwner = user && user.username === username;
-
-    // --- STYLES ---
     const containerStyle = {
         maxWidth: '1280px', 
         width: '100%',
@@ -95,15 +91,12 @@ const ProfilePage = () => {
         border: '1px solid var(--platform-border-color)'
     };
 
-    // --- RENDERING ---
-
     if (loading) return (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
             <IconLoader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)' }} />
         </div>
     );
 
-    // ВАРІАНТ 1: ПРИВАТНИЙ ПРОФІЛЬ (403)
     if (errorStatus === 403) {
         return (
             <div style={containerStyle}>
@@ -119,7 +112,6 @@ const ProfilePage = () => {
                         Користувач <strong>@{username}</strong> обмежив доступ до своєї сторінки. 
                     </p>
                     
-                    {/* Кнопка на головну (опціонально) */}
                     <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}>
                         <Button variant="secondary">На головну</Button>
                     </Link>
@@ -128,7 +120,6 @@ const ProfilePage = () => {
         );
     }
 
-    // ВАРІАНТ 2: НЕ ЗНАЙДЕНО (404)
     if (errorStatus === 404) {
         return (
             <div style={containerStyle}>
@@ -151,7 +142,6 @@ const ProfilePage = () => {
         );
     }
     
-    // ВАРІАНТ 3: ІНША ПОМИЛКА
     if (errorStatus) {
         return (
             <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-danger)' }}>
@@ -160,7 +150,6 @@ const ProfilePage = () => {
         );
     }
 
-    // ВАРІАНТ 4: УСПІШНЕ ВІДОБРАЖЕННЯ
     const userAccentColor = profileData?.accent_color || 'var(--platform-accent)';
     
     const coverStyle = {
@@ -288,7 +277,6 @@ const ProfilePage = () => {
                                 }}>
                                     {profileData.username}
                                 </h1>
-                                {/* Якщо це власник і профіль приватний, покажемо іконку ока для нього */}
                                 {!profileData.is_profile_public && isOwner && (
                                     <div title="Приватний профіль (бачите тільки ви)" style={{paddingBottom: '8px'}}>
                                         <IconEyeOff size={24} color="var(--platform-text-secondary)" />

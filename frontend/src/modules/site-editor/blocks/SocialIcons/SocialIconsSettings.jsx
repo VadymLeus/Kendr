@@ -1,80 +1,75 @@
 // frontend/src/modules/site-editor/blocks/SocialIcons/SocialIconsSettings.jsx
 import React from 'react';
 import { commonStyles, ToggleGroup, SectionTitle } from '../../components/common/SettingsUI';
+import { Input } from '../../../../common/components/ui/Input';
+import { 
+    IconAlignLeft, IconAlignCenter, IconAlignRight, 
+    IconSun, IconMoon, IconLayout, IconShare,
+    IconFacebook, IconInstagram, IconTelegram, IconYoutube, IconTiktok
+} from '../../../../common/components/ui/Icons';
 
 const socialNetworks = [
-    { key: 'facebook', name: 'Facebook' },
-    { key: 'instagram', name: 'Instagram' },
-    { key: 'telegram', name: 'Telegram' },
-    { key: 'youtube', name: 'YouTube' },
-    { key: 'tiktok', name: 'TikTok' }
+    { key: 'facebook', name: 'Facebook', icon: <IconFacebook size={16}/>, placeholder: 'https://facebook.com/page' },
+    { key: 'instagram', name: 'Instagram', icon: <IconInstagram size={16}/>, placeholder: 'https://instagram.com/user' },
+    { key: 'telegram', name: 'Telegram', icon: <IconTelegram size={16}/>, placeholder: 'https://t.me/channel' },
+    { key: 'youtube', name: 'YouTube', icon: <IconYoutube size={16}/>, placeholder: 'https://youtube.com/@channel' },
+    { key: 'tiktok', name: 'TikTok', icon: <IconTiktok size={16}/>, placeholder: 'https://tiktok.com/@user' }
 ];
 
 const SocialIconsSettings = ({ data, onChange }) => {
-    const handleChange = (e) => {
-        onChange({ ...data, [e.target.name]: e.target.value });
-    };
-
-    const handleAlignmentChange = (alignment) => {
-        onChange({ ...data, alignment });
-    };
-
-    const handleThemeChange = (theme_mode) => {
-        onChange({ ...data, theme_mode });
-    };
-
-    const alignOptions = [
-        { value: 'left', label: 'Ліво' },
-        { value: 'center', label: 'Центр' },
-        { value: 'right', label: 'Право' }
-    ];
-
-    const themeOptions = [
-        { value: 'auto', label: '🌓 Авто' },
-        { value: 'light', label: '☀️ Темні іконки' },
-        { value: 'dark', label: '🌙 Світлі іконки' },
-    ];
+    
+    const updateData = (updates) => onChange({ ...data, ...updates });
 
     return (
-        <div>
-            <div style={commonStyles.formGroup}>
-                <label style={commonStyles.label}>Вирівнювання:</label>
-                <ToggleGroup 
-                    options={alignOptions}
-                    value={data.alignment || 'left'}
-                    onChange={handleAlignmentChange}
-                />
-            </div>
-
-            <div style={commonStyles.formGroup}>
-                <label style={commonStyles.label}>Колір іконок:</label>
-                <ToggleGroup 
-                    options={themeOptions}
-                    value={data.theme_mode || 'auto'}
-                    onChange={handleThemeChange}
-                />
-                <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
-                    Оберіть "Темні іконки" для світлого фону, "Світлі" для темного.
-                </small>
-            </div>
-
-            <hr style={{margin: '2rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
-
-            <SectionTitle>Посилання</SectionTitle>
-
-            {socialNetworks.map(net => (
-                <div style={commonStyles.formGroup} key={net.key}>
-                    <label style={commonStyles.label}>{net.name} URL:</label>
-                    <input
-                        type="text"
-                        name={net.key}
-                        value={data[net.key] || ''}
-                        onChange={handleChange}
-                        style={commonStyles.input}
-                        placeholder={`https://www.${net.key.toLowerCase()}.com/...`}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div>
+                <SectionTitle icon={<IconLayout size={18}/>}>Вигляд</SectionTitle>
+                
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Вирівнювання</label>
+                    <ToggleGroup 
+                        options={[
+                            { value: 'left', label: <IconAlignLeft size={18} /> },
+                            { value: 'center', label: <IconAlignCenter size={18} /> },
+                            { value: 'right', label: <IconAlignRight size={18} /> }
+                        ]}
+                        value={data.alignment || 'left'}
+                        onChange={(val) => updateData({ alignment: val })}
                     />
                 </div>
-            ))}
+
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Колір іконок (Тема)</label>
+                    <ToggleGroup 
+                        options={[
+                            { value: 'auto', label: 'Авто' },
+                            { value: 'light', label: <div style={{display:'flex', gap:'6px'}}><IconSun size={16}/> Темні</div> },
+                            { value: 'dark', label: <div style={{display:'flex', gap:'6px'}}><IconMoon size={16}/> Світлі</div> },
+                        ]}
+                        value={data.theme_mode || 'auto'}
+                        onChange={(val) => updateData({ theme_mode: val })}
+                    />
+                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '6px', display: 'block' }}>
+                        Оберіть "Темні" для світлого фону блоку, "Світлі" для темного.
+                    </small>
+                </div>
+            </div>
+            <div>
+                <SectionTitle icon={<IconShare size={18}/>}>Посилання</SectionTitle>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {socialNetworks.map(net => (
+                        <Input
+                            key={net.key}
+                            label={net.name}
+                            value={data[net.key] || ''}
+                            onChange={(e) => updateData({ [net.key]: e.target.value })}
+                            placeholder={net.placeholder}
+                            leftIcon={net.icon}
+                        />
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };

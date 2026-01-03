@@ -29,7 +29,6 @@ const FontPicker = ({
     const [localFonts, setLocalFonts] = useState([]); 
     const [searchTerm, setSearchTerm] = useState('');
     const [previewFont, setPreviewFont] = useState(value);
-    
     const [sections, setSections] = useState(() => {
         try {
             const saved = localStorage.getItem('fontPickerSections');
@@ -50,36 +49,70 @@ const FontPicker = ({
     const { confirm } = useConfirm();
 
     useEffect(() => {
-        const initCurrentFont = async () => {
-            const isCustomPath = value && value.includes('/uploads/');
-            const alreadyInList = localFonts.some(f => f.path_full === value);
+        const fetchAllFonts = async () => {
+            try {
+                const res = await apiClient.get('/media');
+                if (Array.isArray(res.data)) {
+                    const serverFonts = res.data.filter(f => 
+                        f.file_type === 'font' || 
+                        f.mime_type?.includes('font') || 
+                        /\.(ttf|otf|woff|woff2)$/i.test(f.original_file_name)
+                    );
 
-            if (isCustomPath && !alreadyInList) {
-                try {
-                    const res = await apiClient.get('/media');
-                    const found = res.data.find(f => f.path_full === value);
-                    const listId = `auto-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+                    const formattedFonts = serverFonts.map(f => ({
+                        ...f,
+                        id: f.id,
+                        listId: f.id, 
+                        label: f.display_name || f.alt_text || f.original_file_name,
+                        value: f.path_full,
+                        isCustom: true,
+                        isTemp: false 
+                    }));
 
-                    if (found) {
-                        setLocalFonts(prev => [...prev, { ...found, listId, label: found.alt_text || found.original_file_name }]);
-                    } else {
-                        const fileName = value.split('/').pop();
-                        setLocalFonts(prev => [...prev, {
-                            id: `temp-${Date.now()}`,
-                            listId,
-                            path_full: value,
-                            original_file_name: fileName,
-                            alt_text: fileName,
-                            label: fileName
-                        }]);
-                    }
-                } catch (e) {
-                    console.error("Error syncing current font", e);
+                    setLocalFonts(prev => {
+                        const uniqueMap = new Map();
+                        
+                        prev.forEach(item => uniqueMap.set(item.path_full, item));
+                        
+                        formattedFonts.forEach(item => {
+                            uniqueMap.set(item.path_full, item);
+                        });
+                        
+                        return Array.from(uniqueMap.values());
+                    });
                 }
+            } catch (e) {
+                console.error("Failed to load fonts list", e);
             }
         };
 
-        initCurrentFont();
+        fetchAllFonts();
+    }, []);
+
+    useEffect(() => {
+        const syncCurrentValue = async () => {
+            if (!value || value === 'global' || value === 'site_heading' || value === 'site_body' || !value.includes('/uploads/')) return;
+
+            setLocalFonts(prev => {
+                if (prev.some(f => f.path_full === value)) return prev;
+
+                const fileName = value.split('/').pop();
+                const newFont = {
+                    id: null,
+                    listId: `temp-${Date.now()}`,
+                    path_full: value,
+                    value: value,
+                    original_file_name: fileName,
+                    label: fileName, 
+                    isCustom: true,
+                    isTemp: true
+                };
+
+                return [newFont, ...prev];
+            });
+        };
+
+        syncCurrentValue();
     }, [value]);
 
     useEffect(() => {
@@ -105,14 +138,23 @@ const FontPicker = ({
 
         const newListItem = {
             ...selectedFile,
-            listId: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            label: selectedFile.alt_text || selectedFile.original_file_name
+            listId: selectedFile.id || `custom-${Date.now()}`,
+            label: selectedFile.display_name || selectedFile.alt_text || selectedFile.original_file_name, 
+            value: selectedFile.path_full,
+            isCustom: true,
+            isTemp: false
         };
 
-        setLocalFonts(prev => [newListItem, ...prev]);
+        setLocalFonts(prev => {
+            const uniqueMap = new Map();
+            prev.forEach(item => uniqueMap.set(item.path_full, item));
+            uniqueMap.set(newListItem.path_full, newListItem);
+            return Array.from(uniqueMap.values());
+        });
+
         onChange(selectedFile.path_full);
         setIsMediaModalOpen(false);
-        toast.success('Шрифт додано');
+        toast.success('Шрифт вибрано');
         
         if (!sections.custom) {
             setSections(prev => ({ ...prev, custom: true }));
@@ -123,27 +165,28 @@ const FontPicker = ({
         e.stopPropagation();
         
         const isConfirmed = await confirm({
-            title: "Видалити шрифт?",
-            message: `Ви впевнені, що хочете прибрати шрифт "${name}" зі списку?`,
-            type: "danger",
-            confirmLabel: "Видалити"
+            title: "Прибрати шрифт?",
+            message: `Прибрати "${name}" зі списку швидкого доступу? Файл залишиться в медіатеці.`,
+            type: "warning",
+            confirmLabel: "Прибрати"
         });
 
         if (!isConfirmed) return;
 
-        setLocalFonts(prev => {
-            const itemToDelete = prev.find(f => f.listId === listId);
-            const newList = prev.filter(f => f.listId !== listId);
+        const itemToDelete = localFonts.find(f => f.listId === listId);
+
+        if (itemToDelete && value === itemToDelete.path_full) {
+            const remainingWithSamePath = localFonts.filter(f => 
+                f.listId !== listId && f.path_full === itemToDelete.path_full
+            );
             
-            if (itemToDelete && value === itemToDelete.path_full) {
-                const sameFontExists = newList.some(f => f.path_full === itemToDelete.path_full);
-                if (!sameFontExists) {
-                    onChange("'Inter', sans-serif"); 
-                    toast.info('Шрифт скинуто на стандартний');
-                }
+            if (remainingWithSamePath.length === 0) {
+                onChange("global");
+                toast.info('Шрифт скинуто на стандартний');
             }
-            return newList;
-        });
+        }
+
+        setLocalFonts(prev => prev.filter(f => f.listId !== listId));
     };
 
     const startEditing = (listId, currentLabel, e) => {
@@ -152,7 +195,7 @@ const FontPicker = ({
         setEditName(currentLabel);
     };
 
-    const saveName = (listId, e) => {
+    const saveName = async (listId, e) => {
         e.stopPropagation();
         if (!editName.trim()) {
             setEditingListId(null);
@@ -165,6 +208,7 @@ const FontPicker = ({
             }
             return f;
         }));
+
         setEditingListId(null);
     };
 
@@ -172,15 +216,23 @@ const FontPicker = ({
     const { customList, googleList } = useMemo(() => {
         const lowerSearch = searchTerm.toLowerCase();
 
-        const custom = localFonts.filter(f => 
-            (f.label || f.original_file_name).toLowerCase().includes(lowerSearch)
-        ).map(f => ({
-            ...f,
-            isCustom: true,
-            value: f.path_full 
-        }));
+        const uniqueCustomMap = new Map();
+        
+        localFonts.forEach(f => {
+            const nameToSearch = f.label || f.original_file_name || '';
+            if (nameToSearch.toLowerCase().includes(lowerSearch)) {
+                uniqueCustomMap.set(f.path_full, {
+                    ...f,
+                    isCustom: true,
+                    value: f.path_full 
+                });
+            }
+        });
 
-        const google = FONT_LIBRARY.filter(f => f.value !== 'global')
+        const custom = Array.from(uniqueCustomMap.values());
+
+        const google = FONT_LIBRARY
+            .filter(f => f.value !== 'global' && f.value !== 'site_heading' && f.value !== 'site_body')
             .filter(f => f.label.toLowerCase().includes(lowerSearch))
             .map(f => ({
                 id: f.value,
@@ -194,7 +246,8 @@ const FontPicker = ({
     }, [localFonts, searchTerm]);
 
     useEffect(() => {
-        if (!previewFont || previewFont === 'global') return;
+        if (!previewFont || previewFont === 'global' || previewFont === 'site_heading' || previewFont === 'site_body') return;
+        
         const loadFontPreview = async () => {
             const isCustom = previewFont.includes('/uploads/');
             const previewEl = document.getElementById(`font-preview-${type}`);
@@ -236,7 +289,6 @@ const FontPicker = ({
         height: '460px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
     };
-
     const headerStyle = {
         padding: '16px',
         borderBottom: '1px solid var(--platform-border-color)',
@@ -247,13 +299,11 @@ const FontPicker = ({
         width: '100%',
         boxSizing: 'border-box'
     };
-
     const bodyStyle = {
         display: 'flex',
         flex: 1,
         overflow: 'hidden'
     };
-
     const listStyle = {
         width: '45%',
         borderRight: '1px solid var(--platform-border-color)',
@@ -262,7 +312,6 @@ const FontPicker = ({
         flexDirection: 'column',
         background: 'var(--platform-card-bg)'
     };
-
     const previewAreaStyle = {
         width: '55%',
         padding: '24px',
@@ -275,7 +324,6 @@ const FontPicker = ({
         position: 'relative',
         color: 'var(--platform-text-primary)'
     };
-
     const sectionHeaderStyle = {
         padding: '12px 16px',
         background: 'var(--platform-bg)',
@@ -293,7 +341,6 @@ const FontPicker = ({
         userSelect: 'none',
         transition: 'background 0.2s'
     };
-
     const renderArrow = (isOpen) => (
         <div style={{ 
             transition: 'transform 0.2s ease', 
@@ -301,7 +348,7 @@ const FontPicker = ({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: 0.6
         }}>
-           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
         </div>
@@ -497,89 +544,18 @@ const FontPicker = ({
                     from { opacity: 0; transform: translateY(5px); } 
                     to { opacity: 1; transform: translateY(0); } 
                 }
-
-                .font-item {
-                    padding: 8px 12px 8px 16px;
-                    border-bottom: 1px solid var(--platform-border-color);
-                    cursor: pointer;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    transition: all 0.2s;
-                    min-height: 42px;
-                    color: var(--platform-text-primary);
-                    font-size: 0.9rem;
-                    background: transparent;
-                }
-
-                .font-item:hover {
-                    background: rgba(0,0,0,0.02);
-                }
-
-                .font-item.active {
-                    background: var(--platform-accent);
-                    color: var(--platform-accent-text);
-                    font-weight: 500;
-                }
-
-                .font-label {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    flex: 1;
-                    padding-right: 10px;
-                }
-
-                .actions-group {
-                    display: flex;
-                    gap: 4px;
-                }
-
-                .action-btn {
-                    background: transparent;
-                    border: none;
-                    cursor: pointer;
-                    padding: 6px;
-                    border-radius: 6px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.2s;
-                    color: var(--platform-text-secondary);
-                    opacity: 0.7;
-                }
-
-                .font-item.active .action-btn {
-                    color: currentColor;
-                    opacity: 0.9;
-                }
-
-                .font-item:not(.active) .action-btn:hover {
-                    background: rgba(255,255,255,0.1);
-                    color: var(--platform-text-primary);
-                    opacity: 1;
-                }
-
-                .font-item:not(.active) .action-btn.delete:hover {
-                    background: rgba(220, 38, 38, 0.15);
-                    color: #ef4444;
-                    opacity: 1;
-                }
-
-                .font-item.active .action-btn:hover {
-                    background: rgba(255, 255, 255, 0.2);
-                    opacity: 1;
-                }
-
-                .font-item.active .action-btn.delete:hover {
-                    background: #ffffff;
-                    color: #dc2626 !important;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                }
-
-                [data-theme='dark'] .font-item:not(.active) .action-btn:hover {
-                    background: rgba(255,255,255,0.1);
-                }
+                .font-item { padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--platform-border-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; min-height: 42px; color: var(--platform-text-primary); font-size: 0.9rem; background: transparent; }
+                .font-item:hover { background: rgba(0,0,0,0.02); }
+                .font-item.active { background: var(--platform-accent); color: var(--platform-accent-text); font-weight: 500; }
+                .font-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; padding-right: 10px; }
+                .actions-group { display: flex; gap: 4px; }
+                .action-btn { background: transparent; border: none; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--platform-text-secondary); opacity: 0.7; }
+                .font-item.active .action-btn { color: currentColor; opacity: 0.9; }
+                .font-item:not(.active) .action-btn:hover { background: rgba(255,255,255,0.1); color: var(--platform-text-primary); opacity: 1; }
+                .font-item:not(.active) .action-btn.delete:hover { background: rgba(220, 38, 38, 0.15); color: #ef4444; opacity: 1; }
+                .font-item.active .action-btn:hover { background: rgba(255, 255, 255, 0.2); opacity: 1; }
+                .font-item.active .action-btn.delete:hover { background: #ffffff; color: #dc2626 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+                [data-theme='dark'] .font-item:not(.active) .action-btn:hover { background: rgba(255,255,255,0.1); }
             `}</style>
         </div>
     );

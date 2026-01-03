@@ -48,8 +48,6 @@ const PublicProfileTab = () => {
         toast.info('Посилання скопійовано');
     };
 
-    // --- STYLES ---
-    // Використовуємо ті самі константи, що й у GeneralSettingsTab для консистентності
     const containerStyle = {
         maxWidth: '900px',
         margin: '0 auto',
@@ -83,7 +81,6 @@ const PublicProfileTab = () => {
         lineHeight: '1.5'
     };
 
-    // Стилі для блоку з посиланням
     const linkBoxStyle = {
         background: 'var(--platform-bg)',
         border: '1px solid var(--platform-border-color)',
@@ -99,7 +96,6 @@ const PublicProfileTab = () => {
         gap: '10px'
     };
 
-    // Стиль для кастомного Textarea, щоб він був схожий на Input
     const textareaWrapperStyle = {
         display: 'flex',
         flexDirection: 'column',
@@ -110,7 +106,7 @@ const PublicProfileTab = () => {
     const textareaStyle = {
         width: '100%',
         padding: '12px 16px',
-        borderRadius: '12px', // Як у Input
+        borderRadius: '12px',
         border: '1px solid var(--platform-border-color)',
         background: 'var(--platform-bg)',
         color: 'var(--platform-text-primary)',
@@ -123,7 +119,6 @@ const PublicProfileTab = () => {
         transition: 'border-color 0.2s'
     };
 
-    // Стиль для лейбла (щоб відповідав Input label)
     const labelStyle = {
         fontSize: '0.9rem',
         fontWeight: '500',
@@ -147,7 +142,6 @@ const PublicProfileTab = () => {
                 .custom-textarea:focus {
                     border-color: var(--platform-accent) !important;
                 }
-                /* Стиль для перемикача */
                 .toggle-switch {
                     position: relative;
                     display: inline-block;
@@ -189,8 +183,6 @@ const PublicProfileTab = () => {
                     transform: translateX(20px);
                 }
             `}</style>
-
-            {/* --- BLOCK 1: STATUS & LINK --- */}
             <div style={cardStyle}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px' }}>
                     <div>
@@ -254,8 +246,6 @@ const PublicProfileTab = () => {
                     </div>
                 )}
             </div>
-
-            {/* --- BLOCK 2: INFO & SOCIALS --- */}
             <div style={cardStyle}>
                 <h3 style={sectionTitleStyle}>
                     <IconGlobe size={20} style={{ color: 'var(--platform-accent)' }} />
@@ -266,8 +256,6 @@ const PublicProfileTab = () => {
                 </p>
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    
-                    {/* Bio Field - Manually styled to look like Input */}
                     <div style={textareaWrapperStyle}>
                         <label style={labelStyle}>
                             Про себе (Bio)
@@ -281,8 +269,6 @@ const PublicProfileTab = () => {
                             placeholder="Розкажіть трохи про себе, ваші навички та інтереси..."
                         />
                     </div>
-
-                    {/* Socials Grid */}
                     <div className="social-grid">
                         <Input 
                             name="social_telegram" 

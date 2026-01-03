@@ -70,18 +70,30 @@ const SiteDisplayPage = () => {
     } catch (e) {}
 
     const layoutStyle = {
-        display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', margin: 0, padding: 0
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        width: '100%',
+        margin: 0,
+        padding: 0
     };
 
     const mainContentStyle = {
-        flex: '1', display: 'flex', flexDirection: 'column', width: '100%'
+        flex: '1',
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        marginBottom: '0'
     };
 
     const footerStyle = {
         flexShrink: 0,
         backgroundColor: siteData.site_theme_mode === 'dark' ? '#1a202c' : '#f7fafc',
         borderTop: `1px solid ${siteData.site_theme_mode === 'dark' ? '#2d3748' : '#e2e8f0'}`,
-        width: '100%', margin: 0, padding: 0 
+        width: '100%',
+        margin: 0,
+        padding: 0,
+        marginTop: '0'
     };
 
     const copyrightStyle = {

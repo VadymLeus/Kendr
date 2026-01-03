@@ -1,158 +1,198 @@
 // frontend/src/modules/site-editor/blocks/Header/HeaderSettings.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import ImageInput from '../../../media/components/ImageInput';
 import { generateBlockId } from '../../core/editorConfig';
-import { commonStyles, ToggleGroup, ToggleSwitch } from '../../components/common/SettingsUI';
+import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../components/common/SettingsUI';
+import { Input } from '../../../../common/components/ui/Input';
+import { Button } from '../../../../common/components/ui/Button';
+import ConfirmModal from '../../../../common/components/ui/ConfirmModal';
+import { 
+    IconTrash, IconPlus, IconImage, IconType, IconLayout, IconList,
+    IconAlignLeft, IconAlignCenter, IconAlignRight, IconLink, IconEdit
+} from '../../../../common/components/ui/Icons';
 
 const HeaderSettings = ({ data, onChange }) => {
-    const handleChange = (field, value) => {
-        onChange({ ...data, [field]: value });
-    };
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [itemToDeleteId, setItemToDeleteId] = useState(null);
+
+    const updateData = (updates) => onChange({ ...data, ...updates });
 
     const handleNavItemChange = (id, field, value) => {
         const newItems = data.nav_items.map(item => 
             item.id === id ? { ...item, [field]: value } : item
         );
-        handleChange('nav_items', newItems);
+        updateData({ nav_items: newItems });
     };
 
     const addNavItem = () => {
         const newItem = { id: generateBlockId(), label: 'Нова сторінка', link: '/' };
-        handleChange('nav_items', [...(data.nav_items || []), newItem]);
+        updateData({ nav_items: [...(data.nav_items || []), newItem] });
     };
 
-    const removeNavItem = (id) => {
-        if (window.confirm('Видалити цей пункт меню?')) {
-            handleChange('nav_items', data.nav_items.filter(item => item.id !== id));
+    const requestDelete = (id) => {
+        setItemToDeleteId(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (itemToDeleteId) {
+            updateData({ nav_items: data.nav_items.filter(item => item.id !== itemToDeleteId) });
         }
+        setIsDeleteModalOpen(false);
+        setItemToDeleteId(null);
     };
 
-    const sectionStyle = { marginBottom: '1.5rem', borderBottom: '1px solid var(--platform-border-color)', paddingBottom: '1rem' };
     const navItemStyle = { 
-        display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center',
-        background: 'var(--platform-bg)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--platform-border-color)'
+        display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-start',
+        background: 'var(--platform-card-bg)', padding: '10px', 
+        borderRadius: '8px', border: '1px solid var(--platform-border-color)'
     };
-
-    const logoSizeOptions = [
-        { value: 'small', label: 'S (30px)' },
-        { value: 'medium', label: 'M (50px)' },
-        { value: 'large', label: 'L (80px)' },
-    ];
-
-    const navAlignOptions = [
-        { value: 'left', label: '⬅️ Зліва', title: 'Зліва (відразу після лого)' },
-        { value: 'center', label: '↔️ Центр', title: 'По центру' },
-        { value: 'right', label: '➡️ Справа', title: 'Справа' },
-    ];
-
-    const navStyleOptions = [
-        { value: 'text', label: 'Текст' },
-        { value: 'button', label: 'Кнопки' },
-    ];
 
     return (
-        <div style={{ padding: '0.5rem' }}>
-            <div style={sectionStyle}>
-                <label style={commonStyles.label}>Логотип сайту</label>
-                <ImageInput 
-                    value={data.logo_src} 
-                    onChange={(url) => handleChange('logo_src', url)} 
-                />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            <ConfirmModal 
+                isOpen={isDeleteModalOpen}
+                title="Видалити пункт меню?"
+                message="Цю дію не можна скасувати."
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteModalOpen(false)}
+                type="danger"
+            />
+
+            <div>
+                <SectionTitle icon={<IconImage size={18}/>}>Логотип та Назва</SectionTitle>
                 
-                <div style={{ marginTop: '1rem' }}>
-                    <label style={{...commonStyles.label, fontSize: '0.85rem'}}>Розмір логотипу:</label>
-                    <ToggleGroup 
-                        options={logoSizeOptions}
-                        value={data.logo_size || 'medium'}
-                        onChange={(val) => handleChange('logo_size', val)}
-                    />
-                </div>
-            </div>
-
-            <div style={sectionStyle}>
-                <label style={commonStyles.label}>Назва сайту (текст)</label>
-                <input 
-                    type="text" 
-                    value={data.site_title} 
-                    onChange={(e) => handleChange('site_title', e.target.value)}
-                    style={commonStyles.input}
-                />
-                <div style={{ marginTop: '0.5rem' }}>
-                    <ToggleSwitch 
-                        checked={data.show_title}
-                        onChange={(checked) => handleChange('show_title', checked)}
-                        label="Показувати назву поруч з лого"
-                    />
-                </div>
-            </div>
-
-            <div style={sectionStyle}>
-                <label style={commonStyles.label}>Розміщення меню</label>
-                <ToggleGroup 
-                    options={navAlignOptions}
-                    value={data.nav_alignment || 'right'}
-                    onChange={(val) => handleChange('nav_alignment', val)}
-                />
-            </div>
-
-            <div style={sectionStyle}>
-                <label style={commonStyles.label}>Стиль пунктів меню</label>
-                <ToggleGroup 
-                    options={navStyleOptions}
-                    value={data.nav_style || 'text'}
-                    onChange={(val) => handleChange('nav_style', val)}
-                />
-            </div>
-
-            <div style={sectionStyle}>
-                <label style={commonStyles.label}>Пункти меню</label>
-                <div style={{
-                    fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginBottom: '0.8rem',
-                    background: 'var(--platform-bg)', padding: '8px', borderRadius: '4px',
-                    border: '1px dashed var(--platform-border-color)'
-                }}>
-                    <strong>Як вказувати посилання:</strong><br/>
-                    • <code>/page</code> - внутрішня сторінка (напр. <code>/delivery</code>)<br/>
-                    • <code>#id</code> - скрол до блоку
-                </div>
-                
-                {data.nav_items && data.nav_items.map((item) => (
-                    <div key={item.id} style={navItemStyle}>
-                        <div style={{ flex: 1 }}>
-                            <input 
-                                type="text" 
-                                value={item.label} 
-                                onChange={(e) => handleNavItemChange(item.id, 'label', e.target.value)}
-                                placeholder="Назва"
-                                style={{ ...commonStyles.input, marginBottom: '4px' }}
-                            />
-                            <input 
-                                type="text" 
-                                value={item.link} 
-                                onChange={(e) => handleNavItemChange(item.id, 'link', e.target.value)}
-                                placeholder="Посилання (/page або #anchor)"
-                                style={{ ...commonStyles.input, fontSize: '0.85rem' }}
-                            />
-                        </div>
-                        <button 
-                            onClick={() => removeNavItem(item.id)}
-                            style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem' }}
-                            title="Видалити"
-                        >
-                            ❌
-                        </button>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Зображення логотипу</label>
+                    <div style={{height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--platform-border-color)'}}>
+                        <ImageInput 
+                            value={data.logo_src} 
+                            onChange={(url) => updateData({ logo_src: url })} 
+                        />
                     </div>
-                ))}
-                <button 
+                </div>
+
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Розмір логотипу</label>
+                    <ToggleGroup 
+                        options={[
+                            { value: 'small', label: 'S' },
+                            { value: 'medium', label: 'M' },
+                            { value: 'large', label: 'L' },
+                        ]}
+                        value={data.logo_size || 'medium'}
+                        onChange={(val) => updateData({ logo_size: val })}
+                    />
+                </div>
+
+                <div style={commonStyles.formGroup}>
+                    <Input 
+                        label="Назва сайту (текст)"
+                        value={data.site_title}
+                        onChange={(e) => updateData({ site_title: e.target.value })}
+                        leftIcon={<IconType size={16}/>}
+                    />
+                </div>
+
+                <ToggleSwitch 
+                    checked={data.show_title}
+                    onChange={(checked) => updateData({ show_title: checked })}
+                    label="Показувати назву поруч з лого"
+                />
+            </div>
+
+            <div>
+                <SectionTitle icon={<IconLayout size={18}/>}>Розміщення</SectionTitle>
+                
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Вирівнювання меню</label>
+                    <ToggleGroup 
+                        options={[
+                            { value: 'left', label: <IconAlignLeft size={18}/> },
+                            { value: 'center', label: <IconAlignCenter size={18}/> },
+                            { value: 'right', label: <IconAlignRight size={18}/> },
+                        ]}
+                        value={data.nav_alignment || 'right'}
+                        onChange={(val) => updateData({ nav_alignment: val })}
+                    />
+                </div>
+
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Стиль посилань</label>
+                    <ToggleGroup 
+                        options={[
+                            { value: 'text', label: 'Текст' },
+                            { value: 'button', label: 'Кнопки' },
+                        ]}
+                        value={data.nav_style || 'text'}
+                        onChange={(val) => updateData({ nav_style: val })}
+                    />
+                </div>
+            </div>
+
+            <div>
+                <SectionTitle icon={<IconList size={18}/>}>Пункти меню</SectionTitle>
+                
+                <div style={{ 
+                    marginBottom: '12px', padding: '8px', 
+                    background: 'rgba(66, 153, 225, 0.1)', color: 'var(--platform-accent)', 
+                    borderRadius: '6px', fontSize: '0.8rem', lineHeight: '1.4'
+                }}>
+                    <strong>Формат посилань:</strong>
+                    <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                        <li><code>/page</code> - внутрішня сторінка</li>
+                        <li><code>#blockId</code> - якір (скрол до блоку)</li>
+                    </ul>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {data.nav_items && data.nav_items.map((item) => (
+                        <div key={item.id} style={navItemStyle}>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <Input 
+                                    value={item.label} 
+                                    onChange={(e) => handleNavItemChange(item.id, 'label', e.target.value)}
+                                    placeholder="Назва"
+                                    leftIcon={<IconEdit size={14}/>}
+                                    style={{fontSize: '0.9rem', padding: '8px 8px 8px 36px'}}
+                                />
+                                <Input 
+                                    value={item.link} 
+                                    onChange={(e) => handleNavItemChange(item.id, 'link', e.target.value)}
+                                    placeholder="/page"
+                                    leftIcon={<IconLink size={14}/>}
+                                    style={{fontSize: '0.85rem', padding: '8px 8px 8px 36px', fontFamily: 'monospace'}}
+                                />
+                            </div>
+                            <Button 
+                                variant="danger"
+                                size="sm"
+                                onClick={() => requestDelete(item.id)}
+                                title="Видалити"
+                                style={{ height: 'auto', padding: '6px' }}
+                            >
+                                <IconTrash size={16} />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+
+                <Button 
+                    variant="outline"
                     onClick={addNavItem}
                     style={{ 
-                        width: '100%', padding: '0.6rem', marginTop: '0.5rem', 
-                        background: 'var(--platform-card-bg)', border: '1px dashed var(--platform-border-color)', 
-                        cursor: 'pointer', color: 'var(--platform-text-primary)' 
+                        width: '100%', 
+                        marginTop: '8px',
+                        borderColor: 'var(--platform-accent)', 
+                        color: 'var(--platform-accent)'
                     }}
+                    icon={<IconPlus size={16} />}
                 >
-                    ➕ Додати пункт меню
-                </button>
+                    Додати пункт меню
+                </Button>
             </div>
         </div>
     );

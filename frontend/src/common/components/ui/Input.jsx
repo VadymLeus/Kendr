@@ -32,7 +32,12 @@ export const Input = ({
   
   const inputType = isPasswordType ? (showPassword ? 'text' : 'password') : type;
   
-  const currentLength = value ? String(value).length : 0;
+  const safeValue =
+    isNumberType && (value === 'all' || value === null || value === undefined)
+      ? ''
+      : value;
+
+  const currentLength = safeValue ? String(safeValue).length : 0;
   const showClearButton = !disabled && currentLength > 0 && !rightIcon && !isNumberType;
 
   const triggerChange = (newValue) => {
@@ -51,7 +56,7 @@ export const Input = ({
   const handleIncrement = (e) => {
     e.preventDefault(); 
     if (disabled) return;
-    let currentVal = value === '' ? 0 : parseFloat(value);
+    let currentVal = safeValue === '' ? 0 : parseFloat(safeValue);
     if (isNaN(currentVal)) currentVal = 0;
     
     let nextVal = currentVal + Number(step);
@@ -65,7 +70,7 @@ export const Input = ({
   const handleDecrement = (e) => {
     e.preventDefault();
     if (disabled) return;
-    let currentVal = value === '' ? 0 : parseFloat(value);
+    let currentVal = safeValue === '' ? 0 : parseFloat(safeValue);
     if (isNaN(currentVal)) currentVal = 0;
 
     let nextVal = currentVal - Number(step);
@@ -161,7 +166,7 @@ export const Input = ({
           ref={inputRef}
           name={name}
           type={inputType}
-          value={value}
+          value={safeValue}
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}

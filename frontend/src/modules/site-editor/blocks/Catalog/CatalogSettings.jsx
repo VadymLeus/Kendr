@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../../../common/services/api';
 import { commonStyles, ToggleSwitch, SectionTitle } from '../../components/common/SettingsUI';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
+import { Input } from '../../../../common/components/ui/Input';
+import RangeSlider from '../../../../common/components/ui/RangeSlider'; 
+import { IconType, IconGrid, IconList, IconLayers } from '../../../../common/components/ui/Icons';
 
 const CatalogSettings = ({ data, onChange, siteData }) => {
     const [categories, setCategories] = useState([]);
@@ -15,26 +18,17 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
         }
     }, [siteData?.id]);
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        
-        let newValue = value;
+    const updateData = (updates) => {
+        onChange({ ...data, ...updates });
+    };
 
-        if (type === 'number' || name === 'columns') {
-            const num = parseInt(value, 10);
-            newValue = isNaN(num) || value.trim() === '' ? '' : num;
-        } else if (type === 'checkbox') {
-            newValue = checked;
-        }
-
-        onChange({ 
-            ...data, 
-            [name]: newValue 
-        });
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        updateData({ [name]: value });
     };
 
     const handleSwitchChange = (name, val) => {
-        onChange({ ...data, [name]: val });
+        updateData({ [name]: val });
     };
 
     const sourceTypeOptions = [
@@ -50,14 +44,13 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
     return (
         <div>
             <div style={commonStyles.formGroup}>
-                <label style={commonStyles.label}>Заголовок блоку:</label>
-                <input 
-                    type="text" 
+                <Input 
+                    label="Заголовок блоку"
                     name="title" 
                     value={data.title || ''} 
-                    onChange={handleChange} 
+                    onChange={handleInputChange} 
                     placeholder="Напр. Наш Каталог"
-                    style={commonStyles.input}
+                    leftIcon={<IconType size={16} />}
                 />
             </div>
 
@@ -66,9 +59,10 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                 <CustomSelect 
                     name="source_type" 
                     value={data.source_type || 'all'} 
-                    onChange={(e) => onChange({ ...data, source_type: e.target.value })}
+                    onChange={(e) => updateData({ source_type: e.target.value })}
                     options={sourceTypeOptions}
                     style={commonStyles.input}
+                    leftIcon={<IconLayers size={16} />}
                 />
                 
                 {data.source_type === 'category' && (
@@ -77,9 +71,10 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                         <CustomSelect 
                             name="root_category_id" 
                             value={data.root_category_id || ''} 
-                            onChange={(e) => onChange({ ...data, root_category_id: e.target.value })}
+                            onChange={(e) => updateData({ root_category_id: e.target.value })}
                             options={categoryOptions}
                             style={commonStyles.input}
+                            leftIcon={<IconList size={16} />}
                         />
                     </div>
                 )}
@@ -106,37 +101,27 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
             <SectionTitle>Налаштування відображення</SectionTitle>
 
             <div style={commonStyles.formGroup}>
-                <div style={{marginBottom: '1rem'}}>
-                    <label style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', display: 'block', marginBottom: '4px'}}>
-                        Товарів на одній сторінці (4-100):
-                    </label>
-                    <input 
-                        type="number" 
-                        name="items_per_page" 
-                        min="4" max="100" 
-                        value={data.items_per_page === 0 ? '' : data.items_per_page || ''} 
-                        onChange={handleChange} 
-                        placeholder="12 (за замовчуванням)"
-                        style={commonStyles.input}
-                    />
-                </div>
+                <RangeSlider 
+                    label="Товарів на одній сторінці"
+                    value={data.items_per_page || 12}
+                    min={4}
+                    max={100}
+                    step={4}
+                    onChange={(val) => updateData({ items_per_page: val })}
+                    unit="" 
+                />
+            </div>
 
-                <div>
-                    <label style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', display: 'block', marginBottom: '4px'}}>
-                        Кількість колонок (Desktop): {data.columns || 3}
-                    </label>
-                    <input 
-                        type="range" 
-                        name="columns" 
-                        min="1" max="6" 
-                        value={data.columns || 3} 
-                        onChange={handleChange} 
-                        style={{width: '100%', cursor: 'pointer'}}
-                    />
-                    <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--platform-text-secondary)'}}>
-                        <span>1</span><span>6</span>
-                    </div>
-                </div>
+            <div style={commonStyles.formGroup}>
+                <RangeSlider 
+                    label="Кількість колонок (Desktop)"
+                    value={data.columns || 3}
+                    min={1}
+                    max={6}
+                    step={1}
+                    onChange={(val) => updateData({ columns: val })}
+                    unit="" 
+                />
             </div>
         </div>
     );
