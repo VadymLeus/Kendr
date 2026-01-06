@@ -52,7 +52,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/form', verifyToken, formRoutes);
 app.use('/api/public/form', publicFormRoutes);
 app.use('/api/saved-blocks', savedBlockRoutes);
-app.use('/api/templates/personal', userTemplateRoutes);
+app.use('/api/user-templates', userTemplateRoutes);
 
 app.get('/', (req, res) => {
   res.send('Welcome to Kendr API!');

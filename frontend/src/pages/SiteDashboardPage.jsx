@@ -1,6 +1,6 @@
 // frontend/src/pages/SiteDashboardPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useOutletContext } from 'react-router-dom';
+import { useParams, useOutletContext, useNavigate } from 'react-router-dom';
 import apiClient from '../common/services/api';
 import { toast } from 'react-toastify';
 
@@ -28,6 +28,7 @@ import {
 
 const SiteDashboardPage = () => {
     const { site_path } = useParams();
+    const navigate = useNavigate();
     const { siteData, setSiteData, isSiteLoading } = useOutletContext();
     
     const [activeTab, setActiveTab] = useState(() => {
@@ -56,24 +57,17 @@ const SiteDashboardPage = () => {
     
     const [collapsedBlocks, setCollapsedBlocks] = useState(() => {
         if (!site_path) return [];
-        
         let targetId = null;
         const savedPage = localStorage.getItem(`last_edited_page_${site_path}`);
-        
-        if (savedPage === 'header' || savedPage === 'footer') {
-            targetId = savedPage;
-        } else if (savedPage) {
-            targetId = parseInt(savedPage, 10);
-        }
+        if (savedPage === 'header' || savedPage === 'footer') targetId = savedPage;
+        else if (savedPage) targetId = parseInt(savedPage, 10);
 
         if (targetId) {
             const key = `collapsed_blocks_${site_path}_${targetId}`;
             try {
                 const savedState = localStorage.getItem(key);
                 return savedState ? JSON.parse(savedState) : [];
-            } catch (e) {
-                return [];
-            }
+            } catch (e) { return []; }
         }
         return [];
     });
@@ -87,24 +81,16 @@ const SiteDashboardPage = () => {
 
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
-    
     const [componentsSaving, setComponentsSaving] = useState({
-        pages: false,
-        store: false,
-        crm: false,
-        settings: false
+        pages: false, store: false, crm: false, settings: false
     });
 
     const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
-
     const isFooterMode = currentPageId === 'footer';
     const isHeaderMode = currentPageId === 'header';
 
     const setComponentSaving = useCallback((component, isSaving) => {
-        setComponentsSaving(prev => ({
-            ...prev,
-            [component]: isSaving
-        }));
+        setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
 
     const handleBlockSaved = useCallback(() => {
@@ -120,23 +106,14 @@ const SiteDashboardPage = () => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
             if (document.querySelector('.ReactModal__Content')) return;
-
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-                if (e.shiftKey) {
-                    e.preventDefault();
-                    redo();
-                } else {
-                    e.preventDefault();
-                    undo();
-                }
+                if (e.shiftKey) { e.preventDefault(); redo(); }
+                else { e.preventDefault(); undo(); }
             }
-            
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-                e.preventDefault();
-                redo();
+                e.preventDefault(); redo();
             }
         };
-
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [undo, redo]);
@@ -150,13 +127,8 @@ const SiteDashboardPage = () => {
                 const contentKey = pageId === 'footer' ? 'footer_content' : 'header_content';
                 content = res.data[contentKey] || [];
                 if (typeof content === 'string') {
-                    try { 
-                        content = JSON.parse(content); 
-                    } catch (e) {
-                        content = [];
-                    }
+                    try { content = JSON.parse(content); } catch (e) { content = []; }
                 }
-                
                 if (pageId === 'header' && (!content || content.length === 0)) {
                     content = [{ 
                         block_id: generateBlockId(), 
@@ -168,11 +140,7 @@ const SiteDashboardPage = () => {
                 const response = await apiClient.get(`/pages/${pageId}`);
                 content = response.data.block_content || [];
                 if (typeof content === 'string') {
-                    try {
-                        content = JSON.parse(content);
-                    } catch (e) {
-                        content = [];
-                    }
+                    try { content = JSON.parse(content); } catch (e) { content = []; }
                 }
             }
             setBlocks(content, false);
@@ -190,46 +158,35 @@ const SiteDashboardPage = () => {
 
     const handleEditPage = (pageId) => {
         if (pageId === currentPageId && !isPageLoading && blocks.length > 0) return;
-        
         setCurrentPageId(pageId);
         localStorage.setItem(`last_edited_page_${site_path}`, pageId);
-        
         try {
             const key = `collapsed_blocks_${site_path}_${pageId}`;
             const savedState = localStorage.getItem(key);
             setCollapsedBlocks(savedState ? JSON.parse(savedState) : []);
-        } catch (e) {
-            setCollapsedBlocks([]);
-        }
-
+        } catch (e) { setCollapsedBlocks([]); }
         fetchPageContent(pageId);
         setSelectedBlockPath(null);
     };
 
     useEffect(() => {
-        if (siteData) {
-            if (!allPages.length) {
-                apiClient.get(`/sites/${siteData.id}/pages`)
-                    .then(res => {
-                        const pages = res.data;
-                        setAllPages(pages);
-                        
-                        if (pages.length > 0) {
-                            let targetId = currentPageId;
-                            
-                            const isSystem = targetId === 'header' || targetId === 'footer';
-                            const pageExists = pages.find(p => p.id === targetId);
-
-                            if (!targetId || (!isSystem && !pageExists)) {
-                                const home = pages.find(p => p.is_homepage) || pages[0];
-                                targetId = home.id;
-                            }
-                            
-                            handleEditPage(targetId);
+        if (siteData && !allPages.length) {
+            apiClient.get(`/sites/${siteData.id}/pages`)
+                .then(res => {
+                    const pages = res.data;
+                    setAllPages(pages);
+                    if (pages.length > 0) {
+                        let targetId = currentPageId;
+                        const isSystem = targetId === 'header' || targetId === 'footer';
+                        const pageExists = pages.find(p => p.id === targetId);
+                        if (!targetId || (!isSystem && !pageExists)) {
+                            const home = pages.find(p => p.is_homepage) || pages[0];
+                            targetId = home.id;
                         }
-                    })
-                    .catch(console.error);
-            }
+                        handleEditPage(targetId);
+                    }
+                })
+                .catch(console.error);
         }
     }, [siteData]);
 
@@ -260,22 +217,35 @@ const SiteDashboardPage = () => {
 
         try {
             if (currentPageId === 'header') {
-                await apiClient.put(`/sites/${siteData.site_path}/settings`, {
+                const response = await apiClient.put(`/sites/${siteData.site_path}/settings`, {
                     header_content: JSON.stringify(blocksToSave)
                 });
+
+                const headerBlock = blocksToSave.find(b => b.type === 'header');
+                if (headerBlock && headerBlock.data) {
+                    setSiteData(prev => ({
+                        ...prev,
+                        logo_url: headerBlock.data.logo_src !== undefined ? headerBlock.data.logo_src : prev.logo_url,
+                        title: headerBlock.data.site_title !== undefined ? headerBlock.data.site_title : prev.title,
+                        header_content: blocksToSave
+                    }));
+                }
             } else if (currentPageId === 'footer') {
                 await apiClient.put(`/sites/${siteData.site_path}/settings`, {
                     footer_content: JSON.stringify(blocksToSave)
                 });
+                setSiteData(prev => ({
+                    ...prev,
+                    footer_content: blocksToSave
+                }));
             } else {
                 await apiClient.put(`/pages/${currentPageId}/content`, {
                     block_content: blocksToSave
                 });
             }
-
         } catch (error) {
             console.error("Помилка при збереженні:", error);
-            toast.error('❌ Не вдалося зберегти зміни. Перевірте підключення до інтернету.');
+            toast.error('Не вдалося зберегти зміни.');
         } finally {
             setTimeout(() => setIsSaving(false), 500);
         }
@@ -283,30 +253,43 @@ const SiteDashboardPage = () => {
 
     const saveThemeSettings = async (updatedData) => {
         setIsThemeSaving(true);
-        
         try {
             const updateData = {};
-            
             Object.keys(updatedData).forEach(key => {
                 if (updatedData[key] !== siteData[key]) {
                     updateData[key] = updatedData[key];
                 }
             });
-            
             if (Object.keys(updateData).length > 0) {
                 await apiClient.put(`/sites/${siteData.site_path}/settings`, updateData);
-                
                 setSiteData(prev => ({ ...prev, ...updateData }));
             }
         } catch (error) {
             console.error("Помилка при збереженні теми:", error);
-            toast.error('❌ Не вдалося зберегти налаштування теми');
+            toast.error('Не вдалося зберегти налаштування теми');
         } finally {
             setTimeout(() => setIsThemeSaving(false), 500);
         }
     };
 
     const handleSiteDataUpdate = (newData) => {
+        setSiteData(prev => ({ ...prev, ...newData }));
+        if (newData.logo_url !== undefined || newData.title !== undefined) {
+            setBlocks(prevBlocks => prevBlocks.map(block => {
+                if (block.type === 'header') {
+                    return {
+                        ...block,
+                        data: {
+                            ...block.data,
+                            logo_src: newData.logo_url !== undefined ? newData.logo_url : block.data.logo_src,
+                            site_title: newData.title !== undefined ? newData.title : block.data.site_title
+                        }
+                    };
+                }
+                return block;
+            }), false);
+        }
+
         saveThemeSettings(newData);
     };
 
@@ -331,63 +314,32 @@ const SiteDashboardPage = () => {
     };
 
     const handleSavingChange = useCallback((isSaving) => {
-        if (activeTab === 'pages') {
-            setComponentSaving('pages', isSaving);
-        } else if (activeTab === 'store') {
-            setComponentSaving('store', isSaving);
-        } else if (activeTab === 'crm') {
-            setComponentSaving('crm', isSaving);
-        } else if (activeTab === 'settings') {
-            setComponentSaving('settings', isSaving);
-        }
+        const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings' };
+        if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
 
     if (isSiteLoading || !siteData) {
-        return <div className="p-8 text-center" style={{color: 'var(--platform-text-secondary)'}}>
-            Завантаження...
-        </div>;
+        return <div className="p-8 text-center" style={{color: 'var(--platform-text-secondary)'}}>Завантаження...</div>;
     }
 
     return (
-        <div className="editor-layout-container" style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            height: '100vh', 
-            overflow: 'hidden' 
-        }}>
+        <div className="editor-layout-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
             <DashboardHeader
                 siteData={siteData}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
-                undo={undo}
-                redo={redo}
-                canUndo={canUndo}
-                canRedo={canRedo}
+                undo={undo} redo={redo}
+                canUndo={canUndo} canRedo={canRedo}
                 isSaving={isSaving || isThemeSaving}
             />
 
-            <div style={{ 
-                flex: 1, 
-                display: 'flex', 
-                overflow: 'hidden', 
-                position: 'relative' 
-            }}>
-                
+            <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
                 {activeTab === 'editor' && (
                     <>
-                        <div className="editor-canvas-scroll-area" style={{ 
-                            flex: 1, 
-                            overflowY: 'auto', 
-                            background: 'var(--platform-bg)' 
-                        }}>
+                        <div className="editor-canvas-scroll-area" style={{ flex: 1, overflowY: 'auto', background: 'var(--platform-bg)' }}>
                             <div style={{ paddingBottom: '100px' }}>
                                 {isPageLoading ? (
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'center', 
-                                        alignItems: 'center', 
-                                        height: '300px' 
-                                    }}>
+                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
                                         <div>Завантаження сторінки...</div>
                                     </div>
                                 ) : (
@@ -431,60 +383,29 @@ const SiteDashboardPage = () => {
                 )}
 
                 {activeTab !== 'editor' && (
-                    <div className="editor-canvas-scroll-area" style={{ 
-                        flex: 1, 
-                        overflowY: 'auto', 
-                        padding: '2rem', 
-                        background: 'var(--platform-bg)' 
-                    }}>
-                        <div style={{ 
-                            maxWidth: (activeTab === 'store' || activeTab === 'crm') ? '100%' : '1000px', 
-                            margin: '0 auto'
-                        }}>
+                    <div className="editor-canvas-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '2rem', background: 'var(--platform-bg)' }}>
+                        <div style={{ maxWidth: (activeTab === 'store' || activeTab === 'crm') ? '100%' : '1000px', margin: '0 auto' }}>
                             {activeTab === 'pages' && (
                                 <PagesSettingsTab 
                                     siteId={siteData.id} 
-                                    onEditPage={(id) => { 
-                                        handleEditPage(id); 
-                                        setActiveTab('editor'); 
-                                    }}
-                                    onEditFooter={() => { 
-                                        handleEditPage('footer'); 
-                                        setActiveTab('editor'); 
-                                    }}
-                                    onEditHeader={() => { 
-                                        handleEditPage('header'); 
-                                        setActiveTab('editor'); 
-                                    }}
+                                    onEditPage={(id) => { handleEditPage(id); setActiveTab('editor'); }}
+                                    onEditFooter={() => { handleEditPage('footer'); setActiveTab('editor'); }}
+                                    onEditHeader={() => { handleEditPage('header'); setActiveTab('editor'); }}
                                     onPageUpdate={refreshPageList}
                                     onSavingChange={handleSavingChange}
                                 />
                             )}
                             {activeTab === 'store' && (
-                                <ShopContentTab 
-                                    siteData={siteData} 
-                                    onSavingChange={handleSavingChange}
-                                />
+                                <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />
                             )}
                             {activeTab === 'theme' && (
-                                <ThemeSettingsTab 
-                                    siteData={siteData} 
-                                    onUpdate={handleSiteDataUpdate}
-                                    isSaving={isThemeSaving}
-                                />
+                                <ThemeSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />
                             )}
                             {activeTab === 'crm' && (
-                                <SubmissionsTab 
-                                    siteId={siteData.id} 
-                                    onSavingChange={handleSavingChange}
-                                />
+                                <SubmissionsTab siteId={siteData.id} onSavingChange={handleSavingChange} />
                             )}
                             {activeTab === 'settings' && (
-                                <GeneralSettingsTab 
-                                    siteData={siteData} 
-                                    onUpdate={handleSiteDataUpdate}
-                                    onSavingChange={handleSavingChange}
-                                />
+                                <GeneralSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} onSavingChange={handleSavingChange} />
                             )}
                         </div>
                     </div>

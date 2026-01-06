@@ -1,5 +1,6 @@
 // frontend/src/common/components/ui/ImageCropperModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { getCroppedImg } from '../../utils/canvasUtils';
@@ -71,8 +72,7 @@ const ImageCropperModal = ({
     };
 
     if (!isOpen || !imageSrc) return null;
-
-    return (
+    return ReactDOM.createPortal(
         <div className="cropper-overlay">
             <div className="cropper-modal">
                 <div className="cropper-header">
@@ -167,7 +167,8 @@ const ImageCropperModal = ({
                 }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             `}</style>
-        </div>
+        </div>,
+        document.body
     );
 };
 

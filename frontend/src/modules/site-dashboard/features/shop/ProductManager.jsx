@@ -113,47 +113,14 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
         setInputState({ label: '', price: '', sale: '' });
     };
 
-    const styles = {
-        container: {
-            background: 'var(--platform-bg)',
-            border: '1px solid var(--platform-border-color)',
-            borderRadius: '10px',
-            padding: '16px',
-            marginBottom: '12px'
-        },
-        header: { display: 'flex', justifyContent: 'space-between', gap: '8px', marginBottom: '16px' },
-        tagsArea: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' },
-        tag: (isActive) => ({
-            background: isActive ? 'rgba(var(--platform-accent-rgb), 0.1)' : 'var(--platform-card-bg)',
-            border: `1px solid ${isActive ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
-            borderRadius: '6px',
-            padding: '6px 10px',
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: '8px',
-            transition: 'all 0.2s'
-        }),
-        editorArea: {
-            borderTop: '1px dashed var(--platform-border-color)', 
-            paddingTop: '16px',
-            background: editingIndex !== null ? 'var(--platform-card-bg)' : 'transparent',
-            borderRadius: '8px',
-            padding: editingIndex !== null ? '12px' : '16px 0 0 0'
-        },
-        inputGrid: {
-            display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '12px', alignItems: 'start', marginBottom: '12px'
-        },
-        buttonRow: { display: 'flex', gap: '10px', marginTop: '10px' }
-    };
-
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
+        <div className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 mb-3">
+            <div className="flex justify-between gap-2 mb-4">
                 <Input 
                     value={variant.name} 
                     onChange={(e) => onChange({...variant, name: e.target.value})}
                     placeholder="Назва опції (напр. Розмір)"
-                    style={{margin: 0, fontWeight: '700', fontSize: '0.95rem'}}
+                    style={{margin: 0, fontWeight: '600', fontSize: '0.95rem'}}
                     wrapperStyle={{margin: 0, flex: 1}}
                 />
                 <Button variant="square-danger" onClick={onRemove} title="Видалити опцію">
@@ -161,38 +128,57 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                 </Button>
             </div>
 
-            <div style={styles.tagsArea}>
-                {variant.values && variant.values.map((val, idx) => (
-                    <div key={idx} style={styles.tag(idx === editingIndex)} onClick={() => setEditingIndex(idx)}>
-                        <span>{val.label}</span>
-                        {(val.priceModifier !== 0 || val.salePercentage > 0) && (
-                            <span style={{fontSize: '0.8em', opacity: 0.7}}>
-                                {val.priceModifier > 0 && `+${val.priceModifier}`}
-                                {val.salePercentage > 0 && ` (-${val.salePercentage}%)`}
+            <div className="flex flex-wrap gap-2 mb-4">
+                {variant.values && variant.values.map((val, idx) => {
+                    const isActive = idx === editingIndex;
+                    return (
+                        <div 
+                            key={idx} 
+                            onClick={() => setEditingIndex(idx)}
+                            className={`
+                                flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm cursor-pointer border transition-all duration-200
+                                ${isActive 
+                                    ? 'bg-(--platform-accent)/10 border-(--platform-accent)' 
+                                    : 'bg-(--platform-card-bg) border-(--platform-border-color) hover:border-(--platform-text-secondary)'
+                                }
+                            `}
+                        >
+                            <span>{val.label}</span>
+                            {(val.priceModifier !== 0 || val.salePercentage > 0) && (
+                                <span className="text-xs opacity-70">
+                                    {val.priceModifier > 0 && `+${val.priceModifier}`}
+                                    {val.salePercentage > 0 && ` (-${val.salePercentage}%)`}
+                                </span>
+                            )}
+                            <span 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newValues = variant.values.filter((_, i) => i !== idx);
+                                    onChange({ ...variant, values: newValues });
+                                    if (editingIndex === idx) setEditingIndex(null);
+                                }} 
+                                className="opacity-50 hover:opacity-100 hover:text-red-500 ml-1 flex items-center"
+                            >
+                                <IconX size={14} />
                             </span>
-                        )}
-                        <span onClick={(e) => {
-                            e.stopPropagation();
-                            const newValues = variant.values.filter((_, i) => i !== idx);
-                            onChange({ ...variant, values: newValues });
-                            if (editingIndex === idx) setEditingIndex(null);
-                        }} style={{opacity: 0.5, display: 'flex', marginLeft: 'auto'}}>
-                            <IconX size={14} />
-                        </span>
-                    </div>
-                ))}
+                        </div>
+                    );
+                })}
             </div>
 
-            <div style={styles.editorArea}>
-                <div style={{fontSize: '0.85rem', fontWeight: '600', marginBottom: '12px', color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center', gap: '6px'}}>
+            <div className={`
+                border-t border-dashed border-(--platform-border-color) pt-4
+                ${editingIndex !== null ? 'bg-(--platform-card-bg) rounded-lg p-3 mt-2' : ''}
+            `}>
+                <div className="text-sm font-semibold mb-3 text-(--platform-text-secondary) flex items-center gap-1.5">
                     {editingIndex !== null ? <><IconEdit size={14}/> Редагування значення</> : <><IconPlus size={14}/> Додати значення</>}
                 </div>
-                <div style={styles.inputGrid}>
+                <div className="grid grid-cols-[2fr_1fr_1fr] gap-3 items-start mb-3">
                     <Input placeholder="Значення (XL)" value={inputState.label} onChange={e => setInputState({...inputState, label: e.target.value})} style={{margin:0}} wrapperStyle={{margin:0}} />
                     <Input placeholder="+Ціна" type="number" value={inputState.price} onChange={e => setInputState({...inputState, price: e.target.value})} style={{margin:0}} wrapperStyle={{margin:0}} />
                     <Input placeholder="Зниж. %" type="number" value={inputState.sale} onChange={e => setInputState({...inputState, sale: e.target.value})} style={{margin:0}} wrapperStyle={{margin:0}} />
                 </div>
-                <div style={styles.buttonRow}>
+                <div className="flex gap-2.5 mt-2.5">
                     <Button onClick={handleSaveValue} style={{flex: 1, justifyContent: 'center'}}>
                         {editingIndex !== null ? <><IconSave size={18}/> Зберегти зміни</> : <><IconPlus size={18}/> Додати</>}
                     </Button>
@@ -217,43 +203,12 @@ const ProductTable = memo(({
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
     ];
 
-    const styles = {
-        container: {
-            background: 'var(--platform-card-bg)', 
-            borderRadius: '16px',
-            border: '1px solid var(--platform-border-color)',
-            display: 'flex', flexDirection: 'column', 
-            height: '100%', overflow: 'hidden',
-        },
-        toolbar: {
-            padding: '12px 20px', borderBottom: '1px solid var(--platform-border-color)',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            gap: '12px', flexWrap: 'wrap', background: 'var(--platform-bg)'
-        },
-        scrollArea: {
-            padding: '20px', overflowY: 'auto', flex: 1,
-            maxHeight: 'calc(692px - 72px)', 
-        },
-        grid: {
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gridAutoRows: '220px', gap: '16px', alignContent: 'start'
-        },
-        card: (isSelected) => ({
-            background: 'var(--platform-bg)', borderRadius: '12px',
-            border: isSelected ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-            overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s ease',
-            position: 'relative', display: 'flex', flexDirection: 'column', height: '100%',
-            boxShadow: isSelected ? '0 8px 20px rgba(var(--platform-accent-rgb), 0.15)' : 'none',
-            transform: isSelected ? 'translateY(-2px)' : 'none'
-        })
-    };
-
-    if (loading) return <div style={{padding: 40, textAlign: 'center'}}>Завантаження...</div>;
+    if (loading) return <div className="p-10 text-center text-(--platform-text-secondary)">Завантаження...</div>;
 
     return (
-        <div style={styles.container}>
-            <div style={styles.toolbar}>
-                <div style={{display: 'flex', gap: '8px', flex: 1, alignItems: 'center', flexWrap: 'wrap'}}>
+        <div className="flex flex-col h-full bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) overflow-hidden">
+            <div className="min-h-18 p-3 sm:px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 flex-wrap bg-(--platform-bg)">
+                <div className="flex gap-2 flex-1 items-center flex-wrap">
                     <Input 
                         leftIcon={<IconSearch size={16}/>}
                         placeholder="Пошук..." 
@@ -261,15 +216,15 @@ const ProductTable = memo(({
                         onChange={(e) => setFilters(prev => ({...prev, search: e.target.value}))}
                         wrapperStyle={{margin: 0, flex: '1 1 200px'}}
                     />
-                    <div style={{width: '180px'}}>
+                    <div className="w-45">
                         <CustomSelect 
                             value={filters.category}
                             onChange={(e) => setFilters(prev => ({...prev, category: e.target.value}))}
                             options={categoryOptions}
                         />
                     </div>
-                    <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
-                        <div style={{width: '160px'}}>
+                    <div className="flex gap-1 items-center">
+                        <div className="w-40">
                             <CustomSelect 
                                 value={filters.sortBy}
                                 onChange={(e) => setFilters(prev => ({...prev, sortBy: e.target.value}))}
@@ -279,100 +234,94 @@ const ProductTable = memo(({
                         <Button 
                             variant="outline" 
                             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                            style={{ 
-                                width: '42px', 
-                                height: '42px', 
-                                padding: 0, 
-                                background: 'var(--platform-card-bg)', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                            }}
+                            style={{ width: '42px', height: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                            <span style={{fontSize: '1.2rem', lineHeight: 1}}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                            <span className="text-lg leading-none">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                         </Button>
                     </div>
                 </div>
                 <Button onClick={onCreate} icon={<IconPlus size={18}/>} style={{height: '42px'}}>Додати</Button>
             </div>
 
-            <div className="custom-scrollbar" style={styles.scrollArea}>
-                <div style={styles.grid}>
-                    {products.map(product => (
-                        <div key={product.id} style={styles.card(selectedId === product.id)} onClick={() => onSelect(product)} className="product-card">
-                            <div style={{height: '130px', background: '#f1f5f9', position: 'relative', borderBottom: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                 {product.image_gallery?.[0] ? (
-                                    <img src={`${API_URL}${product.image_gallery[0]}`} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                                 ) : <IconImage size={32} style={{opacity: 0.2}} />}
-                                 
-                                 <div style={{position: 'absolute', top: '8px', left: '8px', padding: '2px 8px', background: 'rgba(255,255,255,0.9)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', color: product.stock_quantity > 0 ? '#10b981' : '#ef4444', zIndex: 2}}>
-                                     {product.stock_quantity} шт.
-                                 </div>
-                                 
-                                 <button
-                                     onClick={(e) => {
-                                         e.stopPropagation();
-                                         onDelete(product);
-                                     }}
-                                     className="delete-card-btn"
-                                     style={{
-                                         position: 'absolute',
-                                         top: '8px',
-                                         right: '8px',
-                                         width: '28px',
-                                         height: '28px',
-                                         borderRadius: '50%',
-                                         background: 'white',
-                                         border: '1px solid #e2e8f0',
-                                         display: 'flex',
-                                         alignItems: 'center',
-                                         justifyContent: 'center',
-                                         cursor: 'pointer',
-                                         zIndex: 10,
-                                         color: '#ef4444',
-                                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                     }}
-                                     title="Видалити"
-                                 >
-                                    <IconX size={16} />
-                                 </button>
-
-                                 {selectedId === product.id && (
-                                    <div style={{position: 'absolute', top: '8px', right: '42px', color: 'var(--platform-accent)', background: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 2}}>
-                                        <IconCheckCircle size={20} />
-                                    </div>
-                                 )}
-                            </div>
-                            <div style={{padding: '10px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
-                                <div style={{fontWeight: '600', fontSize: '0.85rem', lineHeight: '1.2', height: '32px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', color: 'var(--platform-text-primary)'}}>
-                                    {product.name}
-                                </div>
-                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px'}}>
-                                    <div style={{fontWeight: 'bold', color: 'var(--platform-text-primary)', fontSize: '1rem'}}>
-                                        {product.price} ₴
-                                    </div>
-                                    {product.sale_percentage > 0 && (
-                                        <div style={{fontSize: '0.75rem', color: '#ef4444', fontWeight: 'bold', background: '#fee2e2', padding: '1px 5px', borderRadius: '4px'}}>
-                                            -{product.sale_percentage}%
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
+                {products.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-(--platform-text-secondary) py-10">
+                        <div className="w-20 h-20 rounded-full bg-(--platform-bg) border border-(--platform-border-color) flex items-center justify-center mb-4">
+                            <IconShop size={40} className="opacity-30"/>
                         </div>
-                    ))}
-                </div>
-
-                {products.length === 0 && (
-                    <div style={{textAlign: 'center', padding: '60px', color: 'var(--platform-text-secondary)'}}>
-                        <IconShop size={48} style={{opacity: 0.2, marginBottom: '16px'}}/>
-                        <p>Товарів не знайдено</p>
+                        <h3 className="text-lg font-semibold text-(--platform-text-primary) mb-1">Товарів не знайдено</h3>
+                        <p className="text-sm opacity-70 max-w-62.5 text-center mb-6">
+                            Спробуйте змінити фільтри або додайте новий товар.
+                        </p>
+                        <Button onClick={onCreate} variant="secondary">
+                            Додати перший товар
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 content-start">
+                        {products.map(product => {
+                            const isSelected = selectedId === product.id;
+                            return (
+                                <div 
+                                    key={product.id} 
+                                    onClick={() => onSelect(product)} 
+                                    className={`
+                                        group relative flex flex-col h-full bg-(--platform-bg) rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden
+                                        ${isSelected 
+                                            ? 'border-(--platform-accent) ring-2 ring-(--platform-accent)/20 shadow-lg -translate-y-1' 
+                                            : 'border-(--platform-border-color) hover:border-(--platform-accent) hover:-translate-y-1 hover:shadow-md'
+                                        }
+                                    `}
+                                >
+                                    <div className="h-35 bg-slate-50 relative border-b border-(--platform-border-color) flex items-center justify-center overflow-hidden">
+                                         {product.image_gallery?.[0] ? (
+                                            <img src={`${API_URL}${product.image_gallery[0]}`} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                         ) : (
+                                            <IconImage size={32} className="opacity-20 text-slate-400" />
+                                         )}
+                                         
+                                         <div className={`
+                                            absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded text-[0.7rem] font-bold z-10 border border-slate-100
+                                            ${product.stock_quantity > 0 ? 'text-emerald-500' : 'text-red-500'}
+                                         `}>
+                                             {product.stock_quantity} шт.
+                                         </div>
+                                         
+                                         <button
+                                             onClick={(e) => { e.stopPropagation(); onDelete(product); }}
+                                             className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer z-20 text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:border-red-500 hover:scale-110"
+                                             title="Видалити"
+                                         >
+                                            <IconX size={16} />
+                                         </button>
+ 
+                                         {isSelected && (
+                                            <div className="absolute top-2 right-10 text-(--platform-accent) bg-white rounded-full p-0.5 shadow-sm z-10 animate-in fade-in zoom-in duration-200">
+                                                <IconCheckCircle size={20} />
+                                            </div>
+                                         )}
+                                    </div>
+                                    <div className="p-3 flex flex-1 flex-col justify-between gap-2">
+                                        <div className="font-medium text-sm leading-tight line-clamp-2 text-(--platform-text-primary)">
+                                            {product.name}
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div className="font-bold text-(--platform-text-primary) text-base">
+                                                {product.price} ₴
+                                            </div>
+                                            {product.sale_percentage > 0 && (
+                                                <div className="text-xs text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded">
+                                                    -{product.sale_percentage}%
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
-            <style>{`
-                .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: var(--platform-accent) !important; }
-                .delete-card-btn:hover { background: #fee2e2 !important; border-color: #ef4444 !important; transform: scale(1.1); transition: all 0.2s; }
-            `}</style>
         </div>
     );
 });
@@ -426,40 +375,11 @@ const ProductEditorPanel = ({
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
     ];
 
-    const styles = `
-        .close-btn-hover:hover {
-            background-color: var(--platform-hover-bg) !important;
-            color: var(--platform-text-primary) !important;
-        }
-        .add-photo-btn {
-            aspect-ratio: 1; 
-            border: 1px dashed var(--platform-border-color); 
-            border-radius: 8px;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 0 !important;
-            cursor: pointer;
-            background: var(--platform-bg); 
-            color: var(--platform-text-secondary); 
-            transition: all 0.2s ease;
-        }
-        .add-photo-btn:hover {
-            border-color: var(--platform-accent); color: var(--platform-accent); background: var(--platform-hover-bg);
-        }
-        .photo-thumb-overlay {
-            position: absolute; top: 0; right: 0; bottom: 0; left: 0;
-            background: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.2s; border-radius: 8px;
-        }
-        .photo-thumb:hover .photo-thumb-overlay { opacity: 1; }
-    `;
-
     return (
-        <div style={{
-            display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--platform-card-bg)',
-            border: '1px solid var(--platform-border-color)', borderRadius: isMobile ? '0' : '16px', overflow: 'hidden'
-        }}>
-            <style>{styles}</style>
+        <div className={`
+            flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) overflow-hidden
+            ${isMobile ? 'border-0' : 'rounded-2xl'}
+        `}>
             <MediaPickerModal
                 isOpen={showMediaPicker} onClose={() => setShowMediaPicker(false)}
                 onSelect={(files) => {
@@ -470,48 +390,57 @@ const ProductEditorPanel = ({
                 multiple={true} allowedTypes={['image']}
             />
 
-            <div style={{height: '72px', padding: '0 24px', borderBottom: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--platform-bg)'}}>
-                <h3 style={{margin: 0, fontSize: '1.2rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--platform-text-primary)'}}>
+            <div className="h-18 px-6 border-b border-(--platform-border-color) flex items-center justify-between bg-(--platform-bg) shrink-0">
+                <h3 className="m-0 text-lg font-bold flex items-center gap-2.5 text-(--platform-text-primary)">
                     {isMobile && (
-                        <Button variant="ghost" onClick={onClose} style={{padding: 0, width: '32px'}} className="close-btn-hover"><IconChevronLeft/></Button>
+                        <Button variant="ghost" onClick={onClose} className="p-0 w-8 hover:bg-(--platform-hover-bg)"><IconChevronLeft/></Button>
                     )}
-                    {formData.id ? <><IconEdit/> Редагування</> : <><IconPlus/> Новий товар</>}
+                    {formData.id ? <><IconEdit/> Редагування</> : 'Новий товар'}
                 </h3>
                 {!isMobile && (
-                    <Button variant="ghost" onClick={onClose} className="close-btn-hover"><IconX/></Button>
+                    <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><IconX/></Button>
                 )}
             </div>
 
-            <form onSubmit={handleSubmit} style={{flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
-                <div className="custom-scrollbar" style={{flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px'}}>
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
                     <Input label="Назва" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
-                    <div style={{display: 'flex', gap: '12px'}}>
-                        <Input label="Ціна (₴)" type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{flex: 1}} />
-                        <Input label="Знижка (%)" type="number" value={formData.sale_percentage} onChange={e => setFormData({...formData, sale_percentage: e.target.value})} style={{flex: 1}} />
+                    
+                    <div className="flex gap-3">
+                        <Input label="Ціна (₴)" type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} wrapperStyle={{flex: 1}} />
+                        <Input label="Знижка (%)" type="number" value={formData.sale_percentage} onChange={e => setFormData({...formData, sale_percentage: e.target.value})} wrapperStyle={{flex: 1}} />
                     </div>
+                    
                     <div>
-                        <label style={{display:'block', marginBottom: '8px', fontSize:'0.9rem', fontWeight:'600', color: 'var(--platform-text-primary)'}}>Категорія</label>
+                        <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">Категорія</label>
                         <CustomSelect value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})} options={categoryOptions} />
                     </div>
                     <div>
-                        <label style={{display:'block', marginBottom: '8px', fontSize:'0.9rem', fontWeight:'600', color: 'var(--platform-text-primary)'}}>Галерея</label>
-                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px'}}>
+                        <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">Галерея</label>
+                        <div className="grid grid-cols-4 gap-2">
                             {formData.image_gallery.map((img, i) => (
-                                <div key={i} style={{aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--platform-border-color)', position: 'relative'}} className="photo-thumb">
-                                    <img src={`${API_URL}${img}`} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} />
-                                    <div className="photo-thumb-overlay">
-                                        <button type="button" onClick={() => setFormData(p => ({...p, image_gallery: p.image_gallery.filter((_, idx) => idx !== i)}))} style={{position:'absolute', top:4, right:4, background:'red', color:'white', border:'none', borderRadius:4, cursor:'pointer', width:'22px', height:'22px', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                                <div key={i} className="aspect-square rounded-lg overflow-hidden border border-(--platform-border-color) relative group">
+                                    <img src={`${API_URL}${img}`} alt="" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-start justify-end p-1">
+                                        <button type="button" onClick={() => setFormData(p => ({...p, image_gallery: p.image_gallery.filter((_, idx) => idx !== i)}))} className="bg-red-500 text-white rounded cursor-pointer w-5 h-5 flex items-center justify-center border-none">
                                             <IconX size={14}/>
                                         </button>
                                     </div>
                                 </div>
                             ))}
-                            <button type="button" onClick={() => setShowMediaPicker(true)} className="add-photo-btn"><IconPlus/></button>
+                            <button 
+                                type="button" 
+                                onClick={() => setShowMediaPicker(true)} 
+                                className="aspect-square border border-dashed border-(--platform-border-color) rounded-lg flex items-center justify-center p-0 cursor-pointer bg-(--platform-bg) text-(--platform-text-secondary) transition-all duration-200 hover:border-(--platform-accent) hover:text-(--platform-accent) hover:bg-(--platform-hover-bg)"
+                            >
+                                <IconPlus/>
+                            </button>
                         </div>
                     </div>
-                    <div style={{borderTop: '1px solid var(--platform-border-color)', paddingTop: '20px'}}>
-                         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
-                            <span style={{fontWeight:'bold', fontSize:'0.9rem', color: 'var(--platform-text-primary)'}}>Опції (варіанти)</span>
+                    
+                    <div className="border-t border-(--platform-border-color) pt-5">
+                         <div className="flex justify-between items-center mb-3">
+                            <span className="font-bold text-sm text-(--platform-text-primary)">Опції (варіанти)</span>
                             <Button type="button" variant="outline" onClick={() => setFormData(p => ({...p, variants: [...p.variants, {id: Date.now(), name: '', values: []}]}))} style={{height:'30px', fontSize:'0.8rem'}}><IconPlus size={14}/> Додати</Button>
                          </div>
                          {formData.variants.map((v, i) => (
@@ -520,26 +449,27 @@ const ProductEditorPanel = ({
                             }} />
                          ))}
                     </div>
+                    
                     <textarea 
-                        className="custom-scrollbar"
+                        className="w-full min-h-25 p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) resize-y custom-scrollbar focus:outline-none focus:ring-2 focus:ring-(--platform-accent)/20 focus:border-(--platform-accent)"
                         value={formData.description} 
                         onChange={e => setFormData({...formData, description: e.target.value})} 
                         placeholder="Опис товару..." 
-                        style={{
-                            width:'100%', 
-                            minHeight:'100px', 
-                            padding:'10px', 
-                            borderRadius:'8px', 
-                            border:'1px solid var(--platform-border-color)', 
-                            background:'var(--platform-bg)', 
-                            color:'var(--platform-text-primary)',
-                            resize: 'vertical'
-                        }} 
                     />
                 </div>
-                <div style={{padding: '16px 24px', borderTop: '1px solid var(--platform-border-color)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'var(--platform-bg)'}}>
-                    <Button type="button" variant="secondary-danger" onClick={handleClearForm} style={{justifyContent: 'center'}}><IconX/> Скасувати</Button>
-                    <Button type="submit" variant="primary" icon={<IconSave/>} style={{justifyContent: 'center'}}>Зберегти</Button>
+                
+                <div className="p-6 border-t border-(--platform-border-color) grid grid-cols-2 gap-4 mt-auto bg-(--platform-bg) shrink-0">
+                    <Button 
+                        type="button" 
+                        variant="outline-danger" 
+                        onClick={handleClearForm} 
+                        style={{justifyContent: 'center', height: '42px'}}
+                    >
+                        <IconX size={18}/> Скасувати
+                    </Button>
+                    <Button type="submit" variant="primary" icon={<IconSave size={18}/>} style={{justifyContent: 'center', height: '42px'}}>
+                        Зберегти
+                    </Button>
                 </div>
             </form>
         </div>

@@ -40,7 +40,8 @@ export const SplitViewLayout = ({
             transition: 'opacity 0.3s'
         },
         collapseBtn: {
-            width: '24px', 
+            width: '32px',
+            height: '692px',
             margin: '0 8px', 
             background: 'var(--platform-bg)',
             display: isMobile ? 'none' : 'flex', 

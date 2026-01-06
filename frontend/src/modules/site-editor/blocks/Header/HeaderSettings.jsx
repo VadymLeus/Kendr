@@ -6,16 +6,41 @@ import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../com
 import { Input } from '../../../../common/components/ui/Input';
 import { Button } from '../../../../common/components/ui/Button';
 import ConfirmModal from '../../../../common/components/ui/ConfirmModal';
+import RangeSlider from '../../../../common/components/ui/RangeSlider';
 import { 
     IconTrash, IconPlus, IconImage, IconType, IconLayout, IconList,
-    IconAlignLeft, IconAlignCenter, IconAlignRight, IconLink, IconEdit
+    IconAlignLeft, IconAlignCenter, IconAlignRight, IconLink, IconEdit,
+    IconUpload, IconAlertCircle
 } from '../../../../common/components/ui/Icons';
+const API_URL = 'http://localhost:5000';
 
 const HeaderSettings = ({ data, onChange }) => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [itemToDeleteId, setItemToDeleteId] = useState(null);
-
+    const [isLogoHovered, setIsLogoHovered] = useState(false);
     const updateData = (updates) => onChange({ ...data, ...updates });
+    const getImageUrl = (src) => {
+        if (!src) return '';
+        if (src.startsWith('data:')) return src;
+        if (src.startsWith('http')) return src;
+        const cleanSrc = src.startsWith('/') ? src : `/${src}`;
+        return `${API_URL}${cleanSrc}`;
+    };
+
+    const overlayStyle = (isHovered) => ({ 
+        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', 
+        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+        color: 'white', opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s ease', 
+        backdropFilter: 'blur(2px)', zIndex: 10 
+    });
+
+    const trashButtonStyle = { 
+        position: 'absolute', top: '6px', right: '6px', 
+        background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', 
+        borderRadius: '50%', width: '28px', height: '28px', 
+        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+        cursor: 'pointer', zIndex: 20, transition: 'background 0.2s' 
+    };
 
     const handleNavItemChange = (id, field, value) => {
         const newItems = data.nav_items.map(item => 
@@ -42,11 +67,18 @@ const HeaderSettings = ({ data, onChange }) => {
         setItemToDeleteId(null);
     };
 
+    const handleLogoChange = (val) => {
+        const newValue = val?.target ? val.target.value : val;
+        updateData({ logo_src: newValue });
+    };
+
     const navItemStyle = { 
         display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-start',
         background: 'var(--platform-card-bg)', padding: '10px', 
         borderRadius: '8px', border: '1px solid var(--platform-border-color)'
     };
+
+    const previewUrl = getImageUrl(data.logo_src);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -66,12 +98,59 @@ const HeaderSettings = ({ data, onChange }) => {
                 <SectionTitle icon={<IconImage size={18}/>}>Логотип та Назва</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Зображення логотипу</label>
-                    <div style={{height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--platform-border-color)'}}>
-                        <ImageInput 
-                            value={data.logo_src} 
-                            onChange={(url) => updateData({ logo_src: url })} 
-                        />
+                    <label style={commonStyles.label}>Центральний логотип</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ width: '100%' }}>
+                            <ImageInput 
+                                value={data.logo_src} 
+                                onChange={handleLogoChange} 
+                                aspect={1}
+                                triggerStyle={{ display: 'block', padding: 0, border: 'none', background: 'transparent', width: '100%', cursor: 'pointer' }}
+                            >
+                                <div 
+                                    style={{ 
+                                        width: '100%', height: '120px',
+                                        border: '1px solid var(--platform-border-color)', 
+                                        borderRadius: '12px', overflow: 'hidden', 
+                                        background: 'var(--platform-bg)', position: 'relative', 
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                                    }} 
+                                    onMouseEnter={() => setIsLogoHovered(true)} 
+                                    onMouseLeave={() => setIsLogoHovered(false)}
+                                >
+                                    {data.logo_src ? (
+                                        <img 
+                                            src={previewUrl}
+                                            alt="Logo" 
+                                            style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} 
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.parentElement.style.backgroundImage = 'none';
+                                            }}
+                                        />
+                                    ) : (
+                                        <IconImage size={32} style={{ color: 'var(--platform-text-secondary)', opacity: 0.5 }} />
+                                    )}
+                                    
+                                    <div style={overlayStyle(isLogoHovered)}>
+                                        <IconUpload size={24} />
+                                    </div>
+
+                                    {data.logo_src && (
+                                        <button 
+                                            type="button" 
+                                            onClick={(e) => { e.stopPropagation(); handleLogoChange(''); }} 
+                                            style={trashButtonStyle} 
+                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--platform-danger)'} 
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'} 
+                                            title="Видалити лого"
+                                        >
+                                            <IconTrash size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            </ImageInput>
+                        </div>
                     </div>
                 </div>
 
@@ -85,6 +164,17 @@ const HeaderSettings = ({ data, onChange }) => {
                         ]}
                         value={data.logo_size || 'medium'}
                         onChange={(val) => updateData({ logo_size: val })}
+                    />
+                </div>
+
+                <div style={commonStyles.formGroup}>
+                    <RangeSlider 
+                        label="Скруглення логотипу"
+                        value={data.borderRadius || 0}
+                        onChange={(val) => updateData({ borderRadius: val })}
+                        min={0}
+                        max={50}
+                        unit="px"
                     />
                 </div>
 
@@ -103,7 +193,10 @@ const HeaderSettings = ({ data, onChange }) => {
                     label="Показувати назву поруч з лого"
                 />
             </div>
-
+                        <div style={{ fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4', display: 'flex', gap: '8px' }}>
+                            <IconAlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--platform-accent)' }} />
+                            <span>Логотип і назву сайту синхронізовано глобальними налаштуваннями.</span>
+                        </div>
             <div>
                 <SectionTitle icon={<IconLayout size={18}/>}>Розміщення</SectionTitle>
                 

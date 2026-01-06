@@ -8,8 +8,10 @@ const verifyTokenOptional = require('../middleware/verifyTokenOptional');
 const trackVisit = require('../middleware/trackVisit');
 const { upload, processAndSaveLogo } = require('../middleware/upload');
 
-router.get('/catalog', verifyTokenOptional, siteController.getSites);
+router.get('/check-slug', verifyToken, siteController.checkSlug);
 router.get('/templates', siteController.getTemplates);
+
+router.get('/catalog', verifyTokenOptional, siteController.getSites);
 router.get('/default-logos', siteController.getDefaultLogos);
 
 router.put('/:site_path/rename', verifyToken, siteController.renameSite);
@@ -26,4 +28,5 @@ router.get('/my-suspended', verifyToken, siteController.getMySuspendedSites);
 router.put('/:siteId/reset-template', verifyToken, siteController.resetSiteToTemplate);
 router.patch('/:siteId/pin', verifyToken, siteController.toggleSitePin);
 
+module.exports = router;
 module.exports = router;

@@ -53,7 +53,6 @@ class Site {
             if (parts.length === 2) {
                 const field = parts[0];
                 const dir = parts[1].toUpperCase();
-
                 const allowedFields = {
                     'created_at': 's.created_at',
                     'view_count': 's.view_count',
@@ -61,9 +60,7 @@ class Site {
                     'author': 'u.username',
                     'popularity': 's.view_count'
                 };
-
                 const validDir = (dir === 'ASC' || dir === 'DESC') ? dir : 'DESC';
-
                 if (allowedFields[field]) {
                     orderByClause = `ORDER BY s.is_pinned DESC, ${allowedFields[field]} ${validDir}`;
                 }
@@ -72,7 +69,6 @@ class Site {
     }
 
     query += ` ${orderByClause}`;
-
     const [rows] = await db.query(query, params);
 
     for (let site of rows) {
@@ -100,6 +96,7 @@ class Site {
     return rows;
   }
 
+  // --- ОБНОВЛЕНО: Чтение новых настроек ---
   static async findByPath(sitePath) {
     const [sites] = await db.query(`
         SELECT
@@ -107,7 +104,13 @@ class Site {
             s.view_count, s.site_theme_mode, s.site_theme_accent,
             s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout,
             s.favicon_url, s.site_title_seo,
-            s.cover_image, s.cover_layout
+            s.cover_image, s.cover_layout,
+            
+            -- Новые поля
+            s.cover_logo_size,
+            s.cover_logo_radius,
+            s.cover_title_size
+
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -116,15 +119,9 @@ class Site {
     const site = sites[0];
     
     try {
-        if (typeof site.theme_settings === 'string') {
-            site.theme_settings = JSON.parse(site.theme_settings);
-        }
-        if (typeof site.header_content === 'string') {
-            site.header_content = JSON.parse(site.header_content);
-        }
-        if (typeof site.footer_content === 'string') {
-            site.footer_content = JSON.parse(site.footer_content);
-        }
+        if (typeof site.theme_settings === 'string') site.theme_settings = JSON.parse(site.theme_settings);
+        if (typeof site.header_content === 'string') site.header_content = JSON.parse(site.header_content);
+        if (typeof site.footer_content === 'string') site.footer_content = JSON.parse(site.footer_content);
     } catch (error) {
         console.error('Error parsing JSON fields for site:', sitePath, error);
         site.theme_settings = site.theme_settings || {};
@@ -144,10 +141,7 @@ class Site {
   }
 
   static async findByIdAndUserId(siteId, userId) {
-    const [rows] = await db.query(
-      'SELECT * FROM sites WHERE id = ? AND user_id = ?',
-      [siteId, userId]
-    );
+    const [rows] = await db.query('SELECT * FROM sites WHERE id = ? AND user_id = ?', [siteId, userId]);
     return rows[0] || null;
   }
 
@@ -166,35 +160,25 @@ class Site {
     };
   }
 
+  // --- ОБНОВЛЕНО: Запись новых настроек ---
   static async updateSettings(siteId, data) {
     const { 
-      title, 
-      status, 
-      site_theme_mode, 
-      site_theme_accent, 
-      theme_settings, 
-      header_content,
-      footer_content,
-      favicon_url,
-      site_title_seo,
-      cover_image,
-      cover_layout
+      title, status, site_theme_mode, site_theme_accent, theme_settings, 
+      header_content, footer_content, favicon_url, site_title_seo, 
+      cover_image, cover_layout, logo_url,
+      
+      // Принимаем новые поля
+      cover_logo_size, cover_logo_radius, cover_title_size
     } = data;
     
     const safeStringify = (obj) => {
       if (!obj) return null;
-      try {
-        return JSON.stringify(obj);
-      } catch (error) {
-        console.error('Error stringifying object:', error);
-        return null;
-      }
+      try { return JSON.stringify(obj); } 
+      catch (error) { return null; }
     };
 
     let safeFaviconUrl = null;
-    if (typeof favicon_url === 'string') {
-        safeFaviconUrl = favicon_url;
-    }
+    if (typeof favicon_url === 'string') safeFaviconUrl = favicon_url;
 
     const params = [
         title, 
@@ -208,6 +192,13 @@ class Site {
         site_title_seo || null,
         cover_image || null,
         cover_layout || 'centered',
+        logo_url,
+        
+        // Новые параметры (с дефолтными значениями, чтобы не было NULL)
+        cover_logo_size || 80,
+        cover_logo_radius || 0,
+        cover_title_size || 24,
+
         siteId
     ];
 
@@ -224,7 +215,14 @@ class Site {
             favicon_url = ?, 
             site_title_seo = ?,
             cover_image = ?, 
-            cover_layout = ?
+            cover_layout = ?,
+            logo_url = ?,
+            
+            -- SQL для новых полей
+            cover_logo_size = ?,
+            cover_logo_radius = ?,
+            cover_title_size = ?
+            
         WHERE id = ?
     `;
     
@@ -234,17 +232,14 @@ class Site {
 
   static async updateStatus(siteId, status, deletionDate = null) {
     const [result] = await db.query(
-         'UPDATE sites SET status = ?, deletion_scheduled_for = ? WHERE id = ?',
+          'UPDATE sites SET status = ?, deletion_scheduled_for = ? WHERE id = ?',
         [status, deletionDate, siteId]
     );
     return result;
   }
 
   static async incrementViewCount(siteId) {
-    await db.query(
-      'UPDATE sites SET view_count = view_count + 1 WHERE id = ?',
-      [siteId]
-    );
+    await db.query('UPDATE sites SET view_count = view_count + 1 WHERE id = ?', [siteId]);
   }
 
   static async updateTags(siteId, tagIds = []) {
@@ -305,7 +300,6 @@ class Site {
         `, [site.id]);
         site.tags = tags;
     }
-    
     return rows;
   }
 
@@ -318,15 +312,8 @@ class Site {
   }
 
   static async togglePin(siteId) {
-    await db.query(
-        'UPDATE sites SET is_pinned = NOT is_pinned WHERE id = ?',
-        [siteId]
-    );
-    
-    const [rows] = await db.query(
-        'SELECT is_pinned FROM sites WHERE id = ?', 
-        [siteId]
-    );
+    await db.query('UPDATE sites SET is_pinned = NOT is_pinned WHERE id = ?', [siteId]);
+    const [rows] = await db.query('SELECT is_pinned FROM sites WHERE id = ?', [siteId]);
     return rows[0] ? !!rows[0].is_pinned : false;
   }
 }

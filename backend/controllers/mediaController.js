@@ -5,11 +5,25 @@ const fs = require('fs').promises;
 const db = require('../config/db');
 const { deleteFile } = require('../utils/fileUtils');
 
+// --- Helper: Нормалізація шляху для Web ---
+// Виправляє подвійні слеші та зворотні слеші Windows
+const normalizeWebPath = (filePath) => {
+    if (!filePath) return null;
+    // 1. Замінюємо зворотні слеші на прямі
+    let cleanPath = filePath.replace(/\\/g, '/');
+    // 2. Видаляємо ВСІ слеші на початку
+    cleanPath = cleanPath.replace(/^\/+/, '');
+    // 3. Додаємо рівно один слеш на початку
+    return `/${cleanPath}`;
+};
+
 exports.getAll = async (req, res, next) => {
     try {
         const userId = req.user.id;
         const { search, type, sort, favorite, extension } = req.query;
-        let query = 'SELECT * FROM user_media WHERE user_id = ?';
+        
+        // Фільтруємо системні файли (is_system = 0)
+        let query = 'SELECT * FROM user_media WHERE user_id = ? AND is_system = 0';
         const params = [userId];
 
         if (search) {
@@ -53,6 +67,9 @@ exports.upload = async (req, res, next) => {
     const originalName = req.file.originalname; 
     const mimeType = req.file.mimetype;
     
+    // Отримуємо прапорець isSystem
+    const isSystem = req.query.isSystem === 'true' ? 1 : 0;
+    
     const ext = path.extname(originalName).toLowerCase();
     const displayName = originalName.replace(ext, '');
 
@@ -66,8 +83,13 @@ exports.upload = async (req, res, next) => {
         
         const baseFileName = `user-${userId}-${Date.now()}`;
         let finalFileName = `${baseFileName}${ext}`;
+        
+        // Шлях для файлової системи (використовуємо path.join для сумісності з ОС)
         let finalPath = path.join(__dirname, '..', 'uploads', 'media', finalFileName);
-        let publicPath = `/uploads/media/${finalFileName}`;
+        
+        // Шлях для WEB (формуємо вручну, щоб уникнути бекслешів)
+        let publicPath = `uploads/media/${finalFileName}`;
+        
         let thumbPath = null;
         let width = null;
         let height = null;
@@ -80,7 +102,7 @@ exports.upload = async (req, res, next) => {
             if (width > 1920) {
                 finalFileName = `${baseFileName}.webp`;
                 finalPath = path.join(__dirname, '..', 'uploads', 'media', finalFileName);
-                publicPath = `/uploads/media/${finalFileName}`;
+                publicPath = `uploads/media/${finalFileName}`;
                 
                 await sharp(tempPath)
                     .resize({ width: 1920, fit: 'inside' })
@@ -94,7 +116,7 @@ exports.upload = async (req, res, next) => {
                     .webp({ quality: 70 })
                     .toFile(thumbDiskPath);
                 
-                thumbPath = `/uploads/media/${thumbName}`;
+                thumbPath = `uploads/media/${thumbName}`;
                 await fs.unlink(tempPath); 
             } else {
                 await fs.rename(tempPath, finalPath);
@@ -106,15 +128,27 @@ exports.upload = async (req, res, next) => {
         const stats = await fs.stat(finalPath);
         const fileSizeKb = Math.round(stats.size / 1024);
 
+        // ВАЖЛИВО: Нормалізуємо шляхи перед записом в БД
+        // Це гарантує формат "/uploads/media/file.jpg" без подвійних слешів
+        const dbPathFull = normalizeWebPath(publicPath);
+        const dbPathThumb = normalizeWebPath(thumbPath);
+
         const [result] = await db.query(
             `INSERT INTO user_media 
-            (user_id, path_full, path_thumb, original_file_name, display_name, mime_type, file_size_kb, file_type, width, height) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [userId, publicPath, thumbPath, originalName, displayName, mimeType, fileSizeKb, fileType, width, height]
+            (user_id, path_full, path_thumb, original_file_name, display_name, mime_type, file_size_kb, file_type, width, height, is_system) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, dbPathFull, dbPathThumb, originalName, displayName, mimeType, fileSizeKb, fileType, width, height, isSystem]
         );
 
         const [newMedia] = await db.query('SELECT * FROM user_media WHERE id = ?', [result.insertId]);
-        res.status(201).json(newMedia[0]);
+        
+        // Відповідь для фронтенду
+        const responseData = {
+            ...newMedia[0],
+            filePath: dbPathFull // Повертаємо чистий шлях
+        };
+
+        res.status(201).json(responseData);
 
     } catch (error) {
         try { await fs.unlink(tempPath); } catch (e) {} 
@@ -163,8 +197,14 @@ exports.deleteMedia = async (req, res, next) => {
 
         const file = media[0];
 
-        await deleteFile(file.path_full);
-        if (file.path_thumb) await deleteFile(file.path_thumb);
+        // Для видалення використовуємо системний шлях (path.join зробить правильні слеші для Windows/Linux)
+        const absolutePathFull = path.join(__dirname, '..', file.path_full);
+        await deleteFile(absolutePathFull).catch(err => console.log('File missing:', err.message));
+
+        if (file.path_thumb) {
+            const absolutePathThumb = path.join(__dirname, '..', file.path_thumb);
+            await deleteFile(absolutePathThumb).catch(err => console.log('Thumb missing:', err.message));
+        }
 
         await db.query('DELETE FROM user_media WHERE id = ?', [id]);
 

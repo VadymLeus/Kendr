@@ -24,8 +24,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
             setChecking(true);
             setName('');
             setDescription('');
-            
-            apiClient.get('/templates/personal')
+            apiClient.get('/user-templates')
                 .then(res => setExistingTemplates(res.data))
                 .catch(err => console.error("Помилка перевірки шаблонів", err))
                 .finally(() => setChecking(false));

@@ -44,6 +44,18 @@ const VARIANTS = {
             border: '1px solid #f87171',
         }
     },
+    'outline-danger': {
+        base: {
+            background: 'transparent',
+            color: 'var(--platform-text-secondary)',
+            border: '1px solid var(--platform-border-color)',
+        },
+        hover: {
+            background: 'transparent', 
+            color: '#c53030',
+            border: '1px solid #c53030',
+        }
+    },
     outline: {
         base: {
             background: 'transparent',

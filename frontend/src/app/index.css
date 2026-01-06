@@ -1,7 +1,5 @@
 /* frontend/src/app/index.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 *, *::before, *::after {
     box-sizing: border-box;
