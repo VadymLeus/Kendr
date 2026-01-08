@@ -2,6 +2,7 @@
 const UserTemplate = require('../models/UserTemplate');
 const Site = require('../models/Site');
 const Page = require('../models/Page');
+const db = require('../config/db');
 
 exports.saveAsTemplate = async (req, res, next) => {
     try {
@@ -27,11 +28,13 @@ exports.saveAsTemplate = async (req, res, next) => {
         }));
 
         const snapshot = {
-            theme_settings: siteDetails.theme_settings || {},
+            theme_settings: {
+                ...(siteDetails.theme_settings || {}),
+                mode: siteDetails.site_theme_mode || 'light',
+                accent: siteDetails.site_theme_accent || 'blue'
+            },
             header_content: siteDetails.header_content || [],
             footer_content: siteDetails.footer_content || [],
-            site_theme_mode: siteDetails.site_theme_mode,
-            site_theme_accent: siteDetails.site_theme_accent,
             pages: pagesWithContent
         };
 
@@ -45,8 +48,19 @@ exports.saveAsTemplate = async (req, res, next) => {
 
 exports.getMyTemplates = async (req, res, next) => {
     try {
-        const templates = await UserTemplate.findAllForUser(req.user.id);
-        res.json(templates);
+        const [templates] = await db.query(
+            'SELECT id, name, description, full_site_snapshot, created_at FROM user_templates WHERE user_id = ? ORDER BY created_at DESC', 
+            [req.user.id]
+        );
+
+        const processedTemplates = templates.map(t => ({
+            ...t,
+            full_site_snapshot: (typeof t.full_site_snapshot === 'string') 
+                ? JSON.parse(t.full_site_snapshot) 
+                : t.full_site_snapshot
+        }));
+
+        res.json(processedTemplates);
     } catch (error) {
         next(error);
     }
@@ -55,9 +69,12 @@ exports.getMyTemplates = async (req, res, next) => {
 exports.deleteTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const success = await UserTemplate.delete(id, req.user.id);
+        const [result] = await db.query(
+            'DELETE FROM user_templates WHERE id = ? AND user_id = ?',
+            [id, req.user.id]
+        );
         
-        if (!success) {
+        if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Шаблон не знайдено або у вас немає прав на його видалення.' });
         }
         
@@ -67,14 +84,30 @@ exports.deleteTemplate = async (req, res, next) => {
     }
 };
 
+// --- ВИПРАВЛЕНИЙ МЕТОД ---
 exports.updateTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { siteId, templateName, description } = req.body;
         const userId = req.user.id;
 
+        // СЦЕНАРІЙ 1: Просто оновлення імені/опису (siteId не передано)
+        if (!siteId) {
+            const [result] = await db.query(
+                'UPDATE user_templates SET name = ?, description = ? WHERE id = ? AND user_id = ?',
+                [templateName, description || '', id, userId]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: 'Шаблон не знайдено або у вас немає прав.' });
+            }
+
+            return res.json({ message: 'Інформацію про шаблон оновлено!' });
+        }
+
+        // СЦЕНАРІЙ 2: Перезбереження (оновлення snapshot) з існуючого сайту
         const site = await Site.findByIdAndUserId(siteId, userId);
-        if (!site) return res.status(403).json({ message: 'Сайт не знайдено.' });
+        if (!site) return res.status(403).json({ message: 'Сайт для оновлення шаблону не знайдено.' });
 
         const siteDetails = await Site.findByPath(site.site_path);
         const pages = await Page.findBySiteId(siteId);
@@ -90,21 +123,26 @@ exports.updateTemplate = async (req, res, next) => {
         }));
 
         const snapshot = {
-            theme_settings: siteDetails.theme_settings || {},
+            theme_settings: {
+                ...(siteDetails.theme_settings || {}),
+                mode: siteDetails.site_theme_mode || 'light',
+                accent: siteDetails.site_theme_accent || 'blue'
+            },
             header_content: siteDetails.header_content || [],
             footer_content: siteDetails.footer_content || [],
-            site_theme_mode: siteDetails.site_theme_mode,
-            site_theme_accent: siteDetails.site_theme_accent,
             pages: pagesWithContent
         };
 
-        const success = await UserTemplate.update(id, userId, templateName, description || '', snapshot);
+        const [result] = await db.query(
+            'UPDATE user_templates SET name = ?, description = ?, full_site_snapshot = ? WHERE id = ? AND user_id = ?',
+            [templateName, description || '', JSON.stringify(snapshot), id, userId]
+        );
         
-        if (!success) {
+        if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Шаблон не знайдено або у вас немає прав.' });
         }
 
-        res.json({ message: 'Шаблон успішно оновлено!' });
+        res.json({ message: 'Шаблон та його структуру успішно оновлено!' });
     } catch (error) {
         next(error);
     }

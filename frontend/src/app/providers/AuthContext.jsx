@@ -8,24 +8,36 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
-      
-      if (token && userData) {
-        setUser(JSON.parse(userData));
+    const initAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const userDataRaw = localStorage.getItem('user');
+        
+        if (token && userDataRaw && userDataRaw !== 'undefined' && userDataRaw !== 'null') {
+          const parsedUser = JSON.parse(userDataRaw);
+          setUser(parsedUser);
+        } else {
+          if (token || userDataRaw) {
+             localStorage.removeItem('token');
+             localStorage.removeItem('user');
+          }
+        }
+      } catch (error) {
+        console.error("Помилка під час ініціалізації AuthContext:", error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Помилка під час завантаження даних користувача", error);
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initAuth();
   }, []);
 
   const login = (userData, token) => {
+    if (!userData || !token) return;
+    
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
@@ -34,16 +46,18 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('themeMode');
-    localStorage.removeItem('themeAccent');
     setUser(null);
   };
 
-  const updateUser = (newUserData) => {
-    const currentUserData = JSON.parse(localStorage.getItem('user')) || {};
-    const updatedData = { ...currentUserData, ...newUserData };
-    localStorage.setItem('user', JSON.stringify(updatedData));
-    setUser(updatedData);
+  const updateUser = (userData) => {
+    if (!userData) return;
+    
+    try {
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+    } catch (e) {
+        console.error("Помилка при збереженні даних користувача", e);
+    }
   };
 
   return (

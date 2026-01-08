@@ -1,5 +1,5 @@
 // backend/models/Product.js
-const db = require('../db');
+const db = require('../config/db');
 
 const safeParseGallery = (galleryData) => {
     if (!galleryData) return [];

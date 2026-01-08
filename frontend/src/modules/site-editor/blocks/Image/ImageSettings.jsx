@@ -1,431 +1,264 @@
 // frontend/src/modules/site-editor/blocks/Image/ImageSettings.jsx
-import React from 'react';
-import ImageInput from '../../../media/components/ImageInput';
+import React, { useState } from 'react';
 import { generateBlockId } from '../../core/editorConfig';
+import MediaPickerModal from '../../../media/components/MediaPickerModal';
+import { 
+    IconPlus, IconTrash, IconImage, IconGrid, IconPlay, IconLink, IconSettings
+} from '../../../../common/components/ui/Icons';
+import CustomSelect from '../../../../common/components/ui/CustomSelect';
+import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../components/common/SettingsUI';
+import RangeSlider from '../../../../common/components/ui/RangeSlider';
 
-const formGroupStyle = { 
-    marginBottom: '0.8rem',
-    padding: '0.3rem 0'
-};
-const labelStyle = { 
-    display: 'block', 
-    marginBottom: '0.3rem', 
-    color: 'var(--platform-text-secondary)', 
-    fontWeight: '500',
-    fontSize: '0.85rem'
-};
-const checkboxLabelStyle = {
-    ...labelStyle,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    cursor: 'pointer',
-    marginBottom: '0.4rem',
-    fontSize: '0.85rem'
-};
-const inputStyle = { 
-    width: '100%', 
-    padding: '0.4rem 0.6rem', 
-    border: '1px solid var(--platform-border-color)', 
-    borderRadius: '4px', 
-    fontSize: '0.85rem', 
-    background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', 
-    boxSizing: 'border-box' 
-};
-const hrStyle = {
-    margin: '0.8rem 0',
-    border: 'none',
-    borderTop: '1px solid var(--platform-border-color)'
-};
-
-const compactItemStyle = {
-    border: '1px solid var(--platform-border-color)',
-    borderRadius: '8px',
-    padding: '0.8rem',
-    marginBottom: '0.6rem',
-    background: 'var(--platform-bg)',
-    width: '100%',
-    boxSizing: 'border-box',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.8rem',
-    position: 'relative'
-};
-
-const thumbnailStyle = {
-    width: '80px',
-    height: '80px',
-    borderRadius: '6px',
-    border: '1px solid var(--platform-border-color)',
-    backgroundColor: 'var(--platform-card-bg)',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    flexShrink: 0,
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    textAlign: 'center',
-    overflow: 'hidden'
-};
-
-const deleteButtonStyle = {
-    position: 'absolute',
-    top: '4px',
-    right: '4px',
-    background: 'var(--platform-danger)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '50%',
-    width: '20px',
-    height: '20px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    lineHeight: 1,
-    padding: 0,
-    transition: 'all 0.2s ease'
-};
-
-const sectionTitleStyle = {
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    color: 'var(--platform-text-primary)',
-    margin: '0.8rem 0 0.5rem 0',
-    paddingBottom: '0.2rem',
-    borderBottom: '1px solid var(--platform-border-color)'
-};
-
-const PLACEHOLDER_URL = 'https://placehold.co/1000x500/EFEFEF/31343C?text=Ваше+зображення';
+const API_URL = 'http://localhost:5000';
 
 const ImageSettings = ({ data, onChange }) => {
     const normalizedData = {
         mode: data.mode || 'single',
-        items: (Array.isArray(data.items) && data.items.length > 0) 
-            ? data.items 
-            : [{ id: generateBlockId(), src: data.imageUrl || '' }],
-        
+        items: Array.isArray(data.items) ? data.items : [],
         width: data.width || 'medium',
         settings_slider: data.settings_slider || { navigation: true, pagination: true, autoplay: false, loop: true },
         settings_grid: data.settings_grid || { columns: 3 },
-        objectFit: data.objectFit || 'contain',
+        objectFit: data.objectFit || 'cover',
         borderRadius: data.borderRadius || '0px',
         link: data.link || '',
         targetBlank: data.targetBlank || false
     };
 
-    const handleDataChange = (field, value) => {
-        onChange({ ...normalizedData, [field]: value });
-    };
+    const [pickerState, setPickerState] = useState({ isOpen: false, mode: 'add', replaceIndex: null });
 
-    const handleSettingsChange = (group, field, value) => {
-        onChange({
-            ...normalizedData,
-            [group]: {
-                ...normalizedData[group],
-                [field]: value
+    const updateData = (updates) => onChange({ ...normalizedData, ...updates });
+
+    const handleMediaSelect = (result) => {
+        const files = Array.isArray(result) ? result : [result];
+        if (files.length === 0) return;
+
+        let newItems = [...normalizedData.items];
+
+        if (pickerState.mode === 'add') {
+            const added = files.map(f => ({ 
+                id: generateBlockId(), 
+                src: f.path_full, 
+                thumb: f.path_thumb 
+            }));
+            if (normalizedData.mode === 'single') {
+                 newItems = [added[0]];
+            } else {
+                 newItems = [...newItems, ...added];
             }
-        });
-    };
-
-    const handleItemChange = (index, field, value) => {
-        const newItems = [...normalizedData.items];
-        newItems[index] = { ...newItems[index], [field]: value };
-        onChange({ ...normalizedData, items: newItems });
-    };
-
-    const handleImageChange = (index, newUrl) => {
-         const relativeUrl = newUrl.replace(/^http:\/\/localhost:5000/, '');
-         handleItemChange(index, 'src', relativeUrl);
-    };
-
-    const handleAddItem = () => {
-        const newItem = { id: generateBlockId(), src: PLACEHOLDER_URL };
-        onChange({ ...normalizedData, items: [...normalizedData.items, newItem] });
-    };
-
-    const handleRemoveItem = (index) => {
-        if (normalizedData.items.length <= 1 && normalizedData.mode !== 'single') {
-            alert('Слайдер або сітка повинні мати хоча б одне зображення.');
-            return;
+        } else if (pickerState.mode === 'replace' && pickerState.replaceIndex !== null) {
+            newItems[pickerState.replaceIndex] = { 
+                ...newItems[pickerState.replaceIndex], 
+                src: files[0].path_full, 
+                thumb: files[0].path_thumb 
+            };
         }
-        if (normalizedData.mode === 'single') {
-             alert('Неможливо видалити зображення в режимі "Одне зображення".');
-             return;
-        }
-        const newItems = normalizedData.items.filter((_, i) => i !== index);
-        onChange({ ...normalizedData, items: newItems });
-    };
-    
-    const renderCompactItem = (item, index) => {
-        const imageUrl = item.src ? 
-            (item.src.startsWith('http') ? item.src : `http://localhost:5000${item.src}`) : 
-            PLACEHOLDER_URL;
 
-        const isPlaceholder = !item.src || item.src === PLACEHOLDER_URL;
-
-        return (
-            <div key={item.id} style={{ ...compactItemStyle, padding: '0.8rem 1rem', alignItems: 'flex-start' }}> 
-                <ImageInput 
-                    value={item.src}
-                    onChange={(newUrl) => handleImageChange(index, newUrl)}
-                    triggerStyle={{
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        margin: 0,
-                        cursor: 'pointer',
-                        flexShrink: 0
-                    }}
-                >
-                    <div style={thumbnailStyle}>
-                        <img 
-                            src={imageUrl} 
-                            alt=""
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: isPlaceholder ? 'contain' : 'cover',
-                                borderRadius: '6px',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseOver={(e) => {
-                                e.target.style.opacity = '0.8';
-                                e.target.style.transform = 'scale(1.05)';
-                            }}
-                            onMouseOut={(e) => {
-                                e.target.style.opacity = '1';
-                                e.target.style.transform = 'scale(1)';
-                            }}
-                        />
-                    </div>
-                </ImageInput>
-                
-                {normalizedData.items.length > 1 && (
-                    <button 
-                        type="button" 
-                        onClick={() => handleRemoveItem(index)} 
-                        style={deleteButtonStyle}
-                        title="Видалити зображення"
-                        onMouseOver={(e) => {
-                            e.target.style.transform = 'scale(1.1)';
-                            e.target.style.background = 'var(--platform-danger-hover)';
-                        }}
-                        onMouseOut={(e) => {
-                            e.target.style.transform = 'scale(1)';
-                            e.target.style.background = 'var(--platform-danger)';
-                        }}
-                    >
-                        ×
-                    </button>
-                )}
-            </div>
-        );
+        updateData({ items: newItems });
+        setPickerState({ isOpen: false, mode: 'add', replaceIndex: null });
     };
 
-    const renderModeSwitcher = () => (
-        <div style={formGroupStyle}>
-            <label style={labelStyle}>Режим відображення</label>
-            <select 
-                value={normalizedData.mode} 
-                onChange={(e) => handleDataChange('mode', e.target.value)} 
-                style={inputStyle}
-            >
-                <option value="single">Одне зображення</option>
-                <option value="slider">Слайдер</option>
-                <option value="grid">Сітка</option>
-            </select>
-        </div>
-    );
-
-    const renderItemManager = () => (
-        <div style={formGroupStyle}>
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                marginBottom: '0.5rem' 
-            }}>
-                <label style={labelStyle}>Зображення ({normalizedData.items.length})</label>
-                <button 
-                    type="button" 
-                    onClick={handleAddItem}
-                    style={{
-                        padding: '0.25rem 0.5rem',
-                        fontSize: '0.75rem',
-                        background: 'var(--platform-accent)',
-                        color: 'var(--platform-accent-text)',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontWeight: '500'
-                    }}
-                >
-                    + Додати
-                </button>
-            </div>
-            <div style={{ 
-                maxHeight: '300px', 
-                overflowY: 'auto',
-                padding: '0.2rem'
-            }}>
-                {normalizedData.items.map((item, index) => renderCompactItem(item, index))}
-            </div>
-        </div>
-    );
-
-    const renderSliderSettings = () => (
-        <div style={formGroupStyle}>
-            <div style={checkboxLabelStyle}>
-                <input 
-                    type="checkbox" 
-                    checked={normalizedData.settings_slider.navigation} 
-                    onChange={(e) => handleSettingsChange('settings_slider', 'navigation', e.target.checked)} 
-                />
-                Стрілки навігації
-            </div>
-            <div style={checkboxLabelStyle}>
-                <input 
-                    type="checkbox" 
-                    checked={normalizedData.settings_slider.pagination} 
-                    onChange={(e) => handleSettingsChange('settings_slider', 'pagination', e.target.checked)} 
-                />
-                Пагінація
-            </div>
-            <div style={checkboxLabelStyle}>
-                <input 
-                    type="checkbox" 
-                    checked={normalizedData.settings_slider.autoplay} 
-                    onChange={(e) => handleSettingsChange('settings_slider', 'autoplay', e.target.checked)} 
-                />
-                Автопрокрутка
-            </div>
-            <div style={checkboxLabelStyle}>
-                <input 
-                    type="checkbox" 
-                    checked={normalizedData.settings_slider.loop} 
-                    onChange={(e) => handleSettingsChange('settings_slider', 'loop', e.target.checked)} 
-                />
-                Зациклити
-            </div>
-        </div>
-    );
-
-    const renderGridSettings = () => (
-        <div style={formGroupStyle}>
-            <label style={labelStyle}>Кількість колонок</label>
-            <select 
-                value={normalizedData.settings_grid.columns} 
-                onChange={(e) => handleSettingsChange('settings_grid', 'columns', parseInt(e.target.value))} 
-                style={inputStyle}
-            >
-                <option value={2}>2 колонки</option>
-                <option value={3}>3 колонки</option>
-                <option value={4}>4 колонки</option>
-            </select>
-        </div>
-    );
-
-    const renderGlobalSettings = () => (
-        <>
-            <div style={sectionTitleStyle}>Загальні налаштування</div>
-            
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Ширина блоку</label>
-                <select 
-                    value={normalizedData.width} 
-                    onChange={(e) => handleDataChange('width', e.target.value)} 
-                    style={inputStyle}
-                >
-                    <option value="small">Маленька</option>
-                    <option value="medium">Середня</option>
-                    <option value="large">Велика</option>
-                    <option value="full">Повна</option>
-                </select>
-            </div>
-            
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Підгонка зображення</label>
-                <select 
-                    value={normalizedData.objectFit} 
-                    onChange={(e) => handleDataChange('objectFit', e.target.value)} 
-                    style={inputStyle}
-                >
-                    <option value="contain">По розміру</option>
-                    <option value="cover">Заповнення</option>
-                </select>
-            </div>
-            
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Радіус скруглення</label>
-                <input 
-                    type="text" 
-                    value={normalizedData.borderRadius} 
-                    onChange={(e) => handleDataChange('borderRadius', e.target.value)} 
-                    placeholder="наприклад: 8px"
-                    style={inputStyle} 
-                />
-            </div>
-        </>
-    );
+    const handleReplaceClick = (index) => {
+        setPickerState({ isOpen: true, mode: 'replace', replaceIndex: index });
+    };
 
     return (
-        <div style={{ padding: '0.4rem 0.3rem' }}>
-            {renderModeSwitcher()}
-            <hr style={hrStyle} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <MediaPickerModal 
+                isOpen={pickerState.isOpen}
+                onClose={() => setPickerState({ ...pickerState, isOpen: false })}
+                onSelect={handleMediaSelect}
+                multiple={pickerState.mode === 'add' && normalizedData.mode !== 'single'}
+                allowedTypes={['image']}
+                title={pickerState.mode === 'add' ? "Додати зображення" : "Замінити зображення"}
+            />
+
+            <ToggleGroup 
+                options={[
+                    { value: 'single', label: 'Одне', icon: <IconImage size={16} /> },
+                    { value: 'slider', label: 'Слайдер', icon: <IconPlay size={16} /> },
+                    { value: 'grid', label: 'Сітка', icon: <IconGrid size={16} /> },
+                ]}
+                value={normalizedData.mode}
+                onChange={(val) => updateData({ mode: val })}
+            />
+
+            <div style={{ background: 'var(--platform-bg)', padding: '12px', borderRadius: '12px', border: '1px solid var(--platform-border-color)' }}>
+                {normalizedData.items.length === 0 ? (
+                    <button 
+                        className="gallery-add-btn"
+                        style={{ width: '100%', height: '100px', fontSize: '0.9rem', gap: '8px' }}
+                        onClick={() => setPickerState({ isOpen: true, mode: 'add', replaceIndex: null })}
+                    >
+                        <IconPlus size={24} />
+                        <span>Вибрати зображення</span>
+                    </button>
+                ) : (
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', 
+                        gap: '8px' 
+                    }}>
+                        {normalizedData.items.map((item, idx) => (
+                            <div 
+                                key={item.id || idx} 
+                                style={{ 
+                                    width: '100%', 
+                                    aspectRatio: '1 / 1', 
+                                    borderRadius: '8px', 
+                                    overflow: 'hidden', 
+                                    position: 'relative', 
+                                    border: '1px solid var(--platform-border-color)', 
+                                    cursor: 'pointer',
+                                    background: 'var(--platform-card-bg)'
+                                }} 
+                                onClick={() => handleReplaceClick(idx)} 
+                                title="Натисніть, щоб замінити"
+                            >
+                                <img 
+                                    src={`${API_URL}${item.thumb || item.src}`} 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                    alt=""
+                                />
+                                
+                                <button 
+                                    className="gallery-delete-btn"
+                                    onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        updateData({ items: normalizedData.items.filter((_, i) => i !== idx) }); 
+                                    }}
+                                >
+                                    <IconTrash size={10} />
+                                </button>
+                            </div>
+                        ))}
+                        {normalizedData.mode !== 'single' && (
+                            <button 
+                                className="gallery-add-btn"
+                                onClick={() => setPickerState({ isOpen: true, mode: 'add', replaceIndex: null })}
+                            >
+                                <IconPlus size={20} />
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {normalizedData.mode === 'slider' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <SectionTitle icon={<IconSettings size={16}/>}>Налаштування слайдера</SectionTitle>
+                    <ToggleSwitch checked={normalizedData.settings_slider.navigation} label="Стрілки" onChange={(v) => updateData({ settings_slider: {...normalizedData.settings_slider, navigation: v}})} />
+                    <ToggleSwitch checked={normalizedData.settings_slider.autoplay} label="Автопрокрутка" onChange={(v) => updateData({ settings_slider: {...normalizedData.settings_slider, autoplay: v}})} />
+                    <ToggleSwitch checked={normalizedData.settings_slider.loop} label="Зациклити" onChange={(v) => updateData({ settings_slider: {...normalizedData.settings_slider, loop: v}})} />
+                </div>
+            )}
+
+            {normalizedData.mode === 'grid' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <SectionTitle icon={<IconGrid size={16}/>}>Налаштування сітки</SectionTitle>
+                    <div style={commonStyles.formGroup}>
+                         <label style={commonStyles.label}>Кількість колонок</label>
+                         <CustomSelect 
+                            value={normalizedData.settings_grid.columns}
+                            onChange={(e) => updateData({ settings_grid: { ...normalizedData.settings_grid, columns: parseInt(e.target.value) } })}
+                            options={[
+                                { value: 2, label: '2 колонки' },
+                                { value: 3, label: '3 колонки' },
+                                { value: 4, label: '4 колонки' },
+                                { value: 5, label: '5 колонок' },
+                            ]}
+                         />
+                    </div>
+                </div>
+            )}
+
+            <div>
+                <SectionTitle icon={<IconImage size={16}/>}>Вигляд</SectionTitle>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Ширина блоку</label>
+                    <CustomSelect 
+                        value={normalizedData.width}
+                        onChange={(e) => updateData({ width: e.target.value })}
+                        options={[
+                            { value: 'small', label: 'Вузька' },
+                            { value: 'medium', label: 'Середня' },
+                            { value: 'large', label: 'Широка' },
+                            { value: 'full', label: 'На весь екран' }
+                        ]}
+                    />
+                </div>
+                
+                <div style={commonStyles.formGroup}>
+                    <RangeSlider 
+                        label="Скруглення кутів"
+                        value={normalizedData.borderRadius}
+                        onChange={(val) => updateData({ borderRadius: val })}
+                        min={0}
+                        max={60}
+                        unit="px"
+                    />
+                </div>
+            </div>
 
             {normalizedData.mode === 'single' && (
-                <>
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>Зображення</label>
-                        {renderCompactItem(normalizedData.items[0], 0)}
-                    </div>
-
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>Посилання</label>
-                        <input 
-                            type="text" 
-                            value={normalizedData.link} 
-                            onChange={(e) => handleDataChange('link', e.target.value)} 
-                            placeholder="https://..."
-                            style={inputStyle} 
-                        />
-                    </div>
-                    
-                    {normalizedData.link && (
-                        <div style={formGroupStyle}>
-                            <label style={checkboxLabelStyle}>
-                                <input 
-                                    type="checkbox" 
-                                    checked={normalizedData.targetBlank} 
-                                    onChange={(e) => handleDataChange('targetBlank', e.target.checked)} 
-                                />
-                                Відкривати у новій вкладці
-                            </label>
-                        </div>
-                    )}
-                    
-                    {renderGlobalSettings()}
-                </>
+                <div>
+                    <SectionTitle icon={<IconLink size={16}/>}>Дія при кліку</SectionTitle>
+                    <input 
+                        type="text" 
+                        value={normalizedData.link}
+                        onChange={(e) => updateData({ link: e.target.value })}
+                        style={commonStyles.input}
+                        placeholder="https://..."
+                    />
+                </div>
             )}
 
-            {(normalizedData.mode === 'slider' || normalizedData.mode === 'grid') && (
-                <>
-                    {renderItemManager()}
-                    <hr style={hrStyle} />
-                    
-                    <div style={sectionTitleStyle}>
-                        {normalizedData.mode === 'slider' ? 'Налаштування слайдера' : 'Налаштування сітки'}
-                    </div>
+            <style>{`
+                .gallery-delete-btn {
+                    position: absolute;
+                    top: 2px;
+                    right: 2px;
+                    background: rgba(239, 68, 68, 0.9);
+                    color: #fff;
+                    border: none;
+                    border-radius: 4px;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 2;
+                    opacity: 0.8;
+                    transition: all 0.2s ease;
+                }
+                .gallery-delete-btn:hover {
+                    opacity: 1;
+                    transform: scale(1.1);
+                    background: rgb(220, 38, 38);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
 
-                    {normalizedData.mode === 'slider' && renderSliderSettings()}
-                    {normalizedData.mode === 'grid' && renderGridSettings()}
-                    
-                    {renderGlobalSettings()}
-                </>
-            )}
+                .gallery-add-btn {
+                    width: 100%;
+                    aspect-ratio: 1 / 1;
+                    border-radius: 8px;
+                    border: 1px dashed var(--platform-border-color);
+                    background: transparent;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-direction: column; 
+                    cursor: pointer;
+                    color: var(--platform-text-secondary);
+                    transition: all 0.2s ease;
+                }
+                .gallery-add-btn:hover {
+                    border-color: var(--platform-accent);
+                    color: var(--platform-accent);
+                    background: rgba(0,0,0,0.03);
+                    transform: translateY(-1px);
+                }
+            `}</style>
         </div>
     );
 };

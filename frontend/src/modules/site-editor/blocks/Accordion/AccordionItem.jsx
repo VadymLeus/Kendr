@@ -1,5 +1,6 @@
 // frontend/src/modules/site-editor/blocks/Accordion/AccordionItem.jsx
 import React, { useState } from 'react';
+import { IconChevronDown } from '../../../../common/components/ui/Icons';
 
 const AccordionItem = ({ item, isEditorPreview }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -34,14 +35,17 @@ const AccordionItem = ({ item, isEditorPreview }) => {
         fontWeight: '600',
         color: textPrimary,
         margin: 0,
-        fontFamily: 'inherit'
+        fontFamily: 'inherit',
+        fontSize: '1.1rem'
     };
 
-    const iconStyle = {
-        fontSize: '1.2rem',
+    const iconWrapperStyle = {
         color: accent,
         transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-        transition: 'transform 0.2s ease'
+        transition: 'transform 0.3s ease',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
     };
 
     const bodyStyle = {
@@ -64,20 +68,17 @@ const AccordionItem = ({ item, isEditorPreview }) => {
                 style={headerStyle}
                 onClick={handleClick}
                 aria-expanded={isExpanded}
-                aria-controls={`accordion-content-${item.id}`}
-                id={`accordion-title-${item.id}`}
             >
                 <h4 style={titleStyle}>{item.title || 'Питання'}</h4>
-                <span style={iconStyle}>▼</span>
+                <div style={iconWrapperStyle}>
+                    <IconChevronDown size={20} />
+                </div>
             </div>
-            <div
-                style={bodyStyle}
-                role="region"
-                aria-labelledby={`accordion-title-${item.id}`}
-                id={`accordion-content-${item.id}`}
-            >
-                {item.content || 'Відповідь...'}
-            </div>
+            {isExpanded && (
+                 <div style={bodyStyle}>
+                    {item.content || 'Відповідь...'}
+                </div>
+            )}
         </div>
     );
 };

@@ -1,7 +1,17 @@
-// frontend/src/modules/site-editor/tabs/SettingsTab.jsx
+// frontend/src/modules/site-editor/tabs/LayersTab.jsx
 import React from 'react';
 import { findBlockByPath } from '../core/blockUtils';
 import SettingsGroup from '../components/common/SettingsGroup';
+import { Input } from '../../../common/components/ui/Input';
+import { 
+    IconSettings, 
+    IconPalette, 
+    IconFileText, 
+    IconCursorClick, 
+    IconAlertCircle,
+    IconHash
+} from '../../../common/components/ui/Icons';
+
 import ShowCaseSettings from '../blocks/ShowCase/ShowCaseSettings';
 import FeaturesSettings from '../blocks/Features/FeaturesSettings';
 import CatalogSettings from '../blocks/Catalog/CatalogSettings';
@@ -45,19 +55,28 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
     if (!selectedBlock) {
         return (
             <div style={{
-                padding: '2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                padding: '40px 20px',
                 textAlign: 'center',
-                border: '1px dashed var(--platform-border-color)',
-                borderRadius: '8px',
                 color: 'var(--platform-text-secondary)',
-                marginTop: '2rem'
             }}>
-                <span style={{ fontSize: '2rem' }}>⚙️</span>
-                <p style={{ fontWeight: '500', color: 'var(--platform-text-primary)' }}>
-                    Налаштування блоку
-                </p>
-                <p>
-                    Оберіть блок на сторінці, щоб побачити його налаштування.
+                <div style={{ 
+                    width: '80px', height: '80px', borderRadius: '50%', background: 'var(--platform-bg)', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px',
+                    border: '1px solid var(--platform-border-color)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                }}>
+                    <IconCursorClick size={36} style={{ color: 'var(--platform-accent)', opacity: 0.8 }} />
+                </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--platform-text-primary)', marginBottom: '8px' }}>
+                    Блок не обрано
+                </h3>
+                <p style={{ fontSize: '0.9rem', maxWidth: '260px', lineHeight: '1.5' }}>
+                    Натисніть на будь-який блок у редакторі праворуч, щоб відкрити його налаштування.
                 </p>
             </div>
         );
@@ -67,11 +86,26 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
 
     if (!SettingsComponent) {
         return (
-             <div style={{ padding: '1rem', color: 'var(--platform-text-primary)'}}>
-                <h4 style={{marginBottom: '1rem'}}>Налаштування: {selectedBlock.type}</h4>
-                <p style={{color: 'var(--platform-text-secondary)'}}>
-                    Компонент налаштувань для цього типу блоку ({selectedBlock.type}) ще не створено.
-                </p>
+             <div style={{ padding: '2rem', textAlign: 'center' }}>
+                <div style={{ color: 'var(--platform-text-secondary)', marginBottom: '1rem' }}>
+                    <IconSettings size={48} style={{ opacity: 0.2 }} />
+                </div>
+                <h4 style={{ marginBottom: '1rem' }}>{selectedBlock.type}</h4>
+                <div style={{ 
+                    padding: '16px', 
+                    background: 'rgba(239, 68, 68, 0.05)', 
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    color: '#ef4444', 
+                    borderRadius: '8px', 
+                    fontSize: '0.9rem', 
+                    display: 'flex', 
+                    gap: '12px', 
+                    alignItems: 'start', 
+                    textAlign: 'left' 
+                }}>
+                    <IconAlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <span>Налаштування для цього типу блоку ще в розробці.</span>
+                </div>
             </div>
         )
     }
@@ -113,13 +147,29 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
     const blockKey = selectedBlock.block_id || selectedBlock.type;
 
     return (
-        <div>
-             <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1.5rem' }}>
-                Налаштування: {selectedBlock.type}
-            </h3>
+        <div className="custom-scrollbar" style={{ paddingBottom: '60px' }}>
+            <div style={{ 
+                padding: '20px 0 16px', 
+                marginBottom: '20px', 
+                borderBottom: '1px solid var(--platform-border-color)',
+                display: 'flex', alignItems: 'center', gap: '12px'
+            }}>
+                <div style={{ 
+                    width: '36px', height: '36px', borderRadius: '8px', 
+                    background: 'var(--platform-accent-transparent)', color: 'var(--platform-accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    <IconSettings size={20} />
+                </div>
+                <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--platform-text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.5px' }}>Редагування</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: '700', textTransform: 'capitalize', color: 'var(--platform-text-primary)' }}>{selectedBlock.type}</div>
+                </div>
+            </div>
             
             <SettingsGroup 
-                title="📝 Основні налаштування" 
+                title="Вміст та Дані" 
+                icon={<IconFileText size={18} />}
                 defaultOpen={true}
                 storageKey={`main_${blockKey}`}
             >
@@ -131,51 +181,29 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
             </SettingsGroup>
 
             <SettingsGroup 
-                title="🎨 Вигляд та ✨ Анімація" 
+                title="Зовнішній вигляд" 
+                icon={<IconPalette size={18} />}
                 defaultOpen={false}
                 storageKey={`style_${blockKey}`}
             >
-                
-                <div style={{ marginBottom: '16px' }}>
-                    <label style={{ 
-                        display: 'block', 
-                        marginBottom: '6px', 
-                        fontSize: '0.85rem', 
-                        fontWeight: '600', 
-                        color: 'var(--platform-text-secondary)'
-                    }}>
-                        ID блоку (Якір):
-                    </label>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                        <span style={{color: 'var(--platform-text-secondary)', fontWeight: 'bold'}}>#</span>
-                        <input 
-                            type="text" 
-                            value={selectedBlock.data.anchorId || ''} 
-                            onChange={handleAnchorChange}
-                            placeholder="наприклад: contacts"
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                border: '1px solid var(--platform-border-color)',
-                                borderRadius: '4px',
-                                background: 'var(--platform-card-bg)',
-                                color: 'var(--platform-text-primary)',
-                                fontSize: '0.9rem'
-                            }}
-                        />
+                <div style={{ marginBottom: '24px' }}>
+                    <Input 
+                        label="Якір блоку (ID)"
+                        value={selectedBlock.data.anchorId || ''}
+                        onChange={handleAnchorChange}
+                        placeholder="наприклад: about-us"
+                        leftIcon={<IconHash size={14} />}
+                    />
+                    <div style={{ marginTop: '6px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4' }}>
+                        Вкажіть унікальний ID, щоб створити посилання на цей блок у меню (наприклад, #about-us).
                     </div>
-                    <small style={{display: 'block', marginTop: '4px', color: 'var(--platform-text-secondary)', fontSize: '0.75rem'}}>
-                        Унікальне ID для навігації (меню).
-                    </small>
                 </div>
-
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: '24px' }}>
                     <SpacingControl 
                         styles={selectedBlock.data.styles || {}} 
                         onChange={handleStyleUpdate} 
                     />
                 </div>
-
                 <div>
                     <AnimationSettings 
                         animationConfig={selectedBlock.data.animation} 

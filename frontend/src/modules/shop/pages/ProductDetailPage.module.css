@@ -1,4 +1,4 @@
-/* frontend/src/modules/shop/pages/ProductDetailPage.module.css */
+/* frontend/src/modules/shop/pages/ProductDetailPage.module.jsx */
 
 .pageWrapper {
     background-color: var(--site-bg);
@@ -10,7 +10,7 @@
 .mainContent {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 40px 20px;
+    padding: 20px 20px;
     width: 100%;
     box-sizing: border-box;
     flex: 1;
@@ -39,6 +39,25 @@
     overflow-y: auto;
     padding-right: 5px;
 }
+
+.thumbnailsCol::-webkit-scrollbar,
+.descriptionContent::-webkit-scrollbar {
+    width: 6px;
+}
+.thumbnailsCol::-webkit-scrollbar-track,
+.descriptionContent::-webkit-scrollbar-track {
+    background: transparent;
+}
+.thumbnailsCol::-webkit-scrollbar-thumb,
+.descriptionContent::-webkit-scrollbar-thumb {
+    background-color: var(--site-accent);
+    border-radius: 3px;
+}
+.thumbnailsCol::-webkit-scrollbar-thumb:hover,
+.descriptionContent::-webkit-scrollbar-thumb:hover {
+    background-color: var(--site-accent-hover);
+}
+
 
 .thumbnailBox {
     width: 100%;
@@ -202,16 +221,11 @@
     color: var(--site-text-secondary);
     display: flex;
     align-items: center;
-    gap: 6px;
-}
-
-.categoryTag::before {
-    content: "|";
-    opacity: 0.5;
-}
-
-.categoryName {
-    font-size: 0.9rem;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding-left: 12px;
+    border-left: 1px solid var(--site-border-color);
 }
 
 .chipButton {
@@ -239,7 +253,7 @@
     border: 1px solid var(--site-border-color);
     border-radius: 12px;
     padding: 0;
-    margin-top: 40px;
+    margin-top: 30px;
     overflow: hidden;
 }
 
@@ -265,9 +279,9 @@
 }
 
 .recommendationsSection {
-    margin-top: 80px;
+    margin-top: 40px;
     border-top: 1px solid var(--site-border-color);
-    padding-top: 40px;
+    padding-top: 20px;
 }
 
 .productsGrid {
@@ -421,7 +435,7 @@
     flex-shrink: 0;
     background-color: var(--footer-bg);
     border-top: 1px solid var(--footer-border);
-    margin-top: auto;
+    margin-top: 0;
 }
 
 .footerText {
@@ -464,6 +478,8 @@
         height: 80px !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
+        padding-right: 0 !important;
+        padding-bottom: 5px !important;
     }
     
     .mainImageBox {

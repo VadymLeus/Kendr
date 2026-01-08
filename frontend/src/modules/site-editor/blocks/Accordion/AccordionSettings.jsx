@@ -1,81 +1,33 @@
 // frontend/src/modules/site-editor/blocks/Accordion/AccordionSettings.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { generateBlockId, FONT_LIBRARY } from '../../core/editorConfig';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '1rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box'
-};
-const textareaStyle = {
-    ...inputStyle,
-    minHeight: '120px',
-    resize: 'vertical',
-    fontFamily: 'inherit',
-    lineHeight: '1.5',
-    overflow: 'hidden'
-};
-const itemWrapperStyle = {
-    border: '1px solid var(--platform-border-color)',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    background: 'var(--platform-card-bg)',
-    overflow: 'hidden'
-};
-const itemHeaderStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0.75rem 1rem',
-    cursor: 'pointer',
-    background: 'var(--platform-bg)',
-    borderBottom: '1px solid var(--platform-border-color)'
-};
-const itemHeaderTitleStyle = {
-    fontWeight: '500',
-    color: 'var(--platform-text-primary)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap'
-};
-const itemBodyStyle = {
-    padding: '1.5rem'
-};
-const iconButtonStyle = {
-    background: 'none',
-    border: 'none',
-    color: 'var(--platform-danger)',
-    cursor: 'pointer',
-    padding: '0.5rem',
-    borderRadius: '4px',
-    fontSize: '1.1rem',
-    lineHeight: '1'
-};
+import { commonStyles, SectionTitle } from '../../components/common/SettingsUI';
+import { Button } from '../../../../common/components/ui/Button';
+import { Input } from '../../../../common/components/ui/Input';
+import ConfirmModal from '../../../../common/components/ui/ConfirmModal';
+import { 
+    IconPlus, IconTrash, IconChevronDown, IconChevronUp, 
+    IconList, IconType, IconFileText, IconFont
+} from '../../../../common/components/ui/Icons';
 
 const AccordionSettings = ({ data, onChange }) => {
     const [openIndex, setOpenIndex] = useState(null);
-    const textareaRefs = useRef([]);
+    
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [itemToDeleteIndex, setItemToDeleteIndex] = useState(null);
+
+    const updateData = (newData) => onChange({ ...data, ...newData });
 
     const handleItemChange = (index, field, value) => {
         const newItems = data.items.map((item, i) => 
             i === index ? { ...item, [field]: value } : item
         );
-        onChange({ ...data, items: newItems });
+        updateData({ items: newItems });
     };
 
     const handleFontChange = (e) => {
-        // CustomSelect повертає подію з target.value
-        onChange({ ...data, fontFamily: e.target.value });
+        updateData({ fontFamily: e.target.value });
     };
 
     const handleAddItem = () => {
@@ -84,109 +36,152 @@ const AccordionSettings = ({ data, onChange }) => {
             title: 'Нове питання', 
             content: 'Тут буде відповідь...' 
         };
-        onChange({ ...data, items: [...(data.items || []), newItem] });
-        setOpenIndex((data.items || []).length);
+        const newItems = [...(data.items || []), newItem];
+        updateData({ items: newItems });
+        setOpenIndex(newItems.length - 1); 
     };
 
-    const handleRemoveItem = (e, index) => {
+    const requestDelete = (e, index) => {
         e.stopPropagation();
-        if (window.confirm(`Видалити елемент "${data.items[index].title}"?`)) {
-            onChange({ ...data, items: data.items.filter((_, i) => i !== index) });
-            setOpenIndex(null);
-        }
+        setItemToDeleteIndex(index);
+        setIsDeleteModalOpen(true);
     };
-    
+
+    const confirmDelete = () => {
+        if (itemToDeleteIndex !== null) {
+            const newItems = data.items.filter((_, i) => i !== itemToDeleteIndex);
+            updateData({ items: newItems });
+            if (openIndex === itemToDeleteIndex) setOpenIndex(null);
+        }
+        setIsDeleteModalOpen(false);
+        setItemToDeleteIndex(null);
+    };
+
     const toggleItem = (index) => {
         setOpenIndex(openIndex === index ? null : index);
     };
 
-    const autoResizeTextarea = (textarea) => {
-        if (textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-        }
-    };
-
-    useEffect(() => {
-        if (openIndex !== null && textareaRefs.current[openIndex]) {
-            autoResizeTextarea(textareaRefs.current[openIndex]);
-        }
-    }, [openIndex, data]);
-
     return (
-        <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Шрифт блоку:</label>
-                <CustomSelect
-                    name="fontFamily"
-                    value={data.fontFamily || 'global'}
-                    onChange={handleFontChange}
-                    options={FONT_LIBRARY}
-                    style={inputStyle}
-                />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            <ConfirmModal 
+                isOpen={isDeleteModalOpen}
+                title="Видалити елемент?"
+                message="Цю дію не можна скасувати."
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteModalOpen(false)}
+                type="danger"
+            />
+
+            <div>
+                <SectionTitle icon={<IconType size={18}/>}>Загальні налаштування</SectionTitle>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Шрифт блоку</label>
+                    <CustomSelect
+                        value={data.fontFamily || 'global'}
+                        onChange={handleFontChange}
+                        options={FONT_LIBRARY}
+                        leftIcon={<IconFont size={16}/>}
+                    />
+                </div>
             </div>
 
-            <label style={labelStyle}>Елементи акордеону:</label>
-            
-            {(data.items || []).map((item, index) => (
-                <div key={item.id || index} style={itemWrapperStyle}>
-                    <div style={itemHeaderStyle} onClick={() => toggleItem(index)}>
-                        <span style={itemHeaderTitleStyle}>
-                            <span style={{fontSize: '1.2rem'}}>❓</span>
-                            <span>{item.title}</span>
-                        </span>
-                        <button 
-                            onClick={(e) => handleRemoveItem(e, index)} 
-                            style={iconButtonStyle}
-                            title="Видалити"
-                        >
-                            ❌
-                        </button>
-                    </div>
+            <div>
+                <SectionTitle icon={<IconList size={18}/>}>Елементи списку</SectionTitle>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {(data.items || []).map((item, index) => {
+                        const isOpen = openIndex === index;
+                        return (
+                            <div 
+                                key={item.id || index} 
+                                style={{
+                                    border: isOpen ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+                                    borderRadius: '8px',
+                                    background: 'var(--platform-card-bg)',
+                                    overflow: 'hidden',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <div 
+                                    onClick={() => toggleItem(index)}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        padding: '10px 12px',
+                                        background: isOpen ? 'var(--platform-bg)' : 'transparent',
+                                        cursor: 'pointer',
+                                        borderBottom: isOpen ? '1px solid var(--platform-border-color)' : 'none'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                                        <div style={{ 
+                                            color: isOpen ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                                            transition: 'transform 0.2s',
+                                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                        }}>
+                                            <IconChevronDown size={16} />
+                                        </div>
+                                        <span style={{ 
+                                            fontWeight: 500, 
+                                            fontSize: '0.9rem', 
+                                            whiteSpace: 'nowrap', 
+                                            overflow: 'hidden', 
+                                            textOverflow: 'ellipsis' 
+                                        }}>
+                                            {item.title}
+                                        </span>
+                                    </div>
+                                    
+                                    <Button 
+                                        variant="danger" 
+                                        size="sm"
+                                        onClick={(e) => requestDelete(e, index)}
+                                        icon={<IconTrash size={14}/>}
+                                        style={{ width: '28px', height: '28px', padding: 0 }}
+                                    />
+                                </div>
 
-                    {openIndex === index && (
-                        <div style={itemBodyStyle}>
-                            <div style={formGroupStyle}>
-                                <label style={labelStyle}>Заголовок / Питання:</label>
-                                <input 
-                                    type="text" 
-                                    value={item.title} 
-                                    onChange={(e) => handleItemChange(index, 'title', e.target.value)} 
-                                    style={inputStyle}
-                                />
+                                {isOpen && (
+                                    <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        <Input
+                                            label="Питання / Заголовок"
+                                            value={item.title}
+                                            onChange={(e) => handleItemChange(index, 'title', e.target.value)}
+                                            placeholder="Введіть питання"
+                                        />
+                                        
+                                        <div style={commonStyles.formGroup}>
+                                            <label style={commonStyles.label}>Відповідь / Вміст</label>
+                                            <textarea
+                                                className="custom-scrollbar"
+                                                value={item.content}
+                                                onChange={(e) => handleItemChange(index, 'content', e.target.value)}
+                                                placeholder="Введіть розгорнуту відповідь..."
+                                                style={{
+                                                    ...commonStyles.textarea,
+                                                    minHeight: '100px',
+                                                    resize: 'vertical',
+                                                    lineHeight: '1.5'
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                            
-                            <div style={formGroupStyle}>
-                                <label style={labelStyle}>Вміст / Відповідь:</label>
-                                <textarea
-                                    ref={el => textareaRefs.current[index] = el}
-                                    value={item.content} 
-                                    onChange={(e) => {
-                                        handleItemChange(index, 'content', e.target.value);
-                                        autoResizeTextarea(e.target);
-                                    }} 
-                                    style={textareaStyle}
-                                />
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })}
                 </div>
-            ))}
 
-            <button 
-                type="button" 
-                onClick={handleAddItem}
-                style={{
-                    ...inputStyle,
-                    cursor: 'pointer',
-                    background: 'var(--platform-accent)',
-                    color: 'var(--platform-accent-text)',
-                    textAlign: 'center',
-                    fontWeight: 500
-                }}
-            >
-                ➕ Додати елемент
-            </button>
+                <Button 
+                    onClick={handleAddItem}
+                    style={{ width: '100%', marginTop: '16px' }}
+                    icon={<IconPlus size={18} />}
+                >
+                    Додати елемент
+                </Button>
+            </div>
         </div>
     );
 };

@@ -27,12 +27,13 @@ apiClient.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response;
       const message = data.message || 'Щось пішло не так';
-
       if (status === 401) {
         console.error("Термін дії сесії вийшов або токен недійсний.");
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-      } 
+      }
+      else if (error.config && error.config.suppressToast) {
+      }
       else if (status === 403) {
         toast.error(`Доступ заборонено: ${message}`);
       }
@@ -50,9 +51,13 @@ apiClient.interceptors.response.use(
          }
       }
     } else if (error.request) {
-      toast.error('Сервер не відповідає. Перевірте підключення до інтернету.');
+      if (!error.config?.suppressToast) {
+          toast.error('Сервер не відповідає. Перевірте підключення до інтернету.');
+      }
     } else {
-      toast.error(`Помилка: ${error.message}`);
+      if (!error.config?.suppressToast) {
+          toast.error(`Помилка: ${error.message}`);
+      }
     }
 
     return Promise.reject(error);

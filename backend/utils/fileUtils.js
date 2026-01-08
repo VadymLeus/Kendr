@@ -1,6 +1,8 @@
 // backend/utils/fileUtils.js
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
+const https = require('https');
 
 const ensureDirExists = async (dirPath) => {
     try {
@@ -32,4 +34,22 @@ const deleteFile = async (relativePath) => {
     }
 };
 
-module.exports = { ensureDirExists, deleteFile };
+const downloadImage = (url, destPath) => {
+    return new Promise((resolve, reject) => {
+        const file = fsSync.createWriteStream(destPath);
+        https.get(url, (response) => {
+            if (response.statusCode !== 200) {
+                return reject(new Error(`Failed to download image: status ${response.statusCode}`));
+            }
+            response.pipe(file);
+            file.on('finish', () => {
+                file.close(() => resolve(destPath));
+            });
+        }).on('error', (err) => {
+            fsSync.unlink(destPath, () => {});
+            reject(err);
+        });
+    });
+};
+
+module.exports = { ensureDirExists, deleteFile, downloadImage };

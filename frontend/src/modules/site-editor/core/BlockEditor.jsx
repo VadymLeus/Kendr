@@ -3,28 +3,11 @@ import React, { useState } from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../components/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../components/DraggableBlockItem';
-import { resolveAccentColor } from '../../../modules/site-dashboard/features/tabs/ThemeSettingsTab';
+import { resolveAccentColor, adjustColor, isLightColor } from '../../../common/utils/themeUtils';
 import ContextMenu from '../components/ContextMenu';
 import { findBlockByPath } from './blockUtils';
 import { useConfirm } from '../../../common/hooks/useConfirm';
-
-const adjustColor = (hex, percent) => {
-    const num = parseInt(hex.replace('#', ''), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-    const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
-    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-    return `#${(1 << 24 | R << 16 | G << 8 | B).toString(16).slice(1)}`;
-};
-
-const isLightColor = (hexColor) => {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    return brightness > 128;
-};
+import { IconBoxOpen } from '../../../common/components/ui/Icons';
 
 const BlockEditor = ({
     blocks,
@@ -205,7 +188,9 @@ const BlockEditor = ({
                         e.target.style.background = 'var(--platform-bg)';
                     }}
                 >
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
+                    <div style={{ marginBottom: '1rem', color: 'var(--platform-accent)', display: 'flex', justifyContent: 'center' }}>
+                        <IconBoxOpen size={48} />
+                    </div>
                     <h3 style={{ 
                         color: 'inherit', 
                         marginBottom: '0.5rem',

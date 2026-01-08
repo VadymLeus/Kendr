@@ -8,10 +8,15 @@ const FontLoader = ({ fontHeading, fontBody }) => {
     const getFontCss = (fontFamily, type) => {
         if (!fontFamily || fontFamily === 'global') return null;
 
-        const isCustomFont = fontFamily.includes('/uploads/') || fontFamily.includes('http');
+        const isCustomFont = fontFamily.includes('uploads') || fontFamily.includes('http');
 
         if (isCustomFont) {
-            const fontUrl = fontFamily.startsWith('http') ? fontFamily : `${API_URL}${fontFamily}`;
+            let fontUrl = fontFamily;
+            if (!fontFamily.startsWith('http')) {
+                const path = fontFamily.startsWith('/') ? fontFamily : `/${fontFamily}`;
+                fontUrl = `${API_URL}${path}`;
+            }
+            
             const fontName = `CustomFont-${type}`;
 
             let format = 'truetype';
@@ -22,6 +27,7 @@ const FontLoader = ({ fontHeading, fontBody }) => {
             return {
                 isCustom: true,
                 name: fontName,
+                link: null,
                 style: `
                     @font-face {
                         font-family: '${fontName}';
@@ -36,7 +42,8 @@ const FontLoader = ({ fontHeading, fontBody }) => {
             const cleanName = fontFamily.split(',')[0].replace(/['"]/g, '');
             return {
                 isCustom: false,
-                name: fontFamily,
+                name: cleanName,
+                style: null,
                 link: `https://fonts.googleapis.com/css2?family=${cleanName.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`
             };
         }
@@ -63,8 +70,8 @@ const FontLoader = ({ fontHeading, fontBody }) => {
 
             <style type="text/css">{`
                 :root {
-                    --font-heading: ${headingFont ? (headingFont.isCustom ? `'${headingFont.name}', sans-serif` : headingFont.name) : 'inherit'};
-                    --font-body: ${bodyFont ? (bodyFont.isCustom ? `'${bodyFont.name}', sans-serif` : bodyFont.name) : 'inherit'};
+                    --site-font-heading: ${headingFont ? `'${headingFont.name}', sans-serif` : 'inherit'};
+                    --site-font-body: ${bodyFont ? `'${bodyFont.name}', sans-serif` : 'inherit'};
                 }
             `}</style>
         </Helmet>

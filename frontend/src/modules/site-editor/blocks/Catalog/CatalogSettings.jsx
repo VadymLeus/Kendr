@@ -1,22 +1,11 @@
 // frontend/src/modules/site-editor/blocks/Catalog/CatalogSettings.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../../common/services/api';
-
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500', fontSize: '0.9rem' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.7rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '0.9rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box'
-};
-const checkboxRowStyle = {
-    display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem', cursor: 'pointer',
-    color: 'var(--platform-text-primary)', fontSize: '0.9rem'
-};
+import { commonStyles, ToggleSwitch, SectionTitle } from '../../components/common/SettingsUI';
+import CustomSelect from '../../../../common/components/ui/CustomSelect';
+import { Input } from '../../../../common/components/ui/Input';
+import RangeSlider from '../../../../common/components/ui/RangeSlider'; 
+import { IconType, IconGrid, IconList, IconLayers } from '../../../../common/components/ui/Icons';
 
 const CatalogSettings = ({ data, onChange, siteData }) => {
     const [categories, setCategories] = useState([]);
@@ -29,137 +18,110 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
         }
     }, [siteData?.id]);
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        
-        let newValue = value;
-
-        if (type === 'number' || name === 'columns') {
-            const num = parseInt(value, 10);
-            newValue = isNaN(num) || value.trim() === '' ? '' : num;
-        } else if (type === 'checkbox') {
-            newValue = checked;
-        }
-
-        onChange({ 
-            ...data, 
-            [name]: newValue 
-        });
+    const updateData = (updates) => {
+        onChange({ ...data, ...updates });
     };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        updateData({ [name]: value });
+    };
+
+    const handleSwitchChange = (name, val) => {
+        updateData({ [name]: val });
+    };
+
+    const sourceTypeOptions = [
+        { value: 'all', label: 'Весь магазин (Всі товари)' },
+        { value: 'category', label: 'З конкретної категорії' }
+    ];
+
+    const categoryOptions = [
+        { value: "", label: "-- Оберіть категорію --" },
+        ...categories.map(cat => ({ value: cat.id, label: cat.name }))
+    ];
 
     return (
         <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Заголовок блоку:</label>
-                <input 
-                    type="text" 
+            <div style={commonStyles.formGroup}>
+                <Input 
+                    label="Заголовок блоку"
                     name="title" 
                     value={data.title || ''} 
-                    onChange={handleChange} 
+                    onChange={handleInputChange} 
                     placeholder="Напр. Наш Каталог"
-                    style={inputStyle}
+                    leftIcon={<IconType size={16} />}
                 />
             </div>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Джерело товарів:</label>
-                <select 
+            <div style={commonStyles.formGroup}>
+                <label style={commonStyles.label}>Джерело товарів:</label>
+                <CustomSelect 
                     name="source_type" 
                     value={data.source_type || 'all'} 
-                    onChange={handleChange} 
-                    style={inputStyle}
-                >
-                    <option value="all">Весь магазин (Всі товари)</option>
-                    <option value="category">З конкретної категорії</option>
-                </select>
+                    onChange={(e) => updateData({ source_type: e.target.value })}
+                    options={sourceTypeOptions}
+                    style={commonStyles.input}
+                    leftIcon={<IconLayers size={16} />}
+                />
                 
                 {data.source_type === 'category' && (
                     <div style={{ marginTop: '10px' }}>
-                        <label style={{...labelStyle, fontSize: '0.8rem'}}>Оберіть кореневу категорію:</label>
-                        <select 
+                        <label style={{...commonStyles.label, fontSize: '0.8rem'}}>Оберіть кореневу категорію:</label>
+                        <CustomSelect 
                             name="root_category_id" 
                             value={data.root_category_id || ''} 
-                            onChange={handleChange} 
-                            style={inputStyle}
-                        >
-                            <option value="">-- Оберіть категорію --</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
+                            onChange={(e) => updateData({ root_category_id: e.target.value })}
+                            options={categoryOptions}
+                            style={commonStyles.input}
+                            leftIcon={<IconList size={16} />}
+                        />
                     </div>
                 )}
             </div>
 
-            <hr style={{margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
+            <SectionTitle>Інструменти для клієнта</SectionTitle>
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Інструменти для клієнта:</label>
-                <label style={checkboxRowStyle}>
-                    <input 
-                        type="checkbox" 
-                        name="show_search" 
-                        checked={data.show_search !== false} 
-                        onChange={handleChange} 
-                    />
-                    Показувати рядок пошуку
-                </label>
-                <label style={checkboxRowStyle}>
-                    <input 
-                        type="checkbox" 
-                        name="show_category_filter" 
-                        checked={data.show_category_filter !== false} 
-                        onChange={handleChange} 
-                    />
-                    Показувати фільтр категорій
-                </label>
-                <label style={checkboxRowStyle}>
-                    <input 
-                        type="checkbox" 
-                        name="show_sorting" 
-                        checked={data.show_sorting !== false} 
-                        onChange={handleChange} 
-                    />
-                    Показувати сортування
-                </label>
+            <ToggleSwitch 
+                checked={data.show_search !== false}
+                onChange={(val) => handleSwitchChange('show_search', val)}
+                label="Показувати рядок пошуку"
+            />
+            <ToggleSwitch 
+                checked={data.show_category_filter !== false}
+                onChange={(val) => handleSwitchChange('show_category_filter', val)}
+                label="Показувати фільтр категорій"
+            />
+            <ToggleSwitch 
+                checked={data.show_sorting !== false}
+                onChange={(val) => handleSwitchChange('show_sorting', val)}
+                label="Показувати сортування"
+            />
+
+            <SectionTitle>Налаштування відображення</SectionTitle>
+
+            <div style={commonStyles.formGroup}>
+                <RangeSlider 
+                    label="Товарів на одній сторінці"
+                    value={data.items_per_page || 12}
+                    min={4}
+                    max={100}
+                    step={4}
+                    onChange={(val) => updateData({ items_per_page: val })}
+                    unit="" 
+                />
             </div>
 
-            <hr style={{margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
-
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Налаштування відображення:</label>
-                
-                <div style={{marginBottom: '1rem'}}>
-                    <label style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', display: 'block', marginBottom: '4px'}}>
-                        Товарів на одній сторінці (4-100):
-                    </label>
-                    <input 
-                        type="number" 
-                        name="items_per_page" 
-                        min="4" max="100" 
-                        value={data.items_per_page === 0 ? '' : data.items_per_page || ''} 
-                        onChange={handleChange} 
-                        placeholder="12 (за замовчуванням)"
-                        style={inputStyle}
-                    />
-                </div>
-
-                <div>
-                    <label style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', display: 'block', marginBottom: '4px'}}>
-                        Кількість колонок (Desktop): {data.columns || 3}
-                    </label>
-                    <input 
-                        type="range" 
-                        name="columns" 
-                        min="1" max="6" 
-                        value={data.columns || 3} 
-                        onChange={handleChange} 
-                        style={{width: '100%', cursor: 'pointer'}}
-                    />
-                    <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--platform-text-secondary)'}}>
-                        <span>1</span><span>6</span>
-                    </div>
-                </div>
+            <div style={commonStyles.formGroup}>
+                <RangeSlider 
+                    label="Кількість колонок (Desktop)"
+                    value={data.columns || 3}
+                    min={1}
+                    max={6}
+                    step={1}
+                    onChange={(val) => updateData({ columns: val })}
+                    unit="" 
+                />
             </div>
         </div>
     );

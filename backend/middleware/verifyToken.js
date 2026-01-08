@@ -9,7 +9,7 @@ function verifyToken(req, res, next) {
         return res.status(401).json({ message: 'Доступ заборонено. Токен не надано.' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET || 'secret_key', (err, user) => {
         if (err) {
             return res.status(403).json({ message: 'Недійсний токен.' });
         }

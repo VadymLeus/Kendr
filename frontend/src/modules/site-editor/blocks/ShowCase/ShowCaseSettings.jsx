@@ -1,144 +1,158 @@
 // frontend/src/modules/site-editor/blocks/ShowCase/ShowCaseSettings.jsx
-import React, { useState, useEffect } from 'react';
-import apiClient from '../../../../common/services/api';
+import React, { useState } from 'react';
+import { commonStyles, SectionTitle, ToggleGroup } from '../../components/common/SettingsUI';
+import { Input } from '../../../../common/components/ui/Input';
+import { Button } from '../../../../common/components/ui/Button';
+import RangeSlider from '../../../../common/components/ui/RangeSlider';
 import ProductPickerModal from '../../../site-dashboard/components/ProductPickerModal';
+import { 
+    IconGrid, IconShoppingBag, IconType, IconList, IconLayers,
+    IconAlignLeft, IconAlignCenter, IconAlignRight
+} from '../../../../common/components/ui/Icons';
 
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500' 
-};
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '1rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box'
-};
-
-const ShowCaseSettings = ({ data, onChange, siteData }) => {
-    const [categories, setCategories] = useState([]);
+const ShowCaseSettings = ({ data, onChange, siteData }) => { 
     const [isPickerOpen, setIsPickerOpen] = useState(false);
+    
+    const updateData = (updates) => onChange({ ...data, ...updates });
 
-    useEffect(() => {
-        if (siteData?.id) {
-            apiClient.get(`/categories/site/${siteData.id}`)
-                .then(res => setCategories(res.data))
-                .catch(console.error);
-        }
-    }, [siteData?.id]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        onChange({ ...data, [name]: value });
-    };
-
-    const handleProductsSelected = (ids) => {
-        onChange({ ...data, selected_product_ids: ids });
+    const handleProductSelection = (ids) => {
+        updateData({ selected_product_ids: ids });
     };
 
     return (
-        <div>
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Заголовок вітрини:</label>
-                <input 
-                    type="text" 
-                    name="title" 
-                    value={data.title || ''} 
-                    onChange={handleChange} 
-                    placeholder="Напр. Хіти продажів"
-                    style={inputStyle}
-                />
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <ProductPickerModal 
+                isOpen={isPickerOpen}
+                onClose={() => setIsPickerOpen(false)}
+                onSave={handleProductSelection}
+                initialSelectedIds={data.selected_product_ids || []}
+                siteId={siteData?.id}
+            />
 
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Джерело товарів:</label>
-                <select 
-                    name="source_type" 
-                    value={data.source_type || 'category'} 
-                    onChange={handleChange} 
-                    style={inputStyle}
-                >
-                    <option value="category">Автоматично (з категорії)</option>
-                    <option value="manual">Вручну (вибір товарів)</option>
-                </select>
-            </div>
-
-            <hr style={{margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
-
-            {data.source_type === 'category' ? (
-                <>
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>Категорія:</label>
-                        <select 
-                            name="category_id" 
-                            value={data.category_id || 'all'} 
-                            onChange={handleChange} 
-                            style={inputStyle}
-                        >
-                            <option value="all">Всі категорії</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>Кількість товарів ({data.limit || 8}):</label>
-                        <input 
-                            type="range" 
-                            name="limit" 
-                            min="1" max="20" 
-                            value={data.limit || 8} 
-                            onChange={handleChange} 
-                            style={{width: '100%', cursor: 'pointer'}}
-                        />
-                        <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--platform-text-secondary)'}}>
-                            <span>1</span><span>20</span>
-                        </div>
-                    </div>
-                </>
-            ) : (
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Обрані товари:</label>
-                    <div style={{marginBottom: '1rem', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>
-                        Вибрано: {data.selected_product_ids?.length || 0}
-                    </div>
-                    <button 
-                        type="button" 
-                        onClick={() => setIsPickerOpen(true)}
-                        style={{
-                            width: '100%', padding: '10px', 
-                            background: 'var(--platform-accent)', color: 'white',
-                            border: 'none', borderRadius: '6px', cursor: 'pointer'
-                        }}
-                    >
-                        ➕ Обрати товари
-                    </button>
-                    
-                    <ProductPickerModal 
-                        isOpen={isPickerOpen}
-                        onClose={() => setIsPickerOpen(false)}
-                        onSave={handleProductsSelected}
-                        initialSelectedIds={data.selected_product_ids || []}
-                        siteId={siteData?.id}
+            <div>
+                <SectionTitle icon={<IconType size={18}/>}>Заголовок секції</SectionTitle>
+                <div style={commonStyles.formGroup}>
+                    <Input 
+                        value={data.title || ''}
+                        onChange={(e) => updateData({ title: e.target.value })}
+                        placeholder="Наприклад: Новинки"
                     />
                 </div>
-            )}
+            </div>
 
-            <hr style={{margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--platform-border-color)'}} />
-
-            <div style={formGroupStyle}>
-                <label style={labelStyle}>Кількість колонок ({data.columns || 4}):</label>
-                <input 
-                    type="range" 
-                    name="columns" 
-                    min="1" max="6" 
-                    value={data.columns || 4} 
-                    onChange={handleChange} 
-                    style={{width: '100%', cursor: 'pointer'}}
-                />
-                <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--platform-text-secondary)'}}>
-                    <span>1</span><span>6</span>
+            <div>
+                <SectionTitle icon={<IconGrid size={18}/>}>Макет сітки</SectionTitle>
+                
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Вирівнювання сітки</label>
+                    <ToggleGroup 
+                        options={[
+                            { value: 'flex-start', label: <IconAlignLeft size={18}/>, title: 'Зліва' },
+                            { value: 'center', label: <IconAlignCenter size={18}/>, title: 'По центру' },
+                            { value: 'flex-end', label: <IconAlignRight size={18}/>, title: 'Справа' },
+                        ]}
+                        value={data.alignment || 'center'}
+                        onChange={(val) => updateData({ alignment: val })}
+                    />
                 </div>
+
+                <div style={commonStyles.formGroup}>
+                    <RangeSlider 
+                        label="Кількість колонок (ПК)"
+                        value={data.columns || 4}
+                        min={1}
+                        max={6}
+                        step={1}
+                        onChange={(val) => updateData({ columns: val })}
+                        unit=""
+                    />
+                </div>
+
+                <div style={commonStyles.formGroup}>
+                    <RangeSlider 
+                        label="Відступ між товарами"
+                        value={data.gap || 20}
+                        min={0}
+                        max={60}
+                        step={4}
+                        onChange={(val) => updateData({ gap: val })}
+                        unit="px"
+                    />
+                </div>
+
+                <div style={commonStyles.formGroup}>
+                    <RangeSlider 
+                        label="Кількість товарів (Ліміт)"
+                        value={data.limit || 8}
+                        min={1}
+                        max={20}
+                        step={1}
+                        onChange={(val) => updateData({ limit: val })}
+                        unit=""
+                    />
+                </div>
+            </div>
+
+            <div>
+                <SectionTitle icon={<IconLayers size={18}/>}>Джерело товарів</SectionTitle>
+                
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Тип вибірки</label>
+                    <ToggleGroup 
+                        options={[
+                            { value: 'category', label: 'Категорія' },
+                            { value: 'manual', label: 'Вручну' },
+                        ]}
+                        value={data.source_type || 'category'}
+                        onChange={(val) => updateData({ source_type: val })}
+                    />
+                </div>
+
+                {data.source_type === 'manual' ? (
+                    <div style={commonStyles.formGroup}>
+                        <label style={commonStyles.label}>Вибір товарів</label>
+                    
+                        <div style={{ marginBottom: '12px' }}>
+                            <Button 
+                                variant="outline" 
+                                style={{ width: '100%', borderColor: 'var(--platform-accent)', color: 'var(--platform-accent)' }}
+                                icon={<IconShoppingBag size={16} />}
+                                onClick={() => setIsPickerOpen(true)}
+                            >
+                                Обрати товари зі списку
+                            </Button>
+                        </div>
+
+                        <label style={{...commonStyles.label, fontSize: '0.8rem', marginTop: '8px'}}>Або введіть ID вручну:</label>
+                        <Input 
+                            value={data.selected_product_ids ? data.selected_product_ids.join(',') : ''}
+                            onChange={(e) => updateData({ 
+                                selected_product_ids: e.target.value.split(',').map(id => id.trim()).filter(id => id) 
+                            })}
+                            placeholder="1, 5, 12..."
+                            leftIcon={<IconShoppingBag size={16}/>}
+                        />
+                        <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                            {data.selected_product_ids?.length > 0 
+                                ? `Обрано товарів: ${data.selected_product_ids.length}` 
+                                : 'Товари не обрано'}
+                        </small>
+                    </div>
+                ) : (
+                    <div style={commonStyles.formGroup}>
+                        <label style={commonStyles.label}>ID Категорії (0 = Всі)</label>
+                        <Input 
+                            type="number"
+                            value={data.category_id || ''}
+                            onChange={(e) => updateData({ category_id: e.target.value })}
+                            placeholder="Введіть ID категорії"
+                            leftIcon={<IconList size={16}/>}
+                        />
+                        <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                            Залиште порожнім або 0, щоб показати всі товари.
+                        </small>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -7,6 +7,7 @@ import CatalogSettings from './features/editor/settings/CatalogSettings';
 import TextSettings from './features/editor/settings/TextSettings';
 import HeroSettings from './features/editor/settings/HeroSettings';
 import AnimationSettings from './common/AnimationSettings';
+import { IconX } from '../../../../common/components/ui/Icons';
 
 const SettingsComponentMap = {
     banner: BannerSettings,
@@ -52,6 +53,7 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2000,
+        backdropFilter: 'blur(4px)'
     };
 
     const contentStyle = {
@@ -62,7 +64,7 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
         maxWidth: '700px',
         maxHeight: '90vh',
         overflowY: 'auto',
-        boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
         position: 'relative',
         border: '1px solid var(--site-border-color)'
     };
@@ -79,11 +81,14 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
     const closeButtonStyle = {
         background: 'transparent',
         border: 'none',
-        fontSize: '1.5rem',
         cursor: 'pointer',
-        padding: '0 10px',
+        padding: '4px',
+        borderRadius: '4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         color: 'var(--site-text-secondary)',
-        transition: 'color 0.2s ease'
+        transition: 'all 0.2s ease'
     };
 
     const warningTextStyle = {
@@ -112,7 +117,7 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
     const buttonStyle = {
         padding: '10px 20px',
         border: 'none',
-        borderRadius: '4px',
+        borderRadius: '6px',
         cursor: 'pointer',
         fontSize: '14px',
         fontWeight: '500',
@@ -121,7 +126,7 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
 
     const secondaryButtonStyle = {
         ...buttonStyle,
-        background: 'var(--site-card-bg)',
+        background: 'transparent',
         color: 'var(--site-text-primary)',
         border: '1px solid var(--site-border-color)'
     };
@@ -129,7 +134,8 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
     const primaryButtonStyle = {
         ...buttonStyle,
         background: 'var(--site-accent)',
-        color: 'var(--site-accent-text)'
+        color: 'var(--site-accent-text)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     };
 
     return (
@@ -148,13 +154,15 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
                         onClick={onClose} 
                         style={closeButtonStyle}
                         onMouseEnter={(e) => {
-                            e.target.style.color = 'var(--site-accent)';
+                            e.currentTarget.style.background = 'rgba(0,0,0,0.05)';
+                            e.currentTarget.style.color = 'var(--site-text-primary)';
                         }}
                         onMouseLeave={(e) => {
-                            e.target.style.color = 'var(--site-text-secondary)';
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--site-text-secondary)';
                         }}
                     >
-                        &times;
+                        <IconX size={20} />
                     </button>
                 </div>
                 
@@ -166,7 +174,6 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
                             onClose={onClose}
                             siteData={siteData}
                         />
-                        
                         <AnimationSettings 
                             animationConfig={animationConfig} 
                             onChange={setAnimationConfig} 
@@ -190,12 +197,16 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
                             <button 
                                 onClick={onClose}
                                 style={secondaryButtonStyle}
+                                onMouseEnter={(e) => e.target.style.background = 'rgba(0,0,0,0.02)'}
+                                onMouseLeave={(e) => e.target.style.background = 'transparent'}
                             >
                                 Закрити
                             </button>
                             <button
                                 onClick={() => handleInternalSave(block.data)}
                                 style={primaryButtonStyle}
+                                onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+                                onMouseLeave={(e) => e.target.style.opacity = '1'}
                             >
                                 Зберегти
                             </button>

@@ -1,5 +1,5 @@
 // backend/models/Category.js
-const db = require('../db');
+const db = require('../config/db');
 
 class Category {
     static async findBySiteId(siteId) {
@@ -29,17 +29,17 @@ class Category {
         }
     }
 
-    static async create(siteId, name, discount_percentage = 0) {
+    static async create(siteId, name, discount_percentage = 0, icon = 'folder') {
         try {
             if (!name || name.trim().length === 0) {
                 throw new Error('Назва категорії не може бути порожньою.');
             }
 
             const [result] = await db.query(
-                'INSERT INTO categories (site_id, name, discount_percentage) VALUES (?, ?, ?)',
-                [siteId, name.trim(), discount_percentage]
+                'INSERT INTO categories (site_id, name, discount_percentage, icon) VALUES (?, ?, ?, ?)',
+                [siteId, name.trim(), discount_percentage, icon]
             );
-            return { id: result.insertId, site_id: siteId, name: name.trim(), discount_percentage };
+            return { id: result.insertId, site_id: siteId, name: name.trim(), discount_percentage, icon };
         } catch (error) {
             if (error.code === 'ER_DUP_ENTRY') {
                 throw new Error('Категорія з такою назвою вже існує для цього сайту.');
@@ -48,15 +48,15 @@ class Category {
         }
     }
 
-    static async update(categoryId, name, discount_percentage = 0) {
+    static async update(categoryId, name, discount_percentage = 0, icon = 'folder') {
         try {
             if (!name || name.trim().length === 0) {
                 throw new Error('Назва категорії не може бути порожньою.');
             }
 
             const [result] = await db.query(
-                'UPDATE categories SET name = ?, discount_percentage = ? WHERE id = ?',
-                [name.trim(), discount_percentage, categoryId]
+                'UPDATE categories SET name = ?, discount_percentage = ?, icon = ? WHERE id = ?',
+                [name.trim(), discount_percentage, icon, categoryId]
             );
             
             if (result.affectedRows === 0) {

@@ -6,149 +6,123 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { resolveSiteLink } from '../../../../common/utils/linkUtils';
+import { IconImage } from '../../../../common/components/ui/Icons';
 
 const API_URL = 'http://localhost:5000';
 
 const formatBorderRadius = (radius) => {
     if (!radius) return '0px';
-    if (String(radius).match(/^[0-9]+$/)) { 
-        return `${radius}px`;
-    }
-    return radius; 
+    return String(radius).match(/^[0-9]+$/) ? `${radius}px` : radius;
 };
 
 const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
-    
-    const siteBg = 'var(--site-bg)';
-    const siteBorderColor = 'var(--site-border-color)';
-    const siteAccent = 'var(--site-accent)';
-    const siteTextSecondary = 'var(--site-text-secondary)';
-
-    const isOldStructure = !blockData.mode && blockData.imageUrl;
-    
-    const mode = isOldStructure ? 'single' : blockData.mode || 'single';
-    const items = (isOldStructure || !Array.isArray(blockData.items) || blockData.items.length === 0)
-        ? [{ id: 'compat1', src: blockData.imageUrl, alt: blockData.alt }]
-        : blockData.items;
-
     const { 
         objectFit = 'contain',
         borderRadius = '0px', 
         link, 
         targetBlank,
-        width = 'medium'
+        width = 'medium',
+        mode = 'single',
+        items = []
     } = blockData;
-    
+
+    const effectiveItems = (blockData.imageUrl && items.length === 0) 
+        ? [{ id: 'legacy', src: blockData.imageUrl }] 
+        : items;
+
     const settings_slider = blockData.settings_slider || { navigation: true, pagination: true, autoplay: false, loop: true };
     const settings_grid = blockData.settings_grid || { columns: 3 };
 
-    const imgStyle = {
-        maxWidth: '100%',
+    const commonImgStyle = {
         width: '100%', 
         height: '100%',
         display: 'block',
         objectFit: objectFit,
-        borderRadius: formatBorderRadius(borderRadius)
+        borderRadius: formatBorderRadius(borderRadius),
+        transition: 'opacity 0.3s ease'
     };
 
-    const renderImage = (item) => {
+    const renderImage = (item, customStyle = {}) => {
         if (!item || !item.src) return null;
         const fullUrl = item.src.startsWith('http') ? item.src : `${API_URL}${item.src}`;
-        return <img src={fullUrl} alt={item.alt || ''} style={imgStyle} />;
+        return (
+            <img 
+                src={fullUrl} 
+                alt={item.alt || ''} 
+                style={{ ...commonImgStyle, ...customStyle }} 
+                loading="lazy"
+            />
+        );
     };
 
-    const renderSingle = () => {
-        const item = items[0];
-        if (!item || !item.src) {
-             return isEditorPreview ? (
-                 <div style={{
-                     padding: '3rem', 
-                     textAlign: 'center', 
-                     background: siteBg, 
-                     border: `1px dashed ${siteBorderColor}`,
-                     borderRadius: formatBorderRadius(borderRadius),
-                     aspectRatio: '16/9',
-                     color: siteTextSecondary
-                 }}>
-                     Оберіть зображення в налаштуваннях
-                 </div>
-             ) : null;
-        }
-        
-        const containerStyles = {
-            width: '100%',
-            height: 'auto',
-            overflow: 'hidden',
+    const Placeholder = () => (
+        <div style={{
+            padding: '3rem', 
+            textAlign: 'center', 
+            background: 'var(--site-card-bg, #f9f9f9)', 
+            border: `1px dashed var(--site-border-color, #ccc)`,
             borderRadius: formatBorderRadius(borderRadius),
-            display: 'block',
-            lineHeight: 0
-        };
+            color: 'var(--site-text-secondary)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            minHeight: '200px' 
+        }}>
+            <div style={{ opacity: 0.4, color: 'var(--site-text-primary)' }}>
+                <IconImage size={64} />
+            </div>
+            <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                Зображення не вибрано
+            </div>
+        </div>
+    );
 
-        const singleImgStyle = {
-            ...imgStyle,
-            height: 'auto',
-            aspectRatio: 'none'
-        };
+    const renderSingle = () => {
+        const item = effectiveItems[0];
         
-        const imageToRender = <img src={item.src.startsWith('http') ? item.src : `${API_URL}${item.src}`} alt={item.alt || ''} style={singleImgStyle} />;
+        if (!item?.src) return isEditorPreview ? <Placeholder /> : null;
 
-        if (mode === 'single' && link) {
+        const content = renderImage(item, { height: 'auto' });
+
+        if (link && !isEditorPreview) {
             const finalLink = resolveSiteLink(link, siteData?.site_path);
-            
             return (
                 <a 
                     href={finalLink} 
                     target={targetBlank ? '_blank' : '_self'} 
                     rel={targetBlank ? 'noopener noreferrer' : ''}
-                    onClick={isEditorPreview ? (e) => e.preventDefault() : undefined}
-                    style={containerStyles}
+                    style={{ display: 'block', lineHeight: 0 }}
                 >
-                    {imageToRender}
+                    {content}
                 </a>
             );
         }
-        return <div style={containerStyles}>{imageToRender}</div>;
+        return <div style={{ lineHeight: 0 }}>{content}</div>;
     };
 
     const renderSlider = () => {
-        const settings = settings_slider;
-        const paginationProp = settings.pagination ? { clickable: true } : false;
-        const autoplayProp = settings.autoplay ? { delay: 3000, disableOnInteraction: false } : false;
-        
-        const accentColor = siteAccent; 
-
-        const swiperNavStyles = `
-            .my-block-swiper-${blockData.block_id} .swiper-button-next,
-            .my-block-swiper-${blockData.block_id} .swiper-button-prev {
-                color: ${accentColor};
-            }
-            .my-block-swiper-${blockData.block_id} .swiper-pagination-bullet-active {
-                background: ${accentColor};
-            }
-        `;
-        
-        const swiperWrapperStyle = isEditorPreview ? {
-            border: `2px dashed ${siteBorderColor}`,
-            padding: '1rem',
-            background: siteBg,
-        } : {};
+        if (effectiveItems.length === 0) return renderSingle();
 
         return (
-            <div style={swiperWrapperStyle}>
-                <style>{swiperNavStyles}</style>
+            <div className={`swiper-container-wrapper my-block-swiper-${blockData.block_id}`}>
+                <style>{`
+                    .my-block-swiper-${blockData.block_id} .swiper-button-next,
+                    .my-block-swiper-${blockData.block_id} .swiper-button-prev { color: var(--site-accent); }
+                    .my-block-swiper-${blockData.block_id} .swiper-pagination-bullet-active { background: var(--site-accent); }
+                `}</style>
                 <Swiper
                     modules={[Navigation, Pagination, Autoplay]}
-                    navigation={settings.navigation}
-                    pagination={paginationProp}
-                    loop={settings.loop}
-                    autoplay={autoplayProp}
-                    className={`my-block-swiper-${blockData.block_id}`}
-                    allowTouchMove={!isEditorPreview} 
-                    style={{'--swiper-navigation-size': '20px', borderRadius: formatBorderRadius(borderRadius), overflow: 'hidden'}}
+                    navigation={settings_slider.navigation}
+                    pagination={settings_slider.pagination ? { clickable: true } : false}
+                    loop={settings_slider.loop && effectiveItems.length > 1}
+                    autoplay={settings_slider.autoplay ? { delay: 3000 } : false}
+                    style={{ borderRadius: formatBorderRadius(borderRadius), overflow: 'hidden' }}
                 >
-                    {items.map(item => (
-                        <SwiperSlide key={item.id}>
-                            <div style={{ aspectRatio: '16 / 9', width: '100%', overflow: 'hidden', borderRadius: formatBorderRadius(borderRadius) }}>
+                    {effectiveItems.map((item, idx) => (
+                        <SwiperSlide key={item.id || idx}>
+                            <div style={{ aspectRatio: '16 / 9', background: 'var(--site-card-bg, #eee)' }}>
                                 {renderImage(item)}
                             </div>
                         </SwiperSlide>
@@ -159,85 +133,40 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
     };
 
     const renderGrid = () => {
-        const gridWrapperStyle = isEditorPreview ? {
-            border: `2px dashed ${siteBorderColor}`,
-            padding: '1rem',
-            background: siteBg,
-        } : {};
-        
-        const columns = settings_grid.columns || 3;
-        const gap = '15px';
-        
-        const itemRelativeWidth = `calc((100% - ${columns - 1} * ${gap}) / ${columns})`;
-        
+        if (effectiveItems.length === 0) return renderSingle();
+        const cols = settings_grid.columns || 3;
+
         return (
-             <div style={{
-                 ...gridWrapperStyle,
-                 padding: isEditorPreview ? '1rem 0 0 0' : '0' 
-             }}>
-                 {isEditorPreview && (
-                     <p style={{textAlign: 'center', color: siteTextSecondary, fontWeight: 'bold', margin: '0 0 1rem 0'}}>
-                         [Сітка: {columns} колонки]
-                     </p>
-                 )}
-                 
-                 <div style={{ 
-                     display: 'flex', 
-                     flexWrap: 'wrap', 
-                     gap: gap, 
-                     justifyContent: 'center',
-                     width: '100%',
-                     margin: '0 auto' 
-                 }}>
-                     {items.map(item => (
-                         <div key={item.id} style={{
-                             width: itemRelativeWidth, 
-                             aspectRatio: '1 / 1', 
-                             overflow: 'hidden', 
-                             borderRadius: formatBorderRadius(borderRadius)
-                         }}>
-                             {renderImage(item)}
-                         </div>
-                     ))}
-                 </div>
-             </div>
+            <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: `repeat(${cols}, 1fr)`, 
+                gap: '16px' 
+            }}>
+                {effectiveItems.map((item, idx) => (
+                    <div key={item.id || idx} style={{ 
+                        aspectRatio: '1 / 1', 
+                        overflow: 'hidden', 
+                        borderRadius: formatBorderRadius(borderRadius),
+                        background: 'var(--site-card-bg, #eee)'
+                    }}>
+                        {renderImage(item, { objectFit: 'cover' })}
+                    </div>
+                ))}
+            </div>
         );
     };
 
-    let content;
-    switch (mode) {
-        case 'slider': 
-            content = renderSlider(); 
-            break;
-        case 'grid': 
-            content = renderGrid(); 
-            break;
-        case 'single':
-        default: 
-            content = renderSingle(); 
-            break;
-    }
-
-    const widthMap = {
-        'small': '400px',
-        'medium': '700px',
-        'large': '1000px',
-        'full': '100%'
-    };
-
-    const blockContainerStyle = {
-        width: '100%',
-        maxWidth: widthMap[width] || '700px',
-        margin: '0 auto',
-        padding: 0,
-        ...style
-    };
+    const widthMap = { 'small': '400px', 'medium': '700px', 'large': '1000px', 'full': '100%' };
 
     return (
-        <div style={{ padding: '20px 0' }}> 
-            <div style={blockContainerStyle}>
-                {content}
-            </div>
+        <div style={{ 
+            width: '100%', 
+            maxWidth: widthMap[width] || '700px', 
+            margin: '0 auto', 
+            padding: '20px 0',
+            ...style 
+        }}>
+            {mode === 'slider' ? renderSlider() : mode === 'grid' ? renderGrid() : renderSingle()}
         </div>
     );
 };

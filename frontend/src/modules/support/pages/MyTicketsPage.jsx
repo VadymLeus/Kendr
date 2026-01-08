@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../common/services/api';
+import { Button } from '../../../common/components/ui/Button';
+import { IconPlus, IconMessageSquare, IconLoader } from '../../../common/components/ui/Icons';
+import { Helmet } from 'react-helmet-async';
 
 const MyTicketsPage = () => {
     const [tickets, setTickets] = useState([]);
@@ -22,16 +25,24 @@ const MyTicketsPage = () => {
         fetchTickets();
     }, []);
 
-    const getStatusStyle = (status) => {
+    const getStatusBadge = (status) => {
+        const baseStyle = {
+            padding: '4px 10px',
+            borderRadius: '20px',
+            fontSize: '0.8rem',
+            fontWeight: '600',
+            textTransform: 'uppercase'
+        };
+
         switch (status) {
             case 'open':
-                return { color: 'var(--platform-warning)', fontWeight: 'bold' };
+                return <span style={{ ...baseStyle, background: 'rgba(221, 107, 32, 0.1)', color: 'var(--platform-warning)' }}>Відкрито</span>;
             case 'answered':
-                return { color: 'var(--platform-success)', fontWeight: 'bold' };
+                return <span style={{ ...baseStyle, background: 'rgba(56, 161, 105, 0.1)', color: 'var(--platform-success)' }}>Є відповідь</span>;
             case 'closed':
-                return { color: 'var(--platform-text-secondary)', fontWeight: 'bold' };
+                return <span style={{ ...baseStyle, background: 'var(--platform-bg)', color: 'var(--platform-text-secondary)', border: '1px solid var(--platform-border-color)' }}>Закрито</span>;
             default:
-                return {};
+                return null;
         }
     };
 
@@ -45,7 +56,9 @@ const MyTicketsPage = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '2rem'
+        marginBottom: '2rem',
+        flexWrap: 'wrap',
+        gap: '1rem'
     };
 
     const ticketLinkStyle = {
@@ -59,21 +72,12 @@ const MyTicketsPage = () => {
         color: 'inherit',
         background: 'var(--platform-card-bg)',
         transition: 'all 0.2s ease',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-    };
-
-    const ticketLinkHoverStyle = {
-        transform: 'translateY(-2px)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
+        marginBottom: '1rem'
     };
 
     if (loading) return (
-        <div style={{ 
-            padding: '2rem', 
-            textAlign: 'center', 
-            color: 'var(--platform-text-secondary)' 
-        }}>
-            Завантаження звернень...
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+            <IconLoader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)' }} />
         </div>
     );
     
@@ -84,7 +88,8 @@ const MyTicketsPage = () => {
             padding: '1rem',
             borderRadius: '8px',
             textAlign: 'center',
-            margin: '2rem'
+            margin: '2rem',
+            border: '1px solid #ffccc7'
         }}>
             {error}
         </div>
@@ -92,66 +97,83 @@ const MyTicketsPage = () => {
 
     return (
         <div style={containerStyle}>
+            <Helmet>
+                <title>Мої звернення | Kendr</title>
+            </Helmet>
+
             <div style={headerStyle}>
-                <h1 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>
-                    Мої звернення
-                </h1>
-                <Link to="/support/new-ticket">
-                    <button className="btn btn-primary">
-                        Створити нове звернення
-                    </button>
+                <div>
+                    <h1 style={{ color: 'var(--platform-text-primary)', margin: '0 0 0.5rem 0', fontSize: '2rem' }}>
+                        Мої звернення
+                    </h1>
+                    <p style={{ color: 'var(--platform-text-secondary)', margin: 0 }}>
+                        Історія вашої комунікації з підтримкою
+                    </p>
+                </div>
+                <Link to="/support/new-ticket" style={{ textDecoration: 'none' }}>
+                    <Button variant="primary" icon={<IconPlus size={18}/>}>
+                        Нове звернення
+                    </Button>
                 </Link>
             </div>
             
             {tickets.length === 0 ? (
                 <div style={{ 
                     textAlign: 'center', 
-                    padding: '3rem',
+                    padding: '4rem 2rem',
                     background: 'var(--platform-card-bg)',
-                    borderRadius: '12px',
+                    borderRadius: '16px',
                     border: '1px solid var(--platform-border-color)'
                 }}>
-                    <p style={{ 
-                        color: 'var(--platform-text-secondary)',
-                        marginBottom: '1.5rem'
-                    }}>
-                        У вас ще немає звернень до підтримки.
+                    <div style={{ color: 'var(--platform-text-secondary)', marginBottom: '1.5rem' }}>
+                        <IconMessageSquare size={48} />
+                    </div>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
+                        У вас ще немає звернень
+                    </h3>
+                    <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '2rem' }}>
+                        Якщо у вас виникли питання або проблеми, створіть тікет.
                     </p>
-                    <Link to="/support/new-ticket">
-                        <button className="btn btn-primary">
+                    <Link to="/support/new-ticket" style={{ textDecoration: 'none' }}>
+                        <Button variant="primary">
                             Створити перше звернення
-                        </button>
+                        </Button>
                     </Link>
                 </div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
                     {tickets.map(ticket => (
                         <Link 
                             to={`/support/ticket/${ticket.id}`} 
                             key={ticket.id} 
                             style={ticketLinkStyle}
-                            onMouseEnter={(e) => Object.assign(e.currentTarget.style, ticketLinkHoverStyle)}
-                            onMouseLeave={(e) => Object.assign(e.currentTarget.style, ticketLinkStyle)}
+                            className="hover-card-effect"
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
+                                e.currentTarget.style.borderColor = 'var(--platform-accent)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'none';
+                                e.currentTarget.style.boxShadow = 'none';
+                                e.currentTarget.style.borderColor = 'var(--platform-border-color)';
+                            }}
                         >
                             <div>
                                 <h3 style={{ 
                                     margin: '0 0 0.5rem 0', 
-                                    color: 'var(--platform-text-primary)' 
+                                    color: 'var(--platform-text-primary)',
+                                    fontSize: '1.1rem'
                                 }}>
                                     {ticket.subject}
                                 </h3>
-                                <small style={{ 
-                                    color: 'var(--platform-text-secondary)',
-                                    fontSize: '0.9rem'
-                                }}>
+                                <small style={{ color: 'var(--platform-text-secondary)' }}>
                                     Створено: {new Date(ticket.created_at).toLocaleString()}
                                 </small>
                             </div>
-                            <span style={getStatusStyle(ticket.status)}>
-                                {ticket.status === 'open' && 'Відкрито'}
-                                {ticket.status === 'answered' && 'Є відповідь'}
-                                {ticket.status === 'closed' && 'Закрито'}
-                            </span>
+                            <div>
+                                {getStatusBadge(ticket.status)}
+                            </div>
                         </Link>
                     ))}
                 </div>

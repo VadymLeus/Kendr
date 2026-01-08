@@ -1,4 +1,4 @@
-// frontend/src/common/components/layout/Layout.jsx
+// frontend/src/common/components/layout/Footer.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { useLocation, Outlet } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
@@ -6,31 +6,13 @@ import PlatformSidebar from './PlatformSidebar';
 import AdminSidebar from './AdminSidebar';
 import SiteHeader from './SiteHeader';
 import Footer from './Footer';
+import TitleManager from './TitleManager';
 import apiClient from '../../services/api';
-import { FONT_LIBRARY } from '../../../modules/site-editor/core/editorConfig';
-import { resolveAccentColor } from '../../../modules/site-dashboard/features/tabs/ThemeSettingsTab';
+import { resolveAccentColor, isLightColor, adjustColor } from '../../utils/themeUtils';
 import FontLoader from '../../../modules/site-render/components/FontLoader';
 
-const EXPANDED_SIDEBAR_WIDTH = '220px';
+const EXPANDED_SIDEBAR_WIDTH = '280px';
 const COLLAPSED_SIDEBAR_WIDTH = '80px';
-
-const adjustColor = (hex, percent) => {
-    const num = parseInt(hex.replace('#', ''), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-    const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
-    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-    return `#${(1 << 24 | R << 16 | G << 8 | B).toString(16).slice(1)}`;
-};
-
-const isLightColor = (hexColor) => {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    return brightness > 128;
-};
 
 const Layout = () => {
     const { user, isAdmin, isLoading: isAuthLoading } = useContext(AuthContext);
@@ -41,9 +23,9 @@ const Layout = () => {
     });
 
     const location = useLocation();
-
     const [siteData, setSiteData] = useState(null);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
+
     const currentSidebarWidth = isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
 
     const handleToggleSidebar = () => {
@@ -54,12 +36,18 @@ const Layout = () => {
         });
     };
 
+    useEffect(() => {
+        document.documentElement.style.setProperty('--sidebar-width', currentSidebarWidth);
+    }, [currentSidebarWidth]);
+
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
     const productMatch = location.pathname.match(/^\/product\/([^/]+)/);
     
+    const mediaLibraryMatch = location.pathname === '/media-library';
+
     const shouldShowSiteHeader = !!(publicMatch || productMatch);
-    const shouldShowFooter = !isAdmin && !dashboardMatch && !publicMatch && !productMatch;
+    const shouldShowFooter = !isAdmin && !dashboardMatch && !publicMatch && !productMatch && !mediaLibraryMatch;
     
     useEffect(() => {
         const fetchSiteData = async () => {
@@ -122,8 +110,6 @@ const Layout = () => {
         );
     }
 
-    document.documentElement.style.setProperty('--sidebar-width', currentSidebarWidth);
-    
     const themeSettings = siteData?.theme_settings || {};
     const isPublicPage = !!(publicMatch || productMatch);
     
@@ -135,7 +121,7 @@ const Layout = () => {
     const siteAccentText = isLightColor(siteAccentHex) ? '#000000' : '#ffffff';
 
     const mainStyles = {
-        padding: (dashboardMatch || isPublicPage) ? 0 : '2rem', 
+        padding: (dashboardMatch || isPublicPage || location.pathname === '/settings') ? 0 : '2rem', 
         flexGrow: 1,
         '--site-accent': siteAccentHex,
         '--site-accent-hover': siteAccentHover,
@@ -171,12 +157,14 @@ const Layout = () => {
     }
 
     const layoutContentStyle = {
-        overflowY: dashboardMatch ? 'hidden' : 'auto',
+        overflowY: (dashboardMatch || mediaLibraryMatch) ? 'hidden' : 'auto',
         width: '100%'
     };
     
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
+            <TitleManager siteData={siteData} key={location.pathname} />
+
             {isAdmin ? (
                 <AdminSidebar isCollapsed={isCollapsed} onToggle={handleToggleSidebar} />
             ) : (

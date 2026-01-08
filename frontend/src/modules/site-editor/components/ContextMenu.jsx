@@ -1,5 +1,6 @@
 // frontend/src/modules/site-editor/components/ContextMenu.jsx
 import React, { useEffect, useRef } from 'react';
+import { IconSettings, IconCopy, IconArrowUp, IconArrowDown, IconTrash } from "../../../common/components/ui/Icons";
 
 const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
     const menuRef = useRef(null);
@@ -33,15 +34,16 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
         top: y,
         left: x,
         zIndex: 9999,
-        backgroundColor: '#2d3748',
-        color: '#fff',
+        backgroundColor: 'var(--platform-card-bg)',
+        color: 'var(--platform-text-primary)',
         borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         padding: '6px 0',
         minWidth: '180px',
         display: 'flex',
         flexDirection: 'column',
-        animation: 'fadeIn 0.1s ease-out'
+        animation: 'fadeIn 0.1s ease-out',
+        border: '1px solid var(--platform-border-color)'
     };
 
     if (y + 250 > window.innerHeight) {
@@ -66,7 +68,7 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
     };
 
     const hoverHandler = (e) => {
-        e.currentTarget.style.backgroundColor = '#4a5568';
+        e.currentTarget.style.backgroundColor = 'var(--platform-bg)';
     };
     
     const unhoverHandler = (e) => {
@@ -75,6 +77,12 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
 
     const deleteHoverHandler = (e) => {
         e.currentTarget.style.backgroundColor = '#e53e3e';
+        e.currentTarget.style.color = '#fff';
+    };
+
+    const deleteUnhoverHandler = (e) => {
+        e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.color = 'inherit';
     };
 
     return (
@@ -85,7 +93,7 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={hoverHandler}
                 onMouseLeave={unhoverHandler}
             >
-                ⚙️ Налаштувати
+                <IconSettings size={16} /> Налаштувати
             </button>
             
             <button 
@@ -94,10 +102,10 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={hoverHandler}
                 onMouseLeave={unhoverHandler}
             >
-                📋 Дублювати
+                <IconCopy size={16} /> Дублювати
             </button>
 
-            <div style={{ height: '1px', background: '#4a5568', margin: '4px 0' }} />
+            <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
 
             <button 
                 style={itemStyle} 
@@ -105,7 +113,7 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={hoverHandler}
                 onMouseLeave={unhoverHandler}
             >
-                ⬆️ Вгору
+                <IconArrowUp size={16} /> Вгору
             </button>
             <button 
                 style={itemStyle} 
@@ -113,18 +121,18 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={hoverHandler}
                 onMouseLeave={unhoverHandler}
             >
-                ⬇️ Вниз
+                <IconArrowDown size={16} /> Вниз
             </button>
 
-            <div style={{ height: '1px', background: '#4a5568', margin: '4px 0' }} />
+            <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
 
             <button 
                 style={itemStyle} 
                 onClick={() => onAction('delete')}
                 onMouseEnter={deleteHoverHandler}
-                onMouseLeave={unhoverHandler}
+                onMouseLeave={deleteUnhoverHandler}
             >
-                ❌ Видалити
+                <IconTrash size={16} /> Видалити
             </button>
             
             <style>{`

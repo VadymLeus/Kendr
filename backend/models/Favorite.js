@@ -1,5 +1,5 @@
 // backend/models/Favorite.js
-const db = require('../db');
+const db = require('../config/db');
 
 class Favorite {
     static async add(userId, siteId) {

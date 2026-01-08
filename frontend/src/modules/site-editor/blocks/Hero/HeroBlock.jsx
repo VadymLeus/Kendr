@@ -17,9 +17,13 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
         height = 'medium', 
         fontFamily, 
         theme_mode = 'auto', 
-        overlay_opacity = 0,
-        overlay_color = 'rgba(0, 0, 0, 0.5)'
+        overlay_opacity,
+        overlay_color = '#000000' 
     } = blockData;
+
+    const safeOpacity = (overlay_opacity === undefined || isNaN(Number(overlay_opacity))) 
+        ? 0.5 
+        : Number(overlay_opacity);
 
     let themeClass = '';
     if (theme_mode === 'dark') themeClass = 'block-theme-dark';
@@ -55,7 +59,8 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
         alignItems: 'center',
         justifyContent: alignMap[alignment] || 'center',
         boxSizing: 'border-box',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        ...style 
     };
 
     const contentStyle = {
@@ -86,10 +91,10 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
 
     const ButtonComponent = isEditorPreview ? 'span' : Link;
     const buttonProps = isEditorPreview ? {} : { to: button_link || '#' };
+    const isTransparent = overlay_color === 'transparent';
 
     return (
         <div style={containerStyle} className={themeClass}>
-            
             <div style={{
                 position: 'absolute', 
                 inset: 0, 
@@ -120,20 +125,16 @@ const HeroBlock = ({ blockData, isEditorPreview, style }) => {
                 )}
             </div>
 
-            <div style={{
-                position: 'absolute', 
-                inset: 0,
-                backgroundColor: '#000',
-                opacity: overlay_opacity, 
-                zIndex: 1
-            }}></div>
-            
-            <div style={{
-                position: 'absolute', 
-                inset: 0,
-                backgroundColor: overlay_color,
-                zIndex: 1
-            }}></div>
+            {!isTransparent && (
+                <div style={{
+                    position: 'absolute', 
+                    inset: 0,
+                    backgroundColor: overlay_color,
+                    opacity: safeOpacity,
+                    zIndex: 1,
+                    transition: 'background-color 0.3s, opacity 0.3s'
+                }}></div>
+            )}
 
             <div style={contentStyle}>
                 {title && <h1 style={{ 

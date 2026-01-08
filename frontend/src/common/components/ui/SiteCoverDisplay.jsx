@@ -4,14 +4,8 @@ import React from 'react';
 const API_URL = 'http://localhost:5000';
 
 const PRESET_COLORS = {
-    green: '#48bb78',
-    orange: '#ed8936',
-    blue: '#4299e1',
-    red: '#f56565',
-    purple: '#9f7aea',
-    yellow: '#ecc94b',
-    gray: '#718096',
-    black: '#000000',
+    green: '#48bb78', orange: '#ed8936', blue: '#4299e1', red: '#f56565',
+    purple: '#9f7aea', yellow: '#ecc94b', gray: '#718096', black: '#000000',
 };
 
 const SiteCoverDisplay = ({ site, style, className }) => {
@@ -24,6 +18,10 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         site_theme_mode = 'light'
     } = site;
 
+    const logoSize = parseInt(site.cover_logo_size) || 80;
+    const logoRadius = parseInt(site.cover_logo_radius) || 0;
+    const titleSize = parseInt(site.cover_title_size) || 24;
+
     const fullCoverImage = cover_image 
         ? (cover_image.startsWith('http') ? cover_image : `${API_URL}${cover_image}`) 
         : null;
@@ -34,7 +32,7 @@ const SiteCoverDisplay = ({ site, style, className }) => {
 
     const accentColor = PRESET_COLORS[site_theme_accent] || site_theme_accent || '#ed8936';
     const isDark = site_theme_mode === 'dark';
-
+    
     const wrapperStyle = {
         width: '100%',
         height: '100%',
@@ -45,9 +43,9 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         justifyContent: 'center',
         padding: '20px',
         boxSizing: 'border-box',
-        backgroundColor: isDark ? '#2d3748' : '#f7fafc',
+        background: isDark ? '#2d3748' : '#f7fafc',
         color: isDark ? '#fff' : '#1a202c',
-        transition: 'all 0.3s ease',
+        transition: 'background 0.3s ease',
         ...style
     };
 
@@ -57,12 +55,7 @@ const SiteCoverDisplay = ({ site, style, className }) => {
                 <img 
                     src={fullCoverImage} 
                     alt={title} 
-                    style={{
-                        position: 'absolute',
-                        top: 0, left: 0,
-                        width: '100%', height: '100%',
-                        objectFit: 'cover'
-                    }} 
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
             </div>
         );
@@ -77,20 +70,29 @@ const SiteCoverDisplay = ({ site, style, className }) => {
     };
 
     const logoStyle = {
-        height: '48px',
+        height: `${logoSize}px`,
         width: 'auto',
         objectFit: 'contain',
-        maxWidth: '140px',
-        display: 'block'
+        maxWidth: '100%',
+        maxHeight: '80%',
+        display: 'block',
+        borderRadius: `${logoRadius}px`,
+        transition: 'all 0.1s linear'
     };
 
     const titleStyle = {
-        fontSize: '1.4rem',
+        fontSize: `${titleSize}px`,
         fontWeight: '700',
         lineHeight: '1.2',
         color: 'inherit',
         margin: 0,
-        textAlign: 'center'
+        textAlign: 'center',
+        transition: 'all 0.1s linear',
+        
+        maxWidth: '100%',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
     };
 
     let contentContainerStyle = {
@@ -98,7 +100,10 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         gap: '16px',
         alignItems: 'center',
         justifyContent: 'center',
-        maxWidth: '100%'
+        maxWidth: '100%',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden' 
     };
 
     switch (cover_layout) {
@@ -106,17 +111,14 @@ const SiteCoverDisplay = ({ site, style, className }) => {
             contentContainerStyle.flexDirection = 'row';
             contentContainerStyle.textAlign = 'left';
             break;
-            
         case 'reverse':
             contentContainerStyle.flexDirection = 'row-reverse';
             contentContainerStyle.textAlign = 'right';
             break;
-            
         case 'centered_reverse':
             contentContainerStyle.flexDirection = 'column-reverse';
             contentContainerStyle.textAlign = 'center';
             break;
-            
         case 'minimal':
         case 'logo_only':
         case 'centered':
@@ -133,16 +135,11 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         <div className={`site-cover-display mode-${cover_layout} ${className || ''}`} style={generatedStyle}>
             <div style={contentContainerStyle}>
                 {showLogo && (
-                    <div style={{ flexShrink: 0 }}>
+                    <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', maxHeight: '100%', maxWidth: '100%' }}>
                         <img src={fullLogoUrl} alt="Logo" style={logoStyle} />
                     </div>
                 )}
-                
-                {showText && (
-                    <div style={titleStyle}>
-                        {title}
-                    </div>
-                )}
+                {showText && <div style={titleStyle}>{title}</div>}
             </div>
         </div>
     );

@@ -11,37 +11,34 @@ const mediaUploadPath = path.join(__dirname, '..', 'uploads', 'media');
 ensureDirExists(tempUploadPath);
 ensureDirExists(mediaUploadPath);
 
-const allowedFontTypes = [
-    'font/ttf', 'application/x-font-ttf', 'application/font-sfnt',
-    'font/otf', 'application/x-font-opentype', 'application/vnd.ms-opentype',
-    'font/woff', 'application/font-woff', 'application/octet-stream',
-    'font/woff2', 'application/font-woff2', 'application/x-woff',
-    'application/x-font-woff'
-];
+const FONT_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
+const DOC_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'];
 
 const mediaFileFilter = (req, file, cb) => {
-    const allowedImageTypes = /jpeg|jpg|png|webp|gif/;
-    const allowedVideoTypes = /mp4|webm|ogg/;
-    
-    const ext = path.extname(file.originalname).toLowerCase();
-    const isImage = allowedImageTypes.test(file.mimetype) || allowedImageTypes.test(ext);
-    const isVideo = allowedVideoTypes.test(file.mimetype) || allowedVideoTypes.test(ext);
-    const isFont = allowedFontTypes.includes(file.mimetype) || /\.(ttf|otf|woff|woff2)$/i.test(ext);
+    file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
 
-    console.log('File upload attempt:', {
-        originalname: file.originalname,
+    const ext = path.extname(file.originalname).toLowerCase();
+    
+    const isImage = /jpeg|jpg|png|webp|gif/.test(file.mimetype) || /jpeg|jpg|png|webp|gif/.test(ext);
+    const isVideo = /mp4|webm|ogg/.test(file.mimetype) || /mp4|webm|ogg/.test(ext);
+    const isFont = FONT_EXTENSIONS.includes(ext);
+    const isDoc = DOC_EXTENSIONS.includes(ext);
+
+    console.log('Upload check:', { 
+        name: file.originalname, 
         mimetype: file.mimetype,
-        extension: ext,
-        isImage,
-        isVideo,
-        isFont
+        ext, 
+        isImage, 
+        isVideo, 
+        isFont, 
+        isDoc 
     });
 
-    if (isImage || isVideo || isFont) {
+    if (isImage || isVideo || isFont || isDoc) {
         return cb(null, true);
     }
     
-    cb(new Error(`Помилка: Непідтримуваний тип файлу. Дозволені: зображення (JPEG, PNG, WebP), відео (MP4, WebM) та шрифти (TTF, OTF, WOFF, WOFF2)!`));
+    cb(new Error(`Помилка: Непідтримуваний тип файлу!`));
 };
 
 const tempStorage = multer.diskStorage({
@@ -50,8 +47,8 @@ const tempStorage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname).toLowerCase();
-        const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-]/g, '_');
-        cb(null, `temp-${req.user.id}-${Date.now()}-${safeName}`);
+        const safeName = `file-${req.user.id}-${Date.now()}${ext}`;
+        cb(null, safeName);
     }
 });
 
@@ -66,6 +63,8 @@ const mediaUpload = multer({
 
 const memoryStorage = multer.memoryStorage();
 const imageFileFilter = (req, file, cb) => {
+    file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const mimetype = allowedTypes.test(file.mimetype);
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());

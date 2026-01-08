@@ -4,52 +4,43 @@ import ImageInput from '../../../media/components/ImageInput';
 import MediaInput from '../../../media/components/MediaInput';
 import { FONT_LIBRARY } from '../../core/editorConfig';
 import CustomSelect from '../../../../common/components/ui/CustomSelect';
+import { commonStyles, ToggleGroup, SectionTitle } from '../../components/common/SettingsUI';
+import { Input } from '../../../../common/components/ui/Input';
+import RangeSlider from '../../../../common/components/ui/RangeSlider';
+import { 
+    IconImage, 
+    IconVideo, 
+    IconAlignLeft, 
+    IconAlignCenter, 
+    IconAlignRight,
+    IconMoon,
+    IconSun,
+    IconMaximize,
+    IconFileText,
+    IconPalette,
+    IconCursorClick,
+    IconCheck
+} from '../../../../common/components/ui/Icons';
 
-const formGroupStyle = { marginBottom: '1.5rem' };
-const labelStyle = { 
-    display: 'block', marginBottom: '0.5rem', 
-    color: 'var(--platform-text-primary)', fontWeight: '500', fontSize: '0.9rem' 
+const isLightColor = (color) => {
+    if (!color || color === 'transparent') return true;
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return brightness > 155;
 };
-const inputStyle = { 
-    width: '100%', padding: '0.75rem', 
-    border: '1px solid var(--platform-border-color)', borderRadius: '4px', 
-    fontSize: '0.9rem', background: 'var(--platform-card-bg)', 
-    color: 'var(--platform-text-primary)', boxSizing: 'border-box' 
-};
-const textareaStyle = {
-    ...inputStyle,
-    minHeight: '80px',
-    resize: 'vertical',
-    overflow: 'auto',
-    fontFamily: 'inherit',
-    lineHeight: '1.5'
-};
-const sectionTitleStyle = {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: 'var(--platform-text-primary)',
-    marginTop: '0',
-    marginBottom: '1rem',
-    paddingBottom: '0.5rem',
-    borderBottom: '1px solid var(--platform-border-color)'
-};
-const toggleButtonContainerStyle = {
-    display: 'flex',
-    borderRadius: '6px',
-    border: '1px solid var(--platform-border-color)',
-    overflow: 'hidden'
-};
-const toggleButtonStyle = (isActive) => ({
-    flex: 1,
-    padding: '0.75rem',
-    border: 'none',
-    background: isActive ? 'var(--platform-accent)' : 'var(--platform-card-bg)',
-    color: isActive ? 'var(--platform-accent-text)' : 'var(--platform-text-primary)',
-    cursor: 'pointer',
-    fontWeight: isActive ? 'bold' : 'normal',
-    transition: 'background 0.2s, color 0.2s',
-    fontSize: '0.9rem'
-});
+
+const OVERLAY_PRESETS = [
+    { id: 'transparent', name: 'Без заливки', isNone: true },
+    { id: '#000000', name: 'Чорний' },
+    { id: '#ffffff', name: 'Білий' },
+    { id: '#1a202c', name: 'Темний' },
+    { id: '#2c5282', name: 'Синій' },
+    { id: '#276749', name: 'Зелений' },
+    { id: '#742a2a', name: 'Червоний' },
+];
 
 const HeroSettings = ({ data, onChange }) => {
     
@@ -57,7 +48,7 @@ const HeroSettings = ({ data, onChange }) => {
         bg_type: data.bg_type || 'image',
         bg_image: data.bg_image || data.imageUrl || '',
         bg_video: data.bg_video || '',
-        overlay_color: data.overlay_color || 'rgba(0, 0, 0, 0.5)',
+        overlay_color: data.overlay_color || '#000000', 
         title: data.title || '',
         subtitle: data.subtitle || '',
         button_text: data.button_text || data.buttonText || '',
@@ -66,7 +57,7 @@ const HeroSettings = ({ data, onChange }) => {
         height: data.height || 'medium',
         fontFamily: data.fontFamily || 'global',
         theme_mode: data.theme_mode || 'auto',
-        overlay_opacity: data.overlay_opacity !== undefined ? data.overlay_opacity : 0.5,
+        overlay_opacity: (data.overlay_opacity !== undefined && !isNaN(data.overlay_opacity)) ? parseFloat(data.overlay_opacity) : 0.5,
         ...data
     };
     
@@ -82,13 +73,15 @@ const HeroSettings = ({ data, onChange }) => {
         const { name, value } = e.target;
         onChange({ ...safeData, [name]: value }, true);
     };
-
-    const handleOpacityChange = (e) => {
-        onChange({ ...safeData, overlay_opacity: parseFloat(e.target.value) }, false);
+    const sliderValue = Math.round((1 - safeData.overlay_opacity) * 100);
+    const handleTransparencyChange = (newValue) => {
+        const transparency = parseFloat(newValue); 
+        const opacity = 1 - (transparency / 100);
+        onChange({ ...safeData, overlay_opacity: opacity }, false); 
     };
-
-    const handleOpacityCommit = (e) => {
-        onChange({ ...safeData, overlay_opacity: parseFloat(e.target.value) }, true);
+    
+    const handleColorChange = (colorValue) => {
+        onChange({ ...safeData, overlay_color: colorValue }, true);
     };
 
     const handleTitleChange = (e) => {
@@ -109,13 +102,22 @@ const HeroSettings = ({ data, onChange }) => {
         onChange({ ...safeData, subtitle: localSubtitle }, true);
     };
 
-    const handleImageChange = (newUrl) => {
-        const relativeUrl = newUrl.replace(/^http:\/\/localhost:5000/, '');
+    const handleImageChange = (e) => {
+        let finalUrl = '';
+        if (e && e.target && typeof e.target.value === 'string') {
+            finalUrl = e.target.value;
+        } else if (typeof e === 'string') {
+            finalUrl = e;
+        } else if (e && typeof e === 'object') {
+            finalUrl = e.url || e.src || '';
+        }
+        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
         onChange({ ...safeData, bg_image: relativeUrl }, true);
     };
 
     const handleVideoChange = (newUrl) => {
-        const relativeUrl = newUrl.replace(/^http:\/\/localhost:5000/, '');
+        const urlStr = typeof newUrl === 'string' ? newUrl : '';
+        const relativeUrl = urlStr.replace(/^http:\/\/localhost:5000/, '');
         onChange({ ...safeData, bg_video: relativeUrl }, true);
     };
 
@@ -134,35 +136,44 @@ const HeroSettings = ({ data, onChange }) => {
         { value: 'full', label: 'На весь екран' },
     ];
 
+    const bgTypeOptions = [
+        { value: 'image', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><IconImage size={16}/> Фото</div> },
+        { value: 'video', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><IconVideo size={16}/> Відео</div> }
+    ];
+
+    const themeOptions = [
+        { value: 'auto', label: 'Авто', title: 'Як на сайті' },
+        { value: 'light', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><IconSun size={16}/> Світла</div>, title: 'Темний текст на світлому' },
+        { value: 'dark', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><IconMoon size={16}/> Темна</div>, title: 'Світлий текст на темному' },
+    ];
+
+    const alignOptions = [
+        { value: 'left', label: <IconAlignLeft size={18} /> },
+        { value: 'center', label: <IconAlignCenter size={18} /> },
+        { value: 'right', label: <IconAlignRight size={18} /> },
+    ];
+
+    const isPreset = OVERLAY_PRESETS.some(p => p.id === safeData.overlay_color);
+    const isTransparent = safeData.overlay_color === 'transparent';
+
     return (
         <div> 
             <div style={{ marginBottom: '2rem' }}>
-                <h4 style={sectionTitleStyle}>🖼️ Фон блоку</h4>
+                <SectionTitle icon={<IconPalette size={18}/>}>Фон блоку</SectionTitle>
 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Тип фону:</label>
-                    <div style={toggleButtonContainerStyle}>
-                        <button 
-                            type="button"
-                            style={toggleButtonStyle(safeData.bg_type === 'image')}
-                            onClick={() => handleChangeDirect('bg_type', 'image')}
-                        >
-                            🖼️ Картинка
-                        </button>
-                        <button 
-                            type="button"
-                            style={toggleButtonStyle(safeData.bg_type === 'video')}
-                            onClick={() => handleChangeDirect('bg_type', 'video')}
-                        >
-                            🎥 Відео
-                        </button>
-                    </div>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Тип фону</label>
+                    <ToggleGroup 
+                        options={bgTypeOptions}
+                        value={safeData.bg_type}
+                        onChange={(val) => handleChangeDirect('bg_type', val)}
+                    />
                 </div>
 
                 {safeData.bg_type === 'image' && (
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>Зображення:</label>
-                        <div style={{height: '150px'}}>
+                    <div style={commonStyles.formGroup}>
+                        <label style={commonStyles.label}>Зображення</label>
+                        <div style={{height: '180px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--platform-border-color)'}}>
                             <ImageInput 
                                 value={safeData.bg_image}
                                 onChange={handleImageChange}
@@ -173,9 +184,9 @@ const HeroSettings = ({ data, onChange }) => {
 
                 {safeData.bg_type === 'video' && (
                     <>
-                        <div style={formGroupStyle}>
-                            <label style={labelStyle}>Відео файл (MP4/WebM):</label>
-                            <div style={{height: '150px'}}>
+                        <div style={commonStyles.formGroup}>
+                            <label style={commonStyles.label}>Відео файл (MP4/WebM)</label>
+                            <div style={{height: '150px', marginBottom: '8px'}}>
                                 <MediaInput 
                                     type="video"
                                     value={safeData.bg_video}
@@ -183,234 +194,224 @@ const HeroSettings = ({ data, onChange }) => {
                                     placeholder="Завантажити відео"
                                 />
                             </div>
-                            <small style={{display:'block', marginTop:5, color:'var(--platform-text-secondary)', fontSize: '0.8rem'}}>
+                            <small style={{display:'block', color:'var(--platform-text-secondary)', fontSize: '0.75rem', lineHeight: '1.4'}}>
                                 Рекомендовано: короткі зациклені відео до 15МБ.
                             </small>
                         </div>
 
-                        <div style={formGroupStyle}>
-                            <label style={labelStyle}>Постер (показується, поки відео вантажиться):</label>
-                            <div style={{height: '100px'}}>
+                        <div style={commonStyles.formGroup}>
+                            <label style={commonStyles.label}>Постер (заставка)</label>
+                            <div style={{height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--platform-border-color)'}}>
                                 <ImageInput 
                                     value={safeData.bg_image}
                                     onChange={handleImageChange}
                                 />
                             </div>
+                            <small style={{display:'block', marginTop: '4px', color:'var(--platform-text-secondary)', fontSize: '0.75rem'}}>
+                                Показується, поки відео завантажується або на мобільних.
+                            </small>
                         </div>
                     </>
                 )}
 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>🎨 Тема блоку (Контраст):</label>
-                    <div style={toggleButtonContainerStyle}>
-                        <button 
-                            type="button"
-                            style={toggleButtonStyle(safeData.theme_mode === 'auto')}
-                            onClick={() => handleChangeDirect('theme_mode', 'auto')}
-                            title="Як на сайті"
-                        >
-                            🌓 Авто
-                        </button>
-                        <button 
-                            type="button"
-                            style={toggleButtonStyle(safeData.theme_mode === 'light')}
-                            onClick={() => handleChangeDirect('theme_mode', 'light')}
-                            title="Чорний текст на білому"
-                        >
-                            ☀️ Світла
-                        </button>
-                        <button 
-                            type="button"
-                            style={toggleButtonStyle(safeData.theme_mode === 'dark')}
-                            onClick={() => handleChangeDirect('theme_mode', 'dark')}
-                            title="Білий текст на темному"
-                        >
-                            🌙 Темна
-                        </button>
-                    </div>
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
-                        Оберіть "Темну", якщо використовуєте фотографію.
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Тема тексту (Контраст)</label>
+                    <ToggleGroup 
+                        options={themeOptions}
+                        value={safeData.theme_mode}
+                        onChange={(val) => handleChangeDirect('theme_mode', val)}
+                    />
+                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '6px', display: 'block' }}>
+                        Оберіть "Темна", якщо фон темний (текст стане білим).
                     </small>
                 </div>
 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>
-                        🌑 Затемнення фону: {Math.round(safeData.overlay_opacity * 100)}%
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Колір накладання</label>
+                    
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                        {OVERLAY_PRESETS.map(preset => (
+                            <button 
+                                key={preset.id}
+                                onClick={() => handleColorChange(preset.id)}
+                                title={preset.name}
+                                style={{
+                                    width: '36px', height: '36px', 
+                                    borderRadius: '8px', 
+                                    background: preset.isNone ? 'transparent' : preset.id,
+                                    backgroundImage: preset.isNone ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)' : 'none',
+                                    backgroundSize: preset.isNone ? '8px 8px' : 'auto',
+                                    backgroundPosition: preset.isNone ? '0 0, 0 4px, 4px -4px, -4px 0px' : 'center',
+                                    
+                                    border: safeData.overlay_color === preset.id 
+                                        ? `2px solid var(--platform-text-primary)` 
+                                        : '1px solid var(--platform-border-color)',
+                                    cursor: 'pointer', 
+                                    transition: 'transform 0.1s ease',
+                                    transform: safeData.overlay_color === preset.id ? 'scale(1.1)' : 'scale(1)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                    position: 'relative'
+                                }}
+                            >
+                                {safeData.overlay_color === preset.id && (
+                                    <IconCheck size={14} style={{ color: (preset.isNone || isLightColor(preset.id)) ? 'black' : 'white' }} />
+                                )}
+                                {preset.isNone && safeData.overlay_color !== preset.id && (
+                                    <div style={{width: '2px', height: '100%', background: '#ff4444', transform: 'rotate(45deg)'}}></div>
+                                )}
+                            </button>
+                        ))}
+
+                        <label 
+                            style={{
+                                width: '36px', height: '36px', 
+                                borderRadius: '8px', 
+                                cursor: 'pointer',
+                                border: (!isPreset && !isTransparent) ? `2px solid var(--platform-text-primary)` : '1px dashed var(--platform-border-color)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                backgroundColor: (!isPreset && !isTransparent) ? safeData.overlay_color : 'transparent',
+                                transition: 'all 0.2s ease',
+                                transform: (!isPreset && !isTransparent) ? 'scale(1.1)' : 'scale(1)',
+                                position: 'relative',
+                                color: 'var(--platform-text-secondary)'
+                            }}
+                            title="Власний колір"
+                        >
+                            <input 
+                                type="color" 
+                                value={(!isTransparent && safeData.overlay_color.length === 7) ? safeData.overlay_color : '#000000'}
+                                onChange={(e) => handleColorChange(e.target.value)} 
+                                style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', top:0, left:0 }}
+                            />
+                            {(!isPreset && !isTransparent) ? (
+                                <span style={{ fontSize: '14px', lineHeight: 1, color: isLightColor(safeData.overlay_color) ? 'black' : 'white' }}>✎</span>
+                            ) : (
+                                <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span>
+                            )}
+                        </label>
+                    </div>
+                </div>
+
+                <div style={{
+                    ...commonStyles.formGroup, 
+                    opacity: isTransparent ? 0.5 : 1, 
+                    pointerEvents: isTransparent ? 'none' : 'auto',
+                    transition: 'opacity 0.2s'
+                }}>
+                    <label style={{...commonStyles.label, display: 'flex', justifyContent: 'space-between'}}>
+                        <span>Прозорість заливки</span>
+                        <span style={{color: 'var(--platform-accent)'}}>{sliderValue}%</span>
                     </label>
-                    <input 
-                        type="range" 
-                        name="overlay_opacity" 
-                        min="0" 
-                        max="0.9" 
-                        step="0.1" 
-                        value={safeData.overlay_opacity}
-                        onChange={handleOpacityChange}
-                        onMouseUp={handleOpacityCommit}
-                        onTouchEnd={handleOpacityCommit}
-                        style={{ width: '100%', cursor: 'pointer' }}
+                    <RangeSlider 
+                        value={sliderValue}
+                        onChange={handleTransparencyChange} 
+                        min={0}
+                        max={100}
+                        step={5}
+                        unit="%"
                     />
                 </div>
-
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Колір накладання:</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                         <input 
-                            type="text" 
-                            name="overlay_color" 
-                            value={safeData.overlay_color}
-                            onChange={handleChange}
-                            placeholder="rgba(0,0,0,0.5)"
-                            style={inputStyle}
-                        />
-                        <div style={{
-                            width: '40px', 
-                            height: '40px', 
-                            borderRadius: '4px', 
-                            background: safeData.overlay_color,
-                            border: '1px solid var(--platform-border-color)',
-                            flexShrink: 0
-                        }} />
-                    </div>
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
-                        CSS колір. Наприклад: <code>rgba(0, 0, 0, 0.6)</code> для затемнення.
-                    </small>
-                </div>
                 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Висота блоку:</label>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Висота блоку</label>
                     <CustomSelect 
                         name="height" 
                         value={safeData.height} 
                         onChange={handleChange} 
                         options={heightOptions}
-                        style={inputStyle}
+                        leftIcon={<IconMaximize size={16}/>}
                     />
                 </div>
             </div>
 
             <div style={{ marginBottom: '2rem' }}>
-                <h4 style={sectionTitleStyle}>📝 Вміст</h4>
+                <SectionTitle icon={<IconFileText size={18}/>}>Вміст</SectionTitle>
 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Шрифт тексту:</label>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Шрифт</label>
                     <CustomSelect
                         name="fontFamily"
                         value={safeData.fontFamily}
                         onChange={handleChange}
                         options={FONT_LIBRARY}
-                        style={inputStyle}
                     />
                 </div>
                 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Заголовок:</label>
-                    <input 
+                <div style={commonStyles.formGroup}>
+                    <Input 
+                        label="Заголовок"
                         type="text" 
                         name="title" 
                         value={localTitle}
                         onChange={handleTitleChange} 
                         onBlur={handleTitleBlur}
                         placeholder="Головний заголовок"
-                        style={inputStyle}
                     />
                 </div>
                 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Підзаголовок:</label>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Підзаголовок</label>
                     <textarea 
                         name="subtitle" 
+                        className="custom-scrollbar"
                         value={localSubtitle}
                         onChange={handleSubtitleChange} 
                         onBlur={handleSubtitleBlur}
-                        placeholder="Короткий опис"
-                        rows="3"
-                        style={textareaStyle}
+                        placeholder="Короткий опис або слоган"
+                        style={{
+                            ...commonStyles.textarea, 
+                            height: '100px',
+                            minHeight: '80px',
+                            maxHeight: '200px',
+                            resize: 'vertical',
+                            fontFamily: 'inherit',
+                            fontSize: '0.9rem',
+                            overflowY: 'auto'
+                        }}
                     />
                 </div>
 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Вирівнювання тексту:</label>
-                    <div style={toggleButtonContainerStyle}>
-                        <button 
-                            type="button"
-                            style={toggleButtonStyle(safeData.alignment === 'left')}
-                            onClick={() => handleAlignmentChange('left')}
-                        >
-                            ⬅️ Зліва
-                        </button>
-                        <button 
-                            type="button"
-                            style={toggleButtonStyle(safeData.alignment === 'center')}
-                            onClick={() => handleAlignmentChange('center')}
-                        >
-                            ⏺️ Центр
-                        </button>
-                        <button 
-                            type="button"
-                            style={toggleButtonStyle(safeData.alignment === 'right')}
-                            onClick={() => handleAlignmentChange('right')}
-                        >
-                            ➡️ Справа
-                        </button>
-                    </div>
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Вирівнювання тексту</label>
+                    <ToggleGroup 
+                        options={alignOptions}
+                        value={safeData.alignment}
+                        onChange={handleAlignmentChange}
+                    />
                 </div>
             </div>
 
             <div>
-                <h4 style={sectionTitleStyle}>🔘 Кнопка дії</h4>
+                <SectionTitle icon={<IconCursorClick size={18}/>}>Кнопка дії</SectionTitle>
                 
-                <div style={formGroupStyle}>
-                    <label style={labelStyle}>Текст кнопки:</label>
-                    <input 
+                <div style={commonStyles.formGroup}>
+                    <Input 
+                        label="Текст кнопки"
                         type="text" 
                         name="button_text" 
                         value={safeData.button_text}
                         onChange={handleChange}
                         placeholder="Наприклад: Детальніше"
-                        style={inputStyle}
                     />
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem', display: 'block' }}>
+                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
                         Залиште порожнім, щоб приховати кнопку.
                     </small>
                 </div>
                 
                 {safeData.button_text && (
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>Посилання кнопки:</label>
-                        <input 
+                    <div style={commonStyles.formGroup}>
+                        <Input 
+                            label="Посилання"
                             type="text" 
                             name="button_link" 
                             value={safeData.button_link}
                             onChange={handleChange}
-                            placeholder="/catalog"
-                            style={inputStyle}
+                            placeholder="/catalog або https://..."
                         />
                     </div>
                 )}
             </div>
-
-            <style>
-                {`
-                textarea {
-                    overflow: auto !important;
-                    resize: vertical !important;
-                }
-                textarea::-webkit-scrollbar {
-                    width: 8px;
-                }
-                textarea::-webkit-scrollbar-track {
-                    background: var(--platform-bg);
-                    border-radius: 4px;
-                }
-                textarea::-webkit-scrollbar-thumb {
-                    background: var(--platform-border-color);
-                    border-radius: 4px;
-                }
-                textarea::-webkit-scrollbar-thumb:hover {
-                    background: var(--platform-text-secondary);
-                }
-                `}
-            </style>
         </div>
     );
 };

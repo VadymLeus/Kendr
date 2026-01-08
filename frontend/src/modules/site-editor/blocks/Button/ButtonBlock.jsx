@@ -1,20 +1,75 @@
 // frontend/src/modules/site-editor/blocks/Button/ButtonBlock.jsx
 import React from 'react';
 import { resolveSiteLink } from '../../../../common/utils/linkUtils';
+import { 
+    IconArrowRight, IconShoppingCart, IconMail, IconPhone, IconCheck, IconStar, IconMousePointer
+} from '../../../../common/components/ui/Icons';
 
 const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
-    const { text, link, styleType, alignment, targetBlank } = blockData;
+    const { 
+        text = 'Кнопка', 
+        link, 
+        styleType = 'primary', 
+        variant = 'solid', 
+        size = 'medium',
+        width = 'auto',
+        borderRadius = '4px',
+        withShadow = false,
+        alignment = 'center', 
+        targetBlank,
+        icon = 'none',
+        iconPosition = 'right'
+    } = blockData;
 
-    const themeClass = styleType === 'secondary' ? 'btn-site-secondary' : 'btn-site-primary';
+    const colorVar = styleType === 'secondary' 
+        ? 'var(--site-text-primary, #333)' 
+        : 'var(--site-accent, #3b82f6)'; 
+
+    const textOnColor = '#ffffff'; 
+
+    const isOutline = variant === 'outline';
+
+    const dynamicStyle = {
+        background: isOutline ? 'transparent' : colorVar,
+        color: isOutline ? colorVar : textOnColor,
+        border: isOutline ? `2px solid ${colorVar}` : '2px solid transparent',
+        boxShadow: withShadow ? '0 4px 14px rgba(0,0,0,0.15)' : 'none',
+    };
+
+    const sizeMap = {
+        small:  { padding: '8px 16px',  fontSize: '0.85rem' },
+        medium: { padding: '12px 24px', fontSize: '1rem' },
+        large:  { padding: '16px 32px', fontSize: '1.2rem' }
+    };
+    const currentSize = sizeMap[size] || sizeMap.medium;
 
     const containerStyle = {
-        padding: '20px',
-        textAlign: alignment || 'center',
-        background: isEditorPreview ? 'var(--site-card-bg)' : 'transparent',
-        border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
+        padding: '20px 0',
+        display: 'flex',
+        justifyContent: width === 'full' ? 'stretch' : (
+            alignment === 'left' ? 'flex-start' : 
+            alignment === 'right' ? 'flex-end' : 'center'
+        ),
+        background: isEditorPreview ? 'var(--site-card-bg, transparent)' : 'transparent',
+        border: isEditorPreview ? '1px dashed var(--site-border-color, transparent)' : 'none',
         borderRadius: isEditorPreview ? '8px' : '0',
         transition: 'all 0.3s ease',
         ...style
+    };
+
+    const buttonStyle = {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        textDecoration: 'none',
+        cursor: 'pointer',
+        fontWeight: '600',
+        transition: 'transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s',
+        width: width === 'full' ? '100%' : 'auto',
+        borderRadius: borderRadius,
+        ...currentSize,
+        ...dynamicStyle
     };
 
     const handleClick = (e) => {
@@ -25,20 +80,46 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
     const finalLink = resolveSiteLink(link, siteData?.site_path);
 
+    const renderIcon = () => {
+        const iconProps = { size: size === 'large' ? 20 : 18 };
+        switch (icon) {
+            case 'arrowRight': return <IconArrowRight {...iconProps} />;
+            case 'cart': return <IconShoppingCart {...iconProps} />;
+            case 'mail': return <IconMail {...iconProps} />;
+            case 'phone': return <IconPhone {...iconProps} />;
+            case 'check': return <IconCheck {...iconProps} />;
+            case 'star': return <IconStar {...iconProps} filled />;
+            case 'pointer': return <IconMousePointer {...iconProps} />;
+            default: return null;
+        }
+    };
+
+    const IconElement = renderIcon();
+
     return (
         <div style={containerStyle}>
+            <style>{`
+                .btn-block-${styleType}-${variant}:hover {
+                    opacity: 0.9;
+                    transform: translateY(-1px);
+                    ${withShadow ? 'box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;' : ''}
+                }
+                .btn-block-${styleType}-${variant}:active {
+                    transform: translateY(0);
+                }
+            `}</style>
+            
             <a 
                 href={finalLink} 
-                className={`btn-site ${themeClass}`}
+                className={`btn-block-${styleType}-${variant}`}
                 target={targetBlank ? '_blank' : '_self'}
                 rel={targetBlank ? 'noopener noreferrer' : ''}
                 onClick={handleClick}
-                style={{
-                    display: 'inline-block',
-                    textDecoration: 'none',
-                }}
+                style={buttonStyle}
             >
-                {text || 'Кнопка'} 
+                {iconPosition === 'left' && IconElement}
+                <span>{text}</span>
+                {iconPosition === 'right' && IconElement}
             </a>
         </div>
     );

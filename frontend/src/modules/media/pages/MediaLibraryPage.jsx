@@ -1,293 +1,781 @@
 // frontend/src/modules/media/pages/MediaLibraryPage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import apiClient from '../../../common/services/api';
+import MediaGridItem from '../components/MediaGridItem';
+import MediaInspector from '../components/MediaInspector';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../common/hooks/useConfirm';
+import { Button, Input, Select } from '../../../common/components/ui'; 
+import { 
+    IconUpload, 
+    IconSearch, 
+    IconX, 
+    IconClear, 
+    IconImage, 
+    IconVideo, 
+    IconFileText, 
+    IconType,
+    IconMusic,
+    IconStar,
+    IconCheck,
+    IconCalendar,
+    IconDownload,
+    IconTrash
+} from '../../../common/components/ui/Icons';
 
 const API_URL = 'http://localhost:5000';
 
+const FORMATS_BY_TYPE = {
+    image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico', 'bmp'],
+    video: ['mp4', 'webm', 'mov', 'avi', 'mkv'],
+    audio: ['mp3', 'wav', 'ogg', 'm4a', 'flac'],
+    document: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'],
+    font: ['ttf', 'otf', 'woff', 'woff2'],
+    all: []
+};
+
+const SORT_OPTIONS = [
+    { value: 'date', label: 'За датою', icon: IconCalendar },
+    { value: 'size', label: 'За розміром', icon: IconFileText },
+    { value: 'name', label: 'За назвою', icon: IconType }
+];
+
 const MediaLibraryPage = () => {
-    const [mediaFiles, setMediaFiles] = useState([]);
+    const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
+    
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeType, setActiveType] = useState('all'); 
+    const [activeFormat, setActiveFormat] = useState(null);
+
+    const [sortKey, setSortKey] = useState('date'); 
+    const [sortDirection, setSortDirection] = useState('desc'); 
+    const [onlyFavorites, setOnlyFavorites] = useState(false); 
+    const [visibleCount, setVisibleCount] = useState(48);
+    
     const [selectedFile, setSelectedFile] = useState(null);
-    const [filterType, setFilterType] = useState('all');
+    const [checkedFiles, setCheckedFiles] = useState(new Set());
+    
+    const lastSelectedIndex = useRef(null);
+
+    const [isDragging, setIsDragging] = useState(false);
+    const dragCounter = useRef(0);
+    
+    const fileInputRef = useRef(null);
     const { confirm } = useConfirm();
 
-    const fetchMedia = useCallback(async () => {
+    useEffect(() => {
+        fetchMedia();
+    }, []);
+
+    const fetchMedia = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
-            const response = await apiClient.get('/media');
-            setMediaFiles(response.data);
-        } catch (err) {
+            const res = await apiClient.get('/media');
+            const data = Array.isArray(res.data) ? res.data : [];
+            setFiles(data);
+        } catch (error) {
+            console.error(error);
+            toast.error('Помилка завантаження медіатеки');
+            setFiles([]); 
         } finally {
             setLoading(false);
         }
-    }, []);
-
-    useEffect(() => { fetchMedia(); }, [fetchMedia]);
-
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            handleUpload(file);
-        }
     };
 
-    const handleUpload = async (file) => {
-        const formData = new FormData();
-        formData.append('mediaFile', file);
-        setUploading(true);
-        try {
-            const response = await apiClient.post('/media/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+    useEffect(() => {
+        setActiveFormat(null);
+    }, [activeType]);
+
+    const filteredFiles = useMemo(() => {
+        if (!files) return [];
+        let result = [...files];
+
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            result = result.filter(f => {
+                const name = f.display_name || f.original_file_name || '';
+                return name.toLowerCase().includes(lowerQuery);
             });
-            setMediaFiles(prev => [response.data, ...prev]);
-            toast.success('Файл успішно завантажено!');
-        } catch (err) {
-        } finally {
-            setUploading(false);
+        }
+
+        if (onlyFavorites) {
+            result = result.filter(f => f.is_favorite);
+        }
+
+        if (activeType !== 'all') {
+            result = result.filter(f => {
+                if (f.file_type === activeType) return true;
+                const name = f.original_file_name || '';
+                const ext = name.split('.').pop().toLowerCase();
+                return FORMATS_BY_TYPE[activeType]?.includes(ext);
+            });
+        }
+
+        if (activeFormat) {
+            result = result.filter(f => {
+                const name = f.original_file_name || '';
+                const ext = name.split('.').pop().toLowerCase();
+                if (activeFormat === 'jpg' && ext === 'jpeg') return true;
+                return ext === activeFormat;
+            });
+        }
+
+        result.sort((a, b) => {
+            let valA, valB;
+            switch (sortKey) {
+                case 'size': valA = a.file_size_kb || 0; valB = b.file_size_kb || 0; break;
+                case 'name': 
+                    valA = (a.display_name || a.original_file_name || '').toLowerCase();
+                    valB = (b.display_name || b.original_file_name || '').toLowerCase();
+                    return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                case 'date':
+                default:
+                    valA = new Date(a.created_at || a.uploaded_at || 0).getTime();
+                    valB = new Date(b.created_at || b.uploaded_at || 0).getTime();
+                    break;
+            }
+            return sortDirection === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+        });
+
+        return result;
+    }, [files, searchQuery, activeType, activeFormat, sortDirection, sortKey, onlyFavorites]);
+
+    const visibleFiles = filteredFiles.slice(0, visibleCount);
+    const remainingCount = filteredFiles.length - visibleFiles.length;
+
+    const handleLoadMore = () => setVisibleCount(prev => prev + 48);
+
+    const handleClearFilters = () => {
+        setSearchQuery('');
+        setActiveType('all');
+        setActiveFormat(null);
+        setSortDirection('desc');
+        setSortKey('date');
+        setOnlyFavorites(false);
+        setVisibleCount(48);
+    };
+
+    const handleUpload = async (e) => {
+        const fileList = e.target.files;
+        if (!fileList || fileList.length === 0) return;
+
+        const uploadPromises = Array.from(fileList).map(async (file) => {
+            const formData = new FormData();
+            formData.append('mediaFile', file);
+            try {
+                const res = await apiClient.post('/media/upload', formData);
+                return res.data;
+            } catch (err) {
+                toast.error(`Помилка: ${file.name}`);
+                return null;
+            }
+        });
+
+        const newFiles = await Promise.all(uploadPromises);
+        const validFiles = newFiles.filter(f => f !== null);
+        if (validFiles.length > 0) {
+            setFiles(prev => [...validFiles, ...prev]);
+            toast.success(`Завантажено ${validFiles.length} файлів`);
+        }
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleUpdateFile = (updatedFile) => {
+        setFiles(prev => prev.map(f => f.id === updatedFile.id ? updatedFile : f));
+        if (selectedFile?.id === updatedFile.id) setSelectedFile(updatedFile);
+    };
+
+    const handleToggleFavorite = async (file, e) => {
+        if (e) e.stopPropagation();
+        try {
+            const newStatus = !file.is_favorite;
+            const updatedFile = { ...file, is_favorite: newStatus };
+            handleUpdateFile(updatedFile);
+            await apiClient.put(`/media/${file.id}`, { is_favorite: newStatus });
+        } catch (error) {
+            handleUpdateFile({ ...file, is_favorite: !file.is_favorite }); 
+            toast.error("Не вдалося оновити статус");
         }
     };
 
-    const handleDelete = async (mediaId, event) => {
-        event.stopPropagation();
-        
+    const handleDelete = async (file) => {
         const isConfirmed = await confirm({
-            title: "Видалення файлу",
-            message: "Ви впевнені, що хочете видалити цей файл? Якщо він використовується на сайті, зображення перестане відображатися.",
+            title: "Видалити файл?",
+            message: "Ця дія незворотна.",
             type: "danger",
             confirmLabel: "Видалити"
         });
 
         if (isConfirmed) {
             try {
-                await apiClient.delete(`/media/${mediaId}`);
-                setMediaFiles(prev => prev.filter(file => file.id !== mediaId));
-                if (selectedFile?.id === mediaId) {
-                    setSelectedFile(null);
-                }
+                await apiClient.delete(`/media/${file.id}`);
+                setFiles(prev => prev.filter(f => f.id !== file.id));
+                setSelectedFile(null);
+                setCheckedFiles(prev => {
+                    const next = new Set(prev);
+                    next.delete(file.id);
+                    return next;
+                });
                 toast.success('Файл видалено');
-            } catch (err) {
+            } catch (error) {
+                toast.error('Помилка видалення');
             }
         }
     };
 
-    const handleSelectFile = (file) => { 
-        setSelectedFile(file); 
+    const handleSelectAll = () => {
+        if (checkedFiles.size === filteredFiles.length && filteredFiles.length > 0) {
+            setCheckedFiles(new Set());
+        } else {
+            const allIds = filteredFiles.map(f => f.id);
+            setCheckedFiles(new Set(allIds));
+        }
     };
 
-    const handleCopyToClipboard = (text) => {
-        navigator.clipboard.writeText(text).then(() => {
-            toast.info("URL скопійовано до буферу обміну!");
-        }, (err) => {
-            toast.error("Не вдалося скопіювати URL.");
+    const handleCardClick = (file, index, e) => {
+        if (e?.shiftKey || e?.ctrlKey || e?.metaKey) { 
+            e.preventDefault(); 
+            setCheckedFiles(prev => {
+                const next = new Set(prev);
+                if (next.has(file.id)) next.delete(file.id);
+                else next.add(file.id);
+                return next;
+            });
+            lastSelectedIndex.current = index;
+        } 
+        else {
+            setSelectedFile(file);
+            lastSelectedIndex.current = index;
+        }
+    };
+
+    const handleCheckFile = (file, index, e) => {
+        if (e?.shiftKey) {
+            e.preventDefault();
+        }
+        setCheckedFiles(prev => {
+            const next = new Set(prev);
+            if (next.has(file.id)) {
+                next.delete(file.id);
+            } else {
+                next.add(file.id);
+            }
+            return next;
         });
+        lastSelectedIndex.current = index;
     };
 
-    const filteredFiles = mediaFiles.filter(file => {
-        if (filterType === 'all') return true;
-        if (filterType === 'image') return file.mime_type.startsWith('image/');
-        if (filterType === 'video') return file.mime_type.startsWith('video/');
-        if (filterType === 'font') return file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name);
-        return true;
-    });
+    const handleBulkDelete = async () => {
+        if (checkedFiles.size === 0) return;
 
-    const tabStyle = (isActive) => ({
-        padding: '8px 16px',
-        border: 'none',
-        borderBottom: isActive ? '2px solid var(--platform-accent)' : '2px solid transparent',
-        background: 'transparent',
-        color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-        cursor: 'pointer',
-        fontWeight: '500'
-    });
+        const isConfirmed = await confirm({
+            title: `Видалити ${checkedFiles.size} файлів?`,
+            message: "Ця дія незворотна.",
+            type: "danger",
+            confirmLabel: "Видалити все"
+        });
 
-    const fontIconStyle = {
-        fontSize: '2rem',
-        color: 'var(--platform-text-primary)',
-        background: 'var(--platform-bg)',
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        border: '1px solid var(--platform-border-color)'
+        if (isConfirmed) {
+            try {
+                const deletePromises = Array.from(checkedFiles).map(id => apiClient.delete(`/media/${id}`));
+                await Promise.all(deletePromises);
+
+                setFiles(prev => prev.filter(f => !checkedFiles.has(f.id)));
+                setCheckedFiles(new Set());
+                setSelectedFile(null);
+                toast.success('Файли видалено');
+            } catch (error) {
+                console.error(error);
+                toast.error('Помилка під час видалення');
+            }
+        }
+    };
+
+    const handleBulkDownload = async () => {
+        if (checkedFiles.size === 0) return;
+        const filesToDownload = files.filter(f => checkedFiles.has(f.id));
+        if (filesToDownload.length === 0) return;
+
+        if (filesToDownload.length === 1) {
+            const file = filesToDownload[0];
+            downloadSingleFile(file);
+        } else {
+            toast.info(`Завантаження ${filesToDownload.length} файлів...`);
+            for (let i = 0; i < filesToDownload.length; i++) {
+                setTimeout(() => {
+                    downloadSingleFile(filesToDownload[i]);
+                }, i * 500); 
+            }
+        }
+        setCheckedFiles(new Set());
+    };
+
+    const downloadSingleFile = async (file) => {
+        try {
+            const response = await fetch(`${API_URL}${file.path_full}`);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = file.original_file_name || 'download';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error("Download error", err);
+        }
+    };
+
+    const onDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter.current += 1;
+        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+            setIsDragging(true);
+        }
+    };
+
+    const onDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter.current -= 1;
+        if (dragCounter.current === 0) {
+            setIsDragging(false);
+        }
+    };
+
+    const onDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const onDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        dragCounter.current = 0;
+        
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            handleUpload({ target: { files } });
+        }
+    };
+
+    const filterTypes = [
+        { id: 'all', label: 'Всі', icon: null },
+        { id: 'image', label: 'Фото', icon: IconImage },
+        { id: 'video', label: 'Відео', icon: IconVideo },
+        { id: 'document', label: 'Док.', icon: IconFileText },
+        { id: 'font', label: 'Шрифти', icon: IconType },
+        { id: 'audio', label: 'Аудіо', icon: IconMusic },
+    ];
+
+    const styles = {
+        pageWrapper: {
+            margin: '-2rem', 
+            width: 'calc(100% + 4rem)',
+            height: 'calc(100vh - 64px + 4rem)', 
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: 'var(--platform-bg)',
+            color: 'var(--platform-text-primary)',
+            overflow: 'hidden', 
+            position: 'relative',
+        },
+        header: {
+            padding: '12px 24px', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            borderBottom: '1px solid var(--platform-border-color)',
+            flexShrink: 0,
+            backgroundColor: 'var(--platform-bg)',
+            height: '60px', 
+        },
+        workspace: {
+            display: 'flex',
+            flex: 1,
+            overflow: 'hidden', 
+            position: 'relative'
+        },
+        mainContent: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0, 
+            height: '100%', 
+        },
+        filtersBar: {
+            padding: '12px 24px',
+            borderBottom: '1px solid var(--platform-border-color)',
+            backgroundColor: 'var(--platform-bg)',
+            flexShrink: 0, 
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+        },
+        topFilterRow: {
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'center',
+            width: '100%',
+            flexWrap: 'wrap',
+        },
+        bottomFilterRow: {
+            display: 'flex', 
+            gap: '8px', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            paddingTop: '4px'
+        },
+        filesGridArea: {
+            flex: 1,
+            overflowY: 'auto', 
+            padding: '24px', 
+            position: 'relative',
+        },
+        statusBar: {
+            padding: '0 24px',
+            height: '40px', 
+            borderTop: '1px solid var(--platform-border-color)',
+            backgroundColor: 'var(--platform-bg)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.8rem',
+            color: 'var(--platform-text-secondary)',
+            flexShrink: 0, 
+            marginTop: 'auto'
+        },
+        bulkActionsContainer: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px', 
+            padding: '4px 8px', 
+            background: 'transparent',
+            border: '1px solid var(--platform-border-color)',
+            borderRadius: '6px',
+            transition: 'all 0.2s'
+        },
+        fileNameTruncated: {
+            maxWidth: '300px', 
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            textAlign: 'right',
+            fontWeight: 500
+        },
+        sidebar: {
+            width: '360px',
+            borderLeft: '1px solid var(--platform-border-color)',
+            backgroundColor: 'var(--platform-bg)',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 40,
+            height: '100%',
+            overflowY: 'auto',
+            boxShadow: '-4px 0 16px rgba(0,0,0,0.03)'
+        },
     };
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1200px', margin: 'auto' }}>
-            <h1 style={{ marginBottom: '1rem' }}>Медіатека</h1>
-            <p className="text-secondary" style={{ marginBottom: '1.5rem' }}>
-                Тут зберігаються всі ваші завантажені зображення, відео та шрифти.
-            </p>
+        <div 
+            style={styles.pageWrapper} 
+            onDragEnter={onDragEnter}
+            onDragOver={onDragOver} 
+            onDragLeave={onDragLeave} 
+            onDrop={onDrop}
+        >
+            {isDragging && (
+                <div style={{
+                    position: 'absolute', inset: 0, zIndex: 100,
+                    backgroundColor: 'rgba(var(--platform-accent-rgb, 59, 130, 246), 0.1)',
+                    border: '4px dashed var(--platform-accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--platform-accent)', fontSize: '1.5rem', fontWeight: 'bold',
+                    pointerEvents: 'none' 
+                }}>
+                    Перетягніть файли сюди
+                </div>
+            )}
 
-            <div className="card" style={{ marginBottom: '2rem' }}>
-                <label htmlFor="page-file-upload" className="btn btn-primary" style={{ cursor: 'pointer' }}>
-                    {uploading ? 'Завантаження...' : '➕ Завантажити файл'}
-                </label>
-                <input 
-                    id="page-file-upload" 
-                    type="file" 
-                    onChange={handleFileChange} 
-                    accept="image/*,video/mp4,video/webm,.ttf,.otf,.woff,.woff2" 
-                    disabled={uploading} 
-                    style={{ display: 'none' }} 
-                />
+            <div style={styles.header}>
+                <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Медіатека</h1>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <Button 
+                        variant="primary"
+                        onClick={() => fileInputRef.current.click()}
+                    >
+                        <IconUpload size={18} /> 
+                        <span>Завантажити</span>
+                    </Button>
+                    <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleUpload} />
+                </div>
             </div>
 
-            <div style={{ display: 'flex', marginBottom: '1rem', borderBottom: '1px solid var(--platform-border-color)' }}>
-                <button style={tabStyle(filterType === 'all')} onClick={() => setFilterType('all')}>Всі</button>
-                <button style={tabStyle(filterType === 'image')} onClick={() => setFilterType('image')}>Зображення</button>
-                <button style={tabStyle(filterType === 'video')} onClick={() => setFilterType('video')}>Відео</button>
-                <button style={tabStyle(filterType === 'font')} onClick={() => setFilterType('font')}>🅰️ Шрифти</button>
-            </div>
+            <div style={styles.workspace}>
+                
+                <div style={styles.mainContent}>
+                    
+                    <div style={styles.filtersBar}>
+                        
+                        <div style={styles.topFilterRow}>
+                            <div style={{ flex: '1 1 200px', minWidth: '200px' }}>
+                                <Input 
+                                    placeholder="Пошук файлів..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    leftIcon={<IconSearch size={18} />}
+                                    rightIcon={searchQuery ? <IconX size={16} onClick={() => setSearchQuery('')} style={{cursor: 'pointer'}} /> : null}
+                                    wrapperStyle={{ marginBottom: 0 }}
+                                    style={{ height: '38px' }}
+                                />
+                            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: selectedFile ? '3fr 1fr' : '1fr', gap: '2rem' }}>
-                <div className="card">
-                    {loading ? <p>Завантаження...</p> : filteredFiles.length === 0 ? (
-                        <p className="text-secondary">
-                            {filterType === 'all' 
-                                ? 'Ваша медіатека порожня.' 
-                                : `Немає ${filterType === 'image' ? 'зображень' : filterType === 'video' ? 'відео' : 'шрифтів'} у медіатеці.`}
-                        </p>
-                    ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
-                            {filteredFiles.map(file => {
-                                const isVideo = file.mime_type.startsWith('video/');
-                                const isFont = file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name);
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                flexWrap: 'wrap', 
+                                marginLeft: 'auto',
+                                flexShrink: 0
+                            }}>
+                                <div style={{ width: '180px' }}>
+                                    <Select 
+                                        value={sortKey}
+                                        onChange={(e) => setSortKey(e.target.value)}
+                                        options={SORT_OPTIONS}
+                                        placeholder="Сортування"
+                                        style={{ height: '38px', padding: '6px 10px' }}
+                                    />
+                                </div>
                                 
-                                return (
-                                    <div 
-                                        key={file.id} 
-                                        style={{
-                                            aspectRatio: '1 / 1',
-                                            borderRadius: '8px',
-                                            overflow: 'hidden',
-                                            border: selectedFile?.id === file.id ? '3px solid var(--platform-accent)' : '3px solid var(--platform-border-color)',
-                                            cursor: 'pointer',
-                                            position: 'relative',
-                                            background: isVideo ? '#000' : 'transparent'
-                                        }}
-                                        onClick={() => handleSelectFile(file)}
-                                    >
-                                        {isVideo ? (
-                                            <div style={{
-                                                width: '100%', 
-                                                height: '100%', 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center', 
-                                                flexDirection: 'column',
-                                                background: '#1a1a1a'
-                                            }}>
-                                                <span style={{fontSize: '2rem'}}>🎥</span>
-                                                <span style={{fontSize: '0.7rem', color: 'white', marginTop: '5px'}}>VIDEO</span>
-                                            </div>
-                                        ) : isFont ? (
-                                            <div style={fontIconStyle}>
-                                                <span>Aa</span>
-                                                <span style={{fontSize: '0.6rem', marginTop: '5px', color: 'var(--platform-text-secondary)'}}>
-                                                    {file.original_file_name.split('.').pop().toUpperCase()}
-                                                </span>
-                                            </div>
-                                        ) : (
-                                            <img 
-                                                src={`${API_URL}${file.path_thumb || file.path_full}`} 
-                                                alt={file.original_file_name} 
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                            />
-                                        )}
-                                        
-                                        <button 
-                                            onClick={(e) => handleDelete(file.id, e)} 
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')} 
+                                    title={sortDirection === 'asc' ? "За зростанням" : "За спаданням"}
+                                    style={{ height: '38px', width: '38px', padding: 0, background: 'var(--platform-card-bg)' }}
+                                >
+                                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                                </Button>
+
+                                <Button
+                                    variant="square-accent"
+                                    active={onlyFavorites}
+                                    onClick={() => setOnlyFavorites(prev => !prev)}
+                                    title="Тільки обрані"
+                                    style={{ height: '38px', width: '38px' }}
+                                >
+                                    <IconStar size={20} filled={onlyFavorites} />
+                                </Button>
+
+                                <Button 
+                                    variant="square-danger"
+                                    onClick={handleClearFilters}
+                                    title="Очистити всі фільтри"
+                                    style={{ height: '38px', width: '38px' }}
+                                >
+                                    <IconClear size={18} />
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div style={styles.bottomFilterRow}>
+                            {filterTypes.map(type => (
+                                <Button
+                                    key={type.id}
+                                    variant="outline"
+                                    onClick={() => { setActiveType(type.id); setVisibleCount(48); }}
+                                    style={{
+                                        borderRadius: '20px',
+                                        padding: '6px 14px',
+                                        fontSize: '0.85rem',
+                                        height: '32px',
+                                        border: activeType === type.id ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+                                        color: activeType === type.id ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                                        background: activeType === type.id ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent'
+                                    }}
+                                >
+                                    {type.icon && <type.icon size={14} />} {type.label}
+                                </Button>
+                            ))}
+                            
+                            {activeType !== 'all' && FORMATS_BY_TYPE[activeType]?.length > 0 && (
+                                <>
+                                    <div style={{ width: '1px', height: '24px', background: 'var(--platform-border-color)', margin: '0 8px', flexShrink: 0 }}></div>
+                                    
+                                    {FORMATS_BY_TYPE[activeType].map(fmt => (
+                                        <Button
+                                            key={fmt}
+                                            variant="outline"
+                                            onClick={() => setActiveFormat(activeFormat === fmt ? null : fmt)}
                                             style={{
-                                                position: 'absolute', 
-                                                top: '5px', 
-                                                right: '5px',
-                                                background: 'rgba(0,0,0,0.6)', 
-                                                color: 'white',
-                                                border: 'none', 
-                                                borderRadius: '50%',
-                                                width: '24px', 
-                                                height: '24px', 
-                                                cursor: 'pointer',
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center'
+                                                borderRadius: '6px', 
+                                                padding: '4px 10px',
+                                                fontSize: '0.8rem',
+                                                height: '32px',
+                                                textTransform: 'uppercase',
+                                                border: activeFormat === fmt ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+                                                color: activeFormat === fmt ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                                                background: activeFormat === fmt ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent'
                                             }}
                                         >
-                                            &times;
-                                        </button>
-                                    </div>
-                                );
-                            })}
+                                            {fmt}
+                                        </Button>
+                                    ))}
+                                </>
+                            )}
                         </div>
-                    )}
+                    </div>
+
+                    <div 
+                        style={styles.filesGridArea}
+                        className="custom-scrollbar" 
+                    >
+                        {loading ? (
+                            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}>Завантаження...</div>
+                        ) : filteredFiles.length === 0 ? (
+                            <div style={{ 
+                                textAlign: 'center', padding: '60px 20px', 
+                                border: '2px dashed var(--platform-border-color)', borderRadius: '16px', color: 'var(--platform-text-secondary)', marginTop: '24px',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <IconSearch size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
+                                <p style={{ margin: 0, marginBottom: '16px' }}>Файлів не знайдено</p>
+                                <Button 
+                                    variant="primary"
+                                    onClick={handleClearFilters}
+                                >
+                                    Очистити фільтри
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
+                                <div style={{ 
+                                    display: 'grid', 
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                                    gap: '16px'
+                                }}>
+                                    {visibleFiles.map((file, index) => (
+                                        <MediaGridItem 
+                                            key={file.id} 
+                                            file={file} 
+                                            selected={selectedFile?.id === file.id}
+                                            onSelect={(f, e) => handleCardClick(f, index, e)}
+                                            onToggleFavorite={(e) => handleToggleFavorite(file, e)}
+                                            isChecked={checkedFiles.has(file.id)}
+                                            onCheck={(f, e) => handleCheckFile(f, index, e)}
+                                        />
+                                    ))}
+                                </div>
+                                {remainingCount > 0 && (
+                                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', marginBottom: '20px' }}>
+                                        <Button 
+                                            variant="outline"
+                                            onClick={handleLoadMore}
+                                            style={{ borderRadius: '30px' }}
+                                        >
+                                            Показати ще ({remainingCount})
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                    
+                    <div style={styles.statusBar}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontWeight: 500 }}>
+                                Всього: {files.length} {filteredFiles.length !== files.length && `(Знайдено: ${filteredFiles.length})`}
+                            </span>
+                            
+                            <Button 
+                                variant="ghost"
+                                onClick={handleSelectAll}
+                                style={{
+                                    fontSize: '0.8rem', fontWeight: 600,
+                                    color: 'var(--platform-accent)',
+                                    padding: '4px 8px', borderRadius: '6px'
+                                }}
+                            >
+                                <IconCheck size={14} />
+                                {checkedFiles.size === filteredFiles.length && filteredFiles.length > 0 ? 'Зняти все' : 'Вибрати все'}
+                            </Button>
+                        </div>
+
+                        {checkedFiles.size > 0 && (
+                            <div style={styles.bulkActionsContainer}>
+                                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                                    Вибрано: {checkedFiles.size}
+                                </span>
+                                
+                                <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }}></div>
+                                
+                                <Button 
+                                    variant="ghost"
+                                    onClick={handleBulkDownload}
+                                    title={checkedFiles.size > 1 ? "Завантажити архівом (послідовно)" : "Завантажити"}
+                                    style={{
+                                        fontSize: '0.8rem', fontWeight: 500, color: 'var(--platform-text-primary)',
+                                        padding: '6px 8px', borderRadius: '4px'
+                                    }}
+                                >
+                                    <IconDownload size={14} />
+                                    <span className="bulk-text">
+                                        {checkedFiles.size > 1 ? 'Завантажити архівом' : 'Завантажити'}
+                                    </span>
+                                </Button>
+                                
+                                <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }}></div>
+                                
+                                <Button 
+                                    variant="ghost"
+                                    onClick={handleBulkDelete}
+                                    title="Видалити вибрані"
+                                    style={{
+                                        fontSize: '0.8rem', fontWeight: 500, color: '#e53e3e',
+                                        padding: '6px 8px', borderRadius: '4px'
+                                    }}
+                                >
+                                    <IconTrash size={14} />
+                                    <span className="bulk-text">
+                                        Видалити
+                                    </span>
+                                </Button>
+                            </div>
+                        )}
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>Обраний файл:</span>
+                            <span 
+                                style={styles.fileNameTruncated} 
+                                title={selectedFile ? (selectedFile.original_file_name || selectedFile.display_name) : ''}
+                            >
+                                {selectedFile 
+                                    ? (selectedFile.original_file_name || selectedFile.display_name) 
+                                    : 'відсутній'
+                                }
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
 
                 {selectedFile && (
-                    <div className="card" style={{ position: 'sticky', top: '2rem' }}>
-                        <h4>Деталі файлу</h4>
-                        {selectedFile.mime_type.startsWith('video/') ? (
-                            <video 
-                                src={`${API_URL}${selectedFile.path_full}`} 
-                                controls 
-                                style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }} 
-                            />
-                        ) : (selectedFile.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(selectedFile.original_file_name)) ? (
-                            <div style={{...fontIconStyle, height: '150px', fontSize: '3rem', borderRadius: '8px'}}>
-                                Aa
-                            </div>
-                        ) : (
-                            <img 
-                                src={`${API_URL}${selectedFile.path_full}`} 
-                                alt="Preview" 
-                                style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }} 
-                            />
-                        )}
-                        <div style={{ marginTop: '1rem' }}>
-                            <label>Назва файлу:</label>
-                            <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: 'var(--platform-text-secondary)' }}>
-                                {selectedFile.original_file_name}
-                            </p>
-                            
-                            <label>Тип:</label>
-                            <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: 'var(--platform-text-secondary)' }}>
-                                {selectedFile.mime_type.startsWith('video/') ? 'Відео' : 
-                                 selectedFile.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(selectedFile.original_file_name) ? 'Шрифт' : 'Зображення'}
-                            </p>
-                            
-                            <label>Розмір:</label>
-                            <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: 'var(--platform-text-secondary)' }}>
-                                {selectedFile.file_size_kb} KB
-                            </p>
-
-                            <label>URL (повний):</label>
-                            <input 
-                                type="text" 
-                                readOnly 
-                                value={`${API_URL}${selectedFile.path_full}`} 
-                                onFocus={(e) => e.target.select()} 
-                                style={{
-                                    width: '100%',
-                                    padding: '0.5rem',
-                                    border: '1px solid var(--platform-border-color)',
-                                    borderRadius: '4px',
-                                    background: 'var(--platform-bg)',
-                                    color: 'var(--platform-text-primary)',
-                                    fontSize: '0.9rem'
-                                }}
-                            />
-                            <button 
-                                className="btn btn-secondary" 
-                                style={{width: '100%', marginTop: '0.5rem'}} 
-                                onClick={() => handleCopyToClipboard(`${API_URL}${selectedFile.path_full}`)}
-                            >
-                                Скопіювати URL
-                            </button>
-                        </div>
+                    <div 
+                        style={styles.sidebar}
+                        className="custom-scrollbar"
+                    >
+                        <MediaInspector 
+                            file={selectedFile} 
+                            onUpdate={handleUpdateFile}
+                            onDelete={handleDelete}
+                            onClose={() => setSelectedFile(null)}
+                        />
                     </div>
                 )}
             </div>

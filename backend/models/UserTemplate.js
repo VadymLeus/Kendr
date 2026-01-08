@@ -1,5 +1,5 @@
 // backend/models/UserTemplate.js
-const db = require('../db');
+const db = require('../config/db');
 
 class UserTemplate {
     static async create(userId, name, description, snapshot) {

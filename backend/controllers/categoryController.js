@@ -14,7 +14,7 @@ exports.getCategoriesForSite = async (req, res, next) => {
 
 exports.createCategory = async (req, res, next) => {
     try {
-        const { siteId, name, discount_percentage } = req.body;
+        const { siteId, name, discount_percentage, icon } = req.body;
         const userId = req.user.id;
 
         const site = await Site.findByIdAndUserId(siteId, userId);
@@ -22,7 +22,7 @@ exports.createCategory = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для додавання категорій на цей сайт.' });
         }
         
-        const newCategory = await Category.create(siteId, name, discount_percentage);
+        const newCategory = await Category.create(siteId, name, discount_percentage, icon);
         res.status(201).json(newCategory);
     } catch (error) {
         next(error);
@@ -32,7 +32,7 @@ exports.createCategory = async (req, res, next) => {
 exports.updateCategory = async (req, res, next) => {
     try {
         const { categoryId } = req.params;
-        const { name, discount_percentage } = req.body;
+        const { name, discount_percentage, icon } = req.body;
         const userId = req.user.id;
 
         if (!name || name.trim() === '') {
@@ -48,7 +48,7 @@ exports.updateCategory = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав на редагування цієї категорії.' });
         }
 
-        await Category.update(categoryId, name.trim(), discount_percentage);
+        await Category.update(categoryId, name.trim(), discount_percentage, icon);
         res.json({ message: 'Категорію оновлено.' });
 
     } catch (error) {

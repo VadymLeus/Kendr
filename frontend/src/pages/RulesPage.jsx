@@ -1,109 +1,193 @@
 // frontend/src/pages/RulesPage.jsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import { Button } from '../common/components/ui/Button';
+import { IconArrowLeft, IconFileText, IconShield, IconInfo } from '../common/components/ui/Icons';
 
 const RulesPage = () => {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    const handleAgree = () => {
+        const fromSource = searchParams.get('from');
+
+        if (fromSource === 'register') {
+            navigate('/register?view=register', { state: { rulesAccepted: true } });
+        } else if (fromSource === 'create-site') {
+            navigate('/create-site', { state: { rulesAccepted: true } });
+        } else {
+            navigate('/');
+        }
+    };
+
     const containerStyle = {
-        maxWidth: '800px',
+        maxWidth: '900px',
         margin: '0 auto',
-        lineHeight: '1.6',
-        padding: '2rem 1rem'
+        padding: '3rem 1.5rem',
+        fontFamily: 'var(--font-body)'
+    };
+
+    const headerStyle = {
+        textAlign: 'center',
+        marginBottom: '3rem'
     };
 
     const titleStyle = {
         color: 'var(--platform-text-primary)',
-        marginBottom: '0.5rem'
+        marginBottom: '1rem',
+        fontSize: '2.5rem',
+        fontWeight: '800'
     };
 
     const subtitleStyle = {
         color: 'var(--platform-text-secondary)',
-        marginBottom: '2rem',
-        fontSize: '0.9rem'
+        fontSize: '1.1rem'
     };
 
-    const warningStyle = {
-        background: '#fffbe6',
-        padding: '1.5rem',
-        borderRadius: '12px',
-        border: '1px solid #ffe58f',
-        marginBottom: '2rem',
-        color: 'var(--platform-text-primary)'
-    };
-
-    const sectionStyle = {
+    const cardStyle = {
+        background: 'var(--platform-card-bg)',
+        padding: '2.5rem',
+        borderRadius: '16px',
+        border: '1px solid var(--platform-border-color)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         marginBottom: '2rem'
     };
 
-    const headingStyle = {
+    const sectionTitleStyle = {
         color: 'var(--platform-text-primary)',
-        marginBottom: '1rem'
+        marginBottom: '1.5rem',
+        paddingBottom: '1rem',
+        borderBottom: '1px solid var(--platform-border-color)',
+        fontSize: '1.5rem',
+        fontWeight: '700',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
+    };
+
+    const subHeadingStyle = {
+        color: 'var(--platform-text-primary)',
+        margin: '1.5rem 0 0.75rem 0',
+        fontSize: '1.1rem',
+        fontWeight: '600'
+    };
+
+    const textStyle = {
+        color: 'var(--platform-text-secondary)',
+        marginBottom: '1rem',
+        fontSize: '1rem',
+        lineHeight: '1.7'
     };
 
     const listStyle = {
-        color: 'var(--platform-text-primary)',
+        color: 'var(--platform-text-secondary)',
         paddingLeft: '1.5rem',
-        marginBottom: '1rem'
-    };
-
-    const paragraphStyle = {
-        color: 'var(--platform-text-primary)',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        listStyleType: 'disc',
+        lineHeight: '1.6'
     };
 
     return (
         <div style={containerStyle}>
-            <h1 style={titleStyle}>Правила платформи Kendr</h1>
-            <p style={subtitleStyle}><em>Дата останнього оновлення: 30 вересня 2025 р.</em></p>
-            
-            <div style={warningStyle}>
-                <p style={{ margin: 0 }}><strong>Важливо:</strong> Незнання правил не звільняє від відповідальності. Створюючи сайт на нашій платформі, ви автоматично погоджуєтеся з наведеними нижче умовами.</p>
-            </div>
+            <Helmet>
+                <title>Правила та Політика конфіденційності | Kendr</title>
+            </Helmet>
 
-            <div style={sectionStyle}>
-                <h2 style={headingStyle}>1. Заборонений контент</h2>
-                <p style={paragraphStyle}>На платформі Kendr категорично заборонено розміщувати:</p>
+            <div style={headerStyle}>
+                <h1 style={titleStyle}>Правила платформи Kendr</h1>
+                <p style={subtitleStyle}>
+                    Будь ласка, уважно ознайомтеся з умовами використання та політикою конфіденційності.
+                </p>
+            </div>
+            
+            <div style={cardStyle}>
+                <h2 style={sectionTitleStyle}>
+                    <IconFileText size={28} style={{ color: 'var(--platform-accent)' }} />
+                    1. Умови використання (Terms of Use)
+                </h2>
+                
+                <h3 style={subHeadingStyle}>1. Загальні положення</h3>
+                <p style={textStyle}>
+                    Платформа Kendr (далі — Платформа) надає інструменти для створення та управління веб-сайтами. 
+                    Реєструючись на Платформі, ви погоджуєтесь з цими умовами.
+                </p>
+
+                <h3 style={subHeadingStyle}>2. Відповідальність користувача</h3>
+                <p style={textStyle}>
+                    Користувач несе повну відповідальність за контент, який він розміщує на створених сайтах. 
+                    Заборонено створювати сайти для:
+                </p>
                 <ul style={listStyle}>
-                    <li>Матеріали, що порушують законодавство.</li>
-                    <li>Контент для дорослих (18+), включно з еротикою та порнографією.</li>
-                    <li>Сцени насильства, жорстокості та контент, що закликає до ненависті за будь-якою ознакою.</li>
-                    <li>Шахрайські сайти, фінансові піраміди та схеми швидкого збагачення.</li>
-                    <li>Продаж заборонених товарів та послуг (зброя, наркотики, підроблені документи тощо).</li>
-                    <li>Контент, що порушує авторські права третіх осіб.</li>
+                    <li>Продажу заборонених товарів та послуг.</li>
+                    <li>Шахрайства (фішингу) та введення в оману.</li>
+                    <li>Розповсюдження шкідливого програмного забезпечення.</li>
+                    <li>Розпалювання ворожнечі, дискримінації або насильства.</li>
                 </ul>
-            </div>
 
-            <div style={sectionStyle}>
-                <h2 style={headingStyle}>2. Відповідальність користувача</h2>
-                <p style={paragraphStyle}>Ви несете повну та одноосібну відповідальність за весь контент, розміщений на створеному вами сайті. Адміністрація платформи не несе відповідальності за дії користувачів, але залишає за собою право модерувати контент.</p>
-            </div>
-
-            <div style={sectionStyle}>
-                <h2 style={headingStyle}>3. Модерація та санкції</h2>
-                <p style={paragraphStyle}>Адміністрація має право без попереднього повідомлення:</p>
+                <h3 style={subHeadingStyle}>3. Права Платформи</h3>
+                <p style={textStyle}>Адміністрація Kendr залишає за собою право:</p>
                 <ul style={listStyle}>
-                    <li>Тимчасово заблокувати або назавжди видалити сайт, що порушує правила.</li>
-                    <li>Заблокувати акаунт користувача за систематичні або грубі порушення.</li>
+                    <li>Видаляти або блокувати сайти, що порушують ці правила, без попередження.</li>
+                    <li>Змінювати функціонал редактора та умови надання послуг у будь-який момент.</li>
                 </ul>
-                <p style={paragraphStyle}>Рішення адміністрації є остаточними та оскарженню не підлягають.</p>
-            </div>
-            
-            <div style={sectionStyle}>
-                <h2 style={headingStyle}>4. Використання платформи</h2>
-                <p style={paragraphStyle}>Забороняється використовувати платформу для DdoS-атак, розсилки спаму, фішингу та будь-якої іншої шкідливої діяльності, яка може завдати шкоди роботі сервісу або іншим користувачам.</p>
+
+                <h3 style={subHeadingStyle}>4. Відмова від відповідальності</h3>
+                <p style={textStyle}>
+                    Платформа надається за принципом "як є" (as is). Ми не несемо відповідальності за прямі 
+                    або непрямі збитки, втрату прибутку або даних, пов'язаних з використанням сервісу.
+                </p>
             </div>
 
-            <hr style={{ 
-                border: 'none',
-                borderTop: '1px solid var(--platform-border-color)',
-                margin: '2rem 0' 
-            }} />
-            
-            <div style={{ textAlign: 'center' }}>
-                <Link to="/create-site">
-                    <button className="btn btn-primary">
-                        Я ознайомився(-лась) і погоджуюся з правилами
-                    </button>
-                </Link>
+            <div style={cardStyle}>
+                <h2 style={sectionTitleStyle}>
+                    <IconShield size={28} style={{ color: 'var(--platform-success)' }} />
+                    2. Політика конфіденційності (Privacy Policy)
+                </h2>
+                
+                <h3 style={subHeadingStyle}>1. Які дані ми збираємо</h3>
+                <p style={textStyle}>Для функціонування сервісу ми зберігаємо:</p>
+                <ul style={listStyle}>
+                    <li>Електронну пошту та ім'я користувача (для ідентифікації).</li>
+                    <li>Завантажені медіа-файли (зображення, відео) необхідні для роботи ваших сайтів.</li>
+                    <li>Технічні дані (IP-адреса, файли Cookie) для забезпечення безпеки та аналітики.</li>
+                </ul>
+
+                <h3 style={subHeadingStyle}>2. Використання даних</h3>
+                <p style={textStyle}>Ми використовуємо ваші дані виключно для:</p>
+                <ul style={listStyle}>
+                    <li>Надання доступу до вашого облікового запису.</li>
+                    <li>Зв'язку з вами щодо технічних питань та оновлень.</li>
+                    <li>Захисту платформи від зловживань та атак.</li>
+                </ul>
+
+                <h3 style={subHeadingStyle}>3. Передача третім особам</h3>
+                <p style={textStyle}>
+                    Ми не продаємо і не передаємо ваші особисті дані третім особам, 
+                    за винятком випадків, передбачених чинним законодавством.
+                </p>
+            </div>
+
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                gap: '1rem',
+                marginTop: '3rem'
+            }}>
+                <Button 
+                    variant="primary" 
+                    onClick={handleAgree}
+                    style={{ minWidth: '200px' }}
+                    icon={<IconArrowLeft size={18}/>}
+                >
+                    Повернутися назад
+                </Button>
+                
+                <div style={{ marginTop: '1rem', opacity: 0.7, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <IconInfo size={16} />
+                    <span>Продовжуючи роботу, ви погоджуєтесь з правилами.</span>
+                </div>
             </div>
         </div>
     );

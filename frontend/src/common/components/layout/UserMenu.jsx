@@ -1,195 +1,92 @@
-// frontend/src/common/components/layout/UserMenu.jsx
-import React, { useState, useContext, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+// frontend/src/common/components/layout/Footer.jsx
+import React, { useContext, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
-
-const API_URL = 'http://localhost:5000';
+import Avatar from '../ui/Avatar';
 
 const UserMenu = ({ isCollapsed }) => {
-    const { user, logout, isAdmin } = useContext(AuthContext);
-    const navigate = useNavigate();
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef(null);
+    const { user } = useContext(AuthContext);
+    const [isHovered, setIsHovered] = useState(false);
 
-    const handleLogout = () => {
-        logout();
-        setIsDropdownOpen(false);
-        navigate('/login');
+    const containerStyle = {
+        padding: '12px 16px', 
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: isCollapsed ? 'center' : 'flex-start',
+        gap: '12px',
+        transition: 'all 0.3s ease',
+        minHeight: '66px'
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsDropdownOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    const infoStyle = {
+        flex: 1,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center'
+    };
 
-    const linkStyles = { 
-        textDecoration: 'none', 
-        color: 'var(--platform-text-secondary)', 
-        fontWeight: '500', 
-        display: 'block', 
-        textAlign: 'center', 
-        padding: '0.5rem 0' 
-    };
-    
-    const avatarStyles = { 
-        height: '50px', 
-        width: '50px', 
-        borderRadius: '50%', 
-        objectFit: 'cover', 
-        cursor: 'pointer', 
-        border: '3px solid var(--platform-accent)' 
-    };
-    
-    const dropdownMenuStyles = { 
-        position: 'absolute', 
-        bottom: '70px', 
-        right: isCollapsed ? '-130px' : 0,
-        background: 'var(--platform-sidebar-bg)', 
-        border: '1px solid var(--platform-border-color)', 
-        borderRadius: '8px', 
-        boxShadow: '0 -4px 8px rgba(0,0,0,0.5)', 
-        minWidth: '200px', 
-        zIndex: 1200, 
-        padding: '0.5rem 0' 
-    };
-    
-    const dropdownHeaderStyle = {
-        padding: '0.75rem 1rem', 
-        borderBottom: '1px solid var(--platform-border-color)',
-        color: 'var(--platform-text-primary)'
-    };
-    
-    const dropdownEmailStyle = { 
-        color: 'var(--platform-text-secondary)'
-    };
-    
-    const dropdownItemStyles = { 
-        display: 'block', 
-        padding: '0.75rem 1rem', 
-        color: 'var(--platform-text-secondary)', 
-        textDecoration: 'none', 
-        cursor: 'pointer', 
-        background: 'none', 
-        border: 'none', 
-        width: '100%', 
-        textAlign: 'left',
-        transition: 'all 0.2s ease'
-    };
-    
-    const dropdownItemHoverStyle = {
+    const nameStyle = {
+        fontSize: '1.0rem',
+        fontWeight: '600',
         color: 'var(--platform-text-primary)',
-        backgroundColor: 'rgba(255, 255, 255, 0.05)'
-    };
-    
-    const dropdownDividerStyle = { 
-        margin: '0.25rem 0', 
-        border: 'none', 
-        borderTop: '1px solid var(--platform-border-color)' 
-    };
-    
-    const logoutButtonStyle = { 
-        ...dropdownItemStyles, 
-        color: 'var(--platform-danger)' 
-    };
-    
-    const userBlockStyle = { 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        gap: '1rem', 
-        position: 'relative' 
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
     };
 
-    const handleItemClick = (callback) => {
-        setIsDropdownOpen(false);
-        if (callback) callback();
+    const emailStyle = {
+        fontSize: '0.7rem',
+        color: 'var(--platform-text-secondary)',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        opacity: 0.8
     };
 
-    const handleItemMouseEnter = (e) => {
-        Object.assign(e.target.style, dropdownItemHoverStyle);
-    };
-
-    const handleItemMouseLeave = (e) => {
-        Object.assign(e.target.style, dropdownItemStyles);
-    };
+    if (isCollapsed) {
+        return (
+            <div style={containerStyle}>
+                <Link 
+                    to={`/profile/${user.username}`} 
+                    title="Мій профіль"
+                    style={{ display: 'flex', justifyContent: 'center' }}
+                >
+                    <Avatar 
+                        url={user.avatar_url} 
+                        name={user.username} 
+                        size={42} 
+                    />
+                </Link>
+            </div>
+        );
+    }
 
     return (
-        <div style={userBlockStyle}>
-            {user ? (
-                <div ref={dropdownRef}>
-                    <img 
-                        src={`${API_URL}${user.avatar_url}`} 
-                        alt={`Аватар ${user.username}`}
-                        onClick={() => setIsDropdownOpen(prev => !prev)}
-                        style={avatarStyles} 
-                    />
-                    {isDropdownOpen && (
-                        <div style={dropdownMenuStyles}>
-                            <div style={dropdownHeaderStyle}>
-                                <strong style={{ display: 'block' }}>{user.username}</strong>
-                                <small style={dropdownEmailStyle}>{user.email}</small>
-                            </div>
-                            <Link 
-                                to={`/profile/${user.username}`} 
-                                style={dropdownItemStyles}
-                                onMouseEnter={handleItemMouseEnter}
-                                onMouseLeave={handleItemMouseLeave}
-                                onClick={() => handleItemClick()}
-                            >
-                                Мій профіль
-                            </Link>
-                            <Link 
-                                to="/settings" 
-                                style={dropdownItemStyles}
-                                onMouseEnter={handleItemMouseEnter}
-                                onMouseLeave={handleItemMouseLeave}
-                                onClick={() => handleItemClick()}
-                            >
-                                Налаштування
-                            </Link>
-                            
-                            {!isAdmin && (
-                                <Link 
-                                    to="/my-sites" 
-                                    style={dropdownItemStyles}
-                                    onMouseEnter={handleItemMouseEnter}
-                                    onMouseLeave={handleItemMouseLeave}
-                                    onClick={() => handleItemClick()}
-                                >
-                                    Мої Сайти
-                                </Link>
-                            )}
-
-                            <hr style={dropdownDividerStyle}/>
-                            <div 
-                                onClick={() => handleItemClick(handleLogout)} 
-                                style={logoutButtonStyle}
-                                onMouseEnter={handleItemMouseEnter}
-                                onMouseLeave={handleItemMouseLeave}
-                            >
-                                Вийти
-                            </div>
-                        </div>
-                    )}
+        <div style={containerStyle}>
+            <Link 
+                to={`/profile/${user.username}`} 
+                style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '12px', 
+                    textDecoration: 'none', 
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: 'hidden' 
+                }}
+            >
+                <Avatar 
+                    url={user.avatar_url} 
+                    name={user.username} 
+                    size={42} 
+                    className={isHovered ? 'ring-2 ring-accent' : ''}
+                />
+                <div style={infoStyle}>
+                    <div style={nameStyle}>{user.username}</div>
+                    <div style={emailStyle} title={user.email}>{user.email}</div>
                 </div>
-            ) : (
-                isCollapsed ? (
-                    <>
-                        <Link to="/login" style={linkStyles}>В</Link>
-                        <Link to="/register" style={linkStyles}>Р</Link>
-                    </>
-                ) : (
-                    <>
-                        <Link to="/login" style={linkStyles}>Увійти</Link>
-                        <Link to="/register" style={linkStyles}>Реєстрація</Link>
-                    </>
-                )
-            )}
+            </Link>
         </div>
     );
 };

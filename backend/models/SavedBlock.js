@@ -1,5 +1,5 @@
 // backend/models/SavedBlock.js
-const db = require('../db');
+const db = require('../config/db');
 
 class SavedBlock {
     static async create(userId, name, type, content) {
