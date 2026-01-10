@@ -1,12 +1,12 @@
 // frontend/src/modules/media/components/MediaPickerModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { 
     IconSearch, IconX, IconUpload, IconCheck, IconImage, 
     IconCalendar, IconFileText, IconVideo, IconType, IconMusic
-} from '../../../common/components/ui/Icons';
+} from '../../../shared/ui/elements/Icons';
 
 const API_URL = 'http://localhost:5000';
 

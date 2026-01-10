@@ -1,9 +1,9 @@
 // frontend/src/modules/support/pages/MyTicketsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
-import { Button } from '../../../common/components/ui/Button';
-import { IconPlus, IconMessageSquare, IconLoader } from '../../../common/components/ui/Icons';
+import apiClient from '../../../shared/api/api';
+import { Button } from '../../../shared/ui/elements/Button';
+import { IconPlus, IconMessageSquare, IconLoader } from '../../../shared/ui/elements/Icons';
 import { Helmet } from 'react-helmet-async';
 
 const MyTicketsPage = () => {

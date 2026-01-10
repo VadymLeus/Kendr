@@ -1,7 +1,7 @@
 // frontend/src/modules/support/pages/SupportPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../../../common/components/ui/Button';
+import { Button } from '../../../shared/ui/elements/Button';
 import { 
     IconHelpCircle, 
     IconMessageCircle, 
@@ -9,7 +9,7 @@ import {
     IconChevronDown, 
     IconChevronRight, 
     IconPlus
-} from '../../../common/components/ui/Icons';
+} from '../../../shared/ui/elements/Icons';
 import { Helmet } from 'react-helmet-async';
 
 const SupportPage = () => {

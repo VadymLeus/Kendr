@@ -1,30 +1,14 @@
 // frontend/src/modules/media/pages/MediaLibraryPage.jsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import MediaGridItem from '../components/MediaGridItem';
 import MediaInspector from '../components/MediaInspector';
 import { toast } from 'react-toastify';
-import { useConfirm } from '../../../common/hooks/useConfirm';
-import { Button, Input, Select } from '../../../common/components/ui'; 
-import { 
-    IconUpload, 
-    IconSearch, 
-    IconX, 
-    IconClear, 
-    IconImage, 
-    IconVideo, 
-    IconFileText, 
-    IconType,
-    IconMusic,
-    IconStar,
-    IconCheck,
-    IconCalendar,
-    IconDownload,
-    IconTrash
-} from '../../../common/components/ui/Icons';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
+import { Button, Input, Select } from '../../../shared/ui/elements'; 
+import { IconUpload, IconSearch, IconX, IconClear, IconImage, IconVideo, IconFileText, IconType, IconMusic, IconStar, IconCheck, IconCalendar, IconDownload, IconTrash } from '../../../shared/ui/elements/Icons';
 
 const API_URL = 'http://localhost:5000';
-
 const FORMATS_BY_TYPE = {
     image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico', 'bmp'],
     video: ['mp4', 'webm', 'mov', 'avi', 'mkv'],

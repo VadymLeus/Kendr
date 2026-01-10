@@ -3,13 +3,13 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { AuthContext } from '../../../app/providers/AuthContext';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Input, Button } from '../../../common/components/ui';
-import Avatar from '../../../common/components/ui/Avatar';
-import ImageUploader from '../../../common/components/ui/ImageUploader';
-import { IconArrowLeft, IconCheck, IconMailOpen, IconTrash, IconCamera, IconUpload } from '../../../common/components/ui/Icons';
-import { validatePassword } from '../../../common/utils/validationUtils';
+import { Input, Button } from '../../../shared/ui/elements';
+import Avatar from '../../../shared/ui/elements/Avatar';
+import ImageUploader from '../../../shared/ui/complex/ImageUploader';
+import { IconArrowLeft, IconCheck, IconMailOpen, IconTrash, IconCamera, IconUpload } from '../../../shared/ui/elements/Icons';
+import { validatePassword } from '../../../shared/lib/utils/validationUtils';
 
 const API_URL = 'http://localhost:5000';
 

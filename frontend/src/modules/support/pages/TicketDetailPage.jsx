@@ -1,10 +1,10 @@
 // frontend/src/modules/support/pages/TicketDetailPage.jsx
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { AuthContext } from '../../../app/providers/AuthContext';
-import { Button } from '../../../common/components/ui/Button';
-import { IconSend, IconLoader, IconUser, IconShield } from '../../../common/components/ui/Icons';
+import { Button } from '../../../shared/ui/elements/Button';
+import { IconSend, IconLoader, IconUser, IconShield } from '../../../shared/ui/elements/Icons';
 import { Helmet } from 'react-helmet-async';
 
 const API_URL = 'http://localhost:5000';

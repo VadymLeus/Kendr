@@ -2,9 +2,9 @@
 import React, { useEffect, useContext, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { IconLoading } from '../../../common/components/ui/Icons';
+import { IconLoading } from '../../../shared/ui/elements/Icons';
 
 const AuthSuccessPage = () => {
     const [searchParams] = useSearchParams();

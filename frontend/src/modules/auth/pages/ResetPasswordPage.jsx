@@ -1,10 +1,10 @@
 // frontend/src/modules/auth/pages/ResetPasswordPage.jsx
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Input, Button } from '../../../common/components/ui';
-import { validatePassword } from '../../../common/utils/validationUtils';
+import { Input, Button } from '../../../shared/ui/elements';
+import { validatePassword } from '../../../shared/lib/utils/validationUtils';
 
 const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();

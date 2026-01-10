@@ -1,10 +1,10 @@
 // frontend/src/modules/support/pages/NewTicketPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Button } from '../../../common/components/ui/Button';
-import { IconSend, IconX, IconInfo, IconFileText, IconEdit } from '../../../common/components/ui/Icons';
+import { Button } from '../../../shared/ui/elements/Button';
+import { IconSend, IconX, IconInfo, IconFileText, IconEdit } from '../../../shared/ui/elements/Icons';
 import { Helmet } from 'react-helmet-async';
 
 const NewTicketPage = () => {

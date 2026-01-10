@@ -8,9 +8,9 @@ import {
     IconCopy,
     IconExternalLink,
     IconX 
-} from '../../../common/components/ui/Icons';
-import { Button } from '../../../common/components/ui/Button';
-import apiClient from '../../../common/services/api';
+} from '../../../shared/ui/elements/Icons';
+import { Button } from '../../../shared/ui/elements/Button';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:5000';

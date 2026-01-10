@@ -1,10 +1,10 @@
 // frontend/src/modules/media/components/ImageInput.jsx
 import React, { useState } from 'react';
 import MediaPickerModal from './MediaPickerModal';
-import ImageCropperModal from "../../../common/components/ui/ImageCropperModal";
-import apiClient from "../../../common/services/api";
+import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { IconUpload, IconX } from "../../../common/components/ui/Icons";
+import { IconUpload, IconX } from '../../../shared/ui/elements/Icons';
 
 const API_URL = 'http://localhost:5000';
 

@@ -1,8 +1,8 @@
 // frontend/src/pages/HomePage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../common/components/ui/Button';
-import { IconEye, IconArrowRight } from '../common/components/ui/Icons';
+import { Button } from '../shared/ui/elements/Button';
+import { IconEye, IconArrowRight } from '../shared/ui/elements/Icons';
 
 const HomePage = () => {
     const containerStyle = {

@@ -1,8 +1,8 @@
 // frontend/src/modules/auth/pages/VerifyEmailPage.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
-import { IconLoading, IconAlertCircle, IconCheckCircle } from '../../../common/components/ui/Icons';
+import apiClient from '../../../shared/api/api';
+import { IconLoading, IconAlertCircle, IconCheckCircle } from '../../../shared/ui/elements/Icons';
 
 const VerifyEmailPage = () => {
     const [searchParams] = useSearchParams();

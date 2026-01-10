@@ -2,12 +2,12 @@
 import React, { useContext, useMemo } from 'react';
 import { CartContext } from '../../../app/providers/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { 
     IconTrash, IconMinus, IconPlus, IconShop, 
     IconArrowLeft, IconCreditCard, IconTag, IconAlertCircle, IconEmptyBox 
-} from '../../../common/components/ui/Icons';
+} from '../../../shared/ui/elements/Icons';
 
 const API_URL = 'http://localhost:5000';
 

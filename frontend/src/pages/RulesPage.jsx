@@ -2,8 +2,8 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Button } from '../common/components/ui/Button';
-import { IconArrowLeft, IconFileText, IconShield, IconInfo } from '../common/components/ui/Icons';
+import { Button } from '../shared/ui/elements/Button';
+import { IconArrowLeft, IconFileText, IconShield, IconInfo } from '../shared/ui/elements/Icons';
 
 const RulesPage = () => {
     const navigate = useNavigate();

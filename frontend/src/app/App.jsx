@@ -4,38 +4,33 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 import { ConfirmProvider } from './providers/ConfirmContext';
-
-import Layout from '../common/components/layout/Layout';
-
 import ProtectedRoute from './guards/ProtectedRoute';
-
+import Layout from '../shared/ui/layouts/Layout';
 import HomePage from '../pages/HomePage';
 import RulesPage from '../pages/RulesPage';
-import SettingsPage from '../modules/profile/pages/SettingsPage';
-import MediaLibraryPage from '../modules/media/pages/MediaLibraryPage';
+import NotFoundPage from '../pages/NotFoundPage';
 import AuthPage from '../modules/auth/pages/AuthPage';
-import CreateSitePage from '../modules/site-dashboard/pages/CreateSitePage';
-import SiteDisplayPage from '../modules/site-render/pages/SiteDisplayPage';
-import SiteDashboardPage from '../pages/SiteDashboardPage';
-import CatalogPage from '../modules/site-render/pages/CatalogPage';
-import MySitesPage from '../modules/site-dashboard/pages/MySitesPage';
+import AuthSuccessPage from '../modules/auth/pages/AuthSuccessPage';
+import VerifyEmailPage from '../modules/auth/pages/VerifyEmailPage';
+import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
 import ProfilePage from '../modules/profile/pages/ProfilePage';
+import SettingsPage from '../modules/profile/pages/SettingsPage';
+import SiteDashboardPage from '../modules/dashboard/pages/SiteDashboardPage';
+import CreateSitePage from '../modules/dashboard/pages/CreateSitePage';
+import MySitesPage from '../modules/dashboard/pages/MySitesPage';
+import MediaLibraryPage from '../modules/media/pages/MediaLibraryPage';
+import CatalogPage from '../modules/renderer/pages/CatalogPage';
+import SiteDisplayPage from '../modules/renderer/pages/SiteDisplayPage';
 import CartPage from '../modules/shop/pages/CartPage';
 import ProductDetailPage from '../modules/shop/pages/ProductDetailPage';
+import SupportPage from '../modules/support/pages/SupportPage';
 import NewTicketPage from '../modules/support/pages/NewTicketPage';
 import AppealPage from '../modules/support/pages/AppealPage';
 import MyTicketsPage from '../modules/support/pages/MyTicketsPage';
 import TicketDetailPage from '../modules/support/pages/TicketDetailPage';
-import SupportPage from '../modules/support/pages/SupportPage';
-import AuthSuccessPage from '../modules/auth/pages/AuthSuccessPage';
-import VerifyEmailPage from '../modules/auth/pages/VerifyEmailPage';
-import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
-
 import AdminDashboardPage from '../modules/admin/pages/DashboardPage';
 import AdminSupportPage from '../modules/admin/pages/AdminSupportPage';
-import NotFoundPage from '../common/components/ui/NotFoundPage';
 
 function App() {
     return (
@@ -43,13 +38,11 @@ function App() {
             <ConfirmProvider>
                 <Routes>
                     <Route element={<Layout />}>
-                        
                         <Route element={<ProtectedRoute onlyPublic={true} />}>
                             <Route path="/login" element={<AuthPage />} />
                             <Route path="/register" element={<AuthPage />} />
                             <Route path="/reset-password" element={<ResetPasswordPage />} />
                         </Route>
-
                         <Route path="/" element={<HomePage />} />
                         <Route path="/catalog" element={<CatalogPage />} />
                         <Route path="/profile/:username" element={<ProfilePage />} />
@@ -59,12 +52,10 @@ function App() {
                         <Route path="/rules" element={<RulesPage />} />
                         <Route path="/auth/success" element={<AuthSuccessPage />} />
                         <Route path="/verify-email" element={<VerifyEmailPage />} />
-
                         <Route element={<ProtectedRoute />}>
                             <Route path="/settings" element={<SettingsPage />} />
                             <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
                         </Route>
-
                         <Route element={<ProtectedRoute excludeAdmin={true} />}>
                             <Route path="/my-sites" element={<MySitesPage />} />
                             <Route path="/create-site" element={<CreateSitePage />} />
@@ -76,12 +67,10 @@ function App() {
                             <Route path="/support/appeal" element={<AppealPage />} />
                             <Route path="/support/my-tickets" element={<MyTicketsPage />} />
                         </Route>
-
                         <Route element={<ProtectedRoute requireAdmin={true} />}>
                             <Route path="/admin" element={<AdminDashboardPage />} />
                             <Route path="/admin/support" element={<AdminSupportPage />} />
                         </Route>
-
                         <Route path="*" element={<NotFoundPage />} />
                     </Route>
                 </Routes>

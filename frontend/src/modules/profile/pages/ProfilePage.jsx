@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { AuthContext } from '../../../app/providers/AuthContext';
-import { Button } from '../../../common/components/ui/Button';
-import Avatar from '../../../common/components/ui/Avatar';
+import { Button } from '../../../shared/ui/elements/Button';
+import Avatar from '../../../shared/ui/elements/Avatar';
 import { 
     IconTelegram, 
     IconInstagram, 
@@ -19,7 +19,7 @@ import {
     IconMail,
     IconEyeOff, 
     IconSearch
-} from '../../../common/components/ui/Icons';
+} from '../../../shared/ui/elements/Icons';
 
 const ProfilePage = () => {
     const { username } = useParams();

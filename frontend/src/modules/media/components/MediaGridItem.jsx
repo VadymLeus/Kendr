@@ -3,7 +3,7 @@ import React from 'react';
 import { 
     IconStar, IconFile, IconVideo, IconPlay, 
     IconPdf, IconWord, IconPowerPoint, IconFont 
-} from '../../../common/components/ui/Icons';
+} from '../../../shared/ui/elements/Icons';
 
 const API_URL = 'http://localhost:5000';
 

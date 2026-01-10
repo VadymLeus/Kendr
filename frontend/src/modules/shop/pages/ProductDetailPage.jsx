@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
-import BlockRenderer from '../../../modules/site-editor/core/BlockRenderer';
-import { IconFolder } from '../../../common/components/ui/Icons';
+import BlockRenderer from '../../editor/core/BlockRenderer';
+import { IconFolder } from '../../../shared/ui/elements/Icons';
 import styles from './ProductDetailPage.module.css';
 
 const API_URL = 'http://localhost:5000';

@@ -1,12 +1,11 @@
 // frontend/src/modules/support/pages/AppealPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
-import { Button } from '../../../common/components/ui/Button';
-import { IconAlertTriangle, IconGavel, IconArrowRight } from '../../../common/components/ui/Icons';
+import apiClient from '../../../shared/api/api';
+import { Button } from '../../../shared/ui/elements/Button';
+import { IconAlertTriangle, IconGavel, IconArrowRight } from '../../../shared/ui/elements/Icons';
 import { Helmet } from 'react-helmet-async';
-import { IconCheckCircle } from '../../../common/components/ui/Icons'; 
-
+import { IconCheckCircle } from '../../../shared/ui/elements/Icons';
 
 const AppealPage = () => {
     const [suspendedSites, setSuspendedSites] = useState([]);

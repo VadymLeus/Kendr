@@ -1,7 +1,7 @@
 // frontend/src/app/providers/ThemeContext.jsx
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { AuthContext } from './AuthContext';
-import apiClient from '../../common/services/api';
+import React, { createContext, useState, useEffect, useContext } from 'react'; 
+import { AuthContext } from './AuthContext'; 
+import apiClient from '../../shared/api/api';
 
 export const ThemeContext = createContext(null);
 

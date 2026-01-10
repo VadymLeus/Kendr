@@ -1,10 +1,9 @@
 // frontend/src/modules/media/components/MediaInput.jsx
 import React, { useState } from 'react';
 import MediaPickerModal from './MediaPickerModal';
-import { IconUpload, IconX, IconVideo, IconImage, IconPlay } from "../../../common/components/ui/Icons";
+import { IconUpload, IconX, IconVideo, IconImage, IconPlay } from "../../../shared/ui/elements/Icons";
 
 const API_URL = 'http://localhost:5000';
-
 const MediaInput = ({ 
     value, 
     onChange, 

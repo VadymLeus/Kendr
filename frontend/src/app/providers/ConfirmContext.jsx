@@ -1,6 +1,6 @@
 // frontend/src/app/providers/ConfirmContext.jsx
 import React, { createContext, useState, useCallback } from 'react';
-import ConfirmModal from '../../common/components/ui/ConfirmModal';
+import ConfirmModal from '../../shared/ui/complex/ConfirmModal';
 
 export const ConfirmContext = createContext();
 

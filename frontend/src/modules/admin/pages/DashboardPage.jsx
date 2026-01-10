@@ -1,7 +1,7 @@
 // frontend/src/modules/admin/pages/DashboardPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
+import apiClient from '../../../shared/api/api';
 
 const formatTimeRemaining = (isoDate) => {
     if (!isoDate) return '';
