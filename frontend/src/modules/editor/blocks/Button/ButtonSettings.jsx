@@ -4,10 +4,10 @@ import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../con
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { 
-    IconType, IconLink, IconImage, IconMaximize, IconStar, 
-    IconArrowRight, IconShoppingCart, IconMail, IconPhone, IconCheck, IconX,
-    IconMousePointer
-} from '../../../../shared/ui/elements/Icons';
+    Type, Link, Palette, Maximize, Star, 
+    ArrowRight, ShoppingCart, Mail, Phone, Check, X,
+    MousePointer2
+} from 'lucide-react';
 
 const ButtonSettings = ({ data, onChange }) => {
 
@@ -31,21 +31,21 @@ const ButtonSettings = ({ data, onChange }) => {
     };
 
     const iconList = [
-        { value: 'none', icon: <IconX size={18} />, label: 'Ні' },
-        { value: 'arrowRight', icon: <IconArrowRight size={18} />, label: 'Стрілка' },
-        { value: 'cart', icon: <IconShoppingCart size={18} />, label: 'Кошик' },
-        { value: 'mail', icon: <IconMail size={18} />, label: 'Пошта' },
-        { value: 'phone', icon: <IconPhone size={18} />, label: 'Дзвінок' },
-        { value: 'check', icon: <IconCheck size={18} />, label: 'Ок' },
-        { value: 'star', icon: <IconStar size={18} />, label: 'Зірка' },
-        { value: 'pointer', icon: <IconMousePointer size={18} />, label: 'Клік' },
+        { value: 'none', icon: <X size={18} />, label: 'Ні' },
+        { value: 'arrowRight', icon: <ArrowRight size={18} />, label: 'Стрілка' },
+        { value: 'cart', icon: <ShoppingCart size={18} />, label: 'Кошик' },
+        { value: 'mail', icon: <Mail size={18} />, label: 'Пошта' },
+        { value: 'phone', icon: <Phone size={18} />, label: 'Дзвінок' },
+        { value: 'check', icon: <Check size={18} />, label: 'Ок' },
+        { value: 'star', icon: <Star size={18} />, label: 'Зірка' },
+        { value: 'pointer', icon: <MousePointer2 size={18} />, label: 'Клік' },
     ];
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
             <div>
-                <SectionTitle icon={<IconType size={16}/>}>Текст та Посилання</SectionTitle>
+                <SectionTitle icon={<Type size={16}/>}>Текст та Посилання</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Текст на кнопці</label>
@@ -62,7 +62,7 @@ const ButtonSettings = ({ data, onChange }) => {
                     <label style={commonStyles.label}>Посилання</label>
                     <div style={{ position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--platform-text-secondary)' }}>
-                            <IconLink size={14} />
+                            <Link size={14} />
                         </div>
                         <input 
                             type="text" 
@@ -132,7 +132,7 @@ const ButtonSettings = ({ data, onChange }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconImage size={16}/>}>Дизайн</SectionTitle>
+                <SectionTitle icon={<Palette size={16}/>}>Дизайн</SectionTitle>
 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Колір</label>
@@ -192,7 +192,7 @@ const ButtonSettings = ({ data, onChange }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconMaximize size={16}/>}>Розміщення</SectionTitle>
+                <SectionTitle icon={<Maximize size={16}/>}>Розміщення</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Ширина</label>

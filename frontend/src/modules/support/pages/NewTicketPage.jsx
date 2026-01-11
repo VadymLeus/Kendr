@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Button } from '../../../shared/ui/elements/Button';
-import { IconSend, IconX, IconInfo, IconFileText, IconEdit } from '../../../shared/ui/elements/Icons';
+import { Send, X, Info, FileText, Edit } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 const NewTicketPage = () => {
@@ -77,7 +77,7 @@ const NewTicketPage = () => {
                     gap: '10px',
                     fontSize: '1.8rem'
                 }}>
-                    <IconFileText size={28} style={{ color: 'var(--platform-accent)' }} />
+                    <FileText size={28} style={{ color: 'var(--platform-accent)' }} />
                     Нове звернення
                 </h2>
                 <p style={{ color: 'var(--platform-text-secondary)' }}>
@@ -94,7 +94,7 @@ const NewTicketPage = () => {
                 display: 'flex',
                 gap: '12px'
             }}>
-                <IconInfo size={24} style={{ color: 'var(--platform-accent)', flexShrink: 0 }} />
+                <Info size={24} style={{ color: 'var(--platform-accent)', flexShrink: 0 }} />
                 <p style={{ color: 'var(--platform-text-secondary)', margin: 0, fontSize: '0.95rem', lineHeight: '1.5' }}>
                     Будь ласка, надайте якомога більше деталей (скріншоти, посилання, кроки відтворення). Це прискорить вирішення проблеми.
                 </p>
@@ -142,7 +142,7 @@ const NewTicketPage = () => {
                         variant="secondary"
                         onClick={() => navigate(-1)}
                         disabled={loading}
-                        icon={<IconX size={18} />}
+                        icon={<X size={18} />}
                         style={{ flex: 1 }}
                     >
                         Скасувати
@@ -151,7 +151,7 @@ const NewTicketPage = () => {
                         type="submit" 
                         variant="primary"
                         disabled={loading}
-                        icon={loading ? null : <IconSend size={18} />}
+                        icon={loading ? null : <Send size={18} />}
                         style={{ flex: 1 }}
                     >
                         {loading ? 'Надсилання...' : 'Надіслати'}

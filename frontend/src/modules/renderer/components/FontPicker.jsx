@@ -5,16 +5,7 @@ import { toast } from 'react-toastify';
 import { FONT_LIBRARY } from '../../editor/core/editorConfig';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements/Button';
-import { 
-    IconSearch, 
-    IconPlus, 
-    IconTrash, 
-    IconEdit, 
-    IconCheck, 
-    IconFont,
-    IconGlobe,
-    IconFolder
-} from '../../../shared/ui/elements/Icons';
+import { Search, Plus, Trash2, Edit2, Check, Type,Globe,Folder,ChevronDown } from 'lucide-react';
 import MediaPickerModal from '../../media/components/MediaPickerModal';
 
 const API_URL = 'http://localhost:5000';
@@ -343,20 +334,18 @@ const FontPicker = ({
     const renderArrow = (isOpen) => (
         <div style={{ 
             transition: 'transform 0.2s ease', 
-            transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: 0.6
         }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            <ChevronDown size={16} />
         </div>
     );
 
     return (
         <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: '600', color: 'var(--platform-text-primary)', fontSize: '0.95rem' }}>
-                <IconFont size={16} />
+                <Type size={16} />
                 {label}
             </label>
             
@@ -367,7 +356,7 @@ const FontPicker = ({
                             position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', 
                             color: 'var(--platform-text-secondary)', pointerEvents: 'none'
                         }}>
-                            <IconSearch size={16} />
+                            <Search size={16} />
                         </div>
                         <input 
                             type="text" 
@@ -388,7 +377,7 @@ const FontPicker = ({
                         onClick={() => setIsMediaModalOpen(true)}
                         style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                     >
-                        <IconPlus size={16} />
+                        <Plus size={16} />
                         Додати
                     </Button>
                 </div>
@@ -403,7 +392,7 @@ const FontPicker = ({
                                 className="hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <IconFolder size={14} style={{ color: '#EAB308' }} />
+                                    <Folder size={14} style={{ color: '#EAB308' }} />
                                     Власні шрифти ({customList.length})
                                 </div>
                                 {renderArrow(sections.custom)}
@@ -446,14 +435,14 @@ const FontPicker = ({
                                             title="Перейменувати"
                                             className="action-btn"
                                         >
-                                            <IconEdit size={14} />
+                                            <Edit2 size={14} />
                                         </button>
                                         <button 
                                             onClick={(e) => handleDelete(font.listId, font.label, e)}
                                             title="Прибрати зі списку"
                                             className="action-btn delete"
                                         >
-                                            <IconTrash size={14} />
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </div>
@@ -469,7 +458,7 @@ const FontPicker = ({
                             className="hover:bg-gray-50 dark:hover:bg-gray-800"
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <IconGlobe size={14} />
+                                <Globe size={14} />
                                 Стандартні (Google)
                             </div>
                             {renderArrow(sections.google)}
@@ -485,7 +474,7 @@ const FontPicker = ({
                                     onClick={() => onChange(font.value)}
                                 >
                                     <span className="font-label">{font.label}</span>
-                                    {isActive && <IconCheck size={16} />}
+                                    {isActive && <Check size={16} />}
                                 </div>
                             );
                         })}

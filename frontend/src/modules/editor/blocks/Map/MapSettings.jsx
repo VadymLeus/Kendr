@@ -3,7 +3,7 @@ import React from 'react';
 import { commonStyles, SectionTitle } from '../../controls/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Button } from '../../../../shared/ui/elements/Button';
-import { IconMapPin, IconMaximize, IconTrash, IconCode } from '../../../../shared/ui/elements/Icons';
+import { MapPin, Maximize, Trash2, Code } from 'lucide-react';
 
 const MapSettings = ({ data, onChange }) => {
     const updateData = (updates) => onChange({ ...data, ...updates });
@@ -16,7 +16,7 @@ const MapSettings = ({ data, onChange }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div>
-                <SectionTitle icon={<IconCode size={18}/>}>Код карти</SectionTitle>
+                <SectionTitle icon={<Code size={18}/>}>Код карти</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -26,7 +26,7 @@ const MapSettings = ({ data, onChange }) => {
                                 variant="danger" 
                                 size="sm" 
                                 onClick={() => updateData({ embed_code: '' })}
-                                icon={<IconTrash size={14}/>}
+                                icon={<Trash2 size={14}/>}
                                 style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto' }}
                             >
                                 Очистити
@@ -72,7 +72,7 @@ const MapSettings = ({ data, onChange }) => {
             </div>
             
             <div>
-                <SectionTitle icon={<IconMaximize size={18}/>}>Розмір та Вигляд</SectionTitle>
+                <SectionTitle icon={<Maximize size={18}/>}>Розмір та Вигляд</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Ширина блоку</label>
@@ -80,7 +80,7 @@ const MapSettings = ({ data, onChange }) => {
                         value={data.sizePreset || 'medium'}
                         onChange={(e) => updateData({ sizePreset: e.target.value })}
                         options={sizeOptions}
-                        leftIcon={<IconMapPin size={16}/>}
+                        leftIcon={<MapPin size={16}/>}
                     />
                 </div>
             </div>

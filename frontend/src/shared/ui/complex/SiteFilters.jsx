@@ -3,17 +3,14 @@ import React from 'react';
 import { Button } from '../elements/Button';
 import { Input } from '../elements/Input';
 import { Select } from '../elements';
-import { 
-    IconSearch, IconClear, IconCalendar, IconEye, 
-    IconUser, IconTrendingUp, IconStar, IconType, IconTag 
-} from '../elements/Icons';
+import { Search, X, Calendar, Eye, User, TrendingUp, Star, Type, Tag } from 'lucide-react';
 
 const SORT_OPTIONS = [
-    { value: 'created_at', label: 'Дата', icon: IconCalendar },
-    { value: 'view_count', label: 'Перегляди', icon: IconEye },
-    { value: 'popularity', label: 'Популярність', icon: IconTrendingUp },
-    { value: 'title', label: 'За назвою', icon: IconType },
-    { value: 'author', label: 'Автор', icon: IconUser }
+    { value: 'created_at', label: 'Дата', icon: Calendar },
+    { value: 'view_count', label: 'Перегляди', icon: Eye },
+    { value: 'popularity', label: 'Популярність', icon: TrendingUp },
+    { value: 'title', label: 'За назвою', icon: Type },
+    { value: 'author', label: 'Автор', icon: User }
 ];
 
 const SiteFilters = ({
@@ -44,7 +41,7 @@ const SiteFilters = ({
                         value={searchTerm} 
                         onChange={(e) => onSearchChange(e.target.value)} 
                         onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit && onSearchSubmit()}
-                        leftIcon={<IconSearch size={18} />}
+                        leftIcon={<Search size={18} />}
                         wrapperStyle={{ marginBottom: 0 }}
                         style={{ height: '38px' }} 
                     />
@@ -92,7 +89,7 @@ const SiteFilters = ({
                             title={starTitle}
                             style={{ height: '38px', width: '38px', padding: 0 }}
                         >
-                            <IconStar size={18} filled={isStarActive} />
+                            <Star size={18} fill={isStarActive ? "currentColor" : "none"} />
                         </Button>
                     )}
 
@@ -102,7 +99,7 @@ const SiteFilters = ({
                         title="Очистити"
                         style={{ height: '38px', width: '38px', padding: 0 }}
                     >
-                        <IconClear size={18} />
+                        <X size={18} />
                     </Button>
                 </div>
             </div>
@@ -117,7 +114,7 @@ const SiteFilters = ({
                     alignItems: 'center' 
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600', color: 'var(--platform-text-primary)', flexShrink: 0 }}>
-                        <IconTag size={14} /> Теги:
+                        <Tag size={14} /> Теги:
                     </div>
                     <Button variant="outline" onClick={() => onTagSelect(null)}
                         style={{ 

@@ -4,9 +4,9 @@ import ReactDOM from 'react-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { 
-    IconSearch, IconX, IconUpload, IconCheck, IconImage, 
-    IconCalendar, IconFileText, IconVideo, IconType, IconMusic
-} from '../../../shared/ui/elements/Icons';
+    Search, X, Upload, Check, Image, 
+    Calendar, FileText, Video, Type, Music
+} from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -138,10 +138,10 @@ const MediaPickerModal = ({
 
     const getFileIcon = (type, mime) => {
         const iconClasses = "text-(--platform-text-secondary) opacity-60";
-        if (type === 'video') return <IconVideo size={40} className={iconClasses} />;
-        if (type === 'font' || (mime && mime.includes('font'))) return <IconType size={40} className={iconClasses} />;
-        if (type === 'audio') return <IconMusic size={40} className={iconClasses} />;
-        return <IconFileText size={40} className={iconClasses} />;
+        if (type === 'video') return <Video size={40} className={iconClasses} />;
+        if (type === 'font' || (mime && mime.includes('font'))) return <Type size={40} className={iconClasses} />;
+        if (type === 'audio') return <Music size={40} className={iconClasses} />;
+        return <FileText size={40} className={iconClasses} />;
     };
 
     if (!isOpen) return null;
@@ -155,7 +155,7 @@ const MediaPickerModal = ({
             <div className="bg-(--platform-bg) w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col shadow-2xl border border-(--platform-border-color) overflow-hidden animate-[popIn_0.2s_ease-out]">
                 <div className="p-4 px-6 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-3 font-semibold text-(--platform-text-primary)">
-                        <IconImage size={20} />
+                        <Image size={20} />
                         <h3 className="text-lg m-0">{title}</h3>
                     </div>
                     <button 
@@ -163,14 +163,14 @@ const MediaPickerModal = ({
                         className="w-9 h-9 flex items-center justify-center rounded-lg bg-(--platform-card-bg) border border-(--platform-border-color) text-(--platform-text-secondary) hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-200 cursor-pointer" 
                         title="Закрити"
                     >
-                        <IconX size={20}/>
+                        <X size={20}/>
                     </button>
                 </div>
 
                 <div className="p-3 px-6 flex gap-4 bg-(--platform-bg) border-b border-(--platform-border-color) shrink-0">
                     <div className="relative flex-1">
                         <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-(--platform-text-secondary) pointer-events-none">
-                            <IconSearch size={18} />
+                            <Search size={18} />
                         </div>
                         <input 
                             type="text" 
@@ -184,7 +184,7 @@ const MediaPickerModal = ({
                         className="flex items-center gap-2 px-5 h-10 bg-(--platform-accent) text-white rounded-lg font-medium hover:bg-(--platform-accent-hover) transition-colors whitespace-nowrap cursor-pointer border-none" 
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        <IconUpload size={16} /> Завантажити
+                        <Upload size={16} /> Завантажити
                     </button>
                     <input 
                         type="file" multiple ref={fileInputRef} 
@@ -229,7 +229,7 @@ const MediaPickerModal = ({
                                             
                                             {isSelected && (
                                                 <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-(--platform-accent) text-white flex items-center justify-center z-10 shadow-sm">
-                                                    <IconCheck size={14} />
+                                                    <Check size={14} />
                                                 </div>
                                             )}
                                             
@@ -262,10 +262,10 @@ const MediaPickerModal = ({
                                 </p>
                                 <div className="flex flex-col gap-1.5 text-sm text-(--platform-text-secondary)">
                                     <span className="flex items-center gap-2">
-                                        <IconFileText size={14} className="opacity-70"/> {activeFile.file_size_kb} KB
+                                        <FileText size={14} className="opacity-70"/> {activeFile.file_size_kb} KB
                                     </span>
                                     <span className="flex items-center gap-2">
-                                        <IconCalendar size={14} className="opacity-70"/> {new Date(activeFile.created_at).toLocaleDateString()}
+                                        <Calendar size={14} className="opacity-70"/> {new Date(activeFile.created_at).toLocaleDateString()}
                                     </span>
                                 </div>
                             </div>

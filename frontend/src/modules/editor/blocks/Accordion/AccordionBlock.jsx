@@ -1,7 +1,7 @@
 // frontend/src/modules/site-editor/blocks/Accordion/AccordionBlock.jsx
 import React from 'react';
 import AccordionItem from './AccordionItem';
-import { IconHelpCircle } from '../../../../common/components/ui/Icons';
+import { HelpCircle } from 'lucide-react';
 
 const AccordionBlock = ({ blockData, isEditorPreview, style }) => {
     const { items = [], fontFamily } = blockData;
@@ -33,7 +33,7 @@ const AccordionBlock = ({ blockData, isEditorPreview, style }) => {
                 gap: '12px'
             }}>
                 <div style={{ color: 'var(--site-accent)', opacity: 0.7 }}>
-                     <IconHelpCircle size={48} />
+                     <HelpCircle size={48} />
                 </div>
                  <h4 style={{color: 'var(--site-text-primary)', margin: 0}}>Акордеон</h4>
                 <p style={{color: 'var(--site-text-secondary)', margin: 0}}>

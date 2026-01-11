@@ -4,7 +4,7 @@ import MediaPickerModal from './MediaPickerModal';
 import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { IconUpload, IconX } from '../../../shared/ui/elements/Icons';
+import { Upload, X } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -159,12 +159,12 @@ const ImageInput = ({
                             onClick={handleClear}
                             title="Видалити фото"
                         >
-                            <IconX size={14} />
+                            <X size={14} />
                         </button>
                     </>
                 ) : (
                     <div style={placeholderStyle}>
-                        <IconUpload size={24} style={{ opacity: 0.7 }} />
+                        <Upload size={24} style={{ opacity: 0.7 }} />
                         <span>Вибрати фото...</span>
                     </div>
                 )}

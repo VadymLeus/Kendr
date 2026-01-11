@@ -1,6 +1,6 @@
 // frontend/src/modules/site-editor/components/ContextMenu.jsx
 import React, { useEffect, useRef } from 'react';
-import { IconSettings, IconCopy, IconArrowUp, IconArrowDown, IconTrash } from "../../../shared/ui/elements/Icons";
+import { Settings, Copy, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 
 const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
     const menuRef = useRef(null);
@@ -93,7 +93,7 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={hoverHandler}
                 onMouseLeave={unhoverHandler}
             >
-                <IconSettings size={16} /> Налаштувати
+                <Settings size={16} /> Налаштувати
             </button>
             
             <button 
@@ -102,7 +102,7 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={hoverHandler}
                 onMouseLeave={unhoverHandler}
             >
-                <IconCopy size={16} /> Дублювати
+                <Copy size={16} /> Дублювати
             </button>
 
             <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
@@ -113,7 +113,7 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={hoverHandler}
                 onMouseLeave={unhoverHandler}
             >
-                <IconArrowUp size={16} /> Вгору
+                <ArrowUp size={16} /> Вгору
             </button>
             <button 
                 style={itemStyle} 
@@ -121,7 +121,7 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={hoverHandler}
                 onMouseLeave={unhoverHandler}
             >
-                <IconArrowDown size={16} /> Вниз
+                <ArrowDown size={16} /> Вниз
             </button>
 
             <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
@@ -132,7 +132,7 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
                 onMouseEnter={deleteHoverHandler}
                 onMouseLeave={deleteUnhoverHandler}
             >
-                <IconTrash size={16} /> Видалити
+                <Trash2 size={16} /> Видалити
             </button>
             
             <style>{`

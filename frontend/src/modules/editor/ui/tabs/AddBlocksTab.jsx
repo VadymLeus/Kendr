@@ -6,18 +6,18 @@ import apiClient from '../../../../shared/api/api';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { 
-    IconChevronDown, 
-    IconChevronRight, 
-    IconTrash, 
-    IconEdit, 
-    IconCheck, 
-    IconX, 
-    IconPackage, 
-    IconLayoutHeader, 
-    IconBox, 
-    IconShop,
-    IconGripVertical
-} from '../../../../shared/ui/elements/Icons';
+    ChevronDown, 
+    ChevronRight, 
+    Trash2, 
+    Edit, 
+    Check, 
+    X, 
+    Package, 
+    PanelTop, 
+    Box, 
+    ShoppingBag,
+    GripVertical
+} from 'lucide-react';
 
 const Section = ({ title, children, defaultOpen = false, icon }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -42,7 +42,7 @@ const Section = ({ title, children, defaultOpen = false, icon }) => {
                     {title}
                 </div>
                 <div style={{ color: 'var(--platform-text-secondary)' }}>
-                    {isOpen ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+                    {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                 </div>
             </div>
             
@@ -143,10 +143,10 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
                     />
                 </div>
                 <button onClick={handleSaveEdit} disabled={isSaving} style={{ ...actionBtnStyle, background: 'var(--platform-accent)', color: '#fff' }}>
-                    <IconCheck size={16} />
+                    <Check size={16} />
                 </button>
                 <button onClick={handleCancelEdit} disabled={isSaving} style={{ ...actionBtnStyle, border: '1px solid var(--platform-border-color)' }}>
-                    <IconX size={16} />
+                    <X size={16} />
                 </button>
             </div>
         );
@@ -179,7 +179,7 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
             <div style={{ flex: 1, height: '100%', minWidth: 0 }}>
                 <DraggableBlockItem
                     name={block.name}
-                    icon={<IconPackage size={16} />}
+                    icon={<Package size={16} />}
                     blockType={block.type}
                     presetData={{ 
                         isSavedBlock: true, 
@@ -201,8 +201,8 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
                     }}
                     customContent={
                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', overflow: 'hidden' }}>
-                            <span style={{ color: 'var(--platform-text-secondary)', cursor: 'grab' }}><IconGripVertical size={14} /></span>
-                            <span style={{ color: 'var(--platform-accent)' }}><IconPackage size={16} /></span>
+                            <span style={{ color: 'var(--platform-text-secondary)', cursor: 'grab' }}><GripVertical size={14} /></span>
+                            <span style={{ color: 'var(--platform-accent)' }}><Package size={16} /></span>
                             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.85rem', fontWeight: '500' }}>{block.name}</span>
                         </div>
                     }
@@ -217,7 +217,7 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--platform-accent)'; e.currentTarget.style.background = 'var(--platform-hover-bg)'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--platform-text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
                 >
-                    <IconEdit size={14} />
+                    <Edit size={14} />
                 </button>
                 <button 
                     onClick={handleDeleteClick}
@@ -226,7 +226,7 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
                     onMouseEnter={e => { e.currentTarget.style.color = '#e53e3e'; e.currentTarget.style.background = '#fff5f5'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--platform-text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
                 >
-                    <IconTrash size={14} />
+                    <Trash2 size={14} />
                 </button>
             </div>
         </div>
@@ -285,7 +285,7 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
 
     return (
         <div>
-            <Section title="Ваша бібліотека" defaultOpen={true} icon={<IconPackage size={18} />}>
+            <Section title="Ваша бібліотека" defaultOpen={true} icon={<Package size={18} />}>
                 {isLoading ? (
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem', color: 'var(--platform-text-secondary)' }}>
                         <span className="animate-spin">⌛</span>
@@ -309,7 +309,7 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
                 )}
             </Section>
 
-            <Section title="Макети" icon={<IconLayoutHeader size={18} />}>
+            <Section title="Макети" icon={<PanelTop size={18} />}>
                 {layoutBlocks.map(block => (
                     block.presets.map(preset => (
                         <DraggableBlockItem
@@ -323,7 +323,7 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
                 ))}
             </Section>
 
-            <Section title="Базові блоки" icon={<IconBox size={18} />}>
+            <Section title="Базові блоки" icon={<Box size={18} />}>
                 {basicBlocks.map(block => (
                     <DraggableBlockItem
                         key={block.type}
@@ -334,7 +334,7 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
                 ))}
             </Section>
 
-            <Section title="E-commerce" icon={<IconShop size={18} />}>
+            <Section title="E-commerce" icon={<ShoppingBag size={18} />}>
                 {ecommerceBlocks.map(block => (
                     <DraggableBlockItem
                         key={block.type}

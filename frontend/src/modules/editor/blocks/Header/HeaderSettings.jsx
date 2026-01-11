@@ -6,7 +6,7 @@ import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../con
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
-import { IconTrash, IconPlus, IconImage, IconType, IconLayout, IconList, IconAlignLeft, IconAlignCenter, IconAlignRight, IconLink, IconEdit, IconUpload, IconAlertCircle } from '../../../../shared/ui/elements/Icons';
+import { Trash2, Plus, Image, Type, LayoutTemplate, List, AlignLeft, AlignCenter, AlignRight, Link, Pencil, Upload, AlertCircle } from 'lucide-react';
 import ConfirmModal from '../../../../shared/ui/complex/ConfirmModal';
 
 const API_URL = 'http://localhost:5000';
@@ -91,7 +91,7 @@ const HeaderSettings = ({ data, onChange }) => {
             />
 
             <div>
-                <SectionTitle icon={<IconImage size={18}/>}>Логотип та Назва</SectionTitle>
+                <SectionTitle icon={<Image size={18}/>}>Логотип та Назва</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Центральний логотип</label>
@@ -125,11 +125,11 @@ const HeaderSettings = ({ data, onChange }) => {
                                             }}
                                         />
                                     ) : (
-                                        <IconImage size={32} style={{ color: 'var(--platform-text-secondary)', opacity: 0.5 }} />
+                                        <Image size={32} style={{ color: 'var(--platform-text-secondary)', opacity: 0.5 }} />
                                     )}
                                     
                                     <div style={overlayStyle(isLogoHovered)}>
-                                        <IconUpload size={24} />
+                                        <Upload size={24} />
                                     </div>
 
                                     {data.logo_src && (
@@ -141,7 +141,7 @@ const HeaderSettings = ({ data, onChange }) => {
                                             onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'} 
                                             title="Видалити лого"
                                         >
-                                            <IconTrash size={14} />
+                                            <Trash2 size={14} />
                                         </button>
                                     )}
                                 </div>
@@ -179,7 +179,7 @@ const HeaderSettings = ({ data, onChange }) => {
                         label="Назва сайту (текст)"
                         value={data.site_title}
                         onChange={(e) => updateData({ site_title: e.target.value })}
-                        leftIcon={<IconType size={16}/>}
+                        leftIcon={<Type size={16}/>}
                     />
                 </div>
 
@@ -190,19 +190,19 @@ const HeaderSettings = ({ data, onChange }) => {
                 />
             </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4', display: 'flex', gap: '8px' }}>
-                            <IconAlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--platform-accent)' }} />
+                            <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--platform-accent)' }} />
                             <span>Логотип і назву сайту синхронізовано глобальними налаштуваннями.</span>
                         </div>
             <div>
-                <SectionTitle icon={<IconLayout size={18}/>}>Розміщення</SectionTitle>
+                <SectionTitle icon={<LayoutTemplate size={18}/>}>Розміщення</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Вирівнювання меню</label>
                     <ToggleGroup 
                         options={[
-                            { value: 'left', label: <IconAlignLeft size={18}/> },
-                            { value: 'center', label: <IconAlignCenter size={18}/> },
-                            { value: 'right', label: <IconAlignRight size={18}/> },
+                            { value: 'left', label: <AlignLeft size={18}/> },
+                            { value: 'center', label: <AlignCenter size={18}/> },
+                            { value: 'right', label: <AlignRight size={18}/> },
                         ]}
                         value={data.nav_alignment || 'right'}
                         onChange={(val) => updateData({ nav_alignment: val })}
@@ -223,7 +223,7 @@ const HeaderSettings = ({ data, onChange }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconList size={18}/>}>Пункти меню</SectionTitle>
+                <SectionTitle icon={<List size={18}/>}>Пункти меню</SectionTitle>
                 
                 <div style={{ 
                     marginBottom: '12px', padding: '8px', 
@@ -245,14 +245,14 @@ const HeaderSettings = ({ data, onChange }) => {
                                     value={item.label} 
                                     onChange={(e) => handleNavItemChange(item.id, 'label', e.target.value)}
                                     placeholder="Назва"
-                                    leftIcon={<IconEdit size={14}/>}
+                                    leftIcon={<Pencil size={14}/>}
                                     style={{fontSize: '0.9rem', padding: '8px 8px 8px 36px'}}
                                 />
                                 <Input 
                                     value={item.link} 
                                     onChange={(e) => handleNavItemChange(item.id, 'link', e.target.value)}
                                     placeholder="/page"
-                                    leftIcon={<IconLink size={14}/>}
+                                    leftIcon={<Link size={14}/>}
                                     style={{fontSize: '0.85rem', padding: '8px 8px 8px 36px', fontFamily: 'monospace'}}
                                 />
                             </div>
@@ -263,7 +263,7 @@ const HeaderSettings = ({ data, onChange }) => {
                                 title="Видалити"
                                 style={{ height: 'auto', padding: '6px' }}
                             >
-                                <IconTrash size={16} />
+                                <Trash2 size={16} />
                             </Button>
                         </div>
                     ))}
@@ -278,7 +278,7 @@ const HeaderSettings = ({ data, onChange }) => {
                         borderColor: 'var(--platform-accent)', 
                         color: 'var(--platform-accent)'
                     }}
-                    icon={<IconPlus size={16} />}
+                    icon={<Plus size={16} />}
                 >
                     Додати пункт меню
                 </Button>

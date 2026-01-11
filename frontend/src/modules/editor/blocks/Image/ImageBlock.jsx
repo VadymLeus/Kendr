@@ -1,4 +1,4 @@
-// frontend/src/modules/site-editor/blocks/Image/ImageBlock.jsx
+// frontend/src/modules/editor/blocks/Image/ImageBlock.jsx
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
@@ -6,7 +6,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { resolveSiteLink } from '../../src/shared/lib/utils/linkUtils';
-import { IconImage } from '../../../../common/components/ui/Icons';
+import { Image as ImageIcon } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -71,7 +71,7 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
             minHeight: '200px' 
         }}>
             <div style={{ opacity: 0.4, color: 'var(--site-text-primary)' }}>
-                <IconImage size={64} />
+                <ImageIcon size={64} />
             </div>
             <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>
                 Зображення не вибрано

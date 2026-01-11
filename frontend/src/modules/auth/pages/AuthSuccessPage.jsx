@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { IconLoading } from '../../../shared/ui/elements/Icons';
+import { Loader } from 'lucide-react';
 
 const AuthSuccessPage = () => {
     const [searchParams] = useSearchParams();
@@ -54,7 +54,7 @@ const AuthSuccessPage = () => {
             gap: '15px',
             color: 'var(--platform-text-secondary)'
         }}>
-            <IconLoading size={48} />
+            <Loader size={48} />
             <h2>Вхід у систему...</h2>
         </div>
     );

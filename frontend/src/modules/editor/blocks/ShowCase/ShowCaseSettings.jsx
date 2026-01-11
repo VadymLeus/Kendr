@@ -5,7 +5,16 @@ import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import ProductPickerModal from '../../../dashboard/components/ProductPickerModal';
-import { IconGrid, IconShoppingBag, IconType, IconList, IconLayers, IconAlignLeft, IconAlignCenter, IconAlignRight } from '../../../../shared/ui/elements/Icons';
+import { 
+    LayoutGrid, 
+    ShoppingBag, 
+    Type, 
+    List, 
+    Layers, 
+    AlignLeft, 
+    AlignCenter, 
+    AlignRight 
+} from 'lucide-react';
 
 const ShowCaseSettings = ({ data, onChange, siteData }) => { 
     const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -27,7 +36,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
             />
 
             <div>
-                <SectionTitle icon={<IconType size={18}/>}>Заголовок секції</SectionTitle>
+                <SectionTitle icon={<Type size={18}/>}>Заголовок секції</SectionTitle>
                 <div style={commonStyles.formGroup}>
                     <Input 
                         value={data.title || ''}
@@ -38,15 +47,15 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconGrid size={18}/>}>Макет сітки</SectionTitle>
+                <SectionTitle icon={<LayoutGrid size={18}/>}>Макет сітки</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Вирівнювання сітки</label>
                     <ToggleGroup 
                         options={[
-                            { value: 'flex-start', label: <IconAlignLeft size={18}/>, title: 'Зліва' },
-                            { value: 'center', label: <IconAlignCenter size={18}/>, title: 'По центру' },
-                            { value: 'flex-end', label: <IconAlignRight size={18}/>, title: 'Справа' },
+                            { value: 'flex-start', label: <AlignLeft size={18}/>, title: 'Зліва' },
+                            { value: 'center', label: <AlignCenter size={18}/>, title: 'По центру' },
+                            { value: 'flex-end', label: <AlignRight size={18}/>, title: 'Справа' },
                         ]}
                         value={data.alignment || 'center'}
                         onChange={(val) => updateData({ alignment: val })}
@@ -91,7 +100,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconLayers size={18}/>}>Джерело товарів</SectionTitle>
+                <SectionTitle icon={<Layers size={18}/>}>Джерело товарів</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Тип вибірки</label>
@@ -113,7 +122,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                             <Button 
                                 variant="outline" 
                                 style={{ width: '100%', borderColor: 'var(--platform-accent)', color: 'var(--platform-accent)' }}
-                                icon={<IconShoppingBag size={16} />}
+                                icon={<ShoppingBag size={16} />}
                                 onClick={() => setIsPickerOpen(true)}
                             >
                                 Обрати товари зі списку
@@ -127,7 +136,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                                 selected_product_ids: e.target.value.split(',').map(id => id.trim()).filter(id => id) 
                             })}
                             placeholder="1, 5, 12..."
-                            leftIcon={<IconShoppingBag size={16}/>}
+                            leftIcon={<ShoppingBag size={16}/>}
                         />
                         <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
                             {data.selected_product_ids?.length > 0 
@@ -143,7 +152,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                             value={data.category_id || ''}
                             onChange={(e) => updateData({ category_id: e.target.value })}
                             placeholder="Введіть ID категорії"
-                            leftIcon={<IconList size={16}/>}
+                            leftIcon={<List size={16}/>}
                         />
                         <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
                             Залиште порожнім або 0, щоб показати всі товари.

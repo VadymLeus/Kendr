@@ -1,6 +1,7 @@
 // frontend/src/modules/editor/controls/SettingsGroup.jsx
 import React, { useState } from 'react';
-import { IconChevronDown, IconChevronRight } from '../../../shared/ui/elements/Icons';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+
 const SettingsGroup = ({ title, children, defaultOpen = false, icon, storageKey }) => {
     const storageId = storageKey ? `group_state_${storageKey}` : null;
 
@@ -46,7 +47,7 @@ const SettingsGroup = ({ title, children, defaultOpen = false, icon, storageKey 
                     {title}
                 </div>
                 <div style={{ color: 'var(--platform-text-secondary)', display: 'flex' }}>
-                    {isOpen ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+                    {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                 </div>
             </div>
             

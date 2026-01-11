@@ -3,36 +3,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
-
 import { Button as UIButton } from '../../../../shared/ui/elements/Button'; 
 import { Input } from '../../../../shared/ui/elements/Input'; 
-
-import { 
-    IconPages, 
-    IconPlus, 
-    IconEdit, 
-    IconSettings, 
-    IconTrash, 
-    IconStar, 
-    IconSearch,
-    IconX
-} from '../../../../shared/ui/elements/Icons';
-
-const IconHeaderLayout = ({ size = 24, color = 'currentColor' }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2" strokeOpacity="0.3" />
-        <path d="M2 9h20" strokeOpacity="1" strokeWidth="3" />
-        <path d="M6 16h4" strokeOpacity="0.3" />
-    </svg>
-);
-
-const IconFooterLayout = ({ size = 24, color = 'currentColor' }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2" strokeOpacity="0.3" />
-        <path d="M2 15h20" strokeOpacity="1" strokeWidth="3" />
-        <path d="M6 8h4" strokeOpacity="0.3" />
-    </svg>
-);
+import { FileText, Plus, Edit, Settings, Trash, Star, Search, X, PanelTop, PanelBottom } from 'lucide-react';
 
 const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavingChange }) => {
     const [name, setName] = useState('');
@@ -152,7 +125,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
                 <div style={contentStyle}>
                     <div style={headerStyle}>
                         <div style={iconBoxStyle}>
-                             {page ? <IconSettings size={24} /> : <IconPlus size={24} />}
+                             {page ? <Settings size={24} /> : <Plus size={24} />}
                         </div>
                         <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px'}}>
                             <h3 style={{fontSize: '1.15rem', fontWeight: '600', margin: 0}}>
@@ -190,7 +163,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
 
                             <div style={{ borderTop: '1px solid var(--platform-border-color)', paddingTop: '16px', marginTop: '20px' }}>
                                 <button type="button" onClick={() => setShowSeo(!showSeo)} style={{ background: 'none', border: 'none', color: 'var(--platform-accent)', cursor: 'pointer', fontSize: '0.9rem', padding: 0, display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-                                    <IconSearch size={16} /> SEO Налаштування {showSeo ? <IconX size={14}/> : null}
+                                    <Search size={16} /> SEO Налаштування {showSeo ? <X size={14}/> : null}
                                 </button>
                                 
                                 {showSeo && (
@@ -403,7 +376,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                     <h2 style={{ color: 'var(--platform-text-primary)', margin: '0 0 4px 0', fontSize: '1.5rem', fontWeight: '700' }}>Структура сайту</h2>
                     <p style={{ margin: 0, color: 'var(--platform-text-secondary)', fontSize: '0.9rem' }}>Керуйте сторінками та глобальними блоками</p>
                 </div>
-                <UIButton onClick={handleOpenCreate}><IconPlus size={18} /> Додати сторінку</UIButton>
+                <UIButton onClick={handleOpenCreate}><Plus size={18} /> Додати сторінку</UIButton>
             </div>
 
             {loading ? (
@@ -418,23 +391,23 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                         
                         <ListRow 
                             isGlobal={true}
-                            icon={<IconHeaderLayout size={24} />}
+                            icon={<PanelTop size={24} />}
                             title="Хедер (Шапка)"
                             subtitle="Верхній блок на всех сторінках"
                             actions={
                                 <CustomActionButton variant="editor" onClick={onEditHeader}>
-                                    <IconEdit size={16} /> Редактор
+                                    <Edit size={16} /> Редактор
                                 </CustomActionButton>
                             }
                         />
                          <ListRow 
                             isGlobal={true}
-                            icon={<IconFooterLayout size={24} />}
+                            icon={<PanelBottom size={24} />}
                             title="Футер (Підвал)"
                             subtitle="Нижній блок на всіх сторінках"
                             actions={
                                 <CustomActionButton variant="editor" onClick={onEditFooter}>
-                                    <IconEdit size={16} /> Редактор
+                                    <Edit size={16} /> Редактор
                                 </CustomActionButton>
                             }
                         />
@@ -459,11 +432,11 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                 {pages.map(page => (
                                     <ListRow 
                                         key={page.id}
-                                        icon={<IconPages size={20} />}
+                                        icon={<FileText size={20} />}
                                         title={
                                             <span style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                                                 {page.name}
-                                                {!!page.is_homepage && <IconStar size={16} style={{color: '#F59E0B', fill: '#F59E0B'}} />}
+                                                {!!page.is_homepage && <Star size={16} style={{color: '#F59E0B', fill: '#F59E0B'}} />}
                                             </span>
                                         }
                                         badges={{
@@ -477,19 +450,19 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                         actions={
                                             <>
                                                 <CustomActionButton variant="editor" onClick={() => onEditPage(page.id)} title="Редактор">
-                                                    <IconEdit size={16} />
+                                                    <Edit size={16} />
                                                 </CustomActionButton>
                                                 <CustomActionButton variant="settings" onClick={() => handleOpenEdit(page)} title="Налаштування">
-                                                    <IconSettings size={16} />
+                                                    <Settings size={16} />
                                                 </CustomActionButton>
                                                 
                                                 {!page.is_homepage && (
                                                     <>
                                                         <CustomActionButton variant="home" onClick={() => handleSetHome(page.id, page.name)} title="Зробити головною">
-                                                            <IconStar size={16} />
+                                                            <Star size={16} />
                                                         </CustomActionButton>
                                                         <CustomActionButton variant="delete" onClick={() => handleDelete(page)} title="Видалити">
-                                                            <IconTrash size={16} />
+                                                            <Trash size={16} />
                                                         </CustomActionButton>
                                                     </>
                                                 )}

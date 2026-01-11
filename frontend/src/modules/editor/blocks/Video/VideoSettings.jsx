@@ -5,15 +5,15 @@ import { commonStyles, SectionTitle, ToggleSwitch } from '../../controls/Setting
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { 
-    IconVideo, 
-    IconPalette, 
-    IconCheck,
-    IconMaximize,
-    IconSettings,
-    IconPlay,
-    IconVolumeX,
-    IconRepeat
-} from '../../../../shared/ui/elements/Icons';
+    Video, 
+    Palette, 
+    Check,
+    Maximize,
+    Settings,
+    Play,
+    VolumeX,
+    Repeat
+} from 'lucide-react';
 
 const isLightColor = (color) => {
     if (!color || color === 'transparent') return true;
@@ -81,7 +81,7 @@ const VideoSettings = ({ data, onChange }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div>
-                <SectionTitle icon={<IconVideo size={18}/>}>Відео контент</SectionTitle>
+                <SectionTitle icon={<Video size={18}/>}>Відео контент</SectionTitle>
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Відео файл</label>
                     <div style={{height: '150px', marginBottom: '8px'}}>
@@ -96,14 +96,14 @@ const VideoSettings = ({ data, onChange }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconSettings size={18}/>}>Поведінка плеєра</SectionTitle>
+                <SectionTitle icon={<Settings size={18}/>}>Поведінка плеєра</SectionTitle>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     
                     <ToggleSwitch 
                         checked={safeData.autoplay}
                         onChange={(val) => updateData({ autoplay: val, muted: val ? true : safeData.muted })}
                         label="Автоплей (Autoplay)"
-                        icon={<IconPlay size={16}/>}
+                        icon={<Play size={16}/>}
                     />
                     {safeData.autoplay && (
                         <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '-8px', marginLeft: '34px' }}>
@@ -115,27 +115,27 @@ const VideoSettings = ({ data, onChange }) => {
                         checked={safeData.muted}
                         onChange={(val) => updateData({ muted: val })}
                         label="Без звуку (Muted)"
-                        icon={<IconVolumeX size={16}/>}
+                        icon={<VolumeX size={16}/>}
                     />
 
                     <ToggleSwitch 
                         checked={safeData.loop}
                         onChange={(val) => updateData({ loop: val })}
                         label="Зациклити (Loop)"
-                        icon={<IconRepeat size={16}/>}
+                        icon={<Repeat size={16}/>}
                     />
 
                     <ToggleSwitch 
                         checked={safeData.controls}
                         onChange={(val) => updateData({ controls: val })}
                         label="Показувати елементи керування"
-                        icon={<IconSettings size={16}/>}
+                        icon={<Settings size={16}/>}
                     />
                 </div>
             </div>
 
             <div>
-                <SectionTitle icon={<IconPalette size={18}/>}>Вигляд та Фон</SectionTitle>
+                <SectionTitle icon={<Palette size={18}/>}>Вигляд та Фон</SectionTitle>
 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Колір накладання</label>
@@ -162,7 +162,7 @@ const VideoSettings = ({ data, onChange }) => {
                                 }}
                             >
                                 {safeData.overlay_color === preset.id && (
-                                    <IconCheck size={14} style={{ color: (preset.isNone || isLightColor(preset.id)) ? 'black' : 'white' }} />
+                                    <Check size={14} style={{ color: (preset.isNone || isLightColor(preset.id)) ? 'black' : 'white' }} />
                                 )}
                             </button>
                         ))}
@@ -210,7 +210,7 @@ const VideoSettings = ({ data, onChange }) => {
                         value={safeData.height} 
                         onChange={(e) => updateData({ height: e.target.value })} 
                         options={heightOptions}
-                        leftIcon={<IconMaximize size={16}/>}
+                        leftIcon={<Maximize size={16}/>}
                     />
                 </div>
             </div>

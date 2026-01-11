@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useOutletContext, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-
 import BlockEditor from '../../editor/core/BlockEditor';
 import EditorSidebar from '../../editor/ui/EditorSidebar';
 import PagesSettingsTab from '../features/tabs/PagesSettingsTab';
@@ -13,17 +12,8 @@ import SubmissionsTab from '../features/tabs/SubmissionsTab';
 import GeneralSettingsTab from '../features/tabs/GeneralSettingsTab';
 import DashboardHeader from '../components/DashboardHeader';
 import useHistory from '../../../shared/hooks/useHistory';
-import { 
-    generateBlockId, 
-    getDefaultBlockData 
-} from '../../editor/core/editorConfig';
-import { 
-    updateBlockDataByPath, 
-    removeBlockByPath, 
-    addBlockByPath, 
-    moveBlock,
-    handleDrop
-} from '../../editor/core/blockUtils';
+import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
+import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, handleDrop } from '../../editor/core/blockUtils';
 
 const SiteDashboardPage = () => {
     const { site_path } = useParams();

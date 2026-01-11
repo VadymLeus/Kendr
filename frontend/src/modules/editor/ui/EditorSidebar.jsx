@@ -6,15 +6,15 @@ import SettingsTab from './tabs/SettingsTab';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 
 import { 
-    IconSave, 
-    IconPlus, 
-    IconLayers, 
-    IconSettings, 
-    IconStar,
-    IconLayoutHeader,
-    IconLayoutFooter,
-    IconFile
-} from '../../../shared/ui/elements/Icons';
+    Save, 
+    Plus, 
+    Layers, 
+    Settings, 
+    Star,
+    PanelTop,
+    PanelBottom,
+    File
+} from 'lucide-react';
 
 const EditorSidebar = ({
     blocks,
@@ -60,17 +60,17 @@ const EditorSidebar = ({
 
     const pageOptions = useMemo(() => {
         return (allPages || []).map(page => {
-            let icon = IconFile;
+            let icon = File;
             let iconStyle = {};
             let iconProps = {};
             let label = page.name;
 
             if (page.id === 'header') {
-                icon = IconLayoutHeader;
+                icon = PanelTop;
             } else if (page.id === 'footer') {
-                icon = IconLayoutFooter;
+                icon = PanelBottom;
             } else if (page.is_homepage) {
-                icon = IconStar;
+                icon = Star;
                 iconStyle = { color: 'var(--platform-accent)', fill: 'var(--platform-accent)' };
                 iconProps = { filled: true };
             }
@@ -167,7 +167,7 @@ const EditorSidebar = ({
                     onMouseOver={(e) => handleMouseOver(e.currentTarget, saveButtonHoverStyle)}
                     onMouseOut={(e) => handleMouseOut(e.currentTarget, saveButtonStyle)}
                 >
-                    <IconSave size={18} /> Зберегти зміни
+                    <Save size={18} /> Зберегти зміни
                 </button>
             </div>
 
@@ -211,7 +211,7 @@ const EditorSidebar = ({
                             onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('add'))}
                             onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('add'))}
                         >
-                            <IconPlus size={16} /> Додати
+                            <Plus size={16} /> Додати
                         </button>
                         <button 
                             style={tabStyle('layers')} 
@@ -219,7 +219,7 @@ const EditorSidebar = ({
                             onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('layers'))}
                             onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('layers'))}
                         >
-                            <IconLayers size={16} /> Шари
+                            <Layers size={16} /> Шари
                         </button>
                     </>
                 )}
@@ -229,7 +229,7 @@ const EditorSidebar = ({
                     onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('settings'))}
                     onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('settings'))}
                 >
-                    <IconSettings size={16} /> Налаш.
+                    <Settings size={16} /> Налаш.
                 </button>
             </nav>
 

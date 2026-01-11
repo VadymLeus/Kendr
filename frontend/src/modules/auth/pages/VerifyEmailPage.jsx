@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
-import { IconLoading, IconAlertCircle, IconCheckCircle } from '../../../shared/ui/elements/Icons';
+import { Loader, AlertCircle, CheckCircle } from 'lucide-react';
 
 const VerifyEmailPage = () => {
     const [searchParams] = useSearchParams();
@@ -94,7 +94,7 @@ const VerifyEmailPage = () => {
                 {status === 'verifying' && (
                     <>
                         <div style={{ color: 'var(--platform-accent)' }}>
-                            <IconLoading size={64} />
+                            <Loader size={64} />
                         </div>
                         <h2 style={titleStyle}>Верифікація...</h2>
                         <p style={textStyle}>{message}</p>
@@ -104,7 +104,7 @@ const VerifyEmailPage = () => {
                 {status === 'success' && (
                     <>
                         <div style={{ color: 'var(--platform-success)' }}>
-                            <IconCheckCircle size={80} />
+                            <CheckCircle size={80} />
                         </div>
                         <h2 style={titleStyle}>Успішно!</h2>
                         <p style={textStyle}>{message}</p>
@@ -118,7 +118,7 @@ const VerifyEmailPage = () => {
                 {status === 'error' && (
                     <>
                         <div style={{ color: 'var(--platform-danger)' }}>
-                            <IconAlertCircle size={80} />
+                            <AlertCircle size={80} />
                         </div>
                         <h2 style={titleStyle}>Помилка</h2>
                         <p style={textStyle}>{message}</p>

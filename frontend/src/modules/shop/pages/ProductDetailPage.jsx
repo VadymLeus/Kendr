@@ -6,7 +6,7 @@ import apiClient from '../../../shared/api/api';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import BlockRenderer from '../../editor/core/BlockRenderer';
-import { IconFolder } from '../../../shared/ui/elements/Icons';
+import { Folder } from 'lucide-react';
 import styles from './ProductDetailPage.module.css';
 
 const API_URL = 'http://localhost:5000';
@@ -498,7 +498,7 @@ const ProductDetailPage = () => {
                                 
                                 {product.category_name && (
                                     <div className={styles.categoryTag}>
-                                        <IconFolder size={18} style={{color: 'var(--site-accent)'}} />
+                                        <Folder size={18} style={{color: 'var(--site-accent)'}} />
                                         <span>{product.category_name}</span>
                                     </div>
                                 )}

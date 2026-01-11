@@ -1,12 +1,15 @@
-// frontend/src/modules/site-editor/blocks/Footer/FooterEditorModal.jsx
+// frontend/src/modules/editor/blocks/Footer/FooterEditorModal.jsx
 import React, { useState, useCallback } from 'react';
 import BlockEditor from '../../core/BlockEditor';
-import EditorSidebar from '../components/EditorSidebar';
-import { Button } from '../../../../common/components/ui/Button';
+import EditorSidebar from '../../components/EditorSidebar';
+import { Button } from '../../../../shared/ui/elements/Button';
 import { toast } from 'react-toastify';
 import { 
-    IconLayoutFooter, IconSave, IconX, IconAlertTriangle 
-} from '../../../../common/components/ui/Icons';
+    PanelBottom, 
+    Save, 
+    X, 
+    AlertTriangle 
+} from 'lucide-react';
 import { 
     generateBlockId, 
     getDefaultBlockData 
@@ -97,7 +100,7 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
                             background: 'var(--platform-accent)', color: '#fff',
                             display: 'flex', alignItems: 'center', justifyContent: 'center'
                          }}>
-                            <IconLayoutFooter size={20} />
+                            <PanelBottom size={20} />
                          </div>
                         <h3 style={{ margin: 0, color: 'var(--platform-text-primary)', fontSize: '1.1rem' }}>
                             Редактор Футера
@@ -109,7 +112,7 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
                             variant="secondary"
                             onClick={onClose} 
                             disabled={saving}
-                            icon={<IconX size={16}/>}
+                            icon={<X size={16}/>}
                         >
                             Скасувати
                         </Button>
@@ -117,7 +120,7 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
                             variant="primary"
                             onClick={handleSave} 
                             disabled={saving}
-                            icon={<IconSave size={16}/>}
+                            icon={<Save size={16}/>}
                             isLoading={saving}
                         >
                             Зберегти Футер
@@ -172,7 +175,7 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
                                         background: 'rgba(237, 137, 54, 0.1)', color: 'var(--platform-warning)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center'
                                     }}>
-                                        <IconAlertTriangle size={32} />
+                                        <AlertTriangle size={32} />
                                     </div>
                                     <div>
                                         <h4 style={{ color: 'var(--platform-text-primary)', margin: '0 0 8px 0' }}>
@@ -221,7 +224,7 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
                     color: 'var(--platform-text-secondary)'
                 }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <IconLayoutFooter size={14} /> Глобальний футер (відображається скрізь)
+                        <PanelBottom size={14} /> Глобальний футер (відображається скрізь)
                     </span>
                     <span>Блоків: <strong>{blocks.length}</strong></span>
                 </div>

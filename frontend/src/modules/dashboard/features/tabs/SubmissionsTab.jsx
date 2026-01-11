@@ -6,22 +6,7 @@ import { toast } from 'react-toastify';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Input } from '../../../../shared/ui/elements/Input';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect'; 
-import { 
-    IconSearch, 
-    IconTrash, 
-    IconCheck, 
-    IconStar, 
-    IconUser,
-    IconMail,
-    IconMessageCircle
-} from '../../../../shared/ui/elements/Icons';
-
-const IconClock = ({ size = 14 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-);
-const IconMessage = ({ size = 16 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-);
+import { Search, Trash, Check, Star, User, Mail, MessageCircle, Clock, MessageSquare } from 'lucide-react';
 
 const statusConfig = {
     new: { label: 'Нова', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)', border: 'rgba(59, 130, 246, 0.2)' },
@@ -307,7 +292,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
         <div style={styles.wrapper}>
             <div style={styles.pageHeader}>
                 <h2 style={styles.pageTitle}>
-                    <IconMessageCircle size={28} />
+                    <MessageCircle size={28} />
                     Обробка звернень
                 </h2>
                 <p style={styles.pageDescription}>
@@ -322,7 +307,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                             placeholder="Пошук..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            leftIcon={<IconSearch size={14} style={{color: '#a0aec0'}}/>}
+                            leftIcon={<Search size={14} style={{color: '#a0aec0'}}/>}
                             style={{
                                 margin: 0, 
                                 height: '36px', 
@@ -381,7 +366,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                                             }}
                                             title={sub.is_pinned ? "Відкріпити" : "Закріпити"}
                                         >
-                                            <IconStar size={14} filled={!!sub.is_pinned} />
+                                            <Star size={14} fill={sub.is_pinned ? "currentColor" : "none"} />
                                         </button>
                                     </div>
 
@@ -412,7 +397,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                                     </h2>
                                     <div style={{display: 'flex', alignItems: 'center', gap: '10px', color: '#a0aec0', fontSize: '0.8rem'}}>
                                         <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
-                                            <IconClock size={12}/> {new Date(selectedSubmission.created_at).toLocaleString('uk-UA')}
+                                            <Clock size={12}/> {new Date(selectedSubmission.created_at).toLocaleString('uk-UA')}
                                         </span>
                                         <span>#{selectedSubmission.id}</span>
                                     </div>
@@ -430,10 +415,10 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                                             display: 'flex', alignItems: 'center', transition: 'all 0.2s'
                                         }}
                                     >
-                                        <IconStar size={16} filled={!!selectedSubmission.is_pinned} />
+                                        <Star size={16} fill={selectedSubmission.is_pinned ? "currentColor" : "none"} />
                                     </button>
                                     <DangerButton onClick={() => handleDelete(selectedSubmission.id)}>
-                                        <IconTrash size={16} /> Видалити
+                                        <Trash size={16} /> Видалити
                                     </DangerButton>
                                 </div>
                             </div>
@@ -441,19 +426,19 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                             <div className="custom-scrollbar" style={{padding: '24px', overflowY: 'auto', flex: 1}}>
                                 <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px'}}>
                                     <div style={{background: 'var(--platform-card-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--platform-border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-                                        <div style={styles.sectionTitle}><IconUser size={14}/> Від кого</div>
+                                        <div style={styles.sectionTitle}><User size={14}/> Від кого</div>
                                         <div style={{fontWeight: '600', fontSize: '1rem', marginBottom: '4px', color: 'var(--platform-text-primary)'}}>{selectedSubmission.form_data.name}</div>
                                         <div 
                                             onClick={() => copyToClipboard(selectedSubmission.form_data.email)}
                                             style={{color: 'var(--platform-accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem'}}
                                             title="Копіювати"
                                         >
-                                            <IconMail size={14}/> {selectedSubmission.form_data.email}
+                                            <Mail size={14}/> {selectedSubmission.form_data.email}
                                         </div>
                                     </div>
 
                                     <div style={{background: 'var(--platform-card-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--platform-border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-                                        <div style={styles.sectionTitle}><IconCheck size={14}/> Статус</div>
+                                        <div style={styles.sectionTitle}><Check size={14}/> Статус</div>
                                         <div style={{display: 'flex', gap: '6px'}}>
                                             {Object.keys(statusConfig).map(key => (
                                                 <StatusButton 
@@ -468,7 +453,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                                 </div>
 
                                 <div style={{background: 'var(--platform-card-bg)', padding: '24px', borderRadius: '8px', border: '1px solid var(--platform-border-color)', minHeight: '200px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-                                    <div style={styles.sectionTitle}><IconMessage size={14}/> Повідомлення</div>
+                                    <div style={styles.sectionTitle}><MessageSquare size={14}/> Повідомлення</div>
                                     <div style={{
                                         whiteSpace: 'pre-wrap', 
                                         lineHeight: '1.6', 

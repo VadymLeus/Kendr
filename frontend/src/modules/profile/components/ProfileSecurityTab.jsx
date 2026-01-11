@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
 import { Input, Button } from '../../../shared/ui/elements';
-import { IconLock, IconCheck, IconLogOut } from '../../../shared/ui/elements/Icons';
+import { Lock, Check, LogOut } from 'lucide-react';
 import { validatePassword } from '../../../shared/lib/utils/validationUtils';
 
 const PasswordStrengthMeter = ({ password }) => {
@@ -48,7 +48,7 @@ const PasswordStrengthMeter = ({ password }) => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--platform-text-secondary)', fontWeight: '500' }}>
                 <span>{getStrengthLabel()}</span>
-                {score === 3 && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><IconCheck size={12}/> Чудовий</span>}
+                {score === 3 && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12}/> Чудовий</span>}
             </div>
         </div>
     );
@@ -103,7 +103,7 @@ const ProfileSecurityTab = () => {
             toast.success(hasPassword ? "Пароль успішно змінено!" : "Пароль успішно встановлено!");
             
             const updatedUser = {
-                ...user,                   
+                ...user,                  
                 ...(response.data.user || {}), 
                 has_password: true        
             };
@@ -157,7 +157,7 @@ const ProfileSecurityTab = () => {
             <div style={card}>
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                     <h3 style={{ ...cardTitle, justifyContent: 'center' }}>
-                        <IconLock size={24} color="var(--platform-accent)" />
+                        <Lock size={24} color="var(--platform-accent)" />
                         {hasPassword ? 'Зміна паролю' : 'Встановлення паролю'}
                     </h3>
                     <p style={{ ...subTitle, marginBottom: '0' }}>
@@ -234,7 +234,7 @@ const ProfileSecurityTab = () => {
                 }}>
                     <div style={{ flex: 1 }}>
                         <h3 style={{ ...cardTitle, color: '#e53e3e', marginBottom: '4px' }}>
-                            <IconLogOut size={22} />
+                            <LogOut size={22} />
                             Вихід з акаунту
                         </h3>
                         <p style={{ 
@@ -250,7 +250,7 @@ const ProfileSecurityTab = () => {
                     <Button 
                         variant="secondary-danger"
                         onClick={handleLogout}
-                        icon={<IconLogOut size={18} />}
+                        icon={<LogOut size={18} />}
                         style={{ flexShrink: 0 }}
                     >
                         Вийти з системи

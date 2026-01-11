@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { FavoritesContext } from '../../../../app/providers/FavoritesContext';
 import { resolveSiteLink } from '../../../../shared/lib/utils/linkUtils';
-import { IconSettings, IconStar, IconList } from '../../../../shared/ui/elements/Icons';
+import { Settings, Star, Menu } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -197,7 +197,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                         onMouseLeave={() => setIsMenuHovered(false)}
                         onClick={onMenuToggle}
                     >
-                        <IconList size={20} />
+                        <Menu size={20} />
                     </div>
                 )}
                 {isOwner ? (
@@ -209,7 +209,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                         onMouseEnter={() => setIsBtnHovered(true)}
                         onMouseLeave={() => setIsBtnHovered(false)}
                     >
-                        <IconSettings size={20} />
+                        <Settings size={20} />
                     </ActionWrapper>
                 ) : (
                     <button 
@@ -219,7 +219,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                         onMouseEnter={() => setIsBtnHovered(true)}
                         onMouseLeave={() => setIsBtnHovered(false)}
                     >
-                        <IconStar size={20} filled={isFavorite} />
+                        <Star size={20} fill={isFavorite ? "currentColor" : "none"} />
                     </button>
                 )}
 

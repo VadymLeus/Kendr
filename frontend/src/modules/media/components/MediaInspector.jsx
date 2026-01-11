@@ -1,14 +1,14 @@
 // frontend/src/modules/media/components/MediaInspector.jsx
 import React, { useState, useEffect } from 'react';
 import { 
-    IconDownload, 
-    IconTrash, 
-    IconFile, 
-    IconFont, 
-    IconCopy,
-    IconExternalLink,
-    IconX 
-} from '../../../shared/ui/elements/Icons';
+    Download, 
+    Trash2, 
+    File, 
+    Type, 
+    Copy,
+    ExternalLink,
+    X 
+} from 'lucide-react';
 import { Button } from '../../../shared/ui/elements/Button';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
@@ -211,7 +211,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         if (isFont) {
             return (
                 <div style={{ textAlign: 'center', width: '100%' }}>
-                    <div style={{ marginBottom: '10px' }}><IconFont size={48} color="var(--platform-accent)" /></div>
+                    <div style={{ marginBottom: '10px' }}><Type size={48} color="var(--platform-accent)" /></div>
                     <div 
                         id={`font-preview-${file.id}`} 
                         style={{
@@ -231,7 +231,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         
         return (
             <div style={{ textAlign: 'center' }}>
-                <IconFile size={64} color="var(--platform-text-secondary)" />
+                <File size={64} color="var(--platform-text-secondary)" />
                 <p style={{ marginTop: '10px', fontWeight: 'bold', color: 'var(--platform-text-primary)' }}>
                     {file.original_file_name.split('.').pop().toUpperCase()}
                 </p>
@@ -249,7 +249,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                     title="Закрити"
                     style={{ padding: 0, width: '32px', height: '32px', borderRadius: '50%', minWidth: 'auto' }}
                 >
-                    <IconX size={20} />
+                    <X size={20} />
                 </Button>
             </div>
 
@@ -323,7 +323,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Копіювати посилання"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        {IconCopy ? <IconCopy size={16}/> : '🔗'} Копіювати
+                        {Copy ? <Copy size={16}/> : '🔗'} Копіювати
                     </Button>
                     
                     <Button 
@@ -332,7 +332,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Відкрити в новій вкладці"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        {IconExternalLink ? <IconExternalLink size={16}/> : '↗'} Відкрити
+                        {ExternalLink ? <ExternalLink size={16}/> : '↗'} Відкрити
                     </Button>
 
                     <Button 
@@ -341,7 +341,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Завантажити файл на комп'ютер"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        <IconDownload size={16} /> Завантажити
+                        <Download size={16} /> Завантажити
                     </Button>
 
                     <Button 
@@ -350,7 +350,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Видалити назавжди"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        <IconTrash size={16} /> Видалити
+                        <Trash2 size={16} /> Видалити
                     </Button>
                 </div>
             </div>

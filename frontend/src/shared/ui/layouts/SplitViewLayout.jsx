@@ -1,6 +1,6 @@
 // frontend/src/shared/ui/layouts/SplitViewLayout.jsx
 import React, { useState, useEffect } from 'react';
-import { IconChevronLeft, IconChevronRight } from '../elements/Icons';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 export const SplitViewLayout = ({ 
     sidebar,
     content,
@@ -79,7 +79,7 @@ export const SplitViewLayout = ({
             </div>
 
             <div style={styles.collapseBtn} onClick={() => onToggle(!isOpen)} className="collapse-btn-hover">
-                {isOpen ? <IconChevronRight size={20} /> : <IconChevronLeft size={20} />}
+                {isOpen ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
             </div>
 
             <div style={styles.contentArea}>

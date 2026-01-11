@@ -1,6 +1,6 @@
 // frontend/src/modules/editor/blocks/Map/MapBlock.jsx
 import React from 'react';
-import { IconMapPin } from '../../../../shared/ui/elements/Icons';
+import { MapPin } from 'lucide-react';
 
 const parseSrcFromIframe = (embedCode) => {
     if (!embedCode || typeof embedCode !== 'string') return null;
@@ -41,7 +41,7 @@ const MapBlock = ({ blockData, isEditorPreview, style }) => {
                     gap: '12px'
                 }}>
                     <div style={{ color: 'var(--site-accent)', opacity: 0.7 }}>
-                        <IconMapPin size={48} />
+                        <MapPin size={48} />
                     </div>
                     <div>
                         <p style={{ margin: '0', fontWeight: '600', color: 'var(--site-text-primary)', fontSize: '1.1rem' }}>

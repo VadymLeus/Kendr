@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import apiClient from '../../../../shared/api/api';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
-import { IconSave, IconPackage, IconPlus } from '../../../../shared/ui/elements/Icons';
+import { Save, Package, Plus } from 'lucide-react';
 import { Button } from '../../../../shared/ui/elements/Button';
 import { Input } from '../../../../shared/ui/elements/Input';
 
@@ -134,7 +134,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                 <div style={contentStyle}>
                     <div style={headerStyle}>
                         <div style={iconBoxStyle}>
-                            <IconSave size={24} />
+                            <Save size={24} />
                         </div>
                         <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px'}}>
                             <h3 style={{fontSize: '1.15rem', fontWeight: '600', margin: 0}}>
@@ -159,7 +159,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                             display: 'flex', alignItems: 'center', gap: '10px',
                             fontSize: '0.85rem'
                         }}>
-                            <IconPackage size={16} style={{color: 'var(--platform-text-secondary)'}} />
+                            <Package size={16} style={{color: 'var(--platform-text-secondary)'}} />
                             <span style={{fontWeight: '500'}}>Оригінал: </span>
                             <span style={{color: 'var(--platform-accent)', fontWeight: '600'}}>{originBlockInfo.name}</span>
                         </div>
@@ -191,7 +191,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                             onClick={handleOverwriteOriginal}
                             title="Оновити вміст оригінального блоку у всіх місцях"
                         >
-                            <IconSave size={16} /> Оновити оригінал
+                            <Save size={16} /> Оновити оригінал
                         </Button>
                     )}
 
@@ -201,7 +201,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                         disabled={!name.trim() || isChecking}
                         style={{opacity: (!name.trim() || isChecking) ? 0.7 : 1}}
                     >
-                        {originBlockInfo ? <><IconPlus size={16} /> Зберегти як новий</> : 'Зберегти'}
+                        {originBlockInfo ? <><Plus size={16} /> Зберегти як новий</> : 'Зберегти'}
                     </Button>
                 </div>
             </div>

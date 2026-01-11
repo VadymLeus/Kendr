@@ -1,4 +1,4 @@
-// frontend/src/app/routesConfig.js
+// frontend/src/app/router/routesConfig.js
 export const STATIC_TITLES = {
     '/': 'Головна',
     '/login': 'Вхід',

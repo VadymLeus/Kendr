@@ -1,8 +1,8 @@
-// frontend/src/modules/site-editor/blocks/ShowCase/ShowCaseBlock.jsx
+// frontend/src/modules/editor/blocks/ShowCase/ShowCaseBlock.jsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import apiClient from '../../api';
+import apiClient from '../../../../shared/api/api';
 import { Link } from 'react-router-dom';
-import { IconShoppingBag } from '../../../../common/components/ui/Icons';
+import { ShoppingBag } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 const ProductCard = ({ product, isEditorPreview, siteData }) => {
@@ -223,7 +223,7 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
                         background: 'rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         color: 'var(--site-text-secondary)'
                     }}>
-                        <IconShoppingBag size={32} />
+                        <ShoppingBag size={32} />
                     </div>
                     <div>
                         <strong>Товарів не знайдено</strong>

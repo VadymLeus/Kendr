@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
-import { IconPlus, IconMessageSquare, IconLoader } from '../../../shared/ui/elements/Icons';
+import { Plus, MessageSquare, Loader } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 const MyTicketsPage = () => {
@@ -77,7 +77,8 @@ const MyTicketsPage = () => {
 
     if (loading) return (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-            <IconLoader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)' }} />
+            <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
+            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
         </div>
     );
     
@@ -111,7 +112,7 @@ const MyTicketsPage = () => {
                     </p>
                 </div>
                 <Link to="/support/new-ticket" style={{ textDecoration: 'none' }}>
-                    <Button variant="primary" icon={<IconPlus size={18}/>}>
+                    <Button variant="primary" icon={<Plus size={18}/>}>
                         Нове звернення
                     </Button>
                 </Link>
@@ -126,7 +127,7 @@ const MyTicketsPage = () => {
                     border: '1px solid var(--platform-border-color)'
                 }}>
                     <div style={{ color: 'var(--platform-text-secondary)', marginBottom: '1.5rem' }}>
-                        <IconMessageSquare size={48} />
+                        <MessageSquare size={48} />
                     </div>
                     <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
                         У вас ще немає звернень

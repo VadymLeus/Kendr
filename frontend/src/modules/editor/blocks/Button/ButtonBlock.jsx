@@ -1,7 +1,15 @@
 // frontend/src/modules/editor/blocks/Button/ButtonBlock.jsx
 import React from 'react';
 import { resolveSiteLink } from '../../../../shared/lib/utils/linkUtils';
-import { IconArrowRight, IconShoppingCart, IconMail, IconPhone, IconCheck, IconStar, IconMousePointer } from '../../../../shared/ui/elements/Icons';
+import { 
+    ArrowRight, 
+    ShoppingCart, 
+    Mail, 
+    Phone, 
+    Check, 
+    Star, 
+    MousePointer2 
+} from 'lucide-react';
 
 const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { 
@@ -81,13 +89,13 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const renderIcon = () => {
         const iconProps = { size: size === 'large' ? 20 : 18 };
         switch (icon) {
-            case 'arrowRight': return <IconArrowRight {...iconProps} />;
-            case 'cart': return <IconShoppingCart {...iconProps} />;
-            case 'mail': return <IconMail {...iconProps} />;
-            case 'phone': return <IconPhone {...iconProps} />;
-            case 'check': return <IconCheck {...iconProps} />;
-            case 'star': return <IconStar {...iconProps} filled />;
-            case 'pointer': return <IconMousePointer {...iconProps} />;
+            case 'arrowRight': return <ArrowRight {...iconProps} />;
+            case 'cart': return <ShoppingCart {...iconProps} />;
+            case 'mail': return <Mail {...iconProps} />;
+            case 'phone': return <Phone {...iconProps} />;
+            case 'check': return <Check {...iconProps} />;
+            case 'star': return <Star {...iconProps} fill="currentColor" />;
+            case 'pointer': return <MousePointer2 {...iconProps} />;
             default: return null;
         }
     };

@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import CategoryManager from '../CategoryManager';
 import ProductManager from '../ProductManager'; 
 import { Button } from '../../../../shared/ui/elements/Button'; 
-import { IconGrid, IconFolder } from '../../../../shared/ui/elements/Icons';
+import { Grid, Folder } from 'lucide-react';
 
 const ShopContentTab = ({ siteData, onSavingChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -89,7 +89,7 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                         <Button 
                             variant={activeSubTab === 'products' ? 'primary' : 'ghost'} 
                             onClick={() => handleTabChange('products')}
-                            icon={<IconGrid size={16}/>}
+                            icon={<Grid size={16}/>}
                             size="sm"
                         >
                             Товари
@@ -97,7 +97,7 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                         <Button 
                             variant={activeSubTab === 'categories' ? 'primary' : 'ghost'} 
                             onClick={() => handleTabChange('categories')}
-                            icon={<IconFolder size={16}/>}
+                            icon={<Folder size={16}/>}
                             size="sm"
                         >
                             Категорії

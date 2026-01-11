@@ -6,7 +6,7 @@ import MediaInspector from '../components/MediaInspector';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button, Input, Select } from '../../../shared/ui/elements'; 
-import { IconUpload, IconSearch, IconX, IconClear, IconImage, IconVideo, IconFileText, IconType, IconMusic, IconStar, IconCheck, IconCalendar, IconDownload, IconTrash } from '../../../shared/ui/elements/Icons';
+import { Upload, Search, X, Image, Video, FileText, Type, Music, Star, Check, Calendar, Download, Trash2 } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 const FORMATS_BY_TYPE = {
@@ -19,9 +19,9 @@ const FORMATS_BY_TYPE = {
 };
 
 const SORT_OPTIONS = [
-    { value: 'date', label: 'За датою', icon: IconCalendar },
-    { value: 'size', label: 'За розміром', icon: IconFileText },
-    { value: 'name', label: 'За назвою', icon: IconType }
+    { value: 'date', label: 'За датою', icon: Calendar },
+    { value: 'size', label: 'За розміром', icon: FileText },
+    { value: 'name', label: 'За назвою', icon: Type }
 ];
 
 const MediaLibraryPage = () => {
@@ -350,11 +350,11 @@ const MediaLibraryPage = () => {
 
     const filterTypes = [
         { id: 'all', label: 'Всі', icon: null },
-        { id: 'image', label: 'Фото', icon: IconImage },
-        { id: 'video', label: 'Відео', icon: IconVideo },
-        { id: 'document', label: 'Док.', icon: IconFileText },
-        { id: 'font', label: 'Шрифти', icon: IconType },
-        { id: 'audio', label: 'Аудіо', icon: IconMusic },
+        { id: 'image', label: 'Фото', icon: Image },
+        { id: 'video', label: 'Відео', icon: Video },
+        { id: 'document', label: 'Док.', icon: FileText },
+        { id: 'font', label: 'Шрифти', icon: Type },
+        { id: 'audio', label: 'Аудіо', icon: Music },
     ];
 
     const styles = {
@@ -494,7 +494,7 @@ const MediaLibraryPage = () => {
                         variant="primary"
                         onClick={() => fileInputRef.current.click()}
                     >
-                        <IconUpload size={18} /> 
+                        <Upload size={18} /> 
                         <span>Завантажити</span>
                     </Button>
                     <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleUpload} />
@@ -513,8 +513,8 @@ const MediaLibraryPage = () => {
                                     placeholder="Пошук файлів..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    leftIcon={<IconSearch size={18} />}
-                                    rightIcon={searchQuery ? <IconX size={16} onClick={() => setSearchQuery('')} style={{cursor: 'pointer'}} /> : null}
+                                    leftIcon={<Search size={18} />}
+                                    rightIcon={searchQuery ? <X size={16} onClick={() => setSearchQuery('')} style={{cursor: 'pointer'}} /> : null}
                                     wrapperStyle={{ marginBottom: 0 }}
                                     style={{ height: '38px' }}
                                 />
@@ -554,7 +554,7 @@ const MediaLibraryPage = () => {
                                     title="Тільки обрані"
                                     style={{ height: '38px', width: '38px' }}
                                 >
-                                    <IconStar size={20} filled={onlyFavorites} />
+                                    <Star size={20} fill={onlyFavorites ? "currentColor" : "none"} />
                                 </Button>
 
                                 <Button 
@@ -563,7 +563,7 @@ const MediaLibraryPage = () => {
                                     title="Очистити всі фільтри"
                                     style={{ height: '38px', width: '38px' }}
                                 >
-                                    <IconClear size={18} />
+                                    <X size={18} />
                                 </Button>
                             </div>
                         </div>
@@ -628,7 +628,7 @@ const MediaLibraryPage = () => {
                                 border: '2px dashed var(--platform-border-color)', borderRadius: '16px', color: 'var(--platform-text-secondary)', marginTop: '24px',
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
                             }}>
-                                <IconSearch size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
+                                <Search size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
                                 <p style={{ margin: 0, marginBottom: '16px' }}>Файлів не знайдено</p>
                                 <Button 
                                     variant="primary"
@@ -686,7 +686,7 @@ const MediaLibraryPage = () => {
                                     padding: '4px 8px', borderRadius: '6px'
                                 }}
                             >
-                                <IconCheck size={14} />
+                                <Check size={14} />
                                 {checkedFiles.size === filteredFiles.length && filteredFiles.length > 0 ? 'Зняти все' : 'Вибрати все'}
                             </Button>
                         </div>
@@ -708,7 +708,7 @@ const MediaLibraryPage = () => {
                                         padding: '6px 8px', borderRadius: '4px'
                                     }}
                                 >
-                                    <IconDownload size={14} />
+                                    <Download size={14} />
                                     <span className="bulk-text">
                                         {checkedFiles.size > 1 ? 'Завантажити архівом' : 'Завантажити'}
                                     </span>
@@ -725,7 +725,7 @@ const MediaLibraryPage = () => {
                                         padding: '6px 8px', borderRadius: '4px'
                                     }}
                                 >
-                                    <IconTrash size={14} />
+                                    <Trash2 size={14} />
                                     <span className="bulk-text">
                                         Видалити
                                     </span>

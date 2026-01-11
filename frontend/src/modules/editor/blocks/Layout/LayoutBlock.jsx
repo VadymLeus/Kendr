@@ -4,7 +4,7 @@ import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../../ui/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../../ui/DraggableBlockItem';
 import BlockRenderer from '../../core/BlockRenderer';
-import { IconPlus } from '../../../../shared/ui/elements/Icons';
+import { Plus } from 'lucide-react';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
@@ -189,7 +189,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
                             marginBottom: '8px',
                             background: 'var(--platform-bg)'
                         }}>
-                            <IconPlus size={20} />
+                            <Plus size={20} />
                         </div>
                         <span style={{ fontSize: '0.85rem' }}>Перетягніть блок сюди</span>
                     </div>

@@ -10,18 +10,15 @@ import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import MediaPickerModal from '../../media/components/MediaPickerModal';
 import { SplitViewLayout } from '../../../shared/ui/layouts/SplitViewLayout';
 import { 
-    IconChevronLeft, IconChevronRight, IconType, 
-    IconList, IconSearch, IconPlus, IconShop, 
-    IconCheckCircle, IconImage, IconTrash, 
-    IconEdit, IconSave, IconUndo, IconX, IconSettings 
-} from '../../../shared/ui/elements/Icons';
+    ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X 
+} from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
 const SORT_FIELDS = [
-    { value: 'name', label: 'За назвою', icon: IconType },
-    { value: 'price', label: 'За ціною', icon: IconList },
-    { value: 'stock', label: 'За залишком', icon: IconList }
+    { value: 'name', label: 'За назвою', icon: Type },
+    { value: 'price', label: 'За ціною', icon: List },
+    { value: 'stock', label: 'За залишком', icon: List }
 ];
 
 const useProducts = (siteId) => {
@@ -124,7 +121,7 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                     wrapperStyle={{margin: 0, flex: 1}}
                 />
                 <Button variant="square-danger" onClick={onRemove} title="Видалити опцію">
-                    <IconTrash size={18}/>
+                    <Trash size={18}/>
                 </Button>
             </div>
 
@@ -159,7 +156,7 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                                 }} 
                                 className="opacity-50 hover:opacity-100 hover:text-red-500 ml-1 flex items-center"
                             >
-                                <IconX size={14} />
+                                <X size={14} />
                             </span>
                         </div>
                     );
@@ -171,7 +168,7 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                 ${editingIndex !== null ? 'bg-(--platform-card-bg) rounded-lg p-3 mt-2' : ''}
             `}>
                 <div className="text-sm font-semibold mb-3 text-(--platform-text-secondary) flex items-center gap-1.5">
-                    {editingIndex !== null ? <><IconEdit size={14}/> Редагування значення</> : <><IconPlus size={14}/> Додати значення</>}
+                    {editingIndex !== null ? <><Edit size={14}/> Редагування значення</> : <><Plus size={14}/> Додати значення</>}
                 </div>
                 <div className="grid grid-cols-[2fr_1fr_1fr] gap-3 items-start mb-3">
                     <Input placeholder="Значення (XL)" value={inputState.label} onChange={e => setInputState({...inputState, label: e.target.value})} style={{margin:0}} wrapperStyle={{margin:0}} />
@@ -180,11 +177,11 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                 </div>
                 <div className="flex gap-2.5 mt-2.5">
                     <Button onClick={handleSaveValue} style={{flex: 1, justifyContent: 'center'}}>
-                        {editingIndex !== null ? <><IconSave size={18}/> Зберегти зміни</> : <><IconPlus size={18}/> Додати</>}
+                        {editingIndex !== null ? <><Save size={18}/> Зберегти зміни</> : <><Plus size={18}/> Додати</>}
                     </Button>
                     {editingIndex !== null && (
                         <Button variant="secondary" onClick={() => {setEditingIndex(null); setInputState({label:'', price:'', sale:''});}} style={{flex: 1, justifyContent: 'center'}} title="Скасувати">
-                            <IconUndo size={18}/> Скасувати
+                            <Undo size={18}/> Скасувати
                         </Button>
                     )}
                 </div>
@@ -210,7 +207,7 @@ const ProductTable = memo(({
             <div className="min-h-18 p-3 sm:px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 flex-wrap bg-(--platform-bg)">
                 <div className="flex gap-2 flex-1 items-center flex-wrap">
                     <Input 
-                        leftIcon={<IconSearch size={16}/>}
+                        leftIcon={<Search size={16}/>}
                         placeholder="Пошук..." 
                         value={filters.search}
                         onChange={(e) => setFilters(prev => ({...prev, search: e.target.value}))}
@@ -240,14 +237,14 @@ const ProductTable = memo(({
                         </Button>
                     </div>
                 </div>
-                <Button onClick={onCreate} icon={<IconPlus size={18}/>} style={{height: '42px'}}>Додати</Button>
+                <Button onClick={onCreate} icon={<Plus size={18}/>} style={{height: '42px'}}>Додати</Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 {products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-(--platform-text-secondary) py-10">
                         <div className="w-20 h-20 rounded-full bg-(--platform-bg) border border-(--platform-border-color) flex items-center justify-center mb-4">
-                            <IconShop size={40} className="opacity-30"/>
+                            <Store size={40} className="opacity-30"/>
                         </div>
                         <h3 className="text-lg font-semibold text-(--platform-text-primary) mb-1">Товарів не знайдено</h3>
                         <p className="text-sm opacity-70 max-w-62.5 text-center mb-6">
@@ -277,27 +274,27 @@ const ProductTable = memo(({
                                          {product.image_gallery?.[0] ? (
                                             <img src={`${API_URL}${product.image_gallery[0]}`} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                          ) : (
-                                            <IconImage size={32} className="opacity-20 text-slate-400" />
+                                            <Image size={32} className="opacity-20 text-slate-400" />
                                          )}
                                          
                                          <div className={`
                                             absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded text-[0.7rem] font-bold z-10 border border-slate-100
                                             ${product.stock_quantity > 0 ? 'text-emerald-500' : 'text-red-500'}
                                          `}>
-                                             {product.stock_quantity} шт.
+                                              {product.stock_quantity} шт.
                                          </div>
                                          
                                          <button
-                                             onClick={(e) => { e.stopPropagation(); onDelete(product); }}
-                                             className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer z-20 text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:border-red-500 hover:scale-110"
-                                             title="Видалити"
+                                              onClick={(e) => { e.stopPropagation(); onDelete(product); }}
+                                              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer z-20 text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:border-red-500 hover:scale-110"
+                                              title="Видалити"
                                          >
-                                            <IconX size={16} />
+                                             <X size={16} />
                                          </button>
  
                                          {isSelected && (
                                             <div className="absolute top-2 right-10 text-(--platform-accent) bg-white rounded-full p-0.5 shadow-sm z-10 animate-in fade-in zoom-in duration-200">
-                                                <IconCheckCircle size={20} />
+                                                <CheckCircle size={20} />
                                             </div>
                                          )}
                                     </div>
@@ -393,12 +390,12 @@ const ProductEditorPanel = ({
             <div className="h-18 px-6 border-b border-(--platform-border-color) flex items-center justify-between bg-(--platform-bg) shrink-0">
                 <h3 className="m-0 text-lg font-bold flex items-center gap-2.5 text-(--platform-text-primary)">
                     {isMobile && (
-                        <Button variant="ghost" onClick={onClose} className="p-0 w-8 hover:bg-(--platform-hover-bg)"><IconChevronLeft/></Button>
+                        <Button variant="ghost" onClick={onClose} className="p-0 w-8 hover:bg-(--platform-hover-bg)"><ChevronLeft size={20}/></Button>
                     )}
-                    {formData.id ? <><IconEdit/> Редагування</> : 'Новий товар'}
+                    {formData.id ? <><Edit size={20}/> Редагування</> : 'Новий товар'}
                 </h3>
                 {!isMobile && (
-                    <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><IconX/></Button>
+                    <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><X size={20}/></Button>
                 )}
             </div>
 
@@ -423,7 +420,7 @@ const ProductEditorPanel = ({
                                     <img src={`${API_URL}${img}`} alt="" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-start justify-end p-1">
                                         <button type="button" onClick={() => setFormData(p => ({...p, image_gallery: p.image_gallery.filter((_, idx) => idx !== i)}))} className="bg-red-500 text-white rounded cursor-pointer w-5 h-5 flex items-center justify-center border-none">
-                                            <IconX size={14}/>
+                                            <X size={14}/>
                                         </button>
                                     </div>
                                 </div>
@@ -433,7 +430,7 @@ const ProductEditorPanel = ({
                                 onClick={() => setShowMediaPicker(true)} 
                                 className="aspect-square border border-dashed border-(--platform-border-color) rounded-lg flex items-center justify-center p-0 cursor-pointer bg-(--platform-bg) text-(--platform-text-secondary) transition-all duration-200 hover:border-(--platform-accent) hover:text-(--platform-accent) hover:bg-(--platform-hover-bg)"
                             >
-                                <IconPlus/>
+                                <Plus size={24}/>
                             </button>
                         </div>
                     </div>
@@ -441,7 +438,7 @@ const ProductEditorPanel = ({
                     <div className="border-t border-(--platform-border-color) pt-5">
                          <div className="flex justify-between items-center mb-3">
                             <span className="font-bold text-sm text-(--platform-text-primary)">Опції (варіанти)</span>
-                            <Button type="button" variant="outline" onClick={() => setFormData(p => ({...p, variants: [...p.variants, {id: Date.now(), name: '', values: []}]}))} style={{height:'30px', fontSize:'0.8rem'}}><IconPlus size={14}/> Додати</Button>
+                            <Button type="button" variant="outline" onClick={() => setFormData(p => ({...p, variants: [...p.variants, {id: Date.now(), name: '', values: []}]}))} style={{height:'30px', fontSize:'0.8rem'}}><Plus size={14}/> Додати</Button>
                          </div>
                          {formData.variants.map((v, i) => (
                             <VariantEditor key={v.id} variant={v} onRemove={() => setFormData(p => ({...p, variants: p.variants.filter((_, idx) => idx !== i)}))} onChange={upd => {
@@ -465,9 +462,9 @@ const ProductEditorPanel = ({
                         onClick={handleClearForm} 
                         style={{justifyContent: 'center', height: '42px'}}
                     >
-                        <IconX size={18}/> Скасувати
+                        <X size={18}/> Скасувати
                     </Button>
-                    <Button type="submit" variant="primary" icon={<IconSave size={18}/>} style={{justifyContent: 'center', height: '42px'}}>
+                    <Button type="submit" variant="primary" icon={<Save size={18}/>} style={{justifyContent: 'center', height: '42px'}}>
                         Зберегти
                     </Button>
                 </div>

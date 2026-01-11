@@ -6,7 +6,7 @@ import SiteCoverDisplay from '../../../shared/ui/complex/SiteCoverDisplay';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
-import { IconEdit, IconExternalLink, IconTrash, IconPlus, IconEye, IconCalendar, IconSad, IconLoading, IconDotsVertical, IconGlobe, IconGlobeOff, IconFileText, IconPause, IconPin, IconStar } from '../../../shared/ui/elements/Icons';
+import { Edit, ExternalLink, Trash, Plus, Eye, Calendar, Frown, Loader, MoreVertical, Globe, GlobeLock, FileText, Pause, Pin, Star } from 'lucide-react';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 
 const ITEMS_PER_PAGE = 16;
@@ -29,9 +29,9 @@ const overlayButtonStyle = {
 
 const SiteStatusBadge = ({ status }) => {
     const config = {
-        published: { label: 'Опубліковано', color: '#38a169', bg: 'rgba(56, 161, 105, 0.1)', icon: IconGlobe },
-        draft: { label: 'Чернетка', color: 'var(--platform-text-secondary)', bg: 'rgba(0,0,0,0.05)', icon: IconFileText },
-        suspended: { label: 'Призупинено', color: '#dd6b20', bg: 'rgba(221, 107, 32, 0.1)', icon: IconPause }
+        published: { label: 'Опубліковано', color: '#38a169', bg: 'rgba(56, 161, 105, 0.1)', icon: Globe },
+        draft: { label: 'Чернетка', color: 'var(--platform-text-secondary)', bg: 'rgba(0,0,0,0.05)', icon: FileText },
+        suspended: { label: 'Призупинено', color: '#dd6b20', bg: 'rgba(221, 107, 32, 0.1)', icon: Pause }
     };
     const s = config[status] || config.draft;
     const Icon = s.icon;
@@ -96,7 +96,7 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
                 onMouseLeave={e => !isOpen && (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)')}
                 title="Меню дій"
             >
-                <IconDotsVertical size={18} />
+                <MoreVertical size={18} />
             </button>
 
             {isOpen && (
@@ -139,7 +139,7 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
                             onMouseEnter={e => e.target.style.background = 'var(--platform-bg)'}
                             onMouseLeave={e => e.target.style.background = 'none'}
                         >
-                            <IconExternalLink size={16} /> Відвідати сайт
+                            <ExternalLink size={16} /> Відвідати сайт
                         </a>
                     )}
 
@@ -161,7 +161,7 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
                         onMouseEnter={e => e.target.style.background = 'var(--platform-bg)'}
                         onMouseLeave={e => e.target.style.background = 'none'}
                     >
-                        {isPublished ? <IconGlobeOff size={16} /> : <IconGlobe size={16} />}
+                        {isPublished ? <GlobeLock size={16} /> : <Globe size={16} />}
                         {isPublished ? 'Зняти з публікації' : 'Опублікувати'}
                     </button>
 
@@ -185,7 +185,7 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
                         onMouseEnter={e => e.target.style.background = '#fff5f5'}
                         onMouseLeave={e => e.target.style.background = 'none'}
                     >
-                        <IconTrash size={16} /> Видалити
+                        <Trash size={16} /> Видалити
                     </button>
                 </div>
             )}
@@ -236,7 +236,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, onDelete, onToggleStatus, 
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)'}
                 title={isPinned ? "Відкріпити" : "Закріпити зверху"}
             >
-                <IconStar size={18} filled={isPinned} />
+                <Star size={18} fill={isPinned ? "currentColor" : "none"} />
             </button>
 
             <SiteCardMenu site={site} onToggleStatus={onToggleStatus} onDelete={onDelete} />
@@ -314,7 +314,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, onDelete, onToggleStatus, 
                             ДАТА
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
-                            <IconCalendar size={14} />
+                            <Calendar size={14} />
                             <span>{formatDate(site.created_at)}</span>
                         </div>
                     </div>
@@ -324,7 +324,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, onDelete, onToggleStatus, 
                             ПЕРЕГЛЯДИ
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
-                            <IconEye size={14} />
+                            <Eye size={14} />
                             <span>{site.view_count || 0}</span>
                         </div>
                     </div>
@@ -377,7 +377,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, onDelete, onToggleStatus, 
                     onMouseEnter={e => { e.target.style.background = 'var(--platform-accent-hover)'; }}
                     onMouseLeave={e => { e.target.style.background = 'var(--platform-accent)'; }}
                 >
-                    <IconEdit size={16} /> Редагувати
+                    <Edit size={16} /> Редагувати
                 </Link>
 
             </div>
@@ -519,7 +519,7 @@ const MySitesPage = () => {
                     </p>
                 </div>
                 <Link to="/create-site" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '8px', background: 'var(--platform-accent)', color: 'white', textDecoration: 'none', fontWeight: '600', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
-                    <IconPlus /> Створити новий
+                    <Plus /> Створити новий
                 </Link>
             </div>
 
@@ -541,17 +541,20 @@ const MySitesPage = () => {
 
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-text-secondary)' }}>
-                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><IconLoading size={48} /></div>
+                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+                         <Loader size={48} style={{ animation: 'spin 1s linear infinite' }} />
+                         <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+                    </div>
                     Завантаження...
                 </div>
             ) : sites.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '4rem', background: 'var(--platform-card-bg)', borderRadius: '12px', border: '1px solid var(--platform-border-color)', width: '100%', boxSizing: 'border-box' }}>
-                    <div style={{ marginBottom: '1rem', color: 'var(--platform-text-secondary)', display: 'flex', justifyContent: 'center' }}><IconSad size={64} /></div>
+                    <div style={{ marginBottom: '1rem', color: 'var(--platform-text-secondary)', display: 'flex', justifyContent: 'center' }}><Frown size={64} /></div>
                     <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Немає сайтів</h3>
                     <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '1.5rem' }}>{searchTerm || selectedTag ? 'Нічого не знайдено за вашим запитом' : 'Ви ще не створили жодного сайту'}</p>
                     {!(searchTerm || selectedTag) ? (
                         <Link to="/create-site" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '8px', background: 'var(--platform-accent)', color: 'white', textDecoration: 'none', fontWeight: '600' }}>
-                            <IconPlus /> Створити перший сайт
+                            <Plus /> Створити перший сайт
                         </Link>
                     ) : (
                         <button onClick={handleClearSearch} className="btn btn-primary" style={{ padding: '10px 24px', borderRadius: '8px', background: 'var(--platform-accent)', color: 'white', fontWeight: '600' }}>Очистити фільтри</button>
@@ -576,7 +579,7 @@ const MySitesPage = () => {
                     {filteredSites.length > visibleCount && (
                         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
                             <button onClick={handleLoadMore} className="btn btn-secondary" style={{ padding: '12px 30px', fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                                <IconPlus size={16} /> Завантажити ще ({filteredSites.length - visibleCount})
+                                <Plus size={16} /> Завантажити ще ({filteredSites.length - visibleCount})
                             </button>
                         </div>
                     )}

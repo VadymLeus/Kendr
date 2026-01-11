@@ -5,10 +5,7 @@ import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import ThemeModeSelector from '../../../../shared/ui/complex/ThemeModeSelector';
 import AccentColorSelector from '../../../../shared/ui/complex/AccentColorSelector';
 import { resolveAccentColor, isLightColor } from '../../../../shared/lib/utils/themeUtils';
-import { 
-    IconPalette, 
-    IconType 
-} from '../../../../shared/ui/elements/Icons';
+import { Palette, Type } from 'lucide-react';
 
 const ThemeSettingsTab = ({ siteData, onUpdate }) => {
     const [themeData, setThemeData] = useState({
@@ -81,7 +78,7 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
         <div style={container}>
             <div style={header}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '600', margin: '0 0 4px 0', color: 'var(--platform-text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <IconPalette size={28} />
+                    <Palette size={28} />
                     Тема та Стиль
                 </h2>
                 <p style={{ color: 'var(--platform-text-secondary)', margin: 0, fontSize: '0.9rem', paddingLeft: '38px' }}>
@@ -110,7 +107,7 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
 
             <div style={card}>
                 <h3 style={cardTitle}>
-                    <IconType size={22} style={{ color: 'var(--platform-accent)' }} />
+                    <Type size={22} style={{ color: 'var(--platform-accent)' }} />
                     Типографіка
                 </h3>
                 <p style={{margin: '0 0 24px 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem'}}>

@@ -1,7 +1,7 @@
 // frontend/src/modules/media/components/MediaInput.jsx
 import React, { useState } from 'react';
 import MediaPickerModal from './MediaPickerModal';
-import { IconUpload, IconX, IconVideo, IconImage, IconPlay } from "../../../shared/ui/elements/Icons";
+import { Upload, X, Video, Image, Play } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 const MediaInput = ({ 
@@ -137,7 +137,7 @@ const MediaInput = ({
                                     background: 'rgba(0,0,0,0.6)', borderRadius: '50%', padding: '4px',
                                     display: 'flex', opacity: 0.8
                                 }}>
-                                    <IconPlay size={12} color="white"/>
+                                    <Play size={12} color="white"/>
                                 </div>
                             </div>
                         ) : (
@@ -162,15 +162,15 @@ const MediaInput = ({
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--platform-danger)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'}
                         >
-                            <IconX size={14} />
+                            <X size={14} />
                         </button>
                     </>
                 ) : (
                     <div style={placeholderStyle}>
                         {type === 'video' ? (
-                            <IconVideo size={24} style={{ opacity: 0.7 }} />
+                            <Video size={24} style={{ opacity: 0.7 }} />
                         ) : (
-                            <IconImage size={24} style={{ opacity: 0.7 }} />
+                            <Image size={24} style={{ opacity: 0.7 }} />
                         )}
                         <span>{placeholder}</span>
                     </div>

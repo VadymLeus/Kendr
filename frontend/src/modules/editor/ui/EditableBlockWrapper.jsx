@@ -1,4 +1,3 @@
-
 // frontend/src/modules/editor/ui/EditableBlockWrapper.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
@@ -9,14 +8,14 @@ import SaveBlockModal from './modals/SaveBlockModal';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { 
-    IconSettings, 
-    IconTrash, 
-    IconSave, 
-    IconGripVertical, 
-    IconChevronDown, 
-    IconChevronUp,
-    IconHelpCircle
-} from '../../../shared/ui/elements/Icons';
+    Settings, 
+    Trash2, 
+    Save, 
+    GripVertical, 
+    ChevronDown, 
+    ChevronUp,
+    HelpCircle
+} from 'lucide-react';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 
@@ -100,7 +99,7 @@ const EditableBlockWrapper = ({
     drag(drop(ref));
 
     const opacity = isDragging ? 0 : 1;
-    const blockType = { name: block.type, icon: <IconSettings size={14} /> };
+    const blockType = { name: block.type, icon: <Settings size={14} /> };
     const blockDomId = `block-${block.block_id}`;
     const isSelected = selectedBlockPath && Array.isArray(selectedBlockPath) && Array.isArray(path) && selectedBlockPath.join(',') === path.join(',');
     const isHeaderBlock = block.type === 'header';
@@ -242,10 +241,10 @@ const EditableBlockWrapper = ({
             <div style={styles.header} className="editable-block-header">
                 <span style={styles.headerText} title={blockType?.name}>
                     <span style={{cursor: 'grab', display: 'flex', alignItems: 'center', color: 'var(--platform-text-secondary)'}}>
-                        <IconGripVertical size={16} />
+                        <GripVertical size={16} />
                     </span>
                     <span style={{display: 'flex', alignItems: 'center', color: 'var(--platform-accent)'}}>
-                        {block.icon || <IconHelpCircle size={16} />} 
+                        {block.icon || <HelpCircle size={16} />} 
                     </span>
                     <span>{blockType?.name}</span>
                     {anchorId && (
@@ -264,7 +263,7 @@ const EditableBlockWrapper = ({
                             onMouseEnter={(e) => handleBtnHover(e, 'default')}
                             onMouseLeave={handleBtnOut}
                         >
-                            <IconSave size={16} />
+                            <Save size={16} />
                         </button>
                     )}
 
@@ -275,7 +274,7 @@ const EditableBlockWrapper = ({
                         onMouseEnter={(e) => handleBtnHover(e, 'default')}
                         onMouseLeave={handleBtnOut}
                     >
-                        {isCollapsed ? <IconChevronDown size={16} /> : <IconChevronUp size={16} />}
+                        {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                     </button>
 
                     <button 
@@ -285,7 +284,7 @@ const EditableBlockWrapper = ({
                         onMouseEnter={(e) => handleBtnHover(e, 'primary')}
                         onMouseLeave={handleBtnOut}
                     >
-                        {isCompact ? <IconSettings size={16} /> : <><IconSettings size={16} /> Налаштування</>}
+                        {isCompact ? <Settings size={16} /> : <><Settings size={16} /> Налаштування</>}
                     </button>
 
                     {!isHeaderBlock && (
@@ -296,7 +295,7 @@ const EditableBlockWrapper = ({
                             onMouseEnter={(e) => handleBtnHover(e, 'danger')}
                             onMouseLeave={handleBtnOut}
                         >
-                            <IconTrash size={16} />
+                            <Trash2 size={16} />
                         </button>
                     )}
                 </div>

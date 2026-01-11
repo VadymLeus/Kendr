@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { IconSearch, IconX, IconCheck, IconSortAsc, IconSortDesc, IconSort, IconTrash, IconFilter, IconEmptyBox } from '../../../shared/ui/elements/Icons';
+import { Search, X, Check, ArrowUp, ArrowDown, ArrowUpDown, Trash, Filter, PackageOpen } from 'lucide-react';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 
 const API_URL = 'http://localhost:5000';
@@ -102,8 +102,8 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     };
 
     const getSortIcon = (field) => {
-        if (sortBy !== field) return <IconSort size={14} />;
-        return sortOrder === 'asc' ? <IconSortAsc size={14} /> : <IconSortDesc size={14} />;
+        if (sortBy !== field) return <ArrowUpDown size={14} />;
+        return sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />;
     };
 
     const filteredProducts = products.filter(p => {
@@ -355,14 +355,14 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                         }}
                         title="Закрити"
                     >
-                        <IconX size={20} />
+                        <X size={20} />
                     </button>
                 </div>
 
                 <div style={toolbarStyle}>
                     <div style={searchContainerStyle}>
                         <div style={searchIconStyle}>
-                            <IconSearch size={16} />
+                            <Search size={16} />
                         </div>
                         <input 
                             type="text" 
@@ -379,7 +379,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                 style={clearButtonStyle}
                                 title="Очистити пошук"
                             >
-                                <IconX size={14} />
+                                <X size={14} />
                             </button>
                         )}
                     </div>
@@ -417,7 +417,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                         </div>
                     ) : sortedProducts.length === 0 ? (
                         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--platform-text-secondary)'}}>
-                            <IconEmptyBox size={48} style={{opacity: 0.5, marginBottom: '1rem'}}/>
+                            <PackageOpen size={48} style={{opacity: 0.5, marginBottom: '1rem'}}/>
                             {searchTerm || selectedCategory !== 'all' ? 'Нічого не знайдено за фільтрами' : 'Список товарів порожній'}
                         </div>
                     ) : (
@@ -433,7 +433,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                     onClick={() => toggleProduct(product.id)}
                                 >
                                     <div style={isSelected ? checkedStyle : checkboxStyle}>
-                                        {isSelected && <IconCheck size={14} />}
+                                        {isSelected && <Check size={14} />}
                                     </div>
                                     <img 
                                         src={imgUrl} 
@@ -475,7 +475,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                                     fontSize: '0.75rem',
                                                     display: 'flex', alignItems: 'center', gap: '4px'
                                                 }}>
-                                                    <IconFilter size={10} /> {category.name}
+                                                    <Filter size={10} /> {category.name}
                                                 </span>
                                             )}
                                         </div>
@@ -521,7 +521,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                     e.target.style.color = '#e53e3e';
                                 }}
                             >
-                                <IconTrash size={14} /> Очистити
+                                <Trash size={14} /> Очистити
                             </button>
                         )}
                     </div>

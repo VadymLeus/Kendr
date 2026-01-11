@@ -1,29 +1,29 @@
 // frontend/src/modules/editor/blocks/Features/FeaturesBlock.jsx
 import React from 'react';
 import { 
-    IconStar, IconZap, IconShield, IconTruck, IconGift, IconClock, 
-    IconPhone, IconSettings, IconCheck, IconUser, IconGlobe, IconHeart, 
-    IconShoppingBag, IconBox, IconSmile, IconAward
-} from '../../../../shared/ui/elements/Icons';
+    Star, Zap, Shield, Truck, Gift, Clock, 
+    Phone, Settings, Check, User, Globe, Heart, 
+    ShoppingBag, Box, Smile, Award
+} from 'lucide-react';
 
 const ICON_MAP = {
-    star: IconStar,
-    zap: IconZap,
-    shield: IconShield,
-    truck: IconTruck,
-    gift: IconGift,
-    clock: IconClock,
-    phone: IconPhone,
-    settings: IconSettings,
-    check: IconCheck,
-    user: IconUser,
-    globe: IconGlobe,
-    heart: IconHeart,
-    shop: IconShoppingBag,
-    box: IconBox,
-    smile: IconSmile,
-    award: IconAward,
-    default: IconStar
+    star: Star,
+    zap: Zap,
+    shield: Shield,
+    truck: Truck,
+    gift: Gift,
+    clock: Clock,
+    phone: Phone,
+    settings: Settings,
+    check: Check,
+    user: User,
+    globe: Globe,
+    heart: Heart,
+    shop: ShoppingBag,
+    box: Box,
+    smile: Smile,
+    award: Award,
+    default: Star
 };
 
 const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
@@ -157,7 +157,7 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
             {isEditorPreview && items.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px', opacity: 0.5, border: '2px dashed #ccc', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ marginBottom: '10px', color: 'var(--site-accent)' }}>
-                        <IconStar size={32} />
+                        <Star size={32} />
                     </div>
                     <span>Додайте переваги у налаштуваннях блоку</span>
                 </div>

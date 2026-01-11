@@ -3,13 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../../../shared/api/api';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Input, Button } from '../../../shared/ui/elements';
-import { 
-    IconSave, 
-    IconLayout, 
-    IconFileText, 
-    IconLoader,
-    IconCheck
-} from '../../../shared/ui/elements/Icons';
+import { Save, Layout, FileText, Loader2, Check } from 'lucide-react';
 
 const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
     const [name, setName] = useState('');
@@ -119,7 +113,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
                 <div style={contentStyle}>
                     <div style={headerStyle}>
                         <div style={iconBoxStyle}>
-                            <IconSave size={24} />
+                            <Save size={24} />
                         </div>
                         <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px'}}>
                             <h3 style={{fontSize: '1.15rem', fontWeight: '600', margin: 0}}>
@@ -142,7 +136,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
                                     required
                                     autoFocus
                                     disabled={checking}
-                                    icon={<IconLayout size={18} />}
+                                    icon={<Layout size={18} />}
                                 />
                             </div>
                             
@@ -153,7 +147,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
                                     onChange={e => setDescription(e.target.value)}
                                     placeholder="Короткий опис призначення..."
                                     disabled={checking}
-                                    icon={<IconFileText size={18} />}
+                                    icon={<FileText size={18} />}
                                 />
                             </div>
 
@@ -188,7 +182,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
                         type="submit" 
                         form="save-template-form"
                         disabled={!name.trim() || checking}
-                        icon={checking ? <IconLoader className="animate-spin" size={18} /> : <IconCheck size={18} />}
+                        icon={checking ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />}
                     >
                         {checking ? 'Завантаження...' : 'Зберегти'}
                     </Button>

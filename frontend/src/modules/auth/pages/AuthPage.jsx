@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import { Input, Button } from '../../../shared/ui/elements';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import ImageUploader from '../../../shared/ui/complex/ImageUploader';
-import { IconArrowLeft, IconCheck, IconMailOpen, IconTrash, IconCamera, IconUpload } from '../../../shared/ui/elements/Icons';
+import { ArrowLeft, Check, MailOpen, Trash, Camera, Upload } from 'lucide-react';
 import { validatePassword } from '../../../shared/lib/utils/validationUtils';
 
 const API_URL = 'http://localhost:5000';
@@ -53,7 +53,7 @@ const PasswordStrengthMeter = ({ password }) => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--platform-text-secondary)' }}>
                 <span>{getStrengthLabel()}</span>
-                {score === 3 && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><IconCheck size={12}/> Чудовий</span>}
+                {score === 3 && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12}/> Чудовий</span>}
             </div>
         </div>
     );
@@ -344,7 +344,7 @@ const AuthPage = () => {
                 <Helmet><title>{getPageTitle()}</title></Helmet>
                 <div style={{...cardStyle, maxWidth: '420px'}} className="auth-card">
                     <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--platform-accent)' }}>
-                        <IconMailOpen size={64} />
+                        <MailOpen size={64} />
                     </div>
                     <h2 style={titleStyle}>Перевірте пошту</h2>
                     <p style={subTitleStyle}>Лист для підтвердження надіслано на <strong>{pendingEmail}</strong>.</p>
@@ -363,7 +363,7 @@ const AuthPage = () => {
                 <Helmet><title>{getPageTitle()}</title></Helmet>
                 <div style={{...cardStyle, maxWidth: '420px'}} className="auth-card">
                     <button onClick={() => setView('login')} style={{ position: 'absolute', top: '30px', left: '30px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--platform-text-secondary)' }}>
-                        <IconArrowLeft size={24} />
+                        <ArrowLeft size={24} />
                     </button>
                     <h2 style={titleStyle}>Відновлення</h2>
                     <p style={subTitleStyle}>Введіть email для скидання пароля</p>
@@ -425,10 +425,10 @@ const AuthPage = () => {
                                                 
                                                 <div className="avatar-overlay">
                                                     {avatarData.preview ? (
-                                                         <IconUpload size={20} />
+                                                         <Upload size={20} />
                                                     ) : (
                                                          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                                                            <IconCamera size={24} style={{marginBottom: '4px'}}/>
+                                                            <Camera size={24} style={{marginBottom: '4px'}}/>
                                                             <span style={{fontSize: '10px'}}>Завантажити</span>
                                                          </div>
                                                     )}
@@ -444,7 +444,7 @@ const AuthPage = () => {
                                             className="trash-btn"
                                             title="Видалити фото"
                                         >
-                                            <IconTrash size={12} />
+                                            <Trash size={12} />
                                         </button>
                                     )}
                                 </div>

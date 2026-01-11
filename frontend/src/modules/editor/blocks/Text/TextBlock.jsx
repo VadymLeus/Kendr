@@ -1,4 +1,4 @@
-// frontend/src/modules/site-editor/blocks/Text/TextBlock.jsx
+// frontend/src/modules/editor/blocks/Text/TextBlock.jsx
 import React from 'react';
 
 const API_URL = 'http://localhost:5000';

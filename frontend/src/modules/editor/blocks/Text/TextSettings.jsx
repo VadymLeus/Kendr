@@ -5,12 +5,12 @@ import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { commonStyles, ToggleGroup, SectionTitle } from '../../controls/SettingsUI';
 import apiClient from '../../../../shared/api/api';
 import { 
-    IconAlignLeft, 
-    IconAlignCenter, 
-    IconAlignRight,
-    IconFileText,
-    IconType
-} from '../../../../shared/ui/elements/Icons';
+    AlignLeft, 
+    AlignCenter, 
+    AlignRight,
+    FileText,
+    Type
+} from 'lucide-react';
 
 const TextSettings = ({ data, onChange }) => {
     const textareaRef = useRef(null);
@@ -88,9 +88,9 @@ const TextSettings = ({ data, onChange }) => {
     ];
 
     const alignOptions = [
-        { value: 'left', label: <IconAlignLeft size={18} /> },
-        { value: 'center', label: <IconAlignCenter size={18} /> },
-        { value: 'right', label: <IconAlignRight size={18} /> }
+        { value: 'left', label: <AlignLeft size={18} /> },
+        { value: 'center', label: <AlignCenter size={18} /> },
+        { value: 'right', label: <AlignRight size={18} /> }
     ];
 
     const safeLibrary = Array.isArray(FONT_LIBRARY) 
@@ -113,7 +113,7 @@ const TextSettings = ({ data, onChange }) => {
     return (
         <div>
             <div style={{ marginBottom: '2rem' }}>
-                <SectionTitle icon={<IconFileText size={18}/>}>Текст</SectionTitle>
+                <SectionTitle icon={<FileText size={18}/>}>Текст</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <textarea 
@@ -145,7 +145,7 @@ const TextSettings = ({ data, onChange }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconType size={18}/>}>Стиль та Типографіка</SectionTitle>
+                <SectionTitle icon={<Type size={18}/>}>Стиль та Типографіка</SectionTitle>
 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Тип тексту</label>

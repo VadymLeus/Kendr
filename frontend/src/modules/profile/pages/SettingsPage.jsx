@@ -1,4 +1,4 @@
-// frontend/src/modules/profile/pages/ProfilePage.jsx
+// frontend/src/modules/profile/pages/SettingsPage.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
@@ -8,13 +8,7 @@ import ProfileSecurityTab from '../components/ProfileSecurityTab';
 import ProfileAppearanceTab from '../components/ProfileAppearanceTab';
 import ProfilePublicTab from '../components/ProfilePublicTab';
 
-import { 
-    IconUser, 
-    IconShield, 
-    IconPalette, 
-    IconGlobe, 
-    IconPlay 
-} from '../../../shared/ui/elements/Icons';
+import { User, Shield, Palette, Globe, Play } from 'lucide-react';
 
 const SettingsPage = () => {
     const { user } = useContext(AuthContext);
@@ -28,10 +22,10 @@ const SettingsPage = () => {
     }, [activeTab]);
 
     const tabs = [
-        { id: 'general', label: 'Загальні', icon: <IconUser /> },
-        { id: 'security', label: 'Безпека', icon: <IconShield /> },
-        { id: 'appearance', label: 'Вигляд', icon: <IconPalette /> },
-        { id: 'public', label: 'Публічність', icon: <IconGlobe /> },
+        { id: 'general', label: 'Загальні', icon: <User /> },
+        { id: 'security', label: 'Безпека', icon: <Shield /> },
+        { id: 'appearance', label: 'Вигляд', icon: <Palette /> },
+        { id: 'public', label: 'Публічність', icon: <Globe /> },
     ];
 
     return (
@@ -74,7 +68,7 @@ const SettingsPage = () => {
                             className="preview-btn"
                             title="Переглянути профіль"
                         >
-                            <IconPlay />
+                            <Play />
                             <span className="preview-text">Переглянути</span>
                         </Link>
                     )}

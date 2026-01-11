@@ -2,7 +2,15 @@
 import React, { useState } from 'react';
 import { generateBlockId } from '../../core/editorConfig';
 import MediaPickerModal from '../../../media/components/MediaPickerModal';
-import { IconPlus, IconTrash, IconImage, IconGrid, IconPlay, IconLink, IconSettings } from '../../../../shared/ui/elements/Icons';
+import { 
+    Plus, 
+    Trash2, 
+    Image, 
+    Grid, 
+    Play, 
+    Link, 
+    Settings 
+} from 'lucide-react';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../controls/SettingsUI';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
@@ -72,9 +80,9 @@ const ImageSettings = ({ data, onChange }) => {
 
             <ToggleGroup 
                 options={[
-                    { value: 'single', label: 'Одне', icon: <IconImage size={16} /> },
-                    { value: 'slider', label: 'Слайдер', icon: <IconPlay size={16} /> },
-                    { value: 'grid', label: 'Сітка', icon: <IconGrid size={16} /> },
+                    { value: 'single', label: 'Одне', icon: <Image size={16} /> },
+                    { value: 'slider', label: 'Слайдер', icon: <Play size={16} /> },
+                    { value: 'grid', label: 'Сітка', icon: <Grid size={16} /> },
                 ]}
                 value={normalizedData.mode}
                 onChange={(val) => updateData({ mode: val })}
@@ -87,7 +95,7 @@ const ImageSettings = ({ data, onChange }) => {
                         style={{ width: '100%', height: '100px', fontSize: '0.9rem', gap: '8px' }}
                         onClick={() => setPickerState({ isOpen: true, mode: 'add', replaceIndex: null })}
                     >
-                        <IconPlus size={24} />
+                        <Plus size={24} />
                         <span>Вибрати зображення</span>
                     </button>
                 ) : (
@@ -125,7 +133,7 @@ const ImageSettings = ({ data, onChange }) => {
                                         updateData({ items: normalizedData.items.filter((_, i) => i !== idx) }); 
                                     }}
                                 >
-                                    <IconTrash size={10} />
+                                    <Trash2 size={10} />
                                 </button>
                             </div>
                         ))}
@@ -134,7 +142,7 @@ const ImageSettings = ({ data, onChange }) => {
                                 className="gallery-add-btn"
                                 onClick={() => setPickerState({ isOpen: true, mode: 'add', replaceIndex: null })}
                             >
-                                <IconPlus size={20} />
+                                <Plus size={20} />
                             </button>
                         )}
                     </div>
@@ -143,7 +151,7 @@ const ImageSettings = ({ data, onChange }) => {
 
             {normalizedData.mode === 'slider' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <SectionTitle icon={<IconSettings size={16}/>}>Налаштування слайдера</SectionTitle>
+                    <SectionTitle icon={<Settings size={16}/>}>Налаштування слайдера</SectionTitle>
                     <ToggleSwitch checked={normalizedData.settings_slider.navigation} label="Стрілки" onChange={(v) => updateData({ settings_slider: {...normalizedData.settings_slider, navigation: v}})} />
                     <ToggleSwitch checked={normalizedData.settings_slider.autoplay} label="Автопрокрутка" onChange={(v) => updateData({ settings_slider: {...normalizedData.settings_slider, autoplay: v}})} />
                     <ToggleSwitch checked={normalizedData.settings_slider.loop} label="Зациклити" onChange={(v) => updateData({ settings_slider: {...normalizedData.settings_slider, loop: v}})} />
@@ -152,7 +160,7 @@ const ImageSettings = ({ data, onChange }) => {
 
             {normalizedData.mode === 'grid' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <SectionTitle icon={<IconGrid size={16}/>}>Налаштування сітки</SectionTitle>
+                    <SectionTitle icon={<Grid size={16}/>}>Налаштування сітки</SectionTitle>
                     <div style={commonStyles.formGroup}>
                          <label style={commonStyles.label}>Кількість колонок</label>
                          <CustomSelect 
@@ -170,7 +178,7 @@ const ImageSettings = ({ data, onChange }) => {
             )}
 
             <div>
-                <SectionTitle icon={<IconImage size={16}/>}>Вигляд</SectionTitle>
+                <SectionTitle icon={<Image size={16}/>}>Вигляд</SectionTitle>
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Ширина блоку</label>
                     <CustomSelect 
@@ -199,7 +207,7 @@ const ImageSettings = ({ data, onChange }) => {
 
             {normalizedData.mode === 'single' && (
                 <div>
-                    <SectionTitle icon={<IconLink size={16}/>}>Дія при кліку</SectionTitle>
+                    <SectionTitle icon={<Link size={16}/>}>Дія при кліку</SectionTitle>
                     <input 
                         type="text" 
                         value={normalizedData.link}

@@ -1,6 +1,6 @@
 // frontend/src/modules/media/components/MediaFilterBar.jsx
 import React, { useMemo, useState } from 'react';
-import { IconSearch, IconStar, IconImage, IconVideo, IconFile, IconFont } from '../../../common/components/ui/Icons';
+import { Search, Star, Image, Video, File, Type } from 'lucide-react';
 
 const MediaFilterBar = ({ filters, onFilterChange }) => {
     const [isFocused, setIsFocused] = useState(false);
@@ -12,10 +12,10 @@ const MediaFilterBar = ({ filters, onFilterChange }) => {
 
     const mainFilters = [
         { id: 'all', label: 'Всі', icon: null },
-        { id: 'image', label: 'Фото', icon: <IconImage size={15} /> },
-        { id: 'video', label: 'Відео', icon: <IconVideo size={15} /> },
-        { id: 'document', label: 'Док.', icon: <IconFile size={15} /> },
-        { id: 'font', label: 'Шрифти', icon: <IconFont size={15} /> },
+        { id: 'image', label: 'Фото', icon: <Image size={15} /> },
+        { id: 'video', label: 'Відео', icon: <Video size={15} /> },
+        { id: 'document', label: 'Док.', icon: <File size={15} /> },
+        { id: 'font', label: 'Шрифти', icon: <Type size={15} /> },
     ];
 
     const subFilters = useMemo(() => {
@@ -160,7 +160,7 @@ const MediaFilterBar = ({ filters, onFilterChange }) => {
         <div style={containerStyle}>
             <div style={searchBarStyle}>
                 <div style={inputWrapperStyle}>
-                    <IconSearch size={20} style={{ color: 'var(--platform-text-secondary)', display: 'block' }} />
+                    <Search size={20} style={{ color: 'var(--platform-text-secondary)', display: 'block' }} />
                     <input 
                         type="text" 
                         placeholder="Пошук файлів..." 
@@ -192,7 +192,7 @@ const MediaFilterBar = ({ filters, onFilterChange }) => {
                     style={favBtnStyle(filters.favorite)}
                     title="Тільки обрані"
                 >
-                    <IconStar size={18} filled={filters.favorite} />
+                    <Star size={18} fill={filters.favorite ? "currentColor" : "none"} />
                 </button>
             </div>
 

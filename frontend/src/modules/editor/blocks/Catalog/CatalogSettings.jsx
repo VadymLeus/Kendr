@@ -5,7 +5,7 @@ import { commonStyles, ToggleSwitch, SectionTitle } from '../../controls/Setting
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Input } from '../../../../shared/ui/elements/Input';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider'; 
-import { IconType, IconGrid, IconList, IconLayers } from '../../../../shared/ui/elements/Icons';
+import { Type, Grid, List, Layers } from 'lucide-react';
 
 const CatalogSettings = ({ data, onChange, siteData }) => {
     const [categories, setCategories] = useState([]);
@@ -49,7 +49,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                     value={data.title || ''} 
                     onChange={handleInputChange} 
                     placeholder="Напр. Наш Каталог"
-                    leftIcon={<IconType size={16} />}
+                    leftIcon={<Type size={16} />}
                 />
             </div>
 
@@ -61,7 +61,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                     onChange={(e) => updateData({ source_type: e.target.value })}
                     options={sourceTypeOptions}
                     style={commonStyles.input}
-                    leftIcon={<IconLayers size={16} />}
+                    leftIcon={<Layers size={16} />}
                 />
                 
                 {data.source_type === 'category' && (
@@ -73,7 +73,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                             onChange={(e) => updateData({ root_category_id: e.target.value })}
                             options={categoryOptions}
                             style={commonStyles.input}
-                            leftIcon={<IconList size={16} />}
+                            leftIcon={<List size={16} />}
                         />
                     </div>
                 )}

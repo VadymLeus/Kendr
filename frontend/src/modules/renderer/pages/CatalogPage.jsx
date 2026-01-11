@@ -3,10 +3,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import SiteCoverDisplay from '../../../shared/ui/complex/SiteCoverDisplay';
-import { 
-  IconUser, IconCalendar, IconExternalLink, IconSad, IconLoading, IconEye, IconPlus, 
-  IconStar, IconUserOff, IconDotsVertical
-} from '../../../shared/ui/elements/Icons';
+import { Calendar, ExternalLink, Frown, Loader2, Eye, Plus, Star, UserX, MoreVertical } from 'lucide-react';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import { Button } from '../../../shared/ui/elements/Button';
 import { AuthContext } from '../../../app/providers/AuthContext';
@@ -62,7 +59,7 @@ const CatalogCardMenu = ({ site }) => {
                 onMouseLeave={e => !isOpen && (e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)')}
                 title="Меню"
             >
-                <IconDotsVertical size={18} />
+                <MoreVertical size={18} />
             </button>
 
             {isOpen && (
@@ -104,7 +101,7 @@ const CatalogCardMenu = ({ site }) => {
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--platform-bg)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'none'}
                     >
-                        <IconExternalLink size={16} /> Відвідати
+                        <ExternalLink size={16} /> Відвідати
                     </a>
                 </div>
             )}
@@ -153,7 +150,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, isFavorite, onToggleFavori
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)'}
                 title={isFavorite ? "Видалити з обраних" : "Додати в обрані"}>
-                <IconStar size={18} filled={isFavorite} />
+                <Star size={18} fill={isFavorite ? "currentColor" : "none"} />
             </button>
 
             <CatalogCardMenu site={site} />
@@ -201,7 +198,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, isFavorite, onToggleFavori
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ДАТА</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
-                            <IconCalendar size={14} />
+                            <Calendar size={14} />
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatDate(site.created_at)}</span>
                         </div>
                     </div>
@@ -209,7 +206,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, isFavorite, onToggleFavori
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ПЕРЕГЛЯДИ</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
-                            <IconEye size={14} />
+                            <Eye size={14} />
                             <span>{site.view_count || 0}</span>
                         </div>
                     </div>
@@ -222,7 +219,7 @@ const SiteGridCard = ({ site, onTagClick, formatDate, isFavorite, onToggleFavori
                 </div>
                 
                 <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center' }}>
-                    <a href={`/site/${site.site_path}`} target="_blank" rel="noopener noreferrer" style={getVisitButtonStyle(isVisitHovered)} onMouseEnter={() => setIsVisitHovered(true)} onMouseLeave={() => setIsVisitHovered(false)} title="Відкрити сайт у новій вкладці">Відвідати <IconExternalLink size={14} /></a>
+                    <a href={`/site/${site.site_path}`} target="_blank" rel="noopener noreferrer" style={getVisitButtonStyle(isVisitHovered)} onMouseEnter={() => setIsVisitHovered(true)} onMouseLeave={() => setIsVisitHovered(false)} title="Відкрити сайт у новій вкладці">Відвідати <ExternalLink size={14} /></a>
                 </div>
             </div>
         </div>
@@ -350,19 +347,19 @@ const CatalogPage = () => {
                         title={hideMySites ? "Показати мої сайти" : "Приховати мої сайти"}
                         style={{ height: '38px', width: '38px' }}
                     >
-                        <IconUserOff size={16} />
+                        <UserX size={16} />
                     </Button>
                 )}
             />
 
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-text-secondary)' }}>
-                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><IconLoading size={48} /></div>
+                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><Loader2 size={48} /></div>
                     Завантаження...
                 </div>
             ) : filteredSites.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '4rem', background: 'var(--platform-card-bg)', borderRadius: '12px', border: '1px solid var(--platform-border-color)', width: '100%', boxSizing: 'border-box' }}>
-                    <div style={{ marginBottom: '1rem', color: 'var(--platform-text-secondary)', display: 'flex', justifyContent: 'center' }}><IconSad size={64} /></div>
+                    <div style={{ marginBottom: '1rem', color: 'var(--platform-text-secondary)', display: 'flex', justifyContent: 'center' }}><Frown size={64} /></div>
                     <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Нічого не знайдено</h3>
                     <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '1.5rem' }}>Спробуйте змінити параметри пошуку</p>
                     <Button onClick={handleClearSearch} variant="primary">Очистити фільтри</Button>
@@ -385,7 +382,7 @@ const CatalogPage = () => {
                     {filteredSites.length > visibleCount && (
                         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
                             <Button onClick={handleLoadMore} variant="secondary" style={{ padding: '12px 30px' }}>
-                                <IconPlus size={16} /> Завантажити ще ({filteredSites.length - visibleCount})
+                                <Plus size={16} /> Завантажити ще ({filteredSites.length - visibleCount})
                             </Button>
                         </div>
                     )}

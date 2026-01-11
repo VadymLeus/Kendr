@@ -3,15 +3,15 @@ import React from 'react';
 import { commonStyles, ToggleGroup } from '../../controls/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { 
-    IconColumns, 
-    IconRows,
-    IconAlignLeft,
-    IconAlignCenter,
-    IconAlignRight,
-    IconAlignTop,
-    IconAlignMiddle,
-    IconAlignBottom
-} from '../../../../shared/ui/elements/Icons';
+    Columns, 
+    Rows,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    ArrowUpToLine,
+    AlignVerticalJustifyCenter,
+    ArrowDownToLine
+} from 'lucide-react';
 
 const PRESETS = [
     { preset: '50-50', name: '50% / 50%', columns: 2 },
@@ -84,11 +84,11 @@ const LayoutSettings = ({ data, onChange }) => {
     const directionOptions = [
         { 
             value: 'row', 
-            label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><IconColumns size={16}/> Рядок</div> 
+            label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><Columns size={16}/> Рядок</div> 
         },
         { 
             value: 'column', 
-            label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><IconRows size={16}/> Стовпчик</div> 
+            label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><Rows size={16}/> Стовпчик</div> 
         }
     ];
 
@@ -98,15 +98,15 @@ const LayoutSettings = ({ data, onChange }) => {
     }));
 
     const verticalAlignOptions = [
-        { value: 'top', label: <IconAlignTop size={18} title="Вгорі"/> },
-        { value: 'middle', label: <IconAlignMiddle size={18} title="Посередині"/> },
-        { value: 'bottom', label: <IconAlignBottom size={18} title="Внизу"/> }
+        { value: 'top', label: <ArrowUpToLine size={18} title="Вгорі"/> },
+        { value: 'middle', label: <AlignVerticalJustifyCenter size={18} title="Посередині"/> },
+        { value: 'bottom', label: <ArrowDownToLine size={18} title="Внизу"/> }
     ];
 
     const horizontalAlignOptions = [
-        { value: 'start', label: <IconAlignLeft size={18} title="Ліворуч"/> },
-        { value: 'center', label: <IconAlignCenter size={18} title="По центру"/> },
-        { value: 'end', label: <IconAlignRight size={18} title="Праворуч"/> }
+        { value: 'start', label: <AlignLeft size={18} title="Ліворуч"/> },
+        { value: 'center', label: <AlignCenter size={18} title="По центру"/> },
+        { value: 'end', label: <AlignRight size={18} title="Праворуч"/> }
     ];
     
     return (

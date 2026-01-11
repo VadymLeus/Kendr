@@ -1,6 +1,6 @@
 // frontend/src/common/components/ui/Input.jsx
 import React, { useState, useRef } from 'react';
-import { IconEye, IconEyeOff, IconX, IconChevronUp, IconChevronDown } from './Icons';
+import { Eye, EyeOff, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 export const Input = ({ 
   label, 
@@ -196,23 +196,23 @@ export const Input = ({
 
            {showClearButton && (
                 <button type="button" onClick={handleClear} className="input-btn-icon" title="Очистити">
-                    <IconX size={16} />
+                    <X size={16} />
                 </button>
             )}
 
             {isPasswordType && (
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="input-btn-icon">
-                     {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
             )}
 
             {isNumberType && !disabled && (
                 <div className="number-controls">
                     <button type="button" onClick={handleIncrement} className="number-btn" tabIndex={-1}>
-                        <IconChevronUp size={12} />
+                        <ChevronUp size={12} />
                     </button>
                     <button type="button" onClick={handleDecrement} className="number-btn" tabIndex={-1}>
-                        <IconChevronDown size={12} />
+                        <ChevronDown size={12} />
                     </button>
                 </div>
             )}

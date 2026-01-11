@@ -3,11 +3,11 @@ import React, { useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { BLOCK_LIBRARY } from '../core/editorConfig'; 
 import { 
-    IconSettings, 
-    IconTrash, 
-    IconLayoutHeader, 
-    IconHelpCircle 
-} from '../../../shared/ui/elements/Icons';
+    Settings, 
+    Trash2, 
+    PanelTop, 
+    HelpCircle 
+} from 'lucide-react';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 const BlockLayerItem = ({
@@ -21,7 +21,7 @@ const BlockLayerItem = ({
     
     const blockInfo = BLOCK_LIBRARY.find(b => b.type === block.type) || { 
         name: block.type, 
-        icon: <IconHelpCircle size={16} /> 
+        icon: <HelpCircle size={16} /> 
     };
 
     const styles = {
@@ -146,7 +146,7 @@ const BlockLayerItem = ({
                 {block.data.columns.map((column, colIndex) => (
                     <div key={colIndex}>
                         <div style={styles.columnLabel}>
-                            <IconLayoutHeader size={14} />
+                            <PanelTop size={14} />
                             <span>Колонка {colIndex + 1}</span>
                             <small style={{ marginLeft: 'auto', opacity: 0.7 }}>
                                 {column.length} блок(ів)
@@ -210,7 +210,7 @@ const BlockLayerItem = ({
                         e.currentTarget.style.color = 'var(--platform-text-secondary)';
                     }}
                 >
-                    <IconSettings size={16} />
+                    <Settings size={16} />
                 </button>
                 <button 
                     title="Видалити" 
@@ -225,7 +225,7 @@ const BlockLayerItem = ({
                         e.currentTarget.style.color = 'var(--platform-danger)';
                     }}
                 >
-                    <IconTrash size={16} />
+                    <Trash2 size={16} />
                 </button>
             </div>
             {nestedBlocks}

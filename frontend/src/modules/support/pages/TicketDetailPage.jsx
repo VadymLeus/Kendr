@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { Button } from '../../../shared/ui/elements/Button';
-import { IconSend, IconLoader, IconUser, IconShield } from '../../../shared/ui/elements/Icons';
+import { Send, Loader, User, Shield } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 const API_URL = 'http://localhost:5000';
@@ -97,7 +97,8 @@ const TicketDetailPage = () => {
 
     if (loading) return (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-            <IconLoader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)' }} />
+            <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
+            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
         </div>
     );
     
@@ -169,7 +170,7 @@ const TicketDetailPage = () => {
                                    {reply.avatar_url ? (
                                         <img src={`${API_URL}${reply.avatar_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                    ) : (
-                                        isAdmin ? <IconShield size={14} /> : <IconUser size={14} />
+                                        isAdmin ? <Shield size={14} /> : <User size={14} />
                                    )}
                                 </div>
                                 <strong style={{ color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
@@ -229,7 +230,7 @@ const TicketDetailPage = () => {
                                 type="submit" 
                                 variant="primary" 
                                 disabled={sending}
-                                icon={sending ? <IconLoader className="animate-spin" size={18}/> : <IconSend size={18}/>}
+                                icon={sending ? <Loader className="animate-spin" size={18} style={{ animation: 'spin 1s linear infinite' }}/> : <Send size={18}/>}
                             >
                                 {sending ? 'Надсилання...' : 'Відповісти'}
                             </Button>
@@ -237,6 +238,7 @@ const TicketDetailPage = () => {
                     </form>
                 </div>
             )}
+            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
         </div>
     );
 };

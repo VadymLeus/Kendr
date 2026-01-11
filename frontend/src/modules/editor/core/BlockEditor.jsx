@@ -7,7 +7,7 @@ import { resolveAccentColor, adjustColor, isLightColor } from '../../../shared/l
 import ContextMenu from '../ui/ContextMenu';
 import { findBlockByPath } from './blockUtils';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
-import { IconBoxOpen } from '../../../shared/ui/elements/Icons';
+import { PackageOpen } from 'lucide-react';
 
 const BlockEditor = ({
     blocks,
@@ -189,7 +189,7 @@ const BlockEditor = ({
                     }}
                 >
                     <div style={{ marginBottom: '1rem', color: 'var(--platform-accent)', display: 'flex', justifyContent: 'center' }}>
-                        <IconBoxOpen size={48} />
+                        <PackageOpen size={48} />
                     </div>
                     <h3 style={{ 
                         color: 'inherit', 

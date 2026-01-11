@@ -3,11 +3,8 @@ import { useState, useCallback } from 'react';
 
 const useHistory = (initialState) => {
     const [past, setPast] = useState([]);
-    
     const [present, setPresent] = useState(initialState);
-    
     const [future, setFuture] = useState([]);
-
     const setState = useCallback((newState, isHistoryEvent = true) => {
         const resolvedState = typeof newState === 'function' ? newState(present) : newState;
 

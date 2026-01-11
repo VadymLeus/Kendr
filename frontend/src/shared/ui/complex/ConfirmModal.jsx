@@ -1,7 +1,7 @@
 // frontend/src/shared/ui/complex/ConfirmModal.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../elements/Button';
-import { IconAlertCircle, IconHelpCircle, IconCheckCircle } from '../elements/Icons';
+import { AlertCircle, HelpCircle, CheckCircle } from 'lucide-react';
 
 const ConfirmModal = ({ 
     isOpen, 
@@ -42,28 +42,28 @@ const ConfirmModal = ({
         switch (type) {
             case 'danger':
                 return {
-                    icon: <IconAlertCircle size={24} />,
+                    icon: <AlertCircle size={24} />,
                     iconColor: 'var(--platform-danger)',
                     iconBg: 'rgba(229, 62, 62, 0.1)',
                     confirmVariant: 'danger'
                 };
             case 'success':
                 return {
-                    icon: <IconCheckCircle size={24} />,
+                    icon: <CheckCircle size={24} />,
                     iconColor: 'var(--platform-success)',
                     iconBg: 'rgba(56, 161, 105, 0.1)',
                     confirmVariant: 'primary'
                 };
             case 'warning':
                 return {
-                    icon: <IconAlertCircle size={24} />,
+                    icon: <AlertCircle size={24} />,
                     iconColor: 'var(--platform-warning)',
                     iconBg: 'rgba(221, 107, 32, 0.1)',
                     confirmVariant: 'warning'
                 };
             default: 
                 return {
-                    icon: <IconHelpCircle size={24} />,
+                    icon: <HelpCircle size={24} />,
                     iconColor: 'var(--platform-accent)',
                     iconBg: 'rgba(66, 153, 225, 0.1)',
                     confirmVariant: 'primary'

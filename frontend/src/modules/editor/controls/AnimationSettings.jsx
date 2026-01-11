@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import RangeSlider from '../../../shared/ui/elements/RangeSlider';
 import { Switch } from '../../../shared/ui/elements/Switch';
-import { IconPlay, IconClock, IconHourglass, IconRepeat } from '../../../shared/ui/elements/Icons';
+import { Play, Clock, Hourglass, Repeat } from 'lucide-react';
 
 const AnimationSettings = ({ animationConfig, onChange }) => {
     const defaultConfig = {
@@ -55,7 +55,7 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
         <div style={{ background: 'var(--platform-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
             <div style={{ marginBottom: '24px' }}>
                 <label style={labelStyle}>
-                    <IconPlay size={16} style={{ color: 'var(--platform-accent)' }} /> 
+                    <Play size={16} style={{ color: 'var(--platform-accent)' }} /> 
                     Ефект появи
                 </label>
                 <CustomSelect 
@@ -70,7 +70,7 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div>
                         <div style={{ ...labelStyle, marginBottom: '4px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)' }}>
-                            <IconClock size={14} /> Тривалість: <span style={{ color: 'var(--platform-text-primary)' }}>{config.duration}s</span>
+                            <Clock size={14} /> Тривалість: <span style={{ color: 'var(--platform-text-primary)' }}>{config.duration}s</span>
                         </div>
                         <RangeSlider 
                             value={Math.round((config.duration || 0.6) * 1000)} 
@@ -84,7 +84,7 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
 
                     <div>
                         <div style={{ ...labelStyle, marginBottom: '4px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)' }}>
-                            <IconHourglass size={14} /> Затримка: <span style={{ color: 'var(--platform-text-primary)' }}>{config.delay}s</span>
+                            <Hourglass size={14} /> Затримка: <span style={{ color: 'var(--platform-text-primary)' }}>{config.delay}s</span>
                         </div>
                         <RangeSlider 
                             value={Math.round((config.delay || 0) * 1000)} 
@@ -105,7 +105,7 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                         borderTop: '1px dashed var(--platform-border-color)'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <IconRepeat size={16} style={{ color: 'var(--platform-text-secondary)' }} />
+                            <Repeat size={16} style={{ color: 'var(--platform-text-secondary)' }} />
                             <span style={{ fontSize: '0.9rem', color: 'var(--platform-text-primary)' }}>Зациклити анімацію</span>
                         </div>
                         <Switch 

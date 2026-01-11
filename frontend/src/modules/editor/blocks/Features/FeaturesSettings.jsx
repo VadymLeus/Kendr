@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import { generateBlockId } from '../../core/editorConfig';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
-import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import { commonStyles, SectionTitle, ToggleGroup, ToggleSwitch } from '../../controls/SettingsUI';
-import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
-import { IconList, IconGrid, IconAlignLeft, IconAlignCenter, IconAlignRight, IconTrash, IconPlus, IconStar, IconZap, IconShield, IconTruck, IconGift, IconClock, IconPhone, IconSettings, IconUser, IconGlobe, IconHeart, IconShoppingBag, IconCheck } from '../../../../shared/ui/elements/Icons';
+import { 
+    List, Grid, AlignLeft, AlignCenter, AlignRight, Trash2, Plus, 
+    Star, Zap, Shield, Truck, Gift, Clock, Phone, Settings, 
+    User, Globe, Heart, ShoppingBag, Check 
+} from 'lucide-react';
 
 const itemWrapperStyle = {
     border: '1px solid var(--platform-border-color)', 
@@ -41,18 +43,18 @@ const FeaturesSettings = ({ data, onChange }) => {
     const updateData = (updates) => onChange({ ...normalizedData, ...updates });
 
     const iconOptions = [
-        { key: 'star', icon: <IconStar size={20} /> },
-        { key: 'zap', icon: <IconZap size={20} /> },
-        { key: 'shield', icon: <IconShield size={20} /> },
-        { key: 'truck', icon: <IconTruck size={20} /> },
-        { key: 'gift', icon: <IconGift size={20} /> },
-        { key: 'clock', icon: <IconClock size={20} /> },
-        { key: 'phone', icon: <IconPhone size={20} /> },
-        { key: 'settings', icon: <IconSettings size={20} /> },
-        { key: 'user', icon: <IconUser size={20} /> },
-        { key: 'globe', icon: <IconGlobe size={20} /> },
-        { key: 'heart', icon: <IconHeart size={20} /> },
-        { key: 'shop', icon: <IconShoppingBag size={20} /> },
+        { key: 'star', icon: <Star size={20} /> },
+        { key: 'zap', icon: <Zap size={20} /> },
+        { key: 'shield', icon: <Shield size={20} /> },
+        { key: 'truck', icon: <Truck size={20} /> },
+        { key: 'gift', icon: <Gift size={20} /> },
+        { key: 'clock', icon: <Clock size={20} /> },
+        { key: 'phone', icon: <Phone size={20} /> },
+        { key: 'settings', icon: <Settings size={20} /> },
+        { key: 'user', icon: <User size={20} /> },
+        { key: 'globe', icon: <Globe size={20} /> },
+        { key: 'heart', icon: <Heart size={20} /> },
+        { key: 'shop', icon: <ShoppingBag size={20} /> },
     ];
 
     const handleFeatureChange = (index, field, value) => {
@@ -93,7 +95,7 @@ const FeaturesSettings = ({ data, onChange }) => {
 
     const getIconComponent = (key) => {
         const option = iconOptions.find(o => o.key === key);
-        return option ? option.icon : <IconStar size={18} />;
+        return option ? option.icon : <Star size={18} />;
     };
 
     return (
@@ -134,24 +136,10 @@ const FeaturesSettings = ({ data, onChange }) => {
                     color: var(--platform-accent);
                     box-shadow: 0 0 0 1px var(--platform-accent);
                 }
-
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: var(--platform-border-color);
-                    border-radius: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: var(--platform-text-secondary);
-                }
             `}</style>
             
             <div>
-                <SectionTitle icon={<IconGrid size={16}/>}>Загальні</SectionTitle>
+                <SectionTitle icon={<Grid size={16}/>}>Загальні</SectionTitle>
                 <Input 
                     label="Заголовок блоку"
                     value={normalizedData.title}
@@ -161,18 +149,18 @@ const FeaturesSettings = ({ data, onChange }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconList size={16}/>}>Макет та Вигляд</SectionTitle>
+                <SectionTitle icon={<List size={16}/>}>Макет та Вигляд</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Стиль відображення</label>
-                    <CustomSelect 
-                        value={normalizedData.layout}
-                        onChange={(e) => updateData({ layout: e.target.value })}
+                    <ToggleGroup 
                         options={[
                             { value: 'cards', label: 'Картки' },
                             { value: 'minimal', label: 'Мінімалізм' },
                             { value: 'list', label: 'Список' },
                         ]}
+                        value={normalizedData.layout}
+                        onChange={(val) => updateData({ layout: val })}
                     />
                 </div>
 
@@ -195,9 +183,9 @@ const FeaturesSettings = ({ data, onChange }) => {
                         <label style={commonStyles.label}>Вирівнювання тексту</label>
                         <ToggleGroup 
                             options={[
-                                { value: 'left', label: 'Зліва', icon: <IconAlignLeft size={14}/> },
-                                { value: 'center', label: 'Центр', icon: <IconAlignCenter size={14}/> },
-                                { value: 'right', label: 'Справа', icon: <IconAlignRight size={14}/> },
+                                { value: 'left', label: 'Зліва', icon: <AlignLeft size={14}/> },
+                                { value: 'center', label: 'Центр', icon: <AlignCenter size={14}/> },
+                                { value: 'right', label: 'Справа', icon: <AlignRight size={14}/> },
                             ]}
                             value={normalizedData.align}
                             onChange={(val) => updateData({ align: val })}
@@ -207,7 +195,7 @@ const FeaturesSettings = ({ data, onChange }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconCheck size={16}/>}>Стилізація</SectionTitle>
+                <SectionTitle icon={<Check size={16}/>}>Стилізація</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <ToggleSwitch 
@@ -216,19 +204,6 @@ const FeaturesSettings = ({ data, onChange }) => {
                         label="Фон для іконок (кружечок)"
                     />
                 </div>
-
-                {normalizedData.layout === 'cards' && (
-                    <div style={commonStyles.formGroup}>
-                        <RangeSlider 
-                            label="Скруглення карток"
-                            value={normalizedData.borderRadius}
-                            onChange={(val) => updateData({ borderRadius: val })}
-                            min={0}
-                            max={30}
-                            unit="px"
-                        />
-                    </div>
-                )}
             </div>
 
             <div>
@@ -262,12 +237,13 @@ const FeaturesSettings = ({ data, onChange }) => {
                             </div>
                             
                             <Button 
-                                variant="square-danger" 
+                                variant="danger" 
+                                size="sm"
                                 onClick={(e) => handleRemoveFeature(e, index)} 
-                                style={{ width: '28px', height: '28px', opacity: 0.6 }} 
+                                style={{ width: '28px', height: '28px', opacity: 0.6, padding: 0 }} 
                                 title="Видалити"
                             >
-                                <IconTrash size={14}/>
+                                <Trash2 size={14}/>
                             </Button>
                         </div>
 
@@ -336,7 +312,7 @@ const FeaturesSettings = ({ data, onChange }) => {
                         opacity: normalizedData.items.length >= 8 ? 0.5 : 1
                     }}
                 >
-                    <IconPlus size={18} />
+                    <Plus size={18} />
                     Додати перевагу
                 </button>
             </div>

@@ -1,22 +1,22 @@
 // frontend/src/modules/editor/core/editorConfig.jsx
 import React from 'react';
 import { 
-    IconImage, IconFileText, IconCursorClick, IconStar, 
-    IconGrid, IconShoppingBag, IconList, IconMail, 
-    IconVideo, IconMapPin, IconHelpCircle, IconShare, 
-    IconLayoutHeader, IconAlignLeft, IconAlignCenter, IconAlignRight 
-} from '../../../shared/ui/elements/Icons';
+    Image, FileText, MousePointerClick, Star, 
+    Grid, ShoppingBag, List, Mail, 
+    Video, MapPin, HelpCircle, Share2, 
+    PanelTop, AlignLeft, AlignCenter, AlignRight 
+} from 'lucide-react';
 
 export const BLOCK_LIBRARY = [
-    { type: 'hero', name: 'Обкладинка', icon: <IconImage size={20} /> },
-    { type: 'text', name: 'Текстовий блок', icon: <IconFileText size={20} /> },
-    { type: 'image', name: 'Зображення', icon: <IconImage size={20} /> },
-    { type: 'button', name: 'Кнопка', icon: <IconCursorClick size={20} /> },
-    { type: 'showcase', name: 'Вітрина', icon: <IconStar size={20} /> },
+    { type: 'hero', name: 'Обкладинка', icon: <Image size={20} /> },
+    { type: 'text', name: 'Текстовий блок', icon: <FileText size={20} /> },
+    { type: 'image', name: 'Зображення', icon: <Image size={20} /> },
+    { type: 'button', name: 'Кнопка', icon: <MousePointerClick size={20} /> },
+    { type: 'showcase', name: 'Вітрина', icon: <Star size={20} /> },
     { 
         type: 'layout', 
         name: 'Макет (Колонки)', 
-        icon: <IconGrid size={20} />, 
+        icon: <Grid size={20} />, 
         presets: [
             { preset: '50-50', name: '2 колонки (50/50)', columns: 2 },
             { preset: '75-25', name: '2 колонки (75/25)', columns: 2 },
@@ -24,14 +24,14 @@ export const BLOCK_LIBRARY = [
             { preset: '25-25-25-25', name: '4 колонки (25/25/25/25)', columns: 4 },
         ]
     },
-    { type: 'catalog', name: 'SPA Каталог', icon: <IconShoppingBag size={20} /> },
-    { type: 'features', name: 'Переваги', icon: <IconList size={20} /> },
-    { type: 'form', name: 'Форма звʼязку', icon: <IconMail size={20} /> },
-    { type: 'video', name: 'Відео', icon: <IconVideo size={20} /> },
-    { type: 'map', name: 'Мапа', icon: <IconMapPin size={20} /> },
-    { type: 'accordion', name: 'Акордеон', icon: <IconHelpCircle size={20} /> },
-    { type: 'social_icons', name: 'Соцмережі', icon: <IconShare size={20} /> },
-    { type: 'header', name: 'Глобальний Хедер', icon: <IconLayoutHeader size={20} />, isSystem: true },
+    { type: 'catalog', name: 'SPA Каталог', icon: <ShoppingBag size={20} /> },
+    { type: 'features', name: 'Переваги', icon: <List size={20} /> },
+    { type: 'form', name: 'Форма звʼязку', icon: <Mail size={20} /> },
+    { type: 'video', name: 'Відео', icon: <Video size={20} /> },
+    { type: 'map', name: 'Мапа', icon: <MapPin size={20} /> },
+    { type: 'accordion', name: 'Акордеон', icon: <HelpCircle size={20} /> },
+    { type: 'social_icons', name: 'Соцмережі', icon: <Share2 size={20} /> },
+    { type: 'header', name: 'Глобальний Хедер', icon: <PanelTop size={20} />, isSystem: true },
 ];
 
 export const generateBlockId = () => {
@@ -244,9 +244,9 @@ export const getBlockThemeClass = (blockTheme) => {
 };
 
 export const ALIGNMENT_OPTIONS = [
-    { value: 'left', label: 'Ліворуч', icon: <IconAlignLeft size={16} /> },
-    { value: 'center', label: 'По центру', icon: <IconAlignCenter size={16} /> },
-    { value: 'right', label: 'Праворуч', icon: <IconAlignRight size={16} /> }
+    { value: 'left', label: 'Ліворуч', icon: <AlignLeft size={16} /> },
+    { value: 'center', label: 'По центру', icon: <AlignCenter size={16} /> },
+    { value: 'right', label: 'Праворуч', icon: <AlignRight size={16} /> }
 ];
 
 export const HEIGHT_OPTIONS = [

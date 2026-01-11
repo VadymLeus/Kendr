@@ -10,11 +10,7 @@ import SiteCoverDisplay from '../../../../shared/ui/complex/SiteCoverDisplay';
 import SaveTemplateModal from '../../components/SaveTemplateModal';
 import { Input, Button, Select, Switch } from '../../../../shared/ui/elements';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
-import {
-    IconSettings, IconImage, IconShield, IconGlobe, IconPalette, IconAlertCircle, IconTrash,
-    IconGrid, IconList, IconType, IconX, IconCheck, IconTag, IconUpload, IconPlus,
-    IconChevronDown, IconShoppingCart, IconBriefcase, IconEdit, IconLayout
-} from '../../../../shared/ui/elements/Icons';
+import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -289,22 +285,22 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const getSystemTemplateIcon = (name) => {
         const n = name.toLowerCase();
         const iconProps = { size: 24, className: "text-(--platform-text-primary)" };
-        if (n.includes('shop') || n.includes('store')) return <IconShoppingCart {...iconProps} />;
-        if (n.includes('business') || n.includes('pro')) return <IconBriefcase {...iconProps} />;
-        if (n.includes('portfolio') || n.includes('art')) return <IconImage {...iconProps} />;
-        if (n.includes('canvas') || n.includes('clean') || n.includes('blank')) return <IconLayout {...iconProps} />;
-        return <IconGrid {...iconProps} />;
+        if (n.includes('shop') || n.includes('store')) return <ShoppingCart {...iconProps} />;
+        if (n.includes('business') || n.includes('pro')) return <Briefcase {...iconProps} />;
+        if (n.includes('portfolio') || n.includes('art')) return <Image {...iconProps} />;
+        if (n.includes('canvas') || n.includes('clean') || n.includes('blank')) return <Layout {...iconProps} />;
+        return <Grid {...iconProps} />;
     };
 
     const cookieSettings = data.theme_settings?.cookie_banner || { enabled: false, text: "", acceptText: "", showReject: true };
 
     const generatorLayouts = [
-        { id: 'centered', label: 'Стандарт', icon: <IconGrid size={20} /> },
-        { id: 'centered_reverse', label: 'Реверс', icon: <IconGrid size={20} className="rotate-180" /> },
-        { id: 'classic', label: 'Класика', icon: <IconList size={20} /> },
-        { id: 'reverse', label: 'Справа', icon: <IconList size={20} className="-scale-x-100" /> },
-        { id: 'minimal', label: 'Текст', icon: <IconType size={20} /> },
-        { id: 'logo_only', label: 'Лого', icon: <IconImage size={20} /> }
+        { id: 'centered', label: 'Стандарт', icon: <Grid size={20} /> },
+        { id: 'centered_reverse', label: 'Реверс', icon: <Grid size={20} className="rotate-180" /> },
+        { id: 'classic', label: 'Класика', icon: <List size={20} /> },
+        { id: 'reverse', label: 'Справа', icon: <List size={20} className="-scale-x-100" /> },
+        { id: 'minimal', label: 'Текст', icon: <Type size={20} /> },
+        { id: 'logo_only', label: 'Лого', icon: <Image size={20} /> }
     ];
 
     return (
@@ -312,7 +308,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
                 <div>
                     <h2 className="text-2xl font-semibold mb-1 text-(--platform-text-primary) flex items-center gap-2.5">
-                        <IconSettings size={28} /> Глобальні налаштування
+                        <Settings size={28} /> Глобальні налаштування
                     </h2>
                     <p className="text-(--platform-text-secondary) text-sm m-0 pl-10">
                         Керування основними параметрами вашого сайту
@@ -324,7 +320,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 <div className="mb-6 flex items-center justify-between gap-3">
                     <div>
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <IconImage size={22} className="text-(--platform-accent)" /> Логотип та Назва
+                            <Image size={22} className="text-(--platform-accent)" /> Логотип та Назва
                         </h3>
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
                             Налаштування брендингу та адреси сайту
@@ -363,12 +359,12 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                             }}
                                         />
                                     ) : (
-                                        <IconImage size={32} className="text-(--platform-text-secondary) opacity-50" />
+                                        <Image size={32} className="text-(--platform-text-secondary) opacity-50" />
                                     )}
                                     <div 
                                         className={`absolute inset-0 bg-black/40 flex items-center justify-center text-white transition-opacity duration-200 backdrop-blur-[2px] z-10 ${isLogoHovered ? 'opacity-100' : 'opacity-0'}`}
                                     >
-                                        <IconUpload size={24} />
+                                        <Upload size={24} />
                                     </div>
                                     {data.logo_url && (
                                         <button
@@ -377,7 +373,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                             className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center cursor-pointer z-20 transition-colors hover:bg-(--platform-danger) border-none"
                                             title="Видалити лого"
                                         >
-                                            <IconTrash size={14} />
+                                            <Trash size={14} />
                                         </button>
                                     )}
                                 </div>
@@ -391,7 +387,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         value={data.title}
                         onChange={handleTitleChange}
                         placeholder="Мій інтернет-магазин"
-                        leftIcon={<IconType size={16}/>}
+                        leftIcon={<Type size={16}/>}
                     />
                 </div>
                 <div className="mb-4">
@@ -408,14 +404,14 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         />
                         <Button onClick={saveSlug} disabled={isSavingSlug}>{isSavingSlug ? '...' : 'Зберегти'}</Button>
                     </div>
-                    {slugError && <div className="text-[#e53e3e] text-xs mt-1.5 flex items-center gap-1"><IconAlertCircle size={14} /> {slugError}</div>}
+                    {slugError && <div className="text-[#e53e3e] text-xs mt-1.5 flex items-center gap-1"><AlertCircle size={14} /> {slugError}</div>}
                 </div>
             </div>
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <IconGlobe size={22} className="text-(--platform-accent)" /> SEO та Теги
+                            <Globe size={22} className="text-(--platform-accent)" /> SEO та Теги
                         </h3>
                     </div>
                 </div>
@@ -423,7 +419,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 <div className="mb-6">
                     <div className="flex justify-between items-center mb-2.5">
                         <label className="font-medium text-(--platform-text-primary) text-sm m-0 flex items-center gap-1.5">
-                            <IconTag size={16} /> Категорії / Теги 
+                            <Tag size={16} /> Категорії / Теги 
                             <span className={`text-xs px-1.5 py-0.5 rounded border border-(--platform-border-color) bg-(--platform-bg) ${selectedTags.length >= 5 ? 'text-(--platform-warning)' : 'text-(--platform-text-secondary)'}`}>
                                 {selectedTags.length}/5
                             </span>
@@ -435,7 +431,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                             title="Очистити всі теги" 
                             disabled={selectedTags.length === 0}
                         >
-                            <IconX size={16} />
+                            <X size={16} />
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2 p-4 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
@@ -454,7 +450,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                         }
                                     `}
                                 >
-                                    {isActive && <IconCheck size={14} />} {tag.name}
+                                    {isActive && <Check size={14} />} {tag.name}
                                 </button> 
                             );
                         })}
@@ -465,7 +461,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 <div className="mb-6">
                     <div>
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <IconImage size={22} className="text-(--platform-accent)" /> Розумна Обкладинка
+                            <Image size={22} className="text-(--platform-accent)" /> Розумна Обкладинка
                         </h3>
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
                             Ця картка відображається в каталозі сайтів.
@@ -494,7 +490,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                 }} />
                                 
                                 <div className={`absolute inset-0 bg-black/40 flex items-center justify-center text-white transition-opacity duration-200 backdrop-blur-[2px] z-10 ${isCoverHovered ? 'opacity-100' : 'opacity-0'}`}>
-                                    <div className="flex items-center gap-2 font-medium"><IconUpload size={20} /> Змінити обкладинку</div>
+                                    <div className="flex items-center gap-2 font-medium"><Upload size={20} /> Змінити обкладинку</div>
                                 </div>
 
                                 {data.cover_image && (
@@ -504,7 +500,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                         className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center cursor-pointer z-20 transition-colors hover:bg-(--platform-danger) border-none"
                                         title="Видалити зображення"
                                     >
-                                        <IconTrash size={16} />
+                                        <Trash size={16} />
                                     </button>
                                 )}
                             </div>
@@ -541,7 +537,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
 
                             <div className="mb-5">
                                 <div className="flex items-center gap-2 mb-2 text-(--platform-text-secondary) text-xs">
-                                    <IconImage size={14} /> Логотип
+                                    <Image size={14} /> Логотип
                                 </div>
                                 <div className="mb-3">
                                     <RangeSlider label="Розмір" value={data.cover_logo_size !== undefined ? data.cover_logo_size : 80} onChange={(val) => handleChange('cover_logo_size', parseInt(val))} min={30} max={150} unit="px" step={5} />
@@ -553,7 +549,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
 
                             <div>
                                 <div className="flex items-center gap-2 mb-2 text-(--platform-text-secondary) text-xs">
-                                    <IconType size={14} /> Текст заголовка
+                                    <Type size={14} /> Текст заголовка
                                 </div>
                                 <div>
                                     <RangeSlider label="Розмір шрифту" value={data.cover_title_size !== undefined ? data.cover_title_size : 24} onChange={(val) => handleChange('cover_title_size', parseInt(val))} min={12} max={60} unit="px" step={2} />
@@ -567,7 +563,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 <div className="mb-6">
                     <div>
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <IconShield size={22} className="text-(--platform-accent)" /> Конфіденційність
+                            <Shield size={22} className="text-(--platform-accent)" /> Конфіденційність
                         </h3>
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">Налаштування Cookie-банера</p>
                     </div>
@@ -600,14 +596,14 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 <div className="mb-6 flex justify-between items-center gap-3">
                     <div>
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <IconPalette size={22} className="text-(--platform-accent)" /> Керування шаблонами
+                            <Palette size={22} className="text-(--platform-accent)" /> Керування шаблонами
                         </h3>
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
                             Зберігайте поточний дизайн або змінюйте вигляд сайту
                         </p>
                     </div>
                     <div className="flex gap-2.5">
-                        <Button variant="secondary" onClick={() => setIsSaveTemplateModalOpen(true)}><IconPlus size={18} /> Зберегти поточний</Button>
+                        <Button variant="secondary" onClick={() => setIsSaveTemplateModalOpen(true)}><Plus size={18} /> Зберегти поточний</Button>
                     </div>
                 </div>
 
@@ -621,7 +617,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                 onClick={() => toggleSection('personal')}
                             >
                                 <div className="font-semibold text-(--platform-text-primary)">Ваші шаблони ({personalTemplates.length})</div>
-                                <IconChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.personal ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.personal ? 'rotate-180' : ''}`} />
                             </div>
                             {expandedSections.personal && (
                                 <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
@@ -638,15 +634,15 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                                             onClick={() => handleApplyTemplate(template.id, true, template.name)} 
                                                             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 bg-transparent border border-(--platform-warning) text-(--platform-warning) hover:bg-(--platform-warning) hover:text-white"
                                                         >
-                                                            <IconGrid size={16} /> Застосувати
+                                                            <Grid size={16} /> Застосувати
                                                         </button>
                                                         <button 
                                                             onClick={(e) => handleOpenEditModal(e, template)} 
                                                             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 bg-transparent border border-(--platform-accent) text-(--platform-accent) hover:bg-(--platform-accent) hover:text-white"
                                                         >
-                                                            <IconEdit size={16} /> Редагувати
+                                                            <Edit size={16} /> Редагувати
                                                         </button>
-                                                        <Button variant="square-danger" onClick={() => handleDeleteTemplate(template.id, template.name)} title="Видалити шаблон"><IconTrash size={18} /></Button>
+                                                        <Button variant="square-danger" onClick={() => handleDeleteTemplate(template.id, template.name)} title="Видалити шаблон"><Trash size={18} /></Button>
                                                     </div>
                                                 </div>
                                             ))}
@@ -665,7 +661,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                 onClick={() => toggleSection('system')}
                             >
                                 <div className="font-semibold text-(--platform-text-primary)">Системні шаблони ({systemTemplates.length})</div>
-                                <IconChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.system ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.system ? 'rotate-180' : ''}`} />
                             </div>
                             {expandedSections.system && (
                                 <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
@@ -686,7 +682,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                                         onClick={() => handleApplyTemplate(template.id, false, template.name)} 
                                                         className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 bg-transparent border border-(--platform-warning) text-(--platform-warning) hover:bg-(--platform-warning) hover:text-white"
                                                     >
-                                                        <IconGrid size={16} /> Застосувати
+                                                        <Grid size={16} /> Застосувати
                                                     </button>
                                                 </div>
                                             ))}
@@ -704,11 +700,11 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 <div className="flex justify-between items-center flex-wrap gap-4">
                     <div className="flex-1">
                         <h3 className="text-xl font-semibold text-[#c53030] m-0 mb-1 flex items-center gap-2.5">
-                            <IconAlertCircle size={22} /> Небезпечна зона
+                            <AlertCircle size={22} /> Небезпечна зона
                         </h3>
                         <p className="text-sm text-[#c53030] m-0 opacity-80">Видалення сайту є незворотним.</p>
                     </div>
-                    <Button variant="danger" onClick={handleDeleteSite} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><IconTrash size={16} /> Видалити сайт</Button>
+                    <Button variant="danger" onClick={handleDeleteSite} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Trash size={16} /> Видалити сайт</Button>
                 </div>
             </div>
 
@@ -724,7 +720,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="m-0 text-lg font-semibold text-(--platform-text-primary)">Редагувати шаблон</h3>
                             <button onClick={handleCloseEditModal} className="bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary)">
-                                <IconX size={20} />
+                                <X size={20} />
                             </button>
                         </div>
 

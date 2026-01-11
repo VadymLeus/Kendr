@@ -4,10 +4,7 @@ import { CartContext } from '../../../app/providers/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { 
-    IconTrash, IconMinus, IconPlus, IconShop, 
-    IconArrowLeft, IconCreditCard, IconTag, IconAlertCircle, IconEmptyBox 
-} from '../../../shared/ui/elements/Icons';
+import { Trash2, Minus, Plus, Store, ArrowLeft, CreditCard, Tag, AlertCircle, PackageOpen } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -15,7 +12,6 @@ const CartPage = () => {
     const { cartItems, removeFromCart, clearCart, updateQuantity } = useContext(CartContext);
     const navigate = useNavigate();
 
-    // Групування товарів
     const groupedItems = useMemo(() => {
         const groups = {};
         cartItems.forEach(item => {
@@ -32,7 +28,6 @@ const CartPage = () => {
         return Object.values(groups);
     }, [cartItems]);
 
-    // Розрахунок сум
     const { total, totalOriginal, totalDiscount } = useMemo(() => {
         let currentSum = 0;
         let originalSum = 0;
@@ -67,18 +62,14 @@ const CartPage = () => {
         }
     };
 
-    // --- ГОЛОВНИЙ ФІКС КАРТИНОК ---
     const getImageUrl = (item) => {
-        // 1. Беремо саме image_gallery, бо так поле називається в твоїй БД
         let gallery = item.image_gallery || item.image_path || item.image;
 
         let targetPath = null;
 
-        // 2. Оскільки бекенд вже парсить JSON, це часто приходить як справжній масив
         if (Array.isArray(gallery) && gallery.length > 0) {
             targetPath = gallery[0];
         } 
-        // 3. Якщо раптом прийшов рядок JSON (страховка)
         else if (typeof gallery === 'string') {
             try {
                 if (gallery.startsWith('[')) {
@@ -92,14 +83,10 @@ const CartPage = () => {
             }
         }
 
-        // 4. Якщо нічого не знайшли
         if (!targetPath) return 'https://placehold.co/120x120?text=No+Image';
 
-        // 5. Якщо це вже повне посилання
         if (targetPath.startsWith('http')) return targetPath;
 
-        // 6. Додаємо API URL. Твої шляхи в БД починаються з '/uploads/...', тому все буде ок.
-        // Але про всяк випадок перевіримо слеш
         const cleanPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
         
         return `${API_URL}${cleanPath}`;
@@ -390,7 +377,7 @@ const CartPage = () => {
 
             {cartItems.length === 0 ? (
                 <div style={styles.emptyState}>
-                    <IconEmptyBox size={80} style={{ color: 'var(--platform-text-secondary)', opacity: 0.5 }} />
+                    <PackageOpen size={80} style={{ color: 'var(--platform-text-secondary)', opacity: 0.5 }} />
                     <h3 style={{ fontSize: '1.8rem', color: 'var(--platform-text-primary)' }}>Кошик порожній</h3>
                     <Link to="/" style={{textDecoration: 'none'}}>
                         <button 
@@ -402,7 +389,7 @@ const CartPage = () => {
                                 marginBottom: 0
                             }}
                         >
-                            <IconArrowLeft size={20} style={{marginRight: '8px'}}/> До каталогу
+                            <ArrowLeft size={20} style={{marginRight: '8px'}}/> До каталогу
                         </button>
                     </Link>
                 </div>
@@ -415,7 +402,7 @@ const CartPage = () => {
                                     ...styles.storeHeader,
                                     borderTop: groupIndex > 0 ? '1px solid var(--platform-border-color)' : 'none'
                                 }}>
-                                    <IconShop size={24} />
+                                    <Store size={24} />
                                     <span>{group.siteName}</span>
                                 </div>
 
@@ -455,7 +442,7 @@ const CartPage = () => {
                                                 <div style={styles.metaInfo}>
                                                     {item.category_name && (
                                                         <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
-                                                            <IconTag size={14}/> {item.category_name}
+                                                            <Tag size={14}/> {item.category_name}
                                                         </span>
                                                     )}
                                                     {item.selectedOptions && Object.entries(item.selectedOptions).map(([k, v]) => (
@@ -474,7 +461,7 @@ const CartPage = () => {
                                                         onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
                                                         disabled={item.quantity <= 1}
                                                     >
-                                                        <IconMinus size={16}/>
+                                                        <Minus size={16}/>
                                                     </button>
                                                     <div style={styles.qtyValue}>{item.quantity}</div>
                                                     <button 
@@ -482,7 +469,7 @@ const CartPage = () => {
                                                         className="qty-btn hover-btn"
                                                         onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                                                     >
-                                                        <IconPlus size={16}/>
+                                                        <Plus size={16}/>
                                                     </button>
                                                 </div>
                                             </div>
@@ -504,7 +491,7 @@ const CartPage = () => {
                                                         onClick={() => removeFromCart(item.cartItemId)}
                                                         title="Видалити з кошика"
                                                     >
-                                                        <IconTrash size={20}/>
+                                                        <Trash2 size={20}/>
                                                     </button>
                                                 </div>
                                             </div>
@@ -531,7 +518,7 @@ const CartPage = () => {
                         )}
                         
                         <div style={{ marginTop: '20px', padding: '16px', background: 'var(--platform-bg)', borderRadius: '10px', fontSize: '0.9rem', color: 'var(--platform-text-secondary)', display: 'flex', gap: '10px', lineHeight: '1.4' }}>
-                            <IconAlertCircle size={20} style={{flexShrink: 0, marginTop: '2px'}} />
+                            <AlertCircle size={20} style={{flexShrink: 0, marginTop: '2px'}} />
                             <div>Доставка розраховується при оформленні.</div>
                         </div>
 
@@ -541,7 +528,7 @@ const CartPage = () => {
                         </div>
 
                         <button style={styles.checkoutBtn} className="checkout-btn hover-btn" onClick={handleCheckout}>
-                            <IconCreditCard size={24} /> Оформити
+                            <CreditCard size={24} /> Оформити
                         </button>
                         
                         <button style={styles.clearBtn} className="clear-btn hover-btn" onClick={clearCart}>

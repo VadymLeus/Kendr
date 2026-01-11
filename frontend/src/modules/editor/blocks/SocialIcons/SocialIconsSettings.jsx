@@ -2,14 +2,27 @@
 import React from 'react';
 import { commonStyles, ToggleGroup, SectionTitle } from '../../controls/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
-import { IconAlignLeft, IconAlignCenter, IconAlignRight, IconSun, IconMoon, IconLayout, IconShare, IconFacebook, IconInstagram, IconTelegram, IconYoutube, IconTiktok } from '../../../../shared/ui/elements/Icons';
+import { 
+    AlignLeft, 
+    AlignCenter, 
+    AlignRight, 
+    Sun, 
+    Moon, 
+    LayoutTemplate, 
+    Share2, 
+    Facebook, 
+    Instagram, 
+    Send, 
+    Youtube, 
+    Music 
+} from 'lucide-react';
 
 const socialNetworks = [
-    { key: 'facebook', name: 'Facebook', icon: <IconFacebook size={16}/>, placeholder: 'https://facebook.com/page' },
-    { key: 'instagram', name: 'Instagram', icon: <IconInstagram size={16}/>, placeholder: 'https://instagram.com/user' },
-    { key: 'telegram', name: 'Telegram', icon: <IconTelegram size={16}/>, placeholder: 'https://t.me/channel' },
-    { key: 'youtube', name: 'YouTube', icon: <IconYoutube size={16}/>, placeholder: 'https://youtube.com/@channel' },
-    { key: 'tiktok', name: 'TikTok', icon: <IconTiktok size={16}/>, placeholder: 'https://tiktok.com/@user' }
+    { key: 'facebook', name: 'Facebook', icon: <Facebook size={16}/>, placeholder: 'https://facebook.com/page' },
+    { key: 'instagram', name: 'Instagram', icon: <Instagram size={16}/>, placeholder: 'https://instagram.com/user' },
+    { key: 'telegram', name: 'Telegram', icon: <Send size={16}/>, placeholder: 'https://t.me/channel' },
+    { key: 'youtube', name: 'YouTube', icon: <Youtube size={16}/>, placeholder: 'https://youtube.com/@channel' },
+    { key: 'tiktok', name: 'TikTok', icon: <Music size={16}/>, placeholder: 'https://tiktok.com/@user' }
 ];
 
 const SocialIconsSettings = ({ data, onChange }) => {
@@ -19,15 +32,15 @@ const SocialIconsSettings = ({ data, onChange }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div>
-                <SectionTitle icon={<IconLayout size={18}/>}>Вигляд</SectionTitle>
+                <SectionTitle icon={<LayoutTemplate size={18}/>}>Вигляд</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Вирівнювання</label>
                     <ToggleGroup 
                         options={[
-                            { value: 'left', label: <IconAlignLeft size={18} /> },
-                            { value: 'center', label: <IconAlignCenter size={18} /> },
-                            { value: 'right', label: <IconAlignRight size={18} /> }
+                            { value: 'left', label: <AlignLeft size={18} /> },
+                            { value: 'center', label: <AlignCenter size={18} /> },
+                            { value: 'right', label: <AlignRight size={18} /> }
                         ]}
                         value={data.alignment || 'left'}
                         onChange={(val) => updateData({ alignment: val })}
@@ -39,8 +52,8 @@ const SocialIconsSettings = ({ data, onChange }) => {
                     <ToggleGroup 
                         options={[
                             { value: 'auto', label: 'Авто' },
-                            { value: 'light', label: <div style={{display:'flex', gap:'6px'}}><IconSun size={16}/> Темні</div> },
-                            { value: 'dark', label: <div style={{display:'flex', gap:'6px'}}><IconMoon size={16}/> Світлі</div> },
+                            { value: 'light', label: <div style={{display:'flex', gap:'6px'}}><Sun size={16}/> Темні</div> },
+                            { value: 'dark', label: <div style={{display:'flex', gap:'6px'}}><Moon size={16}/> Світлі</div> },
                         ]}
                         value={data.theme_mode || 'auto'}
                         onChange={(val) => updateData({ theme_mode: val })}
@@ -51,7 +64,7 @@ const SocialIconsSettings = ({ data, onChange }) => {
                 </div>
             </div>
             <div>
-                <SectionTitle icon={<IconShare size={18}/>}>Посилання</SectionTitle>
+                <SectionTitle icon={<Share2 size={18}/>}>Посилання</SectionTitle>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {socialNetworks.map(net => (

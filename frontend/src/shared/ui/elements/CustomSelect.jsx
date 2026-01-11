@@ -148,7 +148,11 @@ const CustomSelect = ({
                         <SelectedIcon 
                             size={18} 
                             style={{ opacity: 0.8, ...selectedOption.iconStyle }} 
-                            {...(selectedOption.iconProps || {})}
+                            fill={selectedOption.iconProps?.filled ? "currentColor" : "none"}
+                            {...(() => {
+                                const { filled, ...rest } = selectedOption.iconProps || {};
+                                return rest;
+                            })()}
                         />
                     )}
                     <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -166,13 +170,16 @@ const CustomSelect = ({
                         normalizedOptions.map(opt => {
                             const isSelected = opt.value === value;
                             const Icon = opt.icon;
+                            const { filled, ...restIconProps } = opt.iconProps || {};
+
                             return (
                                 <div key={opt.value} onClick={() => handleSelect(opt.value)} className={`custom-select-option ${isSelected ? 'selected' : ''}`}>
                                     {Icon && (
                                         <Icon 
                                             size={18} 
                                             style={{ opacity: isSelected ? 1 : 0.7, ...opt.iconStyle }} 
-                                            {...(opt.iconProps || {})}
+                                            fill={filled ? "currentColor" : "none"}
+                                            {...restIconProps}
                                         />
                                     )} 
                                     <span>{opt.label}</span> 

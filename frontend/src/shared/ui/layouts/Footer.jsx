@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
-import { IconGlobe, IconShop, IconLogin, IconUser } from '../elements/Icons';
+import { Globe, Store, LogIn, User } from 'lucide-react';
 
 const Footer = () => {
   const { user } = useContext(AuthContext);
@@ -50,15 +50,15 @@ const Footer = () => {
 
   const links = user 
     ? [
-        { to: "/", label: "Головна", icon: <IconGlobe size={16}/> },
-        { to: "/catalog", label: "Каталог сайтів", icon: <IconShop size={16}/> },
+        { to: "/", label: "Головна", icon: <Globe size={16}/> },
+        { to: "/catalog", label: "Каталог сайтів", icon: <Store size={16}/> },
         { to: "/support", label: "Підтримка", icon: null },
         { to: "/rules", label: "Правила", icon: null }
       ]
     : [
-        { to: "/", label: "Головна", icon: <IconGlobe size={16}/> },
-        { to: "/catalog", label: "Каталог сайтів", icon: <IconShop size={16}/> },
-        { to: "/login", label: "Авторизація", icon: <IconLogin size={16}/> }
+        { to: "/", label: "Головна", icon: <Globe size={16}/> },
+        { to: "/catalog", label: "Каталог сайтів", icon: <Store size={16}/> },
+        { to: "/login", label: "Авторизація", icon: <LogIn size={16}/> }
       ];
 
   return (

@@ -6,20 +6,7 @@ import apiClient from '../../../shared/api/api';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
-import { 
-    IconTelegram, 
-    IconInstagram, 
-    IconGlobe, 
-    IconSettings, 
-    IconCalendar, 
-    IconGrid, 
-    IconUser,
-    IconLoader,
-    IconExternalLink,
-    IconMail,
-    IconEyeOff, 
-    IconSearch
-} from '../../../shared/ui/elements/Icons';
+import { Send, Instagram, Globe, Settings, Calendar, Grid, User, Loader, ExternalLink, EyeOff, Search } from 'lucide-react';
 
 const ProfilePage = () => {
     const { username } = useParams();
@@ -93,7 +80,8 @@ const ProfilePage = () => {
 
     if (loading) return (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-            <IconLoader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)' }} />
+            <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
+            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
         </div>
     );
 
@@ -103,7 +91,7 @@ const ProfilePage = () => {
                 <Helmet><title>Приватний профіль | Kendr</title></Helmet>
                 <div style={errorContainerStyle}>
                     <div style={errorIconCircleStyle}>
-                        <IconEyeOff size={40} />
+                        <EyeOff size={40} />
                     </div>
                     <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>
                         Цей профіль закритий
@@ -126,7 +114,7 @@ const ProfilePage = () => {
                 <Helmet><title>Користувача не знайдено | Kendr</title></Helmet>
                 <div style={errorContainerStyle}>
                     <div style={errorIconCircleStyle}>
-                        <IconSearch size={40} />
+                        <Search size={40} />
                     </div>
                     <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>
                         Користувача не знайдено
@@ -279,7 +267,7 @@ const ProfilePage = () => {
                                 </h1>
                                 {!profileData.is_profile_public && isOwner && (
                                     <div title="Приватний профіль (бачите тільки ви)" style={{paddingBottom: '8px'}}>
-                                        <IconEyeOff size={24} color="var(--platform-text-secondary)" />
+                                        <EyeOff size={24} color="var(--platform-text-secondary)" />
                                     </div>
                                 )}
                             </div>
@@ -288,14 +276,14 @@ const ProfilePage = () => {
                                 color: 'var(--platform-text-secondary)', margin: 0, 
                                 display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem'
                             }}>
-                                <IconCalendar size={16} style={{ color: 'var(--platform-accent)' }}/> 
+                                <Calendar size={16} style={{ color: 'var(--platform-accent)' }}/> 
                                 На платформі з {new Date(profileData.createdAt).toLocaleDateString()}
                             </p>
                         </div>
 
                         {isOwner && (
                             <Link to="/settings" style={{ textDecoration: 'none', flexShrink: 0 }}>
-                                <Button variant="secondary" icon={<IconSettings size={18}/>}>
+                                <Button variant="secondary" icon={<Settings size={18}/>}>
                                     Налаштувати
                                 </Button>
                             </Link>
@@ -307,7 +295,7 @@ const ProfilePage = () => {
             {profileData.bio && (
                 <div style={sectionStyle}>
                     <div style={cardHeaderStyle}>
-                        <IconUser size={24} style={{ color: 'var(--platform-accent)' }} />
+                        <User size={24} style={{ color: 'var(--platform-accent)' }} />
                         <h3 style={cardTitleStyle}>Про мене</h3>
                     </div>
                     <div style={cardBodyStyle}>
@@ -320,7 +308,7 @@ const ProfilePage = () => {
                 
                 <div style={{ ...sectionStyle, marginBottom: 0, height: '100%' }}>
                     <div style={cardHeaderStyle}>
-                        <IconGrid size={24} style={{ color: 'var(--platform-accent)' }} />
+                        <Grid size={24} style={{ color: 'var(--platform-accent)' }} />
                         <h3 style={cardTitleStyle}>Статистика</h3>
                     </div>
                     <div style={cardBodyStyle}>
@@ -342,7 +330,7 @@ const ProfilePage = () => {
                 {profileData.socials && Object.values(profileData.socials).some(v => v) ? (
                     <div style={{ ...sectionStyle, marginBottom: 0, height: '100%' }}>
                         <div style={cardHeaderStyle}>
-                            <IconGlobe size={24} style={{ color: 'var(--platform-accent)' }} />
+                            <Globe size={24} style={{ color: 'var(--platform-accent)' }} />
                             <h3 style={cardTitleStyle}>Контакти</h3>
                         </div>
                         <div style={cardBodyStyle}>
@@ -354,9 +342,9 @@ const ProfilePage = () => {
                                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 136, 204, 0.1)'}
                                     onMouseLeave={e => e.currentTarget.style.background = 'var(--platform-bg)'}
                                 >
-                                    <IconTelegram size={22} style={{ color: '#0088cc' }}/> 
+                                    <Send size={22} style={{ color: '#0088cc' }}/> 
                                     Telegram
-                                    <IconExternalLink size={16} style={{ marginLeft: 'auto', opacity: 0.5 }}/>
+                                    <ExternalLink size={16} style={{ marginLeft: 'auto', opacity: 0.5 }}/>
                                 </a>
                             )}
                             {profileData.socials.instagram && (
@@ -367,9 +355,9 @@ const ProfilePage = () => {
                                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(225, 48, 108, 0.1)'}
                                     onMouseLeave={e => e.currentTarget.style.background = 'var(--platform-bg)'}
                                 >
-                                    <IconInstagram size={22} style={{ color: '#E1306C' }}/> 
+                                    <Instagram size={22} style={{ color: '#E1306C' }}/> 
                                     Instagram
-                                    <IconExternalLink size={16} style={{ marginLeft: 'auto', opacity: 0.5 }}/>
+                                    <ExternalLink size={16} style={{ marginLeft: 'auto', opacity: 0.5 }}/>
                                 </a>
                             )}
                             {profileData.socials.website && (
@@ -380,9 +368,9 @@ const ProfilePage = () => {
                                     onMouseEnter={e => e.currentTarget.style.background = 'var(--platform-hover-bg)'}
                                     onMouseLeave={e => e.currentTarget.style.background = 'var(--platform-bg)'}
                                 >
-                                    <IconGlobe size={22} style={{ color: 'var(--platform-text-secondary)' }}/> 
+                                    <Globe size={22} style={{ color: 'var(--platform-text-secondary)' }}/> 
                                     Веб-сайт
-                                    <IconExternalLink size={16} style={{ marginLeft: 'auto', opacity: 0.5 }}/>
+                                    <ExternalLink size={16} style={{ marginLeft: 'auto', opacity: 0.5 }}/>
                                 </a>
                             )}
                         </div>
@@ -398,7 +386,7 @@ const ProfilePage = () => {
 
             <div style={sectionStyle}>
                 <div style={cardHeaderStyle}>
-                    <IconGrid size={24} style={{ color: 'var(--platform-accent)' }} />
+                    <Grid size={24} style={{ color: 'var(--platform-accent)' }} />
                     <h3 style={cardTitleStyle}>Проекти</h3>
                 </div>
                 
@@ -423,7 +411,7 @@ const ProfilePage = () => {
                      ) : (
                          <div style={{ maxWidth: '400px', margin: '0 auto', color: 'var(--platform-text-secondary)' }}>
                              <div style={{ marginBottom: '1rem', opacity: 0.5 }}>
-                                <IconGlobe size={48} />
+                                <Globe size={48} />
                              </div>
                              <p style={{ fontSize: '1.1rem' }}>Немає публічних проектів</p>
                          </div>

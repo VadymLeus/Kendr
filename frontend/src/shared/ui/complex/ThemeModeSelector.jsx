@@ -1,6 +1,6 @@
 // frontend/src/shared/ui/complex/ThemeModeSelector.jsx
 import React from 'react';
-import { IconSun, IconMoon } from '../elements/Icons';
+import { Sun, Moon } from 'lucide-react';
 import { resolveAccentColor } from '../../lib/utils/themeUtils';
 
 const ThemeModeSelector = ({ currentMode, accentColor, onChange }) => {
@@ -58,13 +58,13 @@ const ThemeModeSelector = ({ currentMode, accentColor, onChange }) => {
             <Card 
                 mode="light" 
                 label="Світла тема" 
-                icon={IconSun} 
+                icon={Sun} 
                 gradient="linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)" 
             />
             <Card 
                 mode="dark" 
                 label="Темна тема" 
-                icon={IconMoon} 
+                icon={Moon} 
                 gradient="linear-gradient(135deg, #1a202c 0%, #2d3748 100%)" 
             />
         </div>

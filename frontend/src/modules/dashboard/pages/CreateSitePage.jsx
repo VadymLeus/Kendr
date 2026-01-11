@@ -6,14 +6,11 @@ import apiClient from '../../../shared/api/api';
 import { Input } from '../../../shared/ui/elements/Input';
 import { Button } from '../../../shared/ui/elements/Button';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
-import {
-    IconArrowLeft, IconLayout, IconCheck, IconLoader,
-    IconAlertCircle, IconGlobe, IconGrid, IconUser,
-    IconImage, IconTrash, IconSearch, IconEdit, IconX
-} from '../../../shared/ui/elements/Icons';
+import { ArrowLeft, Layout, Check, Loader, AlertCircle, Globe, Grid, User, Image, Trash, Search, Edit, X } from 'lucide-react';
 import ImageInput from '../../media/components/ImageInput';
 import BlockRenderer from '../../editor/core/BlockRenderer';
 import FontLoader from '../../renderer/components/FontLoader';
+
 const API_URL = 'http://localhost:5000';
 
 const CreateSitePage = () => {
@@ -347,7 +344,7 @@ const CreateSitePage = () => {
         return source.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }, [activeTab, systemTemplates, personalTemplates, searchQuery]);
 
-    const pageStyles = `
+const pageStyles = `
         .create-site-container { display: flex; height: 100vh; overflow: hidden; background: var(--platform-bg); font-family: var(--font-family, sans-serif); color: var(--platform-text-primary); }
         
         .left-panel { 
@@ -366,6 +363,7 @@ const CreateSitePage = () => {
                 height: calc(100vh - 40px);
                 border: 1px solid var(--platform-border-color);
                 box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+                overflow: hidden;
             } 
         }
         
@@ -498,7 +496,7 @@ const CreateSitePage = () => {
     if (isLoadingData) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--platform-bg)' }}>
-                <IconLoader size={48} style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
+                <Loader size={48} style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
                 <p style={{ marginTop: '16px', color: 'var(--platform-text-secondary)' }}>Завантаження студії...</p>
                 <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
             </div>
@@ -525,7 +523,7 @@ const CreateSitePage = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Редагувати шаблон</h3>
                             <button onClick={handleCloseEditModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--platform-text-secondary)' }}>
-                                <IconX size={20} />
+                                <X size={20} />
                             </button>
                         </div>
                         
@@ -585,7 +583,7 @@ const CreateSitePage = () => {
                                 placeholder="Моя кав'ярня"
                                 value={formData.title}
                                 onChange={handleTitleChange}
-                                leftIcon={<IconLayout size={18} />}
+                                leftIcon={<Layout size={18} />}
                             />
                             <div style={{ position: 'relative' }}>
                                 <Input
@@ -593,11 +591,11 @@ const CreateSitePage = () => {
                                     placeholder="my-shop"
                                     value={formData.slug}
                                     onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
-                                    leftIcon={<IconGlobe size={18} />}
+                                    leftIcon={<Globe size={18} />}
                                     rightIcon={
-                                        slugStatus === 'checking' ? <IconLoader size={16} style={{ animation: 'spin 1s linear infinite' }} /> :
-                                            slugStatus === 'available' ? <IconCheck size={18} style={{ color: '#10B981' }} /> :
-                                                slugStatus === 'taken' ? <IconAlertCircle size={18} style={{ color: '#EF4444' }} /> : null
+                                        slugStatus === 'checking' ? <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> :
+                                            slugStatus === 'available' ? <Check size={18} style={{ color: '#10B981' }} /> :
+                                                slugStatus === 'taken' ? <AlertCircle size={18} style={{ color: '#EF4444' }} /> : null
                                     }
                                     error={slugStatus === 'taken' ? 'Адреса зайнята' : null}
                                 />
@@ -627,7 +625,7 @@ const CreateSitePage = () => {
                                                     onClick={handleClearLogo}
                                                     title="Видалити та повернути стандартний"
                                                 >
-                                                    <IconTrash size={12} />
+                                                    <Trash size={12} />
                                                 </button>
                                             </div>
                                         ) : (
@@ -639,7 +637,7 @@ const CreateSitePage = () => {
                                                             alt="Random"
                                                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                                         />
-                                                    ) : <IconImage size={48} />}
+                                                    ) : <Image size={48} />}
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                                                     <span style={{ fontWeight: '500' }}>Змінити логотип</span>
@@ -665,17 +663,17 @@ const CreateSitePage = () => {
                                 placeholder="Пошук шаблону..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                leftIcon={<IconSearch size={16} />}
+                                leftIcon={<Search size={16} />}
                                 wrapperStyle={{ margin: 0 }}
                             />
                         </div>
 
                         <div className="tab-switcher">
                             <button onClick={() => setActiveTab('system')} className={`tab-btn ${activeTab === 'system' ? 'active' : ''}`}>
-                                <IconGrid size={16} /> Галерея
+                                <Grid size={16} /> Галерея
                             </button>
                             <button onClick={() => setActiveTab('personal')} className={`tab-btn ${activeTab === 'personal' ? 'active' : ''}`}>
-                                <IconUser size={16} /> Мої макети
+                                <User size={16} /> Мої макети
                             </button>
                         </div>
 
@@ -692,7 +690,7 @@ const CreateSitePage = () => {
                                             <div className="tpl-desc">{tpl.description || 'Без опису'}</div>
 
                                             {selectedTemplateId === tpl.id && (
-                                                <div className="check-icon"><IconCheck size={12} /></div>
+                                                <div className="check-icon"><Check size={12} /></div>
                                             )}
 
                                             {activeTab === 'personal' && (
@@ -702,14 +700,14 @@ const CreateSitePage = () => {
                                                         onClick={(e) => handleOpenEditModal(e, tpl)}
                                                         title="Редагувати"
                                                     >
-                                                        <IconEdit size={14} />
+                                                        <Edit size={14} />
                                                     </button>
                                                     <button 
                                                         className="template-action-btn delete" 
                                                         onClick={(e) => handleOpenDeleteModal(e, tpl.id)}
                                                         title="Видалити"
                                                     >
-                                                        <IconTrash size={14} />
+                                                        <Trash size={14} />
                                                     </button>
                                                 </div>
                                             )}
@@ -752,7 +750,7 @@ const CreateSitePage = () => {
                     className="mobile-back-btn"
                 >
                     <style>{`@media (max-width: 768px) { .mobile-back-btn { display: flex !important; } }`}</style>
-                    <IconArrowLeft size={20} color="var(--platform-text-primary)" />
+                    <ArrowLeft size={20} color="var(--platform-text-primary)" />
                 </button>
 
                 <div className="browser-mockup">
@@ -792,7 +790,7 @@ const CreateSitePage = () => {
                                         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', color: '#9ca3af', gap: '16px' }}>
                                             {previewData.pages.length > 0
                                                 ? <p>Ця сторінка порожня ({currentPreviewSlug})</p>
-                                                : <div style={{ textAlign: 'center' }}><IconLayout size={48} style={{ opacity: 0.2 }} /><p>Оберіть шаблон зліва</p></div>
+                                                : <div style={{ textAlign: 'center' }}><Layout size={48} style={{ opacity: 0.2 }} /><p>Оберіть шаблон зліва</p></div>
                                             }
                                         </div>
                                     )}

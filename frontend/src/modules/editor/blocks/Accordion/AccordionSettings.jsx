@@ -5,7 +5,7 @@ import { commonStyles, SectionTitle } from '../../controls/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Button } from '../../../../shared/ui/elements/Button';
 import { Input } from '../../../../shared/ui/elements/Input';
-import { IconPlus, IconTrash, IconChevronDown, IconChevronUp, IconList, IconType, IconFileText, IconFont } from '../../../../shared/ui/elements/Icons';
+import { Plus, Trash2, ChevronDown, List, Type } from 'lucide-react';
 import ConfirmModal from '../../../../shared/ui/complex/ConfirmModal';
 
 const AccordionSettings = ({ data, onChange }) => {
@@ -73,20 +73,20 @@ const AccordionSettings = ({ data, onChange }) => {
             />
 
             <div>
-                <SectionTitle icon={<IconType size={18}/>}>Загальні налаштування</SectionTitle>
+                <SectionTitle icon={<Type size={18}/>}>Загальні налаштування</SectionTitle>
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Шрифт блоку</label>
                     <CustomSelect
                         value={data.fontFamily || 'global'}
                         onChange={handleFontChange}
                         options={FONT_LIBRARY}
-                        leftIcon={<IconFont size={16}/>}
+                        leftIcon={<Type size={16}/>}
                     />
                 </div>
             </div>
 
             <div>
-                <SectionTitle icon={<IconList size={18}/>}>Елементи списку</SectionTitle>
+                <SectionTitle icon={<List size={18}/>}>Елементи списку</SectionTitle>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {(data.items || []).map((item, index) => {
@@ -118,7 +118,7 @@ const AccordionSettings = ({ data, onChange }) => {
                                             transition: 'transform 0.2s',
                                             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
                                         }}>
-                                            <IconChevronDown size={16} />
+                                            <ChevronDown size={16} />
                                         </div>
                                         <span style={{ 
                                             fontWeight: 500, 
@@ -135,7 +135,7 @@ const AccordionSettings = ({ data, onChange }) => {
                                         variant="danger" 
                                         size="sm"
                                         onClick={(e) => requestDelete(e, index)}
-                                        icon={<IconTrash size={14}/>}
+                                        icon={<Trash2 size={14}/>}
                                         style={{ width: '28px', height: '28px', padding: 0 }}
                                     />
                                 </div>
@@ -174,7 +174,7 @@ const AccordionSettings = ({ data, onChange }) => {
                 <Button 
                     onClick={handleAddItem}
                     style={{ width: '100%', marginTop: '16px' }}
-                    icon={<IconPlus size={18} />}
+                    icon={<Plus size={18} />}
                 >
                     Додати елемент
                 </Button>

@@ -6,9 +6,9 @@ import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { Input } from '../../../../common/components/ui/Input'; 
 import { 
-    IconSearch, IconClear, IconSortAsc, IconSortDesc, 
-    IconShoppingBag, IconUser, IconSettings
-} from '../../../../common/components/ui/Icons';
+    Search, X, ArrowUpAZ, ArrowDownAZ, 
+    ShoppingBag, User, Settings
+} from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -156,7 +156,7 @@ const ProductCard = ({ product, isEditorPreview, siteData }) => {
                             padding: '4px 8px', borderRadius: '6px',
                             fontSize: '0.75rem', fontWeight: 'bold', zIndex: 3,
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}>
+                        }} className="badge-discount">
                             -{product.sale_percentage}%
                         </div>
                     )}
@@ -212,9 +212,9 @@ const ProductCard = ({ product, isEditorPreview, siteData }) => {
                             }}
                         >
                             {isOwner ? (
-                                <IconUser size={20} />
+                                <User size={20} />
                             ) : hasVariants ? (
-                                <IconSettings size={20} />
+                                <Settings size={20} />
                             ) : (
                                 '+'
                             )}
@@ -401,7 +401,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                         setFilters(prev => ({ ...prev, searchQuery: e.target.value }));
                                         setCurrentPage(1);
                                     }}
-                                    leftIcon={<IconSearch size={18} />}
+                                    leftIcon={<Search size={18} />}
                                     wrapperStyle={{ marginBottom: 0 }}
                                     style={{ height: '38px', background: 'var(--site-bg)', border: '1px solid var(--site-border-color)' }} 
                                 />
@@ -448,7 +448,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                         onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--site-accent)'}
                                         onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--site-border-color)'}
                                     >
-                                        {filters.sortOrder === 'asc' ? <IconSortAsc size={18}/> : <IconSortDesc size={18}/>}
+                                        {filters.sortOrder === 'asc' ? <ArrowUpAZ size={18}/> : <ArrowDownAZ size={18}/>}
                                     </button>
                                 </>
                             )}
@@ -460,7 +460,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                 onMouseEnter={e => e.currentTarget.style.background = '#e53e3e10'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             >
-                                <IconClear size={18} />
+                                <X size={18} />
                             </button>
                         </div>
                     </div>
@@ -478,7 +478,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     border: '1px dashed var(--site-border-color)', borderRadius: '12px',
                     backgroundColor: 'var(--site-card-bg)'
                 }}>
-                    <IconShoppingBag size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                    <ShoppingBag size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
                     <p style={{ fontSize: '1.1rem' }}>Товарів не знайдено</p>
                     {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
                         <button 

@@ -5,18 +5,7 @@ import UserMenu from './UserMenu';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import ConfirmModal from '../complex/ConfirmModal';
-import { 
-    IconShop,           
-    IconLayoutHeader,   
-    IconFile,          
-    IconShoppingCart,   
-    IconHelpCircle,     
-    IconChevronLeft,    
-    IconChevronRight,
-    IconUser,
-    IconSettings,
-    IconLogOut
-} from '../elements/Icons';
+import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, User, Settings, LogOut } from 'lucide-react';
 
 const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     const { cartItems } = useContext(CartContext);
@@ -268,7 +257,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                         e.currentTarget.style.borderColor = 'var(--platform-border-color)';
                     }}
                 >
-                    {isCollapsed ? <IconChevronRight size={18} /> : <IconChevronLeft size={18} />}
+                    {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
             </div>
 
@@ -277,7 +266,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 <div style={groupWrapperStyle}>
                     <SidebarLink 
                         to="/create-site" 
-                        icon={IconFile} 
+                        icon={FileText} 
                         label="Створити сайт" 
                         protectedLink 
                         isCreateButton={true} 
@@ -286,29 +275,29 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
 
                 <div style={separatorStyle}></div>
                 <div style={groupWrapperStyle}>
-                    <SidebarLink to="/my-sites" icon={IconLayoutHeader} label="Мої сайти" protectedLink />
-                    <SidebarLink to="/media-library" icon={IconFile} label="Медіатека" protectedLink />
+                    <SidebarLink to="/my-sites" icon={Layout} label="Мої сайти" protectedLink />
+                    <SidebarLink to="/media-library" icon={FileText} label="Медіатека" protectedLink />
                 </div>
 
                 <div style={separatorStyle}></div>
 
                 <div style={groupWrapperStyle}>
-                    <SidebarLink to="/catalog" icon={IconShop} label="Каталог сайтів" />
+                    <SidebarLink to="/catalog" icon={Store} label="Каталог сайтів" />
                     {user && (
-                        <SidebarLink to="/cart" icon={IconShoppingCart} label="Кошик" count={cartItems.length} />
+                        <SidebarLink to="/cart" icon={ShoppingCart} label="Кошик" count={cartItems.length} />
                     )}
                 </div>
 
                 <div style={separatorStyle}></div>
 
                 <div style={groupWrapperStyle}>
-                    <SidebarLink to="/support" icon={IconHelpCircle} label="Підтримка" />
+                    <SidebarLink to="/support" icon={HelpCircle} label="Підтримка" />
                     {user && (
-                        <SidebarLink to="/settings" icon={IconSettings} label="Налаштування" />
+                        <SidebarLink to="/settings" icon={Settings} label="Налаштування" />
                     )}
                     
                     {!user && (
-                        <SidebarLink to="/login" icon={IconUser} label="Авторизація" />
+                        <SidebarLink to="/login" icon={User} label="Авторизація" />
                     )}
                 </div>
 
@@ -316,7 +305,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                     <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
                         <SidebarLink 
                             to="#" 
-                            icon={IconLogOut} 
+                            icon={LogOut} 
                             label="Вийти" 
                             onClick={handleLogoutClick}
                             isCreateButton={false}

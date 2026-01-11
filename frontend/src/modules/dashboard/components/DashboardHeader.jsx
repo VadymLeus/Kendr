@@ -1,16 +1,6 @@
 // frontend/src/modules/dashboard/components/DashboardHeader.jsx
 import React from 'react';
-import { 
-    IconUndo, 
-    IconRedo, 
-    IconPlay, 
-    IconEdit, 
-    IconPages, 
-    IconShop, 
-    IconPalette, 
-    IconMail, 
-    IconSettings 
-} from '../../../shared/ui/elements/Icons';
+import { Undo, Redo, Play, Edit, FileText, Store, Palette, Mail, Settings } from 'lucide-react';
 
 const DashboardHeader = ({ 
     siteData, 
@@ -24,12 +14,12 @@ const DashboardHeader = ({
 }) => {
     
     const tabs = [
-        { key: 'editor', icon: <IconEdit />, text: 'Редактор' },
-        { key: 'pages', icon: <IconPages />, text: 'Сторінки' },
-        { key: 'store', icon: <IconShop />, text: 'Магазин' },
-        { key: 'theme', icon: <IconPalette />, text: 'Тема' },
-        { key: 'crm', icon: <IconMail />, text: 'Заявки' },
-        { key: 'settings', icon: <IconSettings />, text: 'Налаштування' }
+        { key: 'editor', icon: <Edit />, text: 'Редактор' },
+        { key: 'pages', icon: <FileText />, text: 'Сторінки' },
+        { key: 'store', icon: <Store />, text: 'Магазин' },
+        { key: 'theme', icon: <Palette />, text: 'Тема' },
+        { key: 'crm', icon: <Mail />, text: 'Заявки' },
+        { key: 'settings', icon: <Settings />, text: 'Налаштування' }
     ];
 
     return (
@@ -83,7 +73,7 @@ const DashboardHeader = ({
                             disabled={!canUndo} 
                             title="Скасувати (Ctrl+Z)"
                         >
-                            <IconUndo />
+                            <Undo />
                         </button>
                         <button 
                             className="action-btn" 
@@ -91,7 +81,7 @@ const DashboardHeader = ({
                             disabled={!canRedo} 
                             title="Повернути (Ctrl+Y)"
                         >
-                            <IconRedo />
+                            <Redo />
                         </button>
                     </div>
                 )}
@@ -103,7 +93,7 @@ const DashboardHeader = ({
                     className="preview-btn"
                     title="Відкрити сайт у новій вкладці"
                 >
-                    <IconPlay />
+                    <Play />
                     <span className="preview-text">Переглянути</span>
                 </a>
             </div>
@@ -242,7 +232,11 @@ const DashboardHeader = ({
                 .tab-icon svg {
                     width: 100%;
                     height: 100%;
-                    fill: currentColor;
+                    fill: none;
+                    stroke: currentColor;
+                    stroke-width: 2;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
                 }
 
                 .tab-text {
@@ -297,7 +291,6 @@ const DashboardHeader = ({
                 .action-btn svg {
                     width: 18px;
                     height: 18px;
-                    fill: currentColor;
                 }
 
                 .preview-btn {
@@ -326,6 +319,7 @@ const DashboardHeader = ({
                     width: 16px;
                     height: 16px;
                     fill: currentColor;
+                    stroke: none;
                 }
 
                 .preview-text {

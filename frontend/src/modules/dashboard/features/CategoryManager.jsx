@@ -9,29 +9,25 @@ import { Button } from '../../../shared/ui/elements/Button';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { SplitViewLayout } from '../../../shared/ui/layouts/SplitViewLayout';
 import {
-    IconSearch, IconFolder, IconPlus, IconTrash,
-    IconEdit, IconChevronLeft, IconChevronRight, IconSave,
-    IconStar, IconHome, IconHeart, IconBox,
-    IconTag, IconShoppingBag, IconGrid, IconX,
-    IconCamera, IconMusic, IconSmartphone, IconCoffee,
-    IconBriefcase, IconGift, IconTruck, IconZap,
-    IconMapPin, IconImage, IconVideo, IconUser,
-    IconType, IconList, IconShop
-} from '../../../shared/ui/elements/Icons';
+    Search, Folder, Plus, Trash, Edit, ChevronLeft, Save,
+    Star, Home, Heart, Package, Tag, ShoppingBag, Grid, X,
+    Camera, Music, Smartphone, Coffee, Briefcase, Gift, Truck,
+    Zap, MapPin, Image, Video, User, Type, List, Store
+} from 'lucide-react';
 
 const ICON_MAP = {
-    folder: IconFolder, grid: IconGrid, tag: IconTag, bag: IconShoppingBag,
-    box: IconBox, star: IconStar, heart: IconHeart, home: IconHome,
-    gift: IconGift, truck: IconTruck, zap: IconZap, camera: IconCamera,
-    music: IconMusic, phone: IconSmartphone, coffee: IconCoffee, briefcase: IconBriefcase,
-    map: IconMapPin, image: IconImage, video: IconVideo, user: IconUser
+    folder: Folder, grid: Grid, tag: Tag, bag: ShoppingBag,
+    box: Package, star: Star, heart: Heart, home: Home,
+    gift: Gift, truck: Truck, zap: Zap, camera: Camera,
+    music: Music, phone: Smartphone, coffee: Coffee, briefcase: Briefcase,
+    map: MapPin, image: Image, video: Video, user: User
 };
 
 const AVAILABLE_ICONS = Object.keys(ICON_MAP);
 
 const SORT_FIELDS = [
-    { value: 'name', label: 'За назвою', icon: IconType },
-    { value: 'count', label: 'Кількість товарів', icon: IconList }
+    { value: 'name', label: 'За назвою', icon: Type },
+    { value: 'count', label: 'Кількість товарів', icon: List }
 ];
 
 const useCategories = (siteId) => {
@@ -98,7 +94,7 @@ const CategoryList = memo(({
                 <div className="flex gap-2 flex-[1_1_300px] items-center">
                     <div className="flex-1 min-w-37.5">
                         <Input
-                            leftIcon={<IconSearch size={16}/>}
+                            leftIcon={<Search size={16}/>}
                             placeholder="Пошук..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -126,7 +122,7 @@ const CategoryList = memo(({
                 </div>
                 
                 <div className="flex items-center gap-3">
-                    <Button onClick={onCreate} icon={<IconPlus size={16}/>}>Додати</Button>
+                    <Button onClick={onCreate} icon={<Plus size={16}/>}>Додати</Button>
                 </div>
             </div>
 
@@ -134,7 +130,7 @@ const CategoryList = memo(({
                 {processedCategories.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-(--platform-text-secondary) py-10">
                         <div className="w-20 h-20 rounded-full bg-(--platform-bg) border border-(--platform-border-color) flex items-center justify-center mb-4">
-                            <IconShop size={40} className="opacity-30"/>
+                            <Store size={40} className="opacity-30"/>
                         </div>
                         <h3 className="text-lg font-semibold text-(--platform-text-primary) mb-1">Категорій не знайдено</h3>
                         <p className="text-sm opacity-70 max-w-62.5 text-center mb-6">
@@ -149,7 +145,7 @@ const CategoryList = memo(({
                         {processedCategories.map(cat => {
                             const isSelected = activeCategoryId === cat.id;
                             const count = getProductCount(cat.id);
-                            const CatIcon = ICON_MAP[cat.icon] || IconFolder;
+                            const CatIcon = ICON_MAP[cat.icon] || Folder;
                             return (
                                 <div 
                                     key={cat.id} 
@@ -164,7 +160,7 @@ const CategoryList = memo(({
                                 >
                                     <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button variant="square-danger" onClick={(e) => onDelete(e, cat.id, cat.name)} style={{width: '28px', height: '28px', opacity: 0.8}} title="Видалити">
-                                            <IconTrash size={14}/>
+                                            <Trash size={14}/>
                                         </Button>
                                     </div>
                                     <div className={`mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary) group-hover:text-(--platform-accent)'}`}>
@@ -200,12 +196,12 @@ const CategoryEditor = memo(({
             <div className="h-18 px-6 border-b border-(--platform-border-color) flex items-center justify-between bg-(--platform-bg) shrink-0">
                 <h3 className="m-0 text-lg font-bold text-(--platform-text-primary) flex items-center gap-2.5">
                     {isMobile && (
-                        <Button variant="ghost" onClick={onClose} className="p-0 w-8 h-8 mr-2"><IconChevronLeft size={20} /></Button>
+                        <Button variant="ghost" onClick={onClose} className="p-0 w-8 h-8 mr-2"><ChevronLeft size={20} /></Button>
                     )}
-                    {formData.id ? <><IconEdit size={20} /> Редагування</> : 'Нова категорія'}
+                    {formData.id ? <><Edit size={20} /> Редагування</> : 'Нова категорія'}
                 </h3>
                 {!isMobile && (
-                    <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><IconX/></Button>
+                    <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><X size={20} /></Button>
                 )}
             </div>
 
@@ -260,9 +256,9 @@ const CategoryEditor = memo(({
                         title="Очистити форму" 
                         style={{justifyContent: 'center', height: '42px'}}
                     >
-                        <IconX size={18} /> Скасувати
+                        <X size={18} /> Скасувати
                     </Button>
-                    <Button type="submit" variant="primary" icon={<IconSave size={18}/>} style={{justifyContent: 'center', height: '42px'}}>
+                    <Button type="submit" variant="primary" icon={<Save size={18}/>} style={{justifyContent: 'center', height: '42px'}}>
                         {formData.id ? 'Зберегти' : 'Створити'}
                     </Button>
                 </div>

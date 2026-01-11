@@ -1,15 +1,20 @@
 // frontend/src/modules/editor/blocks/SocialIcons/SocialIconsBlock.jsx
 import React from 'react';
 import { 
-    IconFacebook, IconInstagram, IconTelegram, IconYoutube, IconTiktok, IconShare 
-} from '../../../../shared/ui/elements/Icons';
+    Facebook, 
+    Instagram, 
+    Send, 
+    Youtube, 
+    Music, 
+    Share2 
+} from 'lucide-react';
 
 const IconsMap = {
-    facebook: IconFacebook,
-    instagram: IconInstagram,
-    telegram: IconTelegram,
-    youtube: IconYoutube,
-    tiktok: IconTiktok
+    facebook: Facebook,
+    instagram: Instagram,
+    telegram: Send,
+    youtube: Youtube,
+    tiktok: Music
 };
 
 const IconWrapper = ({ children, href, isEditorPreview, baseColor }) => (
@@ -81,7 +86,7 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
                 ...style
             }}>
                 <div style={{ color: 'var(--site-accent)', opacity: 0.7 }}>
-                    <IconShare size={48} />
+                    <Share2 size={48} />
                 </div>
                 <div>
                     <p style={{margin: '0', fontWeight: '600', color: 'var(--site-text-primary)', fontSize: '1.1rem'}}>Соцмережі</p>
@@ -97,7 +102,7 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
             textAlign: alignment || 'left',
             background: 'transparent',
             border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
-            borderRadius: isEditorPreview ? '8px' : '0',
+borderRadius: isEditorPreview ? '8px' : '0',
             backgroundColor: isEditorPreview ? 'var(--site-card-bg)' : 'transparent',
             ...style
         }}>

@@ -4,9 +4,9 @@ import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { 
-    IconGlobe, IconTelegram, IconInstagram, IconCopy, 
-    IconExternalLink, IconEye, IconEyeOff, IconCheck 
-} from '../../../shared/ui/elements/Icons';
+    Globe, Send, Instagram, Copy, 
+    ExternalLink, Eye, EyeOff, Check 
+} from 'lucide-react';
 import { Input, Button } from '../../../shared/ui/elements';
 
 const PublicProfileTab = () => {
@@ -187,7 +187,7 @@ const PublicProfileTab = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px' }}>
                     <div>
                         <h3 style={sectionTitleStyle}>
-                            {formData.is_profile_public ? <IconEye size={20} color="var(--platform-accent)" /> : <IconEyeOff size={20} />}
+                            {formData.is_profile_public ? <Eye size={20} color="var(--platform-accent)" /> : <EyeOff size={20} />}
                             Статус профілю
                         </h3>
                         <p style={{...sectionDescStyle, marginBottom: 0}}>
@@ -231,7 +231,7 @@ const PublicProfileTab = () => {
                                 title="Копіювати"
                                 style={{ padding: '8px', background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '8px', cursor: 'pointer', color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center' }}
                             >
-                                <IconCopy size={16} />
+                                <Copy size={16} />
                             </button>
                             <a 
                                 href={profileUrl} 
@@ -240,7 +240,7 @@ const PublicProfileTab = () => {
                                 title="Відкрити"
                                 style={{ padding: '8px', background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '8px', cursor: 'pointer', color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center' }}
                             >
-                                <IconExternalLink size={16} />
+                                <ExternalLink size={16} />
                             </a>
                         </div>
                     </div>
@@ -248,7 +248,7 @@ const PublicProfileTab = () => {
             </div>
             <div style={cardStyle}>
                 <h3 style={sectionTitleStyle}>
-                    <IconGlobe size={20} style={{ color: 'var(--platform-accent)' }} />
+                    <Globe size={20} style={{ color: 'var(--platform-accent)' }} />
                     Соціальні мережі та Біо
                 </h3>
                 <p style={sectionDescStyle}>
@@ -275,7 +275,7 @@ const PublicProfileTab = () => {
                             label="Telegram" 
                             value={formData.social_telegram} 
                             onChange={handleChange}
-                            icon={<IconTelegram size={18} />}
+                            icon={<Send size={18} />}
                             placeholder="@username"
                         />
                         <Input 
@@ -283,7 +283,7 @@ const PublicProfileTab = () => {
                             label="Instagram" 
                             value={formData.social_instagram} 
                             onChange={handleChange}
-                            icon={<IconInstagram size={18} />}
+                            icon={<Instagram size={18} />}
                             placeholder="@username"
                         />
                     </div>
@@ -293,7 +293,7 @@ const PublicProfileTab = () => {
                         label="Особистий сайт" 
                         value={formData.social_website} 
                         onChange={handleChange}
-                        icon={<IconGlobe size={18} />}
+                        icon={<Globe size={18} />}
                         placeholder="https://mysite.com"
                     />
 
@@ -301,7 +301,7 @@ const PublicProfileTab = () => {
                         <Button 
                             type="submit" 
                             disabled={isLoading} 
-                            icon={isLoading ? null : <IconCheck size={18} />}
+                            icon={isLoading ? null : <Check size={18} />}
                         >
                             {isLoading ? 'Збереження...' : 'Зберегти зміни'}
                         </Button>

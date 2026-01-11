@@ -1,6 +1,6 @@
 // frontend/src/modules/site-editor/blocks/Accordion/AccordionItem.jsx
 import React, { useState } from 'react';
-import { IconChevronDown } from '../../../../common/components/ui/Icons';
+import { ChevronDown } from 'lucide-react';
 
 const AccordionItem = ({ item, isEditorPreview }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -71,7 +71,7 @@ const AccordionItem = ({ item, isEditorPreview }) => {
             >
                 <h4 style={titleStyle}>{item.title || 'Питання'}</h4>
                 <div style={iconWrapperStyle}>
-                    <IconChevronDown size={20} />
+                    <ChevronDown size={20} />
                 </div>
             </div>
             {isExpanded && (

@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import RangeSlider from '../../../shared/ui/elements/RangeSlider';
 import { 
-    IconArrowUp, 
-    IconArrowDown, 
-    IconLink, 
-    IconUnlink 
-} from '../../../shared/ui/elements/Icons';
+    ArrowUp, 
+    ArrowDown, 
+    Link, 
+    Unlink 
+} from 'lucide-react';
 
 const SpacingControl = ({ styles = {}, onChange }) => {
     const defaultPadding = 60;
@@ -78,14 +78,14 @@ const SpacingControl = ({ styles = {}, onChange }) => {
                         height: '32px'
                     }}
                 >
-                    {isLinked ? <IconLink size={16} /> : <IconUnlink size={16} />}
+                    {isLinked ? <Link size={16} /> : <Unlink size={16} />}
                 </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem', fontWeight: '500' }}>
-                        <IconArrowUp size={14} /> 
+                        <ArrowUp size={14} /> 
                         <span>Відступ зверху: <span style={{ color: 'var(--platform-text-primary)' }}>{paddingTop}px</span></span>
                     </div>
                     <RangeSlider 
@@ -100,7 +100,7 @@ const SpacingControl = ({ styles = {}, onChange }) => {
 
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem', fontWeight: '500' }}>
-                        <IconArrowDown size={14} />
+                        <ArrowDown size={14} />
                         <span>Відступ знизу: <span style={{ color: 'var(--platform-text-primary)' }}>{paddingBottom}px</span></span>
                     </div>
                     <RangeSlider 

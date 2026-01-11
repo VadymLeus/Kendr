@@ -2,7 +2,7 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AnimationWrapper from '../../renderer/components/AnimationWrapper';
-import { IconAlertTriangle, IconConstruction, IconLoading } from '../../../shared/ui/elements/Icons';
+import { AlertTriangle, Construction, Loader } from 'lucide-react';
 import { resolveSiteLink } from '../../../shared/lib/utils/linkUtils';
 
 const HeroBlock = lazy(() => import('../blocks/Hero/HeroBlock'));
@@ -60,7 +60,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                 border: isEditorPreview ? `1px dashed ${borderColor}` : 'none'
             }}>
                 <div style={{ marginBottom: '1rem', opacity: 0.7, display: 'flex', justifyContent: 'center' }}>
-                    <IconConstruction size={48} />
+                    <Construction size={48} />
                 </div>
                 <h3 style={{ color: textPrimary, marginBottom: '0.5rem', fontWeight: '500' }}>
                     Ця сторінка порожня
@@ -95,7 +95,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                             }}
                         >
                             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
-                                <IconAlertTriangle size={32} />
+                                <AlertTriangle size={32} />
                             </div>
                             <div style={{ fontWeight: '500' }}>Невідомий тип блоку</div>
                             <div style={{ fontSize: '0.9rem', marginTop: '0.25rem', opacity: 0.8 }}>{block.type}</div>
@@ -128,7 +128,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                                         color: textSecondary
                                     }}>
                                         <div style={{ marginBottom: '0.5rem', opacity: 0.7, display: 'flex', justifyContent: 'center' }}>
-                                            <IconLoading size={24} />
+                                            <Loader size={24} />
                                         </div>
                                         <div style={{ fontWeight: '500' }}>Завантаження блоку...</div>
                                     </div>

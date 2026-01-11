@@ -1,9 +1,14 @@
 // frontend/src/modules/media/components/MediaGridItem.jsx
 import React from 'react';
 import { 
-    IconStar, IconFile, IconVideo, IconPlay, 
-    IconPdf, IconWord, IconPowerPoint, IconFont 
-} from '../../../shared/ui/elements/Icons';
+    Star, 
+    File, 
+    Video, 
+    Play, 
+    FileText, 
+    Type, 
+    Presentation 
+} from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -112,7 +117,7 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
                     <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                     
                     <div style={{position: 'absolute', opacity: 0.1, transform: 'scale(1.5)'}}>
-                         <IconVideo size={100} color="white" />
+                         <Video size={100} color="white" />
                     </div>
 
                     <div style={{ 
@@ -124,21 +129,21 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
                         zIndex: 2,
                         display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
-                        <IconPlay size={32} color="white" style={{marginLeft: '4px'}}/>
+                        <Play size={32} color="white" style={{marginLeft: '4px'}}/>
                     </div>
                 </div>
             );
         }
 
-        let IconComponent = IconFile;
+        let IconComponent = File;
         let themeColor = 'var(--platform-text-secondary)';
         let bgColor = 'var(--platform-bg)';
         let badgeBg = 'rgba(0,0,0,0.05)';
 
-        if (isPdf) { IconComponent = IconPdf; themeColor = '#e53e3e'; bgColor = 'rgba(229, 62, 62, 0.04)'; badgeBg = 'rgba(229, 62, 62, 0.1)'; }
-        else if (isWord) { IconComponent = IconWord; themeColor = '#2b6cb0'; bgColor = 'rgba(43, 108, 176, 0.04)'; badgeBg = 'rgba(43, 108, 176, 0.1)'; }
-        else if (isPpt) { IconComponent = IconPowerPoint; themeColor = '#dd6b20'; bgColor = 'rgba(221, 107, 32, 0.04)'; badgeBg = 'rgba(221, 107, 32, 0.1)'; }
-        else if (isFont) { IconComponent = IconFont; themeColor = '#38a169'; bgColor = 'rgba(56, 161, 105, 0.04)'; badgeBg = 'rgba(56, 161, 105, 0.1)'; }
+        if (isPdf) { IconComponent = FileText; themeColor = '#e53e3e'; bgColor = 'rgba(229, 62, 62, 0.04)'; badgeBg = 'rgba(229, 62, 62, 0.1)'; }
+        else if (isWord) { IconComponent = FileText; themeColor = '#2b6cb0'; bgColor = 'rgba(43, 108, 176, 0.04)'; badgeBg = 'rgba(43, 108, 176, 0.1)'; }
+        else if (isPpt) { IconComponent = Presentation; themeColor = '#dd6b20'; bgColor = 'rgba(221, 107, 32, 0.04)'; badgeBg = 'rgba(221, 107, 32, 0.1)'; }
+        else if (isFont) { IconComponent = Type; themeColor = '#38a169'; bgColor = 'rgba(56, 161, 105, 0.04)'; badgeBg = 'rgba(56, 161, 105, 0.1)'; }
 
         return (
             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: bgColor, gap: '8px', position: 'relative' }}>
@@ -191,7 +196,7 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
                     onToggleFavorite(file);
                 }}
             >
-                <IconStar size={14} filled={file.is_favorite} />
+                <Star size={14} fill={file.is_favorite ? "currentColor" : "none"} />
             </button>
 
             {renderContent()}

@@ -7,7 +7,20 @@ import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { commonStyles, ToggleGroup, SectionTitle } from '../../controls/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
-import { IconImage, IconVideo, IconAlignLeft, IconAlignCenter, IconAlignRight, IconMoon, IconSun, IconMaximize, IconFileText, IconPalette, IconCursorClick, IconCheck } from '../../../../shared/ui/elements/Icons';
+import { 
+    Image, 
+    Video, 
+    AlignLeft, 
+    AlignCenter, 
+    AlignRight, 
+    Moon, 
+    Sun, 
+    Maximize, 
+    Type, 
+    Palette, 
+    MousePointerClick, 
+    Check 
+} from 'lucide-react';
 
 const isLightColor = (color) => {
     if (!color || color === 'transparent') return true;
@@ -124,20 +137,20 @@ const HeroSettings = ({ data, onChange }) => {
     ];
 
     const bgTypeOptions = [
-        { value: 'image', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><IconImage size={16}/> Фото</div> },
-        { value: 'video', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><IconVideo size={16}/> Відео</div> }
+        { value: 'image', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><Image size={16}/> Фото</div> },
+        { value: 'video', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><Video size={16}/> Відео</div> }
     ];
 
     const themeOptions = [
         { value: 'auto', label: 'Авто', title: 'Як на сайті' },
-        { value: 'light', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><IconSun size={16}/> Світла</div>, title: 'Темний текст на світлому' },
-        { value: 'dark', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><IconMoon size={16}/> Темна</div>, title: 'Світлий текст на темному' },
+        { value: 'light', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><Sun size={16}/> Світла</div>, title: 'Темний текст на світлому' },
+        { value: 'dark', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><Moon size={16}/> Темна</div>, title: 'Світлий текст на темному' },
     ];
 
     const alignOptions = [
-        { value: 'left', label: <IconAlignLeft size={18} /> },
-        { value: 'center', label: <IconAlignCenter size={18} /> },
-        { value: 'right', label: <IconAlignRight size={18} /> },
+        { value: 'left', label: <AlignLeft size={18} /> },
+        { value: 'center', label: <AlignCenter size={18} /> },
+        { value: 'right', label: <AlignRight size={18} /> },
     ];
 
     const isPreset = OVERLAY_PRESETS.some(p => p.id === safeData.overlay_color);
@@ -146,7 +159,7 @@ const HeroSettings = ({ data, onChange }) => {
     return (
         <div> 
             <div style={{ marginBottom: '2rem' }}>
-                <SectionTitle icon={<IconPalette size={18}/>}>Фон блоку</SectionTitle>
+                <SectionTitle icon={<Palette size={18}/>}>Фон блоку</SectionTitle>
 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Тип фону</label>
@@ -242,7 +255,7 @@ const HeroSettings = ({ data, onChange }) => {
                                 }}
                             >
                                 {safeData.overlay_color === preset.id && (
-                                    <IconCheck size={14} style={{ color: (preset.isNone || isLightColor(preset.id)) ? 'black' : 'white' }} />
+                                    <Check size={14} style={{ color: (preset.isNone || isLightColor(preset.id)) ? 'black' : 'white' }} />
                                 )}
                                 {preset.isNone && safeData.overlay_color !== preset.id && (
                                     <div style={{width: '2px', height: '100%', background: '#ff4444', transform: 'rotate(45deg)'}}></div>
@@ -307,13 +320,13 @@ const HeroSettings = ({ data, onChange }) => {
                         value={safeData.height} 
                         onChange={handleChange} 
                         options={heightOptions}
-                        leftIcon={<IconMaximize size={16}/>}
+                        leftIcon={<Maximize size={16}/>}
                     />
                 </div>
             </div>
 
             <div style={{ marginBottom: '2rem' }}>
-                <SectionTitle icon={<IconFileText size={18}/>}>Вміст</SectionTitle>
+                <SectionTitle icon={<Type size={18}/>}>Вміст</SectionTitle>
 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Шрифт</label>
@@ -370,7 +383,7 @@ const HeroSettings = ({ data, onChange }) => {
             </div>
 
             <div>
-                <SectionTitle icon={<IconCursorClick size={18}/>}>Кнопка дії</SectionTitle>
+                <SectionTitle icon={<MousePointerClick size={18}/>}>Кнопка дії</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <Input 

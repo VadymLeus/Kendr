@@ -7,7 +7,7 @@ import CatalogSettings from './features/editor/settings/CatalogSettings';
 import TextSettings from './features/editor/settings/TextSettings';
 import HeroSettings from './features/editor/settings/HeroSettings';
 import AnimationSettings from './common/AnimationSettings';
-import { IconX } from '../../../../common/components/ui/Icons';
+import { X } from 'lucide-react';
 
 const SettingsComponentMap = {
     banner: BannerSettings,
@@ -162,7 +162,7 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
                             e.currentTarget.style.color = 'var(--site-text-secondary)';
                         }}
                     >
-                        <IconX size={20} />
+                        <X size={20} />
                     </button>
                 </div>
                 

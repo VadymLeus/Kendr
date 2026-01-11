@@ -3,7 +3,13 @@ import React from 'react';
 import { commonStyles, SectionTitle } from '../../controls/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
-import { IconCursorClick, IconCheckCircle, IconMail, IconTrash, IconMessageSquare } from '../../../../shared/ui/elements/Icons';
+import { 
+    MousePointerClick, 
+    CheckCircle, 
+    Mail, 
+    Trash2, 
+    MessageSquare 
+} from 'lucide-react';
 
 const FormSettings = ({ data, onChange }) => {
     
@@ -13,7 +19,7 @@ const FormSettings = ({ data, onChange }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
             <div>
-                <SectionTitle icon={<IconMessageSquare size={18}/>}>Тексти форми</SectionTitle>
+                <SectionTitle icon={<MessageSquare size={18}/>}>Тексти форми</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <Input 
@@ -21,7 +27,7 @@ const FormSettings = ({ data, onChange }) => {
                         value={data.buttonText || ''}
                         onChange={(e) => updateData({ buttonText: e.target.value })}
                         placeholder="Наприклад: Надіслати"
-                        leftIcon={<IconCursorClick size={16}/>}
+                        leftIcon={<MousePointerClick size={16}/>}
                     />
                 </div>
                 
@@ -40,14 +46,14 @@ const FormSettings = ({ data, onChange }) => {
                             }}
                         />
                         <div style={{ position: 'absolute', top: '10px', left: '10px', color: 'var(--platform-text-secondary)' }}>
-                            <IconCheckCircle size={16} />
+                            <CheckCircle size={16} />
                         </div>
                     </div>
                 </div>
             </div>
 
             <div>
-                <SectionTitle icon={<IconMail size={18}/>}>Налаштування сповіщень</SectionTitle>
+                <SectionTitle icon={<Mail size={18}/>}>Налаштування сповіщень</SectionTitle>
 
                 <div style={commonStyles.formGroup}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -57,7 +63,7 @@ const FormSettings = ({ data, onChange }) => {
                                 variant="danger" 
                                 size="sm" 
                                 onClick={() => updateData({ notifyEmail: '' })}
-                                icon={<IconTrash size={14}/>}
+                                icon={<Trash2 size={14}/>}
                                 style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto' }}
                             >
                                 Очистити
@@ -70,7 +76,7 @@ const FormSettings = ({ data, onChange }) => {
                         value={data.notifyEmail || ''}
                         onChange={(e) => updateData({ notifyEmail: e.target.value })}
                         placeholder="admin@example.com"
-                        leftIcon={<IconMail size={16}/>}
+                        leftIcon={<Mail size={16}/>}
                     />
                     <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '6px', display: 'block' }}>
                         Якщо залишити порожнім, листи надходитимуть на пошту власника акаунту.

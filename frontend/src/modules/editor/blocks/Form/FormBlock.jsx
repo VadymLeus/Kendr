@@ -1,8 +1,8 @@
-// frontend/src/modules/site-editor/blocks/Form/FormBlock.jsx
+// frontend/src/modules/editor/blocks/Form/FormBlock.jsx
 import React, { useState } from 'react';
-import apiClient from '../../api';
+import apiClient from '../../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { IconSend } from '../../../../common/components/ui/Icons'; 
+import { Send } from 'lucide-react';
 
 const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -174,7 +174,7 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                         }}
                     >
                         <span>{status.loading ? 'Відправка...' : (buttonText || 'Надіслати')}</span>
-                        {!status.loading && <IconSend size={16} />}
+                        {!status.loading && <Send size={16} />}
                     </button>
                 </div>
             </form>

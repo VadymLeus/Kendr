@@ -5,7 +5,7 @@ import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { getCroppedImg } from '../../lib/utils/canvasUtils';
 import { toast } from 'react-toastify';
-import { IconX, IconCheck, IconCrop } from '../elements/Icons';
+import { X, Check, Crop } from 'lucide-react';
 import { Button } from '../elements/Button';
 
 function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
@@ -77,11 +77,11 @@ const ImageCropperModal = ({
             <div className="cropper-modal">
                 <div className="cropper-header">
                     <h3>
-                        <IconCrop size={20} style={{ color: 'var(--platform-accent)' }}/>
+                        <Crop size={20} style={{ color: 'var(--platform-accent)' }}/>
                         Кадрування
                     </h3>
                     <button onClick={onClose} className="close-btn">
-                        <IconX size={20}/>
+                        <X size={20}/>
                     </button>
                 </div>
                 
@@ -113,7 +113,7 @@ const ImageCropperModal = ({
                         variant="primary" 
                         onClick={handleConfirm} 
                         disabled={isProcessing}
-                        icon={isProcessing ? null : <IconCheck size={18}/>}
+                        icon={isProcessing ? null : <Check size={18}/>}
                     >
                         {isProcessing ? 'Обробка...' : 'Зберегти'}
                     </Button>

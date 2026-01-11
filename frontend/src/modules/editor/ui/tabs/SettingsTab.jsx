@@ -4,13 +4,13 @@ import { findBlockByPath } from '../../core/blockUtils';
 import SettingsGroup from '../../controls/SettingsGroup';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { 
-    IconSettings, 
-    IconPalette, 
-    IconFileText, 
-    IconCursorClick, 
-    IconAlertCircle,
-    IconHash
-} from '../../../../shared/ui/elements/Icons';
+    Settings, 
+    Palette, 
+    FileText, 
+    MousePointerClick, 
+    AlertCircle,
+    Hash
+} from 'lucide-react';
 import ShowCaseSettings from '../../blocks/ShowCase/ShowCaseSettings';
 import FeaturesSettings from '../../blocks/Features/FeaturesSettings';
 import CatalogSettings from '../../blocks/Catalog/CatalogSettings';
@@ -69,13 +69,13 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                     border: '1px solid var(--platform-border-color)',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
                 }}>
-                    <IconCursorClick size={36} style={{ color: 'var(--platform-accent)', opacity: 0.8 }} />
+                    <MousePointerClick size={36} style={{ color: 'var(--platform-accent)', opacity: 0.8 }} />
                 </div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--platform-text-primary)', marginBottom: '8px' }}>
                     Блок не обрано
                 </h3>
                 <p style={{ fontSize: '0.9rem', maxWidth: '260px', lineHeight: '1.5' }}>
-                    Натисніть на будь-який блок у редакторі праворуч, щоб відкрити його налаштування.
+                    Натисніть на будь-який блок у редакторі ліворуч, щоб відкрити його налаштування.
                 </p>
             </div>
         );
@@ -87,7 +87,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
         return (
              <div style={{ padding: '2rem', textAlign: 'center' }}>
                 <div style={{ color: 'var(--platform-text-secondary)', marginBottom: '1rem' }}>
-                    <IconSettings size={48} style={{ opacity: 0.2 }} />
+                    <Settings size={48} style={{ opacity: 0.2 }} />
                 </div>
                 <h4 style={{ marginBottom: '1rem' }}>{selectedBlock.type}</h4>
                 <div style={{ 
@@ -102,7 +102,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                     alignItems: 'start', 
                     textAlign: 'left' 
                 }}>
-                    <IconAlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <AlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
                     <span>Налаштування для цього типу блоку ще в розробці.</span>
                 </div>
             </div>
@@ -158,7 +158,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                     background: 'var(--platform-accent-transparent)', color: 'var(--platform-accent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                    <IconSettings size={20} />
+                    <Settings size={20} />
                 </div>
                 <div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--platform-text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.5px' }}>Редагування</div>
@@ -168,7 +168,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
             
             <SettingsGroup 
                 title="Вміст та Дані" 
-                icon={<IconFileText size={18} />}
+                icon={<FileText size={18} />}
                 defaultOpen={true}
                 storageKey={`main_${blockKey}`}
             >
@@ -181,7 +181,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
 
             <SettingsGroup 
                 title="Зовнішній вигляд" 
-                icon={<IconPalette size={18} />}
+                icon={<Palette size={18} />}
                 defaultOpen={false}
                 storageKey={`style_${blockKey}`}
             >
@@ -191,7 +191,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                         value={selectedBlock.data.anchorId || ''}
                         onChange={handleAnchorChange}
                         placeholder="наприклад: about-us"
-                        leftIcon={<IconHash size={14} />}
+                        leftIcon={<Hash size={14} />}
                     />
                     <div style={{ marginTop: '6px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4' }}>
                         Вкажіть унікальний ID, щоб створити посилання на цей блок у меню (наприклад, #about-us).

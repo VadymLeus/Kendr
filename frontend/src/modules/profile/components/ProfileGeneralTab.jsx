@@ -7,17 +7,7 @@ import { toast } from 'react-toastify';
 import { Input, Button } from '../../../shared/ui/elements';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import ImageUploader from '../../../shared/ui/complex/ImageUploader';
-import { 
-    IconUser, 
-    IconMail, 
-    IconPhone, 
-    IconTrash, 
-    IconCamera, 
-    IconShield,
-    IconAlertCircle,
-    IconCheck,
-    IconUpload 
-} from '../../../shared/ui/elements/Icons';
+import { User, Mail, Phone, Trash2, Camera, AlertCircle, Check, Upload } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
@@ -40,6 +30,7 @@ const ProfileGeneralTab = () => {
     }, [user]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -102,6 +93,7 @@ const ProfileGeneralTab = () => {
     };
 
     if (!user) return null;
+    
     const containerStyle = {
         maxWidth: '900px',
         margin: '0 auto',
@@ -214,7 +206,7 @@ const ProfileGeneralTab = () => {
                 <div style={cardStyle}>
                     <div style={{ marginBottom: '24px' }}>
                         <h3 style={sectionTitleStyle}>
-                            <IconCamera size={22} style={{ color: 'var(--platform-accent)' }} />
+                            <Camera size={22} style={{ color: 'var(--platform-accent)' }} />
                             Фото профілю
                         </h3>
                         <p style={{ ...sectionDescStyle, marginTop: '4px' }}>
@@ -250,7 +242,7 @@ const ProfileGeneralTab = () => {
                                         />
                                         
                                         <div className="avatar-overlay">
-                                            <IconUpload size={32} style={{ marginBottom: '4px' }} />
+                                            <Upload size={32} style={{ marginBottom: '4px' }} />
                                             <span style={{ fontSize: '14px', fontWeight: '500' }}>Змінити</span>
                                         </div>
                                     </div>
@@ -264,7 +256,7 @@ const ProfileGeneralTab = () => {
                                     className="trash-btn"
                                     title="Видалити фото"
                                 >
-                                    <IconTrash size={16} />
+                                    <Trash2 size={16} />
                                 </button>
                             )}
                         </div>
@@ -282,7 +274,7 @@ const ProfileGeneralTab = () => {
                 <div style={cardStyle}>
                     <div style={{ marginBottom: '24px' }}>
                         <h3 style={sectionTitleStyle}>
-                            <IconUser size={22} style={{ color: 'var(--platform-accent)' }} />
+                            <User size={22} style={{ color: 'var(--platform-accent)' }} />
                             Особисті дані
                         </h3>
                         <p style={{ ...sectionDescStyle, marginTop: '4px' }}>
@@ -296,7 +288,7 @@ const ProfileGeneralTab = () => {
                             label="Нікнейм" 
                             value={formData.username} 
                             onChange={handleChange} 
-                            icon={<IconUser size={18} />}
+                            icon={<User size={18} />}
                         />
 
                         <Input 
@@ -304,7 +296,7 @@ const ProfileGeneralTab = () => {
                             label="Email" 
                             value={user.email} 
                             disabled 
-                            icon={<IconMail size={18} />}
+                            icon={<Mail size={18} />}
                             style={{ opacity: 0.7, cursor: 'not-allowed' }}
                         />
 
@@ -313,7 +305,7 @@ const ProfileGeneralTab = () => {
                             label="Телефон" 
                             value={formData.phone_number} 
                             onChange={handleChange}
-                            icon={<IconPhone size={18} />}
+                            icon={<Phone size={18} />}
                             placeholder="+380..."
                         />
 
@@ -321,7 +313,7 @@ const ProfileGeneralTab = () => {
                             <Button 
                                 type="submit" 
                                 disabled={isLoading} 
-                                icon={isLoading ? null : <IconCheck size={18} />}
+                                icon={isLoading ? null : <Check size={18} />}
                             >
                                 {isLoading ? 'Збереження...' : 'Зберегти зміни'}
                             </Button>
@@ -349,7 +341,7 @@ const ProfileGeneralTab = () => {
                                 color: '#c53030', 
                                 marginBottom: '4px' 
                             }}>
-                                <IconAlertCircle size={22} />
+                                <AlertCircle size={22} />
                                 Небезпечна зона
                             </h3>
                             <p style={{ 
@@ -364,7 +356,7 @@ const ProfileGeneralTab = () => {
                         <Button 
                             variant="danger" 
                             onClick={handleDeleteAccount} 
-                            icon={<IconTrash size={16} />}
+                            icon={<Trash2 size={16} />}
                             style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
                         >
                             Видалити акаунт
