@@ -265,7 +265,7 @@ const PublicProfileTab = () => {
                             value={formData.bio} 
                             onChange={handleChange}
                             style={textareaStyle}
-                            className="custom-textarea"
+                            className="custom-textarea custom-scrollbar"
                             placeholder="Розкажіть трохи про себе, ваші навички та інтереси..."
                         />
                     </div>

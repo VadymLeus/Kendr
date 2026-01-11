@@ -5,10 +5,12 @@ import { toast } from 'react-toastify';
 import apiClient from '../../../shared/api/api';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { Input } from '../../../shared/ui/elements/Input';
+import { InputWithCounter } from '../../../shared/ui/complex/InputWithCounter';
 import { Button } from '../../../shared/ui/elements/Button';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import MediaPickerModal from '../../media/components/MediaPickerModal';
 import { SplitViewLayout } from '../../../shared/ui/layouts/SplitViewLayout';
+import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { 
     ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X 
 } from 'lucide-react';
@@ -281,17 +283,17 @@ const ProductTable = memo(({
                                             absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded text-[0.7rem] font-bold z-10 border border-slate-100
                                             ${product.stock_quantity > 0 ? 'text-emerald-500' : 'text-red-500'}
                                          `}>
-                                              {product.stock_quantity} шт.
+                                                 {product.stock_quantity} шт.
                                          </div>
                                          
                                          <button
-                                              onClick={(e) => { e.stopPropagation(); onDelete(product); }}
-                                              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer z-20 text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:border-red-500 hover:scale-110"
-                                              title="Видалити"
+                                                 onClick={(e) => { e.stopPropagation(); onDelete(product); }}
+                                                 className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer z-20 text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:border-red-500 hover:scale-110"
+                                                 title="Видалити"
                                          >
-                                             <X size={16} />
+                                                 <X size={16} />
                                          </button>
- 
+
                                          {isSelected && (
                                             <div className="absolute top-2 right-10 text-(--platform-accent) bg-white rounded-full p-0.5 shadow-sm z-10 animate-in fade-in zoom-in duration-200">
                                                 <CheckCircle size={20} />
@@ -337,6 +339,8 @@ const ProductEditorPanel = ({
     };
     
     const [formData, setFormData] = useState(initialFormData);
+
+    const DESCRIPTION_LIMIT = 2000;
 
     useEffect(() => {
         if (productToEdit) {
@@ -401,7 +405,13 @@ const ProductEditorPanel = ({
 
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
-                    <Input label="Назва" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                    <InputWithCounter 
+                        label="Назва" 
+                        value={formData.name} 
+                        onChange={e => setFormData({...formData, name: e.target.value})} 
+                        required 
+                        limitKey="PRODUCT_NAME"
+                    />
                     
                     <div className="flex gap-3">
                         <Input label="Ціна (₴)" type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} wrapperStyle={{flex: 1}} />
@@ -447,12 +457,18 @@ const ProductEditorPanel = ({
                          ))}
                     </div>
                     
-                    <textarea 
-                        className="w-full min-h-25 p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) resize-y custom-scrollbar focus:outline-none focus:ring-2 focus:ring-(--platform-accent)/20 focus:border-(--platform-accent)"
-                        value={formData.description} 
-                        onChange={e => setFormData({...formData, description: e.target.value})} 
-                        placeholder="Опис товару..." 
-                    />
+                    <div>
+                        <textarea 
+                            className="w-full min-h-25 p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) resize-y custom-scrollbar focus:outline-none focus:ring-2 focus:ring-(--platform-accent)/20 focus:border-(--platform-accent)"
+                            value={formData.description} 
+                            onChange={e => setFormData({...formData, description: e.target.value})} 
+                            placeholder="Опис товару..." 
+                            maxLength={DESCRIPTION_LIMIT}
+                        />
+                        <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--platform-text-secondary)', marginTop: '4px' }}>
+                            {formData.description.length} / {DESCRIPTION_LIMIT}
+                        </div>
+                    </div>
                 </div>
                 
                 <div className="p-6 border-t border-(--platform-border-color) grid grid-cols-2 gap-4 mt-auto bg-(--platform-bg) shrink-0">

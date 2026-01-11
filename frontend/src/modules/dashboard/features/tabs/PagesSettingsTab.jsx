@@ -396,7 +396,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                             subtitle="Верхній блок на всех сторінках"
                             actions={
                                 <CustomActionButton variant="editor" onClick={onEditHeader}>
-                                    <Edit size={16} /> Редактор
+                                    <Edit size={16} /> В редактор
                                 </CustomActionButton>
                             }
                         />
@@ -407,7 +407,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                             subtitle="Нижній блок на всіх сторінках"
                             actions={
                                 <CustomActionButton variant="editor" onClick={onEditFooter}>
-                                    <Edit size={16} /> Редактор
+                                    <Edit size={16} /> В редактор
                                 </CustomActionButton>
                             }
                         />
@@ -449,7 +449,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                         }}
                                         actions={
                                             <>
-                                                <CustomActionButton variant="editor" onClick={() => onEditPage(page.id)} title="Редактор">
+                                                <CustomActionButton variant="editor" onClick={() => onEditPage(page.id)} title="В редактор">
                                                     <Edit size={16} />
                                                 </CustomActionButton>
                                                 <CustomActionButton variant="settings" onClick={() => handleOpenEdit(page)} title="Налаштування">

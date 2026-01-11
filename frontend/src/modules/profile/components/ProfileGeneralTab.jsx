@@ -8,6 +8,7 @@ import { Input, Button } from '../../../shared/ui/elements';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import ImageUploader from '../../../shared/ui/complex/ImageUploader';
 import { User, Mail, Phone, Trash2, Camera, AlertCircle, Check, Upload } from 'lucide-react';
+import { TEXT_LIMITS } from '../../../shared/config/limits';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
@@ -33,6 +34,12 @@ const ProfileGeneralTab = () => {
     
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!formData.username || formData.username.trim().length < 3) {
+            toast.warn('Нікнейм повинен містити мінімум 3 символи');
+            return;
+        }
+
         setIsLoading(true);
         try {
             const response = await apiClient.put('/users/profile', formData);
@@ -289,6 +296,9 @@ const ProfileGeneralTab = () => {
                             value={formData.username} 
                             onChange={handleChange} 
                             icon={<User size={18} />}
+                            maxLength={TEXT_LIMITS.USERNAME}
+                            showCounter={true}
+                            helperText="Мінімум 3 символи"
                         />
 
                         <Input 
@@ -307,6 +317,7 @@ const ProfileGeneralTab = () => {
                             onChange={handleChange}
                             icon={<Phone size={18} />}
                             placeholder="+380..."
+                            maxLength={20}
                         />
 
                         <div style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>

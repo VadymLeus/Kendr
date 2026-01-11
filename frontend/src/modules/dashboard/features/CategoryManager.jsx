@@ -5,6 +5,7 @@ import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Input } from '../../../shared/ui/elements/Input';
+import { InputWithCounter } from '../../../shared/ui/complex/InputWithCounter';
 import { Button } from '../../../shared/ui/elements/Button';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { SplitViewLayout } from '../../../shared/ui/layouts/SplitViewLayout';
@@ -208,13 +209,13 @@ const CategoryEditor = memo(({
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden custom-scrollbar bg-(--platform-card-bg)">
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="mb-6">
-                        <Input
+                        <InputWithCounter
                             label="Назва категорії"
                             value={formData.name}
                             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                             required
                             placeholder="Наприклад: Ноутбуки"
-                            maxLength={30}
+                            limitKey="CATEGORY_NAME"
                             style={{height: '48px', fontSize: '1rem'}}
                         />
                     </div>

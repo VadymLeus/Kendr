@@ -1,4 +1,4 @@
-// frontend/src/common/utils/validationUtils.js
+// frontend/src/shared/lib/utils/validationUtils.js
 
 export const PASSWORD_REQUIREMENTS = {
     minLength: 8,

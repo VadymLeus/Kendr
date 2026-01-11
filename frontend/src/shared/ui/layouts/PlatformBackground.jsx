@@ -1,4 +1,4 @@
-// frontend/src/common/components/layout/PlatformBackground.jsx
+// frontend/src/shared/ui/layouts/PlatformBackground.jsx
 import React, { useContext } from 'react';
 import { AuthContext } from '../../../app/providers/AuthContext';
 

@@ -1,4 +1,4 @@
-// frontend/src/common/components/ui/RangeSlider.jsx
+// frontend/src/shared/ui/elements/RangeSlider.jsx
 import React from 'react';
 
 const RangeSlider = ({ 

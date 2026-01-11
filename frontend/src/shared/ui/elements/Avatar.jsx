@@ -1,4 +1,4 @@
-// frontend/src/common/components/ui/Avatar.jsx
+// frontend/src/shared/ui/elements/Avatar.jsx
 import React, { useState, useEffect } from 'react';
 
 const API_URL = 'http://localhost:5000'; 

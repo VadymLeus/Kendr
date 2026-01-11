@@ -6,10 +6,12 @@ import apiClient from '../../../shared/api/api';
 import { Input } from '../../../shared/ui/elements/Input';
 import { Button } from '../../../shared/ui/elements/Button';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
-import { ArrowLeft, Layout, Check, Loader, AlertCircle, Globe, Grid, User, Image, Trash, Search, Edit, X } from 'lucide-react';
+import EditTemplateModal from '../../../shared/ui/complex/EditTemplateModal';
+import { ArrowLeft, Layout, Check, Loader, AlertCircle, Globe, Grid, User, Image, Trash, Search, Edit } from 'lucide-react';
 import ImageInput from '../../media/components/ImageInput';
 import BlockRenderer from '../../editor/core/BlockRenderer';
 import FontLoader from '../../renderer/components/FontLoader';
+import { TEXT_LIMITS } from '../../../shared/config/limits';
 
 const API_URL = 'http://localhost:5000';
 
@@ -35,7 +37,7 @@ const CreateSitePage = () => {
 
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editFormData, setEditFormData] = useState({ name: '', description: '' });
+
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -49,6 +51,7 @@ const CreateSitePage = () => {
     });
 
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
+
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -105,33 +108,25 @@ const CreateSitePage = () => {
     const handleOpenEditModal = (e, template) => {
         e.stopPropagation();
         setEditingTemplate(template);
-        setEditFormData({
-            name: template.name,
-            description: template.description || ''
-        });
         setIsEditModalOpen(true);
     };
 
-    const handleCloseEditModal = () => {
-        setIsEditModalOpen(false);
-        setEditingTemplate(null);
-    };
-
-    const handleSaveTemplateChanges = async () => {
+    const handleSaveTemplateChanges = async (name, description) => {
         if (!editingTemplate) return;
         setIsSavingTemplate(true);
         try {
             await apiClient.put(`/user-templates/${editingTemplate.id}`, {
-                templateName: editFormData.name,
-                description: editFormData.description
+                templateName: name,
+                description: description
             });
 
             setPersonalTemplates(prev => prev.map(t => 
-                t.id === editingTemplate.id ? { ...t, name: editFormData.name, description: editFormData.description } : t
+                t.id === editingTemplate.id ? { ...t, name, description } : t
             ));
 
             toast.success('Шаблон оновлено');
-            handleCloseEditModal();
+            setIsEditModalOpen(false);
+            setEditingTemplate(null);
         } catch (error) {
             toast.error('Помилка при збереженні змін');
             console.error(error);
@@ -265,14 +260,7 @@ const CreateSitePage = () => {
 
     const handleTitleChange = (e) => {
         const val = e.target.value;
-        setFormData(prev => {
-            const autoSlug = prev.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-            const currentSlug = prev.slug;
-            const newSlug = (!currentSlug || currentSlug === autoSlug)
-                ? val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-                : currentSlug;
-            return { ...prev, title: val, slug: newSlug };
-        });
+        setFormData(prev => ({ ...prev, title: val }));
     };
 
     const handleSubmit = async (e) => {
@@ -344,7 +332,7 @@ const CreateSitePage = () => {
         return source.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }, [activeTab, systemTemplates, personalTemplates, searchQuery]);
 
-const pageStyles = `
+    const pageStyles = `
         .create-site-container { display: flex; height: 100vh; overflow: hidden; background: var(--platform-bg); font-family: var(--font-family, sans-serif); color: var(--platform-text-primary); }
         
         .left-panel { 
@@ -447,21 +435,7 @@ const pageStyles = `
         .delete-logo-btn:hover { transform: scale(1.1); background: #dc2626; }
         .add-logo-card { width: 100%; height: 100px; border: 1px dashed var(--platform-border-color); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--platform-bg); cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; }
         .add-logo-card:hover { border-color: var(--platform-accent); color: var(--platform-accent); background: rgba(0,0,0,0.02); }
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5); z-index: 100;
-            display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px);
-        }
-        .modal-content {
-            background: var(--platform-card-bg);
-            padding: 24px; border-radius: 12px;
-            width: 100%; max-width: 400px;
-            border: 1px solid var(--platform-border-color);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: popIn 0.2s ease;
-        }
-
+        
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .site-theme-context[data-site-mode="dark"] {
             --site-bg: #1a202c; 
@@ -517,51 +491,13 @@ const pageStyles = `
                 type="danger"
             />
 
-            {isEditModalOpen && (
-                <div className="modal-overlay" onClick={handleCloseEditModal}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Редагувати шаблон</h3>
-                            <button onClick={handleCloseEditModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--platform-text-secondary)' }}>
-                                <X size={20} />
-                            </button>
-                        </div>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <Input 
-                                label="Назва шаблону"
-                                value={editFormData.name}
-                                onChange={e => setEditFormData({...editFormData, name: e.target.value})}
-                                placeholder="Мій крутий шаблон"
-                            />
-                            
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500', color: 'var(--platform-text-secondary)' }}>
-                                    Опис
-                                </label>
-                                <textarea 
-                                    value={editFormData.description}
-                                    onChange={e => setEditFormData({...editFormData, description: e.target.value})}
-                                    placeholder="Короткий опис шаблону..."
-                                    style={{
-                                        width: '100%', padding: '10px', borderRadius: '8px',
-                                        border: '1px solid var(--platform-border-color)',
-                                        background: 'var(--platform-bg)', color: 'var(--platform-text-primary)',
-                                        minHeight: '80px', resize: 'vertical'
-                                    }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                                <Button variant="secondary" onClick={handleCloseEditModal} style={{ flex: 1 }}>Скасувати</Button>
-                                <Button onClick={handleSaveTemplateChanges} disabled={isSavingTemplate || !editFormData.name} style={{ flex: 1 }}>
-                                    {isSavingTemplate ? 'Збереження...' : 'Зберегти'}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <EditTemplateModal 
+                isOpen={isEditModalOpen}
+                initialData={editingTemplate}
+                onClose={() => { setIsEditModalOpen(false); setEditingTemplate(null); }}
+                onSave={handleSaveTemplateChanges}
+                isSaving={isSavingTemplate}
+            />
 
             <div className={`left-panel ${showMobilePreview ? 'mobile-hidden' : 'desktop-visible'}`}>
 
@@ -584,6 +520,8 @@ const pageStyles = `
                                 value={formData.title}
                                 onChange={handleTitleChange}
                                 leftIcon={<Layout size={18} />}
+                                maxLength={TEXT_LIMITS.SITE_NAME}
+                                helperText="Відображається в шапці сайту та SEO"
                             />
                             <div style={{ position: 'relative' }}>
                                 <Input
@@ -598,6 +536,8 @@ const pageStyles = `
                                                 slugStatus === 'taken' ? <AlertCircle size={18} style={{ color: '#EF4444' }} /> : null
                                     }
                                     error={slugStatus === 'taken' ? 'Адреса зайнята' : null}
+                                    maxLength={TEXT_LIMITS.SITE_SLUG}
+                                    showCounter={true}
                                 />
                                 <div style={{ fontSize: '12px', color: 'var(--platform-text-secondary)', marginTop: '4px', marginLeft: '4px', display: 'flex', gap: '4px' }}>
                                     <span>kendr.site/</span>

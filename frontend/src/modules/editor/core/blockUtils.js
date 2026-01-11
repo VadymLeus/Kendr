@@ -1,4 +1,4 @@
-// frontend/src/modules/site-editor/core/blockUtils.js
+// frontend/src/modules/editor/core/blockUtils.js
 import { produce } from 'immer';
 import { get } from 'lodash';
 

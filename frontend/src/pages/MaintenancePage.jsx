@@ -1,4 +1,4 @@
-// frontend/src/common/components/ui/MaintenancePage.jsx
+// frontend/src/pages/MaintenancePage.jsx
 import React from 'react';
 
 const API_URL = 'http://localhost:5000';

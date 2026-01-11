@@ -83,10 +83,10 @@ class Product {
     }
 
     static async update(productId, productData) {
-        const { name, description, price, category_id = null, stock_quantity, image_gallery, variants, sale_percentage } = productData;
+        const { name, description, price, category_id, stock_quantity, image_gallery, variants, sale_percentage } = productData;
         
         let query = 'UPDATE products SET name = ?, description = ?, price = ?, category_id = ?, stock_quantity = ?, sale_percentage = ?';
-        const params = [name, description, price, category_id, stock_quantity, sale_percentage || 0];
+        const params = [name, description, price, category_id || null, stock_quantity, sale_percentage || 0];
         
         if ('image_gallery' in productData) {
             query += ', image_gallery = ?';

@@ -5,50 +5,64 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
 import { Input, Button } from '../../../shared/ui/elements';
-import { Lock, Check, LogOut } from 'lucide-react';
-import { validatePassword } from '../../../shared/lib/utils/validationUtils';
+import { Lock, Check, LogOut, AlertCircle } from 'lucide-react';
+
+const validateLocalPassword = (password) => {
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const isLongEnough = password.length >= 8;
+
+    return {
+        isValid: hasLower && hasUpper && hasNumber && isLongEnough,
+        hasLower,
+        hasUpper,
+        hasNumber,
+        isLongEnough,
+        score: [hasLower, hasUpper, hasNumber, isLongEnough].filter(Boolean).length
+    };
+};
 
 const PasswordStrengthMeter = ({ password }) => {
-    const checks = validatePassword(password);
-    let score = 0;
-    if (password.length > 0) {
-        if (checks.length) score++;
-        if (checks.number) score++;
-        if (checks.capital) score++;
-    }
+    const { score, isValid } = validateLocalPassword(password);
 
     const getStrengthColor = () => {
-        if (score === 0) return 'var(--platform-border-color)';
-        if (score === 1) return '#e53e3e';
-        if (score === 2) return '#ecc94b';
+        if (score <= 1) return '#e53e3e';
+        if (score === 2 || score === 3) return '#ecc94b';
         return '#48bb78';
     };
 
     const getStrengthLabel = () => {
-        if (score === 0) return 'Рівень безпеки';
-        if (score === 1) return 'Слабкий';
-        if (score === 2) return 'Середній';
+        if (password.length === 0) return 'Рівень безпеки';
+        if (score <= 2) return 'Слабкий';
+        if (score === 3) return 'Середній';
         return 'Надійний';
     };
 
-    const barStyle = (index) => ({
-        height: '4px',
-        flex: 1,
-        borderRadius: '2px',
-        backgroundColor: index < score ? getStrengthColor() : 'var(--platform-border-color)',
-        transition: 'background-color 0.3s ease'
-    });
+    const bars = [1, 2, 3, 4];
 
     return (
         <div style={{ marginTop: '6px', marginBottom: '12px' }}>
             <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
-                <div style={barStyle(0)} />
-                <div style={barStyle(1)} />
-                <div style={barStyle(2)} />
+                {bars.map((barIndex) => (
+                    <div 
+                        key={barIndex}
+                        style={{
+                            height: '4px',
+                            flex: 1,
+                            borderRadius: '2px',
+                            backgroundColor: barIndex <= score ? getStrengthColor() : 'var(--platform-border-color)',
+                            transition: 'background-color 0.3s ease'
+                        }} 
+                    />
+                ))}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--platform-text-secondary)', fontWeight: '500' }}>
                 <span>{getStrengthLabel()}</span>
-                {score === 3 && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12}/> Чудовий</span>}
+                {isValid && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12}/> Чудовий</span>}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', marginTop: '4px', lineHeight: '1.2' }}>
+                Мінімум 8 символів, велика та мала літери, цифра.
             </div>
         </div>
     );
@@ -84,9 +98,9 @@ const ProfileSecurityTab = () => {
             return;
         }
 
-        const strength = validatePassword(passwords.newPassword);
-        if (!strength.isValid) {
-            toast.warning("Новий пароль недостатньо надійний");
+        const validation = validateLocalPassword(passwords.newPassword);
+        if (!validation.isValid) {
+            toast.warning("Пароль має містити мінімум 8 символів, велику літеру, малу літеру та цифру.");
             return;
         }
 
@@ -109,6 +123,7 @@ const ProfileSecurityTab = () => {
             };
             
             updateUser(updatedUser); 
+            setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
         } catch (error) {
             toast.error(error.response?.data?.message || "Помилка збереження пароля.");
@@ -149,6 +164,14 @@ const ProfileSecurityTab = () => {
         marginBottom: '24px', 
         fontSize: '0.9rem', 
         lineHeight: '1.5' 
+    };
+
+    const dangerCardStyle = {
+        ...card,
+        borderColor: '#fed7d7',
+        background: 'linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%)',
+        marginBottom: 0,
+        padding: '32px'
     };
 
     return (
@@ -220,11 +243,7 @@ const ProfileSecurityTab = () => {
                 </form>
             </div>
 
-            <div style={{ 
-                ...card, 
-                borderColor: 'rgba(229, 62, 62, 0.3)',
-                marginBottom: 0
-            }}>
+            <div style={dangerCardStyle}>
                 <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
@@ -233,25 +252,29 @@ const ProfileSecurityTab = () => {
                     gap: '16px' 
                 }}>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ ...cardTitle, color: '#e53e3e', marginBottom: '4px' }}>
-                            <LogOut size={22} />
+                        <h3 style={{ 
+                            ...cardTitle, 
+                            color: '#c53030', 
+                            marginBottom: '4px' 
+                        }}>
+                            <AlertCircle size={22} />
                             Вихід з акаунту
                         </h3>
                         <p style={{ 
                             margin: 0, 
-                            color: 'var(--platform-text-secondary)', 
-                            fontSize: '0.9rem',
-                            lineHeight: '1.4'
+                            color: '#c53030', 
+                            fontSize: '0.9rem', 
+                            opacity: 0.8 
                         }}>
                             Це завершить вашу поточну сесію в цьому браузері.
                         </p>
                     </div>
                     
                     <Button 
-                        variant="secondary-danger"
+                        variant="danger"
                         onClick={handleLogout}
                         icon={<LogOut size={18} />}
-                        style={{ flexShrink: 0 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
                     >
                         Вийти з системи
                     </Button>

@@ -1,4 +1,4 @@
-// frontend/src/common/components/ui/Button.jsx
+// frontend/src/shared/ui/elements/Button.jsx
 import React, { useState } from 'react';
 
 const VARIANTS = {

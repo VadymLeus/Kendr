@@ -1,4 +1,4 @@
-// frontend/src/common/hooks/useHistory.js
+// frontend/src/shared/hooks/useHistory.js
 import { useState, useCallback } from 'react';
 
 const useHistory = (initialState) => {

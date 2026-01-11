@@ -1,4 +1,4 @@
-// frontend/src/modules/site-render/components/CookieBanner.jsx
+// frontend/src/modules/renderer/components/CookieBanner.jsx
 import React, { useState, useEffect } from 'react';
 
 const CookieBanner = ({ settings, siteId }) => {

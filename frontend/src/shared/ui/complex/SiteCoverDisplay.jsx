@@ -1,4 +1,4 @@
-// frontend/src/common/components/ui/SiteCoverDisplay.jsx
+// frontend/src/shared/ui/complex/SiteCoverDisplay.jsx
 import React from 'react';
 
 const API_URL = 'http://localhost:5000';

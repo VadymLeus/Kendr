@@ -21,28 +21,43 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
     const currentAccentHex = resolveAccentColor(themeData.site_theme_accent);
 
     useEffect(() => {
-        setThemeData({
-            site_theme_mode: siteData.site_theme_mode || 'light',
-            site_theme_accent: siteData.site_theme_accent || 'orange',
-            theme_settings: siteData.theme_settings || {
-                font_heading: "'Roboto Mono', monospace",
-                font_body: "'Roboto Mono', monospace",
-                button_radius: '8px',
+        const newMode = siteData.site_theme_mode || 'light';
+        const newAccent = siteData.site_theme_accent || 'orange';
+        const newSettings = siteData.theme_settings || {};
+
+        setThemeData(prev => {
+            if (
+                prev.site_theme_mode === newMode &&
+                prev.site_theme_accent === newAccent &&
+                JSON.stringify(prev.theme_settings) === JSON.stringify(newSettings)
+            ) {
+                return prev;
             }
+
+            return {
+                site_theme_mode: newMode,
+                site_theme_accent: newAccent,
+                theme_settings: {
+                    font_heading: "'Roboto Mono', monospace",
+                    font_body: "'Roboto Mono', monospace",
+                    button_radius: '8px',
+                    ...newSettings
+                }
+            };
         });
     }, [siteData]);
 
     const updateThemeSetting = (key, value) => {
-        const newData = { ...themeData, [key]: value };
-        setThemeData(newData);
+        setThemeData(prev => ({ ...prev, [key]: value }));
         if (onUpdate) onUpdate({ [key]: value });
     };
 
     const updateThemeSettings = (key, value) => {
-        const newThemeSettings = { ...themeData.theme_settings, [key]: value };
-        const newData = { ...themeData, theme_settings: newThemeSettings };
-        setThemeData(newData);
-        if (onUpdate) onUpdate({ theme_settings: newThemeSettings });
+        setThemeData(prev => {
+            const newThemeSettings = { ...prev.theme_settings, [key]: value };
+            if (onUpdate) onUpdate({ theme_settings: newThemeSettings });
+            return { ...prev, theme_settings: newThemeSettings };
+        });
     };
 
     const container = { maxWidth: '900px', margin: '0 auto', padding: '0 16px' };

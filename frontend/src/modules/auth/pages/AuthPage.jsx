@@ -9,52 +9,64 @@ import { Input, Button } from '../../../shared/ui/elements';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import ImageUploader from '../../../shared/ui/complex/ImageUploader';
 import { ArrowLeft, Check, MailOpen, Trash, Camera, Upload } from 'lucide-react';
-import { validatePassword } from '../../../shared/lib/utils/validationUtils';
 
 const API_URL = 'http://localhost:5000';
 
+const validateLocalPassword = (password) => {
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const isLongEnough = password.length >= 8;
+
+    return {
+        isValid: hasLower && hasUpper && hasNumber && isLongEnough,
+        score: [hasLower, hasUpper, hasNumber, isLongEnough].filter(Boolean).length
+    };
+};
+
 const PasswordStrengthMeter = ({ password }) => {
-    const checks = validatePassword(password);
-    let score = 0;
-    if (password.length > 0) {
-        if (checks.length) score++;
-        if (checks.number) score++;
-        if (checks.capital) score++;
-    }
+    const { score, isValid } = validateLocalPassword(password);
 
     const getStrengthColor = () => {
-        if (score === 0) return 'var(--platform-border-color)';
-        if (score === 1) return '#e53e3e';
-        if (score === 2) return '#ecc94b';
-        if (score === 3) return '#48bb78';
+        if (score <= 1) return '#e53e3e';
+        if (score === 2 || score === 3) return '#ecc94b';
+        return '#48bb78';
     };
 
     const getStrengthLabel = () => {
-        if (score === 0) return 'Пароль';
-        if (score === 1) return 'Слабкий';
-        if (score === 2) return 'Середній';
-        if (score === 3) return 'Надійний';
+        if (password.length === 0) return 'Пароль';
+        if (score <= 2) return 'Слабкий';
+        if (score === 3) return 'Середній';
+        return 'Надійний';
     };
 
-    const barStyle = (index) => ({
-        height: '4px',
-        flex: 1,
-        borderRadius: '2px',
-        backgroundColor: index < score ? getStrengthColor() : 'var(--platform-border-color)',
-        transition: 'background-color 0.3s ease'
-    });
+    const bars = [1, 2, 3, 4];
 
     return (
-        <div style={{ marginTop: '4px', marginBottom: '16px' }}>
+        <div style={{ marginTop: '4px', marginBottom: '4px' }}>
             <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
-                <div style={barStyle(0)} />
-                <div style={barStyle(1)} />
-                <div style={barStyle(2)} />
+                {bars.map((barIndex) => (
+                    <div 
+                        key={barIndex}
+                        style={{
+                            height: '4px',
+                            flex: 1,
+                            borderRadius: '2px',
+                            backgroundColor: barIndex <= score ? getStrengthColor() : 'var(--platform-border-color)',
+                            transition: 'background-color 0.3s ease'
+                        }} 
+                    />
+                ))}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--platform-text-secondary)' }}>
                 <span>{getStrengthLabel()}</span>
-                {score === 3 && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12}/> Чудовий</span>}
+                {isValid && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12}/> Чудовий</span>}
             </div>
+            {!isValid && password.length > 0 && (
+                <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', marginTop: '4px', lineHeight: '1.2' }}>
+                    Мінімум 8 символів, велика та мала літери, цифра.
+                </div>
+            )}
         </div>
     );
 };
@@ -146,7 +158,7 @@ const AuthPage = () => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        const passwordChecks = validatePassword(formData.password);
+        const passwordChecks = validateLocalPassword(formData.password);
         if (!passwordChecks.isValid) {
             toast.warning("Пароль недостатньо надійний.");
             return;
@@ -216,7 +228,7 @@ const AuthPage = () => {
 
     const cardStyle = {
         width: '100%',
-        maxWidth: isRegister ? '850px' : '420px',
+        maxWidth: isRegister ? '900px' : '420px',
         background: 'var(--platform-card-bg)',
         padding: '2.5rem',
         borderRadius: '24px',
@@ -228,18 +240,11 @@ const AuthPage = () => {
         transition: 'max-width 0.3s ease'
     };
 
-    const registerGridStyle = {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '2rem',
-        marginTop: '1rem'
-    };
-
     const mobileRegisterStyle = `
         @media (max-width: 768px) {
-            .register-grid {
+            .register-input-row {
                 grid-template-columns: 1fr !important;
-                gap: 1rem !important;
+                gap: 1.5rem !important;
             }
             .auth-card {
                 padding: 1.5rem !important;
@@ -248,9 +253,8 @@ const AuthPage = () => {
 
         .avatar-wrapper {
             position: relative;
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 1.5rem auto;
+            width: 120px;
+            height: 120px;
         }
 
         .avatar-circle {
@@ -291,8 +295,8 @@ const AuthPage = () => {
             color: white;
             border: none;
             border-radius: 50%;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -300,7 +304,7 @@ const AuthPage = () => {
             z-index: 20;
             transition: background 0.2s, opacity 0.2s;
             opacity: 0;
-            transform: translate(20%, -20%);
+            transform: translate(15%, -15%);
         }
 
         .avatar-wrapper:hover .trash-btn {
@@ -336,6 +340,15 @@ const AuthPage = () => {
         transition: 'all 0.2s', 
         fontSize: '1rem',
         boxShadow: '0 2px 5px rgba(0,0,0,0.1)' 
+    };
+
+    const sectionHeaderStyle = {
+        margin: '0 0 1.25rem 0',
+        color: 'var(--platform-text-primary)',
+        fontSize: '1rem',
+        fontWeight: '600',
+        paddingBottom: '8px',
+        borderBottom: '1px solid var(--platform-border-color)'
     };
 
     if (view === 'pending_verification') {
@@ -401,10 +414,8 @@ const AuthPage = () => {
                 <form onSubmit={isRegister ? handleRegister : handleLogin}>
                     
                     {isRegister ? (
-                        <div style={registerGridStyle} className="register-grid">
-                            <div>
-                                <h4 style={{margin: '0 0 1rem 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase'}}>Особисті дані</h4>
-                                
+                        <>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
                                 <div className="avatar-wrapper">
                                     <div className="avatar-circle">
                                         <ImageUploader 
@@ -418,18 +429,18 @@ const AuthPage = () => {
                                                 <Avatar 
                                                     url={avatarData.preview} 
                                                     name={formData.username || 'User'} 
-                                                    size={100} 
-                                                    fontSize="40px"
+                                                    size={120} 
+                                                    fontSize="48px"
                                                     style={{ width: '100%', height: '100%' }}
                                                 />
                                                 
                                                 <div className="avatar-overlay">
                                                     {avatarData.preview ? (
-                                                         <Upload size={20} />
+                                                         <Upload size={24} />
                                                     ) : (
                                                          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                                                            <Camera size={24} style={{marginBottom: '4px'}}/>
-                                                            <span style={{fontSize: '10px'}}>Завантажити</span>
+                                                            <Camera size={28} style={{marginBottom: '4px'}}/>
+                                                            <span style={{fontSize: '11px', fontWeight: '500'}}>Фото</span>
                                                          </div>
                                                     )}
                                                 </div>
@@ -444,23 +455,66 @@ const AuthPage = () => {
                                             className="trash-btn"
                                             title="Видалити фото"
                                         >
-                                            <Trash size={12} />
+                                            <Trash size={14} />
                                         </button>
                                     )}
                                 </div>
-
-                                <Input name="username" label="Ім'я користувача" placeholder="Логін" value={formData.username} onChange={handleChange} required />
-                                <Input name="email" label="Email адреса" type="email" placeholder="example@mail.com" value={formData.email} onChange={handleChange} required />
                             </div>
 
-                            <div>
-                                <h4 style={{margin: '0 0 1rem 0', color: 'var(--platform-text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase'}}>Безпека</h4>
-                                
-                                <Input name="password" label="Пароль" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
-                                <PasswordStrengthMeter password={formData.password} />
-                                <Input name="confirmPassword" label="Підтвердження" type="password" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} required error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Паролі не співпадають" : ""} />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                <div>
+                                    <h4 style={sectionHeaderStyle}>Особисті дані</h4>
+                                    <div className="register-input-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                        <Input 
+                                            name="username" 
+                                            label="Ім'я користувача" 
+                                            placeholder="Логін" 
+                                            value={formData.username} 
+                                            onChange={handleChange} 
+                                            required 
+                                        />
+                                        <Input 
+                                            name="email" 
+                                            label="Email адреса" 
+                                            type="email" 
+                                            placeholder="example@mail.com" 
+                                            value={formData.email} 
+                                            onChange={handleChange} 
+                                            required 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 style={sectionHeaderStyle}>Безпека</h4>
+                                    <div className="register-input-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
+                                        <div>
+                                            <Input 
+                                                name="password" 
+                                                label="Пароль" 
+                                                type="password" 
+                                                placeholder="••••••••" 
+                                                value={formData.password} 
+                                                onChange={handleChange} 
+                                                required 
+                                            />
+                                            <PasswordStrengthMeter password={formData.password} />
+                                        </div>
+                                        
+                                        <Input 
+                                            name="confirmPassword" 
+                                            label="Підтвердження" 
+                                            type="password" 
+                                            placeholder="••••••••" 
+                                            value={formData.confirmPassword} 
+                                            onChange={handleChange} 
+                                            required 
+                                            error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Паролі не співпадають" : ""} 
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </>
                     ) : (
                         <>
                             <Input name="loginInput" label="Email або Логін" placeholder="Введіть дані" value={formData.loginInput} onChange={handleChange} required />
@@ -471,7 +525,7 @@ const AuthPage = () => {
                         </>
                     )}
 
-                    <div style={{ marginTop: isRegister ? '2rem' : '0' }}>
+                    <div style={{ marginTop: isRegister ? '2.5rem' : '0' }}>
                         <Button type="submit" disabled={isLoading} style={{ width: '100%', padding: '14px', fontSize: '1rem', borderRadius: '12px' }}>
                             {isLoading ? 'Обробка...' : (isRegister ? 'Створити акаунт' : 'Увійти')}
                         </Button>

@@ -1,4 +1,4 @@
-// frontend/src/modules/site-render/components/FontLoader.jsx
+// frontend/src/modules/renderer/components/FontLoader.jsx
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 

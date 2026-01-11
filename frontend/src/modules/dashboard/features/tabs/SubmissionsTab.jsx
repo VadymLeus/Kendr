@@ -467,7 +467,9 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                         </>
                     ) : (
                         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#a0aec0'}}>
-                            <div style={{fontSize: '4rem', marginBottom: '16px', opacity: 0.1}}>📩</div>
+                            <div style={{marginBottom: '16px', opacity: 0.1}}>
+                                <Mail size={64} strokeWidth={1.5} />
+                            </div>
                             <div style={{fontSize: '1.1rem'}}>Оберіть заявку зі списку</div>
                         </div>
                     )}

@@ -1,4 +1,4 @@
-// frontend/src/common/hooks/useConfirm.js
+// frontend/src/shared/hooks/useConfirm.js
 import { useContext } from 'react';
 import { ConfirmContext } from '../../app/providers/ConfirmContext';
 

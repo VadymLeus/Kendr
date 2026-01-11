@@ -1,4 +1,4 @@
-// frontend/src/modules/site-render/components/AnimationWrapper.jsx
+// frontend/src/modules/renderer/components/AnimationWrapper.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 

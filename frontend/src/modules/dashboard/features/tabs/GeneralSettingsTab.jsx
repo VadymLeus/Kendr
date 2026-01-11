@@ -1,5 +1,5 @@
 // frontend/src/modules/dashboard/features/tabs/GeneralSettingsTab.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../../../../shared/api/api';
@@ -8,8 +8,11 @@ import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import ImageInput from '../../../media/components/ImageInput';
 import SiteCoverDisplay from '../../../../shared/ui/complex/SiteCoverDisplay';
 import SaveTemplateModal from '../../components/SaveTemplateModal';
+import EditTemplateModal from '../../../../shared/ui/complex/EditTemplateModal';
 import { Input, Button, Select, Switch } from '../../../../shared/ui/elements';
+import { InputWithCounter } from '../../../../shared/ui/complex/InputWithCounter';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
+import { TEXT_LIMITS } from '../../../../shared/config/limits';
 import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
@@ -17,9 +20,9 @@ const API_URL = 'http://localhost:5000';
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const navigate = useNavigate();
     const { confirm } = useConfirm();
-    const [slug, setSlug] = useState(siteData.site_path);
+    const [identityData, setIdentityData] = useState({ title: '', slug: '' });
+    const [isSavingIdentity, setIsSavingIdentity] = useState(false);
     const [slugError, setSlugError] = useState('');
-    const [isSavingSlug, setIsSavingSlug] = useState(false);
     const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
     const [personalTemplates, setPersonalTemplates] = useState([]);
     const [systemTemplates, setSystemTemplates] = useState([]);
@@ -28,19 +31,17 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         try { return JSON.parse(localStorage.getItem('kendr_template_sections')) || { personal: true, system: true }; }
         catch (e) { return { personal: true, system: true }; }
     });
-
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editFormData, setEditFormData] = useState({ name: '', description: '' });
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
     const [isCoverHovered, setIsCoverHovered] = useState(false);
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [availableTags, setAvailableTags] = useState([]);
     const [selectedTags, setSelectedTags] = useState([]);
+
     const { data, handleChange, isSaving, setData } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
         {
-            title: siteData.title,
             status: siteData.status,
             favicon_url: siteData.favicon_url || '',
             logo_url: siteData.logo_url || '',
@@ -66,6 +67,11 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
 
     useEffect(() => {
         if (siteData) {
+            setIdentityData({
+                title: siteData.title || '',
+                slug: siteData.site_path || ''
+            });
+
             setData(prev => ({
                 ...prev,
                 cover_image: siteData.cover_image || '',
@@ -73,7 +79,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 cover_logo_radius: parseInt(siteData.cover_logo_radius || 0),
                 cover_logo_size: parseInt(siteData.cover_logo_size || 80),
                 cover_title_size: parseInt(siteData.cover_title_size || 24),
-                title: siteData.title,
                 status: siteData.status,
                 favicon_url: siteData.favicon_url || '',
                 logo_url: siteData.logo_url || '',
@@ -81,7 +86,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 show_title: siteData.show_title !== undefined ? siteData.show_title : true,
                 theme_settings: siteData.theme_settings || {}
             }));
-            setSlug(siteData.site_path);
+            
             if (siteData.tags) {
                 setSelectedTags(siteData.tags.map(t => t.id));
             }
@@ -103,8 +108,64 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     }, []);
 
     useEffect(() => {
-        if (onSavingChange) onSavingChange(isSaving || isSavingSlug);
-    }, [isSaving, isSavingSlug, onSavingChange]);
+        if (onSavingChange) onSavingChange(isSaving || isSavingIdentity);
+    }, [isSaving, isSavingIdentity, onSavingChange]);
+
+    const handleIdentityChange = (field, value) => {
+        if (field === 'slug') {
+            const val = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+            setIdentityData(prev => ({ ...prev, slug: val }));
+            setSlugError('');
+        } else {
+            setIdentityData(prev => ({ ...prev, [field]: value }));
+        }
+    };
+
+    const handleSaveIdentity = async () => {
+        const { title, slug } = identityData;
+        const originalSlug = siteData.site_path;
+        
+        if (slug.length < 3) { setSlugError('Мінімум 3 символи'); return; }
+
+        setIsSavingIdentity(true);
+        try {
+            const promises = [];
+            let needRedirect = false;
+            if (slug !== originalSlug) {
+                promises.push(apiClient.put(`/sites/${originalSlug}/rename`, { newPath: slug }));
+                needRedirect = true;
+            }
+
+            if (title !== siteData.title) {
+                promises.push(apiClient.put(`/sites/${originalSlug}/settings`, { title }));
+            }
+
+            if (promises.length === 0) {
+                setIsSavingIdentity(false);
+                return;
+            }
+
+            await Promise.all(promises);
+
+            toast.success('Зміни успішно збережено!');
+            
+            if (onUpdate) onUpdate({ title, site_path: slug });
+
+            if (needRedirect) {
+                setTimeout(() => { 
+                    navigate(`/dashboard/${slug}`); 
+                    window.location.reload(); 
+                }, 1000);
+            }
+
+        } catch (error) {
+            console.error(error);
+            setSlugError(error.response?.data?.message || 'Помилка збереження');
+            toast.error('Не вдалося зберегти зміни');
+        } finally {
+            setIsSavingIdentity(false);
+        }
+    };
 
     const fetchAllTemplates = async () => {
         setLoadingTemplates(true);
@@ -131,33 +192,25 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const handleOpenEditModal = (e, template) => {
         e.stopPropagation();
         setEditingTemplate(template);
-        setEditFormData({
-            name: template.name,
-            description: template.description || ''
-        });
         setIsEditModalOpen(true);
     };
 
-    const handleCloseEditModal = () => {
-        setIsEditModalOpen(false);
-        setEditingTemplate(null);
-    };
-
-    const handleSaveTemplateChanges = async () => {
+    const handleSaveTemplateChanges = async (name, description) => {
         if (!editingTemplate) return;
         setIsSavingTemplate(true);
         try {
             await apiClient.put(`/user-templates/${editingTemplate.id}`, {
-                templateName: editFormData.name,
-                description: editFormData.description
+                templateName: name,
+                description: description
             });
 
             setPersonalTemplates(prev => prev.map(t =>
-                t.id === editingTemplate.id ? { ...t, name: editFormData.name, description: editFormData.description } : t
+                t.id === editingTemplate.id ? { ...t, name, description } : t
             ));
 
             toast.success('Шаблон оновлено');
-            handleCloseEditModal();
+            setIsEditModalOpen(false);
+            setEditingTemplate(null);
         } catch (error) {
             toast.error('Помилка при збереженні змін');
         } finally {
@@ -184,14 +237,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     };
 
     const handleDeleteTemplate = async (id, name) => {
-        const isConfirmed = await confirm({
-            title: "Видалити шаблон?",
-            message: `Ви впевнені, що хочете видалити шаблон "${name}"?`,
-            type: "danger",
-            confirmLabel: "Видалити"
-        });
-
-        if (isConfirmed) {
+        if (await confirm({ title: "Видалити шаблон?", message: `Ви впевнені, що хочете видалити шаблон "${name}"?`, type: "danger", confirmLabel: "Видалити" })) {
             try {
                 await apiClient.delete(`/user-templates/${id}`);
                 toast.success("Шаблон видалено");
@@ -203,21 +249,10 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     };
 
     const handleApplyTemplate = async (templateId, isPersonal, templateName) => {
-        const isConfirmed = await confirm({
-            title: "Змінити дизайн?",
-            message: `УВАГА: Ви збираєтесь застосувати шаблон "${templateName}". Це повністю замінить поточний дизайн сайту. Продовжити?`,
-            type: "warning",
-            confirmLabel: "Так, застосувати"
-        });
-
-        if (isConfirmed) {
+        if (await confirm({ title: "Змінити дизайн?", message: `УВАГА: Ви збираєтесь застосувати шаблон "${templateName}". Це повністю замінить поточний дизайн сайту. Продовжити?`, type: "warning", confirmLabel: "Так, застосувати" })) {
             const toastId = toast.loading("Застосування шаблону...");
             try {
-                await apiClient.put(`/sites/${siteData.id}/reset-template`, {
-                    templateId,
-                    isPersonal
-                });
-
+                await apiClient.put(`/sites/${siteData.id}/reset-template`, { templateId, isPersonal });
                 toast.update(toastId, { render: `Шаблон "${templateName}" застосовано! Перезавантаження...`, type: "success", isLoading: false, autoClose: 2000 });
                 setTimeout(() => window.location.reload(), 2000);
             } catch (error) {
@@ -242,32 +277,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         const updatedCookieSettings = { ...currentCookie, [field]: value };
         const updatedThemeSettings = { ...data.theme_settings, cookie_banner: updatedCookieSettings };
         handleChange('theme_settings', updatedThemeSettings);
-    };
-
-    const handleTitleChange = (e) => {
-        const newTitle = e.target.value;
-        handleChange('title', newTitle);
-        if (onUpdate) onUpdate({ title: newTitle });
-    };
-
-    const handleSlugChange = (e) => {
-        const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
-        setSlug(val);
-        setSlugError('');
-    };
-
-    const saveSlug = async () => {
-        if (slug === siteData.site_path) return;
-        if (slug.length < 3) { setSlugError('Мінімум 3 символи'); return; }
-        setIsSavingSlug(true);
-        try {
-            await apiClient.put(`/sites/${siteData.site_path}/rename`, { newPath: slug });
-            toast.success('Адресу сайту успішно змінено! Перезавантаження...');
-            setTimeout(() => { navigate(`/dashboard/${slug}`); window.location.reload(); }, 1500);
-        } catch (error) {
-            setSlugError(error.response?.data?.message || 'Помилка зміни адреси');
-            setIsSavingSlug(false);
-        }
     };
 
     const handleDeleteSite = async () => {
@@ -302,6 +311,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         { id: 'minimal', label: 'Текст', icon: <Type size={20} /> },
         { id: 'logo_only', label: 'Лого', icon: <Image size={20} /> }
     ];
+
+    const hasIdentityChanges = identityData.title !== siteData.title || identityData.slug !== siteData.site_path;
 
     return (
         <div className="max-w-4xl mx-auto px-4">
@@ -354,9 +365,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                             src={getImageUrl(data.logo_url)} 
                                             alt="Logo" 
                                             className="max-w-[90%] max-h-[90%] object-contain"
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                            }}
+                                            onError={(e) => { e.target.style.display = 'none'; }}
                                         />
                                     ) : (
                                         <Image size={32} className="text-(--platform-text-secondary) opacity-50" />
@@ -381,32 +390,50 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         </div>
                     </div>
                 </div>
+
                 <div className="mb-4">
-                    <Input
+                    <InputWithCounter
                         label="Назва сайту (текст)"
-                        value={data.title}
-                        onChange={handleTitleChange}
+                        value={identityData.title}
+                        onChange={(e) => handleIdentityChange('title', e.target.value)}
                         placeholder="Мій інтернет-магазин"
                         leftIcon={<Type size={16}/>}
+                        limitKey="SITE_NAME"
                     />
                 </div>
+
                 <div className="mb-4">
                     <label className="block mb-2 font-medium text-(--platform-text-primary) text-sm">Веб-адреса</label>
-                    <div className="flex gap-2 items-center">
-                        <div className="py-3 px-4 bg-(--platform-bg) rounded-lg border border-(--platform-border-color) text-(--platform-text-secondary) text-sm whitespace-nowrap">
+                    <div className="flex gap-2 items-start">
+                        <div className="py-3 px-4 bg-(--platform-bg) rounded-lg border border-(--platform-border-color) text-(--platform-text-secondary) text-sm whitespace-nowrap h-11.5">
                             /site/
                         </div>
-                        <input 
-                            type="text" 
-                            className="w-full py-3 px-4 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) text-sm box-border transition-all duration-200 font-medium focus:outline-none focus:border-(--platform-accent) focus:ring-2 focus:ring-(--platform-accent)/10"
-                            value={slug} 
-                            onChange={handleSlugChange} 
-                        />
-                        <Button onClick={saveSlug} disabled={isSavingSlug}>{isSavingSlug ? '...' : 'Зберегти'}</Button>
+                        <div className="flex-1">
+                            <input 
+                                type="text" 
+                                className="w-full py-3 px-4 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) text-sm box-border transition-all duration-200 font-medium focus:outline-none focus:border-(--platform-accent) focus:ring-2 focus:ring-(--platform-accent)/10 h-11.5"
+                                value={identityData.slug} 
+                                onChange={(e) => handleIdentityChange('slug', e.target.value)} 
+                                maxLength={TEXT_LIMITS.SITE_SLUG}
+                            />
+                            <div className="flex justify-between items-start mt-1.5">
+                                <div className="text-(--platform-text-secondary) text-xs">
+                                    Максимум {TEXT_LIMITS.SITE_SLUG} символів
+                                </div>
+                                {slugError && <div className="text-[#e53e3e] text-xs flex items-center gap-1"><AlertCircle size={14} /> {slugError}</div>}
+                            </div>
+                        </div>
+                        <Button 
+                            onClick={handleSaveIdentity} 
+                            disabled={isSavingIdentity || !hasIdentityChanges}
+                            style={{ height: '46px' }}
+                        >
+                            {isSavingIdentity ? '...' : 'Зберегти'}
+                        </Button>
                     </div>
-                    {slugError && <div className="text-[#e53e3e] text-xs mt-1.5 flex items-center gap-1"><AlertCircle size={14} /> {slugError}</div>}
                 </div>
             </div>
+
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
@@ -457,6 +484,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
             </div>
+            
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
@@ -480,7 +508,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                             >
                                 <SiteCoverDisplay site={{
                                     ...siteData,
-                                    title: data.title,
+                                    title: identityData.title,
                                     logo_url: data.logo_url,
                                     cover_image: data.cover_image,
                                     cover_layout: data.cover_layout,
@@ -559,6 +587,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
             </div>
+
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
@@ -582,8 +611,22 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         </div>
                         <div className="mb-6"><Switch checked={cookieSettings.showReject !== false} onChange={(e) => handleCookieChange('showReject', e.target.checked)} label='Показати кнопку "Відхилити"' /></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <Input label="Текст кнопки прийняття" value={cookieSettings.acceptText} onChange={(e) => handleCookieChange('acceptText', e.target.value)} placeholder="Прийняти" />
-                            {(cookieSettings.showReject !== false) && (<Input label="Текст кнопки відхилення" value={cookieSettings.rejectText} onChange={(e) => handleCookieChange('rejectText', e.target.value)} placeholder="Відхилити" />)}
+                            <InputWithCounter 
+                                label="Текст кнопки прийняття" 
+                                value={cookieSettings.acceptText} 
+                                onChange={(e) => handleCookieChange('acceptText', e.target.value)} 
+                                placeholder="Прийняти" 
+                                customLimit={30}
+                            />
+                            {(cookieSettings.showReject !== false) && (
+                                <InputWithCounter 
+                                    label="Текст кнопки відхилення" 
+                                    value={cookieSettings.rejectText} 
+                                    onChange={(e) => handleCookieChange('rejectText', e.target.value)} 
+                                    placeholder="Відхилити" 
+                                    customLimit={30}
+                                />
+                            )}
                         </div>
                         <div className="mb-6 mt-6">
                             <label className="block mb-2 font-medium text-(--platform-text-primary) text-sm">Розташування банера</label>
@@ -592,6 +635,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 )}
             </div>
+
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex justify-between items-center gap-3">
                     <div>
@@ -696,6 +740,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 )}
             </div>
+
             <div className="rounded-2xl border border-[#fed7d7] p-8 mb-6 shadow-sm bg-linear-to-br from-[#fff5f5] to-[#fed7d7]">
                 <div className="flex justify-between items-center flex-wrap gap-4">
                     <div className="flex-1">
@@ -713,47 +758,14 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 onClose={() => setIsSaveTemplateModalOpen(false)}
                 onSave={handleSaveTemplate}
             />
-            {isEditModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-100 flex items-center justify-center backdrop-blur-xs" onClick={handleCloseEditModal}>
-
-                    <div className="bg-(--platform-card-bg) p-6 rounded-xl w-full max-w-100 border border-(--platform-border-color) shadow-2xl animate-[popIn_0.2s_ease]" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="m-0 text-lg font-semibold text-(--platform-text-primary)">Редагувати шаблон</h3>
-                            <button onClick={handleCloseEditModal} className="bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary)">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="flex flex-col gap-4">
-                            <Input
-                                label="Назва шаблону"
-                                value={editFormData.name}
-                                onChange={e => setEditFormData({...editFormData, name: e.target.value})}
-                                placeholder="Мій крутий шаблон"
-                            />
-
-                            <div>
-                                <label className="block mb-2 text-sm font-medium text-(--platform-text-secondary)">
-                                    Опис
-                                </label>
-                                <textarea
-                                    value={editFormData.description}
-                                    onChange={e => setEditFormData({...editFormData, description: e.target.value})}
-                                    placeholder="Короткий опис шаблону..."
-                                    className="w-full p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) min-h-20 resize-y focus:outline-none focus:border-(--platform-accent)"
-                                />
-                            </div>
-
-                            <div className="flex gap-2.5 mt-2">
-                                <Button variant="secondary" onClick={handleCloseEditModal} style={{ flex: 1 }}>Скасувати</Button>
-                                <Button onClick={handleSaveTemplateChanges} disabled={isSavingTemplate || !editFormData.name} style={{ flex: 1 }}>
-                                    {isSavingTemplate ? 'Збереження...' : 'Зберегти'}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            
+            <EditTemplateModal 
+                isOpen={isEditModalOpen}
+                initialData={editingTemplate}
+                onClose={() => { setIsEditModalOpen(false); setEditingTemplate(null); }}
+                onSave={handleSaveTemplateChanges}
+                isSaving={isSavingTemplate}
+            />
             
             <style>{`
                  @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }

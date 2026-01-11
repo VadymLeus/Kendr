@@ -1,4 +1,4 @@
-// frontend/src/common/utils/canvasUtils.js
+// frontend/src/shared/lib/utils/canvasUtils.js
 
 export const createImage = (url) =>
   new Promise((resolve, reject) => {

@@ -1,4 +1,4 @@
-// frontend/src/common/components/ui/Switch.jsx
+// frontend/src/shared/ui/elements/Switch.jsx
 import React from 'react';
 
 export const Switch = ({ 

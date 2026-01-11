@@ -1,4 +1,4 @@
-// frontend/src/common/templates/TemplateLoader.jsx
+// frontend/src/shared/lib/templates/TemplateLoader.jsx
 import React, { Suspense, lazy } from 'react';
 
 const TEMPLATE_COMPONENTS = {

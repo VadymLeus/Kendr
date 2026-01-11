@@ -1,4 +1,4 @@
-// frontend/src/common/components/ui/CustomSelect.jsx
+// frontend/src/shared/ui/elements/CustomSelect.jsx
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 

@@ -70,7 +70,7 @@ exports.addProduct = async (req, res, next) => {
             description, 
             price, 
             image_path: galleryData.length > 0 ? galleryData[0] : null,
-            category_id, 
+            category_id: category_id || null, 
             stock_quantity,
             variants,
             sale_percentage,
@@ -99,7 +99,15 @@ exports.updateProduct = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для зміни цього товару.' });
         }
 
-        const updateData = { name, description, price, category_id, stock_quantity, variants, sale_percentage };
+        const updateData = { 
+            name, 
+            description, 
+            price, 
+            category_id: category_id || null, 
+            stock_quantity, 
+            variants, 
+            sale_percentage 
+        };
 
         if (image_gallery !== undefined) {
             updateData.image_gallery = JSON.stringify(Array.isArray(image_gallery) ? image_gallery : [image_gallery]);
