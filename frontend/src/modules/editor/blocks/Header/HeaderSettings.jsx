@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import ImageInput from '../../../media/components/ImageInput';
 import { generateBlockId } from '../../core/editorConfig';
-import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';

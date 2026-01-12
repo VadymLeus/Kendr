@@ -1,6 +1,6 @@
 // frontend/src/modules/editor/blocks/Footer/FooterSettings.jsx
 import React, { useState } from 'react';
-import { commonStyles, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import { 

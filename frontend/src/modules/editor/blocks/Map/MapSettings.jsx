@@ -1,6 +1,6 @@
 // frontend/src/modules/editor/blocks/Map/MapSettings.jsx
 import React from 'react';
-import { commonStyles, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Button } from '../../../../shared/ui/elements/Button';
 import { MapPin, Maximize, Trash2, Code } from 'lucide-react';

@@ -285,7 +285,7 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
 
     return (
         <div>
-            <Section title="Ваша бібліотека" defaultOpen={true} icon={<Package size={18} />}>
+            <Section title="Ваша бібліотека" defaultOpen={false} icon={<Package size={18} />}>
                 {isLoading ? (
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem', color: 'var(--platform-text-secondary)' }}>
                         <span className="animate-spin">⌛</span>
@@ -295,7 +295,7 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
                         padding: '1.5rem 1rem', border: '1px dashed var(--platform-border-color)', 
                         borderRadius: '8px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontSize: '0.85rem', background: 'var(--platform-bg)'
                     }}>
-                        Тут будуть ваші збережені блоки.
+                        Тут будуть ваші збережені варіанти блоків.
                     </div>
                 ) : (
                     savedBlocks.map(block => (

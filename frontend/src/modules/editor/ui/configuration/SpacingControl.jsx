@@ -1,6 +1,6 @@
-// frontend/src/modules/editor/controls/SpacingControl.jsx
+// frontend/src/modules/editor/ui/configuration/SpacingControl.jsx
 import React, { useState, useEffect } from 'react';
-import RangeSlider from '../../../shared/ui/elements/RangeSlider';
+import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { 
     ArrowUp, 
     ArrowDown, 
@@ -12,6 +12,7 @@ const SpacingControl = ({ styles = {}, onChange }) => {
     const defaultPadding = 60;
     const minPadding = 0;
     const maxPadding = 240;
+    
     const getSafeValue = (val) => {
         if (val === undefined || val === null || val === '') return defaultPadding;
         const parsed = parseInt(val, 10);
@@ -53,7 +54,7 @@ const SpacingControl = ({ styles = {}, onChange }) => {
     };
 
     return (
-        <div style={{ background: 'var(--platform-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
+        <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <label style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--platform-text-primary)' }}>
                     Внутрішні відступи
@@ -64,21 +65,21 @@ const SpacingControl = ({ styles = {}, onChange }) => {
                     onClick={() => setIsLinked(!isLinked)}
                     title={isLinked ? "Роз'єднати значення" : "Зв'язати верх і низ"}
                     style={{
-                        background: isLinked ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                        background: isLinked ? 'var(--platform-accent-transparent)' : 'transparent',
                         border: isLinked ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         color: isLinked ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                        padding: '6px',
+                        padding: '4px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         transition: 'all 0.2s',
-                        width: '32px',
-                        height: '32px'
+                        width: '28px',
+                        height: '28px'
                     }}
                 >
-                    {isLinked ? <Link size={16} /> : <Unlink size={16} />}
+                    {isLinked ? <Link size={14} /> : <Unlink size={14} />}
                 </button>
             </div>
 

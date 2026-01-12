@@ -4,7 +4,7 @@ import { generateBlockId } from '../../core/editorConfig';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
-import { commonStyles, SectionTitle, ToggleGroup, ToggleSwitch } from '../../controls/SettingsUI';
+import { commonStyles, SectionTitle, ToggleGroup, ToggleSwitch } from '../../ui/configuration/SettingsUI';
 import { 
     List, Grid, AlignLeft, AlignCenter, AlignRight, Trash2, Plus, 
     Star, Zap, Shield, Truck, Gift, Clock, Phone, Settings, 

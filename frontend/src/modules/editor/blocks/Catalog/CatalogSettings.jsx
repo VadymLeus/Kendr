@@ -1,7 +1,7 @@
 // frontend/src/modules/editor/blocks/Catalog/CatalogSettings.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../../shared/api/api';
-import { commonStyles, ToggleSwitch, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, ToggleSwitch, SectionTitle } from '../../ui/configuration/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Input } from '../../../../shared/ui/elements/Input';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider'; 

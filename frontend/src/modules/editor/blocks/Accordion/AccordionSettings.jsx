@@ -1,7 +1,7 @@
 // frontend/src/modules/editor/blocks/Accordion/AccordionSettings.jsx
 import React, { useState } from 'react';
 import { generateBlockId, FONT_LIBRARY } from '../../core/editorConfig';
-import { commonStyles, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Button } from '../../../../shared/ui/elements/Button';
 import { Input } from '../../../../shared/ui/elements/Input';

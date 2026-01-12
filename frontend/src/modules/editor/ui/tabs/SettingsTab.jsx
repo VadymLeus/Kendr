@@ -1,16 +1,7 @@
 // frontend/src/modules/editor/ui/tabs/SettingsTab.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { findBlockByPath } from '../../core/blockUtils';
-import SettingsGroup from '../../controls/SettingsGroup';
-import { Input } from '../../../../shared/ui/elements/Input';
-import { 
-    Settings, 
-    Palette, 
-    FileText, 
-    MousePointerClick, 
-    AlertCircle,
-    Hash
-} from 'lucide-react';
+import { Settings, FileText, MousePointerClick, AlertCircle, SlidersHorizontal, LayoutTemplate } from 'lucide-react';
 import ShowCaseSettings from '../../blocks/ShowCase/ShowCaseSettings';
 import FeaturesSettings from '../../blocks/Features/FeaturesSettings';
 import CatalogSettings from '../../blocks/Catalog/CatalogSettings';
@@ -25,8 +16,7 @@ import MapSettings from '../../blocks/Map/MapSettings';
 import AccordionSettings from '../../blocks/Accordion/AccordionSettings';
 import SocialIconsSettings from '../../blocks/SocialIcons/SocialIconsSettings';
 import HeaderSettings from '../../blocks/Header/HeaderSettings';
-import SpacingControl from '../../controls/SpacingControl';
-import AnimationSettings from '../../controls/AnimationSettings';
+import AdvancedSettingsTab from './AdvancedSettingsTab';
 
 const SettingsComponentMap = {
     showcase: ShowCaseSettings,
@@ -46,7 +36,8 @@ const SettingsComponentMap = {
 };
 
 const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData }) => {
-    
+    const [activeTab, setActiveTab] = useState('content');
+
     const selectedBlock = selectedBlockPath 
         ? findBlockByPath(blocks, selectedBlockPath) 
         : null;
@@ -58,158 +49,160 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '100%',
-                padding: '40px 20px',
+                minHeight: '100%',
+                padding: '20px', 
                 textAlign: 'center',
                 color: 'var(--platform-text-secondary)',
             }}>
                 <div style={{ 
-                    width: '80px', height: '80px', borderRadius: '50%', background: 'var(--platform-bg)', 
+                    width: '72px', height: '72px', borderRadius: '50%', background: 'var(--platform-bg)', 
                     display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px',
                     border: '1px solid var(--platform-border-color)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                 }}>
-                    <MousePointerClick size={36} style={{ color: 'var(--platform-accent)', opacity: 0.8 }} />
+                    <MousePointerClick size={32} style={{ color: 'var(--platform-accent)', opacity: 0.9 }} />
                 </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--platform-text-primary)', marginBottom: '8px' }}>
-                    Блок не обрано
+                <h3 style={{ fontSize: '1.05rem', fontWeight: '600', color: 'var(--platform-text-primary)', marginBottom: '8px' }}>
+                    Налаштування блоку
                 </h3>
-                <p style={{ fontSize: '0.9rem', maxWidth: '260px', lineHeight: '1.5' }}>
-                    Натисніть на будь-який блок у редакторі ліворуч, щоб відкрити його налаштування.
+                <p style={{ fontSize: '0.85rem', maxWidth: '240px', lineHeight: '1.5' }}>
+                    Оберіть будь-який блок у редакторі або в списку шарів, щоб змінити його вміст та вигляд.
                 </p>
+                
+                <div style={{ 
+                    marginTop: '30px', 
+                    padding: '12px 16px', 
+                    background: 'var(--platform-bg)', 
+                    border: '1px dashed var(--platform-border-color)',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    color: 'var(--platform-text-secondary)'
+                }}>
+                   <LayoutTemplate size={14} /> 
+                   <span>Клікніть по блоку для вибору</span>
+                </div>
             </div>
         );
     }
 
     const SettingsComponent = SettingsComponentMap[selectedBlock.type];
 
-    if (!SettingsComponent) {
-        return (
-             <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <div style={{ color: 'var(--platform-text-secondary)', marginBottom: '1rem' }}>
-                    <Settings size={48} style={{ opacity: 0.2 }} />
-                </div>
-                <h4 style={{ marginBottom: '1rem' }}>{selectedBlock.type}</h4>
-                <div style={{ 
-                    padding: '16px', 
-                    background: 'rgba(239, 68, 68, 0.05)', 
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                    color: '#ef4444', 
-                    borderRadius: '8px', 
-                    fontSize: '0.9rem', 
-                    display: 'flex', 
-                    gap: '12px', 
-                    alignItems: 'start', 
-                    textAlign: 'left' 
-                }}>
-                    <AlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <span>Налаштування для цього типу блоку ще в розробці.</span>
-                </div>
-            </div>
-        )
-    }
-
     const handleLiveUpdate = (newData, addToHistory = true) => {
         onUpdateBlockData(selectedBlockPath, newData, addToHistory);
     };
 
-    const handleStyleUpdate = (newStyles, addToHistory = true) => {
-        const newData = { 
-            ...selectedBlock.data, 
-            styles: { 
-                ...selectedBlock.data.styles, 
-                ...newStyles 
-            }
-        };
-        onUpdateBlockData(selectedBlockPath, newData, addToHistory);
+    const TabButton = ({ id, label, icon: Icon }) => {
+        const isActive = activeTab === id;
+        return (
+            <button
+                onClick={() => setActiveTab(id)}
+                style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '10px 4px',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: isActive ? '2px solid var(--platform-accent)' : '2px solid transparent',
+                    color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                    fontWeight: isActive ? '600' : '500',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                }}
+            >
+                <Icon size={16} />
+                <span>{label}</span>
+            </button>
+        );
     };
-
-    const handleAnimationUpdate = (newAnimationConfig) => {
-        const newData = {
-            ...selectedBlock.data,
-            animation: newAnimationConfig
-        };
-        onUpdateBlockData(selectedBlockPath, newData, true);
-    };
-
-    const handleAnchorChange = (e) => {
-        const rawValue = e.target.value;
-        const sanitized = rawValue.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
-        
-        const newData = {
-            ...selectedBlock.data,
-            anchorId: sanitized
-        };
-        onUpdateBlockData(selectedBlockPath, newData, true);
-    };
-
-    const blockKey = selectedBlock.block_id || selectedBlock.type;
 
     return (
-        <div className="custom-scrollbar" style={{ paddingBottom: '60px' }}>
-            <div style={{ 
-                padding: '20px 0 16px', 
-                marginBottom: '20px', 
-                borderBottom: '1px solid var(--platform-border-color)',
-                display: 'flex', alignItems: 'center', gap: '12px'
+        <div style={{ 
+            minHeight: '100%', 
+            background: 'var(--platform-sidebar-bg)',
+            paddingBottom: '80px',
+            position: 'relative' 
+        }}>
+            <div style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 20,
+                background: 'var(--platform-sidebar-bg)',
+                borderBottom: '1px solid var(--platform-border-color)'
             }}>
                 <div style={{ 
-                    width: '36px', height: '36px', borderRadius: '8px', 
-                    background: 'var(--platform-accent-transparent)', color: 'var(--platform-accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    padding: '12px 16px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between'
                 }}>
-                    <Settings size={20} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ 
+                            width: '36px', height: '36px', borderRadius: '8px', 
+                            background: 'var(--platform-bg)', 
+                            border: '1px solid var(--platform-border-color)',
+                            color: 'var(--platform-accent)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <Settings size={18} />
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.05em' }}>
+                                Редагування
+                            </div>
+                            <div style={{ fontSize: '1.05rem', fontWeight: '700', textTransform: 'capitalize', color: 'var(--platform-text-primary)' }}>
+                                {selectedBlock.name || selectedBlock.type}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--platform-text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.5px' }}>Редагування</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: '700', textTransform: 'capitalize', color: 'var(--platform-text-primary)' }}>{selectedBlock.type}</div>
+
+                <div style={{ 
+                    display: 'flex', 
+                    padding: '0 16px'
+                }}>
+                    <TabButton id="content" label="Контент" icon={FileText} />
+                    <TabButton id="advanced" label="Вигляд" icon={SlidersHorizontal} />
                 </div>
             </div>
             
-            <SettingsGroup 
-                title="Вміст та Дані" 
-                icon={<FileText size={18} />}
-                defaultOpen={true}
-                storageKey={`main_${blockKey}`}
-            >
-                <SettingsComponent
-                    data={selectedBlock.data}
-                    onChange={handleLiveUpdate}
-                    siteData={siteData}
-                />
-            </SettingsGroup>
-
-            <SettingsGroup 
-                title="Зовнішній вигляд" 
-                icon={<Palette size={18} />}
-                defaultOpen={false}
-                storageKey={`style_${blockKey}`}
-            >
-                <div style={{ marginBottom: '24px' }}>
-                    <Input 
-                        label="Якір блоку (ID)"
-                        value={selectedBlock.data.anchorId || ''}
-                        onChange={handleAnchorChange}
-                        placeholder="наприклад: about-us"
-                        leftIcon={<Hash size={14} />}
-                    />
-                    <div style={{ marginTop: '6px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4' }}>
-                        Вкажіть унікальний ID, щоб створити посилання на цей блок у меню (наприклад, #about-us).
+            <div style={{ padding: '16px', animation: 'fadeIn 0.3s ease' }}>
+                <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+                
+                {activeTab === 'content' && (
+                    <div>
+                        {SettingsComponent ? (
+                            <SettingsComponent
+                                data={selectedBlock.data}
+                                onChange={handleLiveUpdate}
+                                siteData={siteData}
+                            />
+                        ) : (
+                            <div style={{ padding: '2rem', textAlign: 'center', border: '1px dashed var(--platform-border-color)', borderRadius: '8px' }}>
+                                <div style={{ color: 'var(--platform-text-secondary)', marginBottom: '1rem' }}>
+                                    <AlertCircle size={32} style={{ opacity: 0.5 }} />
+                                </div>
+                                <div style={{ fontSize: '0.9rem', color: 'var(--platform-text-secondary)' }}>
+                                    Налаштування контенту для блоку <b>{selectedBlock.type}</b> в розробці.
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </div>
-                <div style={{ marginBottom: '24px' }}>
-                    <SpacingControl 
-                        styles={selectedBlock.data.styles || {}} 
-                        onChange={handleStyleUpdate} 
+                )}
+
+                {activeTab === 'advanced' && (
+                    <AdvancedSettingsTab 
+                        data={selectedBlock.data}
+                        onUpdate={handleLiveUpdate}
                     />
-                </div>
-                <div>
-                    <AnimationSettings 
-                        animationConfig={selectedBlock.data.animation} 
-                        onChange={handleAnimationUpdate} 
-                    />
-                </div>
-            </SettingsGroup>
+                )}
+            </div>
         </div>
     );
 };

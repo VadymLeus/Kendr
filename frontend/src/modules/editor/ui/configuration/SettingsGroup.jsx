@@ -1,4 +1,4 @@
-// frontend/src/modules/editor/controls/SettingsGroup.jsx
+// frontend/src/modules/editor/ui/configuration/SettingsGroup.jsx
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 

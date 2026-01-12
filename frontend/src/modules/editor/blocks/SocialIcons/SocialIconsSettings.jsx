@@ -1,6 +1,6 @@
 // frontend/src/modules/editor/blocks/SocialIcons/SocialIconsSettings.jsx
 import React from 'react';
-import { commonStyles, ToggleGroup, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { 
     AlignLeft, 

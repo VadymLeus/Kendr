@@ -1,6 +1,6 @@
 // frontend/src/modules/editor/blocks/Layout/LayoutSettings.jsx
 import React from 'react';
-import { commonStyles, ToggleGroup } from '../../controls/SettingsUI';
+import { commonStyles, ToggleGroup } from '../../ui/configuration/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { 
     Columns, 

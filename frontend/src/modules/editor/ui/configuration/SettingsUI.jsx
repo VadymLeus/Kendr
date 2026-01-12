@@ -1,4 +1,4 @@
-// frontend/src/modules/site-editor/components/common/SettingsUI.jsx
+// frontend/src/modules/editor/ui/configuration/SettingsUI.jsx
 import React from 'react';
 
 export const commonStyles = {

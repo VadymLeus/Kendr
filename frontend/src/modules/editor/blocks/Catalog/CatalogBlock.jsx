@@ -1,10 +1,10 @@
-// frontend/src/modules/site-editor/blocks/Catalog/CatalogBlock.jsx
+// frontend/src/modules/editor/blocks/Catalog/CatalogBlock.jsx
 import React, { useState, useEffect, useMemo, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import apiClient from '../../api';
+import apiClient from '../../../../shared/api/api';
 import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
-import { Input } from '../../../../common/components/ui/Input'; 
+import { Input } from '../../../../shared/ui/elements/Input'; 
 import { 
     Search, X, ArrowUpAZ, ArrowDownAZ, 
     ShoppingBag, User, Settings

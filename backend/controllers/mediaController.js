@@ -4,16 +4,10 @@ const path = require('path');
 const fs = require('fs').promises;
 const db = require('../config/db');
 const { deleteFile } = require('../utils/fileUtils');
-
-// --- Helper: Нормалізація шляху для Web ---
-// Виправляє подвійні слеші та зворотні слеші Windows
 const normalizeWebPath = (filePath) => {
     if (!filePath) return null;
-    // 1. Замінюємо зворотні слеші на прямі
     let cleanPath = filePath.replace(/\\/g, '/');
-    // 2. Видаляємо ВСІ слеші на початку
     cleanPath = cleanPath.replace(/^\/+/, '');
-    // 3. Додаємо рівно один слеш на початку
     return `/${cleanPath}`;
 };
 
@@ -22,7 +16,6 @@ exports.getAll = async (req, res, next) => {
         const userId = req.user.id;
         const { search, type, sort, favorite, extension } = req.query;
         
-        // Фільтруємо системні файли (is_system = 0)
         let query = 'SELECT * FROM user_media WHERE user_id = ? AND is_system = 0';
         const params = [userId];
 
@@ -61,15 +54,11 @@ exports.getAll = async (req, res, next) => {
 
 exports.upload = async (req, res, next) => {
     if (!req.file) return res.status(400).json({ message: 'Файл не завантажено.' });
-
     const tempPath = req.file.path;
     const userId = req.user.id;
     const originalName = req.file.originalname; 
     const mimeType = req.file.mimetype;
-    
-    // Отримуємо прапорець isSystem
     const isSystem = req.query.isSystem === 'true' ? 1 : 0;
-    
     const ext = path.extname(originalName).toLowerCase();
     const displayName = originalName.replace(ext, '');
 
@@ -83,11 +72,7 @@ exports.upload = async (req, res, next) => {
         
         const baseFileName = `user-${userId}-${Date.now()}`;
         let finalFileName = `${baseFileName}${ext}`;
-        
-        // Шлях для файлової системи (використовуємо path.join для сумісності з ОС)
         let finalPath = path.join(__dirname, '..', 'uploads', 'media', finalFileName);
-        
-        // Шлях для WEB (формуємо вручну, щоб уникнути бекслешів)
         let publicPath = `uploads/media/${finalFileName}`;
         
         let thumbPath = null;
@@ -127,12 +112,8 @@ exports.upload = async (req, res, next) => {
 
         const stats = await fs.stat(finalPath);
         const fileSizeKb = Math.round(stats.size / 1024);
-
-        // ВАЖЛИВО: Нормалізуємо шляхи перед записом в БД
-        // Це гарантує формат "/uploads/media/file.jpg" без подвійних слешів
         const dbPathFull = normalizeWebPath(publicPath);
         const dbPathThumb = normalizeWebPath(thumbPath);
-
         const [result] = await db.query(
             `INSERT INTO user_media 
             (user_id, path_full, path_thumb, original_file_name, display_name, mime_type, file_size_kb, file_type, width, height, is_system) 
@@ -141,11 +122,9 @@ exports.upload = async (req, res, next) => {
         );
 
         const [newMedia] = await db.query('SELECT * FROM user_media WHERE id = ?', [result.insertId]);
-        
-        // Відповідь для фронтенду
         const responseData = {
             ...newMedia[0],
-            filePath: dbPathFull // Повертаємо чистий шлях
+            filePath: dbPathFull
         };
 
         res.status(201).json(responseData);
@@ -162,7 +141,6 @@ exports.updateMedia = async (req, res, next) => {
         const { id } = req.params;
         const userId = req.user.id;
         const { display_name, alt_text, description, is_favorite } = req.body;
-
         const [check] = await db.query('SELECT id FROM user_media WHERE id = ? AND user_id = ?', [id, userId]);
         if (check.length === 0) return res.status(404).json({ message: 'Файл не знайдено' });
 
@@ -191,13 +169,9 @@ exports.deleteMedia = async (req, res, next) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
-
         const [media] = await db.query('SELECT * FROM user_media WHERE id = ? AND user_id = ?', [id, userId]);
         if (media.length === 0) return res.status(404).json({ message: 'Файл не знайдено' });
-
         const file = media[0];
-
-        // Для видалення використовуємо системний шлях (path.join зробить правильні слеші для Windows/Linux)
         const absolutePathFull = path.join(__dirname, '..', file.path_full);
         await deleteFile(absolutePathFull).catch(err => console.log('File missing:', err.message));
 

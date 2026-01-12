@@ -4,7 +4,7 @@ import ImageInput from '../../../media/components/ImageInput';
 import MediaInput from '../../../media/components/MediaInput';
 import { FONT_LIBRARY } from '../../core/editorConfig';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
-import { commonStyles, ToggleGroup, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { 

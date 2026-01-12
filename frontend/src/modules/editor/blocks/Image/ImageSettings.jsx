@@ -12,7 +12,7 @@ import {
     Settings 
 } from 'lucide-react';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
-import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../ui/configuration/SettingsUI';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 
 const API_URL = 'http://localhost:5000';

@@ -2,6 +2,18 @@
 const Product = require('../models/Product');
 const Site = require('../models/Site');
 const { deleteFile } = require('../utils/fileUtils');
+const parseDecimal = (value) => {
+    if (value === '' || value === undefined || value === null) return 0;
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? 0 : parsed;
+};
+
+const parseIntNullable = (value) => {
+    if (value === '' || value === undefined || value === null) return null;
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? null : parsed;
+};
+
 
 exports.getProductById = async (req, res, next) => {
     try {
@@ -64,16 +76,20 @@ exports.addProduct = async (req, res, next) => {
             galleryData = [image_gallery];
         }
 
+        const cleanPrice = parseDecimal(price);
+        const cleanSale = parseDecimal(sale_percentage);
+        const cleanStock = parseIntNullable(stock_quantity);
+
         const newProduct = await Product.create({ 
             site_id, 
             name, 
             description, 
-            price, 
+            price: cleanPrice, 
             image_path: galleryData.length > 0 ? galleryData[0] : null,
             category_id: category_id || null, 
-            stock_quantity,
+            stock_quantity: cleanStock,
             variants,
-            sale_percentage,
+            sale_percentage: cleanSale,
             image_gallery: JSON.stringify(galleryData)
         });
         
@@ -99,14 +115,18 @@ exports.updateProduct = async (req, res, next) => {
             return res.status(403).json({ message: 'У вас немає прав для зміни цього товару.' });
         }
 
+        const cleanPrice = parseDecimal(price);
+        const cleanSale = parseDecimal(sale_percentage);
+        const cleanStock = parseIntNullable(stock_quantity);
+
         const updateData = { 
             name, 
             description, 
-            price, 
+            price: cleanPrice, 
             category_id: category_id || null, 
-            stock_quantity, 
+            stock_quantity: cleanStock, 
             variants, 
-            sale_percentage 
+            sale_percentage: cleanSale 
         };
 
         if (image_gallery !== undefined) {

@@ -1,11 +1,10 @@
-// frontend/src/modules/editor/blocks/Image/ImageBlock.jsx
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { resolveSiteLink } from '../../src/shared/lib/utils/linkUtils';
+import { resolveSiteLink } from '../../../../shared/lib/utils/linkUtils';
 import { Image as ImageIcon } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';

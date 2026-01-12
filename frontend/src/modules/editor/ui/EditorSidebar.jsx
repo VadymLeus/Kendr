@@ -4,17 +4,7 @@ import AddBlocksTab from './tabs/AddBlocksTab';
 import LayersTab from './tabs/LayersTab';
 import SettingsTab from './tabs/SettingsTab';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-
-import { 
-    Save, 
-    Plus, 
-    Layers, 
-    Settings, 
-    Star,
-    PanelTop,
-    PanelBottom,
-    File
-} from 'lucide-react';
+import { Save, Plus, Layers, Settings, Star, PanelTop, PanelBottom, File } from 'lucide-react';
 
 const EditorSidebar = ({
     blocks,
@@ -85,15 +75,14 @@ const EditorSidebar = ({
         });
     }, [allPages]);
 
-
     const saveButtonStyle = {
-        width: '100%',
         backgroundColor: 'var(--platform-accent)',
         color: 'var(--platform-accent-text)',
-        padding: '12px 24px',
+        padding: '0 12px', 
+        height: '38px', 
         borderRadius: '8px',
         border: 'none',
-        fontSize: '14px',
+        fontSize: '13px',
         fontWeight: '600',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
@@ -101,7 +90,9 @@ const EditorSidebar = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '8px'
+        gap: '6px',
+        whiteSpace: 'nowrap', 
+        flexShrink: 0 
     };
 
     const saveButtonHoverStyle = {
@@ -133,12 +124,6 @@ const EditorSidebar = ({
         color: activeTab !== tabName ? 'var(--platform-text-primary)' : 'var(--platform-accent)'
     });
     
-    const pageSwitcherStyle = {
-        padding: '1rem',
-        borderBottom: '1px solid var(--platform-border-color)',
-        background: 'var(--platform-card-bg)'
-    };
-
     const handleMouseOver = (element, hoverStyle) => {
         Object.assign(element.style, hoverStyle);
     };
@@ -157,45 +142,41 @@ const EditorSidebar = ({
             borderLeft: '1px solid var(--platform-border-color)',
         }}>
             <div style={{
-                padding: '1rem',
+                padding: '12px',
                 borderBottom: '1px solid var(--platform-border-color)',
-                background: 'var(--platform-card-bg)'
+                background: 'var(--platform-card-bg)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
             }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <CustomSelect 
+                        value={currentPageId || ''}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'footer' || val === 'header') {
+                                onSelectPage(val);
+                            } else {
+                                onSelectPage(parseInt(val, 10));
+                            }
+                        }}
+                        options={pageOptions}
+                        placeholder="Сторінка"
+                        disabled={!allPages || allPages.length === 0}
+                        style={{ width: '100%', margin: 0 }} 
+                    />
+                </div>
+
                 <button
                     onClick={handleSave}
                     style={saveButtonStyle}
                     onMouseOver={(e) => handleMouseOver(e.currentTarget, saveButtonHoverStyle)}
                     onMouseOut={(e) => handleMouseOut(e.currentTarget, saveButtonStyle)}
+                    title="Зберегти зміни"
                 >
-                    <Save size={18} /> Зберегти зміни
+                    <Save size={16} /> 
+                    <span>Зберегти</span>
                 </button>
-            </div>
-
-            <div style={pageSwitcherStyle}>
-                <label style={{
-                    fontSize: '0.8rem',
-                    fontWeight: '500',
-                    color: 'var(--platform-text-secondary)',
-                    marginBottom: '0.5rem',
-                    display: 'block'
-                }}>
-                    Поточна сторінка:
-                </label>
-                
-                <CustomSelect 
-                    value={currentPageId || ''}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'footer' || val === 'header') {
-                            onSelectPage(val);
-                        } else {
-                            onSelectPage(parseInt(val, 10));
-                        }
-                    }}
-                    options={pageOptions}
-                    placeholder="Оберіть сторінку"
-                    disabled={!allPages || allPages.length === 0}
-                />
             </div>
 
             <nav style={{ 
@@ -234,17 +215,19 @@ const EditorSidebar = ({
             </nav>
 
             <div style={{ 
-                 overflowY: 'auto', 
-                 flex: 1, 
-                 padding: '1rem',
-                 background: 'var(--platform-sidebar-bg)',
-             }}
-                 className="custom-scrollbar"
+                    overflowY: 'auto', 
+                    flex: 1, 
+                    padding: 0,
+                    background: 'var(--platform-sidebar-bg)',
+                }}
+                className="custom-scrollbar"
             >
                 {activeTab === 'add' && !isHeaderMode && (
-                    <AddBlocksTab 
-                        savedBlocksUpdateTrigger={savedBlocksUpdateTrigger} 
-                    />
+                    <div style={{ padding: '1rem' }}>
+                        <AddBlocksTab 
+                            savedBlocksUpdateTrigger={savedBlocksUpdateTrigger} 
+                        />
+                    </div>
                 )}
                 
                 {activeTab === 'layers' && !isHeaderMode && (

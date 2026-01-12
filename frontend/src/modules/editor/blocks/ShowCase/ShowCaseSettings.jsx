@@ -1,6 +1,6 @@
 // frontend/src/modules/editor/blocks/ShowCase/ShowCaseSettings.jsx
 import React, { useState } from 'react';
-import { commonStyles, SectionTitle, ToggleGroup } from '../../controls/SettingsUI';
+import { commonStyles, SectionTitle, ToggleGroup } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';

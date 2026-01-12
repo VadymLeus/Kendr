@@ -1,8 +1,8 @@
-// frontend/src/modules/editor/controls/AnimationSettings.jsx
+// frontend/src/modules/editor/ui/configuration/AnimationSettings.jsx
 import React, { useState, useEffect } from 'react';
-import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import RangeSlider from '../../../shared/ui/elements/RangeSlider';
-import { Switch } from '../../../shared/ui/elements/Switch';
+import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
+import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
+import { Switch } from '../../../../shared/ui/elements/Switch';
 import { Play, Clock, Hourglass, Repeat } from 'lucide-react';
 
 const AnimationSettings = ({ animationConfig, onChange }) => {
@@ -44,16 +44,23 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
     const labelStyle = {
         display: 'flex',
         alignItems: 'center',
-        gap: '6px',
-        fontSize: '0.85rem',
-        fontWeight: '600',
+        gap: '8px',
+        fontSize: '0.9rem',
+        fontWeight: '500',
         color: 'var(--platform-text-primary)',
-        marginBottom: '10px'
+        marginBottom: '8px'
+    };
+
+    const subLabelStyle = {
+        ...labelStyle,
+        fontSize: '0.8rem', 
+        color: 'var(--platform-text-secondary)',
+        marginBottom: '4px'
     };
 
     return (
-        <div style={{ background: 'var(--platform-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
-            <div style={{ marginBottom: '24px' }}>
+        <div>
+            <div style={{ marginBottom: config.type !== 'none' ? '20px' : '0' }}>
                 <label style={labelStyle}>
                     <Play size={16} style={{ color: 'var(--platform-accent)' }} /> 
                     Ефект появи
@@ -68,8 +75,9 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
 
             {config.type !== 'none' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    
                     <div>
-                        <div style={{ ...labelStyle, marginBottom: '4px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)' }}>
+                        <div style={subLabelStyle}>
                             <Clock size={14} /> Тривалість: <span style={{ color: 'var(--platform-text-primary)' }}>{config.duration}s</span>
                         </div>
                         <RangeSlider 
@@ -83,7 +91,7 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                     </div>
 
                     <div>
-                        <div style={{ ...labelStyle, marginBottom: '4px', fontSize: '0.8rem', color: 'var(--platform-text-secondary)' }}>
+                        <div style={subLabelStyle}>
                             <Hourglass size={14} /> Затримка: <span style={{ color: 'var(--platform-text-primary)' }}>{config.delay}s</span>
                         </div>
                         <RangeSlider 
@@ -100,7 +108,6 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'space-between', 
-                        marginTop: '10px',
                         paddingTop: '16px',
                         borderTop: '1px dashed var(--platform-border-color)'
                     }}>

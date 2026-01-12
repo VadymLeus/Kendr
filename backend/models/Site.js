@@ -96,7 +96,6 @@ class Site {
     return rows;
   }
 
-  // --- ОБНОВЛЕНО: Чтение новых настроек ---
   static async findByPath(sitePath) {
     const [sites] = await db.query(`
         SELECT
@@ -160,14 +159,12 @@ class Site {
     };
   }
 
-  // --- ОБНОВЛЕНО: Запись новых настроек ---
   static async updateSettings(siteId, data) {
     const { 
       title, status, site_theme_mode, site_theme_accent, theme_settings, 
       header_content, footer_content, favicon_url, site_title_seo, 
       cover_image, cover_layout, logo_url,
       
-      // Принимаем новые поля
       cover_logo_size, cover_logo_radius, cover_title_size
     } = data;
     
@@ -193,8 +190,6 @@ class Site {
         cover_image || null,
         cover_layout || 'centered',
         logo_url,
-        
-        // Новые параметры (с дефолтными значениями, чтобы не было NULL)
         cover_logo_size || 80,
         cover_logo_radius || 0,
         cover_title_size || 24,

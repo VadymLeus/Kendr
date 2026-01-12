@@ -1,7 +1,7 @@
 // frontend/src/modules/editor/blocks/Video/VideoSettings.jsx
 import React from 'react';
 import MediaInput from '../../../media/components/MediaInput';
-import { commonStyles, SectionTitle, ToggleSwitch } from '../../controls/SettingsUI';
+import { commonStyles, SectionTitle, ToggleSwitch } from '../../ui/configuration/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { 

@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { FONT_LIBRARY } from '../../core/editorConfig';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
-import { commonStyles, ToggleGroup, SectionTitle } from '../../controls/SettingsUI';
+import { commonStyles, ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
 import apiClient from '../../../../shared/api/api';
 import { 
     AlignLeft, 

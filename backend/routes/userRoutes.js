@@ -7,14 +7,12 @@ const verifyTokenOptional = require('../middleware/verifyTokenOptional');
 const { upload, processAndSaveImage } = require('../middleware/upload');
 
 router.get('/default-avatars', userController.getDefaultAvatars);
-
 router.get('/:username', verifyTokenOptional, userController.getPublicProfile);
 
 router.put('/profile', verifyToken, userController.updateProfile);
-
 router.put('/profile/password', verifyToken, userController.changePassword);
-
 router.put('/profile/avatar-url', verifyToken, userController.updateAvatarUrl);
+
 router.delete('/profile/avatar', verifyToken, userController.deleteAvatar);
 
 router.post(

@@ -8,14 +8,10 @@ const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 const { v4: uuidv4 } = require('uuid');
-
-// --- Допоміжні функції ---
-
 const getDefaultLogoFiles = async () => {
     try {
         const defaultLogosDir = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'default');
         const files = await fs.readdir(defaultLogosDir);
-        // Фільтруємо системні файли типу .DS_Store
         const validFiles = files.filter(f => !f.startsWith('.'));
         return validFiles.map(file => `/uploads/shops/logos/default/${file}`);
     } catch (e) {
@@ -46,8 +42,6 @@ const regenerateBlockIds = (blocks) => {
     }
     return blocks;
 };
-
-// --- Контролери ---
 
 exports.getSites = async (req, res, next) => {
     try {
@@ -90,8 +84,6 @@ exports.getDefaultLogos = async (req, res, next) => {
 exports.createSite = async (req, res, next) => {
     const { templateId, sitePath, title, selected_logo_url, isPersonal } = req.body;
     const userId = req.user.id;
-
-    // Отримуємо підключення для транзакції
     const connection = await db.getConnection();
 
     try {
@@ -101,44 +93,32 @@ exports.createSite = async (req, res, next) => {
             throw new Error('ID шаблону не було надано.');
         }
 
-        // Перевірка на існування сайту (щоб не покладатися тільки на DB constraint)
         const [existing] = await connection.query('SELECT id FROM sites WHERE site_path = ?', [sitePath]);
         if (existing.length > 0) {
             await connection.rollback();
             return res.status(400).json({ message: 'Ця адреса сайту вже зайнята.' });
         }
-
-        // --- ЛОГІКА ЛОГОТИПУ (ВИПРАВЛЕНО) ---
         let logoUrl = selected_logo_url;
-        
-        // Якщо лого не передано, шукаємо дефолтні
         if (!logoUrl) {
             const defaults = await getDefaultLogoFiles();
             if (defaults && Array.isArray(defaults) && defaults.length > 0) {
                 logoUrl = defaults[Math.floor(Math.random() * defaults.length)];
             }
         }
-
-        // Жорсткий фоллбек: гарантуємо, що це рядок і він не пустий
         if (!logoUrl || typeof logoUrl !== 'string') {
             logoUrl = '/uploads/shops/logos/default/default-logo.webp';
         }
 
         const relativeLogoUrl = logoUrl.replace(/^http:\/\/localhost:5000/, '');
-        // ------------------------------------
-
         let templateData = {};
         let siteThemeConfig = {};
 
         if (isPersonal) {
-            // Отримуємо приватний шаблон
             const [rows] = await connection.query('SELECT * FROM user_templates WHERE id = ? AND user_id = ?', [templateId, userId]);
             const personalTemplate = rows[0];
-            
             if (!personalTemplate) {
                 throw new Error('Шаблон не знайдено або у вас немає доступу.');
             }
-            // Розпарсити, якщо це рядок
             templateData = typeof personalTemplate.full_site_snapshot === 'string' 
                 ? JSON.parse(personalTemplate.full_site_snapshot) 
                 : personalTemplate.full_site_snapshot;
@@ -150,7 +130,6 @@ exports.createSite = async (req, res, next) => {
                 site_theme_accent: templateData.site_theme_accent || 'blue'
             };
         } else {
-            // Отримуємо системний шаблон
             const [templates] = await connection.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
             if (!templates[0] || !templates[0].default_block_content) {
                 throw new Error(`Шаблон з ID ${templateId} не знайдено.`);
@@ -166,8 +145,6 @@ exports.createSite = async (req, res, next) => {
         if (!templateData.pages && Array.isArray(templateData)) {
             pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }];
         }
-
-        // Оновлюємо Хедер даними нового сайту
         if (headerToSave.length > 0) {
             headerToSave = headerToSave.map(b => {
                 if (b.type === 'header') {
@@ -184,7 +161,6 @@ exports.createSite = async (req, res, next) => {
                 return b;
             });
         } else {
-            // Створюємо дефолтний хедер, якщо в шаблоні його немає
             headerToSave = [{
                 block_id: uuidv4(),
                 type: 'header',
@@ -199,17 +175,11 @@ exports.createSite = async (req, res, next) => {
                 }
             }];
         }
-
-        // 1. INSERT SITE (Вручну, щоб використати connection транзакції)
-        // Використовуємо явні значення, щоб уникнути помилки "cannot be null"
         const [siteResult] = await connection.query(
             `INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, 'draft')`,
             [userId, sitePath, title, relativeLogoUrl]
         );
         const newSiteId = siteResult.insertId;
-
-        // 2. UPDATE SETTINGS (Вручну)
-        // Готуємо дані для JSON полів
         const themeSettingsJson = JSON.stringify(siteThemeConfig.theme_settings || {});
         const headerContentJson = JSON.stringify(headerToSave);
         const footerContentJson = JSON.stringify(footerToSave);
@@ -226,8 +196,6 @@ exports.createSite = async (req, res, next) => {
              WHERE id = ?`,
             [headerContentJson, footerContentJson, themeSettingsJson, themeMode, themeAccent, newSiteId]
         );
-
-        // 3. CREATE PAGES (Вручну)
         if (pagesToCreate.length > 0) {
             for (const pageData of pagesToCreate) {
                 const pageBlocks = regenerateBlockIds(pageData.blocks || []);
@@ -246,8 +214,6 @@ exports.createSite = async (req, res, next) => {
                 [newSiteId, 'Головна', 'home', JSON.stringify([]), 1]
             );
         }
-
-        // Якщо все ок - комітимо транзакцію
         await connection.commit();
 
         res.status(201).json({ 
@@ -256,16 +222,12 @@ exports.createSite = async (req, res, next) => {
         });
 
     } catch (error) {
-        // Якщо помилка - відкочуємо все (в т.ч. створення сайту, звільняючи path)
         await connection.rollback();
         console.error('Помилка при створенні сайту:', error.message);
-        
-        // Видаляємо завантажений файл, якщо був
         if (req.file) await deleteFile(req.file.path);
         
         res.status(500).json({ message: error.message || 'Не вдалося створити сайт.' });
     } finally {
-        // Завжди закриваємо з'єднання
         connection.release();
     }
 };
