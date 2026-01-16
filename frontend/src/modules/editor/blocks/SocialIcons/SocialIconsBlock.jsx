@@ -1,13 +1,6 @@
 // frontend/src/modules/editor/blocks/SocialIcons/SocialIconsBlock.jsx
 import React from 'react';
-import { 
-    Facebook, 
-    Instagram, 
-    Send, 
-    Youtube, 
-    Music, 
-    Share2 
-} from 'lucide-react';
+import { Facebook, Instagram, Send, Youtube, Music, Share2 } from 'lucide-react';
 
 const IconsMap = {
     facebook: Facebook,

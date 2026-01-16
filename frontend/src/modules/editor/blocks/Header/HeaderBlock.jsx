@@ -1,16 +1,28 @@
 // frontend/src/modules/editor/blocks/Header/HeaderBlock.jsx
 import React, { useContext, useState, useRef, useLayoutEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { FavoritesContext } from '../../../../app/providers/FavoritesContext';
-import { resolveSiteLink } from '../../../../shared/lib/utils/linkUtils';
-import { Settings, Star, Menu } from 'lucide-react';
+import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
+import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
+import { Settings, Star, Menu, ArrowRight, ShoppingCart, Mail, Phone, Check, MousePointer2, Star as StarIcon} from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
+const ICON_MAP = {
+    arrowRight: ArrowRight,
+    cart: ShoppingCart,
+    mail: Mail,
+    phone: Phone,
+    check: Check,
+    none: null,
+    star: StarIcon,
+    pointer: MousePointer2
+};
 
-const formatBorderRadius = (radius) => {
-    if (!radius) return '0px';
-    return String(radius).match(/^[0-9]+$/) ? `${radius}px` : radius;
+const formatRadius = (val) => {
+    if (val === undefined || val === null || val === '') return '0px';
+    const str = String(val);
+    return str.endsWith('px') ? str : `${str}px`;
 };
 
 const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => {
@@ -19,9 +31,18 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         nav_items = [],
         logo_size = 'medium',
         nav_alignment = 'right',
-        nav_style = 'text',
-        borderRadius = 0 
+        nav_style = 'text', 
+        nav_fontFamily,     
+        buttonSettings = {}, 
+        logo_radius,
+        borderRadius 
     } = blockData;
+
+    const effectiveLogoRadius = logo_radius !== undefined ? logo_radius : (borderRadius || 0);
+    const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
+        navText: nav_fontFamily,
+        btnFont: buttonSettings.fontFamily 
+    }, siteData);
 
     let effectiveLogoSrc = blockData.logo_src;
     let effectiveTitle = blockData.site_title;
@@ -36,24 +57,23 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
 
     const { user } = useContext(AuthContext);
     const { favoriteSiteIds, addFavorite, removeFavorite } = useContext(FavoritesContext);
-    const navigate = useNavigate();
     const headerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(1200);
 
     useLayoutEffect(() => {
         if (!headerRef.current) return;
-
         const observer = new ResizeObserver((entries) => {
             for (let entry of entries) {
                 setContainerWidth(entry.contentRect.width);
             }
         });
-
         observer.observe(headerRef.current);
         return () => observer.disconnect();
     }, []);
+
     const IS_COMPACT_NAV = containerWidth < 850;   
     const IS_COMPACT_BTN = containerWidth < 480;   
+
     const getLogoHeight = () => {
         switch (logo_size) {
             case 'small': return '30px';
@@ -63,7 +83,66 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         }
     };
 
+    const getButtonStyle = (isHovered) => {
+        const { 
+            variant = 'solid', 
+            styleType = 'primary', 
+            borderRadius: btnRadius, 
+            size = 'medium'
+        } = buttonSettings;
+
+        const accentColor = 'var(--site-accent, #3b82f6)';
+        const textColor = 'var(--site-text-primary, #111827)'; 
+        const whiteColor = '#ffffff';
+        const colorVar = styleType === 'secondary' ? textColor : accentColor;
+        const isOutline = variant === 'outline';
+
+        let padding = '8px 16px';
+        let fontSize = '0.95rem';
+        if (size === 'small') { padding = '6px 12px'; fontSize = '0.85rem'; }
+        if (size === 'large') { padding = '12px 24px'; fontSize = '1.05rem'; }
+
+        let background, color, border;
+
+        if (isOutline) {
+            background = isHovered ? colorVar : 'transparent';
+            color = isHovered ? (styleType === 'secondary' ? 'var(--site-bg)' : whiteColor) : colorVar;
+            border = `2px solid ${colorVar}`;
+        } else {
+            background = colorVar;
+            color = whiteColor;
+            if (styleType === 'secondary') {
+                 color = 'var(--site-bg)'; 
+            }
+            border = '2px solid transparent';
+        }
+
+        const safeRadius = btnRadius !== undefined ? parseInt(btnRadius) : 4;
+
+        return {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            borderRadius: `${safeRadius}px`,
+            background: background,
+            color: color,
+            border: border,
+            fontFamily: fontStyles.btnFont,
+            fontSize,
+            fontWeight: '600',
+            textDecoration: 'none',
+            transition: 'all 0.2s ease',
+            cursor: isEditorPreview ? 'default' : 'pointer',
+            padding,
+            lineHeight: 1,
+            opacity: (isHovered && !isOutline) ? 0.9 : 1,
+            transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
+        };
+    };
+
     const headerStyle = {
+        ...cssVariables,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -81,22 +160,25 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         width: 'auto',
         objectFit: 'contain',
         transition: 'height 0.2s ease',
-        borderRadius: formatBorderRadius(borderRadius),
+        borderRadius: formatRadius(effectiveLogoRadius),
         maxWidth: '150px' 
     };
 
     const [hoveredNavId, setHoveredNavId] = useState(null);
     const [isBtnHovered, setIsBtnHovered] = useState(false);
     const [isMenuHovered, setIsMenuHovered] = useState(false);
+    
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isFavorite = siteData && favoriteSiteIds.has(parseInt(siteData.id));
     const logoUrl = (effectiveLogoSrc && typeof effectiveLogoSrc === 'string')
         ? (effectiveLogoSrc.startsWith('http') ? effectiveLogoSrc : `${API_URL}${effectiveLogoSrc}`)
         : null;
+        
     const NavWrapper = isEditorPreview ? 'div' : Link;
     const ActionWrapper = isEditorPreview ? 'div' : Link;
     const siteRoot = resolveSiteLink('/', siteData?.site_path);
     const homeLink = isEditorPreview ? '#' : siteRoot;
+
     const iconBtnBaseStyle = {
         display: 'flex',
         alignItems: 'center',
@@ -125,23 +207,16 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         color: isMenuHovered ? 'var(--site-accent)' : 'var(--site-text-primary)',
     };
 
-    const navLinkBaseStyle = {
-        textDecoration: 'none',
-        fontWeight: '500',
-        fontSize: '0.95rem',
-        transition: 'all 0.2s ease',
-        cursor: isEditorPreview ? 'default' : 'pointer',
-        padding: nav_style === 'button' ? '8px 16px' : '4px 0',
-        borderRadius: nav_style === 'button' ? 'var(--btn-radius, 8px)' : '0',
-    };
-
     return (
         <header ref={headerRef} style={headerStyle}>
+            <RenderFonts />
+
             <NavWrapper to={homeLink} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit', flexShrink: 0 }} onClick={e => isEditorPreview && e.preventDefault()}>
                 {logoUrl && <img src={logoUrl} alt="Logo" style={logoImgStyle} />}
                 {show_title && (
                     <span style={{ 
                         fontWeight: '700', 
+                        fontFamily: fontStyles.navText,
                         fontSize: IS_COMPACT_BTN ? '1rem' : '1.2rem',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -152,25 +227,41 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                     </span>
                 )}
             </NavWrapper>
+
             {!IS_COMPACT_NAV && (
                 <nav style={{ 
                     display: 'flex', 
                     gap: '24px', 
                     flex: 1, 
                     justifyContent: nav_alignment === 'center' ? 'center' : (nav_alignment === 'left' ? 'flex-start' : 'flex-end'),
-                    padding: '0 20px'
+                    padding: '0 20px',
+                    alignItems: 'center'
                 }}>
                     {nav_items.map((item) => {
                         const isHovered = hoveredNavId === item.id;
-                        
-                        let itemStyle = { ...navLinkBaseStyle };
-                        
+                        let itemStyle = {};
+
                         if (nav_style === 'button') {
-                            itemStyle.backgroundColor = isHovered ? 'var(--site-accent-hover)' : 'var(--site-accent)';
-                            itemStyle.color = 'var(--site-accent-text)'; 
+                            const btnStyle = getButtonStyle(isHovered);
+                            itemStyle = { ...btnStyle };
                         } else {
-                            itemStyle.color = isHovered ? 'var(--site-accent)' : 'inherit';
+                            itemStyle = {
+                                textDecoration: 'none',
+                                fontWeight: '500',
+                                fontSize: '0.95rem',
+                                transition: 'all 0.2s ease',
+                                cursor: isEditorPreview ? 'default' : 'pointer',
+                                padding: '4px 0',
+                                color: isHovered ? 'var(--site-accent)' : 'inherit',
+                                fontFamily: fontStyles.navText
+                            };
                         }
+
+                        const IconComp = (nav_style === 'button' && buttonSettings.icon && buttonSettings.icon !== 'none') 
+                            ? ICON_MAP[buttonSettings.icon] 
+                            : null;
+                        const iconPos = buttonSettings.iconPosition || 'right';
+                        const isFlipped = buttonSettings.iconFlip;
 
                         return (
                             <NavWrapper 
@@ -181,7 +272,15 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                                 onMouseEnter={() => setHoveredNavId(item.id)}
                                 onMouseLeave={() => setHoveredNavId(null)}
                             >
-                                {item.label}
+                                {nav_style === 'button' && IconComp && iconPos === 'left' && (
+                                    <IconComp size={16} style={{ transform: isFlipped ? 'scaleX(-1)' : 'none' }} />
+                                )}
+                                
+                                <span>{item.label}</span>
+
+                                {nav_style === 'button' && IconComp && iconPos === 'right' && (
+                                    <IconComp size={16} style={{ transform: isFlipped ? 'scaleX(-1)' : 'none' }} />
+                                )}
                             </NavWrapper>
                         );
                     })}
@@ -222,7 +321,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                         <Star size={20} fill={isFavorite ? "currentColor" : "none"} />
                     </button>
                 )}
-
             </div>
         </header>
     );

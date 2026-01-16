@@ -2,7 +2,6 @@
 import React from 'react';
 
 const API_URL = 'http://localhost:5000';
-
 const PRESET_COLORS = {
     green: '#48bb78', orange: '#ed8936', blue: '#4299e1', red: '#f56565',
     purple: '#9f7aea', yellow: '#ecc94b', gray: '#718096', black: '#000000',
@@ -21,7 +20,6 @@ const SiteCoverDisplay = ({ site, style, className }) => {
     const logoSize = parseInt(site.cover_logo_size) || 80;
     const logoRadius = parseInt(site.cover_logo_radius) || 0;
     const titleSize = parseInt(site.cover_title_size) || 24;
-
     const fullCoverImage = cover_image 
         ? (cover_image.startsWith('http') ? cover_image : `${API_URL}${cover_image}`) 
         : null;
@@ -32,7 +30,6 @@ const SiteCoverDisplay = ({ site, style, className }) => {
 
     const accentColor = PRESET_COLORS[site_theme_accent] || site_theme_accent || '#ed8936';
     const isDark = site_theme_mode === 'dark';
-    
     const wrapperStyle = {
         width: '100%',
         height: '100%',

@@ -4,8 +4,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Button } from '../../../shared/ui/elements/Button';
-import { Send, X, Info, FileText, Edit } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { Send, X, Info, FileText, Edit } from 'lucide-react';
 
 const NewTicketPage = () => {
     const [subject, setSubject] = useState('');

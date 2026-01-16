@@ -1,9 +1,14 @@
-// frontend/src/modules/site-editor/blocks/Accordion/AccordionItem.jsx
-import React, { useState } from 'react';
+// frontend/src/modules/editor/blocks/Accordion/AccordionItem.jsx
+import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const AccordionItem = ({ item, isEditorPreview }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+const AccordionItem = ({ item, isEditorPreview, titleFont, contentFont }) => {
+    const [isExpanded, setIsExpanded] = useState(item.isOpenDefault || false);
+    
+    useEffect(() => {
+        setIsExpanded(item.isOpenDefault || false);
+    }, [item.isOpenDefault]);
+
     const borderColor = 'var(--site-border-color)';
     const headerBg = 'var(--site-card-bg)'; 
     const bodyBg = 'var(--site-bg)';
@@ -35,8 +40,8 @@ const AccordionItem = ({ item, isEditorPreview }) => {
         fontWeight: '600',
         color: textPrimary,
         margin: 0,
-        fontFamily: 'inherit',
-        fontSize: '1.1rem'
+        fontSize: '1.1rem',
+        fontFamily: titleFont || 'inherit'
     };
 
     const iconWrapperStyle = {
@@ -55,7 +60,7 @@ const AccordionItem = ({ item, isEditorPreview }) => {
         whiteSpace: 'pre-wrap',
         display: isExpanded ? 'block' : 'none',
         backgroundColor: bodyBg,
-        fontFamily: 'inherit'
+        fontFamily: contentFont || 'inherit'
     };
 
     const handleClick = () => {

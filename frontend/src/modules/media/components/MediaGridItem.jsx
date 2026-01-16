@@ -1,14 +1,6 @@
 // frontend/src/modules/media/components/MediaGridItem.jsx
 import React from 'react';
-import { 
-    Star, 
-    File, 
-    Video, 
-    Play, 
-    FileText, 
-    Type, 
-    Presentation 
-} from 'lucide-react';
+import { Star, File, Video, Play, FileText, Type, Presentation } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -16,12 +8,10 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
     const isImage = file.mime_type.startsWith('image/');
     const isVideo = file.mime_type.startsWith('video/');
     const isFont = file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name);
-    
     const ext = file.original_file_name.split('.').pop().toLowerCase();
     const isPdf = ext === 'pdf';
     const isWord = ext === 'docx' || ext === 'doc';
     const isPpt = ext === 'pptx' || ext === 'ppt';
-
     const containerStyle = {
         position: 'relative',
         aspectRatio: '1/1',

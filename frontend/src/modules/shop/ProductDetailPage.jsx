@@ -1,12 +1,13 @@
 // frontend/src/modules/shop/pages/ProductDetailPage.jsx
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
-import { useParams, useNavigate, useOutletContext, Link } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import apiClient from '../../../shared/api/api';
-import { CartContext } from '../../../app/providers/CartContext';
-import { AuthContext } from '../../../app/providers/AuthContext';
-import BlockRenderer from '../../editor/core/BlockRenderer';
+import apiClient from '../../shared/api/api';
+import { CartContext } from '../../app/providers/CartContext';
+import { AuthContext } from '../../app/providers/AuthContext';
+import BlockRenderer from '../editor/core/BlockRenderer';
 import { Folder } from 'lucide-react';
+import ProductCard from '../editor/ui/components/ProductCard'; 
 import styles from './ProductDetailPage.module.css';
 
 const API_URL = 'http://localhost:5000';
@@ -17,12 +18,10 @@ const ProductDetailPage = () => {
     const { addToCart } = useContext(CartContext);
     const { user } = useContext(AuthContext);
     const { siteData, isSiteLoading } = useOutletContext();
-
     const [product, setProduct] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
     const [selectedOptions, setSelectedOptions] = useState({});
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [imageScale, setImageScale] = useState(1);
@@ -30,9 +29,7 @@ const ProductDetailPage = () => {
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
     const [isHovering, setIsHovering] = useState(false);
-    
     const imageContainerRef = useRef(null);
-    
     const [priceData, setPriceData] = useState({
         finalPrice: 0,
         originalPrice: 0,
@@ -192,11 +189,9 @@ const ProductDetailPage = () => {
         if (isDragging && imageScale > 1) {
             const newX = e.clientX - dragStart.x;
             const newY = e.clientY - dragStart.y;
-            
             const maxDrag = 200;
             const limitedX = Math.max(Math.min(newX, maxDrag), -maxDrag);
             const limitedY = Math.max(Math.min(newY, maxDrag), -maxDrag);
-            
             setImagePosition({
                 x: limitedX,
                 y: limitedY
@@ -209,14 +204,11 @@ const ProductDetailPage = () => {
             const { left, top, width, height } = imageContainerRef.current.getBoundingClientRect();
             const x = e.clientX - left;
             const y = e.clientY - top;
-
             const moveX = (width / 2 - x) * (imageScale - 1);
             const moveY = (height / 2 - y) * (imageScale - 1);
-
             const maxMove = 150;
             const limitedMoveX = Math.max(Math.min(moveX, maxMove), -maxMove);
             const limitedMoveY = Math.max(Math.min(moveY, maxMove), -maxMove);
-
             setImagePosition({ 
                 x: limitedMoveX, 
                 y: limitedMoveY 
@@ -246,7 +238,6 @@ const ProductDetailPage = () => {
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            
             switch(e.key) {
                 case '+':
                 case '=':
@@ -350,7 +341,6 @@ const ProductDetailPage = () => {
         : '/icon-light.webp';
     const siteTitle = siteData?.site_title_seo || siteData?.title || 'Kendr Store';
     const pageTitle = `${product.name} | ${siteTitle}`;
-
     const getMainImageStyle = () => ({
         transform: `scale(${imageScale}) translate(${imagePosition.x}px, ${imagePosition.y}px)`,
         transition: isDragging ? 'none' : 'transform 0.2s ease',
@@ -576,33 +566,17 @@ const ProductDetailPage = () => {
                         }}>
                             Інші товари
                         </h2>
+                        
                         <div className={`${styles.productsGrid} products-grid-recommendations`}>
-                            {relatedProducts.map(relProd => {
-                                const relImg = (relProd.image_gallery && relProd.image_gallery.length > 0) 
-                                    ? (typeof relProd.image_gallery === 'string' ? JSON.parse(relProd.image_gallery)[0] : relProd.image_gallery[0]) 
-                                    : null;
-                                const fullRelImg = relImg ? (relImg.startsWith('http') ? relImg : `${API_URL}${relImg}`) : 'https://placehold.co/300';
-
-                                return (
-                                    <Link to={`/product/${relProd.id}`} key={relProd.id} className={styles.productCard}>
-                                        <div className={styles.productImageContainer}>
-                                            <img 
-                                                src={fullRelImg} 
-                                                alt={relProd.name} 
-                                                className={styles.productCardImage}
-                                            />
-                                        </div>
-                                        <div className={styles.productCardContent}>
-                                            <h4 className={styles.productCardTitle}>
-                                                {relProd.name}
-                                            </h4>
-                                            <div className={styles.productCardPrice}>
-                                                {relProd.price} ₴
-                                            </div>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
+                            {relatedProducts.map(relProd => (
+                                <div key={relProd.id} style={{ height: '100%', minWidth: 0 }}>
+                                    <ProductCard 
+                                        product={relProd}
+                                        isEditorPreview={false}
+                                        siteData={siteData}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

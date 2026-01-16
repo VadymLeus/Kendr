@@ -1,6 +1,5 @@
 // frontend/src/shared/ui/elements/Switch.jsx
 import React from 'react';
-
 export const Switch = ({ 
     checked, 
     onChange, 
@@ -9,6 +8,12 @@ export const Switch = ({
     className = '',
     style = {}
 }) => {
+    
+    const handleChange = (e) => {
+        if (disabled || !onChange) return;
+        onChange(e.target.checked);
+    };
+
     return (
         <label 
             className={`custom-switch-wrapper ${className}`} 
@@ -67,8 +72,8 @@ export const Switch = ({
             <input 
                 type="checkbox" 
                 className="custom-switch-input"
-                checked={checked}
-                onChange={(e) => !disabled && onChange && onChange(e)}
+                checked={!!checked}
+                onChange={handleChange}
                 disabled={disabled}
             />
             
@@ -89,3 +94,5 @@ export const Switch = ({
         </label>
     );
 };
+
+export default Switch;

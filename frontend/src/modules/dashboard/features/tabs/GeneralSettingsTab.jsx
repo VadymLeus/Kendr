@@ -10,10 +10,15 @@ import SiteCoverDisplay from '../../../../shared/ui/complex/SiteCoverDisplay';
 import SaveTemplateModal from '../../components/SaveTemplateModal';
 import EditTemplateModal from '../../../../shared/ui/complex/EditTemplateModal';
 import { Input, Button, Select, Switch } from '../../../../shared/ui/elements';
+import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { InputWithCounter } from '../../../../shared/ui/complex/InputWithCounter';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { TEXT_LIMITS } from '../../../../shared/config/limits';
-import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout } from 'lucide-react';
+import { 
+    Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, 
+    List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, 
+    Briefcase, Edit, Layout, FileText
+} from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 
@@ -42,7 +47,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const { data, handleChange, isSaving, setData } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
         {
-            status: siteData.status,
+            status: siteData.status || 'draft',
             favicon_url: siteData.favicon_url || '',
             logo_url: siteData.logo_url || '',
             site_title_seo: siteData.site_title_seo || siteData.title,
@@ -314,6 +319,12 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
 
     const hasIdentityChanges = identityData.title !== siteData.title || identityData.slug !== siteData.site_path;
 
+    // --- Оновлені опції статусів (лише доступні користувачу) ---
+    const statusOptions = [
+        { value: 'published', label: 'Опубліковано (Доступний)', icon: Globe, iconProps: { className: 'text-green-500' } },
+        { value: 'draft', label: 'Чернетка (Прихований)', icon: FileText, iconProps: { className: 'text-gray-500' } }
+    ];
+
     return (
         <div className="max-w-4xl mx-auto px-4">
             <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
@@ -434,11 +445,49 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
+            {/* --- СЕКЦІЯ СТАТУСУ (Центрована) --- */}
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
+                <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                        <Globe size={22} className="text-(--platform-accent)" /> Статус сайту
+                    </h3>
+                    <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
+                        Визначає видимість вашого сайту для відвідувачів.
+                    </p>
+                </div>
+                {/* Додано mx-auto для центрування */}
+                <div className="max-w-md mx-auto">
+                    <label className="block mb-2 font-medium text-(--platform-text-primary) text-sm">
+                        Поточний статус
+                    </label>
+                    
+                    {data.status === 'suspended' ? (
+                        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-start gap-3">
+                            <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                            <div>
+                                <div className="font-semibold mb-1">Сайт призупинено адміністратором</div>
+                                <div className="text-sm opacity-90 leading-relaxed">
+                                    Робота сайту тимчасово зупинена. Ви не можете змінити статус самостійно. Будь ласка, зверніться до служби підтримки для відновлення доступу.
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <CustomSelect 
+                            name="status"
+                            value={data.status === 'private' ? 'draft' : data.status} 
+                            onChange={(e) => handleChange('status', e.target.value)}
+                            options={statusOptions}
+                        />
+                    )}
+                </div>
+            </div>
+            {/* ---------------------- */}
+
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <Globe size={22} className="text-(--platform-accent)" /> SEO та Теги
+                            <Tag size={22} className="text-(--platform-accent)" /> SEO та Теги
                         </h3>
                     </div>
                 </div>

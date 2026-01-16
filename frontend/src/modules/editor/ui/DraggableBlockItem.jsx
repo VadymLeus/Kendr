@@ -1,7 +1,6 @@
-// frontend/src/modules/site-editor/components/DraggableBlockItem.jsx
+// frontend/src/modules/editor/ui/DraggableBlockItem.jsx
 import React from 'react';
 import { useDrag } from 'react-dnd';
-
 export const DND_TYPE_NEW_BLOCK = 'NEW_BLOCK';
 
 const DraggableBlockItem = ({ blockType, presetData = {}, name, icon, customStyle = {} }) => {

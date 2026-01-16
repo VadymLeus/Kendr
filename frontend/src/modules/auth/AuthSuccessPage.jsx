@@ -1,8 +1,8 @@
-// frontend/src/modules/auth/pages/AuthSuccessPage.jsx
+// frontend/src/modules/auth/AuthSuccessPage.jsx
 import React, { useEffect, useContext, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AuthContext } from '../../../app/providers/AuthContext';
-import apiClient from '../../../shared/api/api';
+import { AuthContext } from '../../app/providers/AuthContext';
+import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Loader } from 'lucide-react';
 

@@ -1,32 +1,16 @@
 // frontend/src/modules/editor/blocks/Features/FeaturesBlock.jsx
 import React from 'react';
-import { 
-    Star, Zap, Shield, Truck, Gift, Clock, 
-    Phone, Settings, Check, User, Globe, Heart, 
-    ShoppingBag, Box, Smile, Award
-} from 'lucide-react';
+import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
+import { Star, Zap, Shield, Truck, Gift, Clock, Phone, Settings, Check, User, Globe, Heart, ShoppingBag, Box, Smile, Award } from 'lucide-react';
 
 const ICON_MAP = {
-    star: Star,
-    zap: Zap,
-    shield: Shield,
-    truck: Truck,
-    gift: Gift,
-    clock: Clock,
-    phone: Phone,
-    settings: Settings,
-    check: Check,
-    user: User,
-    globe: Globe,
-    heart: Heart,
-    shop: ShoppingBag,
-    box: Box,
-    smile: Smile,
-    award: Award,
-    default: Star
+    star: Star, zap: Zap, shield: Shield, truck: Truck, gift: Gift,
+    clock: Clock, phone: Phone, settings: Settings, check: Check,
+    user: User, globe: Globe, heart: Heart, shop: ShoppingBag,
+    box: Box, smile: Smile, award: Award, default: Star
 };
 
-const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
+const FeaturesBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { 
         title, 
         items = [], 
@@ -34,8 +18,30 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
         layout = 'cards', 
         align = 'center',
         borderRadius = '8px',
-        showIconBackground = false
-    } = blockData;
+        showIconBackground = false,
+        titleFontFamily,
+        contentFontFamily,
+        height = 'small',
+        styles = {} 
+    } = blockData || {};
+
+    const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
+        title: titleFontFamily,
+        content: contentFontFamily
+    }, siteData);
+
+    const cssVarsString = Object.entries(cssVariables)
+        .map(([key, val]) => `${key}: ${val};`)
+        .join(' ');
+
+    const uniqueClass = `features-vars-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
+    const heightMap = { 
+        small: 'auto', 
+        medium: '600px', 
+        large: '800px', 
+        full: 'calc(100vh - 60px)',
+        auto: 'auto'
+    };
 
     const gridStyle = {
         display: 'grid',
@@ -43,18 +49,26 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
         gap: '24px',
         marginTop: '32px',
         textAlign: layout === 'list' ? 'left' : align,
+        width: '100%'
     };
 
     const wrapperStyle = {
         padding: '60px 20px',
-        backgroundColor: isEditorPreview ? 'var(--site-card-bg)' : 'transparent',
-        border: isEditorPreview ? `1px dashed var(--site-border-color)` : 'none',
-        borderRadius: isEditorPreview ? '8px' : '0',
-        ...style
+        backgroundColor: 'var(--site-bg, #ffffff)', 
+        color: 'var(--site-text-primary)',
+        border: 'none',
+        borderRadius: '0',
+        minHeight: heightMap[height] || 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        ...styles,
+        ...style 
     };
 
     const isCard = layout === 'cards';
     const isList = layout === 'list';
+    
     const getFlexAlign = () => {
         if (isList) return 'flex-start'; 
         if (align === 'center') return 'center';
@@ -85,11 +99,12 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
         width: showIconBackground ? '64px' : 'auto',
         height: showIconBackground ? '64px' : 'auto',
         borderRadius: showIconBackground ? '50%' : '0',
-        background: showIconBackground ? 'var(--site-accent-light, rgba(59, 130, 246, 0.1))' : 'transparent',
-        color: 'var(--site-accent)',
+        background: showIconBackground ? 'var(--site-accent)' : 'transparent',
+        color: showIconBackground ? '#ffffff' : 'var(--site-accent)',
         flexShrink: 0,
         marginBottom: isList ? '0' : '8px',
-        transition: 'transform 0.3s ease'
+        transition: 'all 0.3s ease',
+        boxShadow: showIconBackground ? '0 4px 10px rgba(0,0,0,0.15)' : 'none'
     };
 
     const renderIcon = (iconName) => {
@@ -98,7 +113,10 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
     };
 
     return (
-        <div style={wrapperStyle}>
+        <div style={wrapperStyle} className={uniqueClass}>
+            <RenderFonts />
+            <style>{`.${uniqueClass} { ${cssVarsString} }`}</style>
+
             <style>{`
                 .feature-item-hoverable:hover {
                     ${isCard ? 'transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important;' : ''}
@@ -118,7 +136,9 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
                     textAlign: 'center', 
                     marginBottom: '10px',
                     fontSize: '2rem',
-                    color: 'var(--site-text-primary)' 
+                    color: 'var(--site-text-primary)',
+                    fontFamily: fontStyles.title,
+                    width: '100%'
                 }}>
                     {title}
                 </h2>
@@ -136,7 +156,8 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
                                 margin: '0 0 8px 0', 
                                 fontSize: '1.25rem', 
                                 fontWeight: 600,
-                                color: 'var(--site-text-primary)'
+                                color: 'var(--site-text-primary)',
+                                fontFamily: fontStyles.content
                             }}>
                                 {item.title}
                             </h4>
@@ -145,7 +166,8 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
                                 color: 'var(--site-text-secondary)',
                                 lineHeight: '1.6',
                                 fontSize: '0.95rem',
-                                wordBreak: 'break-word'
+                                wordBreak: 'break-word',
+                                fontFamily: fontStyles.content
                             }}>
                                 {item.text}
                             </p>
@@ -155,7 +177,7 @@ const FeaturesBlock = ({ blockData, isEditorPreview, style }) => {
             </div>
 
             {isEditorPreview && items.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '40px', opacity: 0.5, border: '2px dashed #ccc', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center', padding: '40px', opacity: 0.5, border: '2px dashed var(--site-border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                     <div style={{ marginBottom: '10px', color: 'var(--site-accent)' }}>
                         <Star size={32} />
                     </div>

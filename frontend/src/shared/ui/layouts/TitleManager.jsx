@@ -6,11 +6,8 @@ import { getTitleForPath } from '../../../app/router/routesConfig';
 
 const TitleManager = ({ siteData }) => {
     const location = useLocation();
-    
     const staticTitle = getTitleForPath(location.pathname);
-
     let finalTitle = '';
-
     if (staticTitle) {
         finalTitle = `${staticTitle} | Kendr`;
     } 

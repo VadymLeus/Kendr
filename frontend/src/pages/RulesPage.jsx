@@ -8,7 +8,6 @@ import { ArrowLeft, FileText, Shield, Info } from 'lucide-react';
 const RulesPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-
     const handleAgree = () => {
         const fromSource = searchParams.get('from');
 

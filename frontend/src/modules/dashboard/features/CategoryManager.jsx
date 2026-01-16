@@ -206,8 +206,9 @@ const CategoryEditor = memo(({
                 )}
             </div>
 
-            <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden custom-scrollbar bg-(--platform-card-bg)">
-                <div className="flex-1 overflow-y-auto p-6">
+            {/* ВИПРАВЛЕННЯ ТУТ: custom-scrollbar перенесено з form на div */}
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden bg-(--platform-card-bg)">
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <div className="mb-6">
                         <InputWithCounter
                             label="Назва категорії"

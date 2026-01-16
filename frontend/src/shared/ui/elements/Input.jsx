@@ -27,20 +27,15 @@ export const Input = ({
     const [showPassword, setShowPassword] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef(null);
-
     const isPasswordType = type === 'password';
     const isNumberType = type === 'number';
-    
     const inputType = isPasswordType ? (showPassword ? 'text' : 'password') : type;
-    
     const safeValue =
         isNumberType && (value === 'all' || value === null || value === undefined)
             ? ''
             : value;
-
     const currentLength = safeValue ? String(safeValue).length : 0;
     const showClearButton = !disabled && currentLength > 0 && !rightIcon && !isNumberType;
-
     const triggerChange = (newValue) => {
         if (disabled) return;
         const syntheticEvent = { target: { name: name, value: newValue } };

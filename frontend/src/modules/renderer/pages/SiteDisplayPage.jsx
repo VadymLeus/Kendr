@@ -12,7 +12,6 @@ import CookieBanner from '../components/CookieBanner';
 import FontLoader from '../components/FontLoader';
 
 const API_URL = 'http://localhost:5000';
-
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
     const { site_path } = useParams();

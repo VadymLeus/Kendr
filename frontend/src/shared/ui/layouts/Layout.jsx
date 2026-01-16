@@ -8,12 +8,11 @@ import SiteHeader from './SiteHeader';
 import Footer from './Footer';
 import TitleManager from './TitleManager';
 import apiClient from '../../api/api';
-import { resolveAccentColor, isLightColor, adjustColor } from '../../lib/utils/themeUtils';
+import { resolveAccentColor, isLightColor, adjustColor } from '../../utils/themeUtils';
 import FontLoader from '../../../modules/renderer/components/FontLoader';
 
 const EXPANDED_SIDEBAR_WIDTH = '280px';
 const COLLAPSED_SIDEBAR_WIDTH = '80px';
-
 const Layout = () => {
     const { user, isAdmin, isLoading: isAuthLoading } = useContext(AuthContext);
     
@@ -25,9 +24,7 @@ const Layout = () => {
     const location = useLocation();
     const [siteData, setSiteData] = useState(null);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
-
     const currentSidebarWidth = isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
-
     const handleToggleSidebar = () => {
         setIsCollapsed(prev => {
             const newState = !prev;
@@ -43,9 +40,7 @@ const Layout = () => {
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
     const productMatch = location.pathname.match(/^\/product\/([^/]+)/);
-    
     const mediaLibraryMatch = location.pathname === '/media-library';
-
     const shouldShowSiteHeader = !!(publicMatch || productMatch);
     const shouldShowFooter = !isAdmin && !dashboardMatch && !publicMatch && !productMatch && !mediaLibraryMatch;
     
@@ -112,14 +107,11 @@ const Layout = () => {
 
     const themeSettings = siteData?.theme_settings || {};
     const isPublicPage = !!(publicMatch || productMatch);
-    
     const siteAccentHex = resolveAccentColor(siteData?.site_theme_accent || 'orange');
     const siteThemeMode = siteData?.site_theme_mode || 'light';
-    
     const siteAccentHover = adjustColor(siteAccentHex, -10);
     const siteAccentLight = adjustColor(siteAccentHex, 90);
     const siteAccentText = isLightColor(siteAccentHex) ? '#000000' : '#ffffff';
-
     const mainStyles = {
         padding: (dashboardMatch || isPublicPage || location.pathname === '/settings') ? 0 : '2rem', 
         flexGrow: 1,

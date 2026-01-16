@@ -1,12 +1,11 @@
 // frontend/src/shared/ui/complex/ThemeModeSelector.jsx
 import React, { useState } from 'react';
+import { resolveAccentColor } from '../../utils/themeUtils';
 import { Sun, Moon } from 'lucide-react';
-import { resolveAccentColor } from '../../lib/utils/themeUtils';
 
 const ThemeModeSelector = ({ currentMode, accentColor, onChange }) => {
     const [hoveredMode, setHoveredMode] = useState(null);
     const activeColor = resolveAccentColor(accentColor);
-
     const Card = ({ mode, label, icon: Icon, gradient }) => {
         const isActive = currentMode === mode;
         const isHovered = hoveredMode === mode;

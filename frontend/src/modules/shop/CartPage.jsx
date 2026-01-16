@@ -1,8 +1,8 @@
 // frontend/src/modules/shop/pages/CartPage.jsx
 import React, { useContext, useMemo } from 'react';
-import { CartContext } from '../../../app/providers/CartContext';
+import { CartContext } from '../../app/providers/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
-import apiClient from '../../../shared/api/api';
+import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Trash2, Minus, Plus, Store, ArrowLeft, CreditCard, Tag, AlertCircle, PackageOpen } from 'lucide-react';
 
@@ -416,7 +416,6 @@ const CartPage = () => {
                                     const itemPrice = parseFloat(item.price);
                                     const itemOriginalPrice = item.originalPrice ? parseFloat(item.originalPrice) : null;
                                     const hasDiscount = itemOriginalPrice && itemOriginalPrice > itemPrice;
-                                    
                                     const totalItemPrice = itemPrice * item.quantity;
                                     const totalItemOriginalPrice = hasDiscount ? itemOriginalPrice * item.quantity : 0;
 

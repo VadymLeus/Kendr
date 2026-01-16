@@ -1,20 +1,11 @@
 // frontend/src/modules/media/components/MediaInspector.jsx
 import React, { useState, useEffect } from 'react';
-import { 
-    Download, 
-    Trash2, 
-    File, 
-    Type, 
-    Copy,
-    ExternalLink,
-    X 
-} from 'lucide-react';
 import { Button } from '../../../shared/ui/elements/Button';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
+import { Download, Trash2, File, Type, Copy,ExternalLink,X } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
 const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     const [formData, setFormData] = useState({
         display_name: '',

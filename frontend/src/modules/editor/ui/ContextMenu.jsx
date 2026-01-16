@@ -1,10 +1,9 @@
-// frontend/src/modules/site-editor/components/ContextMenu.jsx
+// frontend/src/modules/editor/ui/ContextMenu.jsx
 import React, { useEffect, useRef } from 'react';
 import { Settings, Copy, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 
 const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
     const menuRef = useRef(null);
-
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (menuRef.current && !menuRef.current.contains(e.target)) {

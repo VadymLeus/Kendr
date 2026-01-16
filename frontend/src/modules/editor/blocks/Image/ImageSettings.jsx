@@ -1,83 +1,68 @@
 // frontend/src/modules/editor/blocks/Image/ImageSettings.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { generateBlockId } from '../../core/editorConfig';
-import MediaPickerModal from '../../../media/components/MediaPickerModal';
-import { 
-    Plus, 
-    Trash2, 
-    Image, 
-    Grid, 
-    Play, 
-    Link, 
-    Settings 
-} from 'lucide-react';
+import ImageInput from '../../../media/components/ImageInput';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../ui/configuration/SettingsUI';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
-
-const API_URL = 'http://localhost:5000';
+import { Image, Grid, Play, Link, Settings, Plus, Crop } from 'lucide-react';
 
 const ImageSettings = ({ data, onChange }) => {
     const normalizedData = {
         mode: data.mode || 'single',
         items: Array.isArray(data.items) ? data.items : [],
-        width: data.width || 'medium',
         settings_slider: data.settings_slider || { navigation: true, pagination: true, autoplay: false, loop: true },
-        settings_grid: data.settings_grid || { columns: 3 },
+        settings_grid: { columns: 3, ...data.settings_grid },
         objectFit: data.objectFit || 'cover',
         borderRadius: data.borderRadius || '0px',
         link: data.link || '',
-        targetBlank: data.targetBlank || false
+        targetBlank: data.targetBlank || false,
+        aspectRatio: data.aspectRatio === 1 ? 1 : null 
     };
-
-    const [pickerState, setPickerState] = useState({ isOpen: false, mode: 'add', replaceIndex: null });
 
     const updateData = (updates) => onChange({ ...normalizedData, ...updates });
-
-    const handleMediaSelect = (result) => {
-        const files = Array.isArray(result) ? result : [result];
-        if (files.length === 0) return;
-
-        let newItems = [...normalizedData.items];
-
-        if (pickerState.mode === 'add') {
-            const added = files.map(f => ({ 
-                id: generateBlockId(), 
-                src: f.path_full, 
-                thumb: f.path_thumb 
-            }));
-            if (normalizedData.mode === 'single') {
-                 newItems = [added[0]];
-            } else {
-                 newItems = [...newItems, ...added];
-            }
-        } else if (pickerState.mode === 'replace' && pickerState.replaceIndex !== null) {
-            newItems[pickerState.replaceIndex] = { 
-                ...newItems[pickerState.replaceIndex], 
-                src: files[0].path_full, 
-                thumb: files[0].path_thumb 
-            };
+    const handleItemChange = (index, e) => {
+        const newValue = e.target.value;
+        const newItems = [...normalizedData.items];
+        if (!newValue) {
+            newItems.splice(index, 1);
+        } else {
+            newItems[index] = { ...newItems[index], src: newValue };
         }
-
         updateData({ items: newItems });
-        setPickerState({ isOpen: false, mode: 'add', replaceIndex: null });
     };
 
-    const handleReplaceClick = (index) => {
-        setPickerState({ isOpen: true, mode: 'replace', replaceIndex: index });
+    const handleAddItem = (e) => {
+        const newValue = e.target.value;
+        if (!newValue) return;
+        const newItem = { id: generateBlockId(), src: newValue };
+        const newItems = normalizedData.mode === 'single' 
+            ? [newItem] 
+            : [...normalizedData.items, newItem];
+        updateData({ items: newItems });
     };
 
+    const customStyles = `
+        .grid-add-trigger {
+            width: 100%; height: 100%; border-radius: 8px;
+            border: 1px dashed var(--platform-border-color);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--platform-text-secondary); background: var(--platform-card-bg);
+            gap: 4px; transition: all 0.2s ease;
+        }
+        .grid-add-trigger:hover {
+            border-color: var(--platform-accent);
+            color: var(--platform-accent);
+            background: rgba(59, 130, 246, 0.05);
+            transform: translateY(-1px);
+        }
+    `;
+
+    const currentAspect = normalizedData.aspectRatio;
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <MediaPickerModal 
-                isOpen={pickerState.isOpen}
-                onClose={() => setPickerState({ ...pickerState, isOpen: false })}
-                onSelect={handleMediaSelect}
-                multiple={pickerState.mode === 'add' && normalizedData.mode !== 'single'}
-                allowedTypes={['image']}
-                title={pickerState.mode === 'add' ? "Додати зображення" : "Замінити зображення"}
-            />
-
+            <style>{customStyles}</style>
+            
             <ToggleGroup 
                 options={[
                     { value: 'single', label: 'Одне', icon: <Image size={16} /> },
@@ -89,64 +74,54 @@ const ImageSettings = ({ data, onChange }) => {
             />
 
             <div style={{ background: 'var(--platform-bg)', padding: '12px', borderRadius: '12px', border: '1px solid var(--platform-border-color)' }}>
-                {normalizedData.items.length === 0 ? (
-                    <button 
-                        className="gallery-add-btn"
-                        style={{ width: '100%', height: '100px', fontSize: '0.9rem', gap: '8px' }}
-                        onClick={() => setPickerState({ isOpen: true, mode: 'add', replaceIndex: null })}
-                    >
-                        <Plus size={24} />
-                        <span>Вибрати зображення</span>
-                    </button>
+                {normalizedData.mode === 'single' ? (
+                    <div style={{ width: '100%', height: '200px' }}>
+                        <ImageInput 
+                            value={normalizedData.items[0]?.src || ''}
+                            onChange={(e) => {
+                                if (normalizedData.items.length > 0) handleItemChange(0, e);
+                                else handleAddItem(e);
+                            }}
+                            aspect={currentAspect}
+                        />
+                    </div>
                 ) : (
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', 
-                        gap: '8px' 
-                    }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                         {normalizedData.items.map((item, idx) => (
-                            <div 
-                                key={item.id || idx} 
-                                style={{ 
-                                    width: '100%', 
-                                    aspectRatio: '1 / 1', 
-                                    borderRadius: '8px', 
-                                    overflow: 'hidden', 
-                                    position: 'relative', 
-                                    border: '1px solid var(--platform-border-color)', 
-                                    cursor: 'pointer',
-                                    background: 'var(--platform-card-bg)'
-                                }} 
-                                onClick={() => handleReplaceClick(idx)} 
-                                title="Натисніть, щоб замінити"
-                            >
-                                <img 
-                                    src={`${API_URL}${item.thumb || item.src}`} 
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                    alt=""
+                            <div key={item.id || idx} style={{ aspectRatio: '1/1', width: '100%' }}>
+                                <ImageInput 
+                                    value={item.src}
+                                    onChange={(e) => handleItemChange(idx, e)}
+                                    aspect={currentAspect}
                                 />
-                                
-                                <button 
-                                    className="gallery-delete-btn"
-                                    onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        updateData({ items: normalizedData.items.filter((_, i) => i !== idx) }); 
-                                    }}
-                                >
-                                    <Trash2 size={10} />
-                                </button>
                             </div>
                         ))}
-                        {normalizedData.mode !== 'single' && (
-                            <button 
-                                className="gallery-add-btn"
-                                onClick={() => setPickerState({ isOpen: true, mode: 'add', replaceIndex: null })}
-                            >
-                                <Plus size={20} />
-                            </button>
-                        )}
+                        <div style={{ aspectRatio: '1/1', width: '100%' }}>
+                            <ImageInput value="" onChange={handleAddItem} aspect={currentAspect}>
+                                <div className="grid-add-trigger">
+                                    <Plus size={24} />
+                                    <span style={{fontSize: '0.75rem', fontWeight: 500}}>Додати</span>
+                                </div>
+                            </ImageInput>
+                        </div>
                     </div>
                 )}
+            </div>
+
+            <div>
+                <SectionTitle icon={<Crop size={16}/>}>Формат</SectionTitle>
+                <div style={commonStyles.formGroup}>
+                     <ToggleSwitch 
+                        label="Квадратне зображення (1:1)"
+                        checked={normalizedData.aspectRatio === 1}
+                        onChange={(val) => updateData({ aspectRatio: val ? 1 : null })}
+                     />
+                     <div style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginTop: '6px', lineHeight: '1.4'}}>
+                        {normalizedData.aspectRatio === 1 
+                            ? "При завантаженні буде запропоновано обрізати фото під квадрат." 
+                            : "Зображення відображатиметься в оригінальних пропорціях."}
+                     </div>
+                </div>
             </div>
 
             {normalizedData.mode === 'slider' && (
@@ -167,10 +142,10 @@ const ImageSettings = ({ data, onChange }) => {
                             value={normalizedData.settings_grid.columns}
                             onChange={(e) => updateData({ settings_grid: { ...normalizedData.settings_grid, columns: parseInt(e.target.value) } })}
                             options={[
+                                { value: 1, label: '1 колонка' },
                                 { value: 2, label: '2 колонки' },
                                 { value: 3, label: '3 колонки' },
                                 { value: 4, label: '4 колонки' },
-                                { value: 5, label: '5 колонок' },
                             ]}
                          />
                     </div>
@@ -179,20 +154,6 @@ const ImageSettings = ({ data, onChange }) => {
 
             <div>
                 <SectionTitle icon={<Image size={16}/>}>Вигляд</SectionTitle>
-                <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Ширина блоку</label>
-                    <CustomSelect 
-                        value={normalizedData.width}
-                        onChange={(e) => updateData({ width: e.target.value })}
-                        options={[
-                            { value: 'small', label: 'Вузька' },
-                            { value: 'medium', label: 'Середня' },
-                            { value: 'large', label: 'Широка' },
-                            { value: 'full', label: 'На весь екран' }
-                        ]}
-                    />
-                </div>
-                
                 <div style={commonStyles.formGroup}>
                     <RangeSlider 
                         label="Скруглення кутів"
@@ -217,54 +178,6 @@ const ImageSettings = ({ data, onChange }) => {
                     />
                 </div>
             )}
-
-            <style>{`
-                .gallery-delete-btn {
-                    position: absolute;
-                    top: 2px;
-                    right: 2px;
-                    background: rgba(239, 68, 68, 0.9);
-                    color: #fff;
-                    border: none;
-                    border-radius: 4px;
-                    width: 20px;
-                    height: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    z-index: 2;
-                    opacity: 0.8;
-                    transition: all 0.2s ease;
-                }
-                .gallery-delete-btn:hover {
-                    opacity: 1;
-                    transform: scale(1.1);
-                    background: rgb(220, 38, 38);
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                }
-
-                .gallery-add-btn {
-                    width: 100%;
-                    aspect-ratio: 1 / 1;
-                    border-radius: 8px;
-                    border: 1px dashed var(--platform-border-color);
-                    background: transparent;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    flex-direction: column; 
-                    cursor: pointer;
-                    color: var(--platform-text-secondary);
-                    transition: all 0.2s ease;
-                }
-                .gallery-add-btn:hover {
-                    border-color: var(--platform-accent);
-                    color: var(--platform-accent);
-                    background: rgba(0,0,0,0.03);
-                    transform: translateY(-1px);
-                }
-            `}</style>
         </div>
     );
 };

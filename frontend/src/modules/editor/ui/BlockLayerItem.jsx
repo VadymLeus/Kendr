@@ -2,12 +2,7 @@
 import React, { useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { BLOCK_LIBRARY } from '../core/editorConfig'; 
-import { 
-    Settings, 
-    Trash2, 
-    PanelTop, 
-    HelpCircle 
-} from 'lucide-react';
+import { Settings, Trash2, PanelTop, HelpCircle } from 'lucide-react';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 const BlockLayerItem = ({

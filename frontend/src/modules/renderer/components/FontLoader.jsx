@@ -3,7 +3,6 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 const API_URL = 'http://localhost:5000';
-
 const FontLoader = ({ fontHeading, fontBody }) => {
     const getFontCss = (fontFamily, type) => {
         if (!fontFamily || fontFamily === 'global') return null;

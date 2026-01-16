@@ -3,33 +3,42 @@ import React from 'react';
 import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
-import { 
-    MousePointerClick, 
-    CheckCircle, 
-    Mail, 
-    Trash2, 
-    MessageSquare 
-} from 'lucide-react';
+import ButtonEditor from '../../ui/components/ButtonEditor';
+import { CheckCircle, Mail, Trash2, MessageSquare,MousePointerClick } from 'lucide-react';
 
-const FormSettings = ({ data, onChange }) => {
-    
+const FormSettings = ({ data, onChange, siteData }) => {
+    const DEFAULT_BUTTON_DATA = {
+        text: 'Надіслати',
+        styleType: 'primary',
+        variant: 'solid',
+        size: 'medium',
+        borderRadius: 6,
+        width: 'auto',
+        alignment: 'center',
+        icon: 'none',
+        iconPosition: 'right'
+    };
+
+    const buttonData = {
+        ...DEFAULT_BUTTON_DATA,
+        ...(data.button || {}),
+        text: (data.button && data.button.text) || data.buttonText || DEFAULT_BUTTON_DATA.text
+    };
+
     const updateData = (updates) => onChange({ ...data, ...updates });
+    const handleButtonChange = (newButtonData) => {
+        onChange({ 
+            ...data, 
+            button: newButtonData,
+            buttonText: newButtonData.text 
+        });
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
             <div>
-                <SectionTitle icon={<MessageSquare size={18}/>}>Тексти форми</SectionTitle>
-                
-                <div style={commonStyles.formGroup}>
-                    <Input 
-                        label="Текст кнопки"
-                        value={data.buttonText || ''}
-                        onChange={(e) => updateData({ buttonText: e.target.value })}
-                        placeholder="Наприклад: Надіслати"
-                        leftIcon={<MousePointerClick size={16}/>}
-                    />
-                </div>
+                <SectionTitle icon={<MessageSquare size={18}/>}>Тексти та Кнопка</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Повідомлення про успіх</label>
@@ -49,6 +58,31 @@ const FormSettings = ({ data, onChange }) => {
                             <CheckCircle size={16} />
                         </div>
                     </div>
+                </div>
+
+                <div style={{ marginTop: '24px' }}>
+                     <div style={{
+                         fontSize: '0.85rem', 
+                         fontWeight: '600', 
+                         marginBottom: '16px', 
+                         display: 'flex', 
+                         alignItems: 'center', 
+                         gap: '8px',
+                         color: 'var(--platform-text-primary)',
+                         paddingBottom: '8px',
+                         borderBottom: '1px solid var(--platform-border-color)'
+                     }}>
+                        <MousePointerClick size={16} style={{ color: 'var(--platform-accent)' }}/>
+                        Кнопка відправки
+                     </div>
+                     
+                     <ButtonEditor 
+                        data={buttonData}
+                        onChange={handleButtonChange}
+                        siteData={siteData}
+                        hideLinks={true}
+                        showAlignment={true}
+                    />
                 </div>
             </div>
 

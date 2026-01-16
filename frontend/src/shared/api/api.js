@@ -1,4 +1,4 @@
-// frontend/src/shared/api/services/api.js
+// frontend/src/shared/api/api.js
 import axios from 'axios';
 import { toast } from 'react-toastify';
 

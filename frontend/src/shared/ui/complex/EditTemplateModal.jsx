@@ -1,9 +1,9 @@
 // frontend/src/shared/ui/complex/EditTemplateModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
 import { Button } from '../elements/Button';
 import { InputWithCounter } from './InputWithCounter';
 import { useConfirm } from '../../hooks/useConfirm';
+import { X } from 'lucide-react';
 
 const EditTemplateModal = ({ isOpen, onClose, initialData, onSave, isSaving }) => {
     const [formData, setFormData] = useState({ name: '', description: '' });

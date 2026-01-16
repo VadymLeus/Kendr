@@ -1,18 +1,23 @@
 // frontend/src/modules/editor/blocks/Accordion/AccordionSettings.jsx
 import React, { useState } from 'react';
-import { generateBlockId, FONT_LIBRARY } from '../../core/editorConfig';
+import { generateBlockId } from '../../core/editorConfig';
 import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
-import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Button } from '../../../../shared/ui/elements/Button';
 import { Input } from '../../../../shared/ui/elements/Input';
-import { Plus, Trash2, ChevronDown, List, Type } from 'lucide-react';
+import Switch from '../../../../shared/ui/elements/Switch';
+import FontSelector from '../../ui/components/FontSelector';
 import ConfirmModal from '../../../../shared/ui/complex/ConfirmModal';
+import { Plus, Trash2, ChevronDown, List, Type } from 'lucide-react';
 
-const AccordionSettings = ({ data, onChange }) => {
+const AccordionSettings = ({ data, onChange, siteData }) => {
     const [openIndex, setOpenIndex] = useState(null);
-    
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [itemToDeleteIndex, setItemToDeleteIndex] = useState(null);
+    const themeSettings = siteData?.theme_settings || {};
+    const currentSiteFonts = {
+        heading: themeSettings.font_heading,
+        body: themeSettings.font_body
+    };
 
     const updateData = (newData) => onChange({ ...data, ...newData });
 
@@ -23,15 +28,12 @@ const AccordionSettings = ({ data, onChange }) => {
         updateData({ items: newItems });
     };
 
-    const handleFontChange = (e) => {
-        updateData({ fontFamily: e.target.value });
-    };
-
     const handleAddItem = () => {
         const newItem = { 
             id: generateBlockId(), 
             title: 'Нове питання', 
-            content: 'Тут буде відповідь...' 
+            content: 'Тут буде відповідь...',
+            isOpenDefault: false
         };
         const newItems = [...(data.items || []), newItem];
         updateData({ items: newItems });
@@ -73,14 +75,23 @@ const AccordionSettings = ({ data, onChange }) => {
             />
 
             <div>
-                <SectionTitle icon={<Type size={18}/>}>Загальні налаштування</SectionTitle>
+                <SectionTitle icon={<Type size={18}/>}>Типографіка</SectionTitle>
+                
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Шрифт блоку</label>
-                    <CustomSelect
-                        value={data.fontFamily || 'global'}
-                        onChange={handleFontChange}
-                        options={FONT_LIBRARY}
-                        leftIcon={<Type size={16}/>}
+                    <FontSelector 
+                        value={data.titleFontFamily}
+                        onChange={(val) => updateData({ titleFontFamily: val })}
+                        label="Шрифт заголовків"
+                        siteFonts={currentSiteFonts}
+                    />
+                </div>
+
+                <div style={commonStyles.formGroup}>
+                    <FontSelector 
+                        value={data.contentFontFamily}
+                        onChange={(val) => updateData({ contentFontFamily: val })}
+                        label="Шрифт тексту"
+                        siteFonts={currentSiteFonts}
                     />
                 </div>
             </div>
@@ -162,6 +173,17 @@ const AccordionSettings = ({ data, onChange }) => {
                                                     resize: 'vertical',
                                                     lineHeight: '1.5'
                                                 }}
+                                            />
+                                        </div>
+
+                                        <div style={{
+                                            borderTop: '1px solid var(--platform-border-color)',
+                                            paddingTop: '12px'
+                                        }}>
+                                            <Switch 
+                                                label="Розгорнуто за замовчуванням"
+                                                checked={item.isOpenDefault || false}
+                                                onChange={(checked) => handleItemChange(index, 'isOpenDefault', checked)}
                                             />
                                         </div>
                                     </div>

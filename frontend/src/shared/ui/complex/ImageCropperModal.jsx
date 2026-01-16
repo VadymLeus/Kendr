@@ -3,10 +3,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { getCroppedImg } from '../../lib/utils/canvasUtils';
+import { getCroppedImg } from '../../utils/canvasUtils';
 import { toast } from 'react-toastify';
-import { X, Check, Crop } from 'lucide-react';
 import { Button } from '../elements/Button';
+import { X, Check, Crop } from 'lucide-react';
 
 function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
   return centerCrop(

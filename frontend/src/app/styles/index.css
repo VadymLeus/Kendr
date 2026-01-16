@@ -28,7 +28,7 @@ html {
   --platform-logo-url: url('/icon-dark.webp');
   --sidebar-width: 280px;
 
-  --site-bg: #ffffff;
+  --site-bg: #f7fafc;
   --site-header-bg: #f7fafc;
   --site-card-bg: #ffffff;
   --site-text-primary: #1a202c;
@@ -564,8 +564,8 @@ hr {
 .block-theme-light {
   --site-text-primary: #1a202c;
   --site-text-secondary: #4a5568;
-  --site-bg: #ffffff;
-  --site-card-bg: #f7fafc;
+  --site-bg: #f7fafc;
+  --site-card-bg: #ffffff;
   --site-border-color: #e2e8f0;
 }
 

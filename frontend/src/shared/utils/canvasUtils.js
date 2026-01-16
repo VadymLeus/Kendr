@@ -1,5 +1,4 @@
 // frontend/src/shared/lib/utils/canvasUtils.js
-
 export const createImage = (url) =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -23,7 +22,6 @@ export async function getCroppedImg(image, crop, rotation = 0) {
 
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
-  
   const pixelRatio = window.devicePixelRatio;
 
   canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
@@ -34,17 +32,14 @@ export async function getCroppedImg(image, crop, rotation = 0) {
 
   const cropX = crop.x * scaleX;
   const cropY = crop.y * scaleY;
-
   const centerX = image.naturalWidth / 2;
   const centerY = image.naturalHeight / 2;
 
   ctx.save();
-
   ctx.translate(-cropX, -cropY);
   ctx.translate(centerX, centerY);
   ctx.rotate(getRadianAngle(rotation));
   ctx.translate(-centerX, -centerY);
-
   ctx.drawImage(
     image,
     0,

@@ -1,11 +1,6 @@
 // frontend/src/modules/editor/core/editorConfig.jsx
 import React from 'react';
-import { 
-    Image, FileText, MousePointerClick, Star, 
-    Grid, ShoppingBag, List, Mail, 
-    Video, MapPin, HelpCircle, Share2, 
-    PanelTop, AlignLeft, AlignCenter, AlignRight 
-} from 'lucide-react';
+import { Image, FileText, MousePointerClick, Star, Grid, ShoppingBag, List, Mail, Video, MapPin, HelpCircle, Share2, PanelTop, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 
 export const BLOCK_LIBRARY = [
     { type: 'hero', name: 'Обкладинка', icon: <Image size={20} /> },
@@ -24,7 +19,7 @@ export const BLOCK_LIBRARY = [
             { preset: '25-25-25-25', name: '4 колонки (25/25/25/25)', columns: 4 },
         ]
     },
-    { type: 'catalog', name: 'SPA Каталог', icon: <ShoppingBag size={20} /> },
+    { type: 'catalog', name: 'Каталог товарів', icon: <ShoppingBag size={20} /> },
     { type: 'features', name: 'Переваги', icon: <List size={20} /> },
     { type: 'form', name: 'Форма звʼязку', icon: <Mail size={20} /> },
     { type: 'video', name: 'Відео', icon: <Video size={20} /> },

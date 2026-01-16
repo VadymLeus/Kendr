@@ -1,14 +1,16 @@
 // frontend/src/modules/renderer/components/FontPicker.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { FONT_LIBRARY } from '../../editor/core/editorConfig';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements/Button';
-import { Search, Plus, Trash2, Edit2, Check, Type,Globe,Folder,ChevronDown } from 'lucide-react';
 import MediaPickerModal from '../../media/components/MediaPickerModal';
+import { Search, Plus, Trash2, Edit2, Check, Type, Globe, Folder, ChevronDown } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
+const EVENT_FONT_CHANGED = 'platform:font-changed';
+const STORAGE_HIDDEN_KEY = 'platform_hidden_fonts';
 
 const FontPicker = ({ 
     label, 
@@ -28,10 +30,6 @@ const FontPicker = ({
         }
     });
 
-    useEffect(() => {
-        localStorage.setItem('fontPickerSections', JSON.stringify(sections));
-    }, [sections]);
-
     const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
     const [editingListId, setEditingListId] = useState(null); 
     const [editName, setEditName] = useState('');
@@ -39,45 +37,66 @@ const FontPicker = ({
     const { confirm } = useConfirm();
 
     useEffect(() => {
-        const fetchAllFonts = async () => {
-            try {
-                const res = await apiClient.get('/media');
-                if (Array.isArray(res.data)) {
-                    const serverFonts = res.data.filter(f => 
-                        f.file_type === 'font' || 
-                        f.mime_type?.includes('font') || 
-                        /\.(ttf|otf|woff|woff2)$/i.test(f.original_file_name)
-                    );
+        localStorage.setItem('fontPickerSections', JSON.stringify(sections));
+    }, [sections]);
 
-                    const formattedFonts = serverFonts.map(f => ({
-                        ...f,
-                        id: f.id,
-                        listId: f.id, 
-                        label: f.display_name || f.alt_text || f.original_file_name,
-                        value: f.path_full,
-                        isCustom: true,
-                        isTemp: false 
-                    }));
+    const fetchAllFonts = useCallback(async () => {
+        try {
+            const res = await apiClient.get('/media');
+            if (Array.isArray(res.data)) {
+                let hiddenFonts = [];
+                try {
+                    hiddenFonts = JSON.parse(localStorage.getItem(STORAGE_HIDDEN_KEY) || '[]');
+                } catch (e) { hiddenFonts = []; }
 
-                    setLocalFonts(prev => {
-                        const uniqueMap = new Map();
-                        
-                        prev.forEach(item => uniqueMap.set(item.path_full, item));
-                        
-                        formattedFonts.forEach(item => {
-                            uniqueMap.set(item.path_full, item);
-                        });
-                        
-                        return Array.from(uniqueMap.values());
+                const serverFonts = res.data.filter(f => 
+                    (f.file_type === 'font' || 
+                    f.mime_type?.includes('font') || 
+                    /\.(ttf|otf|woff|woff2)$/i.test(f.original_file_name)) &&
+                    !hiddenFonts.includes(f.path_full)
+                );
+
+                const formattedFonts = serverFonts.map(f => ({
+                    ...f,
+                    id: f.id,
+                    listId: f.id, 
+                    label: f.display_name || f.alt_text || f.original_file_name,
+                    value: f.path_full,
+                    isCustom: true,
+                    isTemp: false 
+                }));
+
+                setLocalFonts(prev => {
+                    const uniqueMap = new Map();
+                    
+                    prev.forEach(item => {
+                        if (item.isTemp) uniqueMap.set(item.path_full, item);
                     });
-                }
-            } catch (e) {
-                console.error("Failed to load fonts list", e);
+                    
+                    formattedFonts.forEach(item => {
+                        uniqueMap.set(item.path_full, item);
+                    });
+                    
+                    return Array.from(uniqueMap.values());
+                });
             }
+        } catch (e) {
+            console.error("Failed to load fonts list", e);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchAllFonts();
+    }, [fetchAllFonts]);
+
+    useEffect(() => {
+        const handleRemoteChange = () => {
+            fetchAllFonts();
         };
 
-        fetchAllFonts();
-    }, []);
+        window.addEventListener(EVENT_FONT_CHANGED, handleRemoteChange);
+        return () => window.removeEventListener(EVENT_FONT_CHANGED, handleRemoteChange);
+    }, [fetchAllFonts]);
 
     useEffect(() => {
         const syncCurrentValue = async () => {
@@ -109,7 +128,6 @@ const FontPicker = ({
         setPreviewFont(value);
     }, [value]);
 
-
     const toggleSection = (section) => {
         setSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
@@ -126,25 +144,19 @@ const FontPicker = ({
             toast.warning('Файл може не працювати як шрифт');
         }
 
-        const newListItem = {
-            ...selectedFile,
-            listId: selectedFile.id || `custom-${Date.now()}`,
-            label: selectedFile.display_name || selectedFile.alt_text || selectedFile.original_file_name, 
-            value: selectedFile.path_full,
-            isCustom: true,
-            isTemp: false
-        };
-
-        setLocalFonts(prev => {
-            const uniqueMap = new Map();
-            prev.forEach(item => uniqueMap.set(item.path_full, item));
-            uniqueMap.set(newListItem.path_full, newListItem);
-            return Array.from(uniqueMap.values());
-        });
+        try {
+            const hiddenFonts = JSON.parse(localStorage.getItem(STORAGE_HIDDEN_KEY) || '[]');
+            if (hiddenFonts.includes(selectedFile.path_full)) {
+                const newHidden = hiddenFonts.filter(path => path !== selectedFile.path_full);
+                localStorage.setItem(STORAGE_HIDDEN_KEY, JSON.stringify(newHidden));
+            }
+        } catch (e) { console.error(e); }
 
         onChange(selectedFile.path_full);
         setIsMediaModalOpen(false);
         toast.success('Шрифт вибрано');
+        
+        window.dispatchEvent(new Event(EVENT_FONT_CHANGED));
         
         if (!sections.custom) {
             setSections(prev => ({ ...prev, custom: true }));
@@ -154,29 +166,34 @@ const FontPicker = ({
     const handleDelete = async (listId, name, e) => {
         e.stopPropagation();
         
+        const itemToDelete = localFonts.find(f => f.listId === listId);
+
         const isConfirmed = await confirm({
             title: "Прибрати шрифт?",
-            message: `Прибрати "${name}" зі списку швидкого доступу? Файл залишиться в медіатеці.`,
+            message: `Прибрати "${name}" зі списку? Файл залишиться в медіатеці, але не буде відображатися тут.`,
             type: "warning",
             confirmLabel: "Прибрати"
         });
 
         if (!isConfirmed) return;
 
-        const itemToDelete = localFonts.find(f => f.listId === listId);
+        if (itemToDelete) {
+            try {
+                const hiddenFonts = JSON.parse(localStorage.getItem(STORAGE_HIDDEN_KEY) || '[]');
+                if (!hiddenFonts.includes(itemToDelete.path_full)) {
+                    hiddenFonts.push(itemToDelete.path_full);
+                    localStorage.setItem(STORAGE_HIDDEN_KEY, JSON.stringify(hiddenFonts));
+                }
+            } catch (err) { console.error(err); }
 
-        if (itemToDelete && value === itemToDelete.path_full) {
-            const remainingWithSamePath = localFonts.filter(f => 
-                f.listId !== listId && f.path_full === itemToDelete.path_full
-            );
-            
-            if (remainingWithSamePath.length === 0) {
+            if (value === itemToDelete.path_full) {
                 onChange("global");
                 toast.info('Шрифт скинуто на стандартний');
             }
-        }
 
-        setLocalFonts(prev => prev.filter(f => f.listId !== listId));
+            window.dispatchEvent(new Event(EVENT_FONT_CHANGED));
+            toast.success('Шрифт прибрано зі списку');
+        }
     };
 
     const startEditing = (listId, currentLabel, e) => {
@@ -192,20 +209,30 @@ const FontPicker = ({
             return;
         }
 
-        setLocalFonts(prev => prev.map(f => {
-            if (f.listId === listId) {
-                return { ...f, label: editName };
-            }
-            return f;
-        }));
-
+        const fontItem = localFonts.find(f => f.listId === listId);
         setEditingListId(null);
-    };
 
+        if (fontItem && fontItem.id && !fontItem.isTemp) {
+            try {
+                await apiClient.put(`/media/${fontItem.id}`, { display_name: editName });
+                toast.success('Назву збережено');
+                window.dispatchEvent(new Event(EVENT_FONT_CHANGED));
+            } catch (error) {
+                console.error("Failed to update font name", error);
+                toast.error('Не вдалося зберегти нову назву');
+            }
+        } else {
+             setLocalFonts(prev => prev.map(f => {
+                if (f.listId === listId) {
+                    return { ...f, label: editName };
+                }
+                return f;
+            }));
+        }
+    };
 
     const { customList, googleList } = useMemo(() => {
         const lowerSearch = searchTerm.toLowerCase();
-
         const uniqueCustomMap = new Map();
         
         localFonts.forEach(f => {
@@ -255,20 +282,45 @@ const FontPicker = ({
                 }
             } else {
                 const cleanName = previewFont.split(',')[0].replace(/['"]/g, '');
-                const linkId = `google-font-preview-${cleanName.replace(/\s+/g, '-')}`;
-                if (!document.getElementById(linkId)) {
-                    const link = document.createElement('link');
-                    link.id = linkId;
-                    link.href = `https://fonts.googleapis.com/css2?family=${cleanName.replace(/ /g, '+')}:wght@400;700&display=swap`;
-                    link.rel = 'stylesheet';
-                    document.head.appendChild(link);
+                const scopedName = `${cleanName}-Preview-${type}`;
+                const styleId = `style-preview-${cleanName.replace(/\s+/g, '-')}`;
+                if (document.getElementById(styleId)) {
+                    if (previewEl) previewEl.style.fontFamily = scopedName;
+                    return;
                 }
-                if (previewEl) previewEl.style.fontFamily = cleanName;
+
+                try {
+                    const response = await fetch(`https://fonts.googleapis.com/css2?family=${cleanName.replace(/ /g, '+')}:wght@400;700&display=swap`);
+                    let cssText = await response.text();
+                    cssText = cssText.replace(
+                        new RegExp(`font-family:\\s*['"]?${cleanName}['"]?;`, 'g'), 
+                        `font-family: '${scopedName}';`
+                    );
+
+                    const style = document.createElement('style');
+                    style.id = styleId;
+                    style.textContent = cssText;
+                    document.head.appendChild(style);
+
+                    if (previewEl) previewEl.style.fontFamily = scopedName;
+                } catch (error) {
+                    console.error("Failed to fetch Google Font CSS for preview isolation:", error);
+                    const linkId = `google-font-preview-${cleanName.replace(/\s+/g, '-')}`;
+                    if (!document.getElementById(linkId)) {
+                        const link = document.createElement('link');
+                        link.id = linkId;
+                        link.href = `https://fonts.googleapis.com/css2?family=${cleanName.replace(/ /g, '+')}:wght@400;700&display=swap`;
+                        link.rel = 'stylesheet';
+                        document.head.appendChild(link);
+                    }
+                    if (previewEl) previewEl.style.fontFamily = cleanName;
+                }
             }
         };
         loadFontPreview();
     }, [previewFont, type]);
 
+    const isAnySectionOpen = sections.custom || sections.google;
     const containerStyle = {
         border: '1px solid var(--platform-border-color)',
         borderRadius: '12px',
@@ -294,14 +346,15 @@ const FontPicker = ({
         flex: 1,
         overflow: 'hidden'
     };
+    
     const listStyle = {
         width: '45%',
         borderRight: '1px solid var(--platform-border-color)',
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
+        overflowY: isAnySectionOpen ? 'auto' : 'hidden',
+        display: 'block', 
         background: 'var(--platform-card-bg)'
     };
+
     const previewAreaStyle = {
         width: '55%',
         padding: '24px',
@@ -383,7 +436,10 @@ const FontPicker = ({
                 </div>
 
                 <div style={bodyStyle}>
-                    <div style={listStyle} className="custom-scrollbar">
+                    <div 
+                        style={listStyle} 
+                        className={`custom-scrollbar font-picker-scroll`}
+                    >
                         
                         {customList.length > 0 && (
                             <div 
@@ -544,6 +600,13 @@ const FontPicker = ({
                 .font-item.active .action-btn:hover { background: rgba(255, 255, 255, 0.2); opacity: 1; }
                 .font-item.active .action-btn.delete:hover { background: #ffffff; color: #dc2626 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
                 [data-theme='dark'] .font-item:not(.active) .action-btn:hover { background: rgba(255,255,255,0.1); }
+                
+                .font-picker-scroll::-webkit-scrollbar-track {
+                    background: transparent !important;
+                }
+                .font-picker-scroll {
+                    scrollbar-gutter: auto !important;
+                }
             `}</style>
         </div>
     );

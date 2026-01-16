@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
-import { AlertTriangle, Gavel, ArrowRight, CheckCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { AlertTriangle, Gavel, ArrowRight, CheckCircle } from 'lucide-react';
 
 const AppealPage = () => {
     const [suspendedSites, setSuspendedSites] = useState([]);

@@ -1,7 +1,7 @@
 // frontend/src/shared/ui/complex/AccentColorSelector.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { PRESET_COLORS, resolveAccentColor, isLightColor } from '../../utils/themeUtils';
 import { Edit, Plus } from 'lucide-react';
-import { PRESET_COLORS, resolveAccentColor, isLightColor } from '../../lib/utils/themeUtils';
 
 const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
     const [hoveredValue, setHoveredValue] = useState(null);

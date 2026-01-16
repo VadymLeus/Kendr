@@ -2,8 +2,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../../shared/ui/elements/Button';
-import { HelpCircle, MessageCircle, Gavel, ChevronRight, Plus } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { HelpCircle, MessageCircle, Gavel, ChevronRight, Plus } from 'lucide-react';
 
 const SupportPage = () => {
     const containerStyle = {

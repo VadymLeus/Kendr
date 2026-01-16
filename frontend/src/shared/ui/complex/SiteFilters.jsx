@@ -21,7 +21,6 @@ const SiteFilters = ({
     extraButtons = null
 }) => {
     const [sortField, sortOrder] = sortOption.split(':');
-
     const handleSortFieldChange = (e) => onSortChange(`${e.target.value}:${sortOrder}`);
     const toggleSortOrder = () => onSortChange(`${sortField}:${sortOrder === 'desc' ? 'asc' : 'desc'}`);
     const handleClearAll = () => { onSearchChange(''); onTagSelect(null); };

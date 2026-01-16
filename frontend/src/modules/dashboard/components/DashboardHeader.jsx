@@ -93,7 +93,7 @@ const DashboardHeader = ({
                     className="preview-btn"
                     title="Відкрити сайт у новій вкладці"
                 >
-                    <Play />
+                    <Play size={16} />
                     <span className="preview-text">Переглянути</span>
                 </a>
             </div>
@@ -296,34 +296,38 @@ const DashboardHeader = ({
                 .preview-btn {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    padding: 0 20px;
-                    height: 40px;
+                    justify-content: center;
+                    gap: 6px;
+                    padding: 0 12px;
+                    height: 38px;
                     background-color: var(--platform-accent);
                     color: var(--platform-accent-text);
                     border-radius: 8px;
                     font-weight: 600;
-                    font-size: 14px;
+                    font-size: 13px;
                     border: none;
                     cursor: pointer;
                     text-decoration: none;
-                    transition: opacity 0.2s;
+                    white-space: nowrap;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    transition: background-color 0.2s ease;
                 }
 
                 .preview-btn:hover {
-                    opacity: 0.9;
                     text-decoration: none;
+                    background-color: var(--platform-accent-hover); 
+                    color: var(--platform-accent-text);
                 }
 
                 .preview-btn svg {
                     width: 16px;
                     height: 16px;
-                    fill: currentColor;
-                    stroke: none;
+                    fill: none;
+                    stroke: currentColor;
                 }
 
                 .preview-text {
-                    font-weight: 500;
+                    font-weight: 600;
                 }
 
                 @media (max-width: 1600px) {
@@ -348,6 +352,7 @@ const DashboardHeader = ({
                     
                     .preview-btn {
                         padding: 0 12px;
+                        width: 38px;
                     }
                 }
 
@@ -368,11 +373,6 @@ const DashboardHeader = ({
                         font-size: 12px;
                     }
 
-                    .preview-btn {
-                        height: 36px;
-                        padding: 0 10px;
-                    }
-
                     .action-btn {
                         width: 32px;
                         height: 32px;
@@ -382,6 +382,12 @@ const DashboardHeader = ({
                         min-width: 72px;
                         margin-right: 8px;
                         padding-right: 8px;
+                    }
+                    
+                    .preview-btn {
+                        height: 32px;
+                        width: 32px;
+                        padding: 0;
                     }
                 }
 
@@ -398,11 +404,6 @@ const DashboardHeader = ({
                     .tab-icon {
                         width: 16px;
                         height: 16px;
-                    }
-
-                    .preview-btn svg {
-                        width: 14px;
-                        height: 14px;
                     }
 
                     .action-btn svg {

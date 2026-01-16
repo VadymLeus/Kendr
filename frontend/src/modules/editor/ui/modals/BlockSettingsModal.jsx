@@ -1,4 +1,4 @@
-// frontend/src/modules/site-editor/components/BlockSettingsModal.jsx
+// frontend/src/modules/editor/ui/modals/BlockSettingsModal.jsx
 import React, { useState, useEffect } from 'react';
 import BannerSettings from './settings/BannerSettings';
 import CategoriesSettings from './settings/CategoriesSettings';

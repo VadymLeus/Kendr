@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 
 const API_URL = 'http://localhost:5000'; 
-
 const stringToColor = (string) => {
     if (!string) return '#cbd5e1'; 
     let hash = 0;

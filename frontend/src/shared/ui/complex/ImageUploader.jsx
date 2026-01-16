@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import ImageCropperModal from './ImageCropperModal';
 import { toast } from 'react-toastify';
+
 const ImageUploader = ({ 
     children, 
     onUpload, 

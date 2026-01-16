@@ -1,21 +1,32 @@
-// frontend/src/modules/site-editor/blocks/Accordion/AccordionBlock.jsx
+// frontend/src/modules/editor/blocks/Accordion/AccordionBlock.jsx
 import React from 'react';
 import AccordionItem from './AccordionItem';
 import { HelpCircle } from 'lucide-react';
+import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 
-const AccordionBlock = ({ blockData, isEditorPreview, style }) => {
-    const { items = [], fontFamily } = blockData;
+const AccordionBlock = ({ blockData, siteData, isEditorPreview, style }) => {
+    const { 
+        items = [], 
+        titleFontFamily, 
+        contentFontFamily 
+    } = blockData;
+
+    const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
+        title: titleFontFamily,
+        content: contentFontFamily
+    }, siteData);
     
+    const uniqueClass = `accordion-scope-${blockData.id || 'preview'}`;
+
     const containerStyle = {
         padding: '20px',
         maxWidth: '900px',
         margin: '0 auto',
         background: 'transparent',
-        fontFamily: (fontFamily && fontFamily !== 'global') ? fontFamily : 'var(--site-font-main, inherit)',
-        
         border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
         borderRadius: isEditorPreview ? '8px' : '0',
-        ...style
+        ...style,
+        ...cssVariables
     };
 
     if (items.length === 0) {
@@ -44,12 +55,17 @@ const AccordionBlock = ({ blockData, isEditorPreview, style }) => {
     }
 
     return (
-        <div style={containerStyle}>
+        <div style={containerStyle} className={uniqueClass}>
+            <RenderFonts />
+            <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
+
             {items.map((item) => (
                 <AccordionItem
                     key={item.id}
                     item={item}
                     isEditorPreview={isEditorPreview}
+                    titleFont={fontStyles.title}
+                    contentFont={fontStyles.content}
                 />
             ))}
         </div>

@@ -7,8 +7,8 @@ import { toast } from 'react-toastify';
 import { Input, Button } from '../../../shared/ui/elements';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import ImageUploader from '../../../shared/ui/complex/ImageUploader';
-import { User, Mail, Phone, Trash2, Camera, AlertCircle, Check, Upload } from 'lucide-react';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
+import { User, Mail, Phone, Trash2, Camera, AlertCircle, Check, Upload } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);

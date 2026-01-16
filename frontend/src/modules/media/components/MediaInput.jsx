@@ -53,7 +53,6 @@ const MediaInput = ({
     };
 
     const appliedContainerStyle = triggerStyle || defaultContainerStyle;
-
     const mediaStyle = {
         width: '100%',
         height: '100%',

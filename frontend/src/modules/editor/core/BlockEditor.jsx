@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../ui/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../ui/DraggableBlockItem';
-import { resolveAccentColor, adjustColor, isLightColor } from '../../../shared/lib/utils/themeUtils';
+import { resolveAccentColor, adjustColor, isLightColor } from '../../../shared/utils/themeUtils';
 import ContextMenu from '../ui/ContextMenu';
 import { findBlockByPath } from './blockUtils';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
@@ -126,17 +126,14 @@ const BlockEditor = ({
 
     const themeSettings = siteData?.theme_settings || {};
     const isSiteDark = siteData?.site_theme_mode === 'dark';
-    
-    const siteBg = isSiteDark ? '#1a202c' : '#ffffff';
+    const siteBg = isSiteDark ? '#1a202c' : '#f7fafc';
     const siteText = isSiteDark ? '#f7fafc' : '#1a202c';
-    const siteCardBg = isSiteDark ? '#2d3748' : '#f7fafc';
+    const siteCardBg = isSiteDark ? '#2d3748' : '#ffffff';
     const siteBorder = isSiteDark ? '#4a5568' : '#e2e8f0';
-    
     const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');
     const siteAccentHover = adjustColor(siteAccent, -10);
     const siteAccentLight = adjustColor(siteAccent, 90);
     const siteAccentText = isLightColor(siteAccent) ? '#000000' : '#ffffff';
-
     const siteIsolationStyles = {
         '--site-bg': siteBg,
         '--site-text-primary': siteText,
@@ -147,11 +144,9 @@ const BlockEditor = ({
         '--site-accent-hover': siteAccentHover,
         '--site-accent-light': siteAccentLight,
         '--site-accent-text': siteAccentText,
-        
         '--site-font-main': themeSettings.font_body || "'Inter', sans-serif",
         '--site-font-headings': themeSettings.font_heading || "'Inter', sans-serif",
         '--site-btn-radius': themeSettings.button_radius || '8px',
-        
         background: 'transparent',
         width: '100%',
         minHeight: '100%',

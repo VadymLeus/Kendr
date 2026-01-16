@@ -11,9 +11,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     const { cartItems } = useContext(CartContext);
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
-    
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
     const handleProtectedLinkClick = (e, path) => {
         if (!user) {
             e.preventDefault();
@@ -33,7 +31,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     };
 
     const sidebarWidth = isCollapsed ? '80px' : '280px'; 
-
     const sidebarStyle = {
         position: 'fixed',
         left: 0,
@@ -262,7 +259,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
             </div>
 
             <div style={navContainerStyle} className="custom-scrollbar">
-                
                 <div style={groupWrapperStyle}>
                     <SidebarLink 
                         to="/create-site" 
@@ -289,7 +285,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 </div>
 
                 <div style={separatorStyle}></div>
-
                 <div style={groupWrapperStyle}>
                     <SidebarLink to="/support" icon={HelpCircle} label="Підтримка" />
                     {user && (

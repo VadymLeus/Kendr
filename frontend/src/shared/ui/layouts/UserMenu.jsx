@@ -7,7 +7,6 @@ import Avatar from '../elements/Avatar';
 const UserMenu = ({ isCollapsed }) => {
     const { user } = useContext(AuthContext);
     const [isHovered, setIsHovered] = useState(false);
-
     const containerStyle = {
         padding: '12px 16px', 
         display: 'flex',

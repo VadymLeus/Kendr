@@ -2,12 +2,10 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
-
 import ProfileGeneralTab from '../components/ProfileGeneralTab';
 import ProfileSecurityTab from '../components/ProfileSecurityTab';
 import ProfileAppearanceTab from '../components/ProfileAppearanceTab';
 import ProfilePublicTab from '../components/ProfilePublicTab';
-
 import { User, Shield, Palette, Globe, Play } from 'lucide-react';
 
 const SettingsPage = () => {

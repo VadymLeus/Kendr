@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
-import { Plus, MessageSquare, Loader } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { Plus, MessageSquare, Loader } from 'lucide-react';
 
 const MyTicketsPage = () => {
     const [tickets, setTickets] = useState([]);

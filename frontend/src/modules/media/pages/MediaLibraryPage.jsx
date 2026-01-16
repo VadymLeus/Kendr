@@ -27,24 +27,18 @@ const SORT_OPTIONS = [
 const MediaLibraryPage = () => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
-    
     const [searchQuery, setSearchQuery] = useState('');
     const [activeType, setActiveType] = useState('all'); 
     const [activeFormat, setActiveFormat] = useState(null);
-
     const [sortKey, setSortKey] = useState('date'); 
     const [sortDirection, setSortDirection] = useState('desc'); 
     const [onlyFavorites, setOnlyFavorites] = useState(false); 
     const [visibleCount, setVisibleCount] = useState(48);
-    
     const [selectedFile, setSelectedFile] = useState(null);
     const [checkedFiles, setCheckedFiles] = useState(new Set());
-    
     const lastSelectedIndex = useRef(null);
-
     const [isDragging, setIsDragging] = useState(false);
     const dragCounter = useRef(0);
-    
     const fileInputRef = useRef(null);
     const { confirm } = useConfirm();
 
@@ -127,9 +121,7 @@ const MediaLibraryPage = () => {
 
     const visibleFiles = filteredFiles.slice(0, visibleCount);
     const remainingCount = filteredFiles.length - visibleFiles.length;
-
     const handleLoadMore = () => setVisibleCount(prev => prev + 48);
-
     const handleClearFilters = () => {
         setSearchQuery('');
         setActiveType('all');

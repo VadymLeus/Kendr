@@ -3,7 +3,6 @@ import React from 'react';
 import BlockRenderer from '../../../modules/editor/core/BlockRenderer';
 
 const SiteHeader = ({ siteData, loading }) => {
-    
     if (loading || !siteData) {
         return (
             <div style={{ 

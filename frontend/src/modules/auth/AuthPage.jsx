@@ -1,13 +1,13 @@
-// frontend/src/modules/auth/pages/AuthPage.jsx
+// frontend/src/modules/auth/AuthPage.jsx
 import React, { useState, useContext } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { AuthContext } from '../../../app/providers/AuthContext';
-import apiClient from '../../../shared/api/api';
+import { AuthContext } from '../../app/providers/AuthContext';
+import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Input, Button } from '../../../shared/ui/elements';
-import Avatar from '../../../shared/ui/elements/Avatar';
-import ImageUploader from '../../../shared/ui/complex/ImageUploader';
+import { Input, Button } from '../../shared/ui/elements';
+import Avatar from '../../shared/ui/elements/Avatar';
+import ImageUploader from '../../shared/ui/complex/ImageUploader';
 import { ArrowLeft, Check, MailOpen, Trash, Camera, Upload } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';

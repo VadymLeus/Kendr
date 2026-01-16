@@ -12,7 +12,6 @@ const RangeSlider = ({
     accentColor = 'var(--platform-accent)'
 }) => {
     const numericValue = parseInt(value) || 0;
-
     const handleChange = (e) => {
         const val = e.target.value;
         onChange(`${val}${unit}`);
@@ -31,7 +30,6 @@ const RangeSlider = ({
     };
 
     const percentage = ((numericValue - min) / (max - min)) * 100;
-
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {label && (

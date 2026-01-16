@@ -3,7 +3,7 @@ import React, { Suspense, lazy, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AnimationWrapper from '../../renderer/components/AnimationWrapper';
 import { AlertTriangle, Construction, Loader } from 'lucide-react';
-import { resolveSiteLink } from '../../../shared/lib/utils/linkUtils';
+import { resolveSiteLink } from '../../../shared/utils/linkUtils';
 
 const HeroBlock = lazy(() => import('../blocks/Hero/HeroBlock'));
 const TextBlock = lazy(() => import('../blocks/Text/TextBlock'));
@@ -19,7 +19,6 @@ const MapBlock = lazy(() => import('../blocks/Map/MapBlock'));
 const AccordionBlock = lazy(() => import('../blocks/Accordion/AccordionBlock'));
 const SocialIconsBlock = lazy(() => import('../blocks/SocialIcons/SocialIconsBlock'));
 const HeaderBlock = lazy(() => import('../blocks/Header/HeaderBlock'));
-
 const blockMap = {
     hero: HeroBlock,
     text: TextBlock,
@@ -57,15 +56,21 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                 background: bg,
                 borderRadius: '8px',
                 margin: '1rem 0',
-                border: isEditorPreview ? `1px dashed ${borderColor}` : 'none'
+                border: isEditorPreview ? `1px dashed ${borderColor}` : 'none',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
             }}>
                 <div style={{ marginBottom: '1rem', opacity: 0.7, display: 'flex', justifyContent: 'center' }}>
                     <Construction size={48} />
                 </div>
-                <h3 style={{ color: textPrimary, marginBottom: '0.5rem', fontWeight: '500' }}>
+                <h3 style={{ 
+                    color: textPrimary, 
+                    marginBottom: '0.5rem', 
+                    fontWeight: '500',
+                    fontFamily: 'inherit' 
+                }}>
                     Ця сторінка порожня
                 </h3>
-                <p style={{ margin: 0, fontSize: '0.95rem' }}>
+                <p style={{ margin: 0, fontSize: '0.95rem', fontFamily: 'inherit' }}>
                     Додайте блоки для створення контенту
                 </p>
             </div>
@@ -91,7 +96,8 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                                 borderRadius: '8px',
                                 margin: '0.5rem 0',
                                 color: isEditorPreview ? danger : textPrimary,
-                                textAlign: 'center'
+                                textAlign: 'center',
+                                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                             }}
                         >
                             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
@@ -121,16 +127,20 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                                     <div style={{
                                         padding: '2rem 1rem',
                                         textAlign: 'center',
-                                        background: bg,
+                                        background: 'transparent',
                                         borderRadius: '8px',
                                         margin: '0.5rem 0',
-                                        border: `1px solid ${borderColor}`,
-                                        color: textSecondary
+                                        border: 'none',
+                                        color: textSecondary,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minHeight: '100px'
                                     }}>
-                                        <div style={{ marginBottom: '0.5rem', opacity: 0.7, display: 'flex', justifyContent: 'center' }}>
-                                            <Loader size={24} />
+                                        <div style={{ marginBottom: '0.5rem', opacity: 0.5 }}>
+                                            <Loader size={24} className="animate-spin" />
                                         </div>
-                                        <div style={{ fontWeight: '500' }}>Завантаження блоку...</div>
                                     </div>
                                 }
                             >
@@ -148,6 +158,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                     </div>
                 );
             })}
+            
             {isMobileMenuOpen && (
                 <div style={{
                     position: 'fixed',

@@ -1,16 +1,11 @@
 // frontend/src/modules/editor/ui/configuration/SpacingControl.jsx
 import React, { useState, useEffect } from 'react';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
-import { 
-    ArrowUp, 
-    ArrowDown, 
-    Link, 
-    Unlink 
-} from 'lucide-react';
+import { ArrowUp, ArrowDown, Link, Unlink } from 'lucide-react';
 
 const SpacingControl = ({ styles = {}, onChange }) => {
     const defaultPadding = 60;
-    const minPadding = 0;
+    const minPadding = 10;
     const maxPadding = 240;
     
     const getSafeValue = (val) => {

@@ -7,7 +7,6 @@ import { toast } from 'react-toastify';
 import { Upload, X } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
 const ImageInput = ({ 
     value, 
     onChange, 
@@ -20,7 +19,9 @@ const ImageInput = ({
     const [isCropperOpen, setIsCropperOpen] = useState(false);
     const [cropImageSrc, setCropImageSrc] = useState(null);
     const [isHovered, setIsHovered] = useState(false);
+    
     const safeValue = typeof value === 'string' ? value : '';
+    
     const getFullUrl = (path) => {
         if (!path) return '';
         if (path.startsWith('http') || path.startsWith('blob:')) return path;
@@ -93,6 +94,7 @@ const ImageInput = ({
         display: 'flex', justifyContent: 'center', alignItems: 'center',
         cursor: 'pointer', transition: 'all 0.2s ease', color: 'var(--platform-text-secondary)',
     };
+    
     const appliedContainerStyle = triggerStyle || defaultContainerStyle;
     const imageStyle = { width: '100%', height: '100%', objectFit: 'cover', display: 'block' };
     const placeholderStyle = { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '500' };
@@ -100,8 +102,10 @@ const ImageInput = ({
         position: 'absolute', top: '6px', right: '6px',
         background: 'rgba(0, 0, 0, 0.6)', color: 'white', border: 'none', borderRadius: '50%',
         width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', zIndex: 10, transition: 'background 0.2s', padding: 0
+        cursor: 'pointer', zIndex: 10, transition: 'background 0.2s, opacity 0.2s', padding: 0,
+        opacity: isHovered ? 1 : 0
     };
+
     const overlayStyle = {
         position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -158,6 +162,8 @@ const ImageInput = ({
                             style={deleteButtonStyle}
                             onClick={handleClear}
                             title="Видалити фото"
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--platform-danger)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'}
                         >
                             <X size={14} />
                         </button>

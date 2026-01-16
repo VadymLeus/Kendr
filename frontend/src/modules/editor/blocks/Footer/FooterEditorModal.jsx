@@ -4,24 +4,9 @@ import BlockEditor from '../../core/BlockEditor';
 import EditorSidebar from '../../components/EditorSidebar';
 import { Button } from '../../../../shared/ui/elements/Button';
 import { toast } from 'react-toastify';
-import { 
-    PanelBottom, 
-    Save, 
-    X, 
-    AlertTriangle 
-} from 'lucide-react';
-import { 
-    generateBlockId, 
-    getDefaultBlockData 
-} from '../../core/editorConfig';
-import { 
-    updateBlockDataByPath, 
-    removeBlockByPath, 
-    addBlockByPath, 
-    moveBlock,
-    handleDrop,
-    cloneBlockWithNewIds
-} from '../../core/blockUtils';
+import { PanelBottom, Save, X, AlertTriangle } from 'lucide-react';
+import {  generateBlockId,  getDefaultBlockData } from '../../core/editorConfig';
+import {  updateBlockDataByPath,  removeBlockByPath,  addBlockByPath,  moveBlock, handleDrop, cloneBlockWithNewIds } from '../../core/blockUtils';
 
 const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData }) => {
     const [blocks, setBlocks] = useState(initialBlocks || []);
@@ -65,7 +50,7 @@ const FooterEditorModal = ({ isOpen, onClose, initialBlocks, onSave, siteData })
         setSaving(true);
         try {
             await onSave(blocks);
-            toast.success('✅ Футер успішно збережено!');
+            toast.success('Футер успішно збережено!');
             onClose();
         } catch (error) {
             console.error('Помилка збереження футера:', error);

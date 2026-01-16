@@ -18,9 +18,7 @@ export const SplitViewLayout = ({
     }, []);
 
     const isMobile = windowWidth < breakPoint;
-    
-    const effectiveIsOpen = isOpen; 
-
+    const effectiveIsOpen = isOpen;
     const styles = {
         container: { 
             display: 'flex', 
@@ -73,7 +71,6 @@ export const SplitViewLayout = ({
     return (
         <div style={styles.container}>
             <style>{`.collapse-btn-hover:hover { border-color: var(--platform-accent) !important; color: var(--platform-accent) !important; background: var(--platform-bg); box-shadow: 0 0 0 1px var(--platform-accent); }`}</style>
-            
             <div style={styles.sidebarArea}>
                 {sidebar}
             </div>

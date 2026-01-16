@@ -5,23 +5,10 @@ import { BLOCK_LIBRARY } from '../../core/editorConfig';
 import apiClient from '../../../../shared/api/api';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Input } from '../../../../shared/ui/elements/Input';
-import { 
-    ChevronDown, 
-    ChevronRight, 
-    Trash2, 
-    Edit, 
-    Check, 
-    X, 
-    Package, 
-    PanelTop, 
-    Box, 
-    ShoppingBag,
-    GripVertical
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Trash2, Edit, Check, X, Package, PanelTop, Box, ShoppingBag, GripVertical } from 'lucide-react';
 
 const Section = ({ title, children, defaultOpen = false, icon }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
-
     const headerStyle = {
         display: 'flex',
         alignItems: 'center',
@@ -31,7 +18,7 @@ const Section = ({ title, children, defaultOpen = false, icon }) => {
         userSelect: 'none',
         color: isOpen ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)',
         borderBottom: isOpen ? 'none' : '1px solid var(--platform-border-color)',
-        transition: 'all 0.2s ease'
+        transition: 'color 0.2s ease' 
     };
 
     return (

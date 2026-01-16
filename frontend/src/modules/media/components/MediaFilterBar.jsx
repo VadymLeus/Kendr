@@ -4,12 +4,10 @@ import { Search, Star, Image, Video, File, Type } from 'lucide-react';
 
 const MediaFilterBar = ({ filters, onFilterChange }) => {
     const [isFocused, setIsFocused] = useState(false);
-    
     const handleMainTypeChange = (type) => onFilterChange({ ...filters, type: type, extension: 'all' });
     const handleExtensionChange = (ext) => onFilterChange({ ...filters, extension: ext });
     const handleSearchChange = (val) => onFilterChange({ ...filters, search: val });
     const handleSortChange = (val) => onFilterChange({ ...filters, sort: val });
-
     const mainFilters = [
         { id: 'all', label: 'Всі', icon: null },
         { id: 'image', label: 'Фото', icon: <Image size={15} /> },

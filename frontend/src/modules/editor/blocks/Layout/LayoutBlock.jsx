@@ -6,29 +6,24 @@ import { DND_TYPE_NEW_BLOCK } from '../../ui/DraggableBlockItem';
 import BlockRenderer from '../../core/BlockRenderer';
 import { Plus } from 'lucide-react';
 
+const API_URL = 'http://localhost:5000';
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
-
-const getLayoutStyles = (direction = 'row', preset, verticalAlign = 'top', horizontalAlign = 'start') => {
+const getGridStyles = (direction = 'row', preset, verticalAlign = 'top', gap = 20) => {
     
     const verticalAlignMap = {
         top: 'start',
         middle: 'center',
-        bottom: 'end'
-    };
-    const horizontalAlignMap = {
-        start: 'start',
-        center: 'center',
-        end: 'end'
+        bottom: 'end',
+        stretch: 'stretch'
     };
 
     const baseStyle = {
         display: 'grid',
-        gap: '20px',
-        padding: '20px',
-        backgroundColor: 'transparent',
-        background: 'none',
-        alignItems: verticalAlignMap[verticalAlign] || 'start',
-        justifyItems: direction === 'column' ? (horizontalAlignMap[horizontalAlign] || 'stretch') : 'stretch',
+        gap: `${gap}px`,
+        width: '100%',
+        alignItems: verticalAlignMap[verticalAlign] || 'start', 
+        zIndex: 2,
+        position: 'relative'
     };
 
     if (direction === 'column') {
@@ -37,23 +32,12 @@ const getLayoutStyles = (direction = 'row', preset, verticalAlign = 'top', horiz
     }
 
     switch (preset) {
-        case '50-50':
-            baseStyle.gridTemplateColumns = '1fr 1fr';
-            break;
-        case '75-25':
-            baseStyle.gridTemplateColumns = '3fr 1fr';
-            break;
-        case '25-75':
-            baseStyle.gridTemplateColumns = '1fr 3fr';
-            break;
-        case '33-33-33':
-            baseStyle.gridTemplateColumns = '1fr 1fr 1fr';
-            break;
-        case '25-25-25-25':
-            baseStyle.gridTemplateColumns = '1fr 1fr 1fr 1fr';
-            break;
-        default: 
-            baseStyle.gridTemplateColumns = '1fr 1fr';
+        case '50-50': baseStyle.gridTemplateColumns = '1fr 1fr'; break;
+        case '75-25': baseStyle.gridTemplateColumns = '3fr 1fr'; break;
+        case '25-75': baseStyle.gridTemplateColumns = '1fr 3fr'; break;
+        case '33-33-33': baseStyle.gridTemplateColumns = '1fr 1fr 1fr'; break;
+        case '25-25-25-25': baseStyle.gridTemplateColumns = '1fr 1fr 1fr 1fr'; break;
+        default: baseStyle.gridTemplateColumns = '1fr 1fr';
     }
     
     return baseStyle;
@@ -75,10 +59,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
                 const isDroppingOnSelf = dropZonePath.join(',').startsWith(dragPath.join(',')) &&
                                          dropZonePath.length > dragPath.length;
                 
-                if (isDroppingOnSelf) {
-                    console.error("Помилка: Не можна перемістити макет сам у себе.");
-                    return;
-                }
+                if (isDroppingOnSelf) return;
                 onDrop(item, path);
             } else if (dragType === DND_TYPE_NEW_BLOCK) {
                 const newBlockPath = [...path, React.Children.count(children)];
@@ -99,30 +80,20 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
 
     useEffect(() => {
         if (!isEditorPreview) return;
-
         const calculateScale = () => {
-            if (columnRef.current && contentRef.current) {
+            if (columnRef.current) {
                 const columnWidth = columnRef.current.offsetWidth;
                 const MIN_COMFORTABLE_WIDTH = 250; 
-
                 if (columnWidth < MIN_COMFORTABLE_WIDTH && columnWidth > 0) {
-                    const newScale = columnWidth / MIN_COMFORTABLE_WIDTH;
-                    setScale(newScale);
+                    setScale(columnWidth / MIN_COMFORTABLE_WIDTH);
                 } else {
                     setScale(1);
                 }
             }
         };
-
-        const resizeObserver = new ResizeObserver(() => {
-            calculateScale();
-        });
-
-        if (columnRef.current) {
-            resizeObserver.observe(columnRef.current);
-        }
-
-        return () => resizeObserver.disconnect();
+        const observer = new ResizeObserver(calculateScale);
+        if (columnRef.current) observer.observe(columnRef.current);
+        return () => observer.disconnect();
     }, [isEditorPreview, children]);
 
     const setRefs = useCallback((node) => {
@@ -131,16 +102,12 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
     }, [drop]);
 
     const columnStyle = {
-        minHeight: '150px',
-        padding: '12px',
+        minHeight: '100px',
+        padding: '10px',
         borderRadius: '8px',
-        border: isOver && canDrop 
-            ? `2px dashed ${siteAccent}` 
-            : `1px dashed ${siteBorderColor}`,
+        border: isOver && canDrop ? `2px dashed ${siteAccent}` : `1px dashed ${isEditorPreview ? siteBorderColor : 'transparent'}`,
         transition: 'all 0.2s ease',
-        backgroundColor: isOver && canDrop 
-            ? 'rgba(66, 153, 225, 0.05)' 
-            : 'transparent',
+        backgroundColor: isOver && canDrop ? 'rgba(66, 153, 225, 0.05)' : 'transparent',
         width: '100%', 
         boxSizing: 'border-box',
         overflow: 'hidden', 
@@ -157,41 +124,22 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         marginBottom: scale < 1 ? `-${(1 - scale) * 100}%` : '0',
     };
 
-    if (!isEditorPreview) {
-        return <div style={{ backgroundColor: 'transparent' }}>{children}</div>;
-    }
-
     return (
         <div ref={setRefs} style={columnStyle}>
             <div ref={contentRef} style={contentWrapperStyle}>
                 {children}
-                
-                {React.Children.count(children) === 0 && (
+                {isEditorPreview && React.Children.count(children) === 0 && (
                     <div style={{ 
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: '120px',
-                        color: 'var(--platform-text-secondary)',
-                        opacity: 0.6,
-                        pointerEvents: 'none',
-                        textAlign: 'center'
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        height: '100px', color: 'var(--platform-text-secondary)', opacity: 0.6, pointerEvents: 'none'
                     }}>
                         <div style={{ 
-                            width: '40px', 
-                            height: '40px', 
-                            borderRadius: '50%', 
-                            border: '1px solid var(--platform-border-color)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: '8px',
-                            background: 'var(--platform-bg)'
+                            width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--platform-border-color)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '6px', background: 'var(--platform-bg)'
                         }}>
-                            <Plus size={20} />
+                            <Plus size={16} />
                         </div>
-                        <span style={{ fontSize: '0.85rem' }}>Перетягніть блок сюди</span>
+                        <span style={{ fontSize: '0.75rem' }}>Сюди блок</span>
                     </div>
                 )}
             </div>
@@ -203,7 +151,7 @@ const LayoutBlock = ({
     block, 
     siteData, 
     isEditorPreview, 
-    path, 
+    path = [], 
     onMoveBlock, 
     onDropBlock, 
     onDeleteBlock, 
@@ -211,57 +159,140 @@ const LayoutBlock = ({
     selectedBlockPath,
     onAddBlock 
 }) => {
-    const { preset, columns = [], direction, verticalAlign, horizontalAlign } = block.data;
-    const layoutStyle = getLayoutStyles(direction, preset, verticalAlign, horizontalAlign);
+    const { 
+        preset, 
+        columns = [], 
+        direction = 'row', 
+        verticalAlign = 'top', 
+        gap = 20,
+        height = 'auto', 
+        styles = {},
+        minHeight: legacyMinHeight,
+        padding: legacyPadding = '20px',
+        bg_type = 'none', 
+        bg_color = 'transparent',
+        bg_image,
+        bg_video,
+        overlay_color = '#000000',
+        overlay_opacity = 0
+    } = block.data;
 
-    if (!isEditorPreview) {
-        return (
-            <div style={layoutStyle}>
-                {columns.map((columnBlocks, colIndex) => (
-                    <div key={colIndex} style={{ 
-                        minWidth: '0', 
-                        backgroundColor: 'transparent'
-                    }}>
-                        <BlockRenderer
-                            blocks={columnBlocks}
-                            siteData={siteData}
-                            isEditorPreview={false}
-                        />
-                    </div>
-                ))}
-            </div>
-        );
-    }
+    const videoRef = useRef(null);
+    const heightMap = { 
+        small: '300px',
+        medium: '500px',
+        large: '700px',
+        full: '100vh',
+        auto: 'auto'
+    };
+
+    const activeMinHeight = heightMap[height] || (legacyMinHeight === 'screen' ? '100vh' : legacyMinHeight) || 'auto';
+    const fullImageUrl = bg_image 
+        ? (bg_image.startsWith('http') ? bg_image : `${API_URL}${bg_image}`)
+        : null;
+    const fullVideoUrl = bg_video 
+        ? (bg_video.startsWith('http') ? bg_video : `${API_URL}${bg_video}`)
+        : null;
+
+    useEffect(() => {
+        if (videoRef.current && bg_type === 'video') {
+            videoRef.current.play().catch(e => console.error("Autoplay failed", e));
+        }
+    }, [bg_type, fullVideoUrl]);
+
+    const containerStyle = {
+        position: 'relative',
+        minHeight: activeMinHeight,
+        padding: legacyPadding,
+        ...styles, 
+        backgroundColor: bg_type === 'color' ? bg_color : 'var(--site-bg, #f7fafc)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: activeMinHeight !== 'auto' ? (
+            verticalAlign === 'middle' ? 'center' : (verticalAlign === 'bottom' ? 'flex-end' : 'flex-start')
+        ) : 'flex-start',
+    };
+
+    const renderBackground = () => {
+        if (bg_type === 'image' && fullImageUrl) {
+            return (
+                <div style={{
+                    position: 'absolute', inset: 0, zIndex: 0,
+                    backgroundImage: `url(${fullImageUrl})`,
+                    backgroundSize: 'cover', backgroundPosition: 'center'
+                }} />
+            );
+        }
+        if (bg_type === 'video' && fullVideoUrl) {
+            return (
+                <video
+                    ref={videoRef}
+                    src={fullVideoUrl}
+                    poster={fullImageUrl}
+                    autoPlay muted loop playsInline
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
+                />
+            );
+        }
+        return null;
+    };
+
+    const gridStyle = getGridStyles(direction, preset, verticalAlign, gap);
 
     return (
-        <div style={layoutStyle}>
-            {columns.map((columnBlocks, colIndex) => {
-                const columnPath = [...path, 'data', 'columns', colIndex];
-                return (
-                    <ColumnDropZone
-                        key={colIndex}
-                        isEditorPreview={isEditorPreview}
-                        path={columnPath}
-                        onDrop={onDropBlock}
-                        onAddBlock={onAddBlock}
-                    >
-                        {columnBlocks.map((childBlock, childIndex) => (
-                            <EditableBlockWrapper
-                                key={childBlock.block_id}
-                                block={childBlock}
-                                siteData={siteData}
-                                path={[...columnPath, childIndex]}
-                                onMoveBlock={onMoveBlock}
-                                onDropBlock={onDropBlock}
-                                onDeleteBlock={onDeleteBlock}
-                                onAddBlock={onAddBlock}
-                                onSelectBlock={onSelectBlock}
-                                selectedBlockPath={selectedBlockPath}
-                            />
-                        ))}
-                    </ColumnDropZone>
-                );
-            })}
+        <div style={containerStyle} id={block.data.anchorId}>
+            {renderBackground()}
+            {(bg_type === 'image' || bg_type === 'video') && (
+                <div style={{
+                    position: 'absolute', inset: 0, zIndex: 1,
+                    backgroundColor: overlay_color,
+                    opacity: parseFloat(overlay_opacity) || 0
+                }} />
+            )}
+            <div style={gridStyle}>
+                {columns.map((columnBlocks, colIndex) => {
+                    const safePath = path || [];
+                    const columnPath = [...safePath, 'data', 'columns', colIndex];
+                    
+                    if (!isEditorPreview) {
+                        return (
+                            <div key={colIndex} style={{ minWidth: '0' }}>
+                                <BlockRenderer
+                                    blocks={columnBlocks}
+                                    siteData={siteData}
+                                    isEditorPreview={false}
+                                />
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <ColumnDropZone
+                            key={colIndex}
+                            isEditorPreview={isEditorPreview}
+                            path={columnPath}
+                            onDrop={onDropBlock}
+                            onAddBlock={onAddBlock}
+                        >
+                            {columnBlocks.map((childBlock, childIndex) => (
+                                <EditableBlockWrapper
+                                    key={childBlock.block_id}
+                                    block={childBlock}
+                                    siteData={siteData}
+                                    path={[...columnPath, childIndex]}
+                                    onMoveBlock={onMoveBlock}
+                                    onDropBlock={onDropBlock}
+                                    onDeleteBlock={onDeleteBlock}
+                                    onAddBlock={onAddBlock}
+                                    onSelectBlock={onSelectBlock}
+                                    selectedBlockPath={selectedBlockPath}
+                                />
+                            ))}
+                        </ColumnDropZone>
+                    );
+                })}
+            </div>
         </div>
     );
 };

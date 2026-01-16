@@ -2,20 +2,7 @@
 import React from 'react';
 import { commonStyles, ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
-import { 
-    AlignLeft, 
-    AlignCenter, 
-    AlignRight, 
-    Sun, 
-    Moon, 
-    LayoutTemplate, 
-    Share2, 
-    Facebook, 
-    Instagram, 
-    Send, 
-    Youtube, 
-    Music 
-} from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Sun, Moon, LayoutTemplate, Share2, Facebook, Instagram, Send, Youtube, Music } from 'lucide-react';
 
 const socialNetworks = [
     { key: 'facebook', name: 'Facebook', icon: <Facebook size={16}/>, placeholder: 'https://facebook.com/page' },
@@ -33,7 +20,6 @@ const SocialIconsSettings = ({ data, onChange }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div>
                 <SectionTitle icon={<LayoutTemplate size={18}/>}>Вигляд</SectionTitle>
-                
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Вирівнювання</label>
                     <ToggleGroup 
@@ -58,9 +44,6 @@ const SocialIconsSettings = ({ data, onChange }) => {
                         value={data.theme_mode || 'auto'}
                         onChange={(val) => updateData({ theme_mode: val })}
                     />
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '6px', display: 'block' }}>
-                        Оберіть "Темні" для світлого фону блоку, "Світлі" для темного.
-                    </small>
                 </div>
             </div>
             <div>

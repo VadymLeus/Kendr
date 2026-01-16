@@ -1,5 +1,4 @@
-/* frontend/src/modules/shop/pages/ProductDetailPage.module.jsx */
-
+/* frontend/src/modules/shop/pages/ProductDetailPage.module.css */
 .pageWrapper {
     background-color: var(--site-bg);
     min-height: 100vh;
@@ -18,7 +17,7 @@
 
 .productGrid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 60px;
     align-items: start;
 }
@@ -188,6 +187,7 @@
     justify-content: center;
     height: 600px;
     gap: 25px;
+    min-width: 0;
 }
 
 .statusRow {
@@ -255,6 +255,7 @@
     padding: 0;
     margin-top: 30px;
     overflow: hidden;
+    max-width: 100%; 
 }
 
 .descriptionHeader {
@@ -276,6 +277,8 @@
     font-size: 1.05rem;
     text-align: left;
     white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .recommendationsSection {
@@ -286,7 +289,7 @@
 
 .productsGrid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 15px;
     margin-top: 20px;
 }
@@ -328,6 +331,7 @@
 .productCardContent {
     padding: 15px;
     flex: 1;
+    min-width: 0; 
 }
 
 .productCardTitle {
@@ -341,6 +345,8 @@
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .productCardPrice {
@@ -409,6 +415,10 @@
     color: var(--site-text-primary);
     line-height: 1.2;
     text-align: left;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
 }
 
 .priceContainer {
@@ -458,13 +468,13 @@
 
 @media (max-width: 1200px) {
     .productsGrid {
-        grid-template-columns: repeat(3, 1fr) !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     }
 }
 
 @media (max-width: 900px) {
     .productGrid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(0, 1fr) !important;
     }
     
     .galleryContainer {
@@ -492,7 +502,7 @@
     }
     
     .productsGrid {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
     
     .zoomControls {
@@ -503,6 +513,6 @@
 
 @media (max-width: 600px) {
     .productsGrid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(0, 1fr) !important;
     }
 }

@@ -1,5 +1,4 @@
 // frontend/src/shared/lib/utils/linkUtils.js
-
 export const resolveSiteLink = (link, sitePath) => {
     if (!link) return '#';
     

@@ -6,37 +6,22 @@ import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../ui/
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
-import { Trash2, Plus, Image, Type, LayoutTemplate, List, AlignLeft, AlignCenter, AlignRight, Link, Pencil, Upload, AlertCircle } from 'lucide-react';
 import ConfirmModal from '../../../../shared/ui/complex/ConfirmModal';
+import AlignmentControl from '../../ui/components/AlignmentControl';
+import ButtonEditor from '../../ui/components/ButtonEditor';
+import FontSelector from '../../ui/components/FontSelector';
+import { Trash2, Plus, Image, Type, LayoutTemplate, List, Link, Pencil, AlertCircle } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-const HeaderSettings = ({ data, onChange }) => {
+const HeaderSettings = ({ data, onChange, siteData }) => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [itemToDeleteId, setItemToDeleteId] = useState(null);
-    const [isLogoHovered, setIsLogoHovered] = useState(false);
+
+    const MAX_NAV_ITEMS = 5;
+    const navItemsCount = (data.nav_items || []).length;
+    const isLimitReached = navItemsCount >= MAX_NAV_ITEMS;
+
     const updateData = (updates) => onChange({ ...data, ...updates });
-    const getImageUrl = (src) => {
-        if (!src) return '';
-        if (src.startsWith('data:')) return src;
-        if (src.startsWith('http')) return src;
-        const cleanSrc = src.startsWith('/') ? src : `/${src}`;
-        return `${API_URL}${cleanSrc}`;
-    };
-
-    const overlayStyle = (isHovered) => ({ 
-        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', 
-        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-        color: 'white', opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s ease', 
-        backdropFilter: 'blur(2px)', zIndex: 10 
-    });
-
-    const trashButtonStyle = { 
-        position: 'absolute', top: '6px', right: '6px', 
-        background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', 
-        borderRadius: '50%', width: '28px', height: '28px', 
-        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-        cursor: 'pointer', zIndex: 20, transition: 'background 0.2s' 
-    };
 
     const handleNavItemChange = (id, field, value) => {
         const newItems = data.nav_items.map(item => 
@@ -46,6 +31,7 @@ const HeaderSettings = ({ data, onChange }) => {
     };
 
     const addNavItem = () => {
+        if (isLimitReached) return;
         const newItem = { id: generateBlockId(), label: 'Нова сторінка', link: '/' };
         updateData({ nav_items: [...(data.nav_items || []), newItem] });
     };
@@ -74,7 +60,7 @@ const HeaderSettings = ({ data, onChange }) => {
         borderRadius: '8px', border: '1px solid var(--platform-border-color)'
     };
 
-    const previewUrl = getImageUrl(data.logo_src);
+    const currentLogoRadius = data.logo_radius !== undefined ? data.logo_radius : (data.borderRadius || 0);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -95,57 +81,18 @@ const HeaderSettings = ({ data, onChange }) => {
                 
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Центральний логотип</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ width: '100%' }}>
+                    <div style={{ 
+                        background: 'var(--platform-bg)', 
+                        padding: '12px', 
+                        borderRadius: '12px', 
+                        border: '1px solid var(--platform-border-color)' 
+                    }}>
+                        <div style={{ width: '100%', height: '200px' }}>
                             <ImageInput 
                                 value={data.logo_src} 
                                 onChange={handleLogoChange} 
-                                aspect={1}
-                                triggerStyle={{ display: 'block', padding: 0, border: 'none', background: 'transparent', width: '100%', cursor: 'pointer' }}
-                            >
-                                <div 
-                                    style={{ 
-                                        width: '100%', height: '120px',
-                                        border: '1px solid var(--platform-border-color)', 
-                                        borderRadius: '12px', overflow: 'hidden', 
-                                        background: 'var(--platform-bg)', position: 'relative', 
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center' 
-                                    }} 
-                                    onMouseEnter={() => setIsLogoHovered(true)} 
-                                    onMouseLeave={() => setIsLogoHovered(false)}
-                                >
-                                    {data.logo_src ? (
-                                        <img 
-                                            src={previewUrl}
-                                            alt="Logo" 
-                                            style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} 
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                                e.target.parentElement.style.backgroundImage = 'none';
-                                            }}
-                                        />
-                                    ) : (
-                                        <Image size={32} style={{ color: 'var(--platform-text-secondary)', opacity: 0.5 }} />
-                                    )}
-                                    
-                                    <div style={overlayStyle(isLogoHovered)}>
-                                        <Upload size={24} />
-                                    </div>
-
-                                    {data.logo_src && (
-                                        <button 
-                                            type="button" 
-                                            onClick={(e) => { e.stopPropagation(); handleLogoChange(''); }} 
-                                            style={trashButtonStyle} 
-                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--platform-danger)'} 
-                                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'} 
-                                            title="Видалити лого"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    )}
-                                </div>
-                            </ImageInput>
+                                aspect={1} 
+                            />
                         </div>
                     </div>
                 </div>
@@ -166,8 +113,8 @@ const HeaderSettings = ({ data, onChange }) => {
                 <div style={commonStyles.formGroup}>
                     <RangeSlider 
                         label="Скруглення логотипу"
-                        value={data.borderRadius || 0}
-                        onChange={(val) => updateData({ borderRadius: val })}
+                        value={currentLogoRadius}
+                        onChange={(val) => updateData({ logo_radius: val })}
                         min={0}
                         max={50}
                         unit="px"
@@ -189,28 +136,25 @@ const HeaderSettings = ({ data, onChange }) => {
                     label="Показувати назву поруч з лого"
                 />
             </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4', display: 'flex', gap: '8px' }}>
-                            <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--platform-accent)' }} />
-                            <span>Логотип і назву сайту синхронізовано глобальними налаштуваннями.</span>
-                        </div>
+            
+            <div style={{ fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4', display: 'flex', gap: '8px' }}>
+                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--platform-accent)' }} />
+                <span>Логотип і назву сайту синхронізовано глобальними налаштуваннями.</span>
+            </div>
+
             <div>
-                <SectionTitle icon={<LayoutTemplate size={18}/>}>Розміщення</SectionTitle>
+                <SectionTitle icon={<LayoutTemplate size={18}/>}>Розміщення та Стиль</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Вирівнювання меню</label>
-                    <ToggleGroup 
-                        options={[
-                            { value: 'left', label: <AlignLeft size={18}/> },
-                            { value: 'center', label: <AlignCenter size={18}/> },
-                            { value: 'right', label: <AlignRight size={18}/> },
-                        ]}
+                    <AlignmentControl 
+                        label="Вирівнювання меню"
                         value={data.nav_alignment || 'right'}
                         onChange={(val) => updateData({ nav_alignment: val })}
                     />
                 </div>
 
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Стиль посилань</label>
+                    <label style={commonStyles.label}>Тип відображення</label>
                     <ToggleGroup 
                         options={[
                             { value: 'text', label: 'Текст' },
@@ -220,10 +164,51 @@ const HeaderSettings = ({ data, onChange }) => {
                         onChange={(val) => updateData({ nav_style: val })}
                     />
                 </div>
+
+                {data.nav_style === 'button' ? (
+                    <div style={{ 
+                        marginTop: '16px', 
+                        padding: '16px', 
+                        background: 'var(--platform-bg)', 
+                        borderRadius: '8px',
+                        border: '1px solid var(--platform-border-color)'
+                    }}>
+                        <div style={{ marginBottom: '12px', fontWeight: '600', fontSize: '0.9rem' }}>Стиль кнопок меню</div>
+                        <ButtonEditor 
+                            data={data.buttonSettings || {}}
+                            onChange={(val) => updateData({ buttonSettings: val })}
+                            siteData={siteData}
+                            showAlignment={false} 
+                            hideLinks={true}      
+                            hideIcons={true}
+                        />
+                    </div>
+                ) : (
+                    <div style={commonStyles.formGroup}>
+                        <FontSelector 
+                            label="Шрифт меню"
+                            value={data.nav_fontFamily}
+                            onChange={(val) => updateData({ nav_fontFamily: val })}
+                            siteFonts={siteData?.theme_settings}
+                        />
+                    </div>
+                )}
             </div>
 
             <div>
-                <SectionTitle icon={<List size={18}/>}>Пункти меню</SectionTitle>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <SectionTitle icon={<List size={18}/>} style={{marginBottom: 0}}>Пункти меню</SectionTitle>
+                    <span style={{ 
+                        fontSize: '0.8rem', 
+                        fontWeight: '600', 
+                        color: isLimitReached ? 'var(--platform-danger)' : 'var(--platform-text-secondary)',
+                        background: isLimitReached ? 'rgba(var(--platform-danger-rgb), 0.1)' : 'var(--platform-bg)',
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                    }}>
+                        {navItemsCount} / {MAX_NAV_ITEMS}
+                    </span>
+                </div>
                 
                 <div style={{ 
                     marginBottom: '12px', padding: '8px', 
@@ -272,15 +257,18 @@ const HeaderSettings = ({ data, onChange }) => {
                 <Button 
                     variant="outline"
                     onClick={addNavItem}
+                    disabled={isLimitReached}
                     style={{ 
                         width: '100%', 
                         marginTop: '8px',
-                        borderColor: 'var(--platform-accent)', 
-                        color: 'var(--platform-accent)'
+                        borderColor: isLimitReached ? 'var(--platform-border-color)' : 'var(--platform-accent)', 
+                        color: isLimitReached ? 'var(--platform-text-secondary)' : 'var(--platform-accent)',
+                        opacity: isLimitReached ? 0.6 : 1,
+                        cursor: isLimitReached ? 'not-allowed' : 'pointer'
                     }}
                     icon={<Plus size={16} />}
                 >
-                    Додати пункт меню
+                    {isLimitReached ? 'Ліміт досягнуто' : 'Додати пункт меню'}
                 </Button>
             </div>
         </div>

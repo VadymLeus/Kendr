@@ -1,29 +1,63 @@
 // frontend/src/modules/editor/blocks/ShowCase/ShowCaseSettings.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { commonStyles, SectionTitle, ToggleGroup } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
-import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import ProductPickerModal from '../../../dashboard/components/ProductPickerModal';
-import { 
-    LayoutGrid, 
-    ShoppingBag, 
-    Type, 
-    List, 
-    Layers, 
-    AlignLeft, 
-    AlignCenter, 
-    AlignRight 
-} from 'lucide-react';
+import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
+import apiClient from '../../../../shared/api/api';
+import AlignmentControl from '../../ui/components/AlignmentControl';
+import FontSelector from '../../ui/components/FontSelector';
+import { LayoutGrid, ShoppingBag, Type, List, Layers, } from 'lucide-react';
 
 const ShowCaseSettings = ({ data, onChange, siteData }) => { 
     const [isPickerOpen, setIsPickerOpen] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+    const themeSettings = siteData?.theme_settings || {};
+    const currentSiteFonts = {
+        heading: themeSettings.font_heading,
+        body: themeSettings.font_body
+    };
     
-    const updateData = (updates) => onChange({ ...data, ...updates });
+    const normalizedData = {
+        title: '',
+        columns: 4,
+        source_type: 'category',
+        category_id: 0,
+        alignment: 'center',
+        ...data
+    };
 
+    const updateData = (updates) => onChange({ ...normalizedData, ...updates });
     const handleProductSelection = (ids) => {
         updateData({ selected_product_ids: ids });
     };
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            if (!siteData?.id) return;
+            setIsLoadingCategories(true);
+            try {
+                const res = await apiClient.get(`/categories/site/${siteData.id}`);
+                const options = [
+                    { value: 0, label: 'Всі товари' },
+                    ...res.data.map(cat => ({
+                        value: cat.id,
+                        label: cat.name
+                    }))
+                ];
+                setCategories(options);
+            } catch (error) {
+                console.error("Failed to load categories", error);
+                setCategories([{ value: 0, label: 'Помилка завантаження' }]);
+            } finally {
+                setIsLoadingCategories(false);
+            }
+        };
+
+        fetchCategories();
+    }, [siteData?.id]);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -31,70 +65,26 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                 isOpen={isPickerOpen}
                 onClose={() => setIsPickerOpen(false)}
                 onSave={handleProductSelection}
-                initialSelectedIds={data.selected_product_ids || []}
+                initialSelectedIds={normalizedData.selected_product_ids || []}
                 siteId={siteData?.id}
             />
 
             <div>
-                <SectionTitle icon={<Type size={18}/>}>Заголовок секції</SectionTitle>
+                <SectionTitle icon={<Type size={18}/>}>Заголовок</SectionTitle>
                 <div style={commonStyles.formGroup}>
                     <Input 
-                        value={data.title || ''}
+                        value={normalizedData.title}
                         onChange={(e) => updateData({ title: e.target.value })}
                         placeholder="Наприклад: Новинки"
                     />
                 </div>
-            </div>
-
-            <div>
-                <SectionTitle icon={<LayoutGrid size={18}/>}>Макет сітки</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Вирівнювання сітки</label>
-                    <ToggleGroup 
-                        options={[
-                            { value: 'flex-start', label: <AlignLeft size={18}/>, title: 'Зліва' },
-                            { value: 'center', label: <AlignCenter size={18}/>, title: 'По центру' },
-                            { value: 'flex-end', label: <AlignRight size={18}/>, title: 'Справа' },
-                        ]}
-                        value={data.alignment || 'center'}
-                        onChange={(val) => updateData({ alignment: val })}
-                    />
-                </div>
-
-                <div style={commonStyles.formGroup}>
-                    <RangeSlider 
-                        label="Кількість колонок (ПК)"
-                        value={data.columns || 4}
-                        min={1}
-                        max={6}
-                        step={1}
-                        onChange={(val) => updateData({ columns: val })}
-                        unit=""
-                    />
-                </div>
-
-                <div style={commonStyles.formGroup}>
-                    <RangeSlider 
-                        label="Відступ між товарами"
-                        value={data.gap || 20}
-                        min={0}
-                        max={60}
-                        step={4}
-                        onChange={(val) => updateData({ gap: val })}
-                        unit="px"
-                    />
-                </div>
-
-                <div style={commonStyles.formGroup}>
-                    <RangeSlider 
-                        label="Кількість товарів (Ліміт)"
-                        value={data.limit || 8}
-                        min={1}
-                        max={20}
-                        step={1}
-                        onChange={(val) => updateData({ limit: val })}
-                        unit=""
+                    <FontSelector 
+                        value={normalizedData.titleFontFamily}
+                        onChange={(val) => updateData({ titleFontFamily: val })}
+                        label="Шрифт заголовка"
+                        siteFonts={currentSiteFonts}
                     />
                 </div>
             </div>
@@ -103,21 +93,19 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                 <SectionTitle icon={<Layers size={18}/>}>Джерело товарів</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Тип вибірки</label>
+                    <label style={commonStyles.label}>Режим відображення</label>
                     <ToggleGroup 
                         options={[
                             { value: 'category', label: 'Категорія' },
-                            { value: 'manual', label: 'Вручну' },
+                            { value: 'manual', label: 'Вибрані вручну' },
                         ]}
-                        value={data.source_type || 'category'}
+                        value={normalizedData.source_type}
                         onChange={(val) => updateData({ source_type: val })}
                     />
                 </div>
 
-                {data.source_type === 'manual' ? (
+                {normalizedData.source_type === 'manual' ? (
                     <div style={commonStyles.formGroup}>
-                        <label style={commonStyles.label}>Вибір товарів</label>
-                    
                         <div style={{ marginBottom: '12px' }}>
                             <Button 
                                 variant="outline" 
@@ -128,37 +116,63 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                                 Обрати товари зі списку
                             </Button>
                         </div>
-
-                        <label style={{...commonStyles.label, fontSize: '0.8rem', marginTop: '8px'}}>Або введіть ID вручну:</label>
-                        <Input 
-                            value={data.selected_product_ids ? data.selected_product_ids.join(',') : ''}
-                            onChange={(e) => updateData({ 
-                                selected_product_ids: e.target.value.split(',').map(id => id.trim()).filter(id => id) 
-                            })}
-                            placeholder="1, 5, 12..."
-                            leftIcon={<ShoppingBag size={16}/>}
-                        />
-                        <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
-                            {data.selected_product_ids?.length > 0 
-                                ? `Обрано товарів: ${data.selected_product_ids.length}` 
+                        <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', display: 'block', textAlign: 'center' }}>
+                            {normalizedData.selected_product_ids?.length > 0 
+                                ? `Обрано: ${normalizedData.selected_product_ids.length} шт.` 
                                 : 'Товари не обрано'}
                         </small>
                     </div>
                 ) : (
                     <div style={commonStyles.formGroup}>
-                        <label style={commonStyles.label}>ID Категорії (0 = Всі)</label>
-                        <Input 
-                            type="number"
-                            value={data.category_id || ''}
-                            onChange={(e) => updateData({ category_id: e.target.value })}
-                            placeholder="Введіть ID категорії"
+                        <label style={commonStyles.label}>Категорія</label>
+                        <CustomSelect 
+                            value={normalizedData.category_id}
+                            onChange={(e) => updateData({ category_id: parseInt(e.target.value) })}
+                            options={categories}
+                            isLoading={isLoadingCategories}
                             leftIcon={<List size={16}/>}
                         />
-                        <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
-                            Залиште порожнім або 0, щоб показати всі товари.
-                        </small>
                     </div>
                 )}
+                
+                <div style={{ 
+                    fontSize: '0.8rem', 
+                    color: 'var(--platform-text-secondary)', 
+                    marginTop: '8px', 
+                    padding: '8px 12px', 
+                    background: 'var(--platform-bg)', 
+                    borderRadius: '6px',
+                    border: '1px solid var(--platform-border-color)'
+                }}>
+                    * У блоці будуть відображатися перші <strong>20 товарів</strong> з вибраної категорії.
+                </div>
+            </div>
+
+            <div>
+                <SectionTitle icon={<LayoutGrid size={18}/>}>Вигляд сітки</SectionTitle>
+                
+                <div style={commonStyles.formGroup}>
+                    <AlignmentControl 
+                        value={normalizedData.alignment}
+                        onChange={(val) => updateData({ alignment: val })}
+                        label="Вирівнювання заголовка"
+                        showJustify={false}
+                    />
+                </div>
+
+                <div style={commonStyles.formGroup}>
+                    <label style={commonStyles.label}>Кількість колонок (ПК)</label>
+                    <ToggleGroup 
+                        options={[
+                            { value: 2, label: '2' },
+                            { value: 3, label: '3' },
+                            { value: 4, label: '4' },
+                            { value: 5, label: '5' },
+                        ]}
+                        value={normalizedData.columns}
+                        onChange={(val) => updateData({ columns: val })}
+                    />
+                </div>
             </div>
         </div>
     );

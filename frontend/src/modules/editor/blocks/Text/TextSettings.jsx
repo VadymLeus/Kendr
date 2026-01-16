@@ -1,169 +1,138 @@
 // frontend/src/modules/editor/blocks/Text/TextSettings.jsx
 import React, { useRef, useEffect, useState } from 'react';
-import { FONT_LIBRARY } from '../../core/editorConfig';
-import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { commonStyles, ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
-import apiClient from '../../../../shared/api/api';
-import { 
-    AlignLeft, 
-    AlignCenter, 
-    AlignRight,
-    FileText,
-    Type
-} from 'lucide-react';
+import AlignmentControl from '../../ui/components/AlignmentControl';
+import FontSelector from '../../ui/components/FontSelector';
+import { FileText, Type, Heading1, Heading2, Heading3, Pilcrow,Bold, Italic, Underline } from 'lucide-react';
 
-const TextSettings = ({ data, onChange }) => {
+const TextSettings = ({ data, onChange, siteData }) => {
     const textareaRef = useRef(null);
     const [localContent, setLocalContent] = useState(data.content || '');
-    const [uploadedFonts, setUploadedFonts] = useState([]);
+
+    const themeSettings = siteData?.theme_settings || {};
+    const currentSiteFonts = {
+        heading: themeSettings.font_heading,
+        body: themeSettings.font_body
+    };
 
     useEffect(() => {
         setLocalContent(data.content || '');
     }, [data.content]);
-    
-    useEffect(() => {
-        const fetchCustomFonts = async () => {
-            try {
-                const res = await apiClient.get('/media');
-                if (Array.isArray(res.data)) {
-                    const fonts = res.data
-                        .filter(f => 
-                            f.file_type === 'font' || 
-                            f.mime_type?.includes('font') || 
-                            /\.(ttf|otf|woff|woff2)$/i.test(f.original_file_name)
-                        )
-                        .map(f => ({
-                            value: f.path_full,
-                            label: f.alt_text || f.original_file_name
-                        }));
-                    setUploadedFonts(fonts);
-                }
-            } catch (error) {
-                console.error("Не вдалося завантажити список шрифтів:", error);
-            }
-        };
 
-        fetchCustomFonts();
-    }, []);
-
-    const handleContentChange = (e) => {
-        const val = e.target.value;
-        setLocalContent(val);
-        onChange({ ...data, content: val }, false);
-        autoResizeTextarea();
+    const handleChange = (key, value) => {
+        onChange({ ...data, [key]: value }, true);
     };
 
-    const handleContentBlur = () => {
-        if (localContent !== data.content) {
-             onChange({ ...data, content: localContent }, true);
-        }
-    };
-
-    const handleAttributeChange = (e) => {
-        const { name, value } = e.target;
-        onChange({ ...data, [name]: value }, true); 
-    };
-    
-    const handleAlignmentChange = (alignment) => {
-        onChange({ ...data, alignment }, true);
-    };
-
-    const autoResizeTextarea = () => {
-        const textarea = textareaRef.current;
-        if (textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-        }
+    const toggleStyle = (key) => {
+        onChange({ ...data, [key]: !data[key] }, true);
     };
 
     useEffect(() => {
-        autoResizeTextarea();
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
     }, [localContent]);
 
-    const styleOptions = [
-        { value: 'p', label: 'Звичайний текст (p)' },
-        { value: 'h1', label: 'Заголовок 1 (h1)' },
-        { value: 'h2', label: 'Заголовок 2 (h2)' },
-        { value: 'h3', label: 'Заголовок 3 (h3)' }
+    const tagOptions = [
+        { value: 'p', label: <div title="Параграф"><Pilcrow size={18} /></div> },
+        { value: 'h1', label: <div title="Заголовок H1"><Heading1 size={18} /></div> },
+        { value: 'h2', label: <div title="Заголовок H2"><Heading2 size={18} /></div> },
+        { value: 'h3', label: <div title="Заголовок H3"><Heading3 size={18} /></div> },
     ];
 
-    const alignOptions = [
-        { value: 'left', label: <AlignLeft size={18} /> },
-        { value: 'center', label: <AlignCenter size={18} /> },
-        { value: 'right', label: <AlignRight size={18} /> }
-    ];
-
-    const safeLibrary = Array.isArray(FONT_LIBRARY) 
-        ? FONT_LIBRARY.filter(f => f.value !== 'global') 
-        : [];
-    
-    const extendedFontOptions = [
-        { value: 'global', label: 'За замовчуванням' },
-        { value: 'site_heading', label: 'Шрифт заголовків' },
-        { value: 'site_body', label: 'Шрифт тексту' },
-        ...(uploadedFonts.length > 0 ? [
-            { value: 'separator-custom', label: '--- Власні шрифти ---', disabled: true },
-            ...uploadedFonts
-        ] : []),
-        
-        { value: 'separator-google', label: '--- Google Fonts ---', disabled: true },
-        ...safeLibrary
-    ];
+    const formatBtnStyle = (isActive) => ({
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '8px',
+        cursor: 'pointer',
+        borderRadius: '6px',
+        border: isActive ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
+        background: isActive ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
+        color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+        transition: 'all 0.2s ease'
+    });
 
     return (
         <div>
             <div style={{ marginBottom: '2rem' }}>
-                <SectionTitle icon={<FileText size={18}/>}>Текст</SectionTitle>
+                <SectionTitle icon={<FileText size={18}/>}>Вміст</SectionTitle>
                 
                 <div style={commonStyles.formGroup}>
                     <textarea 
                         ref={textareaRef}
-                        name="content" 
                         className="custom-scrollbar"
                         value={localContent}
-                        onChange={handleContentChange} 
-                        onBlur={handleContentBlur}
-                        placeholder="Введіть основний текст тут..."
+                        onChange={(e) => {
+                            setLocalContent(e.target.value);
+                            onChange({ ...data, content: e.target.value }, false);
+                        }} 
+                        onBlur={() => onChange({ ...data, content: localContent }, true)}
+                        placeholder="Введіть текст..."
                         style={{
                             ...commonStyles.input, 
-                            minHeight: '120px',
-                            resize: 'vertical',
+                            minHeight: '100px',
+                            resize: 'none',
                             lineHeight: '1.5',
-                            fontFamily: 'inherit'
+                            fontFamily: 'inherit',
+                            marginBottom: '12px'
                         }}
                     />
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => toggleStyle('isBold')}
+                            style={formatBtnStyle(data.isBold)}
+                            title="Напівжирний"
+                        >
+                            <Bold size={18} />
+                        </button>
+                        <button 
+                            onClick={() => toggleStyle('isItalic')}
+                            style={formatBtnStyle(data.isItalic)}
+                            title="Курсив"
+                        >
+                            <Italic size={18} />
+                        </button>
+                        <button 
+                            onClick={() => toggleStyle('isUnderline')}
+                            style={formatBtnStyle(data.isUnderline)}
+                            title="Підкреслений"
+                        >
+                            <Underline size={18} />
+                        </button>
+                    </div>
                 </div>
 
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Вирівнювання</label>
-                    <ToggleGroup 
-                        options={alignOptions}
-                        value={data.alignment || 'left'}
-                        onChange={handleAlignmentChange}
+                    <AlignmentControl 
+                        value={data.alignment}
+                        onChange={(val) => handleChange('alignment', val)}
+                        showJustify={true} 
                     />
                 </div>
             </div>
 
             <div>
-                <SectionTitle icon={<Type size={18}/>}>Стиль та Типографіка</SectionTitle>
+                <SectionTitle icon={<Type size={18}/>}>Типографіка</SectionTitle>
 
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Тип тексту</label>
-                    <CustomSelect 
-                        name="style" 
-                        value={data.style || 'p'} 
-                        onChange={handleAttributeChange}
-                        options={styleOptions}
+                    <label style={commonStyles.label}>Семантика</label>
+                    <ToggleGroup 
+                        options={tagOptions}
+                        value={data.tag || 'p'}
+                        onChange={(val) => handleChange('tag', val)}
                     />
                 </div>
 
                 <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Шрифт</label>
-                    <CustomSelect
-                        name="fontFamily"
-                        value={data.fontFamily || 'global'}
-                        onChange={(e) => onChange({ ...data, fontFamily: e.target.value }, true)}
-                        options={extendedFontOptions}
+                    <FontSelector 
+                        value={data.fontFamily}
+                        onChange={(val) => handleChange('fontFamily', val)}
+                        label="Шрифт"
+                        siteFonts={currentSiteFonts}
                     />
                 </div>
             </div>

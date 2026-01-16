@@ -1,7 +1,7 @@
-// frontend/src/modules/auth/pages/VerifyEmailPage.jsx
+// frontend/src/modules/auth/VerifyEmailPage.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import apiClient from '../../../shared/api/api';
+import apiClient from '../../shared/api/api';
 import { Loader, AlertCircle, CheckCircle } from 'lucide-react';
 
 const VerifyEmailPage = () => {

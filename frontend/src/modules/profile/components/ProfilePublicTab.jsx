@@ -3,11 +3,8 @@ import React, { useContext, useState } from 'react';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { 
-    Globe, Send, Instagram, Copy, 
-    ExternalLink, Eye, EyeOff, Check 
-} from 'lucide-react';
 import { Input, Button } from '../../../shared/ui/elements';
+import { Globe, Send, Instagram, Copy, ExternalLink, Eye, EyeOff, Check } from 'lucide-react';
 
 const PublicProfileTab = () => {
     const { user, updateUser } = useContext(AuthContext);

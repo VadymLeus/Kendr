@@ -3,7 +3,6 @@ import React, { useContext } from 'react';
 import { AuthContext } from '../../../app/providers/AuthContext';
 
 const API_URL = 'http://localhost:5000';
-
 const PlatformBackground = () => {
     const { user } = useContext(AuthContext);
 

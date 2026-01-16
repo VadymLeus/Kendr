@@ -1,7 +1,6 @@
 // frontend/src/modules/editor/ui/tabs/SettingsTab.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { findBlockByPath } from '../../core/blockUtils';
-import { Settings, FileText, MousePointerClick, AlertCircle, SlidersHorizontal, LayoutTemplate } from 'lucide-react';
 import ShowCaseSettings from '../../blocks/ShowCase/ShowCaseSettings';
 import FeaturesSettings from '../../blocks/Features/FeaturesSettings';
 import CatalogSettings from '../../blocks/Catalog/CatalogSettings';
@@ -17,6 +16,7 @@ import AccordionSettings from '../../blocks/Accordion/AccordionSettings';
 import SocialIconsSettings from '../../blocks/SocialIcons/SocialIconsSettings';
 import HeaderSettings from '../../blocks/Header/HeaderSettings';
 import AdvancedSettingsTab from './AdvancedSettingsTab';
+import { Settings, FileText, MousePointerClick, AlertCircle, SlidersHorizontal } from 'lucide-react';
 
 const SettingsComponentMap = {
     showcase: ShowCaseSettings,
@@ -41,6 +41,13 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
     const selectedBlock = selectedBlockPath 
         ? findBlockByPath(blocks, selectedBlockPath) 
         : null;
+
+    const isHeaderBlock = selectedBlock?.type === 'header';
+    useEffect(() => {
+        if (isHeaderBlock && activeTab === 'advanced') {
+            setActiveTab('content');
+        }
+    }, [isHeaderBlock, activeTab]);
 
     if (!selectedBlock) {
         return (
@@ -68,22 +75,6 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                 <p style={{ fontSize: '0.85rem', maxWidth: '240px', lineHeight: '1.5' }}>
                     Оберіть будь-який блок у редакторі або в списку шарів, щоб змінити його вміст та вигляд.
                 </p>
-                
-                <div style={{ 
-                    marginTop: '30px', 
-                    padding: '12px 16px', 
-                    background: 'var(--platform-bg)', 
-                    border: '1px dashed var(--platform-border-color)',
-                    borderRadius: '8px',
-                    fontSize: '0.8rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    color: 'var(--platform-text-secondary)'
-                }}>
-                   <LayoutTemplate size={14} /> 
-                   <span>Клікніть по блоку для вибору</span>
-                </div>
             </div>
         );
     }
@@ -168,7 +159,9 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                     padding: '0 16px'
                 }}>
                     <TabButton id="content" label="Контент" icon={FileText} />
-                    <TabButton id="advanced" label="Вигляд" icon={SlidersHorizontal} />
+                    {!isHeaderBlock && (
+                        <TabButton id="advanced" label="Вигляд" icon={SlidersHorizontal} />
+                    )}
                 </div>
             </div>
             
@@ -196,7 +189,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                     </div>
                 )}
 
-                {activeTab === 'advanced' && (
+                {activeTab === 'advanced' && !isHeaderBlock && (
                     <AdvancedSettingsTab 
                         data={selectedBlock.data}
                         onUpdate={handleLiveUpdate}

@@ -1,15 +1,8 @@
 // frontend/src/modules/editor/blocks/Button/ButtonBlock.jsx
 import React from 'react';
-import { resolveSiteLink } from '../../../../shared/lib/utils/linkUtils';
-import { 
-    ArrowRight, 
-    ShoppingCart, 
-    Mail, 
-    Phone, 
-    Check, 
-    Star, 
-    MousePointer2 
-} from 'lucide-react';
+import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
+import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
+import { ArrowRight, ShoppingCart, Mail, Phone, Check, Star, MousePointer2 } from 'lucide-react';
 
 const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { 
@@ -19,27 +12,33 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         variant = 'solid', 
         size = 'medium',
         width = 'auto',
-        borderRadius = '4px',
-        withShadow = false,
-        alignment = 'center', 
+        borderRadius = 4,
         targetBlank,
         icon = 'none',
-        iconPosition = 'right'
+        iconPosition = 'right',
+        iconFlip = false,
+        alignment = 'center', 
+        theme_mode = 'light',
+        fontFamily,
+        height = 'small',
+        styles = {}
     } = blockData;
 
-    const colorVar = styleType === 'secondary' 
-        ? 'var(--site-text-primary, #333)' 
-        : 'var(--site-accent, #3b82f6)'; 
+    const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
+        main: fontFamily
+    }, siteData);
 
-    const textOnColor = '#ffffff'; 
-
+    const accentColor = 'var(--site-accent, #3b82f6)';
+    const textColor = 'var(--site-text-primary, #111827)';
+    const whiteColor = '#ffffff';
+    const secondaryColor = theme_mode === 'dark' ? whiteColor : textColor;
+    const colorVar = styleType === 'secondary' ? secondaryColor : accentColor;
     const isOutline = variant === 'outline';
 
-    const dynamicStyle = {
+    const dynamicBtnStyle = {
         background: isOutline ? 'transparent' : colorVar,
-        color: isOutline ? colorVar : textOnColor,
+        color: isOutline ? colorVar : (styleType === 'secondary' && !isOutline ? whiteColor : whiteColor),
         border: isOutline ? `2px solid ${colorVar}` : '2px solid transparent',
-        boxShadow: withShadow ? '0 4px 14px rgba(0,0,0,0.15)' : 'none',
     };
 
     const sizeMap = {
@@ -47,88 +46,102 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         medium: { padding: '12px 24px', fontSize: '1rem' },
         large:  { padding: '16px 32px', fontSize: '1.2rem' }
     };
-    const currentSize = sizeMap[size] || sizeMap.medium;
 
-    const containerStyle = {
-        padding: '20px 0',
-        display: 'flex',
-        justifyContent: width === 'full' ? 'stretch' : (
-            alignment === 'left' ? 'flex-start' : 
-            alignment === 'right' ? 'flex-end' : 'center'
-        ),
-        background: isEditorPreview ? 'var(--site-card-bg, transparent)' : 'transparent',
-        border: isEditorPreview ? '1px dashed var(--site-border-color, transparent)' : 'none',
-        borderRadius: isEditorPreview ? '8px' : '0',
-        transition: 'all 0.3s ease',
-        ...style
+    const justifyMap = {
+        left: 'flex-start',
+        center: 'center',
+        right: 'flex-end'
     };
+    const justifyContent = width === 'full' ? 'stretch' : (justifyMap[alignment] || 'center');
+    const safeRadius = parseInt(borderRadius) || 0;
+    
+    const uniqueClass = `btn-scope-${blockData.id || 'preview'}`;
 
-    const buttonStyle = {
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        textDecoration: 'none',
-        cursor: 'pointer',
-        fontWeight: '600',
-        transition: 'transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s',
-        width: width === 'full' ? '100%' : 'auto',
-        borderRadius: borderRadius,
-        ...currentSize,
-        ...dynamicStyle
+    const heightMap = { 
+        small: 'auto', 
+        medium: '250px', 
+        large: '400px', 
+        full: 'calc(100vh - 60px)',
+        auto: 'auto'
     };
-
-    const handleClick = (e) => {
-        if (isEditorPreview) {
-            e.preventDefault();
-        }
-    };
-
-    const finalLink = resolveSiteLink(link, siteData?.site_path);
-
-    const renderIcon = () => {
-        const iconProps = { size: size === 'large' ? 20 : 18 };
-        switch (icon) {
-            case 'arrowRight': return <ArrowRight {...iconProps} />;
-            case 'cart': return <ShoppingCart {...iconProps} />;
-            case 'mail': return <Mail {...iconProps} />;
-            case 'phone': return <Phone {...iconProps} />;
-            case 'check': return <Check {...iconProps} />;
-            case 'star': return <Star {...iconProps} fill="currentColor" />;
-            case 'pointer': return <MousePointer2 {...iconProps} />;
-            default: return null;
-        }
-    };
-
-    const IconElement = renderIcon();
 
     return (
-        <div style={containerStyle}>
+        <div 
+            className={uniqueClass}
+            style={{ 
+                display: 'flex',
+                width: '100%',
+                justifyContent: justifyContent,
+                minHeight: heightMap[height] || 'auto',
+                alignItems: 'center',
+                backgroundColor: 'var(--site-bg, #f7fafc)', 
+                color: 'var(--site-text-primary)',
+                ...styles,
+                ...style,
+                ...cssVariables 
+            }}
+        >
+            <RenderFonts />
+            <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
+
             <style>{`
-                .btn-block-${styleType}-${variant}:hover {
-                    opacity: 0.9;
-                    transform: translateY(-1px);
-                    ${withShadow ? 'box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;' : ''}
-                }
-                .btn-block-${styleType}-${variant}:active {
-                    transform: translateY(0);
-                }
+                .btn-${styleType}-${variant}:hover { opacity: 0.9; transform: translateY(-1px); }
+                .btn-${styleType}-${variant}:active { transform: translateY(0); }
             `}</style>
             
             <a 
-                href={finalLink} 
-                className={`btn-block-${styleType}-${variant}`}
+                href={resolveSiteLink(link, siteData?.site_path)} 
+                className={`btn-${styleType}-${variant}`}
                 target={targetBlank ? '_blank' : '_self'}
                 rel={targetBlank ? 'noopener noreferrer' : ''}
-                onClick={handleClick}
-                style={buttonStyle}
+                onClick={(e) => isEditorPreview && e.preventDefault()}
+                style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s',
+                    width: width === 'full' ? '100%' : 'auto',
+                    fontFamily: fontStyles.main,
+                    borderRadius: `${safeRadius}px`,
+                    lineHeight: 1, 
+                    ...sizeMap[size || 'medium'],
+                    ...dynamicBtnStyle
+                }}
             >
-                {iconPosition === 'left' && IconElement}
-                <span>{text}</span>
-                {iconPosition === 'right' && IconElement}
+                {iconPosition === 'left' && <ButtonIcon name={icon} size={size} flip={iconFlip} />}
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                    {text}
+                </span>
+                
+                {iconPosition === 'right' && <ButtonIcon name={icon} size={size} flip={iconFlip} />}
             </a>
         </div>
     );
+};
+
+const ButtonIcon = ({ name, size, flip }) => {
+    if (!name || name === 'none') return null;
+    const s = size === 'large' ? 20 : 18;
+    
+    const style = {
+        transform: flip ? 'scaleX(-1)' : 'none',
+        flexShrink: 0
+    };
+
+    const icons = {
+        arrowRight: <ArrowRight size={s} style={style} />,
+        cart: <ShoppingCart size={s} style={style} />,
+        mail: <Mail size={s} style={style} />,
+        phone: <Phone size={s} style={style} />,
+        check: <Check size={s} style={style} />,
+        star: <Star size={s} fill="currentColor" style={style} />,
+        pointer: <MousePointer2 size={s} style={style} />
+    };
+    return icons[name] || null;
 };
 
 export default ButtonBlock;

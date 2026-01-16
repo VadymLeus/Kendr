@@ -7,25 +7,16 @@ import apiClient from '../../../shared/api/api';
 import SaveBlockModal from './modals/SaveBlockModal';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
-import { 
-    Settings, 
-    Trash2, 
-    Save, 
-    GripVertical, 
-    ChevronDown, 
-    ChevronUp,
-    HelpCircle
-} from 'lucide-react';
+import { Settings, Trash2, Save, GripVertical, ChevronDown, ChevronUp,HelpCircle } from 'lucide-react';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
-
 const EditableBlockWrapper = ({ 
     block, 
     siteData, 
     path, 
     onMoveBlock, 
     onDropBlock, 
-    onDeleteBlock,
+    onDeleteBlock, 
     onAddBlock,
     onSelectBlock,
     selectedBlockPath,
@@ -149,7 +140,6 @@ const EditableBlockWrapper = ({
 
     const originBlockInfo = block._library_origin_id ? { id: block._library_origin_id, name: block._library_name } : null;
     const themeSettings = siteData?.theme_settings || {};
-
     const baseBtnStyle = {
         background: 'transparent',
         border: '1px solid var(--platform-border-color)',
@@ -191,6 +181,20 @@ const EditableBlockWrapper = ({
         style.color = 'var(--platform-text-secondary)';
         style.transform = 'translateY(0)';
     };
+    
+    let borderStyle = '1px solid var(--platform-border-color)';
+    let shadowStyle = isDragging ? 'none' : '0 2px 4px rgba(0,0,0,0.05)';
+    let zIndex = 1;
+
+    if (isSelected) {
+        borderStyle = '1px solid var(--platform-accent)';
+        shadowStyle = '0 0 0 1px var(--platform-accent), 0 4px 12px rgba(0,0,0,0.1)'; 
+        zIndex = 10;
+    } else if (isHovered) {
+        borderStyle = '1px dashed var(--platform-accent)';
+        shadowStyle = '0 4px 12px rgba(0,0,0,0.1)';
+        zIndex = 5;
+    }
 
     const styles = {
         wrapper: {
@@ -198,14 +202,15 @@ const EditableBlockWrapper = ({
             cursor: 'grab',
             position: 'relative',
             margin: '20px 0',
-            border: isSelected ? '2px solid var(--platform-accent)' : 
-                   isHovered ? '2px dashed var(--platform-accent)' : 
-                   '2px dashed var(--platform-border-color)',
+            border: borderStyle,
+            boxShadow: shadowStyle,
+            zIndex: zIndex,
             borderRadius: '8px',
+            overflow: 'hidden',
             transition: 'all 0.2s ease',
-            background: block.type === 'layout' ? 'transparent' : 'var(--platform-card-bg)',
-            boxShadow: isHovered && !isDragging ? '0 4px 12px rgba(0,0,0,0.1)' : '0 2px 4px rgba(0,0,0,0.05)',
+            background: block.type === 'layout' ? 'transparent' : 'var(--site-bg)',
             maxWidth: '100%',
+            outline: 'none',
         },
         header: {
             display: 'flex',
@@ -214,7 +219,6 @@ const EditableBlockWrapper = ({
             padding: '8px 12px',
             background: 'var(--platform-card-bg)',
             borderBottom: '1px solid var(--platform-border-color)',
-            borderRadius: '8px 8px 0 0',
             gap: '10px'
         },
         headerText: {
@@ -302,7 +306,7 @@ const EditableBlockWrapper = ({
             </div>
 
             {isCollapsed ? (
-                <div style={{ padding: '1.5rem', textAlign: 'center', background: 'var(--platform-bg)', color: 'var(--platform-text-secondary)', borderRadius: '0 0 8px 8px' }}>
+                <div style={{ padding: '1.5rem', textAlign: 'center', background: 'var(--platform-bg)', color: 'var(--platform-text-secondary)' }}>
                     <small>Вміст блоку згорнуто</small>
                 </div>
             ) : (
@@ -311,10 +315,9 @@ const EditableBlockWrapper = ({
                     data-site-mode={siteData?.site_theme_mode || 'light'}
                     data-site-accent={siteData?.site_theme_accent || 'orange'}
                     style={{
-                        background: 'var(--platform-card-bg)',
+                        background: 'var(--site-bg)', 
                         color: 'var(--platform-text-primary)',
                         ...(block.type === 'layout' && { background: 'transparent' }),
-                        borderRadius: '0 0 8px 8px',
                         '--font-heading': themeSettings.font_heading || "'Inter', sans-serif",
                         '--font-body': themeSettings.font_body || "'Inter', sans-serif",
                         '--btn-radius': themeSettings.button_radius || '8px',

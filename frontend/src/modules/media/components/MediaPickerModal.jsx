@@ -5,7 +5,7 @@ import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { 
     Search, X, Upload, Check, Image, 
-    Calendar, FileText, Video, Type, Music
+    Calendar, FileText, Video, Type, Music, Clock 
 } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
@@ -23,6 +23,7 @@ const MediaPickerModal = ({
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFile, setActiveFile] = useState(null);
+    const [videoDuration, setVideoDuration] = useState(null);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -36,6 +37,10 @@ const MediaPickerModal = ({
         }
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
+
+    useEffect(() => {
+        setVideoDuration(null);
+    }, [activeFile]);
 
     const fetchMedia = async () => {
         setLoading(true);
@@ -136,6 +141,17 @@ const MediaPickerModal = ({
         onClose();
     };
 
+    const formatDuration = (seconds) => {
+        if (!seconds) return '--:--';
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    const handleVideoMetadata = (e) => {
+        setVideoDuration(e.target.duration);
+    };
+
     const getFileIcon = (type, mime) => {
         const iconClasses = "text-(--platform-text-secondary) opacity-60";
         if (type === 'video') return <Video size={40} className={iconClasses} />;
@@ -221,6 +237,10 @@ const MediaPickerModal = ({
                                         >
                                             {file.file_type === 'image' ? (
                                                 <img src={`${API_URL}${file.path_full}`} alt="" className="w-full h-full object-cover" />
+                                            ) : file.file_type === 'video' ? (
+                                                <div className="w-full h-full flex items-center justify-center bg-black/90 relative">
+                                                    <Video size={40} className="text-white/70" />
+                                                </div>
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center bg-(--platform-bg)">
                                                     {getFileIcon(file.file_type, file.mime_type)}
@@ -245,9 +265,18 @@ const MediaPickerModal = ({
 
                     {activeFile && (
                         <div className="w-80 shrink-0 border-l border-(--platform-border-color) bg-(--platform-card-bg) p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar animate-[slideIn_0.2s_ease-out]">
-                            <div className="w-full aspect-16/10 rounded-xl overflow-hidden border border-(--platform-border-color) bg-(--platform-bg) flex items-center justify-center shrink-0">
+                            <div className="w-full aspect-16/10 rounded-xl overflow-hidden border border-(--platform-border-color) bg-(--platform-bg) flex items-center justify-center shrink-0 relative">
                                 {activeFile.file_type === 'image' ? (
                                     <img src={`${API_URL}${activeFile.path_full}`} alt="" className="w-full h-full object-contain" />
+                                ) : activeFile.file_type === 'video' ? (
+                                    <video 
+                                        src={`${API_URL}${activeFile.path_full}`} 
+                                        controls 
+                                        autoPlay 
+                                        muted // ДОБАВЛЕНО: звук выключен по умолчанию
+                                        className="w-full h-full object-contain bg-black"
+                                        onLoadedMetadata={handleVideoMetadata}
+                                    />
                                 ) : (
                                     <div className="flex flex-col items-center justify-center gap-2 text-(--platform-text-secondary)">
                                         {getFileIcon(activeFile.file_type, activeFile.mime_type)}
@@ -267,6 +296,11 @@ const MediaPickerModal = ({
                                     <span className="flex items-center gap-2">
                                         <Calendar size={14} className="opacity-70"/> {new Date(activeFile.created_at).toLocaleDateString()}
                                     </span>
+                                    {activeFile.file_type === 'video' && videoDuration && (
+                                        <span className="flex items-center gap-2 text-(--platform-accent)">
+                                            <Clock size={14} /> Тривалість: {formatDuration(videoDuration)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>

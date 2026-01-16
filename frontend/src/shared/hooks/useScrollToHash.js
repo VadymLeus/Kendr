@@ -1,5 +1,4 @@
 // frontend/src/shared/hooks/useScrollToHash.js
-
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 

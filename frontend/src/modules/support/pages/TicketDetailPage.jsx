@@ -4,11 +4,10 @@ import { useParams } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { Button } from '../../../shared/ui/elements/Button';
-import { Send, Loader, User, Shield } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { Send, Loader, User, Shield } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
 const TicketDetailPage = () => {
     const { ticketId } = useParams();
     const [ticket, setTicket] = useState(null);

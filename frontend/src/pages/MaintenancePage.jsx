@@ -2,7 +2,6 @@
 import React from 'react';
 
 const API_URL = 'http://localhost:5000';
-
 const MaintenancePage = ({ logoUrl, siteName }) => {
     const containerStyle = {
         display: 'flex',

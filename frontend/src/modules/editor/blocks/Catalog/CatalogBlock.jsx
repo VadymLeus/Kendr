@@ -1,230 +1,10 @@
 // frontend/src/modules/editor/blocks/Catalog/CatalogBlock.jsx
-import React, { useState, useEffect, useMemo, useContext, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '../../../../shared/api/api';
-import { CartContext } from '../../../../app/providers/CartContext';
-import { AuthContext } from '../../../../app/providers/AuthContext';
+import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 import { Input } from '../../../../shared/ui/elements/Input'; 
-import { 
-    Search, X, ArrowUpAZ, ArrowDownAZ, 
-    ShoppingBag, User, Settings
-} from 'lucide-react';
-
-const API_URL = 'http://localhost:5000';
-
-const ProductCard = ({ product, isEditorPreview, siteData }) => {
-    const { addToCart } = useContext(CartContext);
-    const { user } = useContext(AuthContext);
-    const navigate = useNavigate();
-    
-    const [activeImgIndex, setActiveImgIndex] = useState(0);
-    const [isTransitioning, setIsTransitioning] = useState(false);
-    const intervalRef = useRef(null);
-
-    const images = useMemo(() => {
-        if (product.image_gallery && product.image_gallery.length > 0) {
-            let gallery = typeof product.image_gallery === 'string' 
-                ? JSON.parse(product.image_gallery) 
-                : product.image_gallery;
-
-            return gallery.map(img => 
-                img.startsWith('http') ? img : `${API_URL}${img}`
-            );
-        }
-        return ['https://placehold.co/300?text=No+Image'];
-    }, [product.image_gallery]);
-
-    const isOwner = user && siteData && user.id === siteData.user_id;
-    const hasDiscount = product.sale_percentage > 0;
-    const finalPrice = product.price ? (hasDiscount 
-        ? Math.round(product.price * (1 - product.sale_percentage / 100)) 
-        : product.price) : 0;
-    const isSoldOut = product.stock_quantity === 0;
-    const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
-
-    const handleMouseEnter = () => {
-        if (isEditorPreview || images.length <= 1) return;
-        intervalRef.current = setInterval(() => {
-            setIsTransitioning(true);
-            setTimeout(() => {
-                setActiveImgIndex(prev => (prev + 1) % images.length);
-                setIsTransitioning(false);
-            }, 300);
-        }, 1500);
-    };
-
-    const handleMouseLeave = () => {
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-        }
-        setIsTransitioning(true);
-        setTimeout(() => {
-            setActiveImgIndex(0);
-            setIsTransitioning(false);
-        }, 300);
-    };
-
-    const handleAction = (e) => {
-        e.preventDefault();
-        if (isEditorPreview) return;
-        
-        if (hasVariants) {
-            navigate(`/product/${product.id}`);
-            return;
-        }
-
-        if (!user) {
-            if (window.confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
-                navigate('/login');
-            }
-            return;
-        }
-        
-        addToCart(product, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
-    };
-
-    return (
-        <Link 
-            to={`/product/${product.id}`} 
-            style={{textDecoration: 'none', pointerEvents: isEditorPreview ? 'none' : 'auto', color: 'inherit'}}
-        >
-            <div style={{
-                border: '1px solid var(--site-border-color)',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                background: 'var(--site-card-bg)',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                position: 'relative'
-            }}
-            onMouseEnter={(e) => {
-                if(!isEditorPreview) {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.1)';
-                }
-                handleMouseEnter();
-            }}
-            onMouseLeave={(e) => {
-                if(!isEditorPreview) {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                }
-                handleMouseLeave();
-            }}
-            >
-                <div style={{ position: 'relative', paddingTop: '100%', overflow: 'hidden', backgroundColor: 'var(--site-bg)' }}>
-                    {images.map((imgSrc, idx) => (
-                        <img 
-                            key={idx}
-                            src={imgSrc} 
-                            alt={product.name}
-                            style={{
-                                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                                objectFit: 'contain', 
-                                opacity: idx === activeImgIndex ? 1 : 0,
-                                transform: `scale(${idx === activeImgIndex ? 1 : 1.05})`,
-                                transition: 'all 0.5s ease-in-out',
-                                filter: isSoldOut ? 'grayscale(100%)' : 'none',
-                                padding: '12px', boxSizing: 'border-box'
-                            }}
-                        />
-                    ))}
-
-                    {images.length > 1 && !isSoldOut && (
-                        <div style={{
-                            position: 'absolute', bottom: '10px', left: 0, right: 0,
-                            display: 'flex', justifyContent: 'center', gap: '4px', zIndex: 2
-                        }}>
-                            {images.map((_, idx) => (
-                                <div key={idx} style={{
-                                    width: '6px', height: '6px', borderRadius: '50%',
-                                    background: idx === activeImgIndex ? 'var(--site-accent)' : 'rgba(0,0,0,0.1)',
-                                    transition: 'all 0.3s ease',
-                                    transform: idx === activeImgIndex ? 'scale(1.2)' : 'scale(1)'
-                                }} />
-                            ))}
-                        </div>
-                    )}
-
-                    {hasDiscount && !isSoldOut && (
-                        <div style={{
-                            position: 'absolute', top: '10px', right: '10px',
-                            background: '#e53e3e', color: 'white',
-                            padding: '4px 8px', borderRadius: '6px',
-                            fontSize: '0.75rem', fontWeight: 'bold', zIndex: 3,
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }} className="badge-discount">
-                            -{product.sale_percentage}%
-                        </div>
-                    )}
-
-                    {isSoldOut && (
-                        <div style={{
-                            position: 'absolute', inset: 0,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: 'rgba(255,255,255,0.8)',
-                            color: '#555', fontWeight: 'bold', zIndex: 3,
-                            backdropFilter: 'blur(2px)'
-                        }}>
-                            Закінчився
-                        </div>
-                    )}
-                </div>
-                
-                <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <h4 style={{
-                        margin: '0 0 8px 0', fontSize: '1rem', color: 'var(--site-text-primary)',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '600'
-                    }}>
-                        {product.name}
-                    </h4>
-                    
-                    <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            {hasDiscount ? (
-                                <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span style={{ color: '#e53e3e', fontWeight: 'bold', fontSize: '1.1rem' }}>{finalPrice} ₴</span>
-                                    <span style={{ textDecoration: 'line-through', fontSize: '0.85rem', color: 'var(--site-text-secondary)' }}>
-                                        {product.price} ₴
-                                    </span>
-                                </div>
-                            ) : (
-                                <span style={{ color: 'var(--site-text-primary)', fontWeight: 'bold', fontSize: '1.1rem' }}>{product.price} ₴</span>
-                            )}
-                        </div>
-                        
-                        <button
-                            onClick={handleAction}
-                            disabled={isSoldOut || (isOwner && !hasVariants)}
-                            style={{
-                                background: isOwner ? 'var(--site-text-secondary)' : 'var(--site-accent)',
-                                color: 'var(--site-accent-text)',
-                                border: 'none', borderRadius: '8px',
-                                width: '36px', height: '36px',
-                                cursor: (isSoldOut || isOwner) ? 'not-allowed' : 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: '1.2rem', opacity: (isSoldOut || isOwner) ? 0.6 : 1,
-                                transition: 'all 0.2s ease',
-                                boxShadow: isOwner ? 'none' : '0 4px 10px rgba(var(--site-accent-rgb), 0.3)'
-                            }}
-                        >
-                            {isOwner ? (
-                                <User size={20} />
-                            ) : hasVariants ? (
-                                <Settings size={20} />
-                            ) : (
-                                '+'
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </Link>
-    );
-};
+import ProductCard from '../../ui/components/ProductCard';
+import { Search, X, ArrowUpAZ, ArrowDownAZ, ShoppingBag } from 'lucide-react';
 
 const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const [products, setProducts] = useState([]);
@@ -243,8 +23,24 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { 
         title, source_type = 'all', root_category_id, 
         show_search = true, show_category_filter = true, show_sorting = true,
-        items_per_page, columns
+        items_per_page = 12, columns = 3,
+        titleFontFamily,
+        height = 'auto',
+        styles = {} 
     } = blockData;
+
+    const heightMap = {
+        small: '300px',
+        medium: '500px',
+        large: '700px',
+        full: 'calc(100vh - 80px)',
+        auto: 'auto'
+    };
+    const currentHeight = heightMap[height] || 'auto';
+
+    const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
+        title: titleFontFamily
+    }, siteData);
 
     const safeItemsPerPage = (parseInt(items_per_page, 10) > 0 && parseInt(items_per_page, 10) <= 100) ? parseInt(items_per_page, 10) : 12;
     const safeColumns = (parseInt(columns, 10) >= 1 && parseInt(columns, 10) <= 6) ? parseInt(columns, 10) : 3;
@@ -333,15 +129,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         }
     };
 
-    const containerStyle = {
-        padding: '60px 20px',
-        maxWidth: '1280px',
-        margin: '0 auto',
-        backgroundColor: isEditorPreview ? 'var(--site-bg)' : 'transparent',
-        border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
-        ...style
-    };
-
     const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
     const showFilters = show_search || show_category_filter || show_sorting;
 
@@ -355,12 +142,43 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     
     const iconBtnStyle = { ...filterBtnStyle, padding: 0, width: '38px' };
 
+    const containerStyle = {
+        padding: '60px 20px',
+        maxWidth: '1280px',
+        margin: '0 auto',
+        backgroundColor: isEditorPreview ? 'var(--site-bg)' : 'transparent',
+        border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
+        minHeight: currentHeight,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        ...styles,
+        ...style
+    };
+
+    const gridStyle = {
+        display: 'grid',
+        gridTemplateColumns: `repeat(${safeColumns}, minmax(0, 1fr))`,
+        gap: '24px',
+        marginBottom: '3rem',
+        width: '100%'
+    };
+
     return (
-        <div style={containerStyle} id={`catalog-${blockData.block_id || 'preview'}`}>
+        <div style={containerStyle} id={`catalog-${blockData.block_id || 'preview'}`} className={uniqueClass}>
+            <RenderFonts />
+            <style>{`.${uniqueClass} { ${Object.entries(cssVariables).map(([k,v]) => `${k}:${v}`).join(';')} }`}</style>
+            
             <style>{`
-                @media (max-width: 1024px) { .${uniqueClass} { grid-template-columns: repeat(${Math.min(3, safeColumns)}, 1fr) !important; } }
-                @media (max-width: 768px) { .${uniqueClass} { grid-template-columns: repeat(2, 1fr) !important; } }
-                @media (max-width: 480px) { .${uniqueClass} { grid-template-columns: 1fr !important; } }
+                @media (max-width: 1024px) { 
+                    .${uniqueClass} .catalog-grid { grid-template-columns: repeat(${Math.min(3, safeColumns)}, minmax(0, 1fr)) !important; } 
+                }
+                @media (max-width: 768px) { 
+                    .${uniqueClass} .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } 
+                }
+                @media (max-width: 480px) { 
+                    .${uniqueClass} .catalog-grid { grid-template-columns: minmax(0, 1fr) !important; } 
+                }
                 
                 .catalog-select-wrapper { position: relative; }
                 .catalog-select-wrapper::after {
@@ -378,7 +196,11 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             `}</style>
 
             {title && (
-                <h2 style={{ textAlign: 'center', marginBottom: '2rem', color: 'var(--site-text-primary)', fontSize: '2rem' }}>
+                <h2 style={{ 
+                    textAlign: 'center', marginBottom: '2rem', 
+                    color: 'var(--site-text-primary)', fontSize: '2rem',
+                    fontFamily: fontStyles.title, lineHeight: '1.2'
+                }}>
                     {title}
                 </h2>
             )}
@@ -391,7 +213,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     boxShadow: '0 4px 20px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: '0.75rem'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        
                         {show_search && (
                             <div style={{ flex: '1 1 200px', minWidth: '200px' }}>
                                 <Input 
@@ -409,7 +230,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                         )}
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flexShrink: 0, marginLeft: 'auto' }}>
-                            
                             {show_category_filter && availableCategories.length > 0 && (
                                 <div className="catalog-select-wrapper" style={{ width: '180px' }}>
                                     <select 
@@ -494,18 +314,14 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     )}
                 </div>
             ) : (
-                <div className={uniqueClass} style={{
-                    display: 'grid',
-                    gridTemplateColumns: `repeat(${safeColumns}, 1fr)`,
-                    gap: '24px',
-                    marginBottom: '3rem',
-                }}>
+                <div className="catalog-grid" style={gridStyle}>
                     {paginatedProducts.map(product => (
                         <ProductCard 
                             key={product.id} 
                             product={product} 
                             isEditorPreview={isEditorPreview}
                             siteData={siteData}
+                            fontStyles={fontStyles}
                         />
                     ))}
                 </div>
