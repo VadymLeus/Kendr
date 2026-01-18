@@ -1,4 +1,4 @@
-// frontend/src/shared/lib/utils/themeUtils.js
+// frontend/src/shared/utils/themeUtils.js
 export const PRESET_COLORS = [
     { id: 'green', color: '#48bb78', name: 'Зелений' },
     { id: 'orange', color: '#ed8936', name: 'Помаранчевий' },

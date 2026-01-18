@@ -1,6 +1,5 @@
 // frontend/src/shared/ui/elements/Button.jsx
 import React, { useState } from 'react';
-
 const VARIANTS = {
     primary: {
         base: {
@@ -133,18 +132,18 @@ const VARIANTS = {
             justifyContent: 'center',
         },
         hover: {
-            borderColor: 'var(--platform-danger)',
+            border: '1px solid var(--platform-danger)',
             color: 'var(--platform-danger)',
             background: 'var(--platform-bg)',
         },
         activeState: {
             background: 'var(--platform-danger)',
-            borderColor: 'var(--platform-danger)',
+            border: '1px solid var(--platform-danger)',
             color: 'white',
         },
         activeHover: {
             background: '#c53030',
-            borderColor: '#c53030',
+            border: '1px solid #c53030',
             color: 'white'
         }
     }
@@ -164,7 +163,6 @@ export const Button = ({
   ...props
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-
   const baseStyle = {
     padding: '10px 20px',
     borderRadius: '8px',
@@ -183,7 +181,6 @@ export const Button = ({
   };
 
   const variantConfig = VARIANTS[variant] || VARIANTS.primary;
-
   let finalStyle = { ...baseStyle, ...variantConfig.base };
 
   if (style) {

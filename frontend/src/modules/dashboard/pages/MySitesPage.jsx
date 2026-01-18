@@ -6,11 +6,10 @@ import SiteCoverDisplay from '../../../shared/ui/complex/SiteCoverDisplay';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
-import { Edit, ExternalLink, Trash, Plus, Eye, Calendar, Frown, Loader, MoreVertical, Globe, GlobeLock, FileText, Pause, Pin, Star } from 'lucide-react';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
+import { Edit, ExternalLink, Trash, Plus, Eye, Calendar, Frown, Loader, MoreVertical, Globe, GlobeLock, FileText, Pause, Pin, Star } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 16;
-
 const overlayButtonStyle = {
     background: 'rgba(0, 0, 0, 0.4)',
     backdropFilter: 'blur(4px)',
@@ -35,7 +34,6 @@ const SiteStatusBadge = ({ status }) => {
     };
     const s = config[status] || config.draft;
     const Icon = s.icon;
-
     return (
         <div style={{ 
             backgroundColor: s.bg, 
@@ -60,7 +58,6 @@ const SiteStatusBadge = ({ status }) => {
 const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -79,7 +76,6 @@ const SiteCardMenu = ({ site, onToggleStatus, onDelete }) => {
     };
 
     const isPublished = site.status === 'published';
-
     return (
         <div ref={menuRef} style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 20 }}>
             <button 
@@ -394,12 +390,10 @@ const MySitesPage = () => {
     const [sortOption, setSortOption] = useState('created_at:desc');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
     const [onlyPinned, setOnlyPinned] = useState(false);
-
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const { confirm } = useConfirm();
     const searchTimeoutRef = useRef(null);
-
     useEffect(() => {
         if (!user) { navigate('/login'); return; }
         apiClient.get('/tags').then(res => setTags(res.data)).catch(console.error);
@@ -436,7 +430,6 @@ const MySitesPage = () => {
     const handleLoadMore = () => setVisibleCount(prev => prev + ITEMS_PER_PAGE);
     const formatDate = (dateString) => new Date(dateString).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const handleTagClick = (tagId) => { setSelectedTag(tagId); };
-
     const handleDeleteSite = async (e, sitePath, siteTitle) => {
         e.preventDefault(); e.stopPropagation();
         if (await confirm({ title: "Видалення сайту", message: `Видалити сайт "${siteTitle}"? Це незворотно.`, type: "danger", confirmLabel: "Так, видалити" })) {

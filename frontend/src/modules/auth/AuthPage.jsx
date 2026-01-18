@@ -7,70 +7,12 @@ import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Input, Button } from '../../shared/ui/elements';
 import Avatar from '../../shared/ui/elements/Avatar';
-import ImageUploader from '../../shared/ui/complex/ImageUploader';
-import { ArrowLeft, Check, MailOpen, Trash, Camera, Upload } from 'lucide-react';
+import ImageUploadTrigger from '../../shared/ui/complex/ImageUploadTrigger';
+import PasswordStrengthMeter from '../../shared/ui/complex/PasswordStrengthMeter';
+import { analyzePassword } from '../../shared/utils/validationUtils';
+import { ArrowLeft, MailOpen, Trash, Camera, Upload } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
-const validateLocalPassword = (password) => {
-    const hasLower = /[a-z]/.test(password);
-    const hasUpper = /[A-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const isLongEnough = password.length >= 8;
-
-    return {
-        isValid: hasLower && hasUpper && hasNumber && isLongEnough,
-        score: [hasLower, hasUpper, hasNumber, isLongEnough].filter(Boolean).length
-    };
-};
-
-const PasswordStrengthMeter = ({ password }) => {
-    const { score, isValid } = validateLocalPassword(password);
-
-    const getStrengthColor = () => {
-        if (score <= 1) return '#e53e3e';
-        if (score === 2 || score === 3) return '#ecc94b';
-        return '#48bb78';
-    };
-
-    const getStrengthLabel = () => {
-        if (password.length === 0) return 'Пароль';
-        if (score <= 2) return 'Слабкий';
-        if (score === 3) return 'Середній';
-        return 'Надійний';
-    };
-
-    const bars = [1, 2, 3, 4];
-
-    return (
-        <div style={{ marginTop: '4px', marginBottom: '4px' }}>
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
-                {bars.map((barIndex) => (
-                    <div 
-                        key={barIndex}
-                        style={{
-                            height: '4px',
-                            flex: 1,
-                            borderRadius: '2px',
-                            backgroundColor: barIndex <= score ? getStrengthColor() : 'var(--platform-border-color)',
-                            transition: 'background-color 0.3s ease'
-                        }} 
-                    />
-                ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--platform-text-secondary)' }}>
-                <span>{getStrengthLabel()}</span>
-                {isValid && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12}/> Чудовий</span>}
-            </div>
-            {!isValid && password.length > 0 && (
-                <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', marginTop: '4px', lineHeight: '1.2' }}>
-                    Мінімум 8 символів, велика та мала літери, цифра.
-                </div>
-            )}
-        </div>
-    );
-};
-
 const AuthPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const view = searchParams.get('view') || 'login';
@@ -82,7 +24,6 @@ const AuthPage = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
-
     const [formData, setFormData] = useState({
         loginInput: '',
         email: '',
@@ -158,7 +99,8 @@ const AuthPage = () => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        const passwordChecks = validateLocalPassword(formData.password);
+        const passwordChecks = analyzePassword(formData.password);
+        
         if (!passwordChecks.isValid) {
             toast.warning("Пароль недостатньо надійний.");
             return;
@@ -225,7 +167,6 @@ const AuthPage = () => {
     };
 
     const isRegister = view === 'register';
-
     const cardStyle = {
         width: '100%',
         maxWidth: isRegister ? '900px' : '420px',
@@ -318,12 +259,9 @@ const AuthPage = () => {
 
     const titleStyle = { fontSize: '1.75rem', fontWeight: '700', color: 'var(--platform-text-primary)', marginBottom: '0.5rem', textAlign: 'center' };
     const subTitleStyle = { color: 'var(--platform-text-secondary)', fontSize: '0.95rem', marginBottom: '2rem', textAlign: 'center' };
-    
     const dividerStyle = { display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0', color: 'var(--platform-text-secondary)', fontSize: '0.8rem' };
     const lineStyle = { flex: 1, height: '1px', background: 'var(--platform-border-color)' };
-    
     const toggleLinkStyle = { background: 'none', border: 'none', cursor: 'pointer', color: 'var(--platform-accent)', fontWeight: '600', fontSize: '0.95rem', marginTop: '1.5rem', width: '100%' };
-    
     const googleBtnStyle = { 
         width: '100%', 
         display: 'flex', 
@@ -395,7 +333,6 @@ const AuthPage = () => {
                 <title>{getPageTitle()}</title>
             </Helmet>
             <style>{mobileRegisterStyle}</style>
-            
             <div style={cardStyle} className="auth-card">
                 <h2 style={titleStyle}>{isRegister ? 'Реєстрація' : 'Вхід'}</h2>
                 <p style={subTitleStyle}>{isRegister ? 'Створіть свій профіль на Kendr' : 'З поверненням до платформи!'}</p>
@@ -412,13 +349,12 @@ const AuthPage = () => {
                 </div>
 
                 <form onSubmit={isRegister ? handleRegister : handleLogin}>
-                    
                     {isRegister ? (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
                                 <div className="avatar-wrapper">
                                     <div className="avatar-circle">
-                                        <ImageUploader 
+                                        <ImageUploadTrigger 
                                             onUpload={handleAvatarUpload}
                                             aspect={1}
                                             circularCrop={true}
@@ -445,7 +381,7 @@ const AuthPage = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                        </ImageUploader>
+                                        </ImageUploadTrigger>
                                     </div>
 
                                     {avatarData.preview && (
@@ -488,19 +424,15 @@ const AuthPage = () => {
                                 <div>
                                     <h4 style={sectionHeaderStyle}>Безпека</h4>
                                     <div className="register-input-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
-                                        <div>
-                                            <Input 
-                                                name="password" 
-                                                label="Пароль" 
-                                                type="password" 
-                                                placeholder="••••••••" 
-                                                value={formData.password} 
-                                                onChange={handleChange} 
-                                                required 
-                                            />
-                                            <PasswordStrengthMeter password={formData.password} />
-                                        </div>
-                                        
+                                        <Input 
+                                            name="password" 
+                                            label="Пароль" 
+                                            type="password" 
+                                            placeholder="••••••••" 
+                                            value={formData.password} 
+                                            onChange={handleChange} 
+                                            required 
+                                        />
                                         <Input 
                                             name="confirmPassword" 
                                             label="Підтвердження" 
@@ -512,6 +444,7 @@ const AuthPage = () => {
                                             error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Паролі не співпадають" : ""} 
                                         />
                                     </div>
+                                    <PasswordStrengthMeter password={formData.password} />
                                 </div>
                             </div>
                         </>

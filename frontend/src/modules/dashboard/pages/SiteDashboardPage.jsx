@@ -10,6 +10,7 @@ import ShopContentTab from '../features/tabs/ShopContentTab';
 import ThemeSettingsTab from '../features/tabs/ThemeSettingsTab';
 import SubmissionsTab from '../features/tabs/SubmissionsTab';
 import GeneralSettingsTab from '../features/tabs/GeneralSettingsTab';
+import OrdersTab from '../features/tabs/OrdersTab';
 import DashboardHeader from '../components/DashboardHeader';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
@@ -31,7 +32,6 @@ const SiteDashboardPage = () => {
     }, [activeTab, site_path]);
 
     const [blocks, setBlocks, undo, redo, { canUndo, canRedo }] = useHistory([]);
-    
     const [currentPageId, setCurrentPageId] = useState(() => {
         const savedPage = localStorage.getItem(`last_edited_page_${site_path}`);
         if (savedPage === 'header' || savedPage === 'footer') {
@@ -43,7 +43,6 @@ const SiteDashboardPage = () => {
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [selectedBlockPath, setSelectedBlockPath] = useState(null);
     const [allPages, setAllPages] = useState([]);
-    
     const [collapsedBlocks, setCollapsedBlocks] = useState(() => {
         if (!site_path) return [];
         let targetId = null;
@@ -71,13 +70,11 @@ const SiteDashboardPage = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
-        pages: false, store: false, crm: false, settings: false
+        pages: false, store: false, crm: false, settings: false, orders: false
     });
-
     const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
     const isFooterMode = currentPageId === 'footer';
     const isHeaderMode = currentPageId === 'header';
-
     const setComponentSaving = useCallback((component, isSaving) => {
         setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
@@ -181,7 +178,6 @@ const SiteDashboardPage = () => {
 
     const handleMoveBlock = (drag, hover) => setBlocks(prev => moveBlock(prev, drag, hover));
     const handleDropBlock = (item, path) => setBlocks(prev => handleDrop(prev, item, path));
-    
     const handleAddBlock = (path, type, preset) => {
         const newBlock = { 
             block_id: generateBlockId(), 
@@ -303,7 +299,13 @@ const SiteDashboardPage = () => {
     };
 
     const handleSavingChange = useCallback((isSaving) => {
-        const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings' };
+        const tabMap = { 
+            pages: 'pages', 
+            store: 'store', 
+            crm: 'crm', 
+            settings: 'settings',
+            orders: 'orders' 
+        };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
 
@@ -373,7 +375,7 @@ const SiteDashboardPage = () => {
 
                 {activeTab !== 'editor' && (
                     <div className="editor-canvas-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '2rem', background: 'var(--platform-bg)' }}>
-                        <div style={{ maxWidth: (activeTab === 'store' || activeTab === 'crm') ? '100%' : '1000px', margin: '0 auto' }}>
+                        <div style={{ maxWidth: (activeTab === 'store' || activeTab === 'crm' || activeTab === 'orders') ? '100%' : '1000px', margin: '0 auto' }}>
                             {activeTab === 'pages' && (
                                 <PagesSettingsTab 
                                     siteId={siteData.id} 
@@ -387,6 +389,11 @@ const SiteDashboardPage = () => {
                             {activeTab === 'store' && (
                                 <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />
                             )}
+                            
+                            {activeTab === 'orders' && (
+                                <OrdersTab />
+                            )}
+
                             {activeTab === 'theme' && (
                                 <ThemeSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />
                             )}

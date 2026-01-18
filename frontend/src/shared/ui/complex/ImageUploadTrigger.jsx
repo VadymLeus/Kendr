@@ -1,9 +1,9 @@
-// frontend/src/shared/ui/complex/ImageUploader.jsx
+// frontend/src/shared/ui/complex/ImageUploadTrigger.jsx
 import React, { useState, useRef } from 'react';
 import ImageCropperModal from './ImageCropperModal';
 import { toast } from 'react-toastify';
 
-const ImageUploader = ({ 
+const ImageUploadTrigger = ({ 
     children, 
     onUpload, 
     aspect = 1, 
@@ -14,7 +14,6 @@ const ImageUploader = ({
     const [selectedImage, setSelectedImage] = useState(null);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
     const fileInputRef = useRef(null);
-
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -90,4 +89,4 @@ const ImageUploader = ({
     );
 };
 
-export default ImageUploader;
+export default ImageUploadTrigger;

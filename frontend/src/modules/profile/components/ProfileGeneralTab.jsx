@@ -6,21 +6,19 @@ import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Input, Button } from '../../../shared/ui/elements';
 import Avatar from '../../../shared/ui/elements/Avatar';
-import ImageUploader from '../../../shared/ui/complex/ImageUploader';
+import ImageUploadTrigger from '../../../shared/ui/complex/ImageUploadTrigger';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { User, Mail, Phone, Trash2, Camera, AlertCircle, Check, Upload } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
     const confirm = useConfirm();
-    
     const [formData, setFormData] = useState({
         username: '',
         phone_number: ''
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
-    
     useEffect(() => {
         if (user) {
             setFormData({
@@ -31,10 +29,8 @@ const ProfileGeneralTab = () => {
     }, [user]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-    
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
         if (!formData.username || formData.username.trim().length < 3) {
             toast.warn('Нікнейм повинен містити мінімум 3 символи');
             return;
@@ -100,7 +96,6 @@ const ProfileGeneralTab = () => {
     };
 
     if (!user) return null;
-    
     const containerStyle = {
         maxWidth: '900px',
         margin: '0 auto',
@@ -232,7 +227,7 @@ const ProfileGeneralTab = () => {
                     }}>
                         <div className="avatar-wrapper">
                             <div className="avatar-circle">
-                                <ImageUploader 
+                                <ImageUploadTrigger 
                                     onUpload={handleAvatarUpload}
                                     aspect={1}
                                     circularCrop={true}
@@ -253,7 +248,7 @@ const ProfileGeneralTab = () => {
                                             <span style={{ fontSize: '14px', fontWeight: '500' }}>Змінити</span>
                                         </div>
                                     </div>
-                                </ImageUploader>
+                                </ImageUploadTrigger>
                             </div>
 
                             {user.avatar_url && (

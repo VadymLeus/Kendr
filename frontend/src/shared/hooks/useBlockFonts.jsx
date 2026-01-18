@@ -2,7 +2,6 @@
 import React, { useMemo } from 'react';
 
 const API_URL = 'http://localhost:5000';
-
 export const useBlockFonts = (fontsConfig, siteData) => {
     const themeSettings = siteData?.theme_settings || {};
     const globalFonts = {
@@ -30,7 +29,6 @@ export const useBlockFonts = (fontsConfig, siteData) => {
         const bodyReal = resolveRealValue('site_body');
         const headingFamily = headingReal ? `'${formatFamilyName(headingReal)}', sans-serif` : 'sans-serif';
         const bodyFamily = bodyReal ? `'${formatFamilyName(bodyReal)}', sans-serif` : 'sans-serif';
-
         return {
             '--site-font-heading': headingFamily,
             '--site-font-body': bodyFamily,
@@ -64,7 +62,6 @@ export const useBlockFonts = (fontsConfig, siteData) => {
             const real = resolveRealValue(val);
             if (real && real !== 'inherit') uniqueFonts.add(real);
         });
-
         return (
             <>
                 {Array.from(uniqueFonts).map(fontVal => {

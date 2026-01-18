@@ -1,19 +1,37 @@
-// frontend/src/shared/lib/utils/validationUtils.js
-
+// frontend/src/shared/utils/validationUtils.js
 export const PASSWORD_REQUIREMENTS = {
     minLength: 8,
     hasNumber: /\d/,
-    hasCapital: /[A-Z]/
+    hasCapital: /[A-Z]/,
+    hasLower: /[a-z]/
 };
 
-export const validatePassword = (password) => {
+export const analyzePassword = (password) => {
+    if (!password) {
+        return { 
+            isValid: false, 
+            score: 0,
+            checks: {
+                isLongEnough: false,
+                hasNumber: false,
+                hasCapital: false,
+                hasLower: false
+            }
+        };
+    }
+
+    const checks = {
+        isLongEnough: password.length >= PASSWORD_REQUIREMENTS.minLength,
+        hasNumber: PASSWORD_REQUIREMENTS.hasNumber.test(password),
+        hasCapital: PASSWORD_REQUIREMENTS.hasCapital.test(password),
+        hasLower: PASSWORD_REQUIREMENTS.hasLower.test(password)
+    };
+
+    const passedChecksCount = Object.values(checks).filter(Boolean).length;
+
     return {
-        length: password.length >= PASSWORD_REQUIREMENTS.minLength,
-        number: PASSWORD_REQUIREMENTS.hasNumber.test(password),
-        capital: PASSWORD_REQUIREMENTS.hasCapital.test(password),
-        isValid: 
-            password.length >= PASSWORD_REQUIREMENTS.minLength &&
-            PASSWORD_REQUIREMENTS.hasNumber.test(password) &&
-            PASSWORD_REQUIREMENTS.hasCapital.test(password)
+        isValid: passedChecksCount === 4,
+        score: passedChecksCount,
+        checks
     };
 };

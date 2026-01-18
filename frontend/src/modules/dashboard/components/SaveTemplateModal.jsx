@@ -12,7 +12,6 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
     const [checking, setChecking] = useState(false);
     const { confirm } = useConfirm();
     const overlayRef = useRef(null);
-
     useEffect(() => {
         if (isOpen) {
             setChecking(true);
@@ -26,13 +25,10 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
     }, [isOpen]);
 
     if (!isOpen) return null;
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!name.trim()) return;
-
         const duplicate = existingTemplates.find(t => t.name.toLowerCase() === name.trim().toLowerCase());
-
         if (duplicate) {
             const isConfirmed = await confirm({
                 title: "Шаблон вже існує",
@@ -73,9 +69,7 @@ const SaveTemplateModal = ({ isOpen, onClose, onSave }) => {
     };
 
     const contentStyle = { padding: '24px 24px 8px 24px' };
-    
     const headerStyle = { display: 'flex', gap: '16px', alignItems: 'flex-start' };
-    
     const iconBoxStyle = {
         width: '48px', height: '48px', borderRadius: '12px',
         backgroundColor: 'rgba(66, 153, 225, 0.1)', 

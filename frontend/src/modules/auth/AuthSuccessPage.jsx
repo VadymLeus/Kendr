@@ -11,7 +11,6 @@ const AuthSuccessPage = () => {
     const navigate = useNavigate();
     const { login } = useContext(AuthContext);
     const processing = useRef(false);
-
     useEffect(() => {
         const token = searchParams.get('token');
         
@@ -22,15 +21,11 @@ const AuthSuccessPage = () => {
 
         if (processing.current) return;
         processing.current = true;
-
         const fetchUserData = async () => {
             try {
                 localStorage.setItem('token', token);
-                
                 const response = await apiClient.get('/auth/me');
-                
                 login(response.data, token);
-                
                 toast.success(`Вітаємо, ${response.data.username}!`);
                 navigate('/');
             } catch (error) {

@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../../../shared/ui/elements/Button';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Download, Trash2, File, Type, Copy,ExternalLink,X } from 'lucide-react';
+import { Download, Trash2, Copy, ExternalLink, X, Type } from 'lucide-react';
+import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
+import { API_URL, getFileExtension } from '../../../shared/utils/mediaUtils';
 
-const API_URL = 'http://localhost:5000';
 const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     const [formData, setFormData] = useState({
         display_name: '',
@@ -14,7 +15,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     });
 
     const isFont = file && (file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name));
-
     useEffect(() => {
         if (isFont && file) {
             const fontUrl = `${API_URL}${file.path_full}`;
@@ -160,7 +160,8 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         metaItem: {
             display: 'flex',
             flexDirection: 'column',
-            gap: '1px'
+            gap: '1px',
+            overflow: 'hidden'
         },
         metaLabel: {
             fontSize: '0.65rem',
@@ -169,7 +170,10 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         },
         metaValue: {
             color: 'var(--platform-text-primary)',
-            fontWeight: 500
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
         },
         actionsGrid: {
             display: 'grid',
@@ -182,23 +186,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     };
 
     const renderPreview = () => {
-        if (file.mime_type.startsWith('image/')) {
-            return (
-                <div style={{ 
-                    width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    backgroundImage: 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)',
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                    borderRadius: '8px',
-                    overflow: 'hidden'
-                }}>
-                    <img src={`${API_URL}${file.path_full}`} alt="preview" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} />
-                </div>
-            );
-        } 
-        if (file.mime_type.startsWith('video/')) {
-            return <video src={`${API_URL}${file.path_full}`} controls style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }} />;
-        }
         if (isFont) {
             return (
                 <div style={{ textAlign: 'center', width: '100%' }}>
@@ -221,11 +208,12 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         }
         
         return (
-            <div style={{ textAlign: 'center' }}>
-                <File size={64} color="var(--platform-text-secondary)" />
-                <p style={{ marginTop: '10px', fontWeight: 'bold', color: 'var(--platform-text-primary)' }}>
-                    {file.original_file_name.split('.').pop().toUpperCase()}
-                </p>
+            <div style={{ width: '100%', height: '220px' }}>
+                <MediaFilePreview 
+                    file={file} 
+                    showVideoControls={true} 
+                    style={{ borderRadius: '8px' }}
+                />
             </div>
         );
     };
@@ -249,12 +237,11 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             </div>
 
             <div style={styles.content}>
-                
                 <div style={styles.metaGrid}>
                     <div style={styles.metaItem}>
                         <span style={styles.metaLabel}>Тип</span>
                         <span style={styles.metaValue} title={file.mime_type}>
-                            {file.mime_type.split('/')[1]?.toUpperCase() || 'FILE'}
+                            {getFileExtension(file.original_file_name)}
                         </span>
                     </div>
                     <div style={styles.metaItem}>
@@ -299,6 +286,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                 <div>
                     <label style={styles.label}>Нотатки</label>
                     <textarea 
+                        className="custom-scrollbar"
                         value={formData.description} 
                         onChange={e => setFormData({...formData, description: e.target.value})}
                         onBlur={handleBlur}

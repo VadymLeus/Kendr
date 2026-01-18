@@ -9,9 +9,9 @@ import { AuthContext } from '../../../app/providers/AuthContext';
 import { FavoritesContext } from '../../../app/providers/FavoritesContext';
 import { toast } from 'react-toastify';
 import { Calendar, ExternalLink, Frown, Loader2, Eye, Plus, Star, UserX, MoreVertical } from 'lucide-react';
+
 const ITEMS_PER_PAGE = 16;
 const API_URL = 'http://localhost:5000';
-
 const overlayButtonStyle = {
     background: 'rgba(0, 0, 0, 0.4)',
     backdropFilter: 'blur(4px)',

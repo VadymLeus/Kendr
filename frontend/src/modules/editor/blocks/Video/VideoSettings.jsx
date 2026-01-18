@@ -1,9 +1,8 @@
 // frontend/src/modules/editor/blocks/Video/VideoSettings.jsx
 import React from 'react';
-import MediaInput from '../../../media/components/MediaInput';
-import ImageInput from '../../../media/components/ImageInput';
 import { commonStyles, SectionTitle, ToggleSwitch } from '../../ui/configuration/SettingsUI';
 import OverlayControl from '../../ui/components/OverlayControl';
+import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { Video, Palette, Settings, Play, VolumeX, Repeat, Image as ImageIcon } from 'lucide-react';
 
 const VideoSettings = ({ data, onChange }) => {
@@ -20,21 +19,19 @@ const VideoSettings = ({ data, onChange }) => {
     };
 
     const updateData = (updates) => onChange({ ...safeData, ...updates }, true);
-    
-    const handleVideoChange = (newUrl) => {
-        const urlStr = typeof newUrl === 'string' ? newUrl : '';
-        const relativeUrl = urlStr.replace(/^http:\/\/localhost:5000/, '');
+    const handleVideoChange = (val) => {
+        let finalUrl = '';
+        if (val && val.target && typeof val.target.value === 'string') finalUrl = val.target.value;
+        else if (typeof val === 'string') finalUrl = val;
+
+        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
         updateData({ url: relativeUrl });
     };
 
-    const handlePosterChange = (e) => {
+    const handlePosterChange = (val) => {
         let posterUrl = '';
-        if (e && e.target && typeof e.target.value === 'string') {
-            posterUrl = e.target.value;
-        } else if (typeof e === 'string') {
-            posterUrl = e;
-        }
-        
+        if (val && val.target && typeof val.target.value === 'string') posterUrl = val.target.value;
+        else if (typeof val === 'string') posterUrl = val;
         const relativeUrl = posterUrl.replace(/^http:\/\/localhost:5000/, '');
         updateData({ poster: relativeUrl });
     };
@@ -46,7 +43,7 @@ const VideoSettings = ({ data, onChange }) => {
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Відео файл</label>
                     <div style={{height: '150px', marginBottom: '16px'}}>
-                        <MediaInput 
+                        <UniversalMediaInput 
                             type="video"
                             value={safeData.url}
                             onChange={handleVideoChange}
@@ -59,7 +56,8 @@ const VideoSettings = ({ data, onChange }) => {
                         Обкладинка (Poster)
                     </label>
                     <div style={{height: '150px'}}>
-                        <ImageInput 
+                        <UniversalMediaInput 
+                            type="image"
                             value={safeData.poster}
                             onChange={handlePosterChange}
                             aspect={16/9}
@@ -71,7 +69,6 @@ const VideoSettings = ({ data, onChange }) => {
             <div>
                 <SectionTitle icon={<Settings size={18}/>}>Поведінка плеєра</SectionTitle>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    
                     <ToggleSwitch 
                         checked={safeData.autoplay}
                         onChange={(val) => updateData({ autoplay: val, muted: val ? true : safeData.muted })}
@@ -104,7 +101,6 @@ const VideoSettings = ({ data, onChange }) => {
 
             <div>
                 <SectionTitle icon={<Palette size={18}/>}>Вигляд та Фон</SectionTitle>
-                
                 <OverlayControl 
                     color={safeData.overlay_color}
                     opacity={safeData.overlay_opacity}

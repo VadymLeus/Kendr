@@ -6,7 +6,6 @@ import { Search, X, Check, ArrowUp, ArrowDown, ArrowUpDown, Trash, Filter, Packa
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 
 const API_URL = 'http://localhost:5000';
-
 const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], siteId }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);

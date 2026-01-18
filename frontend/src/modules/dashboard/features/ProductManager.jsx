@@ -11,12 +11,9 @@ import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import MediaPickerModal from '../../media/components/MediaPickerModal';
 import { SplitViewLayout } from '../../../shared/ui/layouts/SplitViewLayout';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
-import { 
-    ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X 
-} from 'lucide-react';
+import { ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
 const SORT_FIELDS = [
     { value: 'name', label: 'За назвою', icon: Type },
     { value: 'price', label: 'За ціною', icon: List },
@@ -28,7 +25,6 @@ const useProducts = (siteId) => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ search: '', category: 'all' });
-
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -203,7 +199,6 @@ const ProductTable = memo(({
     ];
 
     if (loading) return <div className="p-10 text-center text-(--platform-text-secondary)">Завантаження...</div>;
-
     return (
         <div className="flex flex-col h-full bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) overflow-hidden">
             <div className="min-h-18 p-3 sm:px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 flex-wrap bg-(--platform-bg)">
@@ -331,7 +326,6 @@ const ProductEditorPanel = ({
     isMobile 
 }) => {
     const [showMediaPicker, setShowMediaPicker] = useState(false);
-    
     const initialFormData = {
         id: null, name: '', description: '', price: 0,
         stock_quantity: 1, category_id: '', image_gallery: [],
@@ -339,9 +333,7 @@ const ProductEditorPanel = ({
     };
     
     const [formData, setFormData] = useState(initialFormData);
-
     const DESCRIPTION_LIMIT = 2000;
-
     useEffect(() => {
         if (productToEdit) {
             setFormData({
@@ -499,7 +491,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
     const [activeProduct, setActiveProduct] = useState(null); 
     const [sortOrder, setSortOrder] = useState('asc');
     const [productToDelete, setProductToDelete] = useState(null);
-
     useEffect(() => {
         const prodIdFromUrl = searchParams.get('productId');
         if (!loading && products.length > 0) {

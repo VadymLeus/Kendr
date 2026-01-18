@@ -1,10 +1,10 @@
 // frontend/src/modules/editor/blocks/Image/ImageSettings.jsx
 import React from 'react';
 import { generateBlockId } from '../../core/editorConfig';
-import ImageInput from '../../../media/components/ImageInput';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../ui/configuration/SettingsUI';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
+import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { Image, Grid, Play, Link, Settings, Plus, Crop } from 'lucide-react';
 
 const ImageSettings = ({ data, onChange }) => {
@@ -21,8 +21,8 @@ const ImageSettings = ({ data, onChange }) => {
     };
 
     const updateData = (updates) => onChange({ ...normalizedData, ...updates });
-    const handleItemChange = (index, e) => {
-        const newValue = e.target.value;
+    const handleItemChange = (index, val) => {
+        const newValue = val?.target ? val.target.value : val;
         const newItems = [...normalizedData.items];
         if (!newValue) {
             newItems.splice(index, 1);
@@ -32,8 +32,8 @@ const ImageSettings = ({ data, onChange }) => {
         updateData({ items: newItems });
     };
 
-    const handleAddItem = (e) => {
-        const newValue = e.target.value;
+    const handleAddItem = (val) => {
+        const newValue = val?.target ? val.target.value : val;
         if (!newValue) return;
         const newItem = { id: generateBlockId(), src: newValue };
         const newItems = normalizedData.mode === 'single' 
@@ -62,7 +62,6 @@ const ImageSettings = ({ data, onChange }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <style>{customStyles}</style>
-            
             <ToggleGroup 
                 options={[
                     { value: 'single', label: 'Одне', icon: <Image size={16} /> },
@@ -76,7 +75,8 @@ const ImageSettings = ({ data, onChange }) => {
             <div style={{ background: 'var(--platform-bg)', padding: '12px', borderRadius: '12px', border: '1px solid var(--platform-border-color)' }}>
                 {normalizedData.mode === 'single' ? (
                     <div style={{ width: '100%', height: '200px' }}>
-                        <ImageInput 
+                        <UniversalMediaInput 
+                            type="image"
                             value={normalizedData.items[0]?.src || ''}
                             onChange={(e) => {
                                 if (normalizedData.items.length > 0) handleItemChange(0, e);
@@ -89,7 +89,8 @@ const ImageSettings = ({ data, onChange }) => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                         {normalizedData.items.map((item, idx) => (
                             <div key={item.id || idx} style={{ aspectRatio: '1/1', width: '100%' }}>
-                                <ImageInput 
+                                <UniversalMediaInput 
+                                    type="image"
                                     value={item.src}
                                     onChange={(e) => handleItemChange(idx, e)}
                                     aspect={currentAspect}
@@ -97,12 +98,18 @@ const ImageSettings = ({ data, onChange }) => {
                             </div>
                         ))}
                         <div style={{ aspectRatio: '1/1', width: '100%' }}>
-                            <ImageInput value="" onChange={handleAddItem} aspect={currentAspect}>
+                            <UniversalMediaInput 
+                                type="image" 
+                                value="" 
+                                onChange={handleAddItem} 
+                                aspect={currentAspect}
+                                triggerStyle={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'transparent' }}
+                            >
                                 <div className="grid-add-trigger">
                                     <Plus size={24} />
                                     <span style={{fontSize: '0.75rem', fontWeight: 500}}>Додати</span>
                                 </div>
-                            </ImageInput>
+                            </UniversalMediaInput>
                         </div>
                     </div>
                 )}
@@ -111,16 +118,16 @@ const ImageSettings = ({ data, onChange }) => {
             <div>
                 <SectionTitle icon={<Crop size={16}/>}>Формат</SectionTitle>
                 <div style={commonStyles.formGroup}>
-                     <ToggleSwitch 
+                      <ToggleSwitch 
                         label="Квадратне зображення (1:1)"
                         checked={normalizedData.aspectRatio === 1}
                         onChange={(val) => updateData({ aspectRatio: val ? 1 : null })}
-                     />
-                     <div style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginTop: '6px', lineHeight: '1.4'}}>
+                      />
+                      <div style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginTop: '6px', lineHeight: '1.4'}}>
                         {normalizedData.aspectRatio === 1 
                             ? "При завантаженні буде запропоновано обрізати фото під квадрат." 
                             : "Зображення відображатиметься в оригінальних пропорціях."}
-                     </div>
+                      </div>
                 </div>
             </div>
 

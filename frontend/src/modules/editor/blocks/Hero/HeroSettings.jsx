@@ -1,13 +1,12 @@
 // frontend/src/modules/editor/blocks/Hero/HeroSettings.jsx
 import React, { useState, useEffect } from 'react';
-import ImageInput from '../../../media/components/ImageInput';
-import MediaInput from '../../../media/components/MediaInput';
 import { commonStyles, ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import AlignmentControl from '../../ui/components/AlignmentControl';
 import FontSelector from '../../ui/components/FontSelector';
 import OverlayControl from '../../ui/components/OverlayControl';
 import ButtonEditor from '../../ui/components/ButtonEditor';
+import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { Image, Video, Moon, Sun, Type, Palette, MousePointerClick, ImageIcon } from 'lucide-react';
 
 const HeroSettings = ({ data, onChange, siteData }) => {
@@ -42,7 +41,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
     
     const [localTitle, setLocalTitle] = useState(safeData.title);
     const [localSubtitle, setLocalSubtitle] = useState(safeData.subtitle);
-
     useEffect(() => {
         setLocalTitle(safeData.title);
         setLocalSubtitle(safeData.subtitle);
@@ -69,20 +67,25 @@ const HeroSettings = ({ data, onChange, siteData }) => {
         }, true);
     };
 
-    const handleImageChange = (e) => {
+    const handleImageChange = (val) => {
         let finalUrl = '';
-        if (e && e.target && typeof e.target.value === 'string') {
-            finalUrl = e.target.value;
-        } else if (typeof e === 'string') {
-            finalUrl = e;
+        if (val && val.target && typeof val.target.value === 'string') {
+            finalUrl = val.target.value;
+        } else if (typeof val === 'string') {
+            finalUrl = val;
         }
         const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
         onChange({ ...safeData, bg_image: relativeUrl }, true);
     };
 
-    const handleVideoChange = (newUrl) => {
-        const urlStr = typeof newUrl === 'string' ? newUrl : '';
-        const relativeUrl = urlStr.replace(/^http:\/\/localhost:5000/, '');
+    const handleVideoChange = (val) => {
+        let finalUrl = '';
+        if (val && val.target && typeof val.target.value === 'string') {
+            finalUrl = val.target.value;
+        } else if (typeof val === 'string') {
+            finalUrl = val;
+        }
+        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
         onChange({ ...safeData, bg_video: relativeUrl }, true);
     };
 
@@ -100,7 +103,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}> 
             <div>
                 <SectionTitle icon={<Palette size={18}/>}>Фон блоку</SectionTitle>
-
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Тип фону</label>
                     <ToggleGroup 
@@ -114,7 +116,8 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                     <div style={commonStyles.formGroup}>
                         <label style={commonStyles.label}>Зображення</label>
                         <div style={{height: '200px'}}>
-                            <ImageInput 
+                            <UniversalMediaInput 
+                                type="image"
                                 value={safeData.bg_image}
                                 onChange={handleImageChange}
                                 aspect={16/9}
@@ -128,7 +131,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                         <div style={commonStyles.formGroup}>
                             <label style={commonStyles.label}>Відео файл</label>
                             <div style={{height: '150px', marginBottom: '8px'}}>
-                                <MediaInput 
+                                <UniversalMediaInput 
                                     type="video"
                                     value={safeData.bg_video}
                                     onChange={handleVideoChange}
@@ -143,7 +146,8 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                                 Обкладинка (Poster)
                             </label>
                             <div style={{height: '150px'}}>
-                                <ImageInput 
+                                <UniversalMediaInput 
+                                    type="image"
                                     value={safeData.bg_image}
                                     onChange={handleImageChange}
                                     aspect={16/9}
@@ -172,7 +176,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
 
             <div>
                 <SectionTitle icon={<Type size={18}/>}>Вміст</SectionTitle>
-
                 <div style={commonStyles.formGroup}>
                     <FontSelector 
                         value={safeData.titleFontFamily}

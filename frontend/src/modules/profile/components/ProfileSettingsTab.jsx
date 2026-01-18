@@ -26,16 +26,12 @@ const ProfileSettingsTab = () => {
     }, [user, navigate]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
     const passwordValidation = validatePassword(formData.newPassword);
-
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        
         try {
             const hasPassword = user?.has_password;
-            
             if (hasPassword && formData.newPassword && !formData.currentPassword) {
                 toast.warning('Для зміни пароля введіть поточний пароль.');
                 setIsLoading(false);
@@ -94,7 +90,6 @@ const ProfileSettingsTab = () => {
     };
 
     if (!user) return null;
-
     const hasPassword = user?.has_password;
     const gridContainerStyle = { 
         display: 'grid', 

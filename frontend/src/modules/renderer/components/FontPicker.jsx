@@ -11,7 +11,6 @@ import { Search, Plus, Trash2, Edit2, Check, Type, Globe, Folder, ChevronDown } 
 const API_URL = 'http://localhost:5000';
 const EVENT_FONT_CHANGED = 'platform:font-changed';
 const STORAGE_HIDDEN_KEY = 'platform_hidden_fonts';
-
 const FontPicker = ({ 
     label, 
     value, 
@@ -33,9 +32,7 @@ const FontPicker = ({
     const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
     const [editingListId, setEditingListId] = useState(null); 
     const [editName, setEditName] = useState('');
-    
     const { confirm } = useConfirm();
-
     useEffect(() => {
         localStorage.setItem('fontPickerSections', JSON.stringify(sections));
     }, [sections]);
@@ -151,13 +148,10 @@ const FontPicker = ({
                 localStorage.setItem(STORAGE_HIDDEN_KEY, JSON.stringify(newHidden));
             }
         } catch (e) { console.error(e); }
-
         onChange(selectedFile.path_full);
         setIsMediaModalOpen(false);
         toast.success('Шрифт вибрано');
-        
         window.dispatchEvent(new Event(EVENT_FONT_CHANGED));
-        
         if (!sections.custom) {
             setSections(prev => ({ ...prev, custom: true }));
         }
@@ -211,7 +205,6 @@ const FontPicker = ({
 
         const fontItem = localFonts.find(f => f.listId === listId);
         setEditingListId(null);
-
         if (fontItem && fontItem.id && !fontItem.isTemp) {
             try {
                 await apiClient.put(`/media/${fontItem.id}`, { display_name: editName });
@@ -234,7 +227,6 @@ const FontPicker = ({
     const { customList, googleList } = useMemo(() => {
         const lowerSearch = searchTerm.toLowerCase();
         const uniqueCustomMap = new Map();
-        
         localFonts.forEach(f => {
             const nameToSearch = f.label || f.original_file_name || '';
             if (nameToSearch.toLowerCase().includes(lowerSearch)) {
@@ -247,7 +239,6 @@ const FontPicker = ({
         });
 
         const custom = Array.from(uniqueCustomMap.values());
-
         const google = FONT_LIBRARY
             .filter(f => f.value !== 'global' && f.value !== 'site_heading' && f.value !== 'site_body')
             .filter(f => f.label.toLowerCase().includes(lowerSearch))
@@ -264,7 +255,6 @@ const FontPicker = ({
 
     useEffect(() => {
         if (!previewFont || previewFont === 'global' || previewFont === 'site_heading' || previewFont === 'site_body') return;
-        
         const loadFontPreview = async () => {
             const isCustom = previewFont.includes('/uploads/');
             const previewEl = document.getElementById(`font-preview-${type}`);

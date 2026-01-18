@@ -2,9 +2,8 @@
 import React from 'react';
 import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
-import ImageInput from '../../../media/components/ImageInput'; 
-import MediaInput from '../../../media/components/MediaInput';
 import OverlayControl from '../../ui/components/OverlayControl';
+import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { Columns, Rows, ArrowUpToLine, AlignVerticalJustifyCenter, ArrowDownToLine, Palette, Layout, Image, Video, X, ImageIcon } from 'lucide-react';
 
 const PRESETS = [
@@ -20,15 +19,11 @@ const LayoutSettings = ({ data, onChange }) => {
     const handlePresetChange = (e) => {
         const newPresetValue = e.target.value;
         const selectedPreset = PRESETS.find(p => p.preset === newPresetValue);
-        
         if (!selectedPreset) return;
-
         const newColumnCount = selectedPreset.columns;
         const currentColumns = data.columns || [];
         const currentColumnCount = currentColumns.length;
-
         let updatedColumns = [...currentColumns];
-
         if (newColumnCount > currentColumnCount) {
             for (let i = 0; i < newColumnCount - currentColumnCount; i++) {
                 updatedColumns.push([]);
@@ -46,42 +41,38 @@ const LayoutSettings = ({ data, onChange }) => {
             }
             updatedColumns = columnsToKeep;
         }
-
         updateData({
             preset: newPresetValue,
             columns: updatedColumns
         });
     };
-    
-    const handleImageChange = (e) => {
+    const handleImageChange = (val) => {
         let finalUrl = '';
-        if (e && e.target && typeof e.target.value === 'string') finalUrl = e.target.value;
-        else if (typeof e === 'string') finalUrl = e;
+        if (val && val.target && typeof val.target.value === 'string') finalUrl = val.target.value;
+        else if (typeof val === 'string') finalUrl = val;
         
         const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
         updateData({ bg_image: relativeUrl });
     };
+    const handleVideoChange = (val) => {
+        let finalUrl = '';
+        if (val && val.target && typeof val.target.value === 'string') finalUrl = val.target.value;
+        else if (typeof val === 'string') finalUrl = val;
 
-    const handleVideoChange = (newUrl) => {
-        const urlStr = typeof newUrl === 'string' ? newUrl : '';
-        const relativeUrl = urlStr.replace(/^http:\/\/localhost:5000/, '');
+        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
         updateData({ bg_video: relativeUrl });
     };
-
     const bgTypeOptions = [
         { value: 'none', label: 'Немає', icon: <X size={16}/> },
         { value: 'color', label: 'Колір', icon: <Palette size={16}/> },
         { value: 'image', label: 'Фото', icon: <Image size={16}/> },
         { value: 'video', label: 'Відео', icon: <Video size={16}/> }
     ];
-
     const directionOptions = [
         { value: 'row', label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><Columns size={16}/> Рядок</div> },
         { value: 'column', label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><Rows size={16}/> Стовпчик</div> }
     ];
-
     const presetOptions = PRESETS.map(p => ({ value: p.preset, label: p.name }));
-
     const verticalAlignOptions = [
         { value: 'top', label: <ArrowUpToLine size={18} title="Вгорі"/> },
         { value: 'middle', label: <AlignVerticalJustifyCenter size={18} title="По центру"/> },
@@ -141,7 +132,8 @@ const LayoutSettings = ({ data, onChange }) => {
                     <div style={commonStyles.formGroup}>
                         <label style={commonStyles.label}>Зображення</label>
                         <div style={{ height: '200px' }}>
-                            <ImageInput 
+                            <UniversalMediaInput 
+                                type="image"
                                 value={data.bg_image}
                                 onChange={handleImageChange}
                                 aspect={16/9} 
@@ -155,7 +147,7 @@ const LayoutSettings = ({ data, onChange }) => {
                         <div style={commonStyles.formGroup}>
                             <label style={commonStyles.label}>Відео файл</label>
                             <div style={{ height: '200px' }}>
-                                <MediaInput 
+                                <UniversalMediaInput 
                                     type="video"
                                     value={data.bg_video}
                                     onChange={handleVideoChange}
@@ -168,7 +160,8 @@ const LayoutSettings = ({ data, onChange }) => {
                                 <ImageIcon size={14} /> Обкладинка (Poster)
                             </label>
                             <div style={{ height: '200px' }}>
-                                <ImageInput 
+                                <UniversalMediaInput 
+                                    type="image"
                                     value={data.bg_image}
                                     onChange={handleImageChange}
                                     aspect={16/9}
@@ -190,7 +183,6 @@ const LayoutSettings = ({ data, onChange }) => {
 
             <div>
                 <SectionTitle icon={<Layout size={18}/>}>Макет</SectionTitle>
-                
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Схема колонок</label>
                     <CustomSelect

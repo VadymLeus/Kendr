@@ -15,7 +15,6 @@ const accentColors = [
 
 const InterfaceSettingsTab = () => {
     const { platformMode, setPlatformMode, platformAccent, setPlatformAccent } = useContext(ThemeContext);
-
     const modes = [
         { value: 'light', label: 'Світлий' },
         { value: 'dark', label: 'Темний' },

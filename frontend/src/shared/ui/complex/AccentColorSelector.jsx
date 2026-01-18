@@ -6,7 +6,6 @@ import { Edit, Plus } from 'lucide-react';
 const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
     const [hoveredValue, setHoveredValue] = useState(null);
     const [localColor, setLocalColor] = useState(() => resolveAccentColor(value));
-    
     const timeoutRef = useRef(null);
 
     useEffect(() => {

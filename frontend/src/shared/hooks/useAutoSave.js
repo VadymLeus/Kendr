@@ -4,12 +4,6 @@ import apiClient from '../api/api';
 import { toast } from 'react-toastify';
 import { debounce } from 'lodash';
 
-/**
- * Хук для автозбереження даних форми
- * @param {string} endpoint - API endpoint (наприклад, `/sites/mysite/settings`)
- * @param {object} initialData - Початкові дані
- * @param {function} onSaveCallback - колбек після успішного збереження
- */
 export const useAutoSave = (endpoint, initialData, onSaveCallback) => {
     const [data, setData] = useState(initialData);
     const [isSaving, setIsSaving] = useState(false);

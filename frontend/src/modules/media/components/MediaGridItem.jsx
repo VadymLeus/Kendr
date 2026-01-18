@@ -1,17 +1,10 @@
 // frontend/src/modules/media/components/MediaGridItem.jsx
 import React from 'react';
-import { Star, File, Video, Play, FileText, Type, Presentation } from 'lucide-react';
-
-const API_URL = 'http://localhost:5000';
+import { Star } from 'lucide-react';
+import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
 
 const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, onCheck }) => {
-    const isImage = file.mime_type.startsWith('image/');
-    const isVideo = file.mime_type.startsWith('video/');
-    const isFont = file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name);
-    const ext = file.original_file_name.split('.').pop().toLowerCase();
-    const isPdf = ext === 'pdf';
-    const isWord = ext === 'docx' || ext === 'doc';
-    const isPpt = ext === 'pptx' || ext === 'ppt';
+    
     const containerStyle = {
         position: 'relative',
         aspectRatio: '1/1',
@@ -88,68 +81,6 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     };
 
-    const renderContent = () => {
-        if (isImage) {
-            return (
-                <div style={{ width: '100%', height: '100%', backgroundImage: `url(${API_URL}${file.path_thumb || file.path_full})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-            );
-        }
-        
-        if (isVideo) {
-            return (
-                <div style={{ 
-                    width: '100%', height: '100%', 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                    background: '#1a202c',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-                    
-                    <div style={{position: 'absolute', opacity: 0.1, transform: 'scale(1.5)'}}>
-                         <Video size={100} color="white" />
-                    </div>
-
-                    <div style={{ 
-                        background: 'rgba(255,255,255,0.15)', 
-                        borderRadius: '50%', 
-                        padding: '16px', 
-                        backdropFilter: 'blur(4px)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        zIndex: 2,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <Play size={32} color="white" style={{marginLeft: '4px'}}/>
-                    </div>
-                </div>
-            );
-        }
-
-        let IconComponent = File;
-        let themeColor = 'var(--platform-text-secondary)';
-        let bgColor = 'var(--platform-bg)';
-        let badgeBg = 'rgba(0,0,0,0.05)';
-
-        if (isPdf) { IconComponent = FileText; themeColor = '#e53e3e'; bgColor = 'rgba(229, 62, 62, 0.04)'; badgeBg = 'rgba(229, 62, 62, 0.1)'; }
-        else if (isWord) { IconComponent = FileText; themeColor = '#2b6cb0'; bgColor = 'rgba(43, 108, 176, 0.04)'; badgeBg = 'rgba(43, 108, 176, 0.1)'; }
-        else if (isPpt) { IconComponent = Presentation; themeColor = '#dd6b20'; bgColor = 'rgba(221, 107, 32, 0.04)'; badgeBg = 'rgba(221, 107, 32, 0.1)'; }
-        else if (isFont) { IconComponent = Type; themeColor = '#38a169'; bgColor = 'rgba(56, 161, 105, 0.04)'; badgeBg = 'rgba(56, 161, 105, 0.1)'; }
-
-        return (
-            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: bgColor, gap: '8px', position: 'relative' }}>
-                <div style={{ position: 'absolute', opacity: 0.05, transform: 'scale(3) rotate(-10deg)', pointerEvents: 'none', color: themeColor }}>
-                    <IconComponent size={64} />
-                </div>
-                <div style={{ background: 'var(--platform-card-bg)', borderRadius: '16px', padding: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2 }}>
-                    <IconComponent size={28} color={themeColor} />
-                </div>
-                <span style={{ fontSize: '0.7rem', fontWeight: '700', color: themeColor, textTransform: 'uppercase', letterSpacing: '0.5px', zIndex: 2, background: badgeBg, padding: '4px 10px', borderRadius: '12px', minWidth: '40px', textAlign: 'center' }}>
-                    {ext}
-                </span>
-            </div>
-        );
-    };
-
     return (
         <div 
             style={containerStyle}
@@ -189,7 +120,7 @@ const MediaGridItem = ({ file, selected, onSelect, onToggleFavorite, isChecked, 
                 <Star size={14} fill={file.is_favorite ? "currentColor" : "none"} />
             </button>
 
-            {renderContent()}
+            <MediaFilePreview file={file} />
 
             <div className="info-bar" style={infoBarStyle}>
                 {file.display_name}

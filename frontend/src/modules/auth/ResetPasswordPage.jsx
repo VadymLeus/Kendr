@@ -4,23 +4,20 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Input, Button } from '../../shared/ui/elements';
-import { validatePassword } from '../../shared/utils/validationUtils';
+import PasswordStrengthMeter from '../../shared/ui/complex/PasswordStrengthMeter';
+import { analyzePassword } from '../../shared/utils/validationUtils';
 
 const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get('token');
-    
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
-    const passwordChecks = validatePassword(password);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!passwordChecks.isValid) {
+        const { isValid } = analyzePassword(password);
+        if (!isValid) {
             toast.warning("Пароль занадто слабкий.");
             return;
         }
@@ -43,7 +40,6 @@ const ResetPasswordPage = () => {
     };
 
     if (!token) return <div style={{padding: '2rem', textAlign: 'center'}}>Невірне посилання</div>;
-
     const cardStyle = {
         maxWidth: '400px', width: '90%', margin: '0 auto',
         background: 'var(--platform-card-bg)', padding: '2rem',
@@ -58,7 +54,6 @@ const ResetPasswordPage = () => {
                     <h2 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>Новий пароль</h2>
                     <p style={{ color: 'var(--platform-text-secondary)', fontSize: '0.9rem' }}>Придумайте надійний пароль</p>
                 </div>
-                
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: '1rem' }}>
                         <Input 
@@ -68,13 +63,7 @@ const ResetPasswordPage = () => {
                             onChange={e => setPassword(e.target.value)} 
                             required 
                         />
-                        {password && (
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                                <Badge active={passwordChecks.length} text="8+ симв." />
-                                <Badge active={passwordChecks.number} text="123" />
-                                <Badge active={passwordChecks.capital} text="ABC" />
-                            </div>
-                        )}
+                        <PasswordStrengthMeter password={password} />
                     </div>
 
                     <div style={{ marginBottom: '1rem' }}>
@@ -95,20 +84,5 @@ const ResetPasswordPage = () => {
         </div>
     );
 };
-
-const Badge = ({ active, text }) => (
-    <span style={{
-        fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px',
-        background: active ? 'rgba(72, 187, 120, 0.2)' : 'var(--platform-bg)',
-        color: active ? '#2f855a' : 'var(--platform-text-secondary)',
-        border: `1px solid ${active ? '#48bb78' : 'var(--platform-border-color)'}`,
-        transition: 'all 0.2s',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px'
-    }}>
-        {active ? '✓ ' : ''}{text}
-    </span>
-);
 
 export default ResetPasswordPage;

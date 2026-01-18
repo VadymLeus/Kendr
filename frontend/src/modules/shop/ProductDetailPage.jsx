@@ -22,7 +22,6 @@ const ProductDetailPage = () => {
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [selectedOptions, setSelectedOptions] = useState({});
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [imageScale, setImageScale] = useState(1);
     const [isDragging, setIsDragging] = useState(false);
@@ -30,17 +29,13 @@ const ProductDetailPage = () => {
     const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
     const [isHovering, setIsHovering] = useState(false);
     const imageContainerRef = useRef(null);
+    const [selectedOptions, setSelectedOptions] = useState({});
     const [priceData, setPriceData] = useState({
-        finalPrice: 0,
-        originalPrice: 0,
-        activeDiscount: 0,
-        isDiscounted: false
+        finalPrice: 0, originalPrice: 0, activeDiscount: 0, isDiscounted: false
     });
-
     const isDarkMode = siteData?.site_theme_mode === 'dark';
     const isOwner = user && user.id === siteData?.user_id;
     const isSoldOut = product?.stock_quantity === 0;
-    const imageBackgroundColor = isDarkMode ? 'var(--site-card-bg)' : '#ffffff';
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -48,30 +43,24 @@ const ProductDetailPage = () => {
                 setLoading(true);
                 const response = await apiClient.get(`/products/${productId}`);
                 const prod = response.data;
-                
-                if (typeof prod.variants === 'string') {
-                    try { prod.variants = JSON.parse(prod.variants); } catch (e) {}
-                }
-                if (typeof prod.image_gallery === 'string') {
-                    try { prod.image_gallery = JSON.parse(prod.image_gallery); } catch (e) {}
-                }
+                ['variants', 'image_gallery'].forEach(key => {
+                    if (typeof prod[key] === 'string') {
+                        try { prod[key] = JSON.parse(prod[key]); } catch (e) {}
+                    }
+                });
                 
                 setProduct(prod);
                 setActiveImageIndex(0);
 
-                if (prod.variants && Array.isArray(prod.variants)) {
+                if (prod.variants?.length) {
                     const defaults = {};
                     prod.variants.forEach(v => {
-                        if (v.values && v.values.length > 0) {
-                            defaults[v.name] = v.values[0].label;
-                        }
+                        if (v.values?.[0]) defaults[v.name] = v.values[0].label;
                     });
                     setSelectedOptions(defaults);
                 }
 
-                if (prod.site_id) {
-                    fetchRecommendations(prod.site_id, prod.category_id, prod.id);
-                }
+                if (prod.site_id) fetchRecommendations(prod.site_id, prod.category_id, prod.id);
 
             } catch (err) {
                 setError('Не вдалося завантажити інформацію про товар.');
@@ -85,116 +74,62 @@ const ProductDetailPage = () => {
     const fetchRecommendations = async (siteId, categoryId, currentId) => {
         try {
             const res = await apiClient.get(`/products/site/${siteId}`);
-            const allProducts = res.data;
-            const others = allProducts.filter(p => p.id !== currentId);
-
-            others.sort((a, b) => {
-                const aIsSameCat = a.category_id === categoryId ? 1 : 0;
-                const bIsSameCat = b.category_id === categoryId ? 1 : 0;
-                return bIsSameCat - aIsSameCat; 
-            });
-
-            setRelatedProducts(others.slice(0, 6));
+            const others = res.data
+                .filter(p => p.id !== currentId)
+                .sort((a, b) => (b.category_id === categoryId ? 1 : 0) - (a.category_id === categoryId ? 1 : 0))
+                .slice(0, 6);
+            setRelatedProducts(others);
         } catch (e) {
             console.error("Error fetching related products", e);
         }
     };
 
     useEffect(() => {
-        if (product) {
-            let basePriceWithModifiers = parseFloat(product.price);
-            let maxVariantDiscount = 0;
+        if (!product) return;
 
-            if (product.variants && Array.isArray(product.variants)) {
-                product.variants.forEach(v => {
-                    const selectedVal = selectedOptions[v.name];
-                    const optionObj = v.values.find(val => val.label === selectedVal);
-                    
-                    if (optionObj) {
-                        if (optionObj.priceModifier) {
-                            basePriceWithModifiers += parseFloat(optionObj.priceModifier);
-                        }
-                        if (optionObj.salePercentage > 0) {
-                            maxVariantDiscount = Math.max(maxVariantDiscount, optionObj.salePercentage);
-                        }
-                    }
-                });
-            }
+        let basePrice = parseFloat(product.price);
+        let maxVariantDiscount = 0;
 
-            let activeDiscount = 0;
-            if (maxVariantDiscount > 0) activeDiscount = maxVariantDiscount;
-            else if (product.sale_percentage > 0) activeDiscount = product.sale_percentage;
-            else if (product.category_discount > 0) activeDiscount = product.category_discount;
-
-            const finalPrice = Math.round(basePriceWithModifiers * (1 - activeDiscount / 100));
-
-            setPriceData({
-                finalPrice: finalPrice,
-                originalPrice: basePriceWithModifiers,
-                activeDiscount: activeDiscount,
-                isDiscounted: activeDiscount > 0
+        if (product.variants?.length) {
+            product.variants.forEach(v => {
+                const selectedVal = selectedOptions[v.name];
+                const optionObj = v.values.find(val => val.label === selectedVal);
+                
+                if (optionObj) {
+                    if (optionObj.priceModifier) basePrice += parseFloat(optionObj.priceModifier);
+                    if (optionObj.salePercentage > 0) maxVariantDiscount = Math.max(maxVariantDiscount, optionObj.salePercentage);
+                }
             });
         }
+
+        let activeDiscount = maxVariantDiscount || product.sale_percentage || product.category_discount || 0;
+        const finalPrice = Math.round(basePrice * (1 - activeDiscount / 100));
+
+        setPriceData({
+            finalPrice,
+            originalPrice: basePrice,
+            activeDiscount,
+            isDiscounted: activeDiscount > 0
+        });
     }, [selectedOptions, product]);
 
-    const handleZoomIn = useCallback(() => {
+    const handleZoom = useCallback((direction) => {
         setImageScale(prev => {
-            const newScale = Math.min(prev + 0.25, 5);
-            if (newScale === 1) {
-                setImagePosition({ x: 0, y: 0 });
-            }
+            let newScale = direction === 'in' ? Math.min(prev + 0.25, 5) : Math.max(prev - 0.25, 0.5);
+            if (direction === 'reset') newScale = 1;
+            if (newScale === 1) setImagePosition({ x: 0, y: 0 });
             return newScale;
         });
     }, []);
-
-    const handleZoomOut = useCallback(() => {
-        setImageScale(prev => {
-            const newScale = Math.max(prev - 0.25, 0.5);
-            if (newScale === 1) {
-                setImagePosition({ x: 0, y: 0 });
-            }
-            return newScale;
-        });
-    }, []);
-
-    const handleResetZoom = useCallback(() => {
-        setImageScale(1);
-        setImagePosition({ x: 0, y: 0 });
-    }, []);
-
-    const handleMouseEnter = useCallback(() => {
-        setIsHovering(true);
-        if (imageScale === 1) {
-            setImageScale(2);
-        }
-    }, [imageScale]);
-
-    const handleMouseLeave = useCallback(() => {
-        setIsHovering(false);
-        if (imageScale === 2) {
-            setImageScale(1);
-            setImagePosition({ x: 0, y: 0 });
-        }
-    }, [imageScale]);
-
-    const handleImageClick = useCallback(() => {
-        if (imageScale === 1) {
-            setImageScale(2);
-        } else {
-            handleResetZoom();
-        }
-    }, [imageScale, handleResetZoom]);
 
     const handleMouseMove = useCallback((e) => {
         if (isDragging && imageScale > 1) {
             const newX = e.clientX - dragStart.x;
             const newY = e.clientY - dragStart.y;
             const maxDrag = 200;
-            const limitedX = Math.max(Math.min(newX, maxDrag), -maxDrag);
-            const limitedY = Math.max(Math.min(newY, maxDrag), -maxDrag);
             setImagePosition({
-                x: limitedX,
-                y: limitedY
+                x: Math.max(Math.min(newX, maxDrag), -maxDrag),
+                y: Math.max(Math.min(newY, maxDrag), -maxDrag)
             });
             e.preventDefault();
             return;
@@ -204,104 +139,15 @@ const ProductDetailPage = () => {
             const { left, top, width, height } = imageContainerRef.current.getBoundingClientRect();
             const x = e.clientX - left;
             const y = e.clientY - top;
-            const moveX = (width / 2 - x) * (imageScale - 1);
-            const moveY = (height / 2 - y) * (imageScale - 1);
+            const factor = imageScale - 1;
             const maxMove = 150;
-            const limitedMoveX = Math.max(Math.min(moveX, maxMove), -maxMove);
-            const limitedMoveY = Math.max(Math.min(moveY, maxMove), -maxMove);
+            
             setImagePosition({ 
-                x: limitedMoveX, 
-                y: limitedMoveY 
+                x: Math.max(Math.min((width / 2 - x) * factor, maxMove), -maxMove), 
+                y: Math.max(Math.min((height / 2 - y) * factor, maxMove), -maxMove) 
             });
         }
     }, [isDragging, dragStart, imageScale]);
-
-    const handleMouseDown = useCallback((e) => {
-        if (e.target.closest('.zoom-controls')) {
-            return;
-        }
-        
-        if (imageScale > 1) {
-            setIsDragging(true);
-            setDragStart({
-                x: e.clientX - imagePosition.x,
-                y: e.clientY - imagePosition.y
-            });
-        }
-        e.preventDefault();
-    }, [imageScale, imagePosition]);
-
-    const handleMouseUp = useCallback(() => {
-        setIsDragging(false);
-    }, []);
-
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            switch(e.key) {
-                case '+':
-                case '=':
-                    e.preventDefault();
-                    handleZoomIn();
-                    break;
-                case '-':
-                    e.preventDefault();
-                    handleZoomOut();
-                    break;
-                case '0':
-                    e.preventDefault();
-                    handleResetZoom();
-                    break;
-                case 'Escape':
-                    e.preventDefault();
-                    handleResetZoom();
-                    break;
-                case 'ArrowLeft':
-                    if (imageScale > 1) {
-                        e.preventDefault();
-                        setImagePosition(prev => ({ 
-                            ...prev, 
-                            x: Math.min(prev.x + 50, 200) 
-                        }));
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (imageScale > 1) {
-                        e.preventDefault();
-                        setImagePosition(prev => ({ 
-                            ...prev, 
-                            x: Math.max(prev.x - 50, -200) 
-                        }));
-                    }
-                    break;
-                case 'ArrowUp':
-                    if (imageScale > 1) {
-                        e.preventDefault();
-                        setImagePosition(prev => ({ 
-                            ...prev, 
-                            y: Math.min(prev.y + 50, 200) 
-                        }));
-                    }
-                    break;
-                case 'ArrowDown':
-                    if (imageScale > 1) {
-                        e.preventDefault();
-                        setImagePosition(prev => ({ 
-                            ...prev, 
-                            y: Math.max(prev.y - 50, -200) 
-                        }));
-                    }
-                    break;
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-        return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [handleZoomIn, handleZoomOut, handleResetZoom, imageScale]);
-
-    const handleOptionChange = (optionName, value) => {
-        setSelectedOptions(prev => ({ ...prev, [optionName]: value }));
-    };
 
     const handleAddToCart = () => {
         if (!user) {
@@ -317,101 +163,43 @@ const ProductDetailPage = () => {
         });
     };
 
-    let footerBlocks = [];
-    try {
-        if (siteData && siteData.footer_content) {
-            footerBlocks = Array.isArray(siteData.footer_content)
-                ? siteData.footer_content
-                : JSON.parse(siteData.footer_content);
-        }
-    } catch (e) {}
-
     if (loading || isSiteLoading) return <div className={styles.loadingContainer}>⏳ Завантаження...</div>;
     if (error || !product) return <div className={styles.errorContainer}>{error || 'Товар не знайдено'}</div>;
 
-    let galleryImages = [];
-    if (product.image_gallery && product.image_gallery.length > 0) {
-        galleryImages = product.image_gallery.map(img => img.startsWith('http') ? img : `${API_URL}${img}`);
-    } else {
-        galleryImages = ['https://placehold.co/600x600?text=No+Image'];
-    }
-
-    const faviconUrl = siteData?.favicon_url 
-        ? (siteData.favicon_url.startsWith('http') ? siteData.favicon_url : `${API_URL}${siteData.favicon_url}`) 
-        : '/icon-light.webp';
-    const siteTitle = siteData?.site_title_seo || siteData?.title || 'Kendr Store';
-    const pageTitle = `${product.name} | ${siteTitle}`;
-    const getMainImageStyle = () => ({
-        transform: `scale(${imageScale}) translate(${imagePosition.x}px, ${imagePosition.y}px)`,
-        transition: isDragging ? 'none' : 'transform 0.2s ease',
-    });
-
-    const getButtonStyle = () => ({
-        '--image-bg': imageBackgroundColor,
+    const galleryImages = product.image_gallery?.length > 0 
+        ? product.image_gallery.map(img => img.startsWith('http') ? img : `${API_URL}${img}`)
+        : ['https://placehold.co/600x600?text=No+Image'];
+    const faviconUrl = siteData?.favicon_url?.startsWith('http') ? siteData.favicon_url : `${API_URL}${siteData?.favicon_url || '/icon-light.webp'}`;
+    const pageTitle = `${product.name} | ${siteData?.site_title_seo || siteData?.title || 'Kendr Store'}`;
+    const dynamicStyles = {
         '--zoom-controls-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
         '--zoom-controls-border': isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
         '--zoom-info-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
-        '--zoom-info-border': isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
         '--badge-instock-bg': isDarkMode ? 'rgba(56, 161, 105, 0.2)' : '#c6f6d5',
         '--badge-outofstock-bg': isDarkMode ? 'rgba(229, 62, 62, 0.2)' : '#fed7d7',
-        '--description-header-bg': isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
         '--footer-bg': isDarkMode ? '#1a202c' : '#f7fafc',
         '--footer-border': isDarkMode ? '#2d3748' : '#e2e8f0',
-    });
-
-    const mainImageBoxClass = `
-        ${styles.mainImageBox} 
-        ${imageScale > 1 ? styles.draggable : styles.zoomable}
-        ${isDragging ? styles.dragging : ''}
-    `;
-
-    const siteScrollbarStyles = `
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--site-bg);
-        }
-        ::-webkit-scrollbar-thumb {
-            background-color: var(--site-accent);
-            border-radius: 4px;
-            border: 2px solid var(--site-bg);
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: var(--site-accent-hover);
-        }
-        
-        * {
-            scrollbar-color: var(--site-accent) var(--site-bg);
-        }
-    `;
+    };
 
     return (
-        <div className={styles.pageWrapper} style={getButtonStyle()}>
+        <div className={styles.pageWrapper} style={dynamicStyles}>
             <Helmet>
                 <title>{pageTitle}</title>
                 <link rel="icon" type="image/webp" href={faviconUrl} />
                 <meta property="og:title" content={pageTitle} />
                 <meta property="og:image" content={galleryImages[0]} />
-                <meta property="og:description" content={product.description?.substring(0, 150) || product.name} />
             </Helmet>
-            
-            <style>{siteScrollbarStyles}</style>
 
             <div className={styles.mainContent}>
-                <div className={`${styles.productGrid} product-grid-layout`}>
-                    <div className={`${styles.galleryContainer} gallery-container`}>
+                <div className={styles.productGrid}>
+                    <div className={styles.galleryContainer}>
                         {galleryImages.length > 1 && (
-                            <div className={`${styles.thumbnailsCol} custom-scrollbar`}>
+                            <div className={styles.thumbnailsCol}>
                                 {galleryImages.map((src, idx) => (
                                     <div 
                                         key={idx}
                                         className={`${styles.thumbnailBox} ${activeImageIndex === idx ? styles.active : ''}`}
-                                        onClick={() => {
-                                            setActiveImageIndex(idx);
-                                            handleResetZoom();
-                                        }}
+                                        onClick={() => { setActiveImageIndex(idx); handleZoom('reset'); }}
                                     >
                                         <img src={src} alt="thumb" className={styles.thumbnailImg} />
                                     </div>
@@ -421,71 +209,42 @@ const ProductDetailPage = () => {
                         
                         <div 
                             ref={imageContainerRef}
-                            className={mainImageBoxClass}
-                            onMouseDown={handleMouseDown}
+                            className={`${styles.mainImageBox} ${imageScale > 1 ? (isDragging ? styles.dragging : styles.draggable) : styles.zoomable}`}
+                            onMouseDown={(e) => { if (imageScale > 1) { setIsDragging(true); setDragStart({ x: e.clientX - imagePosition.x, y: e.clientY - imagePosition.y }); } e.preventDefault(); }}
                             onMouseMove={handleMouseMove}
-                            onMouseUp={handleMouseUp}
-                            onMouseLeave={handleMouseLeave}
-                            onMouseEnter={handleMouseEnter}
-                            onClick={handleImageClick}
+                            onMouseUp={() => setIsDragging(false)}
+                            onMouseLeave={() => { setIsHovering(false); if(imageScale > 1) handleZoom('reset'); }}
+                            onMouseEnter={() => { setIsHovering(true); if(imageScale === 1) handleZoom('in'); }}
+                            onClick={() => imageScale === 1 ? handleZoom('in') : handleZoom('reset')}
                         >
                             <img 
                                 src={galleryImages[activeImageIndex]} 
                                 alt={product.name} 
                                 className={styles.mainImage}
-                                style={getMainImageStyle()}
+                                style={{ transform: `scale(${imageScale}) translate(${imagePosition.x}px, ${imagePosition.y}px)` }}
                                 draggable="false"
                             />
                             
-                            <div className={styles.zoomInfo}>
-                                {Math.round(imageScale * 100)}%
-                            </div>
-                            
+                            <div className={styles.zoomInfo}>{Math.round(imageScale * 100)}%</div>
                             <div className={`${styles.zoomControls} zoom-controls`}>
-                                <button
-                                    onClick={handleZoomOut}
-                                    disabled={imageScale <= 0.5}
-                                    className={styles.zoomButton}
-                                    title="Зменшити"
-                                >
-                                    −
-                                </button>
-                                <button
-                                    onClick={handleResetZoom}
-                                    className={styles.zoomButton}
-                                    title="Скинути масштаб"
-                                >
-                                    1:1
-                                </button>
-                                <button
-                                    onClick={handleZoomIn}
-                                    disabled={imageScale >= 5}
-                                    className={styles.zoomButton}
-                                    title="Збільшити"
-                                >
-                                    +
-                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); handleZoom('out'); }} disabled={imageScale <= 0.5} className={styles.zoomButton}>−</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleZoom('reset'); }} className={styles.zoomButton}>1:1</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleZoom('in'); }} disabled={imageScale >= 5} className={styles.zoomButton}>+</button>
                             </div>
 
                             {product.sale_percentage > 0 && !isSoldOut && (
-                                <div className={styles.saleBadge}>
-                                    -{product.sale_percentage}%
-                                </div>
+                                <div className={styles.saleBadge}>-{product.sale_percentage}%</div>
                             )}
                         </div>
                     </div>
 
-                    <div className={`${styles.productInfoCol} product-info-col`}>
+                    <div className={styles.productInfoCol}>
                         <div>
-                            <h1 className={styles.productTitle}>
-                                {product.name}
-                            </h1>
-                            
+                            <h1 className={styles.productTitle}>{product.name}</h1>
                             <div className={styles.statusRow}>
                                 <div className={`${styles.badge} ${isSoldOut ? styles.outOfStock : styles.inStock}`}>
                                     {isSoldOut ? 'Закінчився' : 'В наявності'}
                                 </div>
-                                
                                 {product.category_name && (
                                     <div className={styles.categoryTag}>
                                         <Folder size={18} style={{color: 'var(--site-accent)'}} />
@@ -498,31 +257,23 @@ const ProductDetailPage = () => {
                         <div className={styles.priceContainer}>
                             {priceData.isDiscounted ? (
                                 <>
-                                    <span className={styles.finalPrice}>
-                                        {priceData.finalPrice} ₴
-                                    </span>
-                                    <span className={styles.originalPrice}>
-                                        {priceData.originalPrice} ₴
-                                    </span>
+                                    <span className={styles.finalPrice}>{priceData.finalPrice} ₴</span>
+                                    <span className={styles.originalPrice}>{priceData.originalPrice} ₴</span>
                                 </>
                             ) : (
-                                <span className={styles.finalPrice}>
-                                    {priceData.finalPrice} ₴
-                                </span>
+                                <span className={styles.finalPrice}>{priceData.finalPrice} ₴</span>
                             )}
                         </div>
 
-                        {product.variants && product.variants.map((variant, idx) => (
+                        {product.variants?.map((variant, idx) => (
                             <div key={idx} className={styles.variantContainer}>
-                                <label className={styles.variantLabel}>
-                                    {variant.name}:
-                                </label>
+                                <label className={styles.variantLabel}>{variant.name}:</label>
                                 <div className={styles.variantOptions}>
                                     {variant.values.map((val, valIdx) => (
                                         <button
                                             key={valIdx}
                                             className={`${styles.chipButton} ${selectedOptions[variant.name] === val.label ? styles.active : ''}`}
-                                            onClick={() => handleOptionChange(variant.name, val.label)}
+                                            onClick={() => setSelectedOptions(prev => ({ ...prev, [variant.name]: val.label }))}
                                         >
                                             {val.label}
                                         </button>
@@ -536,45 +287,27 @@ const ProductDetailPage = () => {
                                 onClick={handleAddToCart}
                                 disabled={isOwner || isSoldOut}
                                 className={`${styles.addToCartButton} ${(isOwner || isSoldOut) ? styles.disabled : styles.available}`}
-                                title={isOwner ? "Ви не можете купувати власні товари" : ""}
                             >
-                                {isOwner 
-                                    ? 'Ви власник цього товару' 
-                                    : (isSoldOut ? 'Немає в наявності' : 'Додати в кошик')
-                                }
+                                {isOwner ? 'Ви власник цього товару' : (isSoldOut ? 'Немає в наявності' : 'Додати в кошик')}
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <div className={styles.descriptionContainer}>
-                    <div className={styles.descriptionHeader}>
-                        Характеристики та опис
-                    </div>
-                    <div className={`${styles.descriptionContent} custom-scrollbar`}>
+                    <div className={styles.descriptionHeader}>Характеристики та опис</div>
+                    <div className={styles.descriptionContent}>
                         {product.description || 'Опис відсутній'}
                     </div>
                 </div>
 
                 {relatedProducts.length > 0 && (
                     <div className={styles.recommendationsSection}>
-                        <h2 style={{
-                            textAlign: 'center', 
-                            marginBottom: '30px', 
-                            color: 'var(--site-text-primary)',
-                            fontSize: '1.8rem'
-                        }}>
-                            Інші товари
-                        </h2>
-                        
-                        <div className={`${styles.productsGrid} products-grid-recommendations`}>
+                        <h2 className={styles.recommendationsTitle}>Інші товари</h2>
+                        <div className={styles.productsGrid}>
                             {relatedProducts.map(relProd => (
                                 <div key={relProd.id} style={{ height: '100%', minWidth: 0 }}>
-                                    <ProductCard 
-                                        product={relProd}
-                                        isEditorPreview={false}
-                                        siteData={siteData}
-                                    />
+                                    <ProductCard product={relProd} isEditorPreview={false} siteData={siteData} />
                                 </div>
                             ))}
                         </div>
@@ -582,12 +315,13 @@ const ProductDetailPage = () => {
                 )}
             </div>
 
-            {footerBlocks.length > 0 && (
+            {siteData?.footer_content && (
                 <footer className={styles.footer}>
-                    <BlockRenderer blocks={footerBlocks} siteData={siteData} />
-                    <div className={styles.footerText}>
-                        Powered by Kendr
-                    </div>
+                    <BlockRenderer 
+                        blocks={Array.isArray(siteData.footer_content) ? siteData.footer_content : JSON.parse(siteData.footer_content)} 
+                        siteData={siteData} 
+                    />
+                    <div className={styles.footerText}>Powered by Kendr</div>
                 </footer>
             )}
         </div>

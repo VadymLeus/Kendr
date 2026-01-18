@@ -22,8 +22,8 @@ const SettingsPage = () => {
     const tabs = [
         { id: 'general', label: 'Загальні', icon: <User /> },
         { id: 'security', label: 'Безпека', icon: <Shield /> },
-        { id: 'appearance', label: 'Вигляд', icon: <Palette /> },
         { id: 'public', label: 'Публічність', icon: <Globe /> },
+        { id: 'appearance', label: 'Вигляд', icon: <Palette /> },
     ];
 
     return (

@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import apiClient from '../../../../shared/api/api';
 import { useAutoSave } from '../../../../shared/hooks/useAutoSave';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
-import ImageInput from '../../../media/components/ImageInput';
 import SiteCoverDisplay from '../../../../shared/ui/complex/SiteCoverDisplay';
 import SaveTemplateModal from '../../components/SaveTemplateModal';
 import EditTemplateModal from '../../../../shared/ui/complex/EditTemplateModal';
@@ -14,14 +13,10 @@ import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { InputWithCounter } from '../../../../shared/ui/complex/InputWithCounter';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { TEXT_LIMITS } from '../../../../shared/config/limits';
-import { 
-    Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, 
-    List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, 
-    Briefcase, Edit, Layout, FileText
-} from 'lucide-react';
+import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
+import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const navigate = useNavigate();
     const { confirm } = useConfirm();
@@ -43,7 +38,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [availableTags, setAvailableTags] = useState([]);
     const [selectedTags, setSelectedTags] = useState([]);
-
     const { data, handleChange, isSaving, setData } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
         {
@@ -129,9 +123,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const handleSaveIdentity = async () => {
         const { title, slug } = identityData;
         const originalSlug = siteData.site_path;
-        
         if (slug.length < 3) { setSlugError('Мінімум 3 символи'); return; }
-
         setIsSavingIdentity(true);
         try {
             const promises = [];
@@ -226,7 +218,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const handleSaveTemplate = async (name, description, overwriteId) => {
         try {
             const payload = { siteId: siteData.id, templateName: name, description };
-
             if (overwriteId) {
                 await apiClient.put(`/user-templates/${overwriteId}`, payload);
                 toast.success(`Шаблон "${name}" оновлено!`);
@@ -307,7 +298,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     };
 
     const cookieSettings = data.theme_settings?.cookie_banner || { enabled: false, text: "", acceptText: "", showReject: true };
-
     const generatorLayouts = [
         { id: 'centered', label: 'Стандарт', icon: <Grid size={20} /> },
         { id: 'centered_reverse', label: 'Реверс', icon: <Grid size={20} className="rotate-180" /> },
@@ -318,8 +308,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     ];
 
     const hasIdentityChanges = identityData.title !== siteData.title || identityData.slug !== siteData.site_path;
-
-    // --- Оновлені опції статусів (лише доступні користувачу) ---
     const statusOptions = [
         { value: 'published', label: 'Опубліковано (Доступний)', icon: Globe, iconProps: { className: 'text-green-500' } },
         { value: 'draft', label: 'Чернетка (Прихований)', icon: FileText, iconProps: { className: 'text-gray-500' } }
@@ -356,10 +344,11 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </label>
                     <div className="flex justify-center">
                         <div className="w-45">
-                            <ImageInput
+                            <UniversalMediaInput
+                                type="image"
                                 value={data.logo_url}
-                                onChange={(e) => {
-                                    const newVal = e.target ? e.target.value : e;
+                                onChange={(val) => {
+                                    const newVal = val && val.target ? val.target.value : val;
                                     handleChange('logo_url', newVal);
                                     if(onUpdate) onUpdate({ logo_url: newVal });
                                 }}
@@ -397,7 +386,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                         </button>
                                     )}
                                 </div>
-                            </ImageInput>
+                            </UniversalMediaInput>
                         </div>
                     </div>
                 </div>
@@ -445,7 +434,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
-            {/* --- СЕКЦІЯ СТАТУСУ (Центрована) --- */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
@@ -455,7 +443,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         Визначає видимість вашого сайту для відвідувачів.
                     </p>
                 </div>
-                {/* Додано mx-auto для центрування */}
                 <div className="max-w-md mx-auto">
                     <label className="block mb-2 font-medium text-(--platform-text-primary) text-sm">
                         Поточний статус
@@ -481,7 +468,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     )}
                 </div>
             </div>
-            {/* ---------------------- */}
 
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
@@ -549,7 +535,16 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 <div className="flex flex-col gap-8">
                     <div>
                         <label className="block mb-2.5 font-semibold text-(--platform-text-primary) text-sm">Попередній перегляд:</label>
-                        <ImageInput value={data.cover_image} onChange={(e) => handleChange('cover_image', e.target.value)} aspect={1.6} triggerStyle={{ display: 'block', padding: 0, border: 'none', background: 'transparent', width: '100%', cursor: 'pointer' }}>
+                        <UniversalMediaInput 
+                            type="image"
+                            value={data.cover_image} 
+                            onChange={(val) => {
+                                const newVal = val && val.target ? val.target.value : val;
+                                handleChange('cover_image', newVal);
+                            }} 
+                            aspect={1.6} 
+                            triggerStyle={{ display: 'block', padding: 0, border: 'none', background: 'transparent', width: '100%', cursor: 'pointer' }}
+                        >
                             <div 
                                 className="w-full aspect-[1.6/1] border border-(--platform-border-color) rounded-xl overflow-hidden shadow-sm relative transition-all duration-200 group"
                                 onMouseEnter={() => setIsCoverHovered(true)} 
@@ -581,11 +576,10 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                     </button>
                                 )}
                             </div>
-                        </ImageInput>
+                        </UniversalMediaInput>
                     </div>
 
                     <div className="h-px bg-(--platform-border-color)" />
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                         <div>
                             <label className="block mb-3 font-semibold text-(--platform-text-primary) text-sm">Стиль генератора:</label>

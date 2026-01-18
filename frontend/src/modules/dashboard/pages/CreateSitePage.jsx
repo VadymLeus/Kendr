@@ -7,49 +7,38 @@ import { Input } from '../../../shared/ui/elements/Input';
 import { Button } from '../../../shared/ui/elements/Button';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import EditTemplateModal from '../../../shared/ui/complex/EditTemplateModal';
-import { ArrowLeft, Layout, Check, Loader, AlertCircle, Globe, Grid, User, Image, Trash, Search, Edit } from 'lucide-react';
-import ImageInput from '../../media/components/ImageInput';
 import BlockRenderer from '../../editor/core/BlockRenderer';
 import FontLoader from '../../renderer/components/FontLoader';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
+import UniversalMediaInput from '../../../shared/ui/complex/UniversalMediaInput';
+import { ArrowLeft, Layout, Check, Loader, AlertCircle, Globe, Grid, User, Image, Trash, Search, Edit } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
 const CreateSitePage = () => {
     const navigate = useNavigate();
-
     const [systemTemplates, setSystemTemplates] = useState([]);
     const [personalTemplates, setPersonalTemplates] = useState([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
-
     const [activeTab, setActiveTab] = useState('system');
     const [selectedTemplateId, setSelectedTemplateId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-
     const [formData, setFormData] = useState({ title: '', slug: '' });
-
     const [customLogo, setCustomLogo] = useState(null);
     const [defaultRandomLogo, setDefaultRandomLogo] = useState(null);
-
     const [slugStatus, setSlugStatus] = useState('idle');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showMobilePreview, setShowMobilePreview] = useState(false);
-
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
-
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [templateToDeleteId, setTemplateToDeleteId] = useState(null);
-
     const [previewData, setPreviewData] = useState({
         pages: [],
         theme: {},
         header: [],
         footer: []
     });
-
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
 
     useEffect(() => {
@@ -143,7 +132,6 @@ const CreateSitePage = () => {
 
     const handleConfirmDelete = async () => {
         if (!templateToDeleteId) return;
-
         try {
             await apiClient.delete(`/user-templates/${templateToDeleteId}`);
             setPersonalTemplates(prev => prev.filter(t => t.id !== templateToDeleteId));
@@ -169,7 +157,6 @@ const CreateSitePage = () => {
     const handleSelectTemplate = (template, type) => {
         if (!template) return;
         setSelectedTemplateId(template.id);
-        
         let content = null;
         try {
             if (type === 'system') {
@@ -188,12 +175,10 @@ const CreateSitePage = () => {
         }
 
         if (!content) return;
-
         let pages = [];
         let theme = content.theme_settings || {};
         let header = content.header_content || [];
         let footer = content.footer_content || [];
-
         if (content.pages && Array.isArray(content.pages)) {
             pages = content.pages;
         } else if (Array.isArray(content)) {
@@ -205,7 +190,6 @@ const CreateSitePage = () => {
         }
 
         setPreviewData({ pages, theme, header, footer });
-
         const hasHomePage = pages.find(p => p.slug === 'home');
         if (hasHomePage) {
             setCurrentPreviewSlug('home');
@@ -216,26 +200,24 @@ const CreateSitePage = () => {
         }
     };
 
-    const handleLogoChange = (e) => {
-        const val = e.target.value;
-        setCustomLogo(val || null);
+    const handleLogoChange = (val) => {
+        const path = val && val.target ? val.target.value : val;
+        setCustomLogo(path || null);
     };
 
     const handleClearLogo = (e) => {
-        e.stopPropagation();
+        e && e.stopPropagation();
         setCustomLogo(null);
         toast.info('Логотип скинуто до стандартного');
     };
 
     const effectiveLogo = customLogo || defaultRandomLogo || '/uploads/shops/logos/default/default-logo.webp';
-
     const handlePreviewInteraction = (e) => {
         e.preventDefault(); e.stopPropagation();
         const link = e.target.closest('a');
         if (!link) return;
         const href = link.getAttribute('href');
         if (!href) return;
-
         let targetSlug = 'home';
         const cleanPath = href.replace(window.location.origin, '');
         const segments = cleanPath.split('/').filter(s => s && s.trim() !== '');
@@ -252,7 +234,6 @@ const CreateSitePage = () => {
     };
 
     const blockInput = (e) => { e.preventDefault(); e.stopPropagation(); };
-
     const currentBlocks = useMemo(() => {
         const page = previewData.pages.find(p => p.slug === currentPreviewSlug);
         return page ? (page.blocks || []) : [];
@@ -267,7 +248,6 @@ const CreateSitePage = () => {
         e.preventDefault();
         if (!formData.title || !formData.slug || !selectedTemplateId) return;
         if (slugStatus === 'taken') return;
-
         setIsSubmitting(true);
         try {
             const payload = {
@@ -288,7 +268,6 @@ const CreateSitePage = () => {
 
     const simulatedSiteData = useMemo(() => {
         let headerContent = [...(previewData.header || [])];
-        
         const updateHeaderBlock = (block) => ({
             ...block,
             data: {
@@ -306,7 +285,6 @@ const CreateSitePage = () => {
         }
 
         const theme = previewData.theme || {};
-
         return {
             id: 'preview',
             title: formData.title || 'New Site',
@@ -331,10 +309,8 @@ const CreateSitePage = () => {
         if (!searchQuery) return source;
         return source.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }, [activeTab, systemTemplates, personalTemplates, searchQuery]);
-
     const pageStyles = `
         .create-site-container { display: flex; height: 100vh; overflow: hidden; background: var(--platform-bg); font-family: var(--font-family, sans-serif); color: var(--platform-text-primary); }
-        
         .left-panel { 
             display: flex; flex-direction: column; background: var(--platform-card-bg); 
             width: 100%; z-index: 20; 
@@ -358,7 +334,6 @@ const CreateSitePage = () => {
         .mobile-hidden { transform: translateX(-100%); }
         .desktop-visible { transform: translateX(0); }
         .right-panel { flex: 1; background: var(--platform-bg); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: transform 0.3s; }
-        
         .browser-mockup { width: 100%; height: 100%; max-width: 1200px; background: var(--platform-card-bg); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--platform-border-color); }
         .browser-header { height: 44px; background: var(--platform-bg); border-bottom: 1px solid var(--platform-border-color); display: flex; align-items: center; padding: 0 16px; gap: 12px; }
         .browser-dots { display: flex; gap: 6px; }
@@ -390,11 +365,9 @@ const CreateSitePage = () => {
         .template-card { border: 1px solid var(--platform-border-color); border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; background: var(--platform-card-bg); padding: 16px; display: flex; flex-direction: column; gap: 6px; min-height: 80px; flex-shrink: 0; }
         .template-card:hover { transform: translateY(-2px); border-color: var(--platform-text-secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .template-card.selected { border-color: var(--platform-accent); background: var(--platform-card-bg); box-shadow: 0 0 0 1px var(--platform-accent); }
-        
         .tpl-title { font-size: 14px; font-weight: 600; color: var(--platform-text-primary); margin-right: 24px; }
         .tpl-desc { font-size: 12px; color: var(--platform-text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .check-icon { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; background: var(--platform-accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2; }
-        
         .template-actions {
             position: absolute;
             bottom: 10px;
@@ -420,12 +393,10 @@ const CreateSitePage = () => {
         }
         .template-action-btn:hover { background: var(--platform-accent); color: #fff; border-color: var(--platform-accent); }
         .template-action-btn.delete:hover { background: #ef4444; border-color: #ef4444; }
-
         .tab-switcher { display: flex; padding: 4px; background: var(--platform-bg); border-radius: 8px; border: 1px solid var(--platform-border-color); margin-bottom: 12px; }
         .tab-btn { flex: 1; padding: 8px; font-size: 14px; font-weight: 500; border-radius: 6px; border: none; background: transparent; cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .tab-btn:hover { color: var(--platform-text-primary); }
         .tab-btn.active { background: var(--platform-accent); color: #ffffff; box-shadow: 0 2px 6px rgba(var(--platform-accent-rgb, 0,0,0), 0.2); }
-        
         .logo-wrapper { width: 100%; }
         .logo-preview-card { width: 120px; height: 120px; border-radius: 12px; border: 1px solid var(--platform-border-color); background: var(--platform-card-bg); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; margin: 0 auto; }
         .logo-preview-card:hover { border-color: var(--platform-accent); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -435,7 +406,6 @@ const CreateSitePage = () => {
         .delete-logo-btn:hover { transform: scale(1.1); background: #dc2626; }
         .add-logo-card { width: 100%; height: 100px; border: 1px dashed var(--platform-border-color); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--platform-bg); cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; }
         .add-logo-card:hover { border-color: var(--platform-accent); color: var(--platform-accent); background: rgba(0,0,0,0.02); }
-        
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .site-theme-context[data-site-mode="dark"] {
             --site-bg: #1a202c; 
@@ -500,19 +470,15 @@ const CreateSitePage = () => {
             />
 
             <div className={`left-panel ${showMobilePreview ? 'mobile-hidden' : 'desktop-visible'}`}>
-
                 <div style={{ padding: '20px', borderBottom: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <h1 style={{ fontSize: '20px', fontWeight: '700', margin: 0, color: 'var(--platform-text-primary)' }}>Новий сайт</h1>
                 </div>
-
                 <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-
                     <div style={{ marginBottom: '32px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                             <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--platform-accent)', color: 'white', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</div>
                             <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: 'var(--platform-text-primary)' }}>Основна інформація</h3>
                         </div>
-
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <Input
                                 label="Назва сайту"
@@ -544,18 +510,18 @@ const CreateSitePage = () => {
                                     <span style={{ fontWeight: '500', color: 'var(--platform-text-primary)' }}>{formData.slug || '...'}</span>
                                 </div>
                             </div>
-
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500', color: 'var(--platform-text-secondary)' }}>
                                     Логотип
                                 </label>
-
                                 <div className="logo-wrapper">
-                                    <ImageInput
+                                    <UniversalMediaInput
+                                        type="image"
                                         value={customLogo}
                                         onChange={handleLogoChange}
                                         aspect={1}
                                         circularCrop={true}
+                                        triggerStyle={{ width: '100%', border: 'none', background: 'transparent', padding: 0 }}
                                     >
                                         {customLogo ? (
                                             <div className="logo-preview-card">
@@ -584,10 +550,9 @@ const CreateSitePage = () => {
                                                 </div>
                                             </div>
                                         )}
-                                    </ImageInput>
+                                    </UniversalMediaInput>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -715,7 +680,6 @@ const CreateSitePage = () => {
                     >
                         <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
                             {previewData.theme && <FontLoader fontHeading={previewData.theme.font_heading} fontBody={previewData.theme.font_body} />}
-
                             <div 
                                 className="site-wysiwyg-wrapper site-theme-context" 
                                 style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', flex: 1 }}

@@ -2,8 +2,9 @@
 import React from 'react';
 import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
-import { ArrowRight, ShoppingCart, Mail, Phone, Check, Star, MousePointer2 } from 'lucide-react';
+import { ArrowRight, ShoppingCart, Mail, Phone, Check, Star, MousePointer2, Download, FileText } from 'lucide-react';
 
+const API_URL = 'http://localhost:5000';
 const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { 
         text = 'Кнопка', 
@@ -20,6 +21,7 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         alignment = 'center', 
         theme_mode = 'light',
         fontFamily,
+        isFile = false,
         height = 'small',
         styles = {}
     } = blockData;
@@ -27,14 +29,12 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         main: fontFamily
     }, siteData);
-
     const accentColor = 'var(--site-accent, #3b82f6)';
     const textColor = 'var(--site-text-primary, #111827)';
     const whiteColor = '#ffffff';
     const secondaryColor = theme_mode === 'dark' ? whiteColor : textColor;
     const colorVar = styleType === 'secondary' ? secondaryColor : accentColor;
     const isOutline = variant === 'outline';
-
     const dynamicBtnStyle = {
         background: isOutline ? 'transparent' : colorVar,
         color: isOutline ? colorVar : (styleType === 'secondary' && !isOutline ? whiteColor : whiteColor),
@@ -54,9 +54,7 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     };
     const justifyContent = width === 'full' ? 'stretch' : (justifyMap[alignment] || 'center');
     const safeRadius = parseInt(borderRadius) || 0;
-    
     const uniqueClass = `btn-scope-${blockData.id || 'preview'}`;
-
     const heightMap = { 
         small: 'auto', 
         medium: '250px', 
@@ -65,6 +63,16 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         auto: 'auto'
     };
 
+    let hrefValue = '#';
+    if (link) {
+        if (isFile) {
+            hrefValue = link.startsWith('http') ? link : `${API_URL}${link}`;
+        } else {
+            hrefValue = resolveSiteLink(link, siteData?.site_path);
+        }
+    }
+
+    const effectiveIcon = (isFile && icon === 'none') ? 'download' : icon;
     return (
         <div 
             className={uniqueClass}
@@ -90,10 +98,11 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             `}</style>
             
             <a 
-                href={resolveSiteLink(link, siteData?.site_path)} 
+                href={hrefValue} 
                 className={`btn-${styleType}-${variant}`}
-                target={targetBlank ? '_blank' : '_self'}
-                rel={targetBlank ? 'noopener noreferrer' : ''}
+                target={(targetBlank || isFile) ? '_blank' : '_self'}
+                rel={(targetBlank || isFile) ? 'noopener noreferrer' : ''}
+                download={isFile} 
                 onClick={(e) => isEditorPreview && e.preventDefault()}
                 style={{
                     display: 'inline-flex',
@@ -112,12 +121,12 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     ...dynamicBtnStyle
                 }}
             >
-                {iconPosition === 'left' && <ButtonIcon name={icon} size={size} flip={iconFlip} />}
+                {iconPosition === 'left' && <ButtonIcon name={effectiveIcon} size={size} flip={iconFlip} />}
                 <span style={{ display: 'flex', alignItems: 'center' }}>
                     {text}
                 </span>
                 
-                {iconPosition === 'right' && <ButtonIcon name={icon} size={size} flip={iconFlip} />}
+                {iconPosition === 'right' && <ButtonIcon name={effectiveIcon} size={size} flip={iconFlip} />}
             </a>
         </div>
     );
@@ -126,7 +135,6 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 const ButtonIcon = ({ name, size, flip }) => {
     if (!name || name === 'none') return null;
     const s = size === 'large' ? 20 : 18;
-    
     const style = {
         transform: flip ? 'scaleX(-1)' : 'none',
         flexShrink: 0
@@ -139,9 +147,11 @@ const ButtonIcon = ({ name, size, flip }) => {
         phone: <Phone size={s} style={style} />,
         check: <Check size={s} style={style} />,
         star: <Star size={s} fill="currentColor" style={style} />,
-        pointer: <MousePointer2 size={s} style={style} />
+        pointer: <MousePointer2 size={s} style={style} />,
+        download: <Download size={s} style={style} />, 
+        file: <FileText size={s} style={style} />      
     };
-    return icons[name] || null;
+    return icons[name] || icons.arrowRight;
 };
 
 export default ButtonBlock;

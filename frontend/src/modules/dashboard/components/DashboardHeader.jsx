@@ -1,6 +1,6 @@
 // frontend/src/modules/dashboard/components/DashboardHeader.jsx
 import React from 'react';
-import { Undo, Redo, Play, Edit, FileText, Store, Palette, Mail, Settings } from 'lucide-react';
+import { Undo, Redo, Play, Edit, FileText, Store, Palette, Mail, Settings, ShoppingBag } from 'lucide-react';
 
 const DashboardHeader = ({ 
     siteData, 
@@ -16,15 +16,15 @@ const DashboardHeader = ({
     const tabs = [
         { key: 'editor', icon: <Edit />, text: 'Редактор' },
         { key: 'pages', icon: <FileText />, text: 'Сторінки' },
-        { key: 'store', icon: <Store />, text: 'Магазин' },
         { key: 'theme', icon: <Palette />, text: 'Тема' },
+        { key: 'store', icon: <Store />, text: 'Магазин' },
+        { key: 'orders', icon: <ShoppingBag />, text: 'Замовлення' },
         { key: 'crm', icon: <Mail />, text: 'Заявки' },
         { key: 'settings', icon: <Settings />, text: 'Налаштування' }
     ];
 
     return (
         <header className="editor-header">
-            
             <div className="header-left">
                 <div style={{display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '150px'}}>
                     <div className="site-title" title={siteData.title}>

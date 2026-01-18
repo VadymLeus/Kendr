@@ -6,9 +6,7 @@ const API_URL = 'http://localhost:5000';
 const FontLoader = ({ fontHeading, fontBody }) => {
     const getFontCss = (fontFamily, type) => {
         if (!fontFamily || fontFamily === 'global') return null;
-
         const isCustomFont = fontFamily.includes('uploads') || fontFamily.includes('http');
-
         if (isCustomFont) {
             let fontUrl = fontFamily;
             if (!fontFamily.startsWith('http')) {

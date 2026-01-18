@@ -1,6 +1,5 @@
 // frontend/src/modules/editor/blocks/Header/HeaderSettings.jsx
 import React, { useState } from 'react';
-import ImageInput from '../../../media/components/ImageInput';
 import { generateBlockId } from '../../core/editorConfig';
 import { commonStyles, ToggleGroup, ToggleSwitch, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
@@ -10,19 +9,18 @@ import ConfirmModal from '../../../../shared/ui/complex/ConfirmModal';
 import AlignmentControl from '../../ui/components/AlignmentControl';
 import ButtonEditor from '../../ui/components/ButtonEditor';
 import FontSelector from '../../ui/components/FontSelector';
-import { Trash2, Plus, Image, Type, LayoutTemplate, List, Link, Pencil, AlertCircle } from 'lucide-react';
+import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
+import { Trash2, Plus, Image, Type, LayoutTemplate, List, Link, Pencil, AlertCircle, Upload } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 const HeaderSettings = ({ data, onChange, siteData }) => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [itemToDeleteId, setItemToDeleteId] = useState(null);
-
+    const [isLogoHovered, setIsLogoHovered] = useState(false);
     const MAX_NAV_ITEMS = 5;
     const navItemsCount = (data.nav_items || []).length;
     const isLimitReached = navItemsCount >= MAX_NAV_ITEMS;
-
     const updateData = (updates) => onChange({ ...data, ...updates });
-
     const handleNavItemChange = (id, field, value) => {
         const newItems = data.nav_items.map(item => 
             item.id === id ? { ...item, [field]: value } : item
@@ -54,6 +52,12 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
         updateData({ logo_src: newValue });
     };
 
+    const getLogoUrl = (src) => {
+        if (!src) return '';
+        if (src.startsWith('http')) return src;
+        return `${API_URL}${src}`;
+    };
+
     const navItemStyle = { 
         display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-start',
         background: 'var(--platform-card-bg)', padding: '10px', 
@@ -61,10 +65,8 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
     };
 
     const currentLogoRadius = data.logo_radius !== undefined ? data.logo_radius : (data.borderRadius || 0);
-
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            
             <ConfirmModal 
                 isOpen={isDeleteModalOpen}
                 title="Видалити пункт меню?"
@@ -78,7 +80,6 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
 
             <div>
                 <SectionTitle icon={<Image size={18}/>}>Логотип та Назва</SectionTitle>
-                
                 <div style={commonStyles.formGroup}>
                     <label style={commonStyles.label}>Центральний логотип</label>
                     <div style={{ 
@@ -88,11 +89,74 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         border: '1px solid var(--platform-border-color)' 
                     }}>
                         <div style={{ width: '100%', height: '200px' }}>
-                            <ImageInput 
+                            <UniversalMediaInput 
+                                type="image"
                                 value={data.logo_src} 
                                 onChange={handleLogoChange} 
-                                aspect={1} 
-                            />
+                                aspect={1}
+                                triggerStyle={{ width: '100%', height: '100%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }}
+                            >
+                                <div 
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '100%', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center',
+                                        position: 'relative',
+                                        borderRadius: '8px',
+                                        overflow: 'hidden',
+                                        backgroundColor: 'var(--platform-card-bg)',
+                                        border: '1px dashed var(--platform-border-color)'
+                                    }}
+                                    onMouseEnter={() => setIsLogoHovered(true)}
+                                    onMouseLeave={() => setIsLogoHovered(false)}
+                                >
+                                    {data.logo_src ? (
+                                        <>
+                                            <img 
+                                                src={getLogoUrl(data.logo_src)} 
+                                                alt="Logo" 
+                                                style={{ 
+                                                    maxWidth: '80%', 
+                                                    maxHeight: '80%', 
+                                                    objectFit: 'contain',
+                                                    borderRadius: `${currentLogoRadius}px`,
+                                                    transition: 'all 0.2s'
+                                                }} 
+                                            />
+                                            <div style={{
+                                                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                opacity: isLogoHovered ? 1 : 0, transition: 'opacity 0.2s',
+                                                backdropFilter: 'blur(2px)'
+                                            }}>
+                                                <div style={{ color: 'white', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 500 }}>
+                                                    <Upload size={18} /> Змінити
+                                                </div>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleLogoChange(''); }}
+                                                    style={{
+                                                        position: 'absolute', top: '8px', right: '8px',
+                                                        width: '28px', height: '28px', borderRadius: '50%',
+                                                        background: 'rgba(0,0,0,0.5)', color: 'white',
+                                                        border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    title="Видалити"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--platform-text-secondary)', opacity: 0.6 }}>
+                                            <Image size={32} />
+                                            <span style={{ fontSize: '0.9rem' }}>Завантажити лого</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </UniversalMediaInput>
                         </div>
                     </div>
                 </div>
@@ -144,7 +208,6 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
 
             <div>
                 <SectionTitle icon={<LayoutTemplate size={18}/>}>Розміщення та Стиль</SectionTitle>
-                
                 <div style={commonStyles.formGroup}>
                     <AlignmentControl 
                         label="Вирівнювання меню"

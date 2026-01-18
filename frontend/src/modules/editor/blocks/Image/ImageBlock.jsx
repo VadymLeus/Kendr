@@ -9,7 +9,6 @@ import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
 import { Image as ImageIcon } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
 const formatBorderRadius = (radius) => {
     if (!radius) return '0px';
     return String(radius).match(/^[0-9]+$/) ? `${radius}px` : radius;
@@ -34,7 +33,6 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
 
     const settings_slider = blockData.settings_slider || { navigation: true, pagination: true, autoplay: false, loop: true };
     const settings_grid = { columns: 3, ...blockData.settings_grid };
-
     const heightMap = {
         small: '300px',
         medium: '500px',

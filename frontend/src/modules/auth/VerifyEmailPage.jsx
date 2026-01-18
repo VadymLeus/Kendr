@@ -9,10 +9,8 @@ const VerifyEmailPage = () => {
     const navigate = useNavigate();
     const [status, setStatus] = useState('verifying'); 
     const [message, setMessage] = useState('Перевірка вашого посилання...');
-    
     const token = searchParams.get('token');
     const effectRan = useRef(false);
-
     useEffect(() => {
         if (effectRan.current === true || !token) return;
 

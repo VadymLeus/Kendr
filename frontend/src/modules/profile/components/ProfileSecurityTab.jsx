@@ -5,76 +5,15 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
 import { Input, Button } from '../../../shared/ui/elements';
-import { Lock, Check, LogOut, AlertCircle } from 'lucide-react';
-
-const validateLocalPassword = (password) => {
-    const hasLower = /[a-z]/.test(password);
-    const hasUpper = /[A-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const isLongEnough = password.length >= 8;
-
-    return {
-        isValid: hasLower && hasUpper && hasNumber && isLongEnough,
-        hasLower,
-        hasUpper,
-        hasNumber,
-        isLongEnough,
-        score: [hasLower, hasUpper, hasNumber, isLongEnough].filter(Boolean).length
-    };
-};
-
-const PasswordStrengthMeter = ({ password }) => {
-    const { score, isValid } = validateLocalPassword(password);
-
-    const getStrengthColor = () => {
-        if (score <= 1) return '#e53e3e';
-        if (score === 2 || score === 3) return '#ecc94b';
-        return '#48bb78';
-    };
-
-    const getStrengthLabel = () => {
-        if (password.length === 0) return 'Рівень безпеки';
-        if (score <= 2) return 'Слабкий';
-        if (score === 3) return 'Середній';
-        return 'Надійний';
-    };
-
-    const bars = [1, 2, 3, 4];
-
-    return (
-        <div style={{ marginTop: '6px', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
-                {bars.map((barIndex) => (
-                    <div 
-                        key={barIndex}
-                        style={{
-                            height: '4px',
-                            flex: 1,
-                            borderRadius: '2px',
-                            backgroundColor: barIndex <= score ? getStrengthColor() : 'var(--platform-border-color)',
-                            transition: 'background-color 0.3s ease'
-                        }} 
-                    />
-                ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--platform-text-secondary)', fontWeight: '500' }}>
-                <span>{getStrengthLabel()}</span>
-                {isValid && <span style={{ color: '#48bb78', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12}/> Чудовий</span>}
-            </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--platform-text-secondary)', marginTop: '4px', lineHeight: '1.2' }}>
-                Мінімум 8 символів, велика та мала літери, цифра.
-            </div>
-        </div>
-    );
-};
+import PasswordStrengthMeter from '../../../shared/ui/complex/PasswordStrengthMeter';
+import { analyzePassword } from '../../../shared/utils/validationUtils';
+import { Lock, LogOut, AlertCircle } from 'lucide-react';
 
 const ProfileSecurityTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
-    
     const hasPassword = user.has_password === true;
-
     const [passwords, setPasswords] = useState({
         currentPassword: '',
         newPassword: '',
@@ -98,7 +37,7 @@ const ProfileSecurityTab = () => {
             return;
         }
 
-        const validation = validateLocalPassword(passwords.newPassword);
+        const validation = analyzePassword(passwords.newPassword);
         if (!validation.isValid) {
             toast.warning("Пароль має містити мінімум 8 символів, велику літеру, малу літеру та цифру.");
             return;
@@ -113,9 +52,7 @@ const ProfileSecurityTab = () => {
             }
 
             const response = await apiClient.put('/users/profile/password', payload);
-            
             toast.success(hasPassword ? "Пароль успішно змінено!" : "Пароль успішно встановлено!");
-            
             const updatedUser = {
                 ...user,                  
                 ...(response.data.user || {}), 
@@ -139,7 +76,6 @@ const ProfileSecurityTab = () => {
     };
 
     const container = { maxWidth: '800px', margin: '0 auto', width: '100%' };
-    
     const card = { 
         background: 'var(--platform-card-bg)', 
         borderRadius: '16px', 
@@ -148,7 +84,6 @@ const ProfileSecurityTab = () => {
         marginBottom: '20px', 
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)' 
     };
-    
     const cardTitle = { 
         fontSize: '1.3rem', 
         fontWeight: '600', 
@@ -158,14 +93,12 @@ const ProfileSecurityTab = () => {
         alignItems: 'center', 
         gap: '10px' 
     };
-    
     const subTitle = { 
         color: 'var(--platform-text-secondary)', 
         marginBottom: '24px', 
         fontSize: '0.9rem', 
         lineHeight: '1.5' 
     };
-
     const dangerCardStyle = {
         ...card,
         borderColor: '#fed7d7',
@@ -252,20 +185,11 @@ const ProfileSecurityTab = () => {
                     gap: '16px' 
                 }}>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ 
-                            ...cardTitle, 
-                            color: '#c53030', 
-                            marginBottom: '4px' 
-                        }}>
+                        <h3 style={{ ...cardTitle, color: '#c53030', marginBottom: '4px' }}>
                             <AlertCircle size={22} />
                             Вихід з акаунту
                         </h3>
-                        <p style={{ 
-                            margin: 0, 
-                            color: '#c53030', 
-                            fontSize: '0.9rem', 
-                            opacity: 0.8 
-                        }}>
+                        <p style={{ margin: 0, color: '#c53030', fontSize: '0.9rem', opacity: 0.8 }}>
                             Це завершить вашу поточну сесію в цьому браузері.
                         </p>
                     </div>

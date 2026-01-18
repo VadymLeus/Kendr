@@ -9,12 +9,7 @@ import { InputWithCounter } from '../../../shared/ui/complex/InputWithCounter';
 import { Button } from '../../../shared/ui/elements/Button';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { SplitViewLayout } from '../../../shared/ui/layouts/SplitViewLayout';
-import {
-    Search, Folder, Plus, Trash, Edit, ChevronLeft, Save,
-    Star, Home, Heart, Package, Tag, ShoppingBag, Grid, X,
-    Camera, Music, Smartphone, Coffee, Briefcase, Gift, Truck,
-    Zap, MapPin, Image, Video, User, Type, List, Store
-} from 'lucide-react';
+import { Search, Folder, Plus, Trash, Edit, ChevronLeft, Save, Star, Home, Heart, Package, Tag, ShoppingBag, Grid, X, Camera, Music, Smartphone, Coffee, Briefcase, Gift, Truck, Zap, MapPin, Image, Video, User, Type, List, Store } from 'lucide-react';
 
 const ICON_MAP = {
     folder: Folder, grid: Grid, tag: Tag, bag: ShoppingBag,
@@ -25,7 +20,6 @@ const ICON_MAP = {
 };
 
 const AVAILABLE_ICONS = Object.keys(ICON_MAP);
-
 const SORT_FIELDS = [
     { value: 'name', label: 'За назвою', icon: Type },
     { value: 'count', label: 'Кількість товарів', icon: List }
@@ -35,7 +29,6 @@ const useCategories = (siteId) => {
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -54,7 +47,6 @@ const useCategories = (siteId) => {
     }, [siteId]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
-
     return { categories, products, loading, fetchData, setCategories };
 };
 
@@ -206,7 +198,6 @@ const CategoryEditor = memo(({
                 )}
             </div>
 
-            {/* ВИПРАВЛЕННЯ ТУТ: custom-scrollbar перенесено з form на div */}
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden bg-(--platform-card-bg)">
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <div className="mb-6">
@@ -273,16 +264,12 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
     const [search, setSearch] = useState('');
     const [sortBy, setSortBy] = useState('name');
     const [sortOrder, setSortOrder] = useState('asc');
-    
     const [searchParams, setSearchParams] = useSearchParams();
     const { confirm } = useConfirm();
-
     const [isPanelOpen, setIsPanelOpen] = useState(true);
     const [activeCategory, setActiveCategory] = useState(null);
     const [formData, setFormData] = useState({ id: null, name: '', icon: 'folder' });
-
     const { categories, products, loading, fetchData, setCategories } = useCategories(siteId);
-
     useEffect(() => {
         const catIdFromUrl = searchParams.get('categoryId');
         if (!loading) {

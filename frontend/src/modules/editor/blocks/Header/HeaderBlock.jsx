@@ -167,7 +167,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const [hoveredNavId, setHoveredNavId] = useState(null);
     const [isBtnHovered, setIsBtnHovered] = useState(false);
     const [isMenuHovered, setIsMenuHovered] = useState(false);
-    
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isFavorite = siteData && favoriteSiteIds.has(parseInt(siteData.id));
     const logoUrl = (effectiveLogoSrc && typeof effectiveLogoSrc === 'string')
@@ -178,7 +177,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const ActionWrapper = isEditorPreview ? 'div' : Link;
     const siteRoot = resolveSiteLink('/', siteData?.site_path);
     const homeLink = isEditorPreview ? '#' : siteRoot;
-
     const iconBtnBaseStyle = {
         display: 'flex',
         alignItems: 'center',

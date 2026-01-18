@@ -19,7 +19,6 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     } = blockData;
 
     const videoRef = useRef(null);
-
     const safeOpacity = (overlay_opacity === undefined || isNaN(Number(overlay_opacity))) 
         ? 0.5 
         : Number(overlay_opacity);

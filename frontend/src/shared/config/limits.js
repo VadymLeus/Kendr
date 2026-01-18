@@ -1,5 +1,4 @@
 // frontend/src/shared/config/limits.js
-
 export const TEXT_LIMITS = {
     SITE_NAME: 60,
     SITE_SLUG: 30,

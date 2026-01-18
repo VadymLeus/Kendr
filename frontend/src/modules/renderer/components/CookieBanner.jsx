@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 
 const CookieBanner = ({ settings, siteId }) => {
     const [isVisible, setIsVisible] = useState(false);
-
     useEffect(() => {
         if (!settings?.enabled) return;
 

@@ -18,7 +18,6 @@ const SiteDisplayPage = () => {
     const { user } = useContext(AuthContext);
     
     useScrollToHash();
-
     useEffect(() => {
         if (!isSiteLoading && siteData && siteData.page && siteData.page.is_homepage) {
             apiClient.get(`/sites/${site_path}`, { params: { increment_view: 'true' } })
@@ -45,9 +44,7 @@ const SiteDisplayPage = () => {
     const titlePart = page.seo_title || page.name;
     const sitePart = siteData.site_title_seo || siteData.title;
     const finalTitle = `${titlePart} | ${sitePart}`;
-    
     const description = page.seo_description || `Сторінка ${page.name} на сайті ${siteData.title}`;
-    
     const favicon = siteData.favicon_url 
         ? (siteData.favicon_url.startsWith('http') 
             ? siteData.favicon_url 
