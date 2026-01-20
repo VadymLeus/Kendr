@@ -5,9 +5,7 @@ import { AuthContext } from '../../../app/providers/AuthContext';
 const API_URL = 'http://localhost:5000';
 const PlatformBackground = () => {
     const { user } = useContext(AuthContext);
-
     if (!user || !user.platform_bg_url) return null;
-
     const bgUrl = user.platform_bg_url.startsWith('http') 
         ? user.platform_bg_url 
         : `${API_URL}${user.platform_bg_url}`;

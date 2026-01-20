@@ -8,6 +8,7 @@ const PRESET_COLORS = {
 };
 
 const SiteCoverDisplay = ({ site, style, className }) => {
+    if (!site) return <div style={{ width: '100%', height: '100%', background: '#eee' }} />;
     const { 
         cover_image, 
         cover_layout = 'centered', 
@@ -21,11 +22,15 @@ const SiteCoverDisplay = ({ site, style, className }) => {
     const logoRadius = parseInt(site.cover_logo_radius) || 0;
     const titleSize = parseInt(site.cover_title_size) || 24;
     const fullCoverImage = cover_image 
-        ? (cover_image.startsWith('http') ? cover_image : `${API_URL}${cover_image}`) 
+        ? (cover_image.startsWith('http') || cover_image.startsWith('data:') 
+            ? cover_image 
+            : `${API_URL}${cover_image}`) 
         : null;
 
     const fullLogoUrl = logo_url 
-        ? (logo_url.startsWith('http') ? logo_url : `${API_URL}${logo_url}`)
+        ? (logo_url.startsWith('http') || logo_url.startsWith('data:') 
+            ? logo_url 
+            : `${API_URL}${logo_url}`)
         : null;
 
     const accentColor = PRESET_COLORS[site_theme_accent] || site_theme_accent || '#ed8936';
@@ -38,7 +43,7 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
+        padding: '16px',
         boxSizing: 'border-box',
         background: isDark ? '#2d3748' : '#f7fafc',
         color: isDark ? '#fff' : '#1a202c',
@@ -71,10 +76,11 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         width: 'auto',
         objectFit: 'contain',
         maxWidth: '100%',
-        maxHeight: '80%',
+        maxHeight: '120px',
         display: 'block',
         borderRadius: `${logoRadius}px`,
-        transition: 'all 0.1s linear'
+        transition: 'all 0.2s ease',
+        flexShrink: 0
     };
 
     const titleStyle = {
@@ -84,17 +90,18 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         color: 'inherit',
         margin: 0,
         textAlign: 'center',
-        transition: 'all 0.1s linear',
-        
+        transition: 'all 0.2s ease',
         maxWidth: '100%',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis'
+        wordBreak: 'break-word',
+        display: '-webkit-box',
+        WebkitLineClamp: 3,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden'
     };
 
     let contentContainerStyle = {
         display: 'flex',
-        gap: '16px',
+        gap: '12px',
         alignItems: 'center',
         justifyContent: 'center',
         maxWidth: '100%',
@@ -107,17 +114,19 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         case 'classic':
             contentContainerStyle.flexDirection = 'row';
             contentContainerStyle.textAlign = 'left';
+            contentContainerStyle.justifyContent = 'flex-start';
             break;
         case 'reverse':
             contentContainerStyle.flexDirection = 'row-reverse';
             contentContainerStyle.textAlign = 'right';
+            contentContainerStyle.justifyContent = 'flex-end';
             break;
         case 'centered_reverse':
             contentContainerStyle.flexDirection = 'column-reverse';
             contentContainerStyle.textAlign = 'center';
             break;
-        case 'minimal':
-        case 'logo_only':
+        case 'minimal': 
+        case 'logo_only': 
         case 'centered':
         default:
             contentContainerStyle.flexDirection = 'column';
@@ -127,12 +136,11 @@ const SiteCoverDisplay = ({ site, style, className }) => {
 
     const showLogo = fullLogoUrl && cover_layout !== 'minimal';
     const showText = cover_layout !== 'logo_only';
-
     return (
         <div className={`site-cover-display mode-${cover_layout} ${className || ''}`} style={generatedStyle}>
             <div style={contentContainerStyle}>
                 {showLogo && (
-                    <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', maxHeight: '100%', maxWidth: '100%' }}>
+                    <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <img src={fullLogoUrl} alt="Logo" style={logoStyle} />
                     </div>
                 )}

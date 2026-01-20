@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../../../shared/ui/elements/Button';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Download, Trash2, Copy, ExternalLink, X, Type } from 'lucide-react';
+import { Download, Trash2, Copy, ExternalLink, X, Type, Save } from 'lucide-react';
 import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
 import { API_URL, getFileExtension } from '../../../shared/utils/mediaUtils';
 
@@ -14,7 +14,14 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         description: ''
     });
 
+    const hasChanges = file && (
+        formData.display_name !== (file.display_name || '') ||
+        formData.alt_text !== (file.alt_text || '') ||
+        formData.description !== (file.description || '')
+    );
+
     const isFont = file && (file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name));
+    
     useEffect(() => {
         if (isFont && file) {
             const fontUrl = `${API_URL}${file.path_full}`;
@@ -44,19 +51,28 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     }, [file]);
 
     if (!file) return null;
+    const saveChanges = async () => {
+        if (!hasChanges) return;
 
-    const handleBlur = async () => {
-        if (formData.display_name !== file.display_name || 
-            formData.alt_text !== file.alt_text || 
-            formData.description !== file.description) {
-            try {
-                const res = await apiClient.put(`/media/${file.id}`, formData);
-                onUpdate(res.data);
-                toast.success('Зміни збережено');
-            } catch (error) {
-                toast.error('Помилка збереження');
-            }
+        try {
+            const res = await apiClient.put(`/media/${file.id}`, formData);
+            onUpdate(res.data);
+            toast.success('Зміни збережено');
+        } catch (error) {
+            console.error(error);
+            toast.error('Помилка збереження');
         }
+    };
+
+    const handleBlur = () => {
+        if (hasChanges) {
+            saveChanges();
+        }
+    };
+
+    const handleSaveClick = (e) => {
+        e.preventDefault(); 
+        saveChanges();
     };
 
     const copyUrl = () => {
@@ -94,10 +110,10 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     const styles = {
         container: {
             width: '100%',
-            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             background: 'var(--platform-sidebar-bg)',
+            minHeight: '100%', 
         },
         header: {
             padding: '16px',
@@ -123,7 +139,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
-            flex: 1
         },
         label: {
             fontSize: '0.75rem',
@@ -286,7 +301,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                 <div>
                     <label style={styles.label}>Нотатки</label>
                     <textarea 
-                        className="custom-scrollbar"
                         value={formData.description} 
                         onChange={e => setFormData({...formData, description: e.target.value})}
                         onBlur={handleBlur}
@@ -294,6 +308,15 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         placeholder="Для внутрішнього користування..."
                     />
                 </div>
+
+                <Button 
+                    variant="primary" 
+                    onClick={handleSaveClick}
+                    disabled={!hasChanges}
+                    style={{ width: '100%', marginTop: '4px' }}
+                >
+                    <Save size={16} /> Зберегти зміни
+                </Button>
 
                 <div style={styles.actionsGrid}>
                     <Button 

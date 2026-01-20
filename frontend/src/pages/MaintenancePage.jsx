@@ -1,89 +1,145 @@
 // frontend/src/pages/MaintenancePage.jsx
 import React from 'react';
+import { Construction } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-const MaintenancePage = ({ logoUrl, siteName }) => {
+const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
+    const colors = themeSettings?.colors || {};
+    const fonts = themeSettings?.fonts || {};
+    const primaryColor = colors.primary || '#3182ce';
+    const customProperties = {
+        '--color-bg': colors.bg || '#ffffff',
+        '--color-text': colors.text || '#1a202c',
+        '--color-primary': primaryColor,
+        '--color-secondary': colors.secondary || '#718096',
+        '--font-heading': fonts.heading || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        '--font-body': fonts.body || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    };
+
     const containerStyle = {
+        ...customProperties,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
-        background: 'var(--platform-bg)',
-        color: 'var(--platform-text-primary)',
+        minHeight: '100%', 
+        width: '100%',
+        background: 'var(--color-bg)',
+        color: 'var(--color-text)',
         textAlign: 'center',
         padding: '40px 20px',
-        fontFamily: 'var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif)'
+        fontFamily: 'var(--font-body)',
+        transition: 'all 0.3s ease',
     };
 
     const logoStyle = {
-        width: '100px',
-        height: '100px',
+        width: '120px',
+        height: '120px',
         objectFit: 'contain',
         marginBottom: '2rem',
-        borderRadius: '12px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        ...(logoUrl ? { borderRadius: '16px' } : {})
     };
 
-    const iconStyle = {
-        fontSize: '5rem',
+    const iconContainerStyle = {
         marginBottom: '1.5rem',
-        filter: 'grayscale(0.3)'
+        color: 'var(--color-primary)',
+        background: 'var(--color-bg)',
+        borderRadius: '50%',
+        padding: '20px',
+        border: '2px solid var(--color-primary)',
+        display: 'inline-flex',
+        opacity: 0.9
     };
 
     const titleStyle = {
-        fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
+        fontFamily: 'var(--font-heading)',
+        fontSize: 'clamp(1.75rem, 5vw, 2.5rem)',
         margin: '0 0 1rem 0',
         fontWeight: '700',
-        lineHeight: 1.3
+        lineHeight: 1.2,
+        color: 'var(--color-text)',
+        maxWidth: '800px',
+        wordBreak: 'break-word'
     };
 
     const textStyle = {
-        color: 'var(--platform-text-secondary)',
-        maxWidth: '500px',
-        fontSize: '1.1rem',
+        color: 'var(--color-text)',
+        opacity: 0.8,
+        maxWidth: '700px',
+        width: '100%',
+        fontSize: '1.125rem',
         lineHeight: 1.6,
-        margin: '0 0 2rem 0'
+        margin: '0 0 2rem 0',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
     };
 
     const highlightStyle = {
-        color: 'var(--platform-accent)',
-        fontWeight: '600'
+        color: 'var(--color-primary)',
+        fontWeight: '600',
+        display: 'inline-block',
+        maxWidth: '100%',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        verticalAlign: 'bottom'
+    };
+
+    const footerStyle = {
+        marginTop: 'auto',
+        paddingTop: '2rem',
+        fontSize: '0.875rem',
+        opacity: 0.6,
+        fontFamily: 'var(--font-body)'
     };
 
     return (
         <div style={containerStyle}>
-            <div style={{ marginBottom: '2.5rem' }}>
-                {logoUrl && !logoUrl.includes('default') ? (
-                    <img 
-                        src={logoUrl.startsWith('http') ? logoUrl : `${API_URL}${logoUrl}`} 
-                        alt={siteName} 
-                        style={logoStyle} 
-                    />
-                ) : (
-                    <div style={iconStyle}>⚙️</div>
-                )}
+            <style>
+                {`
+                    .layout-content::-webkit-scrollbar-thumb:hover {
+                        background-color: ${primaryColor} !important;
+                    }
+                `}
+            </style>
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <div style={{ marginBottom: '1.5rem' }}>
+                    {logoUrl && !logoUrl.includes('default') ? (
+                        <img 
+                            src={logoUrl.startsWith('http') ? logoUrl : `${API_URL}${logoUrl}`} 
+                            alt={siteName} 
+                            style={logoStyle} 
+                        />
+                    ) : (
+                        <div style={iconContainerStyle}>
+                            <Construction size={64} strokeWidth={1.5} />
+                        </div>
+                    )}
+                </div>
+                
+                <h1 style={titleStyle}>Технічне обслуговування</h1>
+                
+                <p style={textStyle}>
+                    Сайт <span style={highlightStyle} title={siteName || 'цей сайт'}>"{siteName || 'цей сайт'}"</span> тимчасово недоступний через планові роботи або оновлення.
+                    <br />
+                    <br />
+                    Ми вже працюємо над відновленням доступу.
+                    <br />
+                    Будь ласка, спробуйте зайти пізніше.
+                </p>
+                
+                <div style={{ 
+                    width: '60px', 
+                    height: '4px', 
+                    background: 'var(--color-primary)', 
+                    borderRadius: '2px',
+                    opacity: 0.5 
+                }} />
             </div>
-            
-            <h1 style={titleStyle}>Сайт на технічному обслуговуванні</h1>
-            <p style={textStyle}>
-                Сайт <span style={highlightStyle}>"{siteName || 'цей сайт'}"</span> <strong>Тимчасово недоступний</strong>
-                <br />
-                Слідкуйте за новинами
-                <br />
-                Будь ласка, спробуйте зайти пізніше
-            </p>
-            
-            <div style={{
-                marginTop: '2rem',
-                padding: '1rem',
-                backgroundColor: 'var(--platform-bg-secondary)',
-                borderRadius: '8px',
-                maxWidth: '400px',
-                fontSize: '0.9rem',
-                color: 'var(--platform-text-secondary)'
-            }}>
-            
+
+            <div style={footerStyle}>
+                &copy; {new Date().getFullYear()} {siteName}. Всі права захищено.
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-// frontend/src/modules/profile/components/ProfileGeneralTab.jsx
+// frontend/src/modules/profile/tabs/ProfileGeneralTab.jsx
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { useConfirm } from '../../../shared/hooks/useConfirm';

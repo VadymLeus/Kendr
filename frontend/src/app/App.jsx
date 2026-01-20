@@ -46,9 +46,9 @@ function App() {
                         <Route path="/" element={<HomePage />} />
                         <Route path="/catalog" element={<CatalogPage />} />
                         <Route path="/profile/:username" element={<ProfilePage />} />
+                        <Route path="/site/:site_path/product/:productId" element={<ProductDetailPage />} />
                         <Route path="/site/:site_path" element={<SiteDisplayPage />} />
                         <Route path="/site/:site_path/:slug" element={<SiteDisplayPage />} />
-                        <Route path="/product/:productId" element={<ProductDetailPage />} />
                         <Route path="/rules" element={<RulesPage />} />
                         <Route path="/auth/success" element={<AuthSuccessPage />} />
                         <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -56,6 +56,7 @@ function App() {
                             <Route path="/settings" element={<SettingsPage />} />
                             <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
                         </Route>
+
                         <Route element={<ProtectedRoute excludeAdmin={true} />}>
                             <Route path="/my-sites" element={<MySitesPage />} />
                             <Route path="/create-site" element={<CreateSitePage />} />
@@ -67,10 +68,12 @@ function App() {
                             <Route path="/support/appeal" element={<AppealPage />} />
                             <Route path="/support/my-tickets" element={<MyTicketsPage />} />
                         </Route>
+                        
                         <Route element={<ProtectedRoute requireAdmin={true} />}>
                             <Route path="/admin" element={<AdminDashboardPage />} />
                             <Route path="/admin/support" element={<AdminSupportPage />} />
                         </Route>
+                        
                         <Route path="*" element={<NotFoundPage />} />
                     </Route>
                 </Routes>

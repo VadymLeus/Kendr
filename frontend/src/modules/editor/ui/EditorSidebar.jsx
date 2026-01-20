@@ -1,10 +1,20 @@
-// frontend/src/modules/editor/ui/EditorSidebar.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import AddBlocksTab from './tabs/AddBlocksTab';
 import LayersTab from './tabs/LayersTab';
 import SettingsTab from './tabs/SettingsTab';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { Save, Plus, Layers, Settings, Star, PanelTop, PanelBottom, File } from 'lucide-react';
+
+const rigidIconWrapper = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '20px',
+    height: '20px',
+    minWidth: '20px',
+    flexShrink: 0,
+    flex: '0 0 20px'
+};
 
 const EditorSidebar = ({
     blocks,
@@ -51,7 +61,7 @@ const EditorSidebar = ({
     const pageOptions = useMemo(() => {
         return (allPages || []).map(page => {
             let icon = File;
-            let iconStyle = {};
+            let iconStyle = { flexShrink: 0 }; 
             let iconProps = {};
             let label = page.name;
 
@@ -61,7 +71,7 @@ const EditorSidebar = ({
                 icon = PanelBottom;
             } else if (page.is_homepage) {
                 icon = Star;
-                iconStyle = { color: 'var(--platform-accent)', fill: 'var(--platform-accent)' };
+                iconStyle = { ...iconStyle, color: 'var(--platform-accent)', fill: 'var(--platform-accent)' };
                 iconProps = { filled: true };
             }
 
@@ -90,9 +100,9 @@ const EditorSidebar = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '6px',
-        whiteSpace: 'nowrap', 
-        flexShrink: 0 
+        gap: '8px', 
+        whiteSpace: 'nowrap',
+        overflow: 'hidden'
     };
 
     const saveButtonHoverStyle = {
@@ -116,7 +126,8 @@ const EditorSidebar = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '6px'
+        gap: '6px',
+        minWidth: 0
     });
 
     const tabHoverStyle = (tabName) => ({
@@ -135,11 +146,13 @@ const EditorSidebar = ({
     return (
         <div style={{
             width: '300px',
+            minWidth: '300px',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
             background: 'var(--platform-sidebar-bg)',
             borderLeft: '1px solid var(--platform-border-color)',
+            flexShrink: 0
         }}>
             <div style={{
                 padding: '12px',
@@ -147,7 +160,8 @@ const EditorSidebar = ({
                 background: 'var(--platform-card-bg)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                flexShrink: 0
             }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <CustomSelect 
@@ -174,7 +188,9 @@ const EditorSidebar = ({
                     onMouseOut={(e) => handleMouseOut(e.currentTarget, saveButtonStyle)}
                     title="Зберегти зміни"
                 >
-                    <Save size={16} /> 
+                    <div style={rigidIconWrapper}>
+                        <Save size={16} />
+                    </div>
                     <span>Зберегти</span>
                 </button>
             </div>
@@ -182,7 +198,8 @@ const EditorSidebar = ({
             <nav style={{ 
                 display: 'flex', 
                 borderBottom: '1px solid var(--platform-border-color)',
-                background: 'var(--platform-sidebar-bg)'
+                background: 'var(--platform-sidebar-bg)',
+                flexShrink: 0
             }}>
                 {!isHeaderMode && (
                     <>
@@ -192,7 +209,8 @@ const EditorSidebar = ({
                             onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('add'))}
                             onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('add'))}
                         >
-                            <Plus size={16} /> Додати
+                            <div style={rigidIconWrapper}><Plus size={16} /></div>
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Додати</span>
                         </button>
                         <button 
                             style={tabStyle('layers')} 
@@ -200,7 +218,8 @@ const EditorSidebar = ({
                             onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('layers'))}
                             onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('layers'))}
                         >
-                            <Layers size={16} /> Шари
+                            <div style={rigidIconWrapper}><Layers size={16} /></div>
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Шари</span>
                         </button>
                     </>
                 )}
@@ -210,10 +229,11 @@ const EditorSidebar = ({
                     onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('settings'))}
                     onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('settings'))}
                 >
-                    <Settings size={16} /> Налаш.
+                    <div style={rigidIconWrapper}><Settings size={16} /></div>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Налаш.</span>
                 </button>
             </nav>
-
+            
             <div style={{ 
                     overflowY: 'auto', 
                     flex: 1, 

@@ -1,4 +1,4 @@
-// frontend/src/modules/profile/components/InterfaceSettingsTab.jsx
+// frontend/src/modules/profile/tabs/InterfaceSettingsTab.jsx
 import React, { useContext } from 'react';
 import { ThemeContext } from '../../../app/providers/ThemeContext';
 

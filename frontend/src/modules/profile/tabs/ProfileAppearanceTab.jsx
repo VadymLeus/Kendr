@@ -1,4 +1,4 @@
-// frontend/src/modules/profile/components/ProfileAppearanceTab.jsx
+// frontend/src/modules/profile/tabs/ProfileAppearanceTab.jsx
 import React, { useContext } from 'react';
 import { ThemeContext } from '../../../app/providers/ThemeContext';
 import ThemeModeSelector from '../../../shared/ui/complex/ThemeModeSelector';

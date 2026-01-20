@@ -172,7 +172,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 title={isCollapsed ? label : ''}
             >
                 {isCreateButton && isCollapsed ? <Plus size={24} /> : <Icon size={20} />}
-                
                 {!isCollapsed && (
                     <span style={{ opacity: 1, transition: 'opacity 0.2s' }}>
                         {label} {count !== undefined && `(${count})`}
@@ -185,7 +184,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     return (
         <div style={styles.container} className="custom-scrollbar">
             <style>{cssStyles}</style>
-
             <div style={styles.logoContainer}>
                 <Link to="/" style={{ display: 'flex', justifyContent: 'center', width: '100%', textDecoration: 'none' }}>
                     <div style={styles.logoImage} />

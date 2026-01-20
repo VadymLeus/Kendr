@@ -20,7 +20,6 @@ const SiteDashboardPage = () => {
     const { site_path } = useParams();
     const navigate = useNavigate();
     const { siteData, setSiteData, isSiteLoading } = useOutletContext();
-    
     const [activeTab, setActiveTab] = useState(() => {
         return localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
     });

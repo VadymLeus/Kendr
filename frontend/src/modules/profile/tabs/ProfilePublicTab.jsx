@@ -1,4 +1,4 @@
-// frontend/src/modules/profile/components/ProfilePublicTab.jsx
+// frontend/src/modules/profile/tabs/ProfilePublicTab.jsx
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
@@ -38,7 +38,6 @@ const PublicProfileTab = () => {
     };
 
     const profileUrl = `${window.location.origin}/profile/${user.username}`;
-    
     const copyLink = () => {
         navigator.clipboard.writeText(profileUrl);
         toast.info('Посилання скопійовано');

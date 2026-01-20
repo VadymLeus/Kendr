@@ -29,5 +29,12 @@ export const getTitleForPath = (pathname) => {
         return 'Профіль користувача';
     }
 
+    if (cleanPath.startsWith('/site/')) {
+        if (cleanPath.includes('/product/')) {
+            return 'Товар';
+        }
+        return 'Сайт'; 
+    }
+
     return null;
 };

@@ -61,7 +61,6 @@ const EditableBlockWrapper = ({
 
             const dragParentPath = dragPath.slice(0, -1).join(',');
             const hoverParentPath = hoverPath.slice(0, -1).join(',');
-
             if (dragParentPath === hoverParentPath) {
                 const dragIndex = dragPath[dragPath.length - 1];
                 const hoverIndex = hoverPath[hoverPath.length - 1];
@@ -88,14 +87,12 @@ const EditableBlockWrapper = ({
     });
 
     drag(drop(ref));
-
     const opacity = isDragging ? 0 : 1;
     const blockType = { name: block.type, icon: <Settings size={14} /> };
     const blockDomId = `block-${block.block_id}`;
     const isSelected = selectedBlockPath && Array.isArray(selectedBlockPath) && Array.isArray(path) && selectedBlockPath.join(',') === path.join(',');
     const isHeaderBlock = block.type === 'header';
     const anchorId = block.data && block.data.anchorId;
-
     const handleSelect = (e) => {
         e.stopPropagation();
         onSelectBlock(path);

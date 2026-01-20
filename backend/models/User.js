@@ -1,7 +1,6 @@
 // backend/models/User.js
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
-
 class User {
     static async create({ username, email, password, avatar_url, is_verified, verification_token, google_id }) {
         let password_hash = null;
@@ -47,9 +46,17 @@ class User {
         return rows[0];
     }
 
-    static async getSiteCount(userId) {
+static async getSiteCount(userId) {
         const [rows] = await db.query('SELECT COUNT(id) as siteCount FROM sites WHERE user_id = ? AND status = "published"', [userId]);
         return rows[0].siteCount;
+    }
+
+    static async getTotalSiteViews(userId) {
+        const [rows] = await db.query(
+            'SELECT COALESCE(SUM(view_count), 0) as totalViews FROM sites WHERE user_id = ? AND status = "published"', 
+            [userId]
+        );
+        return rows[0].totalViews; 
     }
 
     static async update(userId, data) {
@@ -63,7 +70,6 @@ class User {
 
         let queryParts = [];
         const params = [];
-
         if (username !== undefined) { queryParts.push('username = ?'); params.push(username); }
         
         if (password) {
@@ -77,26 +83,22 @@ class User {
 
         if (avatar_url !== undefined) { queryParts.push('avatar_url = ?'); params.push(avatar_url); }
         if (phone_number !== undefined) { queryParts.push('phone_number = ?'); params.push(phone_number); }
-        
         if (platform_theme_mode !== undefined) { queryParts.push('platform_theme_mode = ?'); params.push(platform_theme_mode); }
         if (platform_theme_accent !== undefined) { queryParts.push('platform_theme_accent = ?'); params.push(platform_theme_accent); }
         if (platform_bg_url !== undefined) { queryParts.push('platform_bg_url = ?'); params.push(platform_bg_url); }
         if (platform_bg_blur !== undefined) { queryParts.push('platform_bg_blur = ?'); params.push(platform_bg_blur); }
         if (platform_bg_brightness !== undefined) { queryParts.push('platform_bg_brightness = ?'); params.push(platform_bg_brightness); }
-
         if (bio !== undefined) { queryParts.push('bio = ?'); params.push(bio); }
         if (social_telegram !== undefined) { queryParts.push('social_telegram = ?'); params.push(social_telegram); }
         if (social_instagram !== undefined) { queryParts.push('social_instagram = ?'); params.push(social_instagram); }
         if (social_website !== undefined) { queryParts.push('social_website = ?'); params.push(social_website); }
         if (is_profile_public !== undefined) { queryParts.push('is_profile_public = ?'); params.push(is_profile_public); }
-
         if (queryParts.length === 0) {
             return this.findById(userId);
         }
 
         let query = `UPDATE users SET ${queryParts.join(', ')} WHERE id = ?`;
         params.push(userId);
-        
         await db.query(query, params);
         return this.findById(userId);
     }

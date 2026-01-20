@@ -3,11 +3,12 @@ const db = require('../config/db');
 const { deleteFile } = require('../utils/fileUtils');
 
 class Site {
-  static async getPublic({ searchTerm = '', userId = null, tag = null, sort = 'new', onlyFavorites = false, currentUserId = null }) {
+  static async getPublic({ searchTerm = '', userId = null, tag = null, sort = 'new', onlyFavorites = false, currentUserId = null, includeAllStatuses = false }) {
     let query = `
         SELECT DISTINCT
             s.id, s.site_path, s.title, s.logo_url, s.status, s.view_count, s.created_at,
             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
+            s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
             s.is_pinned, 
             u.username AS author, u.avatar_url AS author_avatar
         FROM sites s
@@ -22,11 +23,13 @@ class Site {
     const params = [];
     const conditions = [];
 
+    if (!includeAllStatuses) {
+        conditions.push("s.status = 'published'");
+    }
+
     if (userId) {
         conditions.push('s.user_id = ?');
         params.push(userId);
-    } else {
-        conditions.push("s.status = 'published'");
     }
 
     if (searchTerm) {
@@ -104,12 +107,9 @@ class Site {
             s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout,
             s.favicon_url, s.site_title_seo,
             s.cover_image, s.cover_layout,
-            
-            -- Новые поля
             s.cover_logo_size,
             s.cover_logo_radius,
             s.cover_title_size
-
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -190,9 +190,9 @@ class Site {
         cover_image || null,
         cover_layout || 'centered',
         logo_url,
-        cover_logo_size || 80,
-        cover_logo_radius || 0,
-        cover_title_size || 24,
+        cover_logo_size !== undefined ? cover_logo_size : 80,
+        cover_logo_radius !== undefined ? cover_logo_radius : 0,
+        cover_title_size !== undefined ? cover_title_size : 24,
 
         siteId
     ];
@@ -213,7 +213,6 @@ class Site {
             cover_layout = ?,
             logo_url = ?,
             
-            -- SQL для новых полей
             cover_logo_size = ?,
             cover_logo_radius = ?,
             cover_title_size = ?
@@ -280,6 +279,7 @@ class Site {
     const [rows] = await db.query(`
       SELECT s.id, s.site_path, s.title, s.logo_url, s.status, 
              s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
+             s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
              s.is_pinned, s.view_count, s.created_at
       FROM sites s 
       WHERE s.user_id = ? 

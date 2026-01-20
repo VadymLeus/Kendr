@@ -1,4 +1,4 @@
-// frontend/src/modules/profile/components/ProfileSettingsTab.jsx
+// frontend/src/modules/profile/tabs/ProfileSettingsTab.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { useNavigate } from 'react-router-dom';

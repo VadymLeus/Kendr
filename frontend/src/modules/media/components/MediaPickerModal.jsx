@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { Search, X, Upload, Check, Image, Calendar, FileText, Clock } from 'lucide-react';
 import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
 import { API_URL } from '../../../shared/utils/mediaUtils';
+import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
 
 const MediaPickerModal = ({ 
     isOpen, 
@@ -13,7 +14,8 @@ const MediaPickerModal = ({
     onSelect, 
     multiple = false, 
     title = "Вибір медіа",
-    allowedTypes = ['image'] 
+    allowedTypes = ['image'],
+    aspect = null
 }) => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,6 +24,9 @@ const MediaPickerModal = ({
     const [activeFile, setActiveFile] = useState(null);
     const [videoDuration, setVideoDuration] = useState(null);
     const fileInputRef = useRef(null);
+    const [cropModalOpen, setCropModalOpen] = useState(false);
+    const [imageToCrop, setImageToCrop] = useState(null);
+    const [isUploadingCrop, setIsUploadingCrop] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -46,7 +51,6 @@ const MediaPickerModal = ({
             const data = Array.isArray(res.data) ? res.data : [];
             const filtered = data.filter(f => {
                 if (allowedTypes.includes('all')) return true;
-
                 return allowedTypes.some(type => {
                     if (f.file_type === type) return true;
                     if (f.mime_type === type) return true;
@@ -69,7 +73,6 @@ const MediaPickerModal = ({
     const handleUpload = async (e) => {
         const fileList = e.target.files;
         if (!fileList || fileList.length === 0) return;
-
         const uploadPromises = Array.from(fileList).map(async (file) => {
             const formData = new FormData();
             formData.append('mediaFile', file);
@@ -128,10 +131,56 @@ const MediaPickerModal = ({
         }
     };
 
+    const getFullImageUrl = (file) => {
+        if (!file || !file.file_path) return null;
+        if (file.file_path.startsWith('http') || file.file_path.startsWith('data:')) return file.file_path;
+        return `${API_URL}${file.file_path.startsWith('/') ? '' : '/'}${file.file_path}`;
+    };
+
     const handleSubmit = () => {
         const selectedFiles = files.filter(f => selectedIds.has(f.id));
+        
+        if (selectedFiles.length === 0) {
+            onClose();
+            return;
+        }
+
+        if (aspect && !multiple && selectedFiles.length === 1) {
+            const file = selectedFiles[0];
+            if (file.file_type === 'image' || file.mime_type?.startsWith('image/')) {
+                const fullUrl = getFullImageUrl(file);
+                setImageToCrop(fullUrl);
+                setCropModalOpen(true);
+                return;
+            }
+        }
+
         onSelect(multiple ? selectedFiles : selectedFiles[0]);
         onClose();
+    };
+
+    const handleCropFinished = async (croppedFileBlob) => {
+        setIsUploadingCrop(true);
+        try {
+            const formData = new FormData();
+            const originalName = activeFile?.original_file_name || 'image.jpg';
+            const nameParts = originalName.split('.');
+            const ext = nameParts.length > 1 ? nameParts.pop() : 'jpg';
+            const newName = `${nameParts.join('.')}_crop.${ext}`;
+            formData.append('mediaFile', croppedFileBlob, newName);
+            const res = await apiClient.post('/media/upload', formData);
+            const uploadedFile = res.data;
+            setFiles(prev => [uploadedFile, ...prev]);
+            onSelect(uploadedFile);
+            setCropModalOpen(false);
+            onClose(); 
+            toast.success('Зображення обрізано');
+        } catch (error) {
+            console.error('Upload crop error:', error);
+            toast.error('Не вдалося зберегти обрізане зображення');
+        } finally {
+            setIsUploadingCrop(false);
+        }
     };
 
     const formatDuration = (seconds) => {
@@ -147,151 +196,162 @@ const MediaPickerModal = ({
         (f.original_file_name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const isCropMode = aspect && !multiple && selectedIds.size === 1 && activeFile?.file_type === 'image';
     return ReactDOM.createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-2000 p-5">
-            <div className="bg-(--platform-bg) w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col shadow-2xl border border-(--platform-border-color) overflow-hidden animate-[popIn_0.2s_ease-out]">
-                <div className="p-4 px-6 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex justify-between items-center shrink-0">
-                    <div className="flex items-center gap-3 font-semibold text-(--platform-text-primary)">
-                        <Image size={20} />
-                        <h3 className="text-lg m-0">{title}</h3>
-                    </div>
-                    <button 
-                        onClick={onClose} 
-                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-(--platform-card-bg) border border-(--platform-border-color) text-(--platform-text-secondary) hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-200 cursor-pointer" 
-                        title="Закрити"
-                    >
-                        <X size={20}/>
-                    </button>
-                </div>
-
-                <div className="p-3 px-6 flex gap-4 bg-(--platform-bg) border-b border-(--platform-border-color) shrink-0">
-                    <div className="relative flex-1">
-                        <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-(--platform-text-secondary) pointer-events-none">
-                            <Search size={18} />
+        <>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-2000 p-5">
+                <div className="bg-(--platform-bg) w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col shadow-2xl border border-(--platform-border-color) overflow-hidden animate-[popIn_0.2s_ease-out]">
+                    <div className="p-4 px-6 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex justify-between items-center shrink-0">
+                        <div className="flex items-center gap-3 font-semibold text-(--platform-text-primary)">
+                            <Image size={20} />
+                            <h3 className="text-lg m-0">{title}</h3>
                         </div>
+                        <button 
+                            onClick={onClose} 
+                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-(--platform-card-bg) border border-(--platform-border-color) text-(--platform-text-secondary) hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-200 cursor-pointer" 
+                            title="Закрити"
+                        >
+                            <X size={20}/>
+                        </button>
+                    </div>
+
+                    <div className="p-3 px-6 flex gap-4 bg-(--platform-bg) border-b border-(--platform-border-color) shrink-0">
+                        <div className="relative flex-1">
+                            <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-(--platform-text-secondary) pointer-events-none">
+                                <Search size={18} />
+                            </div>
+                            <input 
+                                type="text" 
+                                placeholder="Пошук у медіатеці..." 
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                className="w-full h-10 pl-10! pr-3 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) text-sm focus:outline-none focus:border-(--platform-accent) transition-colors"
+                            />
+                        </div>
+                        <button 
+                            className="flex items-center gap-2 px-5 h-10 bg-(--platform-accent) text-white rounded-lg font-medium hover:bg-(--platform-accent-hover) transition-colors whitespace-nowrap cursor-pointer border-none" 
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <Upload size={16} /> Завантажити
+                        </button>
                         <input 
-                            type="text" 
-                            placeholder="Пошук у медіатеці..." 
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full h-10 pl-10! pr-3 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) text-sm focus:outline-none focus:border-(--platform-accent) transition-colors"
+                            type="file" multiple ref={fileInputRef} 
+                            style={{display: 'none'}} onChange={handleUpload} 
                         />
                     </div>
-                    <button 
-                        className="flex items-center gap-2 px-5 h-10 bg-(--platform-accent) text-white rounded-lg font-medium hover:bg-(--platform-accent-hover) transition-colors whitespace-nowrap cursor-pointer border-none" 
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        <Upload size={16} /> Завантажити
-                    </button>
-                    <input 
-                        type="file" multiple ref={fileInputRef} 
-                        style={{display: 'none'}} onChange={handleUpload} 
-                    />
-                </div>
 
-                <div className="flex flex-1 overflow-hidden">
-                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                        {loading ? (
-                            <div className="p-12 text-center text-(--platform-text-secondary) italic">Завантаження...</div>
-                        ) : filteredFiles.length === 0 ? (
-                            <div className="p-12 text-center text-(--platform-text-secondary) italic">
-                                {files.length === 0 
-                                    ? `Немає файлів типу: ${allowedTypes.join(', ')}` 
-                                    : 'Нічого не знайдено за запитом'}
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5">
-                                {filteredFiles.map(file => {
-                                    const isSelected = selectedIds.has(file.id);
-                                    const isActive = activeFile?.id === file.id;
-                                    
-                                    return (
-                                        <div 
-                                            key={file.id} 
-                                            className={`
-                                                aspect-square rounded-xl bg-(--platform-card-bg) border-2 overflow-hidden relative cursor-pointer shadow-sm transition-all duration-200
-                                                hover:-translate-y-1 hover:shadow-md
-                                                ${isSelected ? 'border-(--platform-accent)' : 'border-transparent'}
-                                                ${isActive ? 'ring-2 ring-(--platform-accent) shadow-lg' : ''}
-                                            `}
-                                            onClick={() => handleFileClick(file)}
-                                        >
-                                            <MediaFilePreview file={file} />
-                                            
-                                            {isSelected && (
-                                                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-(--platform-accent) text-white flex items-center justify-center z-10 shadow-sm">
-                                                    <Check size={14} />
+                    <div className="flex flex-1 overflow-hidden">
+                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            {loading ? (
+                                <div className="p-12 text-center text-(--platform-text-secondary) italic">Завантаження...</div>
+                            ) : filteredFiles.length === 0 ? (
+                                <div className="p-12 text-center text-(--platform-text-secondary) italic">
+                                    {files.length === 0 
+                                        ? `Немає файлів типу: ${allowedTypes.join(', ')}` 
+                                        : 'Нічого не знайдено за запитом'}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5">
+                                    {filteredFiles.map(file => {
+                                        const isSelected = selectedIds.has(file.id);
+                                        const isActive = activeFile?.id === file.id;
+                                        
+                                        return (
+                                            <div 
+                                                key={file.id} 
+                                                className={`
+                                                    aspect-square rounded-xl bg-(--platform-card-bg) border-2 overflow-hidden relative cursor-pointer shadow-sm transition-all duration-200
+                                                    hover:-translate-y-1 hover:shadow-md
+                                                    ${isSelected ? 'border-(--platform-accent)' : 'border-transparent'}
+                                                    ${isActive ? 'ring-2 ring-(--platform-accent) shadow-lg' : ''}
+                                                `}
+                                                onClick={() => handleFileClick(file)}
+                                            >
+                                                <MediaFilePreview file={file} />
+                                                
+                                                {isSelected && (
+                                                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-(--platform-accent) text-white flex items-center justify-center z-10 shadow-sm">
+                                                        <Check size={14} />
+                                                    </div>
+                                                )}
+                                                
+                                                <div className="absolute bottom-0 left-0 right-0 p-1.5 px-2.5 bg-linear-to-t from-black/80 to-transparent pt-6 text-white text-xs truncate">
+                                                    {file.original_file_name}
                                                 </div>
-                                            )}
-                                            
-                                            <div className="absolute bottom-0 left-0 right-0 p-1.5 px-2.5 bg-linear-to-t from-black/80 to-transparent pt-6 text-white text-xs truncate">
-                                                {file.original_file_name}
                                             </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                        {activeFile && (
+                            <div className="w-80 shrink-0 border-l border-(--platform-border-color) bg-(--platform-card-bg) p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar animate-[slideIn_0.2s_ease-out]">
+                                <div className="w-full aspect-16/10 rounded-xl overflow-hidden border border-(--platform-border-color) flex items-center justify-center shrink-0 relative bg-(--platform-bg)">
+                                    <MediaFilePreview 
+                                        file={activeFile} 
+                                        showVideoControls={true} 
+                                        onVideoMetadata={(e) => setVideoDuration(e.target.duration)} 
+                                    />
+                                </div>
+                                
+                                <div className="flex flex-col gap-3">
+                                    <p className="font-semibold m-0 break-all text-(--platform-text-primary)">
+                                        {activeFile.original_file_name}
+                                    </p>
+                                    <div className="flex flex-col gap-1.5 text-sm text-(--platform-text-secondary)">
+                                        <span className="flex items-center gap-2">
+                                            <FileText size={14} className="opacity-70"/> {activeFile.file_size_kb} KB
+                                        </span>
+                                        <span className="flex items-center gap-2">
+                                            <Calendar size={14} className="opacity-70"/> {new Date(activeFile.created_at).toLocaleDateString()}
+                                        </span>
+                                        {activeFile.file_type === 'video' && videoDuration && (
+                                            <span className="flex items-center gap-2 text-(--platform-accent)">
+                                                <Clock size={14} /> Тривалість: {formatDuration(videoDuration)}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
-                    {activeFile && (
-                        <div className="w-80 shrink-0 border-l border-(--platform-border-color) bg-(--platform-card-bg) p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar animate-[slideIn_0.2s_ease-out]">
-                            <div className="w-full aspect-16/10 rounded-xl overflow-hidden border border-(--platform-border-color) flex items-center justify-center shrink-0 relative bg-(--platform-bg)">
-                                <MediaFilePreview 
-                                    file={activeFile} 
-                                    showVideoControls={true} 
-                                    onVideoMetadata={(e) => setVideoDuration(e.target.duration)} 
-                                />
-                            </div>
-                            
-                            <div className="flex flex-col gap-3">
-                                <p className="font-semibold m-0 break-all text-(--platform-text-primary)">
-                                    {activeFile.original_file_name}
-                                </p>
-                                <div className="flex flex-col gap-1.5 text-sm text-(--platform-text-secondary)">
-                                    <span className="flex items-center gap-2">
-                                        <FileText size={14} className="opacity-70"/> {activeFile.file_size_kb} KB
-                                    </span>
-                                    <span className="flex items-center gap-2">
-                                        <Calendar size={14} className="opacity-70"/> {new Date(activeFile.created_at).toLocaleDateString()}
-                                    </span>
-                                    {activeFile.file_type === 'video' && videoDuration && (
-                                        <span className="flex items-center gap-2 text-(--platform-accent)">
-                                            <Clock size={14} /> Тривалість: {formatDuration(videoDuration)}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
 
-                <div className="p-4 px-6 border-t border-(--platform-border-color) bg-(--platform-card-bg) flex justify-between items-center shrink-0">
-                    <div className="text-(--platform-text-primary) text-sm">
-                        Вибрано: <b className="text-(--platform-accent)">{selectedIds.size}</b> {multiple ? 'файлів' : 'файл'}
-                    </div>
-                    <div className="flex gap-3">
-                        <button 
-                            onClick={onClose} 
-                            className="px-5 py-2.5 bg-transparent border border-(--platform-border-color) text-(--platform-text-primary) rounded-lg font-medium transition-colors cursor-pointer hover:border-(--platform-accent) hover:text-(--platform-accent)"
-                        >
-                            Скасувати
-                        </button>
-                        <button 
-                            onClick={handleSubmit} 
-                            className="px-6 py-2.5 bg-(--platform-accent) text-white border-none rounded-lg font-semibold hover:bg-(--platform-accent-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                            disabled={selectedIds.size === 0}
-                        >
-                            Підтвердити
-                        </button>
+                    <div className="p-4 px-6 border-t border-(--platform-border-color) bg-(--platform-card-bg) flex justify-between items-center shrink-0">
+                        <div className="text-(--platform-text-primary) text-sm">
+                            Вибрано: <b className="text-(--platform-accent)">{selectedIds.size}</b> {multiple ? 'файлів' : 'файл'}
+                        </div>
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={onClose} 
+                                className="px-5 py-2.5 bg-transparent border border-(--platform-border-color) text-(--platform-text-primary) rounded-lg font-medium transition-colors cursor-pointer hover:border-(--platform-accent) hover:text-(--platform-accent)"
+                            >
+                                Скасувати
+                            </button>
+                            <button 
+                                onClick={handleSubmit} 
+                                className="px-6 py-2.5 bg-(--platform-accent) text-white border-none rounded-lg font-semibold hover:bg-(--platform-accent-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                disabled={selectedIds.size === 0}
+                            >
+                                {isCropMode ? 'Далі' : 'Підтвердити'}
+                            </button>
+                        </div>
                     </div>
                 </div>
+                
+                <style>{`
+                    @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+                    @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+                `}</style>
             </div>
-            
-            <style>{`
-                @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-                @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-            `}</style>
-        </div>,
+
+            <ImageCropperModal
+                isOpen={cropModalOpen}
+                imageSrc={imageToCrop}
+                aspect={aspect}
+                onClose={() => setCropModalOpen(false)}
+                onCropComplete={handleCropFinished}
+            />
+        </>,
         document.body
     );
 };

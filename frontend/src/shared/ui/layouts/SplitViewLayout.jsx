@@ -10,7 +10,6 @@ export const SplitViewLayout = ({
     breakPoint = 1100
 }) => {
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);

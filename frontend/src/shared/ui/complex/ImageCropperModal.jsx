@@ -36,7 +36,6 @@ const ImageCropperModal = ({
     const [completedCrop, setCompletedCrop] = useState();
     const [isProcessing, setIsProcessing] = useState(false);
     const imgRef = useRef(null);
-
     useEffect(() => {
         if (!isOpen) {
             setCrop(undefined);
@@ -152,18 +151,22 @@ const ImageCropperModal = ({
                     padding: 20px;
                     overflow: auto;
                     display: flex; justify-content: center;
-                    background: #18181b;
+                    align-items: center;
+                    background-color: var(--platform-bg);
+                    background-image: url('https://transparenttextures.com/patterns/cubes.png');
                     flex: 1;
                     min-height: 300px;
                 }
                 .react-crop-component img {
                     display: block;
                     max-width: 100%;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
                 }
                 .cropper-footer {
                     padding: 16px 20px;
                     border-top: 1px solid var(--platform-border-color);
                     display: flex; justify-content: flex-end; gap: 10px;
+                    background: var(--platform-card-bg);
                 }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             `}</style>

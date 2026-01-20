@@ -8,20 +8,30 @@ import { AuthContext } from '../../app/providers/AuthContext';
 import BlockRenderer from '../editor/core/BlockRenderer';
 import { Folder } from 'lucide-react';
 import ProductCard from '../editor/ui/components/ProductCard'; 
+import MaintenancePage from '../../pages/MaintenancePage'; 
+import NotFoundPage from '../../pages/NotFoundPage';
 import styles from './ProductDetailPage.module.css';
 
 const API_URL = 'http://localhost:5000';
+
+const safeParseFloat = (val) => {
+    if (val === null || val === undefined || val === '') return 0;
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : num;
+};
 
 const ProductDetailPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
     const { addToCart } = useContext(CartContext);
     const { user } = useContext(AuthContext);
-    const { siteData, isSiteLoading } = useOutletContext();
+    const outletContext = useOutletContext() || {};
+    const { siteData = null, isSiteLoading = false } = outletContext;
     const [product, setProduct] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [isNotFound, setIsNotFound] = useState(false);
+    const [isRestricted, setIsRestricted] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [imageScale, setImageScale] = useState(1);
     const [isDragging, setIsDragging] = useState(false);
@@ -34,28 +44,44 @@ const ProductDetailPage = () => {
         finalPrice: 0, originalPrice: 0, activeDiscount: 0, isDiscounted: false
     });
     const isDarkMode = siteData?.site_theme_mode === 'dark';
-    const isOwner = user && user.id === siteData?.user_id;
-    const isSoldOut = product?.stock_quantity === 0;
+    const isOwner = user && siteData && user.id === siteData.user_id; 
+    const isSiteHidden = siteData && siteData.status === 'draft' && !isOwner;
+    const isSoldOut = product ? product.stock_quantity === 0 : false;
 
     useEffect(() => {
+        if (isSiteHidden) {
+            setLoading(false);
+            return;
+        }
+
         const fetchProduct = async () => {
             try {
                 setLoading(true);
+                setIsNotFound(false);
+                setIsRestricted(false);
+
+                if (!productId) throw new Error("No ID");
+
                 const response = await apiClient.get(`/products/${productId}`);
                 const prod = response.data;
+                
+                if (!prod || Object.keys(prod).length === 0) {
+                    throw new Error("Empty product");
+                }
+                
                 ['variants', 'image_gallery'].forEach(key => {
-                    if (typeof prod[key] === 'string') {
-                        try { prod[key] = JSON.parse(prod[key]); } catch (e) {}
+                    if (prod[key] && typeof prod[key] === 'string') {
+                        try { prod[key] = JSON.parse(prod[key]); } catch (e) { prod[key] = null; }
                     }
                 });
                 
                 setProduct(prod);
                 setActiveImageIndex(0);
 
-                if (prod.variants?.length) {
+                if (Array.isArray(prod.variants) && prod.variants.length > 0) {
                     const defaults = {};
                     prod.variants.forEach(v => {
-                        if (v.values?.[0]) defaults[v.name] = v.values[0].label;
+                        if (v?.name && v.values?.[0]) defaults[v.name] = v.values[0].label;
                     });
                     setSelectedOptions(defaults);
                 }
@@ -63,53 +89,59 @@ const ProductDetailPage = () => {
                 if (prod.site_id) fetchRecommendations(prod.site_id, prod.category_id, prod.id);
 
             } catch (err) {
-                setError('Не вдалося завантажити інформацію про товар.');
+                console.error("Product load error:", err);
+                if (err.response && (err.response.status === 403 || err.response.data?.code === 'SITE_DRAFT_MODE')) {
+                    setIsRestricted(true);
+                } else {
+                    setIsNotFound(true);
+                }
             } finally {
                 setLoading(false);
             }
         };
-        fetchProduct();
-    }, [productId]);
+
+        if (!isSiteLoading) {
+            fetchProduct();
+        }
+    }, [productId, isSiteHidden, isSiteLoading]);
 
     const fetchRecommendations = async (siteId, categoryId, currentId) => {
         try {
             const res = await apiClient.get(`/products/site/${siteId}`);
-            const others = res.data
-                .filter(p => p.id !== currentId)
-                .sort((a, b) => (b.category_id === categoryId ? 1 : 0) - (a.category_id === categoryId ? 1 : 0))
-                .slice(0, 6);
-            setRelatedProducts(others);
-        } catch (e) {
-            console.error("Error fetching related products", e);
-        }
+            if (Array.isArray(res.data)) {
+                const others = res.data
+                    .filter(p => p.id !== currentId)
+                    .sort((a, b) => (b.category_id === categoryId ? 1 : 0) - (a.category_id === categoryId ? 1 : 0))
+                    .slice(0, 6);
+                setRelatedProducts(others);
+            }
+        } catch (e) { console.error(e); }
     };
 
     useEffect(() => {
         if (!product) return;
-
-        let basePrice = parseFloat(product.price);
+        let basePrice = safeParseFloat(product.price);
         let maxVariantDiscount = 0;
-
-        if (product.variants?.length) {
+        if (Array.isArray(product.variants)) {
             product.variants.forEach(v => {
+                if (!v) return;
                 const selectedVal = selectedOptions[v.name];
-                const optionObj = v.values.find(val => val.label === selectedVal);
+                const optionObj = v.values?.find(val => val.label === selectedVal);
                 
                 if (optionObj) {
-                    if (optionObj.priceModifier) basePrice += parseFloat(optionObj.priceModifier);
-                    if (optionObj.salePercentage > 0) maxVariantDiscount = Math.max(maxVariantDiscount, optionObj.salePercentage);
+                    if (optionObj.priceModifier) basePrice += safeParseFloat(optionObj.priceModifier);
+                    if (optionObj.salePercentage > 0) maxVariantDiscount = Math.max(maxVariantDiscount, safeParseFloat(optionObj.salePercentage));
                 }
             });
         }
 
-        let activeDiscount = maxVariantDiscount || product.sale_percentage || product.category_discount || 0;
+        const prodSale = safeParseFloat(product.sale_percentage);
+        const catSale = safeParseFloat(product.category_discount);
+        let activeDiscount = maxVariantDiscount || prodSale || catSale || 0;
         const finalPrice = Math.round(basePrice * (1 - activeDiscount / 100));
 
         setPriceData({
-            finalPrice,
-            originalPrice: basePrice,
-            activeDiscount,
-            isDiscounted: activeDiscount > 0
+            finalPrice, originalPrice: basePrice, activeDiscount, isDiscounted: activeDiscount > 0
         });
     }, [selectedOptions, product]);
 
@@ -134,14 +166,12 @@ const ProductDetailPage = () => {
             e.preventDefault();
             return;
         }
-
         if (imageContainerRef.current && imageScale > 1 && !isDragging) {
             const { left, top, width, height } = imageContainerRef.current.getBoundingClientRect();
             const x = e.clientX - left;
             const y = e.clientY - top;
             const factor = imageScale - 1;
             const maxMove = 150;
-            
             setImagePosition({ 
                 x: Math.max(Math.min((width / 2 - x) * factor, maxMove), -maxMove), 
                 y: Math.max(Math.min((height / 2 - y) * factor, maxMove), -maxMove) 
@@ -151,26 +181,33 @@ const ProductDetailPage = () => {
 
     const handleAddToCart = () => {
         if (!user) {
-            if (window.confirm("Щоб додати товар до кошика, необхідно увійти. Перейти на сторінку входу?")) {
-                navigate('/login');
-            }
+            if (window.confirm("Щоб додати товар до кошика, необхідно увійти. Перейти на сторінку входу?")) navigate('/login');
             return;
         }
         addToCart(product, selectedOptions, {
-            finalPrice: priceData.finalPrice,
-            originalPrice: priceData.originalPrice,
-            discount: priceData.activeDiscount
+            finalPrice: priceData.finalPrice, originalPrice: priceData.originalPrice, discount: priceData.activeDiscount
         });
     };
 
     if (loading || isSiteLoading) return <div className={styles.loadingContainer}>⏳ Завантаження...</div>;
-    if (error || !product) return <div className={styles.errorContainer}>{error || 'Товар не знайдено'}</div>;
+    if (isSiteHidden || isRestricted) {
+        return (
+            <MaintenancePage 
+                logoUrl={siteData?.logo_url} 
+                siteName={siteData?.title || 'Site'} 
+                themeSettings={siteData?.theme_settings} 
+            />
+        );
+    }
 
-    const galleryImages = product.image_gallery?.length > 0 
+    if (isNotFound || !product || Object.keys(product).length === 0) return <NotFoundPage />;
+
+    const galleryImages = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length > 0)
         ? product.image_gallery.map(img => img.startsWith('http') ? img : `${API_URL}${img}`)
         : ['https://placehold.co/600x600?text=No+Image'];
+
     const faviconUrl = siteData?.favicon_url?.startsWith('http') ? siteData.favicon_url : `${API_URL}${siteData?.favicon_url || '/icon-light.webp'}`;
-    const pageTitle = `${product.name} | ${siteData?.site_title_seo || siteData?.title || 'Kendr Store'}`;
+    const pageTitle = `${product.name || 'Товар'} | ${siteData?.site_title_seo || siteData?.title || 'Kendr Store'}`;
     const dynamicStyles = {
         '--zoom-controls-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
         '--zoom-controls-border': isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
@@ -179,6 +216,7 @@ const ProductDetailPage = () => {
         '--badge-outofstock-bg': isDarkMode ? 'rgba(229, 62, 62, 0.2)' : '#fed7d7',
         '--footer-bg': isDarkMode ? '#1a202c' : '#f7fafc',
         '--footer-border': isDarkMode ? '#2d3748' : '#e2e8f0',
+        color: 'var(--site-text-primary, #000000)',
     };
 
     return (
@@ -194,7 +232,7 @@ const ProductDetailPage = () => {
                 <div className={styles.productGrid}>
                     <div className={styles.galleryContainer}>
                         {galleryImages.length > 1 && (
-                            <div className={styles.thumbnailsCol}>
+                            <div className={`${styles.thumbnailsCol} custom-scrollbar`}>
                                 {galleryImages.map((src, idx) => (
                                     <div 
                                         key={idx}
@@ -219,7 +257,7 @@ const ProductDetailPage = () => {
                         >
                             <img 
                                 src={galleryImages[activeImageIndex]} 
-                                alt={product.name} 
+                                alt={product.name || 'Product'} 
                                 className={styles.mainImage}
                                 style={{ transform: `scale(${imageScale}) translate(${imagePosition.x}px, ${imagePosition.y}px)` }}
                                 draggable="false"
@@ -240,14 +278,14 @@ const ProductDetailPage = () => {
 
                     <div className={styles.productInfoCol}>
                         <div>
-                            <h1 className={styles.productTitle}>{product.name}</h1>
+                            <h1 className={styles.productTitle}>{product.name || 'Товар'}</h1>
                             <div className={styles.statusRow}>
                                 <div className={`${styles.badge} ${isSoldOut ? styles.outOfStock : styles.inStock}`}>
                                     {isSoldOut ? 'Закінчився' : 'В наявності'}
                                 </div>
                                 {product.category_name && (
                                     <div className={styles.categoryTag}>
-                                        <Folder size={18} style={{color: 'var(--site-accent)'}} />
+                                        <Folder size={18} style={{color: 'var(--site-accent, orange)'}} />
                                         <span>{product.category_name}</span>
                                     </div>
                                 )}
@@ -296,7 +334,7 @@ const ProductDetailPage = () => {
 
                 <div className={styles.descriptionContainer}>
                     <div className={styles.descriptionHeader}>Характеристики та опис</div>
-                    <div className={styles.descriptionContent}>
+                    <div className={`${styles.descriptionContent} custom-scrollbar`}>
                         {product.description || 'Опис відсутній'}
                     </div>
                 </div>

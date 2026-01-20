@@ -31,6 +31,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         try { return JSON.parse(localStorage.getItem('kendr_template_sections')) || { personal: true, system: true }; }
         catch (e) { return { personal: true, system: true }; }
     });
+    
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
@@ -527,56 +528,58 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                             <Image size={22} className="text-(--platform-accent)" /> Розумна Обкладинка
                         </h3>
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
-                            Ця картка відображається в каталозі сайтів.
+                            Налаштуйте вигляд картки так, як вона виглядатиме в каталозі.
                         </p>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-8">
-                    <div>
-                        <label className="block mb-2.5 font-semibold text-(--platform-text-primary) text-sm">Попередній перегляд:</label>
-                        <UniversalMediaInput 
-                            type="image"
-                            value={data.cover_image} 
-                            onChange={(val) => {
-                                const newVal = val && val.target ? val.target.value : val;
-                                handleChange('cover_image', newVal);
-                            }} 
-                            aspect={1.6} 
-                            triggerStyle={{ display: 'block', padding: 0, border: 'none', background: 'transparent', width: '100%', cursor: 'pointer' }}
-                        >
-                            <div 
-                                className="w-full aspect-[1.6/1] border border-(--platform-border-color) rounded-xl overflow-hidden shadow-sm relative transition-all duration-200 group"
-                                onMouseEnter={() => setIsCoverHovered(true)} 
-                                onMouseLeave={() => setIsCoverHovered(false)}
-                            >
-                                <SiteCoverDisplay site={{
-                                    ...siteData,
-                                    title: identityData.title,
-                                    logo_url: data.logo_url,
-                                    cover_image: data.cover_image,
-                                    cover_layout: data.cover_layout,
-                                    cover_logo_radius: data.cover_logo_radius,
-                                    cover_logo_size: data.cover_logo_size,
-                                    cover_title_size: data.cover_title_size
-                                }} />
-                                
-                                <div className={`absolute inset-0 bg-black/40 flex items-center justify-center text-white transition-opacity duration-200 backdrop-blur-[2px] z-10 ${isCoverHovered ? 'opacity-100' : 'opacity-0'}`}>
-                                    <div className="flex items-center gap-2 font-medium"><Upload size={20} /> Змінити обкладинку</div>
-                                </div>
-
-                                {data.cover_image && (
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleChange('cover_image', ''); }}
-                                        className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center cursor-pointer z-20 transition-colors hover:bg-(--platform-danger) border-none"
-                                        title="Видалити зображення"
+                    <div className="flex justify-center bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-8 bg-[url('https://transparenttextures.com/patterns/cubes.png')]">
+                         <div className="relative group">
+                            <div style={{ width: '320px', height: '200px', transform: 'scale(1.2)', transformOrigin: 'center', transition: 'transform 0.3s' }} className="shadow-2xl rounded-lg overflow-hidden border border-(--platform-border-color)">
+                                <UniversalMediaInput 
+                                    type="image"
+                                    value={data.cover_image} 
+                                    onChange={(val) => {
+                                        const newVal = val && val.target ? val.target.value : val;
+                                        handleChange('cover_image', newVal);
+                                    }} 
+                                    triggerStyle={{ display: 'block', padding: 0, border: 'none', background: 'transparent', width: '100%', height: '100%', cursor: 'pointer' }}
+                                >
+                                    <div 
+                                        className="w-full h-full relative"
+                                        onMouseEnter={() => setIsCoverHovered(true)} 
+                                        onMouseLeave={() => setIsCoverHovered(false)}
                                     >
-                                        <Trash size={16} />
-                                    </button>
-                                )}
+                                        <SiteCoverDisplay site={{
+                                            ...siteData,
+                                            title: identityData.title,
+                                            logo_url: data.logo_url,
+                                            cover_image: data.cover_image,
+                                            cover_layout: data.cover_layout,
+                                            cover_logo_radius: data.cover_logo_radius,
+                                            cover_logo_size: data.cover_logo_size,
+                                            cover_title_size: data.cover_title_size
+                                        }} style={{ width: '100%', height: '100%' }} />
+                                        
+                                        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center text-white transition-opacity duration-200 backdrop-blur-[2px] z-10 ${isCoverHovered ? 'opacity-100' : 'opacity-0'}`}>
+                                            <div className="flex items-center gap-2 font-medium text-sm"><Upload size={16} /> Змінити фон</div>
+                                        </div>
+
+                                        {data.cover_image && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); handleChange('cover_image', ''); }}
+                                                className="absolute top-2 right-2 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center cursor-pointer z-20 transition-colors hover:bg-(--platform-danger) border-none"
+                                                title="Видалити зображення"
+                                            >
+                                                <Trash size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </UniversalMediaInput>
                             </div>
-                        </UniversalMediaInput>
+                        </div>
                     </div>
 
                     <div className="h-px bg-(--platform-border-color)" />
@@ -611,10 +614,10 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                     <Image size={14} /> Логотип
                                 </div>
                                 <div className="mb-3">
-                                    <RangeSlider label="Розмір" value={data.cover_logo_size !== undefined ? data.cover_logo_size : 80} onChange={(val) => handleChange('cover_logo_size', parseInt(val))} min={30} max={150} unit="px" step={5} />
+                                    <RangeSlider label="Розмір (px)" value={data.cover_logo_size !== undefined ? data.cover_logo_size : 80} onChange={(val) => handleChange('cover_logo_size', parseInt(val))} min={20} max={120} unit="px" step={5} />
                                 </div>
                                 <div>
-                                    <RangeSlider label="Скруглення" value={data.cover_logo_radius !== undefined ? data.cover_logo_radius : 0} onChange={(val) => handleChange('cover_logo_radius', parseInt(val))} min={0} max={100} unit="px" />
+                                    <RangeSlider label="Скруглення (px)" value={data.cover_logo_radius !== undefined ? data.cover_logo_radius : 0} onChange={(val) => handleChange('cover_logo_radius', parseInt(val))} min={0} max={60} unit="px" />
                                 </div>
                             </div>
 
@@ -623,7 +626,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                     <Type size={14} /> Текст заголовка
                                 </div>
                                 <div>
-                                    <RangeSlider label="Розмір шрифту" value={data.cover_title_size !== undefined ? data.cover_title_size : 24} onChange={(val) => handleChange('cover_title_size', parseInt(val))} min={12} max={60} unit="px" step={2} />
+                                    <RangeSlider label="Розмір шрифту (px)" value={data.cover_title_size !== undefined ? data.cover_title_size : 24} onChange={(val) => handleChange('cover_title_size', parseInt(val))} min={12} max={40} unit="px" step={1} />
                                 </div>
                             </div>
                         </div>

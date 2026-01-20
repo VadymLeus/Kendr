@@ -8,14 +8,14 @@ import { AuthContext } from '../../../../app/providers/AuthContext';
 const API_URL = 'http://localhost:5000';
 
 const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
-    const { addToCart } = useContext(CartContext);
-    const { user } = useContext(AuthContext);
+    const cartContext = useContext(CartContext);
+    const authContext = useContext(AuthContext);
+    const addToCart = cartContext?.addToCart || (() => console.warn('Cart Context is missing'));
+    const user = authContext?.user || null;
     const navigate = useNavigate();
-    
     const [activeImgIndex, setActiveImgIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false);
     const intervalRef = useRef(null);
-
     const images = useMemo(() => {
         if (product.image_gallery && product.image_gallery.length > 0) {
             let gallery = typeof product.image_gallery === 'string' 
@@ -36,6 +36,10 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
         : product.price) : 0;
     const isSoldOut = product.stock_quantity === 0;
     const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+    const sitePath = siteData?.site_path || product.site_path;
+    const productLink = sitePath 
+        ? `/site/${sitePath}/product/${product.id}` 
+        : `/product/${product.id}`; 
 
     const handleMouseEnter = (e) => {
         if (!isEditorPreview) {
@@ -67,27 +71,27 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const handleAction = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
         if (isEditorPreview) return;
-        
         if (hasVariants) {
-            navigate(`/product/${product.id}`);
+            navigate(productLink);
             return;
         }
 
         if (!user) {
-            if (window.confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
+            if (typeof window !== 'undefined' && window.confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
                 navigate('/login');
             }
             return;
         }
         
-        addToCart(product, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
+        if (addToCart) {
+            addToCart(product, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
+        }
     };
 
     return (
         <Link 
-            to={`/product/${product.id}`} 
+            to={isEditorPreview ? '#' : productLink}
             style={{
                 textDecoration: 'none', 
                 pointerEvents: isEditorPreview ? 'none' : 'auto', 
@@ -97,6 +101,7 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                 width: '100%',
                 minWidth: 0
             }}
+            onClick={(e) => isEditorPreview && e.preventDefault()}
         >
             <div 
                 style={{

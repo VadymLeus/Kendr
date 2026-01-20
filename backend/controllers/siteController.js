@@ -3,7 +3,6 @@ const Site = require('../models/Site');
 const Page = require('../models/Page');
 const UserTemplate = require('../models/UserTemplate');
 const db = require('../config/db');
-
 const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
@@ -21,7 +20,6 @@ const getDefaultLogoFiles = async () => {
 
 const regenerateBlockIds = (blocks) => {
     if (!blocks) return [];
-    
     const mapBlock = (block) => {
         const newBlock = { ...block, block_id: uuidv4() };
         
@@ -45,17 +43,26 @@ const regenerateBlockIds = (blocks) => {
 
 exports.getSites = async (req, res, next) => {
     try {
-        const { search, scope, tag, sort, onlyFavorites } = req.query;
-        let userId = null;
-        if (req.user) userId = req.user.id;
+        const { search, scope, tag, sort, onlyFavorites, userId } = req.query; 
+        let targetUserId = null;
+        let includeAllStatuses = false;
+        if (scope === 'my' && req.user) {
+            targetUserId = req.user.id;
+            includeAllStatuses = true;
+        }
+        else if (userId) {
+            targetUserId = userId;
+            includeAllStatuses = false; 
+        }
 
         const sites = await Site.getPublic({ 
             searchTerm: search, 
-            userId: scope === 'my' ? userId : null,
+            userId: targetUserId, 
             tag, 
             sort,
             onlyFavorites: onlyFavorites === 'true',
-            currentUserId: userId
+            currentUserId: req.user ? req.user.id : null,
+            includeAllStatuses: includeAllStatuses
         });
         res.json(sites);
     } catch (error) { next(error); }
@@ -141,7 +148,6 @@ exports.createSite = async (req, res, next) => {
         let pagesToCreate = templateData.pages || [];
         let footerToSave = regenerateBlockIds(templateData.footer_content || []);
         let headerToSave = regenerateBlockIds(templateData.header_content || []);
-
         if (!templateData.pages && Array.isArray(templateData)) {
             pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }];
         }
@@ -258,7 +264,6 @@ exports.getSiteByPath = async (req, res, next) => {
         }
 
         const [tags] = await db.query(`SELECT t.id, t.name FROM tags t JOIN site_tags st ON t.id = st.tag_id WHERE st.site_id = ?`, [site.id]);
-
         res.json({ ...site, page_content: page.block_content, page_id: page.id, page: page, tags: tags });
     } catch (error) {
         console.error('Помилка в getSiteByPath:', error);
@@ -280,8 +285,6 @@ exports.updateSiteSettings = async (req, res, next) => {
             title, status, tags, site_theme_mode, site_theme_accent, theme_settings, 
             header_content, footer_content, favicon_url, site_title_seo, 
             cover_image, cover_layout, logo_url,
-            
-            // New fields
             cover_logo_size,
             cover_logo_radius,
             cover_title_size
@@ -295,10 +298,8 @@ exports.updateSiteSettings = async (req, res, next) => {
 
         let processingHeaderContent = safeParse(header_content, null);
         let currentHeaderContent = processingHeaderContent || safeParse(site.header_content, []);
-
         let finalLogoUrl = logo_url !== undefined ? logo_url : site.logo_url;
         let finalTitle = title !== undefined ? title : site.title;
-
         if (processingHeaderContent && Array.isArray(processingHeaderContent)) {
             const incomingHeaderBlock = processingHeaderContent.find(b => b.type === 'header');
             if (incomingHeaderBlock && incomingHeaderBlock.data) {
@@ -343,20 +344,15 @@ exports.updateSiteSettings = async (req, res, next) => {
             title: finalTitle,
             status: status !== undefined ? status : site.status,
             logo_url: finalLogoUrl,
-            
             site_theme_mode: site_theme_mode !== undefined ? site_theme_mode : site.site_theme_mode,
             site_theme_accent: site_theme_accent !== undefined ? site_theme_accent : site.site_theme_accent,
-            
             theme_settings: safeParse(theme_settings, site.theme_settings),
             header_content: currentHeaderContent,
             footer_content: safeParse(footer_content, site.footer_content),
-            
             favicon_url: favicon_url !== undefined ? favicon_url : site.favicon_url,
             site_title_seo: site_title_seo !== undefined ? site_title_seo : site.site_title_seo,
-            
             cover_image: cover_image !== undefined ? cover_image : site.cover_image,
             cover_layout: cover_layout !== undefined ? cover_layout : site.cover_layout,
-
             cover_logo_size: cover_logo_size !== undefined ? parseInt(cover_logo_size) : site.cover_logo_size,
             cover_logo_radius: cover_logo_radius !== undefined ? parseInt(cover_logo_radius) : site.cover_logo_radius,
             cover_title_size: cover_title_size !== undefined ? parseInt(cover_title_size) : site.cover_title_size
@@ -459,7 +455,6 @@ exports.resetSiteToTemplate = async (req, res, next) => {
         const themeSettings = templateData.theme_settings || {}; 
         const siteThemeMode = templateData.site_theme_mode || 'light'; 
         const siteThemeAccent = templateData.site_theme_accent || 'orange'; 
-        
         await connection.query(updateQuery, [JSON.stringify(headerToSave), JSON.stringify(footerToSave), siteThemeMode, siteThemeAccent, JSON.stringify(themeSettings), siteId]); 
         
         for (const pageData of pagesToCreate) { 
@@ -500,7 +495,6 @@ exports.checkSlug = async (req, res, next) => {
 
         const sanitizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
         const reservedWords = ['admin', 'api', 'login', 'dashboard', 'settings', 'create'];
-
         if (reservedWords.includes(sanitizedSlug)) {
             return res.json({ isAvailable: false, message: 'Ця адреса зарезервована системою.' });
         }

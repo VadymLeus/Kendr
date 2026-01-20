@@ -5,6 +5,18 @@ import { BLOCK_LIBRARY } from '../core/editorConfig';
 import { Settings, Trash2, PanelTop, HelpCircle } from 'lucide-react';
 
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
+const rigidIconWrapper = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: '20px', height: '20px', minWidth: '20px', flexShrink: 0
+};
+
+const rigidButtonWrapper = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: '24px', height: '24px', minWidth: '24px', flexShrink: 0,
+    border: 'none', background: 'transparent', cursor: 'pointer',
+    borderRadius: '4px', padding: 0, transition: 'all 0.2s'
+};
+
 const BlockLayerItem = ({
     block,
     path,
@@ -13,7 +25,6 @@ const BlockLayerItem = ({
     onDeleteBlock
 }) => {
     const ref = useRef(null);
-    
     const blockInfo = BLOCK_LIBRARY.find(b => b.type === block.type) || { 
         name: block.type, 
         icon: <HelpCircle size={16} /> 
@@ -21,7 +32,7 @@ const BlockLayerItem = ({
 
     const styles = {
         layerItem: {
-            padding: '0.75rem 1rem',
+            padding: '0.6rem 0.8rem',
             margin: '0.25rem 0',
             display: 'flex',
             alignItems: 'center',
@@ -34,10 +45,11 @@ const BlockLayerItem = ({
             color: 'var(--platform-text-primary)',
             fontSize: '0.875rem',
             fontWeight: 500,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            overflow: 'hidden'
         },
         nestedContainer: {
-            marginLeft: '1.5rem',
+            marginLeft: '1.25rem',
             paddingLeft: '0.75rem',
             borderLeft: '2px solid var(--platform-border-color)',
             marginTop: '0.5rem'
@@ -54,38 +66,24 @@ const BlockLayerItem = ({
             alignItems: 'center',
             gap: '0.5rem'
         },
-        icon: {
-            fontSize: '1rem',
-            opacity: 0.8,
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            color: 'var(--platform-accent)'
+        iconContainer: {
+            ...rigidIconWrapper,
+            color: 'var(--platform-accent)',
+            opacity: 0.8
         },
-        name: {
+        nameContainer: {
             flex: 1,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            minWidth: 0
+            minWidth: 0,
+            lineHeight: '1.2'
         },
-        button: {
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0.25rem',
-            borderRadius: '4px',
-            transition: 'all 0.2s ease',
-            flexShrink: 0,
+        actionsContainer: {
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
-        },
-        settingsButton: {
-            color: 'var(--platform-text-secondary)'
-        },
-        deleteButton: {
-            color: 'var(--platform-danger)'
+            gap: '4px',
+            flexShrink: 0
         }
     };
 
@@ -112,7 +110,6 @@ const BlockLayerItem = ({
     });
 
     drag(drop(ref));
-
     const handleDelete = (e) => {
         e.stopPropagation();
         onDeleteBlock(path);
@@ -124,14 +121,18 @@ const BlockLayerItem = ({
 
         const blockDomId = `block-${block.block_id}`;
         const element = document.getElementById(blockDomId);
-
         if (element) {
-            element.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'nearest'
-            });
+            element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
         }
+    };
+
+    const handleBtnEnter = (e, color, bg) => {
+        e.currentTarget.style.color = color;
+        e.currentTarget.style.background = bg;
+    };
+    const handleBtnLeave = (e, color) => {
+        e.currentTarget.style.color = color;
+        e.currentTarget.style.background = 'transparent';
     };
 
     let nestedBlocks = null;
@@ -141,10 +142,12 @@ const BlockLayerItem = ({
                 {block.data.columns.map((column, colIndex) => (
                     <div key={colIndex}>
                         <div style={styles.columnLabel}>
-                            <PanelTop size={14} />
-                            <span>Колонка {colIndex + 1}</span>
-                            <small style={{ marginLeft: 'auto', opacity: 0.7 }}>
-                                {column.length} блок(ів)
+                            <div style={{...rigidIconWrapper, width: '16px', height: '16px', minWidth: '16px'}}>
+                                <PanelTop size={14} />
+                            </div>
+                            <span style={styles.nameContainer}>Колонка {colIndex + 1}</span>
+                            <small style={{ marginLeft: 'auto', opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                {column.length} ел.
                             </small>
                         </div>
                         {column.map((colBlock, colBlockIndex) => (
@@ -187,41 +190,34 @@ const BlockLayerItem = ({
                     }
                 }}
             >
-                <span style={styles.icon}>{blockInfo.icon}</span>
-                <span style={styles.name}>
+                <div style={styles.iconContainer}>
+                    {blockInfo.icon}
+                </div>
+
+                <div style={styles.nameContainer}>
                     {blockInfo.name}
-                </span>
+                </div>
                 
-                <button 
-                    title="Налаштування" 
-                    onClick={handleSelectAndScroll}
-                    style={{ ...styles.button, ...styles.settingsButton }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--platform-bg)';
-                        e.currentTarget.style.color = 'var(--platform-accent)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'none';
-                        e.currentTarget.style.color = 'var(--platform-text-secondary)';
-                    }}
-                >
-                    <Settings size={16} />
-                </button>
-                <button 
-                    title="Видалити" 
-                    onClick={handleDelete} 
-                    style={{ ...styles.button, ...styles.deleteButton }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--platform-danger)';
-                        e.currentTarget.style.color = 'white';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'none';
-                        e.currentTarget.style.color = 'var(--platform-danger)';
-                    }}
-                >
-                    <Trash2 size={16} />
-                </button>
+                <div style={styles.actionsContainer}>
+                    <button 
+                        title="Налаштування" 
+                        onClick={handleSelectAndScroll}
+                        style={{ ...rigidButtonWrapper, color: 'var(--platform-text-secondary)' }}
+                        onMouseEnter={(e) => handleBtnEnter(e, 'var(--platform-accent)', 'var(--platform-bg)')}
+                        onMouseLeave={(e) => handleBtnLeave(e, 'var(--platform-text-secondary)')}
+                    >
+                        <Settings size={14} />
+                    </button>
+                    <button 
+                        title="Видалити" 
+                        onClick={handleDelete} 
+                        style={{ ...rigidButtonWrapper, color: 'var(--platform-danger)' }}
+                        onMouseEnter={(e) => handleBtnEnter(e, 'white', 'var(--platform-danger)')}
+                        onMouseLeave={(e) => handleBtnLeave(e, 'var(--platform-danger)')}
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </div>
             </div>
             {nestedBlocks}
         </>

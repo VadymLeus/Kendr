@@ -1,4 +1,4 @@
-// frontend/src/modules/profile/components/ProfileSecurityTab.jsx
+// frontend/src/modules/profile/tabs/ProfileSecurityTab.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';

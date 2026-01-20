@@ -12,7 +12,6 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
     if (!user) return null;
-
     const handleLogoutClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -28,13 +27,14 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
     const styles = {
         container: {
             display: 'flex', 
-            alignItems: 'center', 
+            alignItems: 'center',
             justifyContent: isCollapsed ? 'center' : 'space-between',
             width: '100%'
         },
         userBlock: {
             display: 'flex',
             alignItems: 'center',
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
             gap: '12px',
             textDecoration: 'none',
             padding: '8px',

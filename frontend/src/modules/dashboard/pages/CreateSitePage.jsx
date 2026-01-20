@@ -14,6 +14,7 @@ import UniversalMediaInput from '../../../shared/ui/complex/UniversalMediaInput'
 import { ArrowLeft, Layout, Check, Loader, AlertCircle, Globe, Grid, User, Image, Trash, Search, Edit } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
+
 const CreateSitePage = () => {
     const navigate = useNavigate();
     const [systemTemplates, setSystemTemplates] = useState([]);
@@ -309,9 +310,10 @@ const CreateSitePage = () => {
         if (!searchQuery) return source;
         return source.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }, [activeTab, systemTemplates, personalTemplates, searchQuery]);
+
     const pageStyles = `
         .create-site-container { display: flex; height: 100vh; overflow: hidden; background: var(--platform-bg); font-family: var(--font-family, sans-serif); color: var(--platform-text-primary); }
-        .left-panel { 
+        .create-site-container .left-panel { 
             display: flex; flex-direction: column; background: var(--platform-card-bg); 
             width: 100%; z-index: 20; 
             transition: transform 0.3s ease; position: absolute; height: 100%; 
@@ -319,7 +321,7 @@ const CreateSitePage = () => {
         }
 
         @media (min-width: 768px) { 
-            .left-panel { 
+            .create-site-container .left-panel { 
                 width: 420px; 
                 position: relative; 
                 border-radius: 12px;
@@ -331,18 +333,18 @@ const CreateSitePage = () => {
             } 
         }
         
-        .mobile-hidden { transform: translateX(-100%); }
-        .desktop-visible { transform: translateX(0); }
-        .right-panel { flex: 1; background: var(--platform-bg); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: transform 0.3s; }
-        .browser-mockup { width: 100%; height: 100%; max-width: 1200px; background: var(--platform-card-bg); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--platform-border-color); }
-        .browser-header { height: 44px; background: var(--platform-bg); border-bottom: 1px solid var(--platform-border-color); display: flex; align-items: center; padding: 0 16px; gap: 12px; }
-        .browser-dots { display: flex; gap: 6px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; }
-        .dot-red { background: #ff5f57; border: 1px solid #e0443e; }
-        .dot-yellow { background: #febc2e; border: 1px solid #dba522; }
-        .dot-green { background: #28c840; border: 1px solid #1aab29; }
-        .url-bar { flex: 1; background: var(--platform-card-bg); height: 28px; border: 1px solid var(--platform-border-color); border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: var(--platform-text-secondary); margin: 0 10px; font-family: monospace; }
-        .template-list-wrapper {
+        .create-site-container .mobile-hidden { transform: translateX(-100%); }
+        .create-site-container .desktop-visible { transform: translateX(0); }
+        .create-site-container .right-panel { flex: 1; background: var(--platform-bg); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: transform 0.3s; }
+        .create-site-container .browser-mockup { width: 100%; height: 100%; max-width: 1200px; background: var(--platform-card-bg); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--platform-border-color); }
+        .create-site-container .browser-header { height: 44px; background: var(--platform-bg); border-bottom: 1px solid var(--platform-border-color); display: flex; align-items: center; padding: 0 16px; gap: 12px; }
+        .create-site-container .browser-dots { display: flex; gap: 6px; }
+        .create-site-container .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .create-site-container .dot-red { background: #ff5f57; border: 1px solid #e0443e; }
+        .create-site-container .dot-yellow { background: #febc2e; border: 1px solid #dba522; }
+        .create-site-container .dot-green { background: #28c840; border: 1px solid #1aab29; }
+        .create-site-container .url-bar { flex: 1; background: var(--platform-card-bg); height: 28px; border: 1px solid var(--platform-border-color); border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: var(--platform-text-secondary); margin: 0 10px; font-family: monospace; }
+        .create-site-container .template-list-wrapper {
             border: 1px solid var(--platform-border-color);
             border-radius: 12px;
             background: var(--platform-bg); 
@@ -353,7 +355,7 @@ const CreateSitePage = () => {
             flex-direction: column;
         }
 
-        .template-list-scroll {
+        .create-site-container .template-list-scroll {
             padding: 12px;
             overflow-y: auto;
             display: flex;
@@ -362,13 +364,13 @@ const CreateSitePage = () => {
             flex: 1;
         }
 
-        .template-card { border: 1px solid var(--platform-border-color); border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; background: var(--platform-card-bg); padding: 16px; display: flex; flex-direction: column; gap: 6px; min-height: 80px; flex-shrink: 0; }
-        .template-card:hover { transform: translateY(-2px); border-color: var(--platform-text-secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .template-card.selected { border-color: var(--platform-accent); background: var(--platform-card-bg); box-shadow: 0 0 0 1px var(--platform-accent); }
-        .tpl-title { font-size: 14px; font-weight: 600; color: var(--platform-text-primary); margin-right: 24px; }
-        .tpl-desc { font-size: 12px; color: var(--platform-text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .check-icon { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; background: var(--platform-accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2; }
-        .template-actions {
+        .create-site-container .template-card { border: 1px solid var(--platform-border-color); border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; background: var(--platform-card-bg); padding: 16px; display: flex; flex-direction: column; gap: 6px; min-height: 80px; flex-shrink: 0; }
+        .create-site-container .template-card:hover { transform: translateY(-2px); border-color: var(--platform-text-secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .create-site-container .template-card.selected { border-color: var(--platform-accent); background: var(--platform-card-bg); box-shadow: 0 0 0 1px var(--platform-accent); }
+        .create-site-container .tpl-title { font-size: 14px; font-weight: 600; color: var(--platform-text-primary); margin-right: 24px; }
+        .create-site-container .tpl-desc { font-size: 12px; color: var(--platform-text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .create-site-container .check-icon { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; background: var(--platform-accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2; }
+        .create-site-container .template-actions {
             position: absolute;
             bottom: 10px;
             right: 10px;
@@ -380,8 +382,8 @@ const CreateSitePage = () => {
             border-radius: 6px;
             padding: 2px;
         }
-        .template-card:hover .template-actions { opacity: 1; }
-        .template-action-btn {
+        .create-site-container .template-card:hover .template-actions { opacity: 1; }
+        .create-site-container .template-action-btn {
             width: 28px; height: 28px;
             display: flex; align-items: center; justify-content: center;
             border: 1px solid var(--platform-border-color);
@@ -391,50 +393,49 @@ const CreateSitePage = () => {
             cursor: pointer;
             transition: all 0.2s;
         }
-        .template-action-btn:hover { background: var(--platform-accent); color: #fff; border-color: var(--platform-accent); }
-        .template-action-btn.delete:hover { background: #ef4444; border-color: #ef4444; }
-        .tab-switcher { display: flex; padding: 4px; background: var(--platform-bg); border-radius: 8px; border: 1px solid var(--platform-border-color); margin-bottom: 12px; }
-        .tab-btn { flex: 1; padding: 8px; font-size: 14px; font-weight: 500; border-radius: 6px; border: none; background: transparent; cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .tab-btn:hover { color: var(--platform-text-primary); }
-        .tab-btn.active { background: var(--platform-accent); color: #ffffff; box-shadow: 0 2px 6px rgba(var(--platform-accent-rgb, 0,0,0), 0.2); }
-        .logo-wrapper { width: 100%; }
-        .logo-preview-card { width: 120px; height: 120px; border-radius: 12px; border: 1px solid var(--platform-border-color); background: var(--platform-card-bg); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; margin: 0 auto; }
-        .logo-preview-card:hover { border-color: var(--platform-accent); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .logo-preview-card img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
-        .delete-logo-btn { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s; }
-        .logo-preview-card:hover .delete-logo-btn { opacity: 1; }
-        .delete-logo-btn:hover { transform: scale(1.1); background: #dc2626; }
-        .add-logo-card { width: 100%; height: 100px; border: 1px dashed var(--platform-border-color); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--platform-bg); cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; }
-        .add-logo-card:hover { border-color: var(--platform-accent); color: var(--platform-accent); background: rgba(0,0,0,0.02); }
+        .create-site-container .template-action-btn:hover { background: var(--platform-accent); color: #fff; border-color: var(--platform-accent); }
+        .create-site-container .template-action-btn.delete:hover { background: #ef4444; border-color: #ef4444; }
+        .create-site-container .tab-switcher { display: flex; padding: 4px; background: var(--platform-bg); border-radius: 8px; border: 1px solid var(--platform-border-color); margin-bottom: 12px; }
+        .create-site-container .tab-btn { flex: 1; padding: 8px; font-size: 14px; font-weight: 500; border-radius: 6px; border: none; background: transparent; cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .create-site-container .tab-btn:hover { color: var(--platform-text-primary); }
+        .create-site-container .tab-btn.active { background: var(--platform-accent); color: #ffffff; box-shadow: 0 2px 6px rgba(var(--platform-accent-rgb, 0,0,0), 0.2); }
+        .create-site-container .logo-wrapper { width: 100%; }
+        .create-site-container .logo-preview-card { width: 120px; height: 120px; border-radius: 12px; border: 1px solid var(--platform-border-color); background: var(--platform-card-bg); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; margin: 0 auto; }
+        .create-site-container .logo-preview-card:hover { border-color: var(--platform-accent); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .create-site-container .logo-preview-card img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+        .create-site-container .delete-logo-btn { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s; }
+        .create-site-container .logo-preview-card:hover .delete-logo-btn { opacity: 1; }
+        .create-site-container .delete-logo-btn:hover { transform: scale(1.1); background: #dc2626; }
+        .create-site-container .add-logo-card { width: 100%; height: 100px; border: 1px dashed var(--platform-border-color); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--platform-bg); cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; }
+        .create-site-container .add-logo-card:hover { border-color: var(--platform-accent); color: var(--platform-accent); background: rgba(0,0,0,0.02); }
+        
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .site-theme-context[data-site-mode="dark"] {
-            --site-bg: #1a202c; 
-            --site-card-bg: #2d3748;
-            --site-text-primary: #f7fafc;
-            --site-text-secondary: #a0aec0;
-            --site-border-color: #4a5568;
-            background-color: var(--site-bg) !important;
-            color: var(--site-text-primary) !important;
+
+        .create-site-container .custom-scrollbar::-webkit-scrollbar,
+        .create-site-container .template-list-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
 
-        .site-theme-context[data-site-mode="light"] {
-            --site-bg: #ffffff; 
-            --site-card-bg: #ffffff;
-            --site-text-primary: #1a202c;
-            --site-text-secondary: #52525b;
-            --site-border-color: #e2e8f0;
-            background-color: var(--site-bg) !important;
-            color: var(--site-text-primary) !important;
+        .create-site-container .custom-scrollbar::-webkit-scrollbar-track,
+        .create-site-container .template-list-scroll::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 4px;
         }
 
-        .site-theme-context[data-site-accent="orange"] { --site-accent: #f97316; --site-accent-hover: #ea580c; --site-accent-text: #ffffff; }
-        .site-theme-context[data-site-accent="blue"]   { --site-accent: #3b82f6; --site-accent-hover: #2563eb; --site-accent-text: #ffffff; }
-        .site-theme-context[data-site-accent="green"]  { --site-accent: #22c55e; --site-accent-hover: #16a34a; --site-accent-text: #ffffff; }
-        .site-theme-context[data-site-accent="red"]    { --site-accent: #ef4444; --site-accent-hover: #dc2626; --site-accent-text: #ffffff; }
-        .site-theme-context[data-site-accent="yellow"] { --site-accent: #eab308; --site-accent-hover: #ca8a04; --site-accent-text: #18181b; }
-        .site-theme-context[data-site-accent="purple"] { --site-accent: #a855f7; --site-accent-hover: #9333ea; --site-accent-text: #ffffff; }
-        .site-theme-context[data-site-accent="gray"]   { --site-accent: #71717a; --site-accent-hover: #52525b; --site-accent-text: #ffffff; }
-        .site-theme-context[data-site-accent="lime"]   { --site-accent: #84cc16; --site-accent-hover: #65a30d; --site-accent-text: #18181b; }
+        .create-site-container .custom-scrollbar::-webkit-scrollbar-thumb,
+        .create-site-container .template-list-scroll::-webkit-scrollbar-thumb {
+            background-color: var(--platform-text-secondary);
+            opacity: 0.5;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        .create-site-container .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+        .create-site-container .template-list-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: var(--platform-accent);
+        }
     `;
 
     if (isLoadingData) {
