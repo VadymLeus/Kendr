@@ -1,16 +1,9 @@
 // frontend/src/modules/support/pages/SupportPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../../../common/components/ui/Button';
-import { 
-    IconHelpCircle, 
-    IconMessageCircle, 
-    IconGavel, 
-    IconChevronDown, 
-    IconChevronRight, 
-    IconPlus
-} from '../../../common/components/ui/Icons';
+import { Button } from '../../../shared/ui/elements/Button';
 import { Helmet } from 'react-helmet-async';
+import { HelpCircle, MessageCircle, Gavel, ChevronRight, Plus } from 'lucide-react';
 
 const SupportPage = () => {
     const containerStyle = {
@@ -64,7 +57,7 @@ const SupportPage = () => {
                     justifyContent: 'center',
                     gap: '12px'
                 }}>
-                    <IconHelpCircle size={40} style={{ color: 'var(--platform-accent)' }} />
+                    <HelpCircle size={40} style={{ color: 'var(--platform-accent)' }} />
                     Центр підтримки
                 </h1>
                 <p style={{ 
@@ -103,7 +96,7 @@ const SupportPage = () => {
                                 alignItems: 'center',
                                 gap: '8px'
                             }}>
-                                <IconChevronRight size={18} style={{ color: 'var(--platform-accent)' }} />
+                                <ChevronRight size={18} style={{ color: 'var(--platform-accent)' }} />
                                 {item.question}
                             </h3>
                             <p style={{ 
@@ -148,19 +141,19 @@ const SupportPage = () => {
                 
                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <Link to="/support/new-ticket" style={{ textDecoration: 'none' }}>
-                        <Button variant="primary" size="lg" icon={<IconPlus size={20}/>}>
+                        <Button variant="primary" size="lg" icon={<Plus size={20}/>}>
                             Створити звернення
                         </Button>
                     </Link>
 
                     <Link to="/support/my-tickets" style={{ textDecoration: 'none' }}>
-                        <Button variant="secondary" size="lg" icon={<IconMessageCircle size={20}/>}>
+                        <Button variant="secondary" size="lg" icon={<MessageCircle size={20}/>}>
                             Мої звернення
                         </Button>
                     </Link>
                     
                     <Link to="/support/appeal" style={{ textDecoration: 'none' }}>
-                         <Button variant="outline" size="lg" icon={<IconGavel size={20}/>}>
+                         <Button variant="outline" size="lg" icon={<Gavel size={20}/>}>
                             Апеляції
                         </Button>
                     </Link>

@@ -1,20 +1,12 @@
-// frontend/src/modules/profile/pages/ProfilePage.jsx
+// frontend/src/modules/profile/pages/SettingsPage.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
-
-import ProfileGeneralTab from '../components/tabs/ProfileGeneralTab';
-import ProfileSecurityTab from '../components/tabs/ProfileSecurityTab';
-import ProfileAppearanceTab from '../components/tabs/ProfileAppearanceTab';
-import ProfilePublicTab from '../components/tabs/ProfilePublicTab';
-
-import { 
-    IconUser, 
-    IconShield, 
-    IconPalette, 
-    IconGlobe, 
-    IconPlay 
-} from '../../../common/components/ui/Icons';
+import ProfileGeneralTab from '../tabs/ProfileGeneralTab';
+import ProfileSecurityTab from '../tabs/ProfileSecurityTab';
+import ProfileAppearanceTab from '../tabs/ProfileAppearanceTab';
+import ProfilePublicTab from '../tabs/ProfilePublicTab';
+import { User, Shield, Palette, Globe, Play } from 'lucide-react';
 
 const SettingsPage = () => {
     const { user } = useContext(AuthContext);
@@ -28,10 +20,10 @@ const SettingsPage = () => {
     }, [activeTab]);
 
     const tabs = [
-        { id: 'general', label: 'Загальні', icon: <IconUser /> },
-        { id: 'security', label: 'Безпека', icon: <IconShield /> },
-        { id: 'appearance', label: 'Вигляд', icon: <IconPalette /> },
-        { id: 'public', label: 'Публічність', icon: <IconGlobe /> },
+        { id: 'general', label: 'Загальні', icon: <User /> },
+        { id: 'security', label: 'Безпека', icon: <Shield /> },
+        { id: 'public', label: 'Публічність', icon: <Globe /> },
+        { id: 'appearance', label: 'Вигляд', icon: <Palette /> },
     ];
 
     return (
@@ -74,7 +66,7 @@ const SettingsPage = () => {
                             className="preview-btn"
                             title="Переглянути профіль"
                         >
-                            <IconPlay />
+                            <Play />
                             <span className="preview-text">Переглянути</span>
                         </Link>
                     )}

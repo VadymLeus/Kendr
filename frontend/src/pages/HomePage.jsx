@@ -1,8 +1,8 @@
 // frontend/src/pages/HomePage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../common/components/ui/Button';
-import { IconEye, IconArrowRight } from '../common/components/ui/Icons';
+import { Button } from '../shared/ui/elements/Button';
+import { Eye, ArrowRight } from 'lucide-react';
 
 const HomePage = () => {
     const containerStyle = {
@@ -48,7 +48,7 @@ const HomePage = () => {
             <h1 style={titleStyle}>
                 Ласкаво просимо до Kendr! 
                 <span style={iconStyle}>
-                    <IconEye size={48} />
+                    <Eye size={48} />
                 </span>
             </h1>
             
@@ -62,7 +62,7 @@ const HomePage = () => {
                     <Button 
                         variant="primary" 
                         style={{ padding: '12px 32px', fontSize: '1.1rem' }}
-                        icon={<IconArrowRight size={20}/>}
+                        icon={<ArrowRight size={20}/>}
                     >
                         Почати безкоштовно
                     </Button>

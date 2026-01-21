@@ -1,19 +1,11 @@
 // frontend/src/modules/media/components/MediaInspector.jsx
 import React, { useState, useEffect } from 'react';
-import { 
-    IconDownload, 
-    IconTrash, 
-    IconFile, 
-    IconFont, 
-    IconCopy,
-    IconExternalLink,
-    IconX 
-} from '../../../common/components/ui/Icons';
-import { Button } from '../../../common/components/ui/Button';
-import apiClient from '../../../common/services/api';
+import { Button } from '../../../shared/ui/elements/Button';
+import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-
-const API_URL = 'http://localhost:5000';
+import { Download, Trash2, Copy, ExternalLink, X, Type, Save } from 'lucide-react';
+import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
+import { API_URL, getFileExtension } from '../../../shared/utils/mediaUtils';
 
 const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     const [formData, setFormData] = useState({
@@ -22,8 +14,14 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         description: ''
     });
 
-    const isFont = file && (file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name));
+    const hasChanges = file && (
+        formData.display_name !== (file.display_name || '') ||
+        formData.alt_text !== (file.alt_text || '') ||
+        formData.description !== (file.description || '')
+    );
 
+    const isFont = file && (file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name));
+    
     useEffect(() => {
         if (isFont && file) {
             const fontUrl = `${API_URL}${file.path_full}`;
@@ -53,19 +51,28 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     }, [file]);
 
     if (!file) return null;
+    const saveChanges = async () => {
+        if (!hasChanges) return;
 
-    const handleBlur = async () => {
-        if (formData.display_name !== file.display_name || 
-            formData.alt_text !== file.alt_text || 
-            formData.description !== file.description) {
-            try {
-                const res = await apiClient.put(`/media/${file.id}`, formData);
-                onUpdate(res.data);
-                toast.success('Зміни збережено');
-            } catch (error) {
-                toast.error('Помилка збереження');
-            }
+        try {
+            const res = await apiClient.put(`/media/${file.id}`, formData);
+            onUpdate(res.data);
+            toast.success('Зміни збережено');
+        } catch (error) {
+            console.error(error);
+            toast.error('Помилка збереження');
         }
+    };
+
+    const handleBlur = () => {
+        if (hasChanges) {
+            saveChanges();
+        }
+    };
+
+    const handleSaveClick = (e) => {
+        e.preventDefault(); 
+        saveChanges();
     };
 
     const copyUrl = () => {
@@ -103,10 +110,10 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     const styles = {
         container: {
             width: '100%',
-            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             background: 'var(--platform-sidebar-bg)',
+            minHeight: '100%', 
         },
         header: {
             padding: '16px',
@@ -132,7 +139,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
-            flex: 1
         },
         label: {
             fontSize: '0.75rem',
@@ -169,7 +175,8 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         metaItem: {
             display: 'flex',
             flexDirection: 'column',
-            gap: '1px'
+            gap: '1px',
+            overflow: 'hidden'
         },
         metaLabel: {
             fontSize: '0.65rem',
@@ -178,7 +185,10 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         },
         metaValue: {
             color: 'var(--platform-text-primary)',
-            fontWeight: 500
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
         },
         actionsGrid: {
             display: 'grid',
@@ -191,27 +201,10 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     };
 
     const renderPreview = () => {
-        if (file.mime_type.startsWith('image/')) {
-            return (
-                <div style={{ 
-                    width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    backgroundImage: 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)',
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                    borderRadius: '8px',
-                    overflow: 'hidden'
-                }}>
-                    <img src={`${API_URL}${file.path_full}`} alt="preview" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} />
-                </div>
-            );
-        } 
-        if (file.mime_type.startsWith('video/')) {
-            return <video src={`${API_URL}${file.path_full}`} controls style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }} />;
-        }
         if (isFont) {
             return (
                 <div style={{ textAlign: 'center', width: '100%' }}>
-                    <div style={{ marginBottom: '10px' }}><IconFont size={48} color="var(--platform-accent)" /></div>
+                    <div style={{ marginBottom: '10px' }}><Type size={48} color="var(--platform-accent)" /></div>
                     <div 
                         id={`font-preview-${file.id}`} 
                         style={{
@@ -230,11 +223,12 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         }
         
         return (
-            <div style={{ textAlign: 'center' }}>
-                <IconFile size={64} color="var(--platform-text-secondary)" />
-                <p style={{ marginTop: '10px', fontWeight: 'bold', color: 'var(--platform-text-primary)' }}>
-                    {file.original_file_name.split('.').pop().toUpperCase()}
-                </p>
+            <div style={{ width: '100%', height: '220px' }}>
+                <MediaFilePreview 
+                    file={file} 
+                    showVideoControls={true} 
+                    style={{ borderRadius: '8px' }}
+                />
             </div>
         );
     };
@@ -249,7 +243,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                     title="Закрити"
                     style={{ padding: 0, width: '32px', height: '32px', borderRadius: '50%', minWidth: 'auto' }}
                 >
-                    <IconX size={20} />
+                    <X size={20} />
                 </Button>
             </div>
 
@@ -258,12 +252,11 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             </div>
 
             <div style={styles.content}>
-                
                 <div style={styles.metaGrid}>
                     <div style={styles.metaItem}>
                         <span style={styles.metaLabel}>Тип</span>
                         <span style={styles.metaValue} title={file.mime_type}>
-                            {file.mime_type.split('/')[1]?.toUpperCase() || 'FILE'}
+                            {getFileExtension(file.original_file_name)}
                         </span>
                     </div>
                     <div style={styles.metaItem}>
@@ -316,6 +309,15 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                     />
                 </div>
 
+                <Button 
+                    variant="primary" 
+                    onClick={handleSaveClick}
+                    disabled={!hasChanges}
+                    style={{ width: '100%', marginTop: '4px' }}
+                >
+                    <Save size={16} /> Зберегти зміни
+                </Button>
+
                 <div style={styles.actionsGrid}>
                     <Button 
                         variant="outline"
@@ -323,7 +325,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Копіювати посилання"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        {IconCopy ? <IconCopy size={16}/> : '🔗'} Копіювати
+                        {Copy ? <Copy size={16}/> : '🔗'} Копіювати
                     </Button>
                     
                     <Button 
@@ -332,7 +334,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Відкрити в новій вкладці"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        {IconExternalLink ? <IconExternalLink size={16}/> : '↗'} Відкрити
+                        {ExternalLink ? <ExternalLink size={16}/> : '↗'} Відкрити
                     </Button>
 
                     <Button 
@@ -341,7 +343,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Завантажити файл на комп'ютер"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        <IconDownload size={16} /> Завантажити
+                        <Download size={16} /> Завантажити
                     </Button>
 
                     <Button 
@@ -350,7 +352,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Видалити назавжди"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        <IconTrash size={16} /> Видалити
+                        <Trash2 size={16} /> Видалити
                     </Button>
                 </div>
             </div>

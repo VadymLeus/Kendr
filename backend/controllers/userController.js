@@ -6,7 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 const db = require('../config/db');
-
 const sanitizeUser = (user) => {
     return {
         id: user.id,
@@ -52,7 +51,10 @@ exports.getPublicProfile = async (req, res, next) => {
             }
         }
         
-        const siteCount = await User.getSiteCount(user.id);
+        const [siteCount, totalViews] = await Promise.all([
+            User.getSiteCount(user.id),
+            User.getTotalSiteViews(user.id)
+        ]);
         
         let warnings = [];
         if (req.user && (req.user.id === user.id || req.user.role === 'admin')) {
@@ -64,6 +66,7 @@ exports.getPublicProfile = async (req, res, next) => {
             username: user.username,
             createdAt: user.created_at,
             siteCount: siteCount,
+            totalViews: totalViews,
             avatar_url: user.avatar_url,
             bio: user.bio,
             is_profile_public: user.is_profile_public,
@@ -112,9 +115,7 @@ exports.updateProfile = async (req, res, next) => {
         }
 
         const updatedUserRaw = await User.update(userId, updates);
-        
         const hasPwd = await User.hasPassword(userId);
-
         res.json({ 
             message: 'Профіль успішно оновлено!', 
             user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd })
@@ -128,10 +129,8 @@ exports.changePassword = async (req, res, next) => {
     try {
         const { currentPassword, newPassword } = req.body;
         const userId = req.user.id;
-
         const [userRows] = await db.query('SELECT * FROM users WHERE id = ?', [userId]);
         const user = userRows[0];
-
         if (user.password_hash) {
             if (!currentPassword) {
                 return res.status(400).json({ message: 'Введіть поточний пароль.' });
@@ -144,11 +143,8 @@ exports.changePassword = async (req, res, next) => {
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
-
         await User.update(userId, { password_hash: hashedPassword });
-
         const updatedUserRaw = await User.findById(userId);
-
         res.json({ 
             message: user.password_hash ? 'Пароль успішно змінено.' : 'Пароль успішно встановлено.',
             user: sanitizeUser({ ...updatedUserRaw, has_password: true }) 
@@ -168,7 +164,6 @@ exports.deleteAccount = async (req, res, next) => {
 
         const userId = req.user.id;
         const user = await User.findById(userId);
-        
         if (user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
             await deleteFile(user.avatar_url);
         }
@@ -184,7 +179,6 @@ exports.deleteAccount = async (req, res, next) => {
 exports.updateAvatarUrl = async (req, res, next) => {
     const { avatar_url } = req.body;
     const userId = req.user.id;
-
     try {
         const currentUser = await User.findById(userId);
         const oldAvatarUrl = currentUser.avatar_url;
@@ -207,7 +201,6 @@ exports.updateAvatarUrl = async (req, res, next) => {
 
 exports.getDefaultAvatars = (req, res, next) => {
     const defaultAvatarsDir = path.join(__dirname, '..', 'uploads', 'avatars', 'default');
-    
     if (!fs.existsSync(defaultAvatarsDir)) {
          return res.json([]); 
     }
@@ -223,7 +216,6 @@ exports.uploadAvatar = async (req, res, next) => {
     }
     
     const userId = req.user.id;
-    
     const newAvatarUrl = `/uploads/avatars/custom/${req.file.filename}`;
 
     try {
@@ -236,7 +228,6 @@ exports.uploadAvatar = async (req, res, next) => {
 
         const updatedUserRaw = await User.update(userId, { avatar_url: newAvatarUrl });
         const hasPwd = await User.hasPassword(userId);
-
         res.json({ 
             message: 'Аватар завантажено!', 
             user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }) 

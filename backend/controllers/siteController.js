@@ -3,19 +3,14 @@ const Site = require('../models/Site');
 const Page = require('../models/Page');
 const UserTemplate = require('../models/UserTemplate');
 const db = require('../config/db');
-
 const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 const { v4: uuidv4 } = require('uuid');
-
-// --- Допоміжні функції ---
-
 const getDefaultLogoFiles = async () => {
     try {
         const defaultLogosDir = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'default');
         const files = await fs.readdir(defaultLogosDir);
-        // Фільтруємо системні файли типу .DS_Store
         const validFiles = files.filter(f => !f.startsWith('.'));
         return validFiles.map(file => `/uploads/shops/logos/default/${file}`);
     } catch (e) {
@@ -25,7 +20,6 @@ const getDefaultLogoFiles = async () => {
 
 const regenerateBlockIds = (blocks) => {
     if (!blocks) return [];
-    
     const mapBlock = (block) => {
         const newBlock = { ...block, block_id: uuidv4() };
         
@@ -47,21 +41,28 @@ const regenerateBlockIds = (blocks) => {
     return blocks;
 };
 
-// --- Контролери ---
-
 exports.getSites = async (req, res, next) => {
     try {
-        const { search, scope, tag, sort, onlyFavorites } = req.query;
-        let userId = null;
-        if (req.user) userId = req.user.id;
+        const { search, scope, tag, sort, onlyFavorites, userId } = req.query; 
+        let targetUserId = null;
+        let includeAllStatuses = false;
+        if (scope === 'my' && req.user) {
+            targetUserId = req.user.id;
+            includeAllStatuses = true;
+        }
+        else if (userId) {
+            targetUserId = userId;
+            includeAllStatuses = false; 
+        }
 
         const sites = await Site.getPublic({ 
             searchTerm: search, 
-            userId: scope === 'my' ? userId : null,
+            userId: targetUserId, 
             tag, 
             sort,
             onlyFavorites: onlyFavorites === 'true',
-            currentUserId: userId
+            currentUserId: req.user ? req.user.id : null,
+            includeAllStatuses: includeAllStatuses
         });
         res.json(sites);
     } catch (error) { next(error); }
@@ -90,8 +91,6 @@ exports.getDefaultLogos = async (req, res, next) => {
 exports.createSite = async (req, res, next) => {
     const { templateId, sitePath, title, selected_logo_url, isPersonal } = req.body;
     const userId = req.user.id;
-
-    // Отримуємо підключення для транзакції
     const connection = await db.getConnection();
 
     try {
@@ -101,44 +100,32 @@ exports.createSite = async (req, res, next) => {
             throw new Error('ID шаблону не було надано.');
         }
 
-        // Перевірка на існування сайту (щоб не покладатися тільки на DB constraint)
         const [existing] = await connection.query('SELECT id FROM sites WHERE site_path = ?', [sitePath]);
         if (existing.length > 0) {
             await connection.rollback();
             return res.status(400).json({ message: 'Ця адреса сайту вже зайнята.' });
         }
-
-        // --- ЛОГІКА ЛОГОТИПУ (ВИПРАВЛЕНО) ---
         let logoUrl = selected_logo_url;
-        
-        // Якщо лого не передано, шукаємо дефолтні
         if (!logoUrl) {
             const defaults = await getDefaultLogoFiles();
             if (defaults && Array.isArray(defaults) && defaults.length > 0) {
                 logoUrl = defaults[Math.floor(Math.random() * defaults.length)];
             }
         }
-
-        // Жорсткий фоллбек: гарантуємо, що це рядок і він не пустий
         if (!logoUrl || typeof logoUrl !== 'string') {
             logoUrl = '/uploads/shops/logos/default/default-logo.webp';
         }
 
         const relativeLogoUrl = logoUrl.replace(/^http:\/\/localhost:5000/, '');
-        // ------------------------------------
-
         let templateData = {};
         let siteThemeConfig = {};
 
         if (isPersonal) {
-            // Отримуємо приватний шаблон
             const [rows] = await connection.query('SELECT * FROM user_templates WHERE id = ? AND user_id = ?', [templateId, userId]);
             const personalTemplate = rows[0];
-            
             if (!personalTemplate) {
                 throw new Error('Шаблон не знайдено або у вас немає доступу.');
             }
-            // Розпарсити, якщо це рядок
             templateData = typeof personalTemplate.full_site_snapshot === 'string' 
                 ? JSON.parse(personalTemplate.full_site_snapshot) 
                 : personalTemplate.full_site_snapshot;
@@ -150,7 +137,6 @@ exports.createSite = async (req, res, next) => {
                 site_theme_accent: templateData.site_theme_accent || 'blue'
             };
         } else {
-            // Отримуємо системний шаблон
             const [templates] = await connection.query('SELECT default_block_content FROM templates WHERE id = ?', [templateId]);
             if (!templates[0] || !templates[0].default_block_content) {
                 throw new Error(`Шаблон з ID ${templateId} не знайдено.`);
@@ -162,12 +148,9 @@ exports.createSite = async (req, res, next) => {
         let pagesToCreate = templateData.pages || [];
         let footerToSave = regenerateBlockIds(templateData.footer_content || []);
         let headerToSave = regenerateBlockIds(templateData.header_content || []);
-
         if (!templateData.pages && Array.isArray(templateData)) {
             pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }];
         }
-
-        // Оновлюємо Хедер даними нового сайту
         if (headerToSave.length > 0) {
             headerToSave = headerToSave.map(b => {
                 if (b.type === 'header') {
@@ -184,7 +167,6 @@ exports.createSite = async (req, res, next) => {
                 return b;
             });
         } else {
-            // Створюємо дефолтний хедер, якщо в шаблоні його немає
             headerToSave = [{
                 block_id: uuidv4(),
                 type: 'header',
@@ -199,17 +181,11 @@ exports.createSite = async (req, res, next) => {
                 }
             }];
         }
-
-        // 1. INSERT SITE (Вручну, щоб використати connection транзакції)
-        // Використовуємо явні значення, щоб уникнути помилки "cannot be null"
         const [siteResult] = await connection.query(
             `INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, 'draft')`,
             [userId, sitePath, title, relativeLogoUrl]
         );
         const newSiteId = siteResult.insertId;
-
-        // 2. UPDATE SETTINGS (Вручну)
-        // Готуємо дані для JSON полів
         const themeSettingsJson = JSON.stringify(siteThemeConfig.theme_settings || {});
         const headerContentJson = JSON.stringify(headerToSave);
         const footerContentJson = JSON.stringify(footerToSave);
@@ -226,8 +202,6 @@ exports.createSite = async (req, res, next) => {
              WHERE id = ?`,
             [headerContentJson, footerContentJson, themeSettingsJson, themeMode, themeAccent, newSiteId]
         );
-
-        // 3. CREATE PAGES (Вручну)
         if (pagesToCreate.length > 0) {
             for (const pageData of pagesToCreate) {
                 const pageBlocks = regenerateBlockIds(pageData.blocks || []);
@@ -246,8 +220,6 @@ exports.createSite = async (req, res, next) => {
                 [newSiteId, 'Головна', 'home', JSON.stringify([]), 1]
             );
         }
-
-        // Якщо все ок - комітимо транзакцію
         await connection.commit();
 
         res.status(201).json({ 
@@ -256,16 +228,12 @@ exports.createSite = async (req, res, next) => {
         });
 
     } catch (error) {
-        // Якщо помилка - відкочуємо все (в т.ч. створення сайту, звільняючи path)
         await connection.rollback();
         console.error('Помилка при створенні сайту:', error.message);
-        
-        // Видаляємо завантажений файл, якщо був
         if (req.file) await deleteFile(req.file.path);
         
         res.status(500).json({ message: error.message || 'Не вдалося створити сайт.' });
     } finally {
-        // Завжди закриваємо з'єднання
         connection.release();
     }
 };
@@ -296,7 +264,6 @@ exports.getSiteByPath = async (req, res, next) => {
         }
 
         const [tags] = await db.query(`SELECT t.id, t.name FROM tags t JOIN site_tags st ON t.id = st.tag_id WHERE st.site_id = ?`, [site.id]);
-
         res.json({ ...site, page_content: page.block_content, page_id: page.id, page: page, tags: tags });
     } catch (error) {
         console.error('Помилка в getSiteByPath:', error);
@@ -318,8 +285,6 @@ exports.updateSiteSettings = async (req, res, next) => {
             title, status, tags, site_theme_mode, site_theme_accent, theme_settings, 
             header_content, footer_content, favicon_url, site_title_seo, 
             cover_image, cover_layout, logo_url,
-            
-            // New fields
             cover_logo_size,
             cover_logo_radius,
             cover_title_size
@@ -333,10 +298,8 @@ exports.updateSiteSettings = async (req, res, next) => {
 
         let processingHeaderContent = safeParse(header_content, null);
         let currentHeaderContent = processingHeaderContent || safeParse(site.header_content, []);
-
         let finalLogoUrl = logo_url !== undefined ? logo_url : site.logo_url;
         let finalTitle = title !== undefined ? title : site.title;
-
         if (processingHeaderContent && Array.isArray(processingHeaderContent)) {
             const incomingHeaderBlock = processingHeaderContent.find(b => b.type === 'header');
             if (incomingHeaderBlock && incomingHeaderBlock.data) {
@@ -381,20 +344,15 @@ exports.updateSiteSettings = async (req, res, next) => {
             title: finalTitle,
             status: status !== undefined ? status : site.status,
             logo_url: finalLogoUrl,
-            
             site_theme_mode: site_theme_mode !== undefined ? site_theme_mode : site.site_theme_mode,
             site_theme_accent: site_theme_accent !== undefined ? site_theme_accent : site.site_theme_accent,
-            
             theme_settings: safeParse(theme_settings, site.theme_settings),
             header_content: currentHeaderContent,
             footer_content: safeParse(footer_content, site.footer_content),
-            
             favicon_url: favicon_url !== undefined ? favicon_url : site.favicon_url,
             site_title_seo: site_title_seo !== undefined ? site_title_seo : site.site_title_seo,
-            
             cover_image: cover_image !== undefined ? cover_image : site.cover_image,
             cover_layout: cover_layout !== undefined ? cover_layout : site.cover_layout,
-
             cover_logo_size: cover_logo_size !== undefined ? parseInt(cover_logo_size) : site.cover_logo_size,
             cover_logo_radius: cover_logo_radius !== undefined ? parseInt(cover_logo_radius) : site.cover_logo_radius,
             cover_title_size: cover_title_size !== undefined ? parseInt(cover_title_size) : site.cover_title_size
@@ -497,7 +455,6 @@ exports.resetSiteToTemplate = async (req, res, next) => {
         const themeSettings = templateData.theme_settings || {}; 
         const siteThemeMode = templateData.site_theme_mode || 'light'; 
         const siteThemeAccent = templateData.site_theme_accent || 'orange'; 
-        
         await connection.query(updateQuery, [JSON.stringify(headerToSave), JSON.stringify(footerToSave), siteThemeMode, siteThemeAccent, JSON.stringify(themeSettings), siteId]); 
         
         for (const pageData of pagesToCreate) { 
@@ -538,7 +495,6 @@ exports.checkSlug = async (req, res, next) => {
 
         const sanitizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
         const reservedWords = ['admin', 'api', 'login', 'dashboard', 'settings', 'create'];
-
         if (reservedWords.includes(sanitizedSlug)) {
             return res.json({ isAvailable: false, message: 'Ця адреса зарезервована системою.' });
         }

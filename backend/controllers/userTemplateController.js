@@ -84,14 +84,11 @@ exports.deleteTemplate = async (req, res, next) => {
     }
 };
 
-// --- ВИПРАВЛЕНИЙ МЕТОД ---
 exports.updateTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { siteId, templateName, description } = req.body;
         const userId = req.user.id;
-
-        // СЦЕНАРІЙ 1: Просто оновлення імені/опису (siteId не передано)
         if (!siteId) {
             const [result] = await db.query(
                 'UPDATE user_templates SET name = ?, description = ? WHERE id = ? AND user_id = ?',
@@ -105,7 +102,6 @@ exports.updateTemplate = async (req, res, next) => {
             return res.json({ message: 'Інформацію про шаблон оновлено!' });
         }
 
-        // СЦЕНАРІЙ 2: Перезбереження (оновлення snapshot) з існуючого сайту
         const site = await Site.findByIdAndUserId(siteId, userId);
         if (!site) return res.status(403).json({ message: 'Сайт для оновлення шаблону не знайдено.' });
 

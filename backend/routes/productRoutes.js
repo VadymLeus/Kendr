@@ -6,9 +6,7 @@ const verifyToken = require('../middleware/verifyToken');
 const { upload, processAndSaveImage } = require('../middleware/upload');
 
 router.get('/', productController.getProducts);
-
 router.get('/site/:siteId', productController.getProductsForSite);
-
 router.get('/:productId', productController.getProductById);
 
 router.post(

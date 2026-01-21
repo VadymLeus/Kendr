@@ -2,13 +2,12 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Button } from '../common/components/ui/Button';
-import { IconArrowLeft, IconFileText, IconShield, IconInfo } from '../common/components/ui/Icons';
+import { Button } from '../shared/ui/elements/Button';
+import { ArrowLeft, FileText, Shield, Info } from 'lucide-react';
 
 const RulesPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-
     const handleAgree = () => {
         const fromSource = searchParams.get('from');
 
@@ -103,7 +102,7 @@ const RulesPage = () => {
             
             <div style={cardStyle}>
                 <h2 style={sectionTitleStyle}>
-                    <IconFileText size={28} style={{ color: 'var(--platform-accent)' }} />
+                    <FileText size={28} style={{ color: 'var(--platform-accent)' }} />
                     1. Умови використання (Terms of Use)
                 </h2>
                 
@@ -141,7 +140,7 @@ const RulesPage = () => {
 
             <div style={cardStyle}>
                 <h2 style={sectionTitleStyle}>
-                    <IconShield size={28} style={{ color: 'var(--platform-success)' }} />
+                    <Shield size={28} style={{ color: 'var(--platform-success)' }} />
                     2. Політика конфіденційності (Privacy Policy)
                 </h2>
                 
@@ -179,13 +178,13 @@ const RulesPage = () => {
                     variant="primary" 
                     onClick={handleAgree}
                     style={{ minWidth: '200px' }}
-                    icon={<IconArrowLeft size={18}/>}
+                    icon={<ArrowLeft size={18}/>}
                 >
                     Повернутися назад
                 </Button>
                 
                 <div style={{ marginTop: '1rem', opacity: 0.7, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <IconInfo size={16} />
+                    <Info size={16} />
                     <span>Продовжуючи роботу, ви погоджуєтесь з правилами.</span>
                 </div>
             </div>

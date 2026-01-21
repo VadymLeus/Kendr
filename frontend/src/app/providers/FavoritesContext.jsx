@@ -1,6 +1,6 @@
 // frontend/src/app/providers/FavoritesContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import apiClient from '../../common/services/api';
+import apiClient from '../../shared/api/api';
 import { AuthContext } from './AuthContext';
 
 export const FavoritesContext = createContext(null);

@@ -1,29 +1,23 @@
 // frontend/src/modules/media/pages/MediaLibraryPage.jsx
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import apiClient from '../../../common/services/api';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from 'react';
+import apiClient from '../../../shared/api/api';
 import MediaGridItem from '../components/MediaGridItem';
 import MediaInspector from '../components/MediaInspector';
+import SiteFilters from '../../../shared/ui/complex/SiteFilters';
+import EmptyState from '../../../shared/ui/complex/EmptyState';
 import { toast } from 'react-toastify';
-import { useConfirm } from '../../../common/hooks/useConfirm';
-import { Button, Input, Select } from '../../../common/components/ui'; 
-import { 
-    IconUpload, 
-    IconSearch, 
-    IconX, 
-    IconClear, 
-    IconImage, 
-    IconVideo, 
-    IconFileText, 
-    IconType,
-    IconMusic,
-    IconStar,
-    IconCheck,
-    IconCalendar,
-    IconDownload,
-    IconTrash
-} from '../../../common/components/ui/Icons';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
+import { Button } from '../../../shared/ui/elements'; 
+import { Upload, Search, Download, Trash2, Check, X as XIcon } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
+const FILE_TYPES = [
+    { id: 'image', name: 'Фото' },
+    { id: 'video', name: 'Відео' },
+    { id: 'audio', name: 'Аудіо' },
+    { id: 'document', name: 'Документи' },
+    { id: 'font', name: 'Шрифти' }
+];
 
 const FORMATS_BY_TYPE = {
     image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico', 'bmp'],
@@ -35,49 +29,66 @@ const FORMATS_BY_TYPE = {
 };
 
 const SORT_OPTIONS = [
-    { value: 'date', label: 'За датою', icon: IconCalendar },
-    { value: 'size', label: 'За розміром', icon: IconFileText },
-    { value: 'name', label: 'За назвою', icon: IconType }
+    { value: 'created_at:desc', label: 'Дата' },
+    { value: 'created_at:asc', label: 'Дата' },
+    { value: 'file_size_kb:desc', label: 'Розмір' },
+    { value: 'file_size_kb:asc', label: 'Розмір' },
+    { value: 'original_file_name:asc', label: 'Назва' },
+    { value: 'original_file_name:desc', label: 'Назва' }
 ];
 
 const MediaLibraryPage = () => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
-    
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeType, setActiveType] = useState('all'); 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeType, setActiveType] = useState(null);
     const [activeFormat, setActiveFormat] = useState(null);
-
-    const [sortKey, setSortKey] = useState('date'); 
-    const [sortDirection, setSortDirection] = useState('desc'); 
-    const [onlyFavorites, setOnlyFavorites] = useState(false); 
+    const [sortOption, setSortOption] = useState('created_at:desc');
+    const [onlyFavorites, setOnlyFavorites] = useState(false);
     const [visibleCount, setVisibleCount] = useState(48);
-    
     const [selectedFile, setSelectedFile] = useState(null);
     const [checkedFiles, setCheckedFiles] = useState(new Set());
-    
-    const lastSelectedIndex = useRef(null);
-
     const [isDragging, setIsDragging] = useState(false);
+    const [headerHeight, setHeaderHeight] = useState(190);
+    const lastSelectedIndex = useRef(null);
     const dragCounter = useRef(0);
-    
     const fileInputRef = useRef(null);
+    const headerRef = useRef(null);
     const { confirm } = useConfirm();
 
     useEffect(() => {
         fetchMedia();
     }, []);
 
+    useLayoutEffect(() => {
+        const updateHeaderHeight = () => {
+            if (headerRef.current) {
+                setHeaderHeight(headerRef.current.offsetHeight);
+            }
+        };
+
+        updateHeaderHeight();
+        const resizeObserver = new ResizeObserver(updateHeaderHeight);
+        if (headerRef.current) {
+            resizeObserver.observe(headerRef.current);
+        }
+
+        window.addEventListener('resize', updateHeaderHeight);
+
+        return () => {
+            window.removeEventListener('resize', updateHeaderHeight);
+            resizeObserver.disconnect();
+        };
+    }, []);
+
     const fetchMedia = async () => {
         setLoading(true);
         try {
             const res = await apiClient.get('/media');
-            const data = Array.isArray(res.data) ? res.data : [];
-            setFiles(data);
+            setFiles(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error(error);
             toast.error('Помилка завантаження медіатеки');
-            setFiles([]); 
         } finally {
             setLoading(false);
         }
@@ -86,80 +97,69 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         setActiveFormat(null);
     }, [activeType]);
-
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
 
-        if (searchQuery) {
-            const lowerQuery = searchQuery.toLowerCase();
-            result = result.filter(f => {
-                const name = f.display_name || f.original_file_name || '';
-                return name.toLowerCase().includes(lowerQuery);
-            });
+        if (searchTerm) {
+            const lowerQuery = searchTerm.toLowerCase();
+            result = result.filter(f => 
+                (f.display_name || f.original_file_name || '').toLowerCase().includes(lowerQuery)
+            );
         }
 
         if (onlyFavorites) {
             result = result.filter(f => f.is_favorite);
         }
 
-        if (activeType !== 'all') {
+        if (activeType) {
             result = result.filter(f => {
                 if (f.file_type === activeType) return true;
-                const name = f.original_file_name || '';
-                const ext = name.split('.').pop().toLowerCase();
+                const ext = (f.original_file_name || '').split('.').pop().toLowerCase();
                 return FORMATS_BY_TYPE[activeType]?.includes(ext);
             });
         }
 
         if (activeFormat) {
             result = result.filter(f => {
-                const name = f.original_file_name || '';
-                const ext = name.split('.').pop().toLowerCase();
+                const ext = (f.original_file_name || '').split('.').pop().toLowerCase();
                 if (activeFormat === 'jpg' && ext === 'jpeg') return true;
                 return ext === activeFormat;
             });
         }
 
+        const [key, dir] = sortOption.split(':');
         result.sort((a, b) => {
-            let valA, valB;
-            switch (sortKey) {
-                case 'size': valA = a.file_size_kb || 0; valB = b.file_size_kb || 0; break;
-                case 'name': 
-                    valA = (a.display_name || a.original_file_name || '').toLowerCase();
-                    valB = (b.display_name || b.original_file_name || '').toLowerCase();
-                    return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                case 'date':
-                default:
-                    valA = new Date(a.created_at || a.uploaded_at || 0).getTime();
-                    valB = new Date(b.created_at || b.uploaded_at || 0).getTime();
-                    break;
+            let valA = a[key];
+            let valB = b[key];
+            if (key === 'original_file_name' || key === 'display_name') {
+                valA = (valA || '').toLowerCase();
+                valB = (valB || '').toLowerCase();
+                return dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
             }
-            return sortDirection === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+            
+            if (key === 'created_at') {
+                valA = new Date(valA || 0).getTime();
+                valB = new Date(valB || 0).getTime();
+            } else {
+                valA = Number(valA || 0);
+                valB = Number(valB || 0);
+            }
+
+            if (valA < valB) return dir === 'asc' ? -1 : 1;
+            if (valA > valB) return dir === 'asc' ? 1 : -1;
+            return 0;
         });
 
         return result;
-    }, [files, searchQuery, activeType, activeFormat, sortDirection, sortKey, onlyFavorites]);
-
+    }, [files, searchTerm, activeType, activeFormat, sortOption, onlyFavorites]);
     const visibleFiles = filteredFiles.slice(0, visibleCount);
     const remainingCount = filteredFiles.length - visibleFiles.length;
-
-    const handleLoadMore = () => setVisibleCount(prev => prev + 48);
-
-    const handleClearFilters = () => {
-        setSearchQuery('');
-        setActiveType('all');
-        setActiveFormat(null);
-        setSortDirection('desc');
-        setSortKey('date');
-        setOnlyFavorites(false);
-        setVisibleCount(48);
-    };
-
     const handleUpload = async (e) => {
         const fileList = e.target.files;
         if (!fileList || fileList.length === 0) return;
 
+        const toastId = toast.loading("Завантаження...");
         const uploadPromises = Array.from(fileList).map(async (file) => {
             const formData = new FormData();
             formData.append('mediaFile', file);
@@ -167,47 +167,42 @@ const MediaLibraryPage = () => {
                 const res = await apiClient.post('/media/upload', formData);
                 return res.data;
             } catch (err) {
-                toast.error(`Помилка: ${file.name}`);
                 return null;
             }
         });
 
         const newFiles = await Promise.all(uploadPromises);
         const validFiles = newFiles.filter(f => f !== null);
+        
+        toast.dismiss(toastId);
+        
         if (validFiles.length > 0) {
             setFiles(prev => [...validFiles, ...prev]);
             toast.success(`Завантажено ${validFiles.length} файлів`);
+        } else {
+            toast.error("Помилка завантаження");
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const handleUpdateFile = (updatedFile) => {
+    const handleUpdateFile = useCallback((updatedFile) => {
         setFiles(prev => prev.map(f => f.id === updatedFile.id ? updatedFile : f));
-        if (selectedFile?.id === updatedFile.id) setSelectedFile(updatedFile);
-    };
+        setSelectedFile(prev => prev?.id === updatedFile.id ? updatedFile : prev);
+    }, []);
 
-    const handleToggleFavorite = async (file, e) => {
-        if (e) e.stopPropagation();
+    const handleToggleFavorite = useCallback(async (file) => {
+        const newStatus = !file.is_favorite;
+        handleUpdateFile({ ...file, is_favorite: newStatus });
         try {
-            const newStatus = !file.is_favorite;
-            const updatedFile = { ...file, is_favorite: newStatus };
-            handleUpdateFile(updatedFile);
             await apiClient.put(`/media/${file.id}`, { is_favorite: newStatus });
         } catch (error) {
-            handleUpdateFile({ ...file, is_favorite: !file.is_favorite }); 
-            toast.error("Не вдалося оновити статус");
+            handleUpdateFile({ ...file, is_favorite: !newStatus });
+            toast.error("Помилка оновлення");
         }
-    };
+    }, [handleUpdateFile]);
 
     const handleDelete = async (file) => {
-        const isConfirmed = await confirm({
-            title: "Видалити файл?",
-            message: "Ця дія незворотна.",
-            type: "danger",
-            confirmLabel: "Видалити"
-        });
-
-        if (isConfirmed) {
+        if (await confirm({ title: "Видалити файл?", message: "Ця дія незворотна.", type: "danger", confirmLabel: "Видалити" })) {
             try {
                 await apiClient.delete(`/media/${file.id}`);
                 setFiles(prev => prev.filter(f => f.id !== file.id));
@@ -224,558 +219,350 @@ const MediaLibraryPage = () => {
         }
     };
 
-    const handleSelectAll = () => {
-        if (checkedFiles.size === filteredFiles.length && filteredFiles.length > 0) {
-            setCheckedFiles(new Set());
-        } else {
-            const allIds = filteredFiles.map(f => f.id);
-            setCheckedFiles(new Set(allIds));
-        }
-    };
-
-    const handleCardClick = (file, index, e) => {
-        if (e?.shiftKey || e?.ctrlKey || e?.metaKey) { 
-            e.preventDefault(); 
+    const handleCheckFile = useCallback((file, index, e) => {
+        if (e?.shiftKey && lastSelectedIndex.current !== null) {
+            const start = Math.min(lastSelectedIndex.current, index);
+            const end = Math.max(lastSelectedIndex.current, index);
+            const filesRange = visibleFiles.slice(start, end + 1);
             setCheckedFiles(prev => {
                 const next = new Set(prev);
-                if (next.has(file.id)) next.delete(file.id);
-                else next.add(file.id);
+                filesRange.forEach(f => next.add(f.id));
                 return next;
             });
+        } else {
+            setCheckedFiles(prev => {
+                const next = new Set(prev);
+                next.has(file.id) ? next.delete(file.id) : next.add(file.id);
+                return next;
+            });
+        }
+        lastSelectedIndex.current = index;
+    }, [visibleFiles]);
+
+    const handleCardClick = useCallback((file, index, e) => {
+        if (e?.ctrlKey || e?.metaKey) {
+            handleCheckFile(file, index, e);
+        } else {
+            setSelectedFile(prev => (prev && prev.id === file.id ? null : file));
             lastSelectedIndex.current = index;
-        } 
-        else {
-            setSelectedFile(file);
-            lastSelectedIndex.current = index;
+        }
+    }, [handleCheckFile]);
+
+    const handleGridBackgroundClick = (e) => {
+        if (e.target === e.currentTarget) {
+            setSelectedFile(null);
         }
     };
 
-    const handleCheckFile = (file, index, e) => {
-        if (e?.shiftKey) {
-            e.preventDefault();
-        }
-        setCheckedFiles(prev => {
-            const next = new Set(prev);
-            if (next.has(file.id)) {
-                next.delete(file.id);
-            } else {
-                next.add(file.id);
-            }
-            return next;
-        });
-        lastSelectedIndex.current = index;
+    const handleSelectAll = () => {
+        setCheckedFiles(new Set(filteredFiles.map(f => f.id)));
+    };
+
+    const handleDeselectAll = () => {
+        setCheckedFiles(new Set());
     };
 
     const handleBulkDelete = async () => {
         if (checkedFiles.size === 0) return;
-
-        const isConfirmed = await confirm({
-            title: `Видалити ${checkedFiles.size} файлів?`,
-            message: "Ця дія незворотна.",
-            type: "danger",
-            confirmLabel: "Видалити все"
-        });
-
-        if (isConfirmed) {
+        if (await confirm({ title: `Видалити ${checkedFiles.size} файлів?`, type: "danger", confirmLabel: "Видалити все" })) {
             try {
-                const deletePromises = Array.from(checkedFiles).map(id => apiClient.delete(`/media/${id}`));
-                await Promise.all(deletePromises);
-
+                await Promise.all(Array.from(checkedFiles).map(id => apiClient.delete(`/media/${id}`)));
                 setFiles(prev => prev.filter(f => !checkedFiles.has(f.id)));
                 setCheckedFiles(new Set());
                 setSelectedFile(null);
                 toast.success('Файли видалено');
-            } catch (error) {
-                console.error(error);
-                toast.error('Помилка під час видалення');
-            }
+            } catch (err) { toast.error('Помилка'); }
         }
     };
 
     const handleBulkDownload = async () => {
-        if (checkedFiles.size === 0) return;
         const filesToDownload = files.filter(f => checkedFiles.has(f.id));
         if (filesToDownload.length === 0) return;
-
-        if (filesToDownload.length === 1) {
-            const file = filesToDownload[0];
-            downloadSingleFile(file);
-        } else {
-            toast.info(`Завантаження ${filesToDownload.length} файлів...`);
-            for (let i = 0; i < filesToDownload.length; i++) {
-                setTimeout(() => {
-                    downloadSingleFile(filesToDownload[i]);
-                }, i * 500); 
-            }
-        }
+        toast.info(`Завантаження ${filesToDownload.length} файлів...`);
+        filesToDownload.forEach((file, i) => {
+            setTimeout(async () => {
+                try {
+                    const response = await fetch(`${API_URL}${file.path_full}`);
+                    if (!response.ok) throw new Error('Network error');
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = file.original_file_name || `download-${Date.now()}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } catch (error) {
+                    console.error("Download failed:", error);
+                    toast.error(`Не вдалося завантажити ${file.original_file_name}`);
+                }
+            }, i * 500);
+        });
         setCheckedFiles(new Set());
     };
 
-    const downloadSingleFile = async (file) => {
-        try {
-            const response = await fetch(`${API_URL}${file.path_full}`);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = file.original_file_name || 'download';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (err) {
-            console.error("Download error", err);
+    const onDragEvent = (e, active) => {
+        e.preventDefault(); e.stopPropagation();
+        if (active !== undefined) {
+             if (active) dragCounter.current += 1;
+             else dragCounter.current -= 1;
+             if (dragCounter.current > 0) setIsDragging(true);
+             else setIsDragging(false);
         }
     };
-
-    const onDragEnter = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dragCounter.current += 1;
-        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-            setIsDragging(true);
-        }
-    };
-
-    const onDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dragCounter.current -= 1;
-        if (dragCounter.current === 0) {
-            setIsDragging(false);
-        }
-    };
-
-    const onDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    };
-
     const onDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         setIsDragging(false);
         dragCounter.current = 0;
-        
         const files = e.dataTransfer.files;
-        if (files && files.length > 0) {
-            handleUpload({ target: { files } });
-        }
+        if (files && files.length > 0) handleUpload({ target: { files } });
     };
-
-    const filterTypes = [
-        { id: 'all', label: 'Всі', icon: null },
-        { id: 'image', label: 'Фото', icon: IconImage },
-        { id: 'video', label: 'Відео', icon: IconVideo },
-        { id: 'document', label: 'Док.', icon: IconFileText },
-        { id: 'font', label: 'Шрифти', icon: IconType },
-        { id: 'audio', label: 'Аудіо', icon: IconMusic },
-    ];
-
+    
     const styles = {
         pageWrapper: {
             margin: '-2rem', 
             width: 'calc(100% + 4rem)',
-            height: 'calc(100vh - 64px + 4rem)', 
-            display: 'flex',
-            flexDirection: 'column',
+            minHeight: '100%', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            backgroundColor: 'var(--platform-bg)', 
+            position: 'relative'
+        },
+        stickyContainer: {
+            position: 'sticky',
+            top: 0,
+            zIndex: 100,
             backgroundColor: 'var(--platform-bg)',
-            color: 'var(--platform-text-primary)',
-            overflow: 'hidden', 
-            position: 'relative',
+            boxShadow: '0 1px 0 var(--platform-border-color)'
         },
         header: {
             padding: '12px 24px', 
             display: 'flex', 
-            justifyContent: 'space-between', 
+            justifyContent: 'center', 
             alignItems: 'center',
-            borderBottom: '1px solid var(--platform-border-color)',
-            flexShrink: 0,
-            backgroundColor: 'var(--platform-bg)',
+            borderBottom: '1px solid var(--platform-border-color)', 
             height: '60px', 
-        },
-        workspace: {
-            display: 'flex',
-            flex: 1,
-            overflow: 'hidden', 
+            flexShrink: 0, 
+            backgroundColor: 'var(--platform-bg)', 
             position: 'relative'
         },
-        mainContent: {
-            flex: 1,
+        contentContainer: {
             display: 'flex',
-            flexDirection: 'column',
-            minWidth: 0, 
-            height: '100%', 
+            flexGrow: 1, 
+            alignItems: 'flex-start',
+            position: 'relative'
         },
-        filtersBar: {
-            padding: '12px 24px',
-            borderBottom: '1px solid var(--platform-border-color)',
-            backgroundColor: 'var(--platform-bg)',
-            flexShrink: 0, 
-            zIndex: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-        },
-        topFilterRow: {
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'center',
-            width: '100%',
-            flexWrap: 'wrap',
-        },
-        bottomFilterRow: {
-            display: 'flex', 
-            gap: '8px', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            paddingTop: '4px'
-        },
-        filesGridArea: {
-            flex: 1,
-            overflowY: 'auto', 
+        gridArea: { 
+            flex: 1, 
             padding: '24px', 
             position: 'relative',
+            minWidth: 0
         },
-        statusBar: {
-            padding: '0 24px',
-            height: '40px', 
-            borderTop: '1px solid var(--platform-border-color)',
-            backgroundColor: 'var(--platform-bg)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '0.8rem',
-            color: 'var(--platform-text-secondary)',
-            flexShrink: 0, 
-            marginTop: 'auto'
-        },
-        bulkActionsContainer: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px', 
-            padding: '4px 8px', 
-            background: 'transparent',
-            border: '1px solid var(--platform-border-color)',
-            borderRadius: '6px',
-            transition: 'all 0.2s'
-        },
-        fileNameTruncated: {
-            maxWidth: '300px', 
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            textAlign: 'right',
-            fontWeight: 500
-        },
-        sidebar: {
+        grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' },
+        inspectorPanel: {
             width: '360px',
             borderLeft: '1px solid var(--platform-border-color)',
+            position: 'sticky',
+            top: `${headerHeight}px`,
+            maxHeight: `calc(100vh - ${headerHeight}px - 48px)`,
+            flexShrink: 0,
             backgroundColor: 'var(--platform-bg)',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 40,
-            height: '100%',
-            overflowY: 'auto',
-            boxShadow: '-4px 0 16px rgba(0,0,0,0.03)'
+            zIndex: 40
         },
+        statusBar: {
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 100,
+            padding: '0 24px', 
+            height: '48px', 
+            borderTop: '1px solid var(--platform-border-color)',
+            backgroundColor: 'var(--platform-bg)', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            fontSize: '0.8rem', 
+            color: 'var(--platform-text-secondary)', 
+            flexShrink: 0
+        },
+        formatChip: (isActive) => ({
+            padding: '0 12px', borderRadius: '20px', fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer',
+            border: `1px solid ${isActive ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
+            color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+            background: isActive ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent',
+            transition: 'all 0.2s',
+            height: '28px',
+            display: 'flex',
+            alignItems: 'center',
+            fontWeight: 500
+        })
     };
 
+    const formatButtons = (activeType && FORMATS_BY_TYPE[activeType]?.length > 0) ? (
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <button style={styles.formatChip(!activeFormat)} onClick={() => setActiveFormat(null)}>Всі формати</button>
+            {FORMATS_BY_TYPE[activeType].map(fmt => (
+                <button key={fmt} style={styles.formatChip(activeFormat === fmt)} onClick={() => setActiveFormat(activeFormat === fmt ? null : fmt)}>
+                    {fmt}
+                </button>
+            ))}
+        </div>
+    ) : null;
+
     return (
-        <div 
-            style={styles.pageWrapper} 
-            onDragEnter={onDragEnter}
-            onDragOver={onDragOver} 
-            onDragLeave={onDragLeave} 
-            onDrop={onDrop}
+        <div style={styles.pageWrapper} 
+            onDragEnter={(e) => onDragEvent(e, true)} onDragLeave={(e) => onDragEvent(e, false)} 
+            onDragOver={(e) => e.preventDefault()} onDrop={onDrop}
         >
             {isDragging && (
                 <div style={{
-                    position: 'absolute', inset: 0, zIndex: 100,
-                    backgroundColor: 'rgba(var(--platform-accent-rgb, 59, 130, 246), 0.1)',
-                    border: '4px dashed var(--platform-accent)',
+                    position: 'fixed', inset: 0, zIndex: 200, 
+                    backgroundColor: 'rgba(var(--platform-accent-rgb), 0.1)', border: '4px dashed var(--platform-accent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--platform-accent)', fontSize: '1.5rem', fontWeight: 'bold',
-                    pointerEvents: 'none' 
+                    color: 'var(--platform-accent)', fontSize: '1.5rem', fontWeight: 'bold', pointerEvents: 'none',
+                    margin: '2rem' 
                 }}>
                     Перетягніть файли сюди
                 </div>
             )}
 
-            <div style={styles.header}>
-                <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Медіатека</h1>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <Button 
-                        variant="primary"
-                        onClick={() => fileInputRef.current.click()}
-                    >
-                        <IconUpload size={18} /> 
-                        <span>Завантажити</span>
-                    </Button>
-                    <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleUpload} />
+            <div style={styles.stickyContainer} ref={headerRef}>
+                <div style={styles.header}>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Медіатека</h1>
+                    
+                    <div style={{ display: 'flex', gap: '10px', position: 'absolute', right: '24px' }}>
+                        <Button variant="primary" type="button" onClick={() => fileInputRef.current.click()}>
+                            <Upload size={18} /> <span>Завантажити</span>
+                        </Button>
+                        <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleUpload} />
+                    </div>
                 </div>
+
+                <SiteFilters 
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    sortOption={sortOption}
+                    onSortChange={setSortOption}
+                    sortOptions={SORT_OPTIONS}
+                    tags={FILE_TYPES}
+                    selectedTag={activeType}
+                    onTagSelect={setActiveType}
+                    showStarFilter={true}
+                    isStarActive={onlyFavorites}
+                    onStarClick={() => setOnlyFavorites(!onlyFavorites)}
+                    afterTags={formatButtons}
+                />
             </div>
 
-            <div style={styles.workspace}>
-                
-                <div style={styles.mainContent}>
-                    
-                    <div style={styles.filtersBar}>
-                        
-                        <div style={styles.topFilterRow}>
-                            <div style={{ flex: '1 1 200px', minWidth: '200px' }}>
-                                <Input 
-                                    placeholder="Пошук файлів..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    leftIcon={<IconSearch size={18} />}
-                                    rightIcon={searchQuery ? <IconX size={16} onClick={() => setSearchQuery('')} style={{cursor: 'pointer'}} /> : null}
-                                    wrapperStyle={{ marginBottom: 0 }}
-                                    style={{ height: '38px' }}
-                                />
-                            </div>
-
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px', 
-                                flexWrap: 'wrap', 
-                                marginLeft: 'auto',
-                                flexShrink: 0
-                            }}>
-                                <div style={{ width: '180px' }}>
-                                    <Select 
-                                        value={sortKey}
-                                        onChange={(e) => setSortKey(e.target.value)}
-                                        options={SORT_OPTIONS}
-                                        placeholder="Сортування"
-                                        style={{ height: '38px', padding: '6px 10px' }}
+            <div style={styles.contentContainer}>
+                <div 
+                    style={styles.gridArea} 
+                    onClick={handleGridBackgroundClick}
+                >
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}>Завантаження...</div>
+                    ) : filteredFiles.length === 0 ? (
+                        <EmptyState 
+                            title="Файлів не знайдено"
+                            description="Спробуйте змінити фільтри або завантажити нові файли"
+                            icon={Search}
+                            action={
+                                (searchTerm || activeType || onlyFavorites) && (
+                                    <Button variant="ghost" onClick={() => { setSearchTerm(''); setActiveType(null); setOnlyFavorites(false); }}>
+                                        Очистити фільтри
+                                    </Button>
+                                )
+                            }
+                        />
+                    ) : (
+                        <>
+                            <div style={styles.grid}>
+                                {visibleFiles.map((file, index) => (
+                                    <MediaGridItem 
+                                        key={file.id} 
+                                        file={file} 
+                                        selected={selectedFile?.id === file.id}
+                                        onSelect={(f, e) => handleCardClick(f, index, e)}
+                                        onToggleFavorite={() => handleToggleFavorite(file)}
+                                        isChecked={checkedFiles.has(file.id)}
+                                        onCheck={(f, e) => handleCheckFile(f, index, e)}
                                     />
-                                </div>
-                                
-                                <Button 
-                                    variant="outline"
-                                    onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')} 
-                                    title={sortDirection === 'asc' ? "За зростанням" : "За спаданням"}
-                                    style={{ height: '38px', width: '38px', padding: 0, background: 'var(--platform-card-bg)' }}
-                                >
-                                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{sortDirection === 'desc' ? '↓' : '↑'}</span>
-                                </Button>
-
-                                <Button
-                                    variant="square-accent"
-                                    active={onlyFavorites}
-                                    onClick={() => setOnlyFavorites(prev => !prev)}
-                                    title="Тільки обрані"
-                                    style={{ height: '38px', width: '38px' }}
-                                >
-                                    <IconStar size={20} filled={onlyFavorites} />
-                                </Button>
-
-                                <Button 
-                                    variant="square-danger"
-                                    onClick={handleClearFilters}
-                                    title="Очистити всі фільтри"
-                                    style={{ height: '38px', width: '38px' }}
-                                >
-                                    <IconClear size={18} />
-                                </Button>
+                                ))}
                             </div>
-                        </div>
-
-                        <div style={styles.bottomFilterRow}>
-                            {filterTypes.map(type => (
-                                <Button
-                                    key={type.id}
-                                    variant="outline"
-                                    onClick={() => { setActiveType(type.id); setVisibleCount(48); }}
-                                    style={{
-                                        borderRadius: '20px',
-                                        padding: '6px 14px',
-                                        fontSize: '0.85rem',
-                                        height: '32px',
-                                        border: activeType === type.id ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-                                        color: activeType === type.id ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                                        background: activeType === type.id ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent'
-                                    }}
-                                >
-                                    {type.icon && <type.icon size={14} />} {type.label}
-                                </Button>
-                            ))}
-                            
-                            {activeType !== 'all' && FORMATS_BY_TYPE[activeType]?.length > 0 && (
-                                <>
-                                    <div style={{ width: '1px', height: '24px', background: 'var(--platform-border-color)', margin: '0 8px', flexShrink: 0 }}></div>
-                                    
-                                    {FORMATS_BY_TYPE[activeType].map(fmt => (
-                                        <Button
-                                            key={fmt}
-                                            variant="outline"
-                                            onClick={() => setActiveFormat(activeFormat === fmt ? null : fmt)}
-                                            style={{
-                                                borderRadius: '6px', 
-                                                padding: '4px 10px',
-                                                fontSize: '0.8rem',
-                                                height: '32px',
-                                                textTransform: 'uppercase',
-                                                border: activeFormat === fmt ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-                                                color: activeFormat === fmt ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                                                background: activeFormat === fmt ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent'
-                                            }}
-                                        >
-                                            {fmt}
-                                        </Button>
-                                    ))}
-                                </>
+                            {remainingCount > 0 && (
+                                <div style={{ textAlign: 'center', marginTop: '30px' }}>
+                                    <Button variant="outline" onClick={() => setVisibleCount(p => p + 48)} style={{ borderRadius: '30px' }}>
+                                        Показати ще ({remainingCount})
+                                    </Button>
+                                </div>
                             )}
-                        </div>
-                    </div>
-
-                    <div 
-                        style={styles.filesGridArea}
-                        className="custom-scrollbar" 
-                    >
-                        {loading ? (
-                            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}>Завантаження...</div>
-                        ) : filteredFiles.length === 0 ? (
-                            <div style={{ 
-                                textAlign: 'center', padding: '60px 20px', 
-                                border: '2px dashed var(--platform-border-color)', borderRadius: '16px', color: 'var(--platform-text-secondary)', marginTop: '24px',
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                <IconSearch size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
-                                <p style={{ margin: 0, marginBottom: '16px' }}>Файлів не знайдено</p>
-                                <Button 
-                                    variant="primary"
-                                    onClick={handleClearFilters}
-                                >
-                                    Очистити фільтри
-                                </Button>
-                            </div>
-                        ) : (
-                            <>
-                                <div style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
-                                    gap: '16px'
-                                }}>
-                                    {visibleFiles.map((file, index) => (
-                                        <MediaGridItem 
-                                            key={file.id} 
-                                            file={file} 
-                                            selected={selectedFile?.id === file.id}
-                                            onSelect={(f, e) => handleCardClick(f, index, e)}
-                                            onToggleFavorite={(e) => handleToggleFavorite(file, e)}
-                                            isChecked={checkedFiles.has(file.id)}
-                                            onCheck={(f, e) => handleCheckFile(f, index, e)}
-                                        />
-                                    ))}
-                                </div>
-                                {remainingCount > 0 && (
-                                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', marginBottom: '20px' }}>
-                                        <Button 
-                                            variant="outline"
-                                            onClick={handleLoadMore}
-                                            style={{ borderRadius: '30px' }}
-                                        >
-                                            Показати ще ({remainingCount})
-                                        </Button>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                    
-                    <div style={styles.statusBar}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <span style={{ fontWeight: 500 }}>
-                                Всього: {files.length} {filteredFiles.length !== files.length && `(Знайдено: ${filteredFiles.length})`}
-                            </span>
-                            
-                            <Button 
-                                variant="ghost"
-                                onClick={handleSelectAll}
-                                style={{
-                                    fontSize: '0.8rem', fontWeight: 600,
-                                    color: 'var(--platform-accent)',
-                                    padding: '4px 8px', borderRadius: '6px'
-                                }}
-                            >
-                                <IconCheck size={14} />
-                                {checkedFiles.size === filteredFiles.length && filteredFiles.length > 0 ? 'Зняти все' : 'Вибрати все'}
-                            </Button>
-                        </div>
-
-                        {checkedFiles.size > 0 && (
-                            <div style={styles.bulkActionsContainer}>
-                                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-                                    Вибрано: {checkedFiles.size}
-                                </span>
-                                
-                                <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }}></div>
-                                
-                                <Button 
-                                    variant="ghost"
-                                    onClick={handleBulkDownload}
-                                    title={checkedFiles.size > 1 ? "Завантажити архівом (послідовно)" : "Завантажити"}
-                                    style={{
-                                        fontSize: '0.8rem', fontWeight: 500, color: 'var(--platform-text-primary)',
-                                        padding: '6px 8px', borderRadius: '4px'
-                                    }}
-                                >
-                                    <IconDownload size={14} />
-                                    <span className="bulk-text">
-                                        {checkedFiles.size > 1 ? 'Завантажити архівом' : 'Завантажити'}
-                                    </span>
-                                </Button>
-                                
-                                <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }}></div>
-                                
-                                <Button 
-                                    variant="ghost"
-                                    onClick={handleBulkDelete}
-                                    title="Видалити вибрані"
-                                    style={{
-                                        fontSize: '0.8rem', fontWeight: 500, color: '#e53e3e',
-                                        padding: '6px 8px', borderRadius: '4px'
-                                    }}
-                                >
-                                    <IconTrash size={14} />
-                                    <span className="bulk-text">
-                                        Видалити
-                                    </span>
-                                </Button>
-                            </div>
-                        )}
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span>Обраний файл:</span>
-                            <span 
-                                style={styles.fileNameTruncated} 
-                                title={selectedFile ? (selectedFile.original_file_name || selectedFile.display_name) : ''}
-                            >
-                                {selectedFile 
-                                    ? (selectedFile.original_file_name || selectedFile.display_name) 
-                                    : 'відсутній'
-                                }
-                            </span>
-                        </div>
-                    </div>
-
+                        </>
+                    )}
                 </div>
 
                 {selectedFile && (
                     <div 
-                        style={styles.sidebar}
-                        className="custom-scrollbar"
+                        style={{...styles.inspectorPanel, overflowY: 'auto'}} 
+                        className="hide-scrollbar"
                     >
+                        <style>{`
+                            .hide-scrollbar {
+                                -ms-overflow-style: none;
+                                scrollbar-width: none;
+                            }
+                            .hide-scrollbar::-webkit-scrollbar {
+                                display: none;
+                            }
+                        `}</style>
                         <MediaInspector 
                             file={selectedFile} 
                             onUpdate={handleUpdateFile}
                             onDelete={handleDelete}
                             onClose={() => setSelectedFile(null)}
                         />
+                    </div>
+                )}
+            </div>
+
+            <div style={styles.statusBar}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>Всього: {files.length}</span>
+                    <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }} />
+                    
+                    <Button variant="ghost" onClick={handleSelectAll} style={{ fontSize: '0.8rem', padding: '4px' }}>
+                        <Check size={14} /> Вибрати все
+                    </Button>
+
+                    {checkedFiles.size > 0 && (
+                        <Button 
+                            variant="ghost" 
+                            onClick={handleDeselectAll} 
+                            style={{ fontSize: '0.8rem', padding: '4px', color: 'var(--platform-text-secondary)' }}
+                            title="Скинути виділення"
+                        >
+                            <XIcon size={14} /> Скинути ({checkedFiles.size})
+                        </Button>
+                    )}
+                </div>
+
+                {checkedFiles.size > 0 ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Button variant="ghost" onClick={handleBulkDownload} style={{ fontSize: '0.8rem', padding: '4px 8px' }}>
+                            <Download size={14} /> Завантажити
+                        </Button>
+                        
+                        <Button 
+                            variant="ghost"
+                            onClick={handleBulkDelete} 
+                            style={{ fontSize: '0.8rem', padding: '4px 8px', color: '#e53e3e' }}
+                        >
+                            <Trash2 size={14} /> Видалити
+                        </Button>
+                    </div>
+                ) : (
+                    <div style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {selectedFile ? (selectedFile.original_file_name || selectedFile.display_name) : 'Файл не обрано'}
                     </div>
                 )}
             </div>

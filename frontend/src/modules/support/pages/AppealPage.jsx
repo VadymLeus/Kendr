@@ -1,12 +1,10 @@
 // frontend/src/modules/support/pages/AppealPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import apiClient from '../../../common/services/api';
-import { Button } from '../../../common/components/ui/Button';
-import { IconAlertTriangle, IconGavel, IconArrowRight } from '../../../common/components/ui/Icons';
+import apiClient from '../../../shared/api/api';
+import { Button } from '../../../shared/ui/elements/Button';
 import { Helmet } from 'react-helmet-async';
-import { IconCheckCircle } from '../../../common/components/ui/Icons'; 
-
+import { AlertTriangle, Gavel, ArrowRight, CheckCircle } from 'lucide-react';
 
 const AppealPage = () => {
     const [suspendedSites, setSuspendedSites] = useState([]);
@@ -71,7 +69,7 @@ const AppealPage = () => {
                     alignItems: 'center',
                     gap: '12px'
                 }}>
-                    <IconGavel size={32} style={{ color: 'var(--platform-danger)' }} />
+                    <Gavel size={32} style={{ color: 'var(--platform-danger)' }} />
                     Оскарження блокування
                 </h2>
                 <p style={{ color: 'var(--platform-text-secondary)', fontSize: '1.1rem' }}>
@@ -88,7 +86,7 @@ const AppealPage = () => {
                     border: '1px solid var(--platform-border-color)'
                 }}>
                     <div style={{ marginBottom: '1.5rem', color: 'var(--platform-success)' }}>
-                        <IconCheckCircle size={48} />
+                        <CheckCircle size={48} />
                     </div>
                     <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
                         У вас немає призупинених сайтів
@@ -97,7 +95,7 @@ const AppealPage = () => {
                         Це чудово! Ви дотримуєтесь правил платформи.
                     </p>
                     <Link to="/my-sites" style={{ textDecoration: 'none' }}>
-                        <Button variant="primary" icon={<IconArrowRight size={18}/>}>
+                        <Button variant="primary" icon={<ArrowRight size={18}/>}>
                             Перейти до моїх сайтів
                         </Button>
                     </Link>
@@ -125,7 +123,7 @@ const AppealPage = () => {
                             </div>
 
                             <div style={warningBoxStyle}>
-                                <IconAlertTriangle size={20} />
+                                <AlertTriangle size={20} />
                                 <span>
                                     Заплановане видалення: <strong>{new Date(site.deletion_scheduled_for).toLocaleDateString()}</strong>
                                 </span>
