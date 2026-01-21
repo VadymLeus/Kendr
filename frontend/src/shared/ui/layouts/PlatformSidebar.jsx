@@ -10,6 +10,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     const { cartItems } = useContext(CartContext);
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    
     const handleProtectedLinkClick = (e, path) => {
         if (!user) {
             e.preventDefault();
@@ -18,6 +19,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     };
 
     const sidebarWidth = isCollapsed ? '80px' : '280px';
+    
     const styles = {
         container: {
             position: 'fixed',
@@ -52,6 +54,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
             transition: 'all 0.3s ease',
+            flexShrink: 0
         },
         toggleBtn: {
             position: 'absolute',
@@ -108,6 +111,10 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
             overflow: hidden;
             border: 1px solid transparent;
         }
+        .sidebar-link svg {
+            flex-shrink: 0; 
+        }
+        
         .sidebar-link:hover {
             color: var(--platform-accent);
             background: var(--platform-card-bg);
@@ -163,6 +170,14 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
             textDecoration: 'none'
         };
 
+        const iconContainerStyle = {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            minWidth: '24px'
+        };
+
         return (
             <NavLink 
                 to={to} 
@@ -171,9 +186,12 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 onClick={handleClick}
                 title={isCollapsed ? label : ''}
             >
-                {isCreateButton && isCollapsed ? <Plus size={24} /> : <Icon size={20} />}
+                <div style={iconContainerStyle}>
+                    {isCreateButton && isCollapsed ? <Plus size={24} /> : <Icon size={20} />}
+                </div>
+                
                 {!isCollapsed && (
-                    <span style={{ opacity: 1, transition: 'opacity 0.2s' }}>
+                    <span style={{ opacity: 1, transition: 'opacity 0.2s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {label} {count !== undefined && `(${count})`}
                     </span>
                 )}
@@ -227,8 +245,10 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
 
             <div style={styles.footer}>
                 {!user ? (
-                    <Link to="/login" className={isCollapsed ? 'sidebar-link' : 'login-btn-area'} title="Увійти" style={{ textDecoration: 'none' }}>
-                        <LogIn size={20} />
+                    <Link to="/login" className={isCollapsed ? 'sidebar-link' : 'login-btn-area'} title="Увійти" style={{ textDecoration: 'none', justifyContent: isCollapsed ? 'center' : 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <LogIn size={20} />
+                        </div>
                         {!isCollapsed && <span style={{ marginLeft: '8px' }}>Увійти</span>}
                     </Link>
                 ) : (

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../ui/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../ui/DraggableBlockItem';
+import { DND_TYPE_EXISTING } from './useBlockDrop';
 import { resolveAccentColor, adjustColor, isLightColor } from '../../../shared/utils/themeUtils';
 import ContextMenu from '../ui/ContextMenu';
 import { findBlockByPath } from './blockUtils';
@@ -25,7 +26,6 @@ const BlockEditor = ({
 }) => {
     
     const { confirm } = useConfirm();
-
     const [contextMenu, setContextMenu] = useState({
         visible: false,
         x: 0,
@@ -34,13 +34,28 @@ const BlockEditor = ({
         blockId: null
     });
 
-    const [, dropRef] = useDrop(() => ({
-        accept: [DND_TYPE_NEW_BLOCK],
+    const [{ isOverBottom }, bottomDropRef] = useDrop(() => ({
+        accept: [DND_TYPE_NEW_BLOCK, DND_TYPE_EXISTING],
+        collect: (monitor) => ({
+            isOverBottom: monitor.isOver(),
+        }),
         drop: (item, monitor) => {
             if (monitor.didDrop()) return;
-            onAddBlock([blocks.length], item.blockType, item.presetData); 
+            const dragType = monitor.getItemType();
+            if (dragType === DND_TYPE_NEW_BLOCK) {
+                onAddBlock([blocks.length], item.blockType, item.presetData);
+            } 
+
+            else if (dragType === DND_TYPE_EXISTING) {
+                const dragPath = item.path;
+                const targetPath = [blocks.length]; 
+                const isLastBlock = dragPath.length === 1 && dragPath[0] === blocks.length - 1;
+                if (!isLastBlock) {
+                    onMoveBlock(dragPath, targetPath);
+                }
+            }
         },
-    }), [blocks.length, onAddBlock]);
+    }), [blocks.length, onAddBlock, onMoveBlock]);
 
     const emptyDropRef = useDrop(() => ({
         accept: [DND_TYPE_NEW_BLOCK],
@@ -150,7 +165,7 @@ const BlockEditor = ({
         background: 'transparent',
         width: '100%',
         minHeight: '100%',
-        padding: '0 0 4rem 0', 
+        padding: '0', 
         position: 'relative'
     };
 
@@ -186,18 +201,10 @@ const BlockEditor = ({
                     <div style={{ marginBottom: '1rem', color: 'var(--platform-accent)', display: 'flex', justifyContent: 'center' }}>
                         <PackageOpen size={48} />
                     </div>
-                    <h3 style={{ 
-                        color: 'inherit', 
-                        marginBottom: '0.5rem',
-                        fontSize: '1.2rem'
-                    }}>
+                    <h3 style={{ color: 'inherit', marginBottom: '0.5rem', fontSize: '1.2rem' }}>
                         Початок роботи
                     </h3>
-                    <p style={{ 
-                        margin: 0, 
-                        fontSize: '0.95rem',
-                        opacity: 0.8
-                    }}>
+                    <p style={{ margin: 0, fontSize: '0.95rem', opacity: 0.8 }}>
                         Перетягніть блок з бібліотеки або натисніть "+" у панелі додавання блоків
                     </p>
                 </div>
@@ -233,52 +240,30 @@ const BlockEditor = ({
                 </div>
 
                 {blocks.length > 0 && !isHeaderMode && (
-                    <div
-                        ref={dropRef}
+                    <div 
+                        ref={bottomDropRef}
                         style={{
-                            padding: '2rem',
-                            textAlign: 'center',
-                            border: '2px dashed var(--platform-border-color)',
-                            borderRadius: '8px',
-                            color: 'var(--platform-text-secondary)',
-                            margin: '20px 0',
-                            opacity: 0.7,
-                            transition: 'all 0.3s ease',
-                            background: 'var(--platform-bg)',
-                            cursor: 'pointer'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.borderColor = 'var(--platform-accent)';
-                            e.target.style.color = 'var(--platform-accent)';
-                            e.target.style.opacity = '1';
-                            e.target.style.background = 'rgba(var(--platform-accent-rgb), 0.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.borderColor = 'var(--platform-border-color)';
-                            e.target.style.color = 'var(--platform-text-secondary)';
-                            e.target.style.opacity = '0.7';
-                            e.target.style.background = 'var(--platform-bg)';
+                            height: '150px',
+                            marginTop: '-12px',
+                            width: '100%',
+                            background: 'transparent',
+                            position: 'relative',
+                            zIndex: 1
                         }}
                     >
-                        <p style={{ 
-                            margin: 0, 
-                            fontSize: '0.9rem',
-                            fontWeight: '500'
-                        }}>
-                            Перетягніть блок сюди, щоб додати в кінець
-                        </p>
-                    </div>
-                )}
-
-                {blocks.length > 0 && (
-                    <div style={{
-                        textAlign: 'center',
-                        marginTop: '2rem',
-                        padding: '1rem',
-                        color: 'var(--platform-text-secondary)',
-                        fontSize: '0.8rem',
-                        opacity: 0.6
-                    }}>
+                        {isOverBottom && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '0',
+                                left: 0, 
+                                right: 0,
+                                height: '4px',
+                                backgroundColor: 'var(--platform-accent)',
+                                borderRadius: '2px',
+                                boxShadow: '0 0 6px rgba(0,0,0,0.3)',
+                                zIndex: 100,
+                            }} />
+                        )}
                     </div>
                 )}
             </div>

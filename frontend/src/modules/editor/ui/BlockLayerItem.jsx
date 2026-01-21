@@ -1,10 +1,10 @@
 // frontend/src/modules/editor/ui/BlockLayerItem.jsx
 import React, { useRef } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
+import { useDrag } from 'react-dnd';
 import { BLOCK_LIBRARY } from '../core/editorConfig'; 
-import { Settings, Trash2, PanelTop, HelpCircle } from 'lucide-react';
+import { useBlockDrop, DND_TYPE_EXISTING } from '../core/useBlockDrop';
+import { Settings, Trash2, PanelTop, HelpCircle, GripVertical } from 'lucide-react';
 
-const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 const rigidIconWrapper = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     width: '20px', height: '20px', minWidth: '20px', flexShrink: 0
@@ -30,15 +30,55 @@ const BlockLayerItem = ({
         icon: <HelpCircle size={16} /> 
     };
 
+    const [{ isDragging }, drag] = useDrag({
+        type: DND_TYPE_EXISTING,
+        item: { path },
+        collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+    });
+
+    const { drop, dropPosition } = useBlockDrop({
+        ref,
+        path,
+        onMoveBlock,
+    });
+
+    drag(drop(ref));
+    const showDropIndicator = dropPosition && !isDragging;
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        onDeleteBlock(path);
+    };
+
+    const handleSelectAndScroll = (e) => {
+        e.stopPropagation();
+        onSelectBlock(path);
+        const blockDomId = `block-${block.block_id}`;
+        const element = document.getElementById(blockDomId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        }
+    };
+
+    const handleBtnEnter = (e, color, bg) => {
+        e.currentTarget.style.color = color;
+        e.currentTarget.style.background = bg;
+    };
+    const handleBtnLeave = (e, color) => {
+        e.currentTarget.style.color = color;
+        e.currentTarget.style.background = 'transparent';
+    };
+
     const styles = {
         layerItem: {
-            padding: '0.6rem 0.8rem',
+            position: 'relative',
+            padding: '0.6rem 0.4rem 0.6rem 0.8rem',
             margin: '0.25rem 0',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
-            background: 'var(--platform-card-bg)',
-            border: '1px solid var(--platform-border-color)',
+            background: isDragging ? 'var(--platform-bg)' : 'var(--platform-card-bg)',
+            border: '1px solid',
+            borderColor: isDragging ? 'var(--platform-accent)' : 'var(--platform-border-color)',
             borderRadius: '8px',
             cursor: 'grab',
             transition: 'all 0.2s ease',
@@ -46,7 +86,17 @@ const BlockLayerItem = ({
             fontSize: '0.875rem',
             fontWeight: 500,
             boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            overflow: 'hidden'
+            opacity: isDragging ? 0.5 : 1
+        },
+        dropIndicator: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: 'var(--platform-accent)',
+            zIndex: 10,
+            pointerEvents: 'none',
+            boxShadow: '0 0 4px rgba(0,0,0,0.3)'
         },
         nestedContainer: {
             marginLeft: '1.25rem',
@@ -82,57 +132,9 @@ const BlockLayerItem = ({
         actionsContainer: {
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
+            gap: '2px',
             flexShrink: 0
         }
-    };
-
-    const [{ isDragging }, drag] = useDrag({
-        type: DRAG_ITEM_TYPE_EXISTING,
-        item: { path },
-        collect: (monitor) => ({ isDragging: monitor.isDragging() }),
-    });
-
-    const [, drop] = useDrop({
-        accept: DRAG_ITEM_TYPE_EXISTING,
-        hover(item, monitor) {
-            if (!ref.current) return;
-            if (!monitor.canDrop()) return;
-
-            const dragPath = item.path;
-            const hoverPath = path;
-
-            if (dragPath.join(',') === hoverPath.join(',')) return;
-
-            onMoveBlock(dragPath, hoverPath);
-            item.path = hoverPath;
-        },
-    });
-
-    drag(drop(ref));
-    const handleDelete = (e) => {
-        e.stopPropagation();
-        onDeleteBlock(path);
-    };
-
-    const handleSelectAndScroll = (e) => {
-        e.stopPropagation();
-        onSelectBlock(path);
-
-        const blockDomId = `block-${block.block_id}`;
-        const element = document.getElementById(blockDomId);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-        }
-    };
-
-    const handleBtnEnter = (e, color, bg) => {
-        e.currentTarget.style.color = color;
-        e.currentTarget.style.background = bg;
-    };
-    const handleBtnLeave = (e, color) => {
-        e.currentTarget.style.color = color;
-        e.currentTarget.style.background = 'transparent';
     };
 
     let nestedBlocks = null;
@@ -170,26 +172,28 @@ const BlockLayerItem = ({
         <>
             <div
                 ref={ref}
-                style={{
-                    ...styles.layerItem,
-                    opacity: isDragging ? 0.3 : 1,
-                    border: isDragging ? '2px dashed var(--platform-accent)' : styles.layerItem.border,
-                    transform: isDragging ? 'scale(0.98)' : 'scale(1)'
-                }}
+                style={styles.layerItem}
                 onClick={handleSelectAndScroll}
                 onMouseEnter={(e) => {
-                    if (!isDragging) {
-                        e.currentTarget.style.transform = 'translateX(4px)';
-                        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
-                    }
+                    if (!isDragging) e.currentTarget.style.borderColor = 'var(--platform-accent)';
                 }}
                 onMouseLeave={(e) => {
-                    if (!isDragging) {
-                        e.currentTarget.style.transform = 'translateX(0)';
-                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-                    }
+                    if (!isDragging) e.currentTarget.style.borderColor = 'var(--platform-border-color)';
                 }}
             >
+                
+                {showDropIndicator && dropPosition === 'top' && (
+                    <div style={{ ...styles.dropIndicator, top: '-2px' }} />
+                )}
+
+                {showDropIndicator && dropPosition === 'bottom' && (
+                    <div style={{ ...styles.dropIndicator, bottom: '-2px' }} />
+                )}
+
+                <div style={{ ...rigidIconWrapper, color: 'var(--platform-text-secondary)', cursor: 'grab', marginRight: '4px' }}>
+                    <GripVertical size={14} />
+                </div>
+
                 <div style={styles.iconContainer}>
                     {blockInfo.icon}
                 </div>

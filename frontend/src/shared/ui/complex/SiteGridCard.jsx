@@ -110,7 +110,7 @@ const cardStyles = `
     
     .site-card-dropdown {
         position: absolute;
-        top: 46px; /* 10px отступ + 32px кнопка + 4px отступ */
+        top: 46px;
         right: 10px;
         background: var(--platform-card-bg);
         border: 1px solid var(--platform-border-color);
