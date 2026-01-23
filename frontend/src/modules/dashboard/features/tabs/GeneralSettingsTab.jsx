@@ -14,15 +14,19 @@ import { InputWithCounter } from '../../../../shared/ui/complex/InputWithCounter
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { TEXT_LIMITS } from '../../../../shared/config/limits';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
-import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText } from 'lucide-react';
+import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown } from 'lucide-react';
+import { exportSiteToZip } from '../../../../shared/utils/siteExporter';
 
 const API_URL = 'http://localhost:5000';
+
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const navigate = useNavigate();
     const { confirm } = useConfirm();
+    
     const [identityData, setIdentityData] = useState({ title: '', slug: '' });
     const [isSavingIdentity, setIsSavingIdentity] = useState(false);
     const [slugError, setSlugError] = useState('');
+    
     const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
     const [personalTemplates, setPersonalTemplates] = useState([]);
     const [systemTemplates, setSystemTemplates] = useState([]);
@@ -31,14 +35,17 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         try { return JSON.parse(localStorage.getItem('kendr_template_sections')) || { personal: true, system: true }; }
         catch (e) { return { personal: true, system: true }; }
     });
-    
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
     const [isCoverHovered, setIsCoverHovered] = useState(false);
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [availableTags, setAvailableTags] = useState([]);
     const [selectedTags, setSelectedTags] = useState([]);
+
+    const [isExporting, setIsExporting] = useState(false);
+
     const { data, handleChange, isSaving, setData } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
         {
@@ -276,6 +283,20 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         handleChange('theme_settings', updatedThemeSettings);
     };
 
+    const handleExportSite = async () => {
+        setIsExporting(true);
+        try {
+            toast.info("Підготовка архіву сайту...", { autoClose: 2000 });
+            await exportSiteToZip(siteData);
+            toast.success("Сайт успішно експортовано!");
+        } catch (error) {
+            console.error("Export failed:", error);
+            toast.error("Сталася помилка при експорті");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     const handleDeleteSite = async () => {
         if (await confirm({ title: "Видалити сайт?", message: `Ви впевнені? Це дію неможливо скасувати.`, type: "danger", confirmLabel: "Так, видалити сайт" })) {
             try {
@@ -315,7 +336,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     ];
 
     return (
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-4xl mx-auto px-4 pb-20 relative">
             <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
                 <div>
                     <h2 className="text-2xl font-semibold mb-1 text-(--platform-text-primary) flex items-center gap-2.5">
@@ -327,6 +348,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
+            {/* IDENTITY BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex items-center justify-between gap-3">
                     <div>
@@ -435,6 +457,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
+            {/* STATUS BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
@@ -470,6 +493,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
+            {/* SEO BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
@@ -521,6 +545,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
             
+            {/* COVER BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
@@ -634,6 +659,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
+            {/* PRIVACY BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
@@ -682,6 +708,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 )}
             </div>
 
+            {/* TEMPLATES BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex justify-between items-center gap-3">
                     <div>
@@ -787,6 +814,30 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 )}
             </div>
 
+            {/* EXPORT SITE BLOCK */}
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
+                <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                            <Download size={22} className="text-(--platform-accent)" /> Експорт сайту
+                        </h3>
+                        <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed max-w-2xl">
+                            Завантажте вихідний код вашого сайту (HTML/CSS) одним архівом. 
+                            Це створить архів (.zip) з усіма сторінками, стилями та медіа.
+                        </p>
+                    </div>
+                    <Button 
+                        onClick={handleExportSite} 
+                        disabled={isExporting}
+                        style={{ height: '46px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                        {isExporting ? <Loader size={18} className="animate-spin" /> : <FileDown size={18} />}
+                        {isExporting ? `Генерація...` : 'Завантажити .ZIP'}
+                    </Button>
+                </div>
+            </div>
+
+            {/* DANGER ZONE */}
             <div className="rounded-2xl border border-[#fed7d7] p-8 mb-6 shadow-sm bg-linear-to-br from-[#fff5f5] to-[#fed7d7]">
                 <div className="flex justify-between items-center flex-wrap gap-4">
                     <div className="flex-1">
