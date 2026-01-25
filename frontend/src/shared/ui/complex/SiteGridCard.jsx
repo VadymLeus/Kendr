@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SiteCoverDisplay from './SiteCoverDisplay';
-import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText } from 'lucide-react';
+import ReportModal from './ReportModal';
+import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock } from 'lucide-react';
 
 const cardStyles = `
     .site-grid-card {
@@ -116,7 +117,7 @@ const cardStyles = `
         border: 1px solid var(--platform-border-color);
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        min-width: 180px;
+        min-width: 200px;
         padding: 4px;
         display: flex;
         flex-direction: column;
@@ -134,7 +135,8 @@ const SiteStatusBadge = ({ status }) => {
     const config = {
         published: { label: 'Опубліковано', color: '#38a169', bg: 'rgba(56, 161, 105, 0.1)', icon: Globe },
         draft: { label: 'Чернетка', color: 'var(--platform-text-secondary)', bg: 'rgba(0,0,0,0.05)', icon: FileText },
-        suspended: { label: 'Призупинено', color: '#dd6b20', bg: 'rgba(221, 107, 32, 0.1)', icon: Pause }
+        suspended: { label: 'Призупинено', color: '#dd6b20', bg: 'rgba(221, 107, 32, 0.1)', icon: Pause },
+        private: { label: 'Прихований', color: '#805ad5', bg: 'rgba(128, 90, 213, 0.1)', icon: Lock }
     };
     const s = config[status] || config.draft;
     const Icon = s.icon;
@@ -154,11 +156,6 @@ const menuItemStyle = {
     cursor: 'pointer', color: 'var(--platform-text-primary)', fontSize: '0.85rem',
     display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textDecoration: 'none',
     boxSizing: 'border-box', borderRadius: '4px', transition: 'background 0.2s'
-};
-
-const menuItemHoverStyle = {
-    ...menuItemStyle,
-    background: 'var(--platform-hover-bg)'
 };
 
 const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) => {
@@ -202,7 +199,7 @@ const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) =
     );
 };
 
-const CardMenu = ({ site, isOwner, onToggleStatus, onDelete }) => {
+const CardMenu = ({ site, isOwner, onToggleStatus, onDelete, onReport }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
     useEffect(() => {
@@ -222,7 +219,7 @@ const CardMenu = ({ site, isOwner, onToggleStatus, onDelete }) => {
             >
                 <MoreVertical size={16} color="white" />
             </button>
-
+            
             {isOpen && (
                 <div className="site-card-dropdown" onClick={(e) => e.stopPropagation()}>
                     <MenuItem 
@@ -231,14 +228,45 @@ const CardMenu = ({ site, isOwner, onToggleStatus, onDelete }) => {
                         href={`/site/${site.site_path}`}
                         onClick={() => setIsOpen(false)}
                     />
+
+                    {!isOwner && (
+                        <MenuItem 
+                            icon={Flag} 
+                            label="Поскаржитись" 
+                            onClick={() => { setIsOpen(false); onReport(); }}
+                        />
+                    )}
                     
                     {isOwner && (
                         <>
                             <MenuItem 
                                 icon={site.status === 'published' ? GlobeLock : Globe} 
                                 label={site.status === 'published' ? 'Зняти з публікації' : 'Опублікувати'}
-                                onClick={(e) => { setIsOpen(false); onToggleStatus(site); }}
+                                onClick={(e) => { 
+                                    setIsOpen(false); 
+                                    onToggleStatus(site, site.status === 'published' ? 'draft' : 'published'); 
+                                }}
                             />
+
+                            {site.status !== 'private' ? (
+                                <MenuItem 
+                                    icon={Lock} 
+                                    label="Приховати (Приватний)"
+                                    onClick={(e) => { 
+                                        setIsOpen(false); 
+                                        onToggleStatus(site, 'private'); 
+                                    }}
+                                />
+                            ) : (
+                                <MenuItem 
+                                    icon={FileText} 
+                                    label="Зробити чернеткою"
+                                    onClick={(e) => { 
+                                        setIsOpen(false); 
+                                        onToggleStatus(site, 'draft'); 
+                                    }}
+                                />
+                            )}
                             
                             <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
                             
@@ -267,6 +295,7 @@ const SiteGridCard = ({
     isFavorite,
     formatDate 
 }) => {
+    const [isReportOpen, setIsReportOpen] = useState(false);
     const isOwner = variant === 'owner';
     const mainLink = isOwner ? `/dashboard/${site.site_path}` : `/site/${site.site_path}`;
     const isPinnedOrFav = isOwner ? site.is_pinned : isFavorite;
@@ -296,11 +325,13 @@ const SiteGridCard = ({
                 >
                     <Star size={16} fill={isPinnedOrFav ? "currentColor" : "none"} />
                 </button>
+                
                 <CardMenu 
                     site={site} 
                     isOwner={isOwner} 
                     onToggleStatus={onToggleStatus} 
                     onDelete={onDelete} 
+                    onReport={() => setIsReportOpen(true)}
                 />
 
                 <Link to={mainLink} style={{ ...noDecorationStyle, height: '180px', width: '100%', overflow: 'hidden', borderBottom: '1px solid var(--platform-border-color)' }}>
@@ -372,7 +403,7 @@ const SiteGridCard = ({
                         ) : (
                             <a 
                                 href={`/site/${site.site_path}`}
-                                target="_blank"
+                                target="_blank" 
                                 rel="noopener noreferrer"
                                 className="site-card-action-btn"
                                 style={noDecorationStyle}
@@ -383,6 +414,12 @@ const SiteGridCard = ({
                     </div>
                 </div>
             </div>
+
+            <ReportModal 
+                isOpen={isReportOpen} 
+                onClose={() => setIsReportOpen(false)} 
+                siteId={site.id} 
+            />
         </>
     );
 };

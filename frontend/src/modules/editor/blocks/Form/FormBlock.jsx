@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import apiClient from '../../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Send, ArrowRight, ShoppingCart, Mail, Phone, Check, Star, MousePointer2 } from 'lucide-react';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
+import { Send, ArrowRight, ShoppingCart, Mail, Phone, Check, Star, MousePointer2 } from 'lucide-react';
 
 const DEFAULT_BUTTON_CONFIG = {
     text: 'Надіслати',
@@ -21,7 +21,6 @@ const DEFAULT_BUTTON_CONFIG = {
 const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [status, setStatus] = useState({ loading: false, error: '', success: '' });
-    
     const { 
         successMessage, 
         height = 'small', 
@@ -67,7 +66,6 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const whiteColor = '#ffffff';
     const colorVar = buttonConfig.styleType === 'secondary' ? textColor : accentColor;
     const isOutline = buttonConfig.variant === 'outline';
-
     const dynamicBtnStyle = {
         background: isOutline ? 'transparent' : colorVar,
         color: isOutline ? colorVar : (buttonConfig.styleType === 'secondary' && !isOutline ? whiteColor : whiteColor),
@@ -149,24 +147,6 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     border-radius: ${safeRadius}px !important;
                 }
 
-                .${scopeClass} textarea::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .${scopeClass} textarea::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .${scopeClass} textarea::-webkit-scrollbar-thumb {
-                    background-color: var(--site-border-color);
-                    border-radius: 4px;
-                }
-                .${scopeClass} textarea::-webkit-scrollbar-thumb:hover {
-                    background-color: var(--site-accent);
-                }
-                .${scopeClass} textarea {
-                    scrollbar-width: thin;
-                    scrollbar-color: var(--site-border-color) transparent;
-                }
-                
                 .${scopeClass} input::placeholder,
                 .${scopeClass} textarea::placeholder {
                     color: var(--site-text-secondary);
@@ -195,8 +175,17 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 <input type="text" name="subject" value={formData.subject} onChange={handleChange} placeholder="Тема (необов'язково)" 
                     style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
 
-                <textarea name="message" value={formData.message} onChange={handleChange} placeholder="Ваше повідомлення*" required 
-                    style={{ ...inputStyle, minHeight: '150px', resize: 'vertical' }} onFocus={handleFocus} onBlur={handleBlur} />
+                <textarea 
+                    name="message" 
+                    value={formData.message} 
+                    onChange={handleChange} 
+                    placeholder="Ваше повідомлення*" 
+                    required 
+                    className="custom-scrollbar"
+                    style={{ ...inputStyle, minHeight: '150px', resize: 'vertical' }} 
+                    onFocus={handleFocus} 
+                    onBlur={handleBlur} 
+                />
                 
                 <div style={{ 
                     textAlign: buttonConfig.width === 'full' ? 'center' : (buttonConfig.alignment || 'center'),

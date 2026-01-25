@@ -92,10 +92,8 @@ exports.createSite = async (req, res, next) => {
     const { templateId, sitePath, title, selected_logo_url, isPersonal } = req.body;
     const userId = req.user.id;
     const connection = await db.getConnection();
-
     try {
         await connection.beginTransaction();
-
         if (!templateId || templateId === 'undefined') {
             throw new Error('ID шаблону не було надано.');
         }
@@ -119,7 +117,6 @@ exports.createSite = async (req, res, next) => {
         const relativeLogoUrl = logoUrl.replace(/^http:\/\/localhost:5000/, '');
         let templateData = {};
         let siteThemeConfig = {};
-
         if (isPersonal) {
             const [rows] = await connection.query('SELECT * FROM user_templates WHERE id = ? AND user_id = ?', [templateId, userId]);
             const personalTemplate = rows[0];
@@ -181,8 +178,9 @@ exports.createSite = async (req, res, next) => {
                 }
             }];
         }
+
         const [siteResult] = await connection.query(
-            `INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, 'draft')`,
+            `INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, 'private')`,
             [userId, sitePath, title, relativeLogoUrl]
         );
         const newSiteId = siteResult.insertId;
@@ -208,7 +206,6 @@ exports.createSite = async (req, res, next) => {
                 const pageSlug = pageData.slug || `page-${Date.now()}`;
                 const pageName = pageData.title || 'Нова сторінка';
                 const isHome = (pageSlug === 'home') ? 1 : 0;
-
                 await connection.query(
                     `INSERT INTO pages (site_id, name, slug, block_content, is_homepage) VALUES (?, ?, ?, ?, ?)`,
                     [newSiteId, pageName, pageSlug, JSON.stringify(pageBlocks), isHome]
@@ -231,7 +228,6 @@ exports.createSite = async (req, res, next) => {
         await connection.rollback();
         console.error('Помилка при створенні сайту:', error.message);
         if (req.file) await deleteFile(req.file.path);
-        
         res.status(500).json({ message: error.message || 'Не вдалося створити сайт.' });
     } finally {
         connection.release();
@@ -243,7 +239,6 @@ exports.getSiteByPath = async (req, res, next) => {
         const { site_path, slug } = req.params;
         const site = await Site.findByPath(site_path);
         if (!site) return res.status(404).json({ message: 'Сайт не знайдено.' });
-
         if (site.status === 'suspended') {
             let isAdmin = false;
             if (req.user) {
@@ -275,7 +270,6 @@ exports.updateSiteSettings = async (req, res, next) => {
     try {
         const { site_path } = req.params;
         const userId = req.user.id;
-        
         const site = await Site.findByPath(site_path);
         if (!site || site.user_id !== userId) {
             return res.status(403).json({ message: 'У вас немає прав.' });
@@ -383,18 +377,13 @@ exports.renameSite = async (req, res, next) => {
         const { site_path: oldPath } = req.params; 
         const { newPath } = req.body; 
         const userId = req.user.id; 
-
         if (!newPath) return res.status(400).json({ message: 'Новий шлях (newPath) є обов\'язковим.' }); 
-
         const sanitizedNewPath = newPath.toLowerCase().replace(/[^a-z0-9-]/g, ''); 
         if (sanitizedNewPath.length < 3) return res.status(400).json({ message: 'Мінімум 3 символи для адреси.' }); 
-
         const existingSite = await Site.findByPath(sanitizedNewPath); 
         if (existingSite) return res.status(409).json({ message: 'Ця адреса вже зайнята. Спробуйте іншу.' }); 
-
         const currentSite = await Site.findByPath(oldPath); 
         if (!currentSite || currentSite.user_id !== userId) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
-
         const [result] = await db.query('UPDATE sites SET site_path = ? WHERE site_path = ? AND user_id = ?', [sanitizedNewPath, oldPath, userId]); 
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
 
@@ -447,16 +436,13 @@ exports.resetSiteToTemplate = async (req, res, next) => {
         const footerToSave = regenerateBlockIds(templateData.footer_content || []); 
         let pagesToCreate = templateData.pages || []; 
         if (!templateData.pages && Array.isArray(templateData)) pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }]; 
-        
         await connection.beginTransaction(); 
         await connection.query('DELETE FROM pages WHERE site_id = ?', [siteId]); 
-        
         const updateQuery = `UPDATE sites SET header_content = ?, footer_content = ?, site_theme_mode = ?, site_theme_accent = ?, theme_settings = ? WHERE id = ?`; 
         const themeSettings = templateData.theme_settings || {}; 
         const siteThemeMode = templateData.site_theme_mode || 'light'; 
         const siteThemeAccent = templateData.site_theme_accent || 'orange'; 
         await connection.query(updateQuery, [JSON.stringify(headerToSave), JSON.stringify(footerToSave), siteThemeMode, siteThemeAccent, JSON.stringify(themeSettings), siteId]); 
-        
         for (const pageData of pagesToCreate) { 
             const blocks = regenerateBlockIds(pageData.blocks || pageData.block_content || []); 
             await connection.query('INSERT INTO pages (site_id, name, slug, block_content, is_homepage) VALUES (?, ?, ?, ?, ?)', [siteId, pageData.title || 'Нова сторінка', pageData.slug || `page-${uuidv4()}`, JSON.stringify(blocks), (pageData.slug === 'home' || pageData.is_homepage) ? 1 : 0]); 

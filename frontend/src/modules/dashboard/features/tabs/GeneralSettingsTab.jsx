@@ -14,19 +14,16 @@ import { InputWithCounter } from '../../../../shared/ui/complex/InputWithCounter
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { TEXT_LIMITS } from '../../../../shared/config/limits';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
-import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown } from 'lucide-react';
 import { exportSiteToZip } from '../../../../shared/utils/siteExporter';
+import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown, Lock } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
-
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const navigate = useNavigate();
     const { confirm } = useConfirm();
-    
     const [identityData, setIdentityData] = useState({ title: '', slug: '' });
     const [isSavingIdentity, setIsSavingIdentity] = useState(false);
     const [slugError, setSlugError] = useState('');
-    
     const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
     const [personalTemplates, setPersonalTemplates] = useState([]);
     const [systemTemplates, setSystemTemplates] = useState([]);
@@ -38,18 +35,15 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
-
     const [isCoverHovered, setIsCoverHovered] = useState(false);
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [availableTags, setAvailableTags] = useState([]);
     const [selectedTags, setSelectedTags] = useState([]);
-
     const [isExporting, setIsExporting] = useState(false);
-
     const { data, handleChange, isSaving, setData } = useAutoSave(
         `/sites/${siteData.site_path}/settings`,
         {
-            status: siteData.status || 'draft',
+            status: siteData.status || 'private',
             favicon_url: siteData.favicon_url || '',
             logo_url: siteData.logo_url || '',
             site_title_seo: siteData.site_title_seo || siteData.title,
@@ -117,7 +111,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     useEffect(() => {
         if (onSavingChange) onSavingChange(isSaving || isSavingIdentity);
     }, [isSaving, isSavingIdentity, onSavingChange]);
-
     const handleIdentityChange = (field, value) => {
         if (field === 'slug') {
             const val = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -331,8 +324,9 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
 
     const hasIdentityChanges = identityData.title !== siteData.title || identityData.slug !== siteData.site_path;
     const statusOptions = [
-        { value: 'published', label: 'Опубліковано (Доступний)', icon: Globe, iconProps: { className: 'text-green-500' } },
-        { value: 'draft', label: 'Чернетка (Прихований)', icon: FileText, iconProps: { className: 'text-gray-500' } }
+        { value: 'published', label: 'Опубліковано (Доступний всім)', icon: Globe, iconProps: { className: 'text-green-500' } },
+        { value: 'draft', label: 'Чернетка (Тех. роботи)', icon: FileText, iconProps: { className: 'text-orange-500' } },
+        { value: 'private', label: 'Приватний (Прихований)', icon: Lock, iconProps: { className: 'text-gray-500' } }
     ];
 
     return (
@@ -348,7 +342,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
-            {/* IDENTITY BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex items-center justify-between gap-3">
                     <div>
@@ -457,7 +450,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
-            {/* STATUS BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
@@ -485,7 +477,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     ) : (
                         <CustomSelect 
                             name="status"
-                            value={data.status === 'private' ? 'draft' : data.status} 
+                            value={data.status} 
                             onChange={(e) => handleChange('status', e.target.value)}
                             options={statusOptions}
                         />
@@ -493,7 +485,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
-            {/* SEO BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
@@ -544,8 +535,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
             </div>
-            
-            {/* COVER BLOCK */}
+
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
@@ -659,7 +649,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
-            {/* PRIVACY BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
@@ -708,7 +697,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 )}
             </div>
 
-            {/* TEMPLATES BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex justify-between items-center gap-3">
                     <div>
@@ -814,7 +802,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 )}
             </div>
 
-            {/* EXPORT SITE BLOCK */}
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
                     <div>
@@ -837,7 +824,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
-            {/* DANGER ZONE */}
             <div className="rounded-2xl border border-[#fed7d7] p-8 mb-6 shadow-sm bg-linear-to-br from-[#fff5f5] to-[#fed7d7]">
                 <div className="flex justify-between items-center flex-wrap gap-4">
                     <div className="flex-1">

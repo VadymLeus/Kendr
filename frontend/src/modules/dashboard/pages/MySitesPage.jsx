@@ -12,7 +12,6 @@ import { Button } from '../../../shared/ui/elements/Button';
 import { Plus, Loader2, Search } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 20;
-
 const SORT_OPTIONS = [
     { value: 'created_at:desc', label: 'Дата' },
     { value: 'created_at:asc', label: 'Дата' },
@@ -76,13 +75,19 @@ const MySitesPage = () => {
         }
     };
 
-    const handleStatusChange = async (site) => {
+    const handleStatusChange = async (site, requestedStatus) => {
         try {
-            const newStatus = site.status === 'published' ? 'draft' : 'published';
+            const newStatus = requestedStatus || (site.status === 'published' ? 'draft' : 'published');
             await apiClient.put(`/sites/${site.site_path}/settings`, { status: newStatus });
             setSites(prev => prev.map(s => s.id === site.id ? { ...s, status: newStatus } : s));
-            toast.success('Статус оновлено');
-        } catch (err) { toast.error('Помилка'); }
+            if (newStatus === 'private') toast.success('Сайт приховано');
+            else if (newStatus === 'published') toast.success('Сайт опубліковано');
+            else toast.success('Сайт перенесено в чернетки');
+
+        } catch (err) { 
+            console.error(err);
+            toast.error('Помилка при зміні статусу'); 
+        }
     };
 
     const handleTogglePin = async (siteId) => {
@@ -192,7 +197,8 @@ const MySitesPage = () => {
                                 <SiteGridCard 
                                     key={site.id} site={site} variant="owner"
                                     onTagClick={setSelectedTag} formatDate={formatDate}
-                                    onDelete={handleDeleteSite} onToggleStatus={handleStatusChange}
+                                    onDelete={handleDeleteSite} 
+                                    onToggleStatus={handleStatusChange}
                                     onTogglePin={handleTogglePin}
                                 />
                             ))}

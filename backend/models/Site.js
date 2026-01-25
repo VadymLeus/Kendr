@@ -22,7 +22,6 @@ class Site {
     
     const params = [];
     const conditions = [];
-
     if (!includeAllStatuses) {
         conditions.push("s.status = 'published'");
     }
@@ -47,7 +46,6 @@ class Site {
     }
 
     let orderByClause = 'ORDER BY s.is_pinned DESC, s.created_at DESC';
-
     if (sort) {
         if (sort === 'popular') {
             orderByClause = 'ORDER BY s.is_pinned DESC, s.view_count DESC, s.created_at DESC';
@@ -73,7 +71,6 @@ class Site {
 
     query += ` ${orderByClause}`;
     const [rows] = await db.query(query, params);
-
     for (let site of rows) {
         const [tags] = await db.query(`
             SELECT t.id, t.name 
@@ -147,7 +144,7 @@ class Site {
   static async create(userId, sitePath, title, logoUrl) {
     const [result] = await db.query(
       'INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, ?)',
-      [userId, sitePath, title, logoUrl, 'draft']
+      [userId, sitePath, title, logoUrl, 'private']
     );
     return { 
       id: result.insertId, 
@@ -155,7 +152,7 @@ class Site {
       site_path: sitePath, 
       title: title, 
       logo_url: logoUrl, 
-      status: 'draft' 
+      status: 'private' 
     };
   }
 
@@ -164,7 +161,6 @@ class Site {
       title, status, site_theme_mode, site_theme_accent, theme_settings, 
       header_content, footer_content, favicon_url, site_title_seo, 
       cover_image, cover_layout, logo_url,
-      
       cover_logo_size, cover_logo_radius, cover_title_size
     } = data;
     

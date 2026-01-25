@@ -41,9 +41,9 @@ const Layout = () => {
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
     const mediaLibraryMatch = location.pathname === '/media-library';
     const isOwner = user && siteData && user.id === siteData.user_id;
-    const isDraft = siteData?.status === 'draft';
-    const isMaintenanceMode = isDraft && !isOwner;
-    const shouldShowSiteHeader = !!(publicMatch || productInsideSiteMatch) && !isMaintenanceMode;
+    const isHiddenStatus = siteData && ['draft', 'suspended', 'private'].includes(siteData.status);
+    const isMaintenanceMode = isHiddenStatus && !isOwner && !isAdmin;
+    const shouldShowSiteHeader = !!(publicMatch || productInsideSiteMatch) && siteData && !isMaintenanceMode;
     const shouldShowFooter = !isAdmin && !dashboardMatch && !publicMatch && !mediaLibraryMatch && !productInsideSiteMatch;
     useEffect(() => {
         const fetchSiteData = async () => {
@@ -88,6 +88,7 @@ const Layout = () => {
             setSiteData(null);
         }
     }, [location.pathname]);
+
     if (isAuthLoading) {
         return <div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'100vh'}}>Завантаження...</div>;
     }

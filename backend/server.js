@@ -24,6 +24,7 @@ const errorHandler = require('./middleware/errorHandler');
 const verifyToken = require('./middleware/verifyToken');
 const userTemplateRoutes = require('./routes/userTemplateRoutes');
 const passport = require('./config/passport');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -53,6 +54,7 @@ app.use('/api/form', verifyToken, formRoutes);
 app.use('/api/public/form', publicFormRoutes);
 app.use('/api/saved-blocks', savedBlockRoutes);
 app.use('/api/user-templates', userTemplateRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.get('/', (req, res) => {
   res.send('Welcome to Kendr API!');
