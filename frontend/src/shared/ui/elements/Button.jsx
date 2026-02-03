@@ -1,5 +1,6 @@
 // frontend/src/shared/ui/elements/Button.jsx
 import React, { useState } from 'react';
+
 const VARIANTS = {
     primary: {
         base: {
@@ -21,14 +22,36 @@ const VARIANTS = {
             background: '#c53030',
         }
     },
-    warning: {
+    success: {
         base: {
-            background: 'var(--platform-warning)',
+            background: '#10b981',
             color: 'white',
             border: 'none',
         },
         hover: {
-            background: 'var(--platform-warning-hover)',
+            background: '#059669',
+        }
+    },
+    warning: {
+        base: {
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+        },
+        hover: {
+            background: '#d97706',
+        }
+    },
+    'outline-warning': {
+        base: {
+            background: 'transparent',
+            color: '#d97706',
+            border: '1px solid #d97706',
+        },
+        hover: {
+            background: 'rgba(217, 119, 6, 0.05)',
+            color: '#b45309',
+            border: '1px solid #b45309',
         }
     },
     'secondary-danger': {

@@ -1,73 +1,88 @@
 // frontend/src/modules/dashboard/pages/CreateSitePage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../../../shared/api/api';
 import { Input } from '../../../shared/ui/elements/Input';
 import { Button } from '../../../shared/ui/elements/Button';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
-import EditTemplateModal from '../../../shared/ui/complex/EditTemplateModal';
-import BlockRenderer from '../../editor/core/BlockRenderer';
-import FontLoader from '../../renderer/components/FontLoader';
-import { TEXT_LIMITS } from '../../../shared/config/limits';
+import TemplateModal from '../components/TemplateModal';
 import UniversalMediaInput from '../../../shared/ui/complex/UniversalMediaInput';
-import { ArrowLeft, Layout, Check, Loader, AlertCircle, Globe, Grid, User, Image, Trash, Search, Edit } from 'lucide-react';
+import EmptyState from '../../../shared/ui/complex/EmptyState';
+import SitePreviewer from '../../../shared/ui/complex/SitePreviewer';
+import { TEXT_LIMITS } from '../../../shared/config/limits';
+import { AuthContext } from '../../../app/providers/AuthContext';
+import { ArrowLeft, Layout, Check, Loader, AlertCircle, Grid, User, Search, Edit, Trash, Info, Palette, Sparkles, Globe, Lock, Image, FileText, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Shield, EyeOff, Tag } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
+const ICON_MAP = {
+    'Layout': Layout, 'FileText': FileText, 'ShoppingBag': ShoppingBag,
+    'Briefcase': Briefcase, 'Camera': Camera, 'Coffee': Coffee,
+    'Music': Music, 'Star': Star, 'Heart': Heart, 'Globe': Globe,
+};
+
+const TEMPLATE_CATEGORIES = [
+    { id: 'All', label: 'Всі' },
+    { id: 'General', label: 'Загальне' },
+    { id: 'Business', label: 'Бізнес' },
+    { id: 'Store', label: 'Магазин' },
+    { id: 'Portfolio', label: 'Портфоліо' },
+    { id: 'Landing', label: 'Лендінг' },
+    { id: 'Blog', label: 'Блог' },
+    { id: 'Creative', label: 'Креатив' },
+];
+
+const getTemplateIcon = (iconName) => ICON_MAP[iconName] || Layout; 
+const getCategoryLabel = (catId) => {
+    if (!catId) return null;
+    const found = TEMPLATE_CATEGORIES.find(c => c.id.toLowerCase() === catId.toLowerCase());
+    return found ? found.label : catId;
+};
 
 const CreateSitePage = () => {
     const navigate = useNavigate();
+    const { isAdmin } = useContext(AuthContext);
     const [systemTemplates, setSystemTemplates] = useState([]);
     const [personalTemplates, setPersonalTemplates] = useState([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
-    const [activeTab, setActiveTab] = useState('system');
+    const [panelTab, setPanelTab] = useState('info'); 
+    const [templateSourceTab, setTemplateSourceTab] = useState('system'); 
+    const [viewMode, setViewMode] = useState('desktop'); 
+    const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedTemplateId, setSelectedTemplateId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [formData, setFormData] = useState({ title: '', slug: '' });
     const [customLogo, setCustomLogo] = useState(null);
     const [defaultRandomLogo, setDefaultRandomLogo] = useState(null);
-    const [slugStatus, setSlugStatus] = useState('idle');
+    const [slugStatus, setSlugStatus] = useState('idle'); 
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [showMobilePreview, setShowMobilePreview] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isSavingTemplate, setIsSavingTemplate] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [templateToDeleteId, setTemplateToDeleteId] = useState(null);
-    const [previewData, setPreviewData] = useState({
-        pages: [],
-        theme: {},
-        header: [],
-        footer: []
-    });
+    const [previewData, setPreviewData] = useState({ pages: [], theme: {}, header: [], footer: [], siteData: {} });
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
-
     useEffect(() => {
         const loadData = async () => {
             try {
+                const templatesUrl = isAdmin ? '/sites/templates?include_drafts=true' : '/sites/templates';
+                
                 const [sysRes, persRes, logosRes] = await Promise.allSettled([
-                    apiClient.get('/sites/templates'),
+                    apiClient.get(templatesUrl),
                     apiClient.get('/user-templates'),
                     apiClient.get('/sites/default-logos')
                 ]);
 
                 if (sysRes.status === 'fulfilled') {
                     setSystemTemplates(sysRes.value.data);
-                    if (sysRes.value.data.length > 0) {
-                        handleSelectTemplate(sysRes.value.data[0], 'system');
-                    }
+                    if (sysRes.value.data.length > 0) handleSelectTemplate(sysRes.value.data[0], 'system');
                 }
-
                 if (persRes.status === 'fulfilled') {
                     setPersonalTemplates(persRes.value.data);
                 }
-
                 if (logosRes.status === 'fulfilled' && Array.isArray(logosRes.value.data) && logosRes.value.data.length > 0) {
-                    const logos = logosRes.value.data;
-                    const random = logos[Math.floor(Math.random() * logos.length)];
-                    setDefaultRandomLogo(random);
+                    setDefaultRandomLogo(logosRes.value.data[Math.floor(Math.random() * logosRes.value.data.length)]);
                 }
-
             } catch (err) {
                 console.error(err);
                 toast.error('Не вдалося завантажити дані');
@@ -76,7 +91,7 @@ const CreateSitePage = () => {
             }
         };
         loadData();
-    }, []);
+    }, [isAdmin]);
 
     useEffect(() => {
         const timer = setTimeout(async () => {
@@ -88,153 +103,38 @@ const CreateSitePage = () => {
             try {
                 const res = await apiClient.get(`/sites/check-slug?slug=${formData.slug}`);
                 setSlugStatus(res.data.isAvailable ? 'available' : 'taken');
-            } catch (err) {
-                console.warn("Slug check failed", err);
-            }
+            } catch (err) { setSlugStatus('idle'); }
         }, 500);
         return () => clearTimeout(timer);
     }, [formData.slug]);
-
-    const handleOpenEditModal = (e, template) => {
-        e.stopPropagation();
-        setEditingTemplate(template);
-        setIsEditModalOpen(true);
-    };
-
-    const handleSaveTemplateChanges = async (name, description) => {
-        if (!editingTemplate) return;
-        setIsSavingTemplate(true);
-        try {
-            await apiClient.put(`/user-templates/${editingTemplate.id}`, {
-                templateName: name,
-                description: description
-            });
-
-            setPersonalTemplates(prev => prev.map(t => 
-                t.id === editingTemplate.id ? { ...t, name, description } : t
-            ));
-
-            toast.success('Шаблон оновлено');
-            setIsEditModalOpen(false);
-            setEditingTemplate(null);
-        } catch (error) {
-            toast.error('Помилка при збереженні змін');
-            console.error(error);
-        } finally {
-            setIsSavingTemplate(false);
-        }
-    };
-
-    const handleOpenDeleteModal = (e, templateId) => {
-        e.stopPropagation();
-        setTemplateToDeleteId(templateId);
-        setIsDeleteModalOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!templateToDeleteId) return;
-        try {
-            await apiClient.delete(`/user-templates/${templateToDeleteId}`);
-            setPersonalTemplates(prev => prev.filter(t => t.id !== templateToDeleteId));
-            
-            if (selectedTemplateId === templateToDeleteId) {
-                setSelectedTemplateId(null);
-                if(systemTemplates.length > 0) handleSelectTemplate(systemTemplates[0], 'system');
-            }
-            toast.success('Шаблон видалено');
-        } catch (error) {
-            toast.error('Не вдалося видалити шаблон');
-        } finally {
-            setIsDeleteModalOpen(false);
-            setTemplateToDeleteId(null);
-        }
-    };
-
-    const handleCancelDelete = () => {
-        setIsDeleteModalOpen(false);
-        setTemplateToDeleteId(null);
-    };
 
     const handleSelectTemplate = (template, type) => {
         if (!template) return;
         setSelectedTemplateId(template.id);
         let content = null;
         try {
-            if (type === 'system') {
-                content = typeof template.default_block_content === 'string'
-                    ? JSON.parse(template.default_block_content)
-                    : template.default_block_content;
-            } else {
-                const rawSnapshot = template.full_site_snapshot;
-                content = typeof rawSnapshot === 'string'
-                    ? JSON.parse(rawSnapshot)
-                    : rawSnapshot;
-            }
-        } catch (e) {
-            console.error("JSON Parse error:", e);
-            return;
-        }
-
+            const raw = template.default_block_content || template.full_site_snapshot;
+            content = (typeof raw === 'string' ? JSON.parse(raw) : raw);
+        } catch (e) { return; }
         if (!content) return;
-        let pages = [];
-        let theme = content.theme_settings || {};
-        let header = content.header_content || [];
-        let footer = content.footer_content || [];
-        if (content.pages && Array.isArray(content.pages)) {
-            pages = content.pages;
-        } else if (Array.isArray(content)) {
-            pages = [{ slug: 'home', blocks: content }];
-        } else if (content.blocks && Array.isArray(content.blocks)) {
-            pages = [{ slug: 'home', blocks: content.blocks }];
-        } else {
-            pages = [{ slug: 'home', blocks: [] }];
-        }
 
-        setPreviewData({ pages, theme, header, footer });
+        let pages = Array.isArray(content.pages) ? content.pages 
+            : Array.isArray(content) ? [{ slug: 'home', blocks: content }]
+            : Array.isArray(content.blocks) ? [{ slug: 'home', blocks: content.blocks }]
+            : [{ slug: 'home', blocks: [] }];
+
+        setPreviewData({ 
+            pages, 
+            theme: content.theme_settings || {}, 
+            header: content.header_content || [], 
+            footer: content.footer_content || [],
+            siteData: { title: template.name, ...content.site_settings } 
+        });
         const hasHomePage = pages.find(p => p.slug === 'home');
-        if (hasHomePage) {
-            setCurrentPreviewSlug('home');
-        } else if (pages.length > 0) {
-            setCurrentPreviewSlug(pages[0].slug);
-        } else {
-            setCurrentPreviewSlug('home');
-        }
-    };
-
-    const handleLogoChange = (val) => {
-        const path = val && val.target ? val.target.value : val;
-        setCustomLogo(path || null);
-    };
-
-    const handleClearLogo = (e) => {
-        e && e.stopPropagation();
-        setCustomLogo(null);
-        toast.info('Логотип скинуто до стандартного');
+        setCurrentPreviewSlug(hasHomePage ? 'home' : (pages[0]?.slug || 'home'));
     };
 
     const effectiveLogo = customLogo || defaultRandomLogo || '/uploads/shops/logos/default/default-logo.webp';
-    const handlePreviewInteraction = (e) => {
-        e.preventDefault(); e.stopPropagation();
-        const link = e.target.closest('a');
-        if (!link) return;
-        const href = link.getAttribute('href');
-        if (!href) return;
-        let targetSlug = 'home';
-        const cleanPath = href.replace(window.location.origin, '');
-        const segments = cleanPath.split('/').filter(s => s && s.trim() !== '');
-        const currentSiteSlug = formData.slug || 'preview-slug';
-
-        if (segments.length === 0) targetSlug = 'home';
-        else {
-            const lastSegment = segments[segments.length - 1];
-            if (lastSegment === currentSiteSlug || lastSegment === 'home' || lastSegment === 'index') targetSlug = 'home';
-            else targetSlug = lastSegment;
-        }
-        const pageExists = previewData.pages.find(p => p.slug === targetSlug);
-        if (pageExists) setCurrentPreviewSlug(targetSlug);
-    };
-
-    const blockInput = (e) => { e.preventDefault(); e.stopPropagation(); };
     const currentBlocks = useMemo(() => {
         const page = previewData.pages.find(p => p.slug === currentPreviewSlug);
         return page ? (page.blocks || []) : [];
@@ -245,19 +145,11 @@ const CreateSitePage = () => {
         setFormData(prev => ({ ...prev, title: val }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!formData.title || !formData.slug || !selectedTemplateId) return;
-        if (slugStatus === 'taken') return;
+    const handleSubmit = async () => {
+        if (!formData.title || !formData.slug || !selectedTemplateId || slugStatus === 'taken') return;
         setIsSubmitting(true);
         try {
-            const payload = {
-                templateId: selectedTemplateId,
-                sitePath: formData.slug,
-                title: formData.title,
-                isPersonal: activeTab === 'personal',
-                selected_logo_url: effectiveLogo
-            };
+            const payload = { templateId: selectedTemplateId, sitePath: formData.slug, title: formData.title, selected_logo_url: effectiveLogo };
             const res = await apiClient.post('/sites/create', payload);
             toast.success('Сайт створено успішно!');
             window.location.href = `/dashboard/${res.data.site.site_path}`;
@@ -267,445 +159,249 @@ const CreateSitePage = () => {
         }
     };
 
-    const simulatedSiteData = useMemo(() => {
-        let headerContent = [...(previewData.header || [])];
-        const updateHeaderBlock = (block) => ({
-            ...block,
-            data: {
-                ...block.data,
-                site_title: formData.title || 'My Site',
-                logo_src: effectiveLogo,
-                show_title: true
-            }
-        });
-
-        if (headerContent.length > 0) {
-            headerContent = headerContent.map(b => b.type === 'header' ? updateHeaderBlock(b) : b);
-        } else {
-            headerContent = [{ type: 'header', data: { site_title: formData.title || 'My Site', logo_src: effectiveLogo } }];
-        }
-
-        const theme = previewData.theme || {};
-        return {
-            id: 'preview',
-            title: formData.title || 'New Site',
-            site_path: formData.slug || 'preview-slug',
-            status: 'draft',
-            theme_settings: theme,
-            site_theme_mode: theme.mode || 'light',
-            site_theme_accent: theme.accent || 'blue',
-            header_content: headerContent,
-            footer_content: previewData.footer || [],
-        };
-    }, [formData.title, formData.slug, previewData, effectiveLogo]);
-
-    const getFullUrl = (path) => {
-        if (!path) return '';
-        if (path.startsWith('http')) return path;
-        return `${API_URL}${path}`;
+    const handleClearLogo = (e) => { e.stopPropagation(); setCustomLogo(null); };
+    const getFullUrl = (path) => path?.startsWith('http') ? path : `${API_URL}${path}`;
+    const handleOpenEditModal = (e, template) => { e.stopPropagation(); setEditingTemplate(template); setIsEditModalOpen(true); };
+    const handleSaveTemplateChanges = async (name, description, icon, category) => {
+        if (!editingTemplate) return;
+        try {
+            await apiClient.put(`/user-templates/${editingTemplate.id}`, { templateName: name, description, icon, category });
+            setPersonalTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { ...t, name, description, icon, category } : t));
+            toast.success('Шаблон оновлено'); setIsEditModalOpen(false); setEditingTemplate(null);
+        } catch (error) { console.error(error); toast.error('Помилка при збереженні'); }
+    };
+    const handleConfirmDelete = async () => {
+        if (!templateToDeleteId) return;
+        try {
+            await apiClient.delete(`/user-templates/${templateToDeleteId}`);
+            setPersonalTemplates(prev => prev.filter(t => t.id !== templateToDeleteId));
+            toast.success('Шаблон видалено');
+        } catch (error) { toast.error('Помилка видалення'); } finally { setIsDeleteModalOpen(false); }
     };
 
     const filteredTemplates = useMemo(() => {
-        const source = activeTab === 'system' ? systemTemplates : personalTemplates;
-        if (!searchQuery) return source;
-        return source.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }, [activeTab, systemTemplates, personalTemplates, searchQuery]);
-
-    const pageStyles = `
-        .create-site-container { display: flex; height: 100vh; overflow: hidden; background: var(--platform-bg); font-family: var(--font-family, sans-serif); color: var(--platform-text-primary); }
-        .create-site-container .left-panel { 
-            display: flex; flex-direction: column; background: var(--platform-card-bg); 
-            width: 100%; z-index: 20; 
-            transition: transform 0.3s ease; position: absolute; height: 100%; 
-            border-right: 1px solid var(--platform-border-color);
+        let source = templateSourceTab === 'system' ? systemTemplates : personalTemplates;
+        if (searchQuery) {
+            source = source.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        }
+        if (selectedCategory !== 'All') {
+            const cat = selectedCategory.toLowerCase();
+            source = source.filter(t => {
+                if (t.category && t.category.toLowerCase() === cat) return true;
+                const inName = t.name.toLowerCase().includes(cat);
+                const inDesc = t.description && t.description.toLowerCase().includes(cat);
+                return inName || inDesc;
+            });
+        }
+        return source;
+    }, [templateSourceTab, systemTemplates, personalTemplates, searchQuery, selectedCategory]);
+    
+    const renderAdminBadge = (tpl) => {
+        if (!isAdmin) return null;
+        let badgeConfig = { text: '', Icon: null, colorVar: '' };
+        if (templateSourceTab === 'system') {
+            if (tpl.access_level === 'public') badgeConfig = { text: 'Public', Icon: Globe, colorVar: '--platform-success' };
+            else if (tpl.access_level === 'admin_only') badgeConfig = { text: 'Admin Only', Icon: Shield, colorVar: '--platform-accent' };
+            else badgeConfig = { text: 'Draft', Icon: EyeOff, colorVar: '--platform-warning' };
+        } else {
+            badgeConfig = { text: 'Private', Icon: Lock, colorVar: '--platform-text-secondary' };
         }
 
-        @media (min-width: 768px) { 
-            .create-site-container .left-panel { 
-                width: 420px; 
-                position: relative; 
-                border-radius: 12px;
-                margin: 20px;
-                height: calc(100vh - 40px);
-                border: 1px solid var(--platform-border-color);
-                box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-                overflow: hidden;
-            } 
-        }
-        
-        .create-site-container .mobile-hidden { transform: translateX(-100%); }
-        .create-site-container .desktop-visible { transform: translateX(0); }
-        .create-site-container .right-panel { flex: 1; background: var(--platform-bg); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: transform 0.3s; }
-        .create-site-container .browser-mockup { width: 100%; height: 100%; max-width: 1200px; background: var(--platform-card-bg); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--platform-border-color); }
-        .create-site-container .browser-header { height: 44px; background: var(--platform-bg); border-bottom: 1px solid var(--platform-border-color); display: flex; align-items: center; padding: 0 16px; gap: 12px; }
-        .create-site-container .browser-dots { display: flex; gap: 6px; }
-        .create-site-container .dot { width: 12px; height: 12px; border-radius: 50%; }
-        .create-site-container .dot-red { background: #ff5f57; border: 1px solid #e0443e; }
-        .create-site-container .dot-yellow { background: #febc2e; border: 1px solid #dba522; }
-        .create-site-container .dot-green { background: #28c840; border: 1px solid #1aab29; }
-        .create-site-container .url-bar { flex: 1; background: var(--platform-card-bg); height: 28px; border: 1px solid var(--platform-border-color); border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: var(--platform-text-secondary); margin: 0 10px; font-family: monospace; }
-        .create-site-container .template-list-wrapper {
-            border: 1px solid var(--platform-border-color);
-            border-radius: 12px;
-            background: var(--platform-bg); 
-            max-height: 400px; 
-            min-height: 100px;
-            overflow: hidden; 
-            display: flex;
-            flex-direction: column;
-        }
+        const { text, Icon, colorVar } = badgeConfig;
+        const style = {
+            color: `var(${colorVar})`,
+            backgroundColor: `color-mix(in srgb, var(${colorVar}), transparent 90%)`,
+            borderColor: `color-mix(in srgb, var(${colorVar}), transparent 80%)`,
+        };
 
-        .create-site-container .template-list-scroll {
-            padding: 12px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .create-site-container .template-card { border: 1px solid var(--platform-border-color); border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; background: var(--platform-card-bg); padding: 16px; display: flex; flex-direction: column; gap: 6px; min-height: 80px; flex-shrink: 0; }
-        .create-site-container .template-card:hover { transform: translateY(-2px); border-color: var(--platform-text-secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .create-site-container .template-card.selected { border-color: var(--platform-accent); background: var(--platform-card-bg); box-shadow: 0 0 0 1px var(--platform-accent); }
-        .create-site-container .tpl-title { font-size: 14px; font-weight: 600; color: var(--platform-text-primary); margin-right: 24px; }
-        .create-site-container .tpl-desc { font-size: 12px; color: var(--platform-text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .create-site-container .check-icon { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; background: var(--platform-accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2; }
-        .create-site-container .template-actions {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            display: flex;
-            gap: 6px;
-            opacity: 0;
-            transition: opacity 0.2s;
-            background: var(--platform-card-bg);
-            border-radius: 6px;
-            padding: 2px;
-        }
-        .create-site-container .template-card:hover .template-actions { opacity: 1; }
-        .create-site-container .template-action-btn {
-            width: 28px; height: 28px;
-            display: flex; align-items: center; justify-content: center;
-            border: 1px solid var(--platform-border-color);
-            background: var(--platform-bg);
-            color: var(--platform-text-secondary);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .create-site-container .template-action-btn:hover { background: var(--platform-accent); color: #fff; border-color: var(--platform-accent); }
-        .create-site-container .template-action-btn.delete:hover { background: #ef4444; border-color: #ef4444; }
-        .create-site-container .tab-switcher { display: flex; padding: 4px; background: var(--platform-bg); border-radius: 8px; border: 1px solid var(--platform-border-color); margin-bottom: 12px; }
-        .create-site-container .tab-btn { flex: 1; padding: 8px; font-size: 14px; font-weight: 500; border-radius: 6px; border: none; background: transparent; cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .create-site-container .tab-btn:hover { color: var(--platform-text-primary); }
-        .create-site-container .tab-btn.active { background: var(--platform-accent); color: #ffffff; box-shadow: 0 2px 6px rgba(var(--platform-accent-rgb, 0,0,0), 0.2); }
-        .create-site-container .logo-wrapper { width: 100%; }
-        .create-site-container .logo-preview-card { width: 120px; height: 120px; border-radius: 12px; border: 1px solid var(--platform-border-color); background: var(--platform-card-bg); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; margin: 0 auto; }
-        .create-site-container .logo-preview-card:hover { border-color: var(--platform-accent); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .create-site-container .logo-preview-card img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
-        .create-site-container .delete-logo-btn { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s; }
-        .create-site-container .logo-preview-card:hover .delete-logo-btn { opacity: 1; }
-        .create-site-container .delete-logo-btn:hover { transform: scale(1.1); background: #dc2626; }
-        .create-site-container .add-logo-card { width: 100%; height: 100px; border: 1px dashed var(--platform-border-color); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--platform-bg); cursor: pointer; color: var(--platform-text-secondary); transition: all 0.2s; }
-        .create-site-container .add-logo-card:hover { border-color: var(--platform-accent); color: var(--platform-accent); background: rgba(0,0,0,0.02); }
-        
-        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .create-site-container .custom-scrollbar::-webkit-scrollbar,
-        .create-site-container .template-list-scroll::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        .create-site-container .custom-scrollbar::-webkit-scrollbar-track,
-        .create-site-container .template-list-scroll::-webkit-scrollbar-track {
-            background: transparent;
-            border-radius: 4px;
-        }
-
-        .create-site-container .custom-scrollbar::-webkit-scrollbar-thumb,
-        .create-site-container .template-list-scroll::-webkit-scrollbar-thumb {
-            background-color: var(--platform-text-secondary);
-            opacity: 0.5;
-            border-radius: 4px;
-            border: 2px solid transparent;
-            background-clip: content-box;
-        }
-
-        .create-site-container .custom-scrollbar::-webkit-scrollbar-thumb:hover,
-        .create-site-container .template-list-scroll::-webkit-scrollbar-thumb:hover {
-            background-color: var(--platform-accent);
-        }
-    `;
-
-    if (isLoadingData) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--platform-bg)' }}>
-                <Loader size={48} style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
-                <p style={{ marginTop: '16px', color: 'var(--platform-text-secondary)' }}>Завантаження студії...</p>
-                <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-colors duration-300" style={style}>
+                {Icon && <Icon size={10} style={{ color: `var(${colorVar})` }} />}
+                {text}
             </div>
         );
-    }
+    };
+
+    if (isLoadingData) return <div className="flex h-full items-center justify-center bg-(--platform-bg)"><Loader size={48} className="text-(--platform-accent) animate-spin" /></div>;
 
     return (
-        <div className="create-site-container">
-            <style>{pageStyles}</style>
-            <ConfirmModal
-                isOpen={isDeleteModalOpen}
-                title="Видалити шаблон?"
-                message="Ви впевнені, що хочете видалити цей шаблон? Цю дію не можна скасувати."
-                confirmLabel="Видалити"
+        <div className="flex h-full w-full overflow-hidden bg-(--platform-bg) min-h-0">
+            <ConfirmModal 
+                isOpen={isDeleteModalOpen} 
+                title="Видалити шаблон?" 
+                message="Ви впевнені? Це незворотньо." 
+                confirmLabel="Видалити" 
                 cancelLabel="Скасувати"
-                onConfirm={handleConfirmDelete}
-                onCancel={handleCancelDelete}
-                type="danger"
+                onConfirm={handleConfirmDelete} 
+                onCancel={() => setIsDeleteModalOpen(false)} 
+                type="danger" 
+            />
+            
+            <TemplateModal 
+                isOpen={isEditModalOpen} 
+                initialData={editingTemplate} 
+                onClose={() => { setIsEditModalOpen(false); setEditingTemplate(null); }} 
+                onSave={handleSaveTemplateChanges} 
             />
 
-            <EditTemplateModal 
-                isOpen={isEditModalOpen}
-                initialData={editingTemplate}
-                onClose={() => { setIsEditModalOpen(false); setEditingTemplate(null); }}
-                onSave={handleSaveTemplateChanges}
-                isSaving={isSavingTemplate}
-            />
-
-            <div className={`left-panel ${showMobilePreview ? 'mobile-hidden' : 'desktop-visible'}`}>
-                <div style={{ padding: '20px', borderBottom: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <h1 style={{ fontSize: '20px', fontWeight: '700', margin: 0, color: 'var(--platform-text-primary)' }}>Новий сайт</h1>
+            <div className={`
+                flex flex-col w-105 min-w-105 h-full max-h-full
+                border-r border-gray-200 dark:border-gray-800
+                z-30 shadow-[4px_0_24px_rgba(0,0,0,0.08)] 
+                transition-transform duration-300 min-h-0
+                bg-(--platform-card-bg)
+                ${viewMode === 'mobile' ? 'hidden md:flex' : 'flex'}
+            `}>
+                <div className="p-6 border-b border-(--platform-border-color) shrink-0">
+                    <div className="flex items-center gap-3 mb-6">
+                        <Button variant="ghost" onClick={() => navigate('/my-sites')} className="p-2!"><ArrowLeft size={20}/></Button>
+                        <h1 className="text-xl font-bold text-(--platform-text-primary) m-0">Новий сайт</h1>
+                    </div>
+                    <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
+                        <button className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${panelTab === 'info' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`} onClick={() => setPanelTab('info')}><Info size={16} /> 1. Інформація</button>
+                        <button className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${panelTab === 'design' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`} onClick={() => setPanelTab('design')}><Palette size={16} /> 2. Дизайн</button>
+                    </div>
                 </div>
-                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-                    <div style={{ marginBottom: '32px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                            <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--platform-accent)', color: 'white', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</div>
-                            <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: 'var(--platform-text-primary)' }}>Основна інформація</h3>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <Input
-                                label="Назва сайту"
-                                placeholder="Моя кав'ярня"
-                                value={formData.title}
-                                onChange={handleTitleChange}
-                                leftIcon={<Layout size={18} />}
-                                maxLength={TEXT_LIMITS.SITE_NAME}
-                                helperText="Відображається в шапці сайту та SEO"
-                            />
-                            <div style={{ position: 'relative' }}>
-                                <Input
-                                    label="Веб-адреса (Slug)"
-                                    placeholder="my-shop"
-                                    value={formData.slug}
-                                    onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
-                                    leftIcon={<Globe size={18} />}
-                                    rightIcon={
-                                        slugStatus === 'checking' ? <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> :
-                                            slugStatus === 'available' ? <Check size={18} style={{ color: '#10B981' }} /> :
-                                                slugStatus === 'taken' ? <AlertCircle size={18} style={{ color: '#EF4444' }} /> : null
-                                    }
-                                    error={slugStatus === 'taken' ? 'Адреса зайнята' : null}
-                                    maxLength={TEXT_LIMITS.SITE_SLUG}
-                                    showCounter={true}
-                                />
-                                <div style={{ fontSize: '12px', color: 'var(--platform-text-secondary)', marginTop: '4px', marginLeft: '4px', display: 'flex', gap: '4px' }}>
-                                    <span>kendr.site/</span>
-                                    <span style={{ fontWeight: '500', color: 'var(--platform-text-primary)' }}>{formData.slug || '...'}</span>
-                                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6 pt-0 bg-(--platform-bg) min-h-0 [scrollbar-gutter:stable]">
+                    {panelTab === 'info' ? (
+                         <div className="flex flex-col gap-6 pt-6">
+                            <div className="p-5 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm">
+                                <Input label="Назва сайту" value={formData.title} onChange={handleTitleChange} maxLength={TEXT_LIMITS.SITE_NAME} autoFocus />
+                                <Input label="Веб-адреса (Slug)" value={formData.slug} onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})} rightIcon={slugStatus === 'checking' ? <Loader size={16} className="animate-spin" /> : slugStatus === 'available' ? <Check size={18} className="text-emerald-500" /> : slugStatus === 'taken' ? <AlertCircle size={18} className="text-red-500" /> : <Globe size={16} />} error={slugStatus === 'taken' ? 'Адреса зайнята' : null} helperText={`kendr.site/${formData.slug || '...'}`} />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500', color: 'var(--platform-text-secondary)' }}>
+
+                            <div className="p-5 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm">
+                                <label className="mb-3 font-semibold text-(--platform-text-primary) text-sm flex items-center gap-2">
+                                    <Sparkles size={18} className="text-(--platform-accent)" />
                                     Логотип
                                 </label>
-                                <div className="logo-wrapper">
-                                    <UniversalMediaInput
-                                        type="image"
-                                        value={customLogo}
-                                        onChange={handleLogoChange}
-                                        aspect={1}
-                                        circularCrop={true}
-                                        triggerStyle={{ width: '100%', border: 'none', background: 'transparent', padding: 0 }}
-                                    >
-                                        {customLogo ? (
-                                            <div className="logo-preview-card">
-                                                <img src={getFullUrl(customLogo)} alt="Custom Logo" />
-                                                <button
-                                                    className="delete-logo-btn"
-                                                    onClick={handleClearLogo}
-                                                    title="Видалити та повернути стандартний"
-                                                >
-                                                    <Trash size={12} />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="add-logo-card">
-                                                <div style={{ position: 'relative', width: '48px', height: '48px', opacity: 0.6 }}>
-                                                    {defaultRandomLogo ? (
-                                                        <img
-                                                            src={getFullUrl(defaultRandomLogo)}
-                                                            alt="Random"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                        />
-                                                    ) : <Image size={48} />}
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                                                    <span style={{ fontWeight: '500' }}>Змінити логотип</span>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </UniversalMediaInput>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr style={{ border: 'none', borderTop: '1px solid var(--platform-border-color)', margin: '0 0 32px 0' }} />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                            <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--platform-accent)', color: 'white', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>2</div>
-                            <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: 'var(--platform-text-primary)' }}>Оберіть дизайн</h3>
-                        </div>
-
-                        <div style={{ marginBottom: '12px' }}>
-                            <Input
-                                placeholder="Пошук шаблону..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                leftIcon={<Search size={16} />}
-                                wrapperStyle={{ margin: 0 }}
-                            />
-                        </div>
-
-                        <div className="tab-switcher">
-                            <button onClick={() => setActiveTab('system')} className={`tab-btn ${activeTab === 'system' ? 'active' : ''}`}>
-                                <Grid size={16} /> Галерея
-                            </button>
-                            <button onClick={() => setActiveTab('personal')} className={`tab-btn ${activeTab === 'personal' ? 'active' : ''}`}>
-                                <User size={16} /> Мої макети
-                            </button>
-                        </div>
-
-                        <div className="template-list-wrapper">
-                             <div className="template-list-scroll custom-scrollbar">
-                                {filteredTemplates.length > 0 ? (
-                                    filteredTemplates.map(tpl => (
-                                        <div
-                                            key={tpl.id}
-                                            onClick={() => handleSelectTemplate(tpl, activeTab)}
-                                            className={`template-card ${selectedTemplateId === tpl.id ? 'selected' : ''}`}
-                                        >
-                                            <div className="tpl-title">{tpl.name}</div>
-                                            <div className="tpl-desc">{tpl.description || 'Без опису'}</div>
-
-                                            {selectedTemplateId === tpl.id && (
-                                                <div className="check-icon"><Check size={12} /></div>
-                                            )}
-
-                                            {activeTab === 'personal' && (
-                                                <div className="template-actions" onClick={e => e.stopPropagation()}>
-                                                    <button 
-                                                        className="template-action-btn" 
-                                                        onClick={(e) => handleOpenEditModal(e, tpl)}
-                                                        title="Редагувати"
-                                                    >
-                                                        <Edit size={14} />
-                                                    </button>
-                                                    <button 
-                                                        className="template-action-btn delete" 
-                                                        onClick={(e) => handleOpenDeleteModal(e, tpl.id)}
-                                                        title="Видалити"
-                                                    >
-                                                        <Trash size={14} />
-                                                    </button>
-                                                </div>
-                                            )}
+                                <UniversalMediaInput type="image" value={customLogo} onChange={setCustomLogo} aspect={1} circularCrop={true} triggerStyle={{ width: '100%', border: 'none', background: 'transparent', padding: 0 }}>
+                                    {customLogo ? (
+                                        <div className="relative group w-32 h-32 mx-auto rounded-xl border border-(--platform-border-color) bg-(--platform-bg) flex items-center justify-center overflow-hidden cursor-pointer hover:border-(--platform-accent) transition-all shadow-sm">
+                                            <img src={getFullUrl(customLogo)} alt="Custom Logo" className="w-full h-full object-contain p-2" />
+                                            <button onClick={handleClearLogo} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md" title="Видалити та повернути стандартний"><Trash size={14} /></button>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--platform-text-secondary)', fontSize: '14px' }}>
-                                        Нічого не знайдено
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style={{ padding: '20px', borderTop: '1px solid var(--platform-border-color)', background: 'var(--platform-card-bg)' }}>
-                    <Button
-                        variant="primary"
-                        style={{ width: '100%', height: '48px', fontSize: '16px' }}
-                        onClick={handleSubmit}
-                        disabled={!formData.title || !formData.slug || slugStatus !== 'available' || isSubmitting}
-                    >
-                        {isSubmitting ? 'Створення...' : 'Створити сайт'}
-                    </Button>
-                    <button
-                        onClick={() => setShowMobilePreview(true)}
-                        style={{ display: 'none', width: '100%', marginTop: '12px', background: 'none', border: 'none', color: 'var(--platform-accent)', fontWeight: '500', cursor: 'pointer' }}
-                        className="mobile-only-btn"
-                    >
-                        <style>{`@media (max-width: 768px) { .mobile-only-btn { display: block !important; } }`}</style>
-                        Подивитись превью
-                    </button>
-                </div>
-            </div>
-
-            <div className={`right-panel ${showMobilePreview ? 'active' : ''}`} style={{ transform: showMobilePreview ? 'translateX(0)' : '' }}>
-                <button
-                    onClick={() => setShowMobilePreview(false)}
-                    style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 50, background: 'var(--platform-card-bg)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', display: 'none', alignItems: 'center', justifyContent: 'center' }}
-                    className="mobile-back-btn"
-                >
-                    <style>{`@media (max-width: 768px) { .mobile-back-btn { display: flex !important; } }`}</style>
-                    <ArrowLeft size={20} color="var(--platform-text-primary)" />
-                </button>
-
-                <div className="browser-mockup">
-                    <div className="browser-header">
-                        <div className="browser-dots">
-                            <div className="dot dot-red"></div>
-                            <div className="dot dot-yellow"></div>
-                            <div className="dot dot-green"></div>
-                        </div>
-                        <div className="url-bar">
-                            https://kendr.site/<span style={{ color: 'var(--platform-text-primary)' }}>{formData.slug}</span>
-                            {currentPreviewSlug !== 'home' && <span style={{ color: 'var(--platform-text-secondary)' }}>/{currentPreviewSlug}</span>}
-                        </div>
-                    </div>
-
-                    <div
-                        className="custom-scrollbar"
-                        style={{ flex: 1, overflowY: 'auto', position: 'relative', isolation: 'isolate' }}
-                        onClickCapture={handlePreviewInteraction}
-                        onChangeCapture={blockInput}
-                        onSubmitCapture={blockInput}
-                    >
-                        <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-                            {previewData.theme && <FontLoader fontHeading={previewData.theme.font_heading} fontBody={previewData.theme.font_body} />}
-                            <div 
-                                className="site-wysiwyg-wrapper site-theme-context" 
-                                style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', flex: 1 }}
-                                data-site-mode={simulatedSiteData.site_theme_mode}
-                                data-site-accent={simulatedSiteData.site_theme_accent}
-                            >
-                                <BlockRenderer blocks={simulatedSiteData.header_content} siteData={simulatedSiteData} />
-                                <main style={{ flex: 1 }}>
-                                    {currentBlocks.length > 0 ? (
-                                        <BlockRenderer blocks={currentBlocks} siteData={simulatedSiteData} />
                                     ) : (
-                                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', color: '#9ca3af', gap: '16px' }}>
-                                            {previewData.pages.length > 0
-                                                ? <p>Ця сторінка порожня ({currentPreviewSlug})</p>
-                                                : <div style={{ textAlign: 'center' }}><Layout size={48} style={{ opacity: 0.2 }} /><p>Оберіть шаблон зліва</p></div>
-                                            }
+                                        <div className="w-full h-32 border-2 border-dashed border-(--platform-border-color) rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-(--platform-accent) hover:bg-gray-50/50 dark:hover:bg-white/5 transition-all group bg-(--platform-bg)">
+                                            <div className="w-12 h-12 opacity-50 grayscale group-hover:grayscale-0 transition-all flex items-center justify-center">
+                                                 {defaultRandomLogo ? (<img src={getFullUrl(defaultRandomLogo)} className="w-full h-full object-contain" alt="Default" />) : (<Image size={40} className="text-gray-400" />)}
+                                            </div>
+                                            <span className="text-sm font-medium text-(--platform-text-secondary) group-hover:text-(--platform-accent)">Змінити логотип</span>
                                         </div>
                                     )}
-                                </main>
-                                {previewData.footer && <BlockRenderer blocks={previewData.footer} siteData={simulatedSiteData} />}
+                                </UniversalMediaInput>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="flex flex-col h-full">
+                            <div className="sticky top-0 -mx-6 px-6 pt-2 pb-2 bg-(--platform-bg)/95 z-20 mb-4 backdrop-blur-sm border-b border-transparent transition-all">
+                                <div className="flex flex-col gap-3 mb-3">
+                                    <div className="flex gap-2">
+                                        <Button variant={templateSourceTab === 'system' ? 'primary' : 'outline'} size="sm" className="flex-1 justify-center" onClick={() => setTemplateSourceTab('system')}><Grid size={16} /> Системні</Button>
+                                        <Button variant={templateSourceTab === 'personal' ? 'primary' : 'outline'} size="sm" className="flex-1 justify-center" onClick={() => setTemplateSourceTab('personal')}><User size={16} /> Мої шаблони</Button>
+                                    </div>
+                                    <Input placeholder="Пошук..." leftIcon={<Search size={16} />} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} wrapperStyle={{ marginBottom: 0 }} />
+                                </div>
+
+                                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar mask-gradient-right">
+                                    {TEMPLATE_CATEGORIES.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => setSelectedCategory(cat.id)}
+                                            className={`
+                                                whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                                ${selectedCategory === cat.id 
+                                                    ? 'bg-(--platform-text-primary) text-(--platform-bg) border-(--platform-text-primary)' 
+                                                    : 'bg-(--platform-card-bg) text-(--platform-text-secondary) border-(--platform-border-color) hover:border-(--platform-text-secondary)'
+                                                }
+                                            `}
+                                        >
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-3 pb-4">
+                                {filteredTemplates.length > 0 ? filteredTemplates.map(tpl => {
+                                    const TemplateIcon = getTemplateIcon(tpl.icon);
+                                    const hasValidImage = tpl.thumbnail_url && tpl.thumbnail_url !== 'null' && !tpl.thumbnail_url.includes('empty.png');
+                                    const isSelected = selectedTemplateId === tpl.id;
+
+                                    return (
+                                        <div 
+                                            key={tpl.id} 
+                                            className={`relative flex items-center gap-4 p-3 pr-12 rounded-xl border-2 cursor-pointer transition-all group
+                                                ${isSelected 
+                                                    ? 'border-(--platform-accent) bg-(--platform-card-bg) shadow-md' 
+                                                    : 'border-(--platform-border-color) bg-(--platform-card-bg) hover:border-(--platform-border-color)/80'
+                                                }`} 
+                                            onClick={() => handleSelectTemplate(tpl, templateSourceTab)}
+                                        >
+                                            <div className="w-16 h-16 rounded-lg overflow-hidden border shrink-0 flex items-center justify-center transition-colors bg-white border-gray-200 text-gray-700 dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                                                {hasValidImage ? (
+                                                    <img src={tpl.thumbnail_url.startsWith('data:') ? tpl.thumbnail_url : getFullUrl(tpl.thumbnail_url)} className="w-full h-full object-cover" alt="" />
+                                                ) : (
+                                                    <TemplateIcon size={32} strokeWidth={1.5} />
+                                                )}
+                                            </div>
+
+                                            <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <div className="font-semibold text-(--platform-text-primary) truncate">{tpl.name}</div>
+                                                    {renderAdminBadge(tpl)}
+                                                </div>
+                                                <div className="text-xs text-(--platform-text-secondary) truncate opacity-80">{tpl.description || 'Без опису'}</div>
+                                                {(tpl.category) && (
+                                                     <div className="flex items-center gap-1 mt-1">
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary)">
+                                                            <Tag size={10} />
+                                                            {getCategoryLabel(tpl.category)}
+                                                        </span>
+                                                     </div>
+                                                )}
+                                            </div>
+                                            
+                                            {isSelected && (
+                                                <div className="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-(--platform-accent) text-white flex items-center justify-center shadow-sm animate-[popIn_0.2s_ease-out]">
+                                                    <Check size={14} strokeWidth={3} />
+                                                </div>
+                                            )}
+                                            
+                                            {(templateSourceTab === 'personal') && (
+                                                <div className="absolute top-2 right-2 flex gap-1 z-10">
+                                                    <button onClick={(e) => handleOpenEditModal(e, tpl)} className="p-1.5 rounded-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors" title="Редагувати"> <Edit size={14} /> </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); setTemplateToDeleteId(tpl.id); setIsDeleteModalOpen(true); }} className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Видалити"> <Trash size={14} /> </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }) : <div className="h-60"><EmptyState title="Не знайдено" description="Спробуйте змінити фільтри" icon={Layout}/></div>}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-6 bg-(--platform-card-bg) border-t border-(--platform-border-color) shrink-0">
+                    {panelTab === 'info' ? 
+                        <Button variant="primary" className="w-full py-3 justify-center" onClick={handleSubmit} disabled={!formData.title || !formData.slug || slugStatus !== 'available' || isSubmitting}>{isSubmitting ? <Loader size={18} className="animate-spin" /> : <>Створити сайт <ArrowLeft size={18} className="rotate-180" /></>}</Button> 
+                        : <Button variant="outline" className="w-full justify-center" onClick={() => setPanelTab('info')}>Далі: Введіть назву <ArrowLeft size={16} className="rotate-180 ml-2" /></Button>
+                    }
                 </div>
             </div>
+            <SitePreviewer 
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                previewData={previewData}
+                currentBlocks={currentBlocks}
+                isLoading={isLoadingData}
+                emptyTitle="Оберіть шаблон"
+                emptyDescription="Оберіть шаблон для попереднього перегляду"
+                url={`kendr.site/${formData.slug || 'your-site'}`}
+                userTitle={formData.title}
+                userLogo={effectiveLogo}
+            />
         </div>
     );
 };

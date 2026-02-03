@@ -4,13 +4,13 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import UserMenu from './UserMenu';
-import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, Settings, LogIn, Plus } from 'lucide-react';
+import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, Settings, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette } from 'lucide-react';
 
-const PlatformSidebar = ({ isCollapsed, onToggle }) => {
+const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
     const { cartItems } = useContext(CartContext);
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-    
+    const isAdmin = variant === 'admin';
     const handleProtectedLinkClick = (e, path) => {
         if (!user) {
             e.preventDefault();
@@ -19,7 +19,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
     };
 
     const sidebarWidth = isCollapsed ? '80px' : '280px';
-    
     const styles = {
         container: {
             position: 'fixed',
@@ -46,7 +45,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
             position: 'relative',
             flexShrink: 0
         },
-        logoImage: {
+        userLogo: {
             height: '70px',
             width: '70px',
             backgroundImage: 'var(--platform-logo-url)',
@@ -55,6 +54,13 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
             backgroundPosition: 'center',
             transition: 'all 0.3s ease',
             flexShrink: 0
+        },
+        adminLogo: {
+            height: '60px',
+            width: 'auto',
+            maxWidth: '80%',
+            objectFit: 'contain',
+            transition: 'all 0.3s ease',
         },
         toggleBtn: {
             position: 'absolute',
@@ -157,11 +163,17 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--platform-border-color); border-radius: 2px; }
+        
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
     `;
 
     const SidebarLink = ({ to, icon: Icon, label, protectedLink, count, isCreateButton = false }) => {
         const handleClick = (e) => {
-            if (protectedLink) handleProtectedLinkClick(e, to);
+            if (protectedLink && !isAdmin) handleProtectedLinkClick(e, to);
         };
 
         const className = isCreateButton ? 'sidebar-link sidebar-create-btn' : 'sidebar-link';
@@ -185,6 +197,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                 style={contentStyle} 
                 onClick={handleClick}
                 title={isCollapsed ? label : ''}
+                end={to === '/admin' || to === '/admin/dashboard'} 
             >
                 <div style={iconContainerStyle}>
                     {isCreateButton && isCollapsed ? <Plus size={24} /> : <Icon size={20} />}
@@ -199,12 +212,20 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
         );
     };
 
+    const Separator = () => (
+        <div className="nav-separator" style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 8px', opacity: 0.5 }} />
+    );
+
     return (
         <div style={styles.container} className="custom-scrollbar">
             <style>{cssStyles}</style>
             <div style={styles.logoContainer}>
-                <Link to="/" style={{ display: 'flex', justifyContent: 'center', width: '100%', textDecoration: 'none' }}>
-                    <div style={styles.logoImage} />
+                <Link to={isAdmin ? "/admin/dashboard" : "/"} style={{ display: 'flex', justifyContent: 'center', width: '100%', textDecoration: 'none' }}>
+                    {isAdmin ? (
+                        <img src="/admin.webp" alt="Admin Panel" style={styles.adminLogo} />
+                    ) : (
+                        <div style={styles.userLogo} />
+                    )}
                 </Link>
                 <button 
                     onClick={onToggle} 
@@ -221,28 +242,58 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                     {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
             </div>
-
             <div style={styles.navScrollArea} className="custom-scrollbar">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <SidebarLink to="/create-site" icon={FileText} label="Створити сайт" protectedLink isCreateButton={true} />
-                </div>
-                <div className="nav-separator" style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 8px', opacity: 0.5 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <SidebarLink to="/my-sites" icon={Layout} label="Мої сайти" protectedLink />
-                    <SidebarLink to="/media-library" icon={FileText} label="Медіатека" protectedLink />
-                </div>
-                <div className="nav-separator" style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 8px', opacity: 0.5 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <SidebarLink to="/catalog" icon={Store} label="Каталог сайтів" />
-                    {user && <SidebarLink to="/cart" icon={ShoppingCart} label="Кошик" count={cartItems.length} />}
-                </div>
-                <div className="nav-separator" style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 8px', opacity: 0.5 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <SidebarLink to="/support" icon={HelpCircle} label="Підтримка" />
-                    {user && <SidebarLink to="/settings" icon={Settings} label="Налаштування" />}
-                </div>
+                
+                {isAdmin ? (
+                    <>
+                        <div className="nav-section">
+                            <SidebarLink to="/create-site" icon={FileText} label="Створити сайт" isCreateButton={true} />
+                        </div>
+                        <Separator />
+                        <div className="nav-section">
+                            <SidebarLink to="/my-sites" icon={Layout} label="Мої сайти" />
+                            <SidebarLink to="/media-library" icon={FileText} label="Медіатека" />
+                            <SidebarLink to="/admin/templates" icon={Palette} label="Шаблони" />
+                        </div>
+                        <Separator />
+                        <div className="nav-section">
+                            <SidebarLink to="/admin/sites" icon={Globe} label="Всі сайти" />
+                            <SidebarLink to="/admin/users" icon={Users} label="Користувачі" />
+                        </div>
+                        <Separator />
+                        <div className="nav-section">
+                            <SidebarLink to="/admin/tickets" icon={MessageSquare} label="Тікети" />
+                            <SidebarLink to="/admin/reports" icon={AlertTriangle} label="Скарги" />
+                        </div>
+                        <Separator />
+                        <div className="nav-section">
+                            <SidebarLink to="/admin/dashboard" icon={LayoutDashboard} label="Дашборд" />
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="nav-section">
+                            <SidebarLink to="/create-site" icon={FileText} label="Створити сайт" protectedLink isCreateButton={true} />
+                        </div>
+                        <Separator />
+                        <div className="nav-section">
+                            <SidebarLink to="/my-sites" icon={Layout} label="Мої сайти" protectedLink />
+                            <SidebarLink to="/media-library" icon={FileText} label="Медіатека" protectedLink />
+                        </div>
+                        <Separator />
+                        <div className="nav-section">
+                            <SidebarLink to="/catalog" icon={Store} label="Каталог сайтів" />
+                            {user && <SidebarLink to="/cart" icon={ShoppingCart} label="Кошик" count={cartItems.length} />}
+                        </div>
+                        <Separator />
+                        <div className="nav-section">
+                            <SidebarLink to="/support" icon={HelpCircle} label="Підтримка" />
+                            {user && <SidebarLink to="/settings" icon={Settings} label="Налаштування" />}
+                        </div>
+                    </>
+                )}
             </div>
-
+            
             <div style={styles.footer}>
                 {!user ? (
                     <Link to="/login" className={isCollapsed ? 'sidebar-link' : 'login-btn-area'} title="Увійти" style={{ textDecoration: 'none', justifyContent: isCollapsed ? 'center' : 'center' }}>
@@ -252,7 +303,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle }) => {
                         {!isCollapsed && <span style={{ marginLeft: '8px' }}>Увійти</span>}
                     </Link>
                 ) : (
-                    <UserMenu isCollapsed={isCollapsed} />
+                    <UserMenu isCollapsed={isCollapsed} customSubtitle={isAdmin ? "Адміністратор" : null} />
                 )}
             </div>
         </div>

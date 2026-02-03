@@ -45,11 +45,17 @@ const MySitesPage = () => {
             setLoading(true);
             const params = { scope: 'my', search: searchTerm, sort: sortOption, tag: selectedTag };
             const response = await apiClient.get('/sites/catalog', { params });
-            setSites(response.data);
+            if (Array.isArray(response.data)) {
+                setSites(response.data);
+            } else {
+                console.error("API Error: Expected array of sites, got:", response.data);
+                setSites([]);
+            }
             setVisibleCount(ITEMS_PER_PAGE);
         } catch (err) { 
             console.error(err);
             toast.error('Не вдалося завантажити ваші сайти.'); 
+            setSites([]);
         } finally { 
             setLoading(false); 
         }
@@ -83,10 +89,13 @@ const MySitesPage = () => {
             if (newStatus === 'private') toast.success('Сайт приховано');
             else if (newStatus === 'published') toast.success('Сайт опубліковано');
             else toast.success('Сайт перенесено в чернетки');
-
         } catch (err) { 
             console.error(err);
-            toast.error('Помилка при зміні статусу'); 
+            if (err.response && err.response.status === 403) {
+                 toast.error(err.response.data.message);
+            } else {
+                 toast.error('Помилка при зміні статусу'); 
+            }
         }
     };
 
@@ -97,7 +106,8 @@ const MySitesPage = () => {
         } catch (error) { toast.error('Помилка'); }
     };
 
-    const filteredSites = sites.filter(s => onlyPinned ? s.is_pinned : true)
+    const safeSites = Array.isArray(sites) ? sites : [];
+    const filteredSites = safeSites.filter(s => onlyPinned ? s.is_pinned : true)
         .sort((a, b) => (a.is_pinned === b.is_pinned ? 0 : a.is_pinned ? -1 : 1));
     const visibleSites = filteredSites.slice(0, visibleCount);
     const styles = {
@@ -141,7 +151,7 @@ const MySitesPage = () => {
                     <div style={{ textAlign: 'center' }}>
                         <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Мої Сайти</h1>
                         <span style={{ fontSize: '0.85rem', color: 'var(--platform-text-secondary)' }}>
-                            Всього: {sites.length}
+                            Всього: {safeSites.length}
                         </span>
                     </div>
                     
@@ -176,7 +186,7 @@ const MySitesPage = () => {
                 ) : filteredSites.length === 0 ? (
                     <EmptyState 
                         title="Сайтів не знайдено"
-                        description={sites.length === 0 ? "У вас ще немає створених сайтів" : "Спробуйте змінити параметри пошуку"}
+                        description={safeSites.length === 0 ? "У вас ще немає створених сайтів" : "Спробуйте змінити параметри пошуку"}
                         icon={Search}
                         action={
                             (searchTerm || selectedTag || onlyPinned) ? (

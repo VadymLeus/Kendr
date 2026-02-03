@@ -3,7 +3,6 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useLocation, Outlet } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import PlatformSidebar from './PlatformSidebar';
-import AdminSidebar from '../../../modules/admin/components/AdminSidebar';
 import SiteHeader from './SiteHeader';
 import Footer from './Footer';
 import TitleManager from './TitleManager';
@@ -13,13 +12,13 @@ import FontLoader from '../../../modules/renderer/components/FontLoader';
 
 const EXPANDED_SIDEBAR_WIDTH = '280px';
 const COLLAPSED_SIDEBAR_WIDTH = '80px';
+
 const Layout = () => {
     const { user, isAdmin, isLoading: isAuthLoading } = useContext(AuthContext);
     const [isCollapsed, setIsCollapsed] = useState(() => {
         const savedState = localStorage.getItem('sidebarCollapsed');
         return savedState === 'true';
     });
-
     const location = useLocation();
     const [siteData, setSiteData] = useState(null);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
@@ -39,12 +38,14 @@ const Layout = () => {
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
-    const mediaLibraryMatch = location.pathname === '/media-library';
+    const createSiteMatch = location.pathname === '/create-site';
+    const adminTemplatesMatch = location.pathname === '/admin/templates';
+    const isAppPage = !!(dashboardMatch || createSiteMatch || adminTemplatesMatch);
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isHiddenStatus = siteData && ['draft', 'suspended', 'private'].includes(siteData.status);
     const isMaintenanceMode = isHiddenStatus && !isOwner && !isAdmin;
     const shouldShowSiteHeader = !!(publicMatch || productInsideSiteMatch) && siteData && !isMaintenanceMode;
-    const shouldShowFooter = !isAdmin && !dashboardMatch && !publicMatch && !mediaLibraryMatch && !productInsideSiteMatch;
+    const shouldShowFooter = !isAdmin && !isAppPage && !publicMatch && !productInsideSiteMatch;
     useEffect(() => {
         const fetchSiteData = async () => {
             setIsSiteLoading(true);
@@ -52,7 +53,6 @@ const Layout = () => {
             try {
                 let url = null;
                 let params = { increment_view: 'false' }; 
-
                 if (dashboardMatch) {
                     const sitePath = dashboardMatch[1];
                     url = `/sites/${sitePath}`;
@@ -102,8 +102,12 @@ const Layout = () => {
     const siteAccentText = isLightColor(siteAccentHex) ? '#000000' : '#ffffff';
     const isSiteThemeActive = isPublicPage && !isSiteLoading && siteData && !isMaintenanceMode;
     const mainStyles = {
-        padding: (dashboardMatch || isPublicPage || location.pathname === '/settings') ? 0 : '2rem', 
+        padding: (isAppPage || isPublicPage) ? 0 : '2rem', 
         flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: isAppPage ? '100%' : 'auto', 
+        overflow: isAppPage ? 'hidden' : 'visible',
         '--site-accent': siteAccentHex,
         '--site-accent-hover': siteAccentHover,
         '--site-accent-light': siteAccentLight,
@@ -136,18 +140,21 @@ const Layout = () => {
     }
 
     const layoutContentStyle = {
-        overflowY: (dashboardMatch) ? 'hidden' : 'auto',
-        width: '100%'
+        overflowY: isAppPage ? 'hidden' : 'auto', 
+        width: '100%',
+        height: '100vh',
+        maxHeight: '100vh',
+        position: 'relative' 
     };
     
     return (
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
             <TitleManager siteData={siteData} key={location.pathname} />
-            {isAdmin ? (
-                <AdminSidebar isCollapsed={isCollapsed} onToggle={handleToggleSidebar} />
-            ) : (
-                <PlatformSidebar isCollapsed={isCollapsed} onToggle={handleToggleSidebar} />
-            )}
+            <PlatformSidebar 
+                isCollapsed={isCollapsed} 
+                onToggle={handleToggleSidebar} 
+                variant={isAdmin ? 'admin' : 'user'}
+            />
 
             <div 
                 className={`layout-content ${isSiteThemeActive ? 'site-theme-context' : ''}`}

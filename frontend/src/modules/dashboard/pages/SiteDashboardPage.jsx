@@ -23,7 +23,14 @@ const SiteDashboardPage = () => {
     const [activeTab, setActiveTab] = useState(() => {
         return localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
     });
-    
+
+    useEffect(() => {
+        if (siteData && siteData.status === 'suspended') {
+            toast.error('Доступ до редагування заблоковано. Сайт забанено.');
+            navigate('/dashboard');
+        }
+    }, [siteData, navigate]);
+
     useEffect(() => {
         if (site_path) {
             localStorage.setItem(`editor_active_tab_${site_path}`, activeTab);

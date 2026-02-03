@@ -23,7 +23,7 @@ class Site {
     const params = [];
     const conditions = [];
     if (!includeAllStatuses) {
-        conditions.push("s.status = 'published'");
+        conditions.push("s.status IN ('published', 'draft')");
     }
 
     if (userId) {

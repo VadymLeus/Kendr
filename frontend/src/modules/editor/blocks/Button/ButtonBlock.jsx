@@ -73,6 +73,7 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     }
 
     const effectiveIcon = (isFile && icon === 'none') ? 'download' : icon;
+    
     return (
         <div 
             className={uniqueClass}
@@ -125,7 +126,6 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 <span style={{ display: 'flex', alignItems: 'center' }}>
                     {text}
                 </span>
-                
                 {iconPosition === 'right' && <ButtonIcon name={effectiveIcon} size={size} flip={iconFlip} />}
             </a>
         </div>

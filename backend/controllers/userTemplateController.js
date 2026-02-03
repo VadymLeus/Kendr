@@ -1,13 +1,15 @@
 // backend/controllers/userTemplateController.js
-const UserTemplate = require('../models/UserTemplate');
 const Site = require('../models/Site');
 const Page = require('../models/Page');
 const db = require('../config/db');
 
 exports.saveAsTemplate = async (req, res, next) => {
     try {
-        const { siteId, templateName, description } = req.body;
+        const { siteId, templateName, description, icon } = req.body;
         const userId = req.user.id;
+        if (!siteId || !templateName) {
+            return res.status(400).json({ message: 'Необхідно вказати ID сайту та назву шаблону.' });
+        }
 
         const site = await Site.findByIdAndUserId(siteId, userId);
         if (!site) {
@@ -15,18 +17,22 @@ exports.saveAsTemplate = async (req, res, next) => {
         }
 
         const siteDetails = await Site.findByPath(site.site_path);
+        if (!siteDetails) return res.status(404).json({ message: 'Деталі сайту не знайдено.' });
         const pages = await Page.findBySiteId(siteId);
-        
         const pagesWithContent = await Promise.all(pages.map(async (p) => {
             const pageData = await Page.findById(p.id);
+            if (!pageData) return null;
             return {
                 title: pageData.name,
                 slug: pageData.slug,
                 blocks: pageData.block_content || [],
-                is_homepage: pageData.is_homepage
+                is_homepage: pageData.is_homepage,
+                seo_title: pageData.seo_title,
+                seo_description: pageData.seo_description
             };
         }));
 
+        const validPages = pagesWithContent.filter(p => p !== null);
         const snapshot = {
             theme_settings: {
                 ...(siteDetails.theme_settings || {}),
@@ -35,30 +41,55 @@ exports.saveAsTemplate = async (req, res, next) => {
             },
             header_content: siteDetails.header_content || [],
             footer_content: siteDetails.footer_content || [],
-            pages: pagesWithContent
+            pages: validPages
         };
 
-        await UserTemplate.create(userId, templateName, description || '', snapshot);
+        const jsonSnapshot = JSON.stringify(snapshot);
+        await db.query(
+            `INSERT INTO templates (user_id, name, description, icon, default_block_content, type, access_level, is_ready) 
+             VALUES (?, ?, ?, ?, ?, 'personal', 'private', 0)`,
+            [userId, templateName, description || '', icon || 'Layout', jsonSnapshot]
+        );
 
         res.status(201).json({ message: 'Шаблон успішно створено!' });
     } catch (error) {
+        console.error('Error in saveAsTemplate:', error);
         next(error);
     }
 };
 
 exports.getMyTemplates = async (req, res, next) => {
     try {
-        const [templates] = await db.query(
-            'SELECT id, name, description, full_site_snapshot, created_at FROM user_templates WHERE user_id = ? ORDER BY created_at DESC', 
-            [req.user.id]
-        );
+        const userId = req.user.id;
+        const query = `
+            SELECT id, name, description, icon, thumbnail_url, default_block_content, type, is_ready, access_level 
+            FROM templates 
+            WHERE user_id = ? 
+            AND (
+                type = 'personal' 
+                OR (type = 'system' AND is_ready = 0)
+            )
+            ORDER BY created_at DESC
+        `;
+        
+        const [rows] = await db.query(query, [userId]);
+        
+        const processedTemplates = rows.map(t => {
+            const rawContent = t.default_block_content;
+            let parsedContent = {};
+            try {
+                parsedContent = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
+            } catch (e) {
+                console.error(`Error parsing template content for id ${t.id}`, e);
+            }
 
-        const processedTemplates = templates.map(t => ({
-            ...t,
-            full_site_snapshot: (typeof t.full_site_snapshot === 'string') 
-                ? JSON.parse(t.full_site_snapshot) 
-                : t.full_site_snapshot
-        }));
+            return {
+                ...t,
+                icon: t.icon || 'Layout', 
+                full_site_snapshot: parsedContent,
+                default_block_content: parsedContent
+            };
+        });
 
         res.json(processedTemplates);
     } catch (error) {
@@ -69,9 +100,10 @@ exports.getMyTemplates = async (req, res, next) => {
 exports.deleteTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const userId = req.user.id;
         const [result] = await db.query(
-            'DELETE FROM user_templates WHERE id = ? AND user_id = ?',
-            [id, req.user.id]
+            `DELETE FROM templates WHERE id = ? AND user_id = ?`,
+            [id, userId]
         );
         
         if (result.affectedRows === 0) {
@@ -87,18 +119,18 @@ exports.deleteTemplate = async (req, res, next) => {
 exports.updateTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { siteId, templateName, description } = req.body;
+        const { siteId, templateName, description, icon } = req.body;
         const userId = req.user.id;
+
         if (!siteId) {
             const [result] = await db.query(
-                'UPDATE user_templates SET name = ?, description = ? WHERE id = ? AND user_id = ?',
-                [templateName, description || '', id, userId]
+                `UPDATE templates SET name = ?, description = ?, icon = ? WHERE id = ? AND user_id = ?`,
+                [templateName, description, icon || 'Layout', id, userId]
             );
 
             if (result.affectedRows === 0) {
                 return res.status(404).json({ message: 'Шаблон не знайдено або у вас немає прав.' });
             }
-
             return res.json({ message: 'Інформацію про шаблон оновлено!' });
         }
 
@@ -106,18 +138,23 @@ exports.updateTemplate = async (req, res, next) => {
         if (!site) return res.status(403).json({ message: 'Сайт для оновлення шаблону не знайдено.' });
 
         const siteDetails = await Site.findByPath(site.site_path);
+        if (!siteDetails) return res.status(404).json({ message: 'Деталі сайту не знайдено.' });
+
         const pages = await Page.findBySiteId(siteId);
-        
         const pagesWithContent = await Promise.all(pages.map(async (p) => {
             const pageData = await Page.findById(p.id);
+            if (!pageData) return null;
             return {
                 title: pageData.name,
                 slug: pageData.slug,
                 blocks: pageData.block_content || [],
-                is_homepage: pageData.is_homepage
+                is_homepage: pageData.is_homepage,
+                seo_title: pageData.seo_title,
+                seo_description: pageData.seo_description
             };
         }));
 
+        const validPages = pagesWithContent.filter(p => p !== null);
         const snapshot = {
             theme_settings: {
                 ...(siteDetails.theme_settings || {}),
@@ -126,12 +163,12 @@ exports.updateTemplate = async (req, res, next) => {
             },
             header_content: siteDetails.header_content || [],
             footer_content: siteDetails.footer_content || [],
-            pages: pagesWithContent
+            pages: validPages
         };
-
+        const jsonSnapshot = JSON.stringify(snapshot);
         const [result] = await db.query(
-            'UPDATE user_templates SET name = ?, description = ?, full_site_snapshot = ? WHERE id = ? AND user_id = ?',
-            [templateName, description || '', JSON.stringify(snapshot), id, userId]
+            `UPDATE templates SET name = ?, description = ?, icon = ?, default_block_content = ? WHERE id = ? AND user_id = ?`,
+            [templateName, description || '', icon || 'Layout', jsonSnapshot, id, userId]
         );
         
         if (result.affectedRows === 0) {
@@ -140,6 +177,7 @@ exports.updateTemplate = async (req, res, next) => {
 
         res.json({ message: 'Шаблон та його структуру успішно оновлено!' });
     } catch (error) {
+        console.error('Error in updateTemplate:', error);
         next(error);
     }
 };

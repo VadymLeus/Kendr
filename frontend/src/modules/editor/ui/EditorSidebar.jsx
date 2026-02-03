@@ -1,3 +1,4 @@
+// frontend/src/modules/editor/ui/EditorSidebar.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import AddBlocksTab from './tabs/AddBlocksTab';
 import LayersTab from './tabs/LayersTab';
@@ -9,11 +10,9 @@ const rigidIconWrapper = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '20px',
-    height: '20px',
-    minWidth: '20px',
+    width: '24px',
+    height: '24px',
     flexShrink: 0,
-    flex: '0 0 20px'
 };
 
 const EditorSidebar = ({
@@ -110,28 +109,30 @@ const EditorSidebar = ({
         transform: 'translateY(-1px)',
         boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
     };
-    
+
     const tabStyle = (tabName) => ({
         flex: 1,
-        padding: '0.75rem',
-        background: activeTab === tabName ? 'var(--platform-card-bg)' : 'var(--platform-sidebar-bg)',
+        padding: '10px 4px',
+        background: activeTab === tabName ? 'var(--platform-card-bg)' : 'transparent',
         border: 'none',
         borderBottom: activeTab === tabName ? '2px solid var(--platform-accent)' : '2px solid transparent',
         cursor: 'pointer',
         color: activeTab === tabName ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-        fontWeight: activeTab === tabName ? '600' : '400',
+        fontWeight: activeTab === tabName ? '600' : '500',
         transition: 'all 0.2s ease',
         position: 'relative',
-        overflow: 'hidden',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '6px',
-        minWidth: 0
+        gap: '4px',
+        minWidth: 0,
+        fontSize: '11px',
+        lineHeight: '1.2'
     });
 
     const tabHoverStyle = (tabName) => ({
-        background: activeTab !== tabName ? 'var(--platform-hover-bg)' : 'var(--platform-card-bg)',
+        background: activeTab !== tabName ? 'rgba(0,0,0,0.03)' : 'var(--platform-card-bg)',
         color: activeTab !== tabName ? 'var(--platform-text-primary)' : 'var(--platform-accent)'
     });
     
@@ -188,7 +189,7 @@ const EditorSidebar = ({
                     onMouseOut={(e) => handleMouseOut(e.currentTarget, saveButtonStyle)}
                     title="Зберегти зміни"
                 >
-                    <div style={rigidIconWrapper}>
+                    <div style={{...rigidIconWrapper, width: '16px', height: '16px'}}>
                         <Save size={16} />
                     </div>
                     <span>Зберегти</span>
@@ -209,8 +210,8 @@ const EditorSidebar = ({
                             onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('add'))}
                             onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('add'))}
                         >
-                            <div style={rigidIconWrapper}><Plus size={16} /></div>
-                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Додати</span>
+                            <div style={rigidIconWrapper}><Plus size={20} /></div>
+                            <span>Додати блок</span>
                         </button>
                         <button 
                             style={tabStyle('layers')} 
@@ -218,8 +219,8 @@ const EditorSidebar = ({
                             onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('layers'))}
                             onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('layers'))}
                         >
-                            <div style={rigidIconWrapper}><Layers size={16} /></div>
-                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Шари</span>
+                            <div style={rigidIconWrapper}><Layers size={20} /></div>
+                            <span>Шари</span>
                         </button>
                     </>
                 )}
@@ -229,8 +230,8 @@ const EditorSidebar = ({
                     onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('settings'))}
                     onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('settings'))}
                 >
-                    <div style={rigidIconWrapper}><Settings size={16} /></div>
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Налаш.</span>
+                    <div style={rigidIconWrapper}><Settings size={20} /></div>
+                    <span>Налаштування</span>
                 </button>
             </nav>
             

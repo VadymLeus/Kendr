@@ -126,7 +126,8 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         borderRadius: button.borderRadius,
         fontFamily: button.fontFamily || contentFontFamily, 
         width: button.width || 'auto',
-        theme_mode: theme_mode
+        theme_mode: theme_mode,
+        height: 'auto' 
     };
 
     const uniqueClass = `hero-scope-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
@@ -169,11 +170,17 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
                 }}>{subtitle}</p>}
                 
                 {resolvedButtonData.text && (
-                    <div style={{ marginTop: '8px' }}>
+                    <div style={{ marginTop: '8px', width: '100%', display: 'flex', justifyContent: alignMap[alignment] || 'center' }}>
                         <ButtonBlock 
                             blockData={resolvedButtonData} 
                             siteData={siteData} 
                             isEditorPreview={isEditorPreview}
+                            style={{ 
+                                backgroundColor: 'transparent',
+                                minHeight: 'auto',
+                                padding: 0,
+                                width: 'auto'
+                            }}
                         />
                     </div>
                 )}

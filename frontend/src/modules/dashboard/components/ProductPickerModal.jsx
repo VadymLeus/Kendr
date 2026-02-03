@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Search, X, Check, ArrowUp, ArrowDown, ArrowUpDown, Trash, Filter, PackageOpen } from 'lucide-react';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
+import { Search, X, Check, ArrowUp, ArrowDown, ArrowUpDown, Trash, Filter, PackageOpen } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], siteId }) => {

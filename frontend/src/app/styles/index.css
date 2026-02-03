@@ -1,4 +1,3 @@
-/* frontend/src/app/styles/index.css */
 @import "tailwindcss";
 
 *, *::before, *::after {
@@ -221,7 +220,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow-y: overlay;
+  overflow-y: auto;
   overflow-x: hidden;
   flex: 1;
   scrollbar-width: thin;
@@ -474,7 +473,7 @@ hr {
 .editor-canvas-scroll-area,
 .custom-scrollbar {
   overflow-y: auto;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }

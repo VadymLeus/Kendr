@@ -4,16 +4,19 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
 import { Helmet } from 'react-helmet-async';
-import { AlertTriangle, Gavel, ArrowRight, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Gavel, ArrowRight, CheckCircle, Clock, XCircle, Check } from 'lucide-react';
 
 const AppealPage = () => {
     const [suspendedSites, setSuspendedSites] = useState([]);
     const [loading, setLoading] = useState(true);
-
     useEffect(() => {
         apiClient.get('/sites/my-suspended')
-            .then(response => setSuspendedSites(response.data))
-            .catch(err => console.error(err))
+            .then(response => {
+                setSuspendedSites(response.data);
+            })
+            .catch(err => {
+                console.error("Помилка отримання заблокованих сайтів:", err);
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -45,6 +48,37 @@ const AppealPage = () => {
         alignItems: 'center',
         gap: '8px',
         border: '1px solid rgba(221, 107, 32, 0.2)'
+    };
+
+    const getAppealStatusBadge = (status) => {
+        switch (status) {
+            case 'pending':
+                return (
+                    <Button variant="secondary" disabled icon={<Clock size={18}/>} style={{opacity: 1, background: 'rgba(255, 193, 7, 0.1)', color: '#d97706', borderColor: '#d97706'}}>
+                        На розгляді
+                    </Button>
+                );
+            case 'approved':
+                return (
+                    <Button variant="secondary" disabled icon={<Check size={18}/>} style={{opacity: 1, background: 'rgba(16, 185, 129, 0.1)', color: '#059669', borderColor: '#059669'}}>
+                        Схвалено
+                    </Button>
+                );
+            case 'rejected':
+                return (
+                    <Button variant="secondary" disabled icon={<XCircle size={18}/>} style={{opacity: 1, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', borderColor: '#dc2626'}}>
+                        Відхилено
+                    </Button>
+                );
+            default:
+                return (
+                    <Link to="/support/new-ticket" state={{ site: site }} style={{ textDecoration: 'none' }}>
+                         <Button variant="primary">
+                            Подати апеляцію
+                        </Button>
+                    </Link>
+                );
+        }
     };
 
     if (loading) return (
@@ -85,7 +119,13 @@ const AppealPage = () => {
                     borderRadius: '16px',
                     border: '1px solid var(--platform-border-color)'
                 }}>
-                    <div style={{ marginBottom: '1.5rem', color: 'var(--platform-success)' }}>
+                    <div style={{ 
+                        marginBottom: '1.5rem', 
+                        color: 'var(--platform-success)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}>
                         <CheckCircle size={48} />
                     </div>
                     <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
@@ -130,11 +170,15 @@ const AppealPage = () => {
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                                <Link to="/support/new-ticket" state={{ site: site }} style={{ textDecoration: 'none' }}>
-                                    <Button variant="primary">
-                                        Подати апеляцію
-                                    </Button>
-                                </Link>
+                                {site.appeal_status ? (
+                                    getAppealStatusBadge(site.appeal_status)
+                                ) : (
+                                    <Link to="/support/new-ticket" state={{ site: site }} style={{ textDecoration: 'none' }}>
+                                        <Button variant="primary">
+                                            Подати апеляцію
+                                        </Button>
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     ))}

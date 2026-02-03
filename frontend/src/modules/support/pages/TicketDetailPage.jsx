@@ -1,15 +1,16 @@
 // frontend/src/modules/support/pages/TicketDetailPage.jsx
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { Button } from '../../../shared/ui/elements/Button';
 import { Helmet } from 'react-helmet-async';
-import { Send, Loader, User, Shield } from 'lucide-react';
+import { Send, Loader, User, Shield, Lock, ArrowLeft, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 const TicketDetailPage = () => {
     const { ticketId } = useParams();
+    const navigate = useNavigate();
     const [ticket, setTicket] = useState(null);
     const [replyBody, setReplyBody] = useState('');
     const [loading, setLoading] = useState(true);
@@ -17,7 +18,6 @@ const TicketDetailPage = () => {
     const [error, setError] = useState('');
     const { user } = useContext(AuthContext);
     const messagesEndRef = useRef(null);
-
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -39,9 +39,25 @@ const TicketDetailPage = () => {
         fetchTicket();
     }, [ticketId]);
 
+    const isSpamBlocked = useMemo(() => {
+        if (!ticket || !user) return false;
+        if (user.role === 'admin') return false; 
+        
+        const replies = ticket.replies || [];
+        if (replies.length < 2) return false;
+
+        const lastTwo = replies.slice(-2);
+        return lastTwo.every(r => r.user_id === user.id);
+    }, [ticket, user]);
+
+    const isInputDisabled = useMemo(() => {
+        if (!ticket) return true;
+        return ticket.status === 'closed' || isSpamBlocked;
+    }, [ticket, isSpamBlocked]);
+
     const handleReplySubmit = async (e) => {
         e.preventDefault();
-        if (!replyBody.trim()) return;
+        if (!replyBody.trim() || isInputDisabled) return;
         
         setSending(true);
         try {
@@ -49,55 +65,192 @@ const TicketDetailPage = () => {
             setReplyBody('');
             await fetchTicket();
         } catch (err) {
-            alert(err.response?.data?.message || 'Не вдалося надіслати відповідь.');
+            if (err.response && err.response.status === 429) {
+                fetchTicket();
+            } else {
+                alert(err.response?.data?.message || 'Не вдалося надіслати відповідь.');
+            }
         } finally {
             setSending(false);
         }
     };
 
-    const containerStyle = {
-        maxWidth: '800px',
-        margin: '0 auto',
-        padding: '2rem 1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        height: 'calc(100vh - 64px)'
+    const getAvatarUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http') || url.startsWith('blob:')) return url;
+        return `${API_URL}${url}`;
     };
 
-    const messageStyle = (isAdmin, isMe) => ({
-        padding: '1.25rem',
-        borderRadius: '16px',
-        background: isAdmin 
-            ? 'rgba(66, 153, 225, 0.1)' 
-            : 'var(--platform-card-bg)',
-        border: isAdmin 
-            ? '1px solid rgba(66, 153, 225, 0.3)' 
-            : '1px solid var(--platform-border-color)',
-        alignSelf: isMe ? 'flex-end' : 'flex-start',
-        maxWidth: '85%',
-        marginBottom: '1rem',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
-        borderBottomRightRadius: isMe ? '4px' : '16px',
-        borderBottomLeftRadius: isAdmin ? '4px' : '16px'
-    });
+    const formatMessageDate = (dateString) => {
+        const date = new Date(dateString);
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `${d}.${m}.${y} - ${time}`;
+    };
 
-    const getStatusBadge = (status) => {
-        const style = {
-            padding: '6px 12px',
-            borderRadius: '20px',
-            fontSize: '0.85rem',
+    const styles = {
+        pageWrapper: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: 'var(--platform-bg)',
+            zIndex: 50,
+            overflow: 'hidden'
+        },
+        header: {
+            padding: '0 24px',
+            height: '64px',
+            backgroundColor: 'var(--platform-card-bg)',
+            borderBottom: '1px solid var(--platform-border-color)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexShrink: 0,
+            zIndex: 10
+        },
+        headerLeft: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+        },
+        chatArea: {
+            flex: 1,
+            overflowY: 'auto',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            backgroundColor: 'var(--platform-bg)',
+            position: 'relative'
+        },
+        inputArea: {
+            padding: '16px 24px',
+            backgroundColor: 'var(--platform-card-bg)', 
+            borderTop: '1px solid var(--platform-border-color)',
+            flexShrink: 0,
+            zIndex: 20
+        },
+        inputForm: {
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: 'var(--platform-bg)', 
+            borderRadius: '16px',
+            padding: '8px 12px'
+        },
+        messageRow: (isMe) => ({
+            display: 'flex',
+            justifyContent: isMe ? 'flex-end' : 'flex-start',
+            gap: '12px',
+            marginBottom: '4px'
+        }),
+        avatar: (isAdmin) => ({
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: isAdmin ? 'var(--platform-accent)' : 'var(--platform-border-color)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            flexShrink: 0,
+            overflow: 'hidden',
+            marginTop: '22px'
+        }),
+        bubble: (isMe, isAdmin) => ({
+            maxWidth: '600px',
+            padding: '12px 16px',
+            borderRadius: '16px',
+            borderTopLeftRadius: !isMe ? '4px' : '16px',
+            borderTopRightRadius: isMe ? '4px' : '16px',
+            background: isMe 
+                ? 'var(--platform-accent)' 
+                : (isAdmin ? 'rgba(59, 130, 246, 0.1)' : 'var(--platform-card-bg)'),
+            color: isMe 
+                ? '#fff' 
+                : 'var(--platform-text-primary)',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            position: 'relative'
+        }),
+        timestamp: (isMe) => ({
+            fontSize: '11px',
+            marginTop: '6px',
+            opacity: 0.7,
+            textAlign: 'right',
+            color: isMe ? 'rgba(255,255,255,0.9)' : 'var(--platform-text-secondary)',
+            whiteSpace: 'nowrap'
+        }),
+        nameLabel: (isMe, isAdmin) => ({
+            fontSize: '12px',
             fontWeight: '600',
-            textTransform: 'uppercase'
-        };
-        if (status === 'open') return <span style={{ ...style, background: 'rgba(221, 107, 32, 0.1)', color: 'var(--platform-warning)' }}>Відкрито</span>;
-        if (status === 'answered') return <span style={{ ...style, background: 'rgba(56, 161, 105, 0.1)', color: 'var(--platform-success)' }}>Є відповідь</span>;
-        return <span style={{ ...style, background: 'var(--platform-bg)', color: 'var(--platform-text-secondary)', border: '1px solid var(--platform-border-color)' }}>Закрито</span>;
+            color: isAdmin ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+            marginBottom: '4px',
+            marginLeft: isMe ? 0 : '4px',
+            marginRight: isMe ? '4px' : 0,
+            textAlign: isMe ? 'right' : 'left'
+        }),
+        statusBadge: (status) => {
+            let color = 'var(--platform-text-secondary)';
+            let bg = 'rgba(0,0,0,0.05)';
+            let icon = <Clock size={14} />;
+            let text = 'Закрито';
+
+            if (status === 'open') {
+                color = 'var(--platform-warning)';
+                bg = 'rgba(245, 158, 11, 0.1)';
+                text = 'Очікує відповіді';
+            } else if (status === 'answered') {
+                color = 'var(--platform-success)';
+                bg = 'rgba(16, 185, 129, 0.1)';
+                icon = <CheckCircle size={14} />;
+                text = 'Є відповідь';
+            } else {
+                icon = <XCircle size={14} />;
+            }
+
+            return (
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '6px 12px', borderRadius: '20px',
+                    fontSize: '13px', fontWeight: '500',
+                    color: color, background: bg
+                }}>
+                    {icon}
+                    {text}
+                </div>
+            );
+        },
+        centeredOverlay: {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 50,
+            background: 'var(--platform-card-bg)',
+            padding: '32px',
+            borderRadius: '24px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            gap: '16px',
+            maxWidth: '90%',
+            width: '380px',
+            animation: 'fadeIn 0.3s ease'
+        }
     };
 
     if (loading) return (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-            <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
-            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--platform-bg)' }}>
+            <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)' }} />
         </div>
     );
     
@@ -106,138 +259,155 @@ const TicketDetailPage = () => {
     );
     
     if (!ticket) return null;
+    const allMessages = [
+        {
+            id: 'original',
+            user_id: ticket.user_id,
+            body: ticket.body,
+            created_at: ticket.created_at,
+            role: 'user',
+            username: 'Ви'
+        },
+        ...ticket.replies
+    ];
 
     return (
-        <div style={containerStyle}>
+        <div style={styles.pageWrapper}>
             <Helmet>
-                <title>{`#${ticket.id} - ${ticket.subject} | Kendr`}</title>
+                <title>{`#${ticket.id} - Підтримка | Kendr`}</title>
             </Helmet>
-
-            <div style={{ 
-                borderBottom: '1px solid var(--platform-border-color)', 
-                paddingBottom: '1.5rem', 
-                marginBottom: '1.5rem' 
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '1rem' }}>
-                    <h1 style={{ 
-                        color: 'var(--platform-text-primary)', 
-                        fontSize: '1.5rem', 
-                        margin: '0 0 0.5rem 0',
-                        lineHeight: '1.4'
-                    }}>
-                        {ticket.subject}
-                    </h1>
-                    <div style={{ flexShrink: 0 }}>
-                        {getStatusBadge(ticket.status)}
+            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -45%); } to { opacity: 1; transform: translate(-50%, -50%); } }`}</style>
+            <div style={styles.header}>
+                <div style={styles.headerLeft}>
+                    <Button variant="ghost" icon={<ArrowLeft size={20}/>} onClick={() => navigate('/support')} />
+                    <div>
+                        <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, color: 'var(--platform-text-primary)' }}>
+                            {ticket.subject}
+                        </h1>
+                        <div style={{ fontSize: '13px', color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            #{ticket.id} • {new Date(ticket.created_at).toLocaleDateString()}
+                        </div>
                     </div>
                 </div>
-                <p style={{ color: 'var(--platform-text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-                    Тікет #{ticket.id} • Створено {new Date(ticket.created_at).toLocaleDateString()}
-                </p>
+                {styles.statusBadge(ticket.status)}
             </div>
 
-            <div style={{ 
-                flex: 1, 
-                overflowY: 'auto', 
-                padding: '0 0.5rem',
-                display: 'flex',
-                flexDirection: 'column'
-            }} className="custom-scrollbar">
-                
-                <div style={messageStyle(false, true)}>
-                    <p style={{ margin: '0 0 0.5rem 0', color: 'var(--platform-text-primary)', whiteSpace: 'pre-wrap' }}>
-                        {ticket.body}
-                    </p>
-                    <small style={{ color: 'var(--platform-text-secondary)', display: 'block', textAlign: 'right', fontSize: '0.8rem' }}>
-                        {new Date(ticket.created_at).toLocaleString()}
-                    </small>
+            <div style={styles.chatArea} className="custom-scrollbar">
+                <div style={{ textAlign: 'center', margin: '16px 0', opacity: 0.5, fontSize: '13px' }}>
+                    Початок діалогу
                 </div>
-                
-                {ticket.replies.map(reply => {
-                    const isAdmin = reply.role === 'admin';
+
+                {allMessages.map((msg, index) => {
+                    const isMe = msg.user_id === user?.id; 
+                    const isAdmin = msg.role === 'admin';
+                    const avatarSrc = getAvatarUrl(msg.avatar_url);
                     return (
-                        <div key={reply.id} style={messageStyle(isAdmin, !isAdmin)}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
-                                <div style={{
-                                    width: '28px', height: '28px',
-                                    borderRadius: '50%',
-                                    background: isAdmin ? 'var(--platform-accent)' : 'var(--platform-border-color)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#fff',
-                                    overflow: 'hidden'
-                                }}>
-                                   {reply.avatar_url ? (
-                                        <img src={`${API_URL}${reply.avatar_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                   ) : (
-                                        isAdmin ? <Shield size={14} /> : <User size={14} />
-                                   )}
+                        <div key={msg.id || index} style={styles.messageRow(isMe)}>
+                            {!isMe && (
+                                <div style={styles.avatar(isAdmin)} title={msg.username}>
+                                    {avatarSrc ? <img src={avatarSrc} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : (isAdmin ? <Shield size={18}/> : <User size={18}/>)}
                                 </div>
-                                <strong style={{ color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
-                                    {reply.username}
-                                </strong>
-                                {isAdmin && (
-                                    <span style={{ 
-                                        background: 'var(--platform-accent)', 
-                                        color: '#fff', 
-                                        padding: '2px 8px', 
-                                        borderRadius: '10px', 
-                                        fontSize: '0.7rem', 
-                                        fontWeight: 'bold' 
-                                    }}>
-                                        Підтримка
-                                    </span>
-                                )}
+                            )}
+
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                                <span style={styles.nameLabel(isMe, isAdmin)}>
+                                    {isAdmin ? 'Підтримка' : 'Ви'}
+                                </span>
+                                
+                                <div style={styles.bubble(isMe, isAdmin)}>
+                                    <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5', fontSize: '14px' }}>
+                                        {msg.body}
+                                    </div>
+                                    <div style={styles.timestamp(isMe)}>
+                                        {formatMessageDate(msg.created_at)}
+                                    </div>
+                                </div>
                             </div>
-                            <p style={{ margin: '0 0 0.5rem 0', color: 'var(--platform-text-primary)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                                {reply.body}
-                            </p>
-                            <small style={{ color: 'var(--platform-text-secondary)', display: 'block', textAlign: 'right', fontSize: '0.8rem' }}>
-                                {new Date(reply.created_at).toLocaleString()}
-                            </small>
                         </div>
                     );
                 })}
                 <div ref={messagesEndRef} />
+
+                {isSpamBlocked && (
+                    <div style={styles.centeredOverlay}>
+                        <div style={{
+                            width: '56px', height: '56px', borderRadius: '50%',
+                            background: 'rgba(245, 158, 11, 0.1)', color: 'var(--platform-accent)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px'
+                        }}>
+                            <Clock size={28} />
+                        </div>
+                        <div>
+                            <div style={{ fontWeight: 'bold', fontSize: '18px', color: 'var(--platform-text-primary)', marginBottom: '8px' }}>
+                                Очікуйте на відповідь
+                            </div>
+                            <div style={{ color: 'var(--platform-text-secondary)', fontSize: '14px', lineHeight: '1.5' }}>
+                                Ви надіслали декілька повідомлень поспіль.<br/>
+                                Можливість писати тимчасово обмежена.
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {ticket.status !== 'closed' && (
-                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--platform-border-color)', paddingTop: '1.5rem' }}>
-                    <form onSubmit={handleReplySubmit}>
-                        <textarea 
-                            value={replyBody} 
-                            onChange={e => setReplyBody(e.target.value)} 
-                            required 
-                            placeholder="Напишіть відповідь..."
-                            style={{
-                                width: '100%',
-                                padding: '1rem',
-                                borderRadius: '12px',
-                                border: '1px solid var(--platform-border-color)',
-                                background: 'var(--platform-input-bg)',
-                                color: 'var(--platform-text-primary)',
-                                minHeight: '100px',
-                                resize: 'vertical',
-                                marginBottom: '1rem',
-                                fontFamily: 'inherit',
-                                outline: 'none'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--platform-border-color)'}
-                        />
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <Button 
-                                type="submit" 
-                                variant="primary" 
-                                disabled={sending}
-                                icon={sending ? <Loader className="animate-spin" size={18} style={{ animation: 'spin 1s linear infinite' }}/> : <Send size={18}/>}
-                            >
-                                {sending ? 'Надсилання...' : 'Відповісти'}
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-            )}
-            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+            <div style={styles.inputArea}>
+                <form 
+                    onSubmit={handleReplySubmit} 
+                    style={styles.inputForm}
+                >
+                    <textarea 
+                        value={replyBody} 
+                        onChange={e => setReplyBody(e.target.value)} 
+                        required 
+                        readOnly={sending || isInputDisabled} 
+                        placeholder="Напишіть повідомлення..."
+                        style={{
+                            flex: 1,
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            color: 'var(--platform-text-primary)',
+                            minHeight: '24px',
+                            maxHeight: '120px',
+                            resize: 'none',
+                            fontSize: '14px',
+                            lineHeight: '1.5',
+                            padding: '4px 0',
+                            fontFamily: 'inherit',
+                            cursor: isInputDisabled ? 'not-allowed' : 'text'
+                        }}
+                        onInput={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleReplySubmit(e);
+                            }
+                        }}
+                    />
+                    <Button 
+                        type="submit" 
+                        variant="primary"
+                        disabled={sending || !replyBody.trim() || isInputDisabled}
+                        style={{ 
+                            borderRadius: '50%', 
+                            width: '40px', 
+                            height: '40px', 
+                            padding: 0, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            cursor: isInputDisabled ? 'not-allowed' : 'pointer',
+                            opacity: isInputDisabled ? 1 : undefined 
+                        }}
+                    >
+                        {sending ? <Loader className="animate-spin" size={18}/> : (isInputDisabled ? <Lock size={18} /> : <Send size={18}/>)}
+                    </Button>
+                </form>
+            </div>
         </div>
     );
 };

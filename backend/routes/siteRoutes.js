@@ -10,23 +10,18 @@ const { upload, processAndSaveLogo } = require('../middleware/upload');
 
 router.get('/check-slug', verifyToken, siteController.checkSlug);
 router.get('/templates', siteController.getTemplates);
-
 router.get('/catalog', verifyTokenOptional, siteController.getSites);
 router.get('/default-logos', siteController.getDefaultLogos);
-
-router.put('/:site_path/rename', verifyToken, siteController.renameSite);
+router.get('/my-suspended', verifyToken, siteController.getMySuspendedSites);
+router.post('/create', verifyToken, upload.single('logo'), processAndSaveLogo(64), siteController.createSite);
+router.put('/:siteId/reset-template', verifyToken, siteController.resetSiteToTemplate);
+router.patch('/:siteId/pin', verifyToken, siteController.toggleSitePin);
 router.get('/:siteId/pages', verifyToken, pageController.getPagesForSite);
 router.post('/:siteId/pages', verifyToken, pageController.createPage);
-
+router.put('/:site_path/rename', verifyToken, siteController.renameSite);
+router.put('/:site_path/settings', verifyToken, siteController.updateSiteSettings);
+router.delete('/:site_path', verifyToken, siteController.deleteSite);
 router.get('/:site_path', trackVisit, verifyTokenOptional, siteController.getSiteByPath);
 router.get('/:site_path/:slug', trackVisit, verifyTokenOptional, siteController.getSiteByPath);
 
-router.post('/create', verifyToken, upload.single('logo'), processAndSaveLogo(64), siteController.createSite);
-router.put('/:site_path/settings', verifyToken, siteController.updateSiteSettings);
-router.delete('/:site_path', verifyToken, siteController.deleteSite);
-router.get('/my-suspended', verifyToken, siteController.getMySuspendedSites);
-router.put('/:siteId/reset-template', verifyToken, siteController.resetSiteToTemplate);
-router.patch('/:siteId/pin', verifyToken, siteController.toggleSitePin);
-
-module.exports = router;
 module.exports = router;

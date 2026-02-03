@@ -1,5 +1,5 @@
 // frontend/src/modules/media/pages/MediaLibraryPage.jsx
-import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import apiClient from '../../../shared/api/api';
 import MediaGridItem from '../components/MediaGridItem';
 import MediaInspector from '../components/MediaInspector';
@@ -49,38 +49,14 @@ const MediaLibraryPage = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [checkedFiles, setCheckedFiles] = useState(new Set());
     const [isDragging, setIsDragging] = useState(false);
-    const [headerHeight, setHeaderHeight] = useState(190);
     const lastSelectedIndex = useRef(null);
     const dragCounter = useRef(0);
     const fileInputRef = useRef(null);
-    const headerRef = useRef(null);
     const { confirm } = useConfirm();
 
     useEffect(() => {
         fetchMedia();
     }, []);
-
-    useLayoutEffect(() => {
-        const updateHeaderHeight = () => {
-            if (headerRef.current) {
-                setHeaderHeight(headerRef.current.offsetHeight);
-            }
-        };
-
-        updateHeaderHeight();
-        const resizeObserver = new ResizeObserver(updateHeaderHeight);
-        if (headerRef.current) {
-            resizeObserver.observe(headerRef.current);
-        }
-
-        window.addEventListener('resize', updateHeaderHeight);
-
-        return () => {
-            window.removeEventListener('resize', updateHeaderHeight);
-            resizeObserver.disconnect();
-        };
-    }, []);
-
     const fetchMedia = async () => {
         setLoading(true);
         try {
@@ -97,6 +73,7 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         setActiveFormat(null);
     }, [activeType]);
+
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
@@ -153,12 +130,12 @@ const MediaLibraryPage = () => {
 
         return result;
     }, [files, searchTerm, activeType, activeFormat, sortOption, onlyFavorites]);
+
     const visibleFiles = filteredFiles.slice(0, visibleCount);
     const remainingCount = filteredFiles.length - visibleFiles.length;
     const handleUpload = async (e) => {
         const fileList = e.target.files;
         if (!fileList || fileList.length === 0) return;
-
         const toastId = toast.loading("Завантаження...");
         const uploadPromises = Array.from(fileList).map(async (file) => {
             const formData = new FormData();
@@ -173,9 +150,7 @@ const MediaLibraryPage = () => {
 
         const newFiles = await Promise.all(uploadPromises);
         const validFiles = newFiles.filter(f => f !== null);
-        
         toast.dismiss(toastId);
-        
         if (validFiles.length > 0) {
             setFiles(prev => [...validFiles, ...prev]);
             toast.success(`Завантажено ${validFiles.length} файлів`);
@@ -296,7 +271,6 @@ const MediaLibraryPage = () => {
                     document.body.removeChild(a);
                 } catch (error) {
                     console.error("Download failed:", error);
-                    toast.error(`Не вдалося завантажити ${file.original_file_name}`);
                 }
             }, i * 500);
         });
@@ -319,59 +293,62 @@ const MediaLibraryPage = () => {
         const files = e.dataTransfer.files;
         if (files && files.length > 0) handleUpload({ target: { files } });
     };
-    
+
     const styles = {
         pageWrapper: {
             margin: '-2rem', 
             width: 'calc(100% + 4rem)',
-            minHeight: '100%', 
+            minHeight: 'calc(100vh - 64px + 4rem)',
             display: 'flex', 
             flexDirection: 'column', 
             backgroundColor: 'var(--platform-bg)', 
-            position: 'relative'
+            position: 'relative',
         },
-        stickyContainer: {
+        stickyHeader: {
             position: 'sticky',
             top: 0,
             zIndex: 100,
             backgroundColor: 'var(--platform-bg)',
-            boxShadow: '0 1px 0 var(--platform-border-color)'
+            borderBottom: '1px solid var(--platform-border-color)',
         },
-        header: {
+        headerContent: {
             padding: '12px 24px', 
             display: 'flex', 
             justifyContent: 'center', 
             alignItems: 'center',
-            borderBottom: '1px solid var(--platform-border-color)', 
             height: '60px', 
-            flexShrink: 0, 
-            backgroundColor: 'var(--platform-bg)', 
-            position: 'relative'
+            position: 'relative',
+            borderBottom: '1px solid var(--platform-border-color)'
         },
-        contentContainer: {
+        mainContent: {
             display: 'flex',
             flexGrow: 1, 
             alignItems: 'flex-start',
-            position: 'relative'
+            position: 'relative',
         },
         gridArea: { 
             flex: 1, 
             padding: '24px', 
-            position: 'relative',
-            minWidth: 0
+            minWidth: 0, 
         },
-        grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' },
+        grid: { 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
+            gap: '16px', 
+            paddingBottom: '24px' 
+        },
         inspectorPanel: {
             width: '360px',
             borderLeft: '1px solid var(--platform-border-color)',
             position: 'sticky',
-            top: `${headerHeight}px`,
-            maxHeight: `calc(100vh - ${headerHeight}px - 48px)`,
+            top: '60px',
+            height: 'calc(100vh - 60px - 48px)',
+            overflowY: 'auto',
             flexShrink: 0,
             backgroundColor: 'var(--platform-bg)',
-            zIndex: 40
+            zIndex: 90
         },
-        statusBar: {
+        stickyFooter: {
             position: 'sticky',
             bottom: 0,
             zIndex: 100,
@@ -384,7 +361,6 @@ const MediaLibraryPage = () => {
             alignItems: 'center',
             fontSize: '0.8rem', 
             color: 'var(--platform-text-secondary)', 
-            flexShrink: 0
         },
         formatChip: (isActive) => ({
             padding: '0 12px', borderRadius: '20px', fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer',
@@ -427,8 +403,8 @@ const MediaLibraryPage = () => {
                 </div>
             )}
 
-            <div style={styles.stickyContainer} ref={headerRef}>
-                <div style={styles.header}>
+            <div style={styles.stickyHeader}>
+                <div style={styles.headerContent}>
                     <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Медіатека</h1>
                     
                     <div style={{ display: 'flex', gap: '10px', position: 'absolute', right: '24px' }}>
@@ -455,9 +431,18 @@ const MediaLibraryPage = () => {
                 />
             </div>
 
-            <div style={styles.contentContainer}>
+            <div style={styles.mainContent}>
                 <div 
-                    style={styles.gridArea} 
+                    style={{
+                        ...styles.gridArea,
+                        ...(!loading && filteredFiles.length === 0 ? { 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            minHeight: '400px'
+                        } : {})
+                    }} 
                     onClick={handleGridBackgroundClick}
                 >
                     {loading ? (
@@ -491,7 +476,7 @@ const MediaLibraryPage = () => {
                                 ))}
                             </div>
                             {remainingCount > 0 && (
-                                <div style={{ textAlign: 'center', marginTop: '30px' }}>
+                                <div style={{ textAlign: 'center', marginTop: '30px', paddingBottom: '20px' }}>
                                     <Button variant="outline" onClick={() => setVisibleCount(p => p + 48)} style={{ borderRadius: '30px' }}>
                                         Показати ще ({remainingCount})
                                     </Button>
@@ -502,18 +487,10 @@ const MediaLibraryPage = () => {
                 </div>
 
                 {selectedFile && (
-                    <div 
-                        style={{...styles.inspectorPanel, overflowY: 'auto'}} 
-                        className="hide-scrollbar"
-                    >
+                    <div style={styles.inspectorPanel} className="hide-scrollbar">
                         <style>{`
-                            .hide-scrollbar {
-                                -ms-overflow-style: none;
-                                scrollbar-width: none;
-                            }
-                            .hide-scrollbar::-webkit-scrollbar {
-                                display: none;
-                            }
+                            .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                            .hide-scrollbar::-webkit-scrollbar { display: none; }
                         `}</style>
                         <MediaInspector 
                             file={selectedFile} 
@@ -525,7 +502,7 @@ const MediaLibraryPage = () => {
                 )}
             </div>
 
-            <div style={styles.statusBar}>
+            <div style={styles.stickyFooter}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span>Всього: {files.length}</span>
                     <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }} />

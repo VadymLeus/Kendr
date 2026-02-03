@@ -7,8 +7,8 @@ const ConfirmModal = ({
     isOpen, 
     title, 
     message, 
-    confirmLabel, 
-    cancelLabel, 
+    confirmLabel = 'Підтвердити',
+    cancelLabel = 'Скасувати',
     onConfirm, 
     onCancel, 
     type = 'danger' 
@@ -35,9 +35,7 @@ const ConfirmModal = ({
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
     }, [isOpen, onCancel]);
-
     if (!isVisible && !isOpen) return null;
-
     const getTypeConfig = () => {
         switch (type) {
             case 'danger':

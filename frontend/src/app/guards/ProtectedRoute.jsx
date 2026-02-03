@@ -1,4 +1,4 @@
-// frontend/src/app/guards/ProtectedRoute.jsx
+// frontend/src/app/guards/ProtectedRoute
 import React, { useContext } from 'react';
 import { Navigate, Outlet, useOutletContext } from 'react-router-dom';
 import { AuthContext } from '../providers/AuthContext';

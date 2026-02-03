@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 const db = require('../config/db');
+
 const sanitizeUser = (user) => {
     return {
         id: user.id,
@@ -38,6 +39,17 @@ exports.getPublicProfile = async (req, res, next) => {
                 code: 'USER_NOT_FOUND' 
             });
         }
+        
+        if (user.role === 'admin') {
+            const isOwner = req.user && req.user.id === user.id;
+            const isRequesterAdmin = req.user && req.user.role === 'admin';
+            if (!isOwner && !isRequesterAdmin) {
+                return res.status(404).json({ 
+                    message: 'Користувача не знайдено',
+                    code: 'USER_NOT_FOUND' 
+                });
+            }
+        }
 
         if (!user.is_profile_public) {
             const isOwner = req.user && req.user.id === user.id;
@@ -50,17 +62,13 @@ exports.getPublicProfile = async (req, res, next) => {
                 });
             }
         }
-        
-        const [siteCount, totalViews] = await Promise.all([
+
+        const [siteCount, totalViews, warnings] = await Promise.all([
             User.getSiteCount(user.id),
-            User.getTotalSiteViews(user.id)
+            User.getTotalSiteViews(user.id),
+            Warning.findForUser(user.id)
         ]);
         
-        let warnings = [];
-        if (req.user && (req.user.id === user.id || req.user.role === 'admin')) {
-             warnings = await Warning.findForUser(user.id);
-        }
-
         const publicData = {
             id: user.id,
             username: user.username,
@@ -75,7 +83,7 @@ exports.getPublicProfile = async (req, res, next) => {
                 instagram: user.social_instagram,
                 website: user.social_website
             },
-            warnings: warnings 
+            warnings: warnings || []
         };
         
         res.json(publicData);
@@ -256,4 +264,4 @@ exports.deleteAvatar = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-};
+};  

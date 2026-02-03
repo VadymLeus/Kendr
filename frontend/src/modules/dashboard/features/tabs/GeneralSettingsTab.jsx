@@ -1,13 +1,13 @@
 // frontend/src/modules/dashboard/features/tabs/GeneralSettingsTab.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../../../../shared/api/api';
 import { useAutoSave } from '../../../../shared/hooks/useAutoSave';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
+import { AuthContext } from '../../../../app/providers/AuthContext';
 import SiteCoverDisplay from '../../../../shared/ui/complex/SiteCoverDisplay';
-import SaveTemplateModal from '../../components/SaveTemplateModal';
-import EditTemplateModal from '../../../../shared/ui/complex/EditTemplateModal';
+import TemplateModal from '../../components/TemplateModal';
 import { Input, Button, Select, Switch } from '../../../../shared/ui/elements';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { InputWithCounter } from '../../../../shared/ui/complex/InputWithCounter';
@@ -15,23 +15,36 @@ import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { TEXT_LIMITS } from '../../../../shared/config/limits';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { exportSiteToZip } from '../../../../shared/utils/siteExporter';
-import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown, Lock } from 'lucide-react';
+import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown, Lock, Construction, ArrowUpCircle, Play, Eye, RefreshCw, Camera, Coffee, Music, Star, Heart, ShoppingBag } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
     const { confirm } = useConfirm();
+    const isAdmin = user?.role === 'admin';
     const [identityData, setIdentityData] = useState({ title: '', slug: '' });
     const [isSavingIdentity, setIsSavingIdentity] = useState(false);
     const [slugError, setSlugError] = useState('');
     const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
-    const [personalTemplates, setPersonalTemplates] = useState([]);
+    const [personalTemplates, setPersonalTemplates] = useState([]); 
     const [systemTemplates, setSystemTemplates] = useState([]);
     const [loadingTemplates, setLoadingTemplates] = useState(false);
     const [expandedSections, setExpandedSections] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('kendr_template_sections')) || { personal: true, system: true }; }
-        catch (e) { return { personal: true, system: true }; }
+        try { 
+            return JSON.parse(localStorage.getItem('kendr_template_sections')) || { 
+                personal: true, 
+                drafts: true, 
+                staging: true,
+                published: true, 
+                system_public: true 
+            }; 
+        }
+        catch (e) { 
+            return { personal: true, drafts: true, staging: true, published: true, system_public: true }; 
+        }
     });
+    
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
@@ -111,6 +124,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     useEffect(() => {
         if (onSavingChange) onSavingChange(isSaving || isSavingIdentity);
     }, [isSaving, isSavingIdentity, onSavingChange]);
+
     const handleIdentityChange = (field, value) => {
         if (field === 'slug') {
             const val = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -144,18 +158,14 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             }
 
             await Promise.all(promises);
-
             toast.success('Зміни успішно збережено!');
-            
             if (onUpdate) onUpdate({ title, site_path: slug });
-
             if (needRedirect) {
                 setTimeout(() => { 
                     navigate(`/dashboard/${slug}`); 
                     window.location.reload(); 
                 }, 1000);
             }
-
         } catch (error) {
             console.error(error);
             setSlugError(error.response?.data?.message || 'Помилка збереження');
@@ -168,12 +178,17 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const fetchAllTemplates = async () => {
         setLoadingTemplates(true);
         try {
-            const [personalRes, systemRes] = await Promise.all([
-                apiClient.get('/user-templates'),
-                apiClient.get('/sites/templates')
-            ]);
-            setPersonalTemplates(personalRes.data);
-            setSystemTemplates(systemRes.data);
+            if (isAdmin) {
+                const systemRes = await apiClient.get('/admin/templates');
+                setSystemTemplates(systemRes.data);
+            } else {
+                const [personalRes, systemRes] = await Promise.all([
+                    apiClient.get('/user-templates'),
+                    apiClient.get('/sites/templates')
+                ]);
+                setPersonalTemplates(personalRes.data);
+                setSystemTemplates(systemRes.data);
+            }
         } catch (error) {
             console.error("Error fetching templates:", error);
         } finally {
@@ -193,18 +208,28 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         setIsEditModalOpen(true);
     };
 
-    const handleSaveTemplateChanges = async (name, description) => {
+    const handleSaveTemplateChanges = async (name, description, icon) => {
         if (!editingTemplate) return;
         setIsSavingTemplate(true);
         try {
-            await apiClient.put(`/user-templates/${editingTemplate.id}`, {
-                templateName: name,
-                description: description
-            });
+            const updateData = {
+                templateName: name, 
+                name: name,          
+                description: description,
+                icon: icon          
+            };
 
-            setPersonalTemplates(prev => prev.map(t =>
-                t.id === editingTemplate.id ? { ...t, name, description } : t
-            ));
+            if (isAdmin) {
+                 await apiClient.put(`/admin/templates/${editingTemplate.id}`, updateData);
+                 setSystemTemplates(prev => 
+                    prev.map(t => t.id === editingTemplate.id ? { ...t, name, description, icon } : t)
+                 );
+            } else {
+                await apiClient.put(`/user-templates/${editingTemplate.id}`, updateData);
+                setPersonalTemplates(prev => prev.map(t =>
+                    t.id === editingTemplate.id ? { ...t, name, description, icon } : t
+                ));
+            }
 
             toast.success('Шаблон оновлено');
             setIsEditModalOpen(false);
@@ -216,27 +241,56 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         }
     };
 
-    const handleSaveTemplate = async (name, description, overwriteId) => {
+    const handleSaveTemplate = async (name, description, icon, overwriteId) => {
+        if (!siteData?.id) {
+            toast.error("Помилка: Не знайдено ID сайту");
+            return;
+        }
+
+        if (!name) {
+            toast.error("Вкажіть назву шаблону");
+            return;
+        }
+
         try {
-            const payload = { siteId: siteData.id, templateName: name, description };
-            if (overwriteId) {
-                await apiClient.put(`/user-templates/${overwriteId}`, payload);
-                toast.success(`Шаблон "${name}" оновлено!`);
+            const payload = { 
+                siteId: siteData.id, 
+                templateName: name, 
+                description,
+                icon: icon || 'Layout'
+            };
+            
+            if (isAdmin) {
+                await apiClient.post('/admin/templates', payload);
+                toast.success(`Системний шаблон "${name}" збережено як чернетку!`);
             } else {
-                await apiClient.post('/user-templates', payload);
-                toast.success(`Шаблон "${name}" створено!`);
+                if (overwriteId) {
+                    await apiClient.put(`/user-templates/${overwriteId}`, payload);
+                    toast.success(`Шаблон "${name}" оновлено!`);
+                } else {
+                    await apiClient.post('/user-templates', payload);
+                    toast.success(`Шаблон "${name}" створено!`);
+                }
             }
+            
             setIsSaveTemplateModalOpen(false);
             fetchAllTemplates();
         } catch (error) {
-            toast.error('Помилка збереження шаблону');
+            console.error("Template Save Error:", error);
+            const msg = error.response?.data?.message || 'Помилка збереження шаблону';
+            toast.error(msg);
         }
     };
 
-    const handleDeleteTemplate = async (id, name) => {
+    const handleDeleteTemplate = async (id, name, isSystem) => {
         if (await confirm({ title: "Видалити шаблон?", message: `Ви впевнені, що хочете видалити шаблон "${name}"?`, type: "danger", confirmLabel: "Видалити" })) {
             try {
-                await apiClient.delete(`/user-templates/${id}`);
+                if (isSystem && isAdmin) {
+                    await apiClient.delete(`/admin/templates/${id}`);
+                } else {
+                    await apiClient.delete(`/user-templates/${id}`);
+                }
+                
                 toast.success("Шаблон видалено");
                 fetchAllTemplates();
             } catch (error) {
@@ -245,11 +299,60 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         }
     };
 
+    const handleMarkAsReady = async (template) => {
+        if (await confirm({ 
+            title: "Позначити як готовий?", 
+            message: `Шаблон "${template.name}" стане доступним для інших адмінів (Admin Only), але ще не для публіки.`, 
+            confirmLabel: "Готово" 
+        })) {
+            try {
+                await apiClient.put(`/admin/templates/${template.id}`, { 
+                    is_ready: 1, 
+                    access_level: 'admin_only' 
+                });
+                
+                setSystemTemplates(prev => prev.map(t => 
+                    t.id === template.id ? { ...t, is_ready: 1, access_level: 'admin_only' } : t
+                ));
+                toast.success(`Шаблон "${template.name}" готовий до перевірки!`);
+            } catch (error) {
+                const msg = error.response?.data?.message || "Помилка при зміні статусу";
+                toast.error(msg);
+            }
+        }
+    };
+
+    const handleRevertToDraft = async (template) => {
+        if (await confirm({ 
+            title: "Повернути в роботу?", 
+            message: `Шаблон "${template.name}" повернеться в чернетки (Private).`, 
+            confirmLabel: "У чернетки" 
+        })) {
+            try {
+                await apiClient.put(`/admin/templates/${template.id}`, { 
+                    is_ready: 0,
+                    access_level: 'private' 
+                });
+                
+                setSystemTemplates(prev => prev.map(t => 
+                    t.id === template.id ? { ...t, is_ready: 0, access_level: 'private' } : t
+                ));
+                toast.success(`Шаблон "${template.name}" повернуто в роботу!`);
+            } catch (error) {
+                toast.error("Помилка при зміні статусу");
+            }
+        }
+    };
+
     const handleApplyTemplate = async (templateId, isPersonal, templateName) => {
-        if (await confirm({ title: "Змінити дизайн?", message: `УВАГА: Ви збираєтесь застосувати шаблон "${templateName}". Це повністю замінить поточний дизайн сайту. Продовжити?`, type: "warning", confirmLabel: "Так, застосувати" })) {
+        const warningMessage = isAdmin 
+            ? `Ви застосуєте шаблон "${templateName}" до цього сайту.`
+            : `УВАГА: Ви збираєтесь застосувати шаблон "${templateName}". Це повністю замінить дизайн вашого сайту.`;
+
+        if (await confirm({ title: "Застосувати шаблон?", message: warningMessage, type: "warning", confirmLabel: "Застосувати" })) {
             const toastId = toast.loading("Застосування шаблону...");
             try {
-                await apiClient.put(`/sites/${siteData.id}/reset-template`, { templateId, isPersonal });
+                await apiClient.put(`/sites/${siteData.id}/reset-template`, { templateId });
                 toast.update(toastId, { render: `Шаблон "${templateName}" застосовано! Перезавантаження...`, type: "success", isLoading: false, autoClose: 2000 });
                 setTimeout(() => window.location.reload(), 2000);
             } catch (error) {
@@ -302,9 +405,30 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         }
     };
 
-    const getSystemTemplateIcon = (name) => {
-        const n = name.toLowerCase();
+    const adminDraftTemplates = systemTemplates.filter(t => !t.is_ready);
+    const adminStagingTemplates = systemTemplates.filter(t => t.is_ready && t.access_level === 'admin_only');
+    const adminPublishedTemplates = systemTemplates.filter(t => t.is_ready && t.access_level === 'public');
+    const getTemplateIcon = (template) => {
         const iconProps = { size: 24, className: "text-(--platform-text-primary)" };
+        
+        if (template.icon) {
+            switch (template.icon) {
+                case 'Layout': return <Layout {...iconProps} />;
+                case 'ShoppingBag': return <ShoppingBag {...iconProps} />;
+                case 'Briefcase': return <Briefcase {...iconProps} />;
+                case 'FileText': return <FileText {...iconProps} />;
+                case 'Camera': return <Camera {...iconProps} />;
+                case 'Coffee': return <Coffee {...iconProps} />;
+                case 'Music': return <Music {...iconProps} />;
+                case 'Star': return <Star {...iconProps} />;
+                case 'Heart': return <Heart {...iconProps} />;
+                case 'Globe': return <Globe {...iconProps} />;
+                case 'Grid': return <Grid {...iconProps} />;
+                default: break; 
+            }
+        }
+
+        const n = (template.name || '').toLowerCase();
         if (n.includes('shop') || n.includes('store')) return <ShoppingCart {...iconProps} />;
         if (n.includes('business') || n.includes('pro')) return <Briefcase {...iconProps} />;
         if (n.includes('portfolio') || n.includes('art')) return <Image {...iconProps} />;
@@ -341,20 +465,18 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </p>
                 </div>
             </div>
-
-            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
+             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex items-center justify-between gap-3">
                     <div>
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
                             <Image size={22} className="text-(--platform-accent)" /> Логотип та Назва
                         </h3>
-                        <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
-                            Налаштування брендингу та адреси сайту
+                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
+                            Налаштуйте брендинг та адресу сайту
                         </p>
                     </div>
                 </div>
-
-                <div className="mb-6">
+                 <div className="mb-6">
                     <label className="block mb-2 font-medium text-(--platform-text-primary) text-sm">
                         Логотип сайту
                     </label>
@@ -386,9 +508,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                     ) : (
                                         <Image size={32} className="text-(--platform-text-secondary) opacity-50" />
                                     )}
-                                    <div 
-                                        className={`absolute inset-0 bg-black/40 flex items-center justify-center text-white transition-opacity duration-200 backdrop-blur-[2px] z-10 ${isLogoHovered ? 'opacity-100' : 'opacity-0'}`}
-                                    >
+                                    <div className={`absolute inset-0 bg-black/40 flex items-center justify-center text-white transition-opacity duration-200 backdrop-blur-[2px] z-10 ${isLogoHovered ? 'opacity-100' : 'opacity-0'}`}>
                                         <Upload size={24} />
                                     </div>
                                     {data.logo_url && (
@@ -449,7 +569,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
             </div>
-
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
@@ -464,13 +583,13 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         Поточний статус
                     </label>
                     
-                    {data.status === 'suspended' ? (
-                        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-start gap-3">
-                            <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                    {isAdmin ? (
+                        <div className="p-4 rounded-lg bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary) flex items-start gap-3">
+                            <Lock size={20} className="shrink-0 mt-0.5" />
                             <div>
-                                <div className="font-semibold mb-1">Сайт призупинено адміністратором</div>
+                                <div className="font-semibold mb-1 text-(--platform-text-primary)">Системний (Приватний)</div>
                                 <div className="text-sm opacity-90 leading-relaxed">
-                                    Робота сайту тимчасово зупинена. Ви не можете змінити статус самостійно. Будь ласка, зверніться до служби підтримки для відновлення доступу.
+                                    Цей сайт є системним і використовується для створення шаблонів. Він завжди має статус "Приватний".
                                 </div>
                             </div>
                         </div>
@@ -484,7 +603,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     )}
                 </div>
             </div>
-
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
@@ -535,7 +653,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
             </div>
-
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
@@ -555,10 +672,11 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                 <UniversalMediaInput 
                                     type="image"
                                     value={data.cover_image} 
+                                    aspect={1.6} 
                                     onChange={(val) => {
                                         const newVal = val && val.target ? val.target.value : val;
                                         handleChange('cover_image', newVal);
-                                    }} 
+                                    }}
                                     triggerStyle={{ display: 'block', padding: 0, border: 'none', background: 'transparent', width: '100%', height: '100%', cursor: 'pointer' }}
                                 >
                                     <div 
@@ -576,7 +694,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                             cover_logo_size: data.cover_logo_size,
                                             cover_title_size: data.cover_title_size
                                         }} style={{ width: '100%', height: '100%' }} />
-                                        
+                                       
                                         <div className={`absolute inset-0 bg-black/40 flex items-center justify-center text-white transition-opacity duration-200 backdrop-blur-[2px] z-10 ${isCoverHovered ? 'opacity-100' : 'opacity-0'}`}>
                                             <div className="flex items-center gap-2 font-medium text-sm"><Upload size={16} /> Змінити фон</div>
                                         </div>
@@ -648,7 +766,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
             </div>
-
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
@@ -658,7 +775,14 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">Налаштування Cookie-банера</p>
                     </div>
                 </div>
-                <div className="mb-6"><Switch checked={cookieSettings.enabled} onChange={(e) => handleCookieChange('enabled', e.target.checked)} label="Ввімкнути Cookie-банер" /></div>
+
+                <div className="mb-6">
+                    <Switch 
+                        checked={cookieSettings.enabled} 
+                        onChange={(checked) => handleCookieChange('enabled', checked)} 
+                        label="Ввімкнути Cookie-банер" 
+                    />
+                </div>
                 {cookieSettings.enabled && (
                     <div className="animate-[fadeIn_0.3s_ease-in-out]">
                         <div className="mb-6">
@@ -670,7 +794,13 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                 placeholder="Ми використовуємо cookies..." 
                             />
                         </div>
-                        <div className="mb-6"><Switch checked={cookieSettings.showReject !== false} onChange={(e) => handleCookieChange('showReject', e.target.checked)} label='Показати кнопку "Відхилити"' /></div>
+                        <div className="mb-6">
+                            <Switch 
+                                checked={cookieSettings.showReject !== false} 
+                                onChange={(checked) => handleCookieChange('showReject', checked)} 
+                                label='Показати кнопку "Відхилити"' 
+                            />
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <InputWithCounter 
                                 label="Текст кнопки прийняття" 
@@ -696,7 +826,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 )}
             </div>
-
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex justify-between items-center gap-3">
                     <div>
@@ -704,11 +833,17 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                             <Palette size={22} className="text-(--platform-accent)" /> Керування шаблонами
                         </h3>
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
-                            Зберігайте поточний дизайн або змінюйте вигляд сайту
+                            {isAdmin 
+                                ? "Створення та підготовка системних шаблонів"
+                                : "Зберігайте поточний дизайн або змінюйте вигляд сайту"
+                            }
                         </p>
                     </div>
                     <div className="flex gap-2.5">
-                        <Button variant="secondary" onClick={() => setIsSaveTemplateModalOpen(true)}><Plus size={18} /> Зберегти поточний</Button>
+                        <Button variant="primary" onClick={() => setIsSaveTemplateModalOpen(true)}>
+                            <Plus size={18} /> 
+                            {isAdmin ? "Створити шаблон" : "Зберегти поточний"}
+                        </Button>
                     </div>
                 </div>
 
@@ -716,92 +851,206 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     <div className="text-center p-8 text-(--platform-text-secondary)">Завантаження шаблонів...</div>
                 ) : (
                     <div className="flex flex-col gap-4">
-                        <div className="border border-(--platform-border-color) rounded-xl overflow-hidden">
-                            <div 
-                                className="flex items-center justify-between cursor-pointer py-4 px-5 select-none transition-all duration-200 bg-(--platform-bg) hover:bg-black/5" 
-                                onClick={() => toggleSection('personal')}
-                            >
-                                <div className="font-semibold text-(--platform-text-primary)">Ваші шаблони ({personalTemplates.length})</div>
-                                <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.personal ? 'rotate-180' : ''}`} />
-                            </div>
-                            {expandedSections.personal && (
-                                <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
-                                    {personalTemplates.length > 0 ? (
-                                        <div className="mt-4 flex flex-col gap-3">
-                                            {personalTemplates.map(template => (
-                                                <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-5 flex justify-between items-center flex-wrap gap-4 transition-all duration-200 hover:shadow-sm hover:border-(--platform-accent)/30">
-                                                    <div>
-                                                        <div className="font-semibold text-(--platform-text-primary) text-lg mb-1">{template.name}</div>
-                                                        <div className="text-sm text-(--platform-text-secondary)">{template.description || 'Опис відсутній'} • {new Date(template.created_at).toLocaleDateString()}</div>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <button 
-                                                            onClick={() => handleApplyTemplate(template.id, true, template.name)} 
-                                                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 bg-transparent border border-(--platform-warning) text-(--platform-warning) hover:bg-(--platform-warning) hover:text-white"
-                                                        >
-                                                            <Grid size={16} /> Застосувати
-                                                        </button>
-                                                        <button 
-                                                            onClick={(e) => handleOpenEditModal(e, template)} 
-                                                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 bg-transparent border border-(--platform-accent) text-(--platform-accent) hover:bg-(--platform-accent) hover:text-white"
-                                                        >
-                                                            <Edit size={16} /> Редагувати
-                                                        </button>
-                                                        <Button variant="square-danger" onClick={() => handleDeleteTemplate(template.id, template.name)} title="Видалити шаблон"><Trash size={18} /></Button>
-                                                    </div>
-                                                </div>
-                                            ))}
+                        {isAdmin ? (
+                            <>
+                                <div className="border border-(--platform-border-color) rounded-xl overflow-hidden">
+                                    <div 
+                                        className="flex items-center justify-between cursor-pointer py-4 px-5 select-none transition-all duration-200 bg-(--platform-bg) hover:bg-black/5" 
+                                        onClick={() => toggleSection('drafts')}
+                                    >
+                                        <div className="font-semibold text-(--platform-text-primary) flex items-center gap-2">
+                                            <Construction size={18} className="text-orange-500"/> Чернетки ({adminDraftTemplates.length})
                                         </div>
-                                    ) : (
-                                        <div className="text-center p-8 text-(--platform-text-secondary) opacity-80">
-                                            Список порожній. Збережіть поточний дизайн як шаблон.
+                                        <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.drafts ? 'rotate-180' : ''}`} />
+                                    </div>
+                                    {expandedSections.drafts && (
+                                        <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
+                                            {adminDraftTemplates.length > 0 ? (
+                                                <div className="mt-4 flex flex-col gap-3">
+                                                    {adminDraftTemplates.map(template => (
+                                                        <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 flex justify-between items-center gap-4 transition-all duration-200 hover:shadow-sm">
+                                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                                <div className="shrink-0">{getTemplateIcon(template)}</div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="font-semibold text-(--platform-text-primary) text-lg truncate pr-2" title={template.name}>
+                                                                        {template.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-(--platform-text-secondary) wrap-break-word line-clamp-2">
+                                                                        {template.description || 'Без опису'}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-2 shrink-0">
+                                                                <Button variant="outline" style={{ borderColor: '#10b981', color: '#10b981' }} onClick={() => handleMarkAsReady(template)} title="Публікація"><ArrowUpCircle size={18} /></Button>
+                                                                <Button variant="outline" onClick={(e) => handleOpenEditModal(e, template)} title="Редагувати"><Edit size={18} /></Button>
+                                                                <Button variant="outline" style={{ borderColor: 'var(--platform-accent)', color: 'var(--platform-accent)' }} onClick={() => handleApplyTemplate(template.id, false, template.name)} title="Застосувати"><Grid size={18} /></Button>
+                                                                <Button variant="outline-danger" onClick={() => handleDeleteTemplate(template.id, template.name, true)} title="Видалити"><Trash size={18} /></Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center p-8 text-(--platform-text-secondary) opacity-80">Немає чернеток.</div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
-                        <div className="border border-(--platform-border-color) rounded-xl overflow-hidden">
-                            <div 
-                                className="flex items-center justify-between cursor-pointer py-4 px-5 select-none transition-all duration-200 bg-(--platform-bg) hover:bg-black/5" 
-                                onClick={() => toggleSection('system')}
-                            >
-                                <div className="font-semibold text-(--platform-text-primary)">Системні шаблони ({systemTemplates.length})</div>
-                                <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.system ? 'rotate-180' : ''}`} />
-                            </div>
-                            {expandedSections.system && (
-                                <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
-                                    {systemTemplates.length > 0 ? (
-                                        <div className="mt-4 flex flex-col gap-3">
-                                            {systemTemplates.map(template => (
-                                                <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 flex justify-between items-center flex-wrap gap-4 transition-all duration-200 hover:shadow-sm">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 rounded-lg bg-(--platform-bg) overflow-hidden flex items-center justify-center border border-(--platform-border-color) shadow-sm">
-                                                            {getSystemTemplateIcon(template.name)}
+                                <div className="border border-(--platform-border-color) rounded-xl overflow-hidden">
+                                    <div className="flex items-center justify-between cursor-pointer py-4 px-5 select-none bg-(--platform-bg) hover:bg-black/5" onClick={() => toggleSection('staging')}>
+                                        <div className="font-semibold text-(--platform-text-primary) flex items-center gap-2"><Eye size={18} className="text-blue-500"/> Готові до публікації ({adminStagingTemplates.length})</div>
+                                        <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.staging ? 'rotate-180' : ''}`} />
+                                    </div>
+                                    {expandedSections.staging && (
+                                         <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
+                                            {adminStagingTemplates.length > 0 ? (
+                                                <div className="mt-4 flex flex-col gap-3">
+                                                    {adminStagingTemplates.map(template => (
+                                                        <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 flex justify-between items-center gap-4">
+                                                             <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                                <div className="w-12 h-12 rounded-lg bg-(--platform-bg) overflow-hidden flex items-center justify-center border border-(--platform-border-color) shadow-sm shrink-0">{getTemplateIcon(template)}</div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="font-semibold text-(--platform-text-primary) text-lg mb-1 truncate pr-2" title={template.name}>
+                                                                        {template.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-(--platform-text-secondary) wrap-break-word line-clamp-2">
+                                                                        {template.description}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-2 shrink-0">
+                                                                <Button variant="outline" style={{ borderColor: '#f59e0b', color: '#f59e0b' }} onClick={() => handleRevertToDraft(template)} title="Повернути в роботу"><Construction size={18} /></Button>
+                                                                <Button variant="outline" style={{ borderColor: 'var(--platform-accent)', color: 'var(--platform-accent)' }} onClick={() => handleApplyTemplate(template.id, false, template.name)} title="Застосувати"><Grid size={18} /></Button>
+                                                                <Button variant="outline-danger" onClick={() => handleDeleteTemplate(template.id, template.name, true)} title="Видалити"><Trash size={18} /></Button>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div className="font-semibold text-(--platform-text-primary) text-lg mb-1">{template.name}</div>
-                                                            <div className="text-sm text-(--platform-text-secondary)">{template.description || 'Базовий шаблон системи'}</div>
-                                                        </div>
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => handleApplyTemplate(template.id, false, template.name)} 
-                                                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-all duration-200 bg-transparent border border-(--platform-warning) text-(--platform-warning) hover:bg-(--platform-warning) hover:text-white"
-                                                    >
-                                                        <Grid size={16} /> Застосувати
-                                                    </button>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center p-8 text-(--platform-text-secondary)">Немає доступних системних шаблонів.</div>
+                                            ) : <div className="text-center p-8 text-(--platform-text-secondary)">Немає шаблонів, готових до публікації.</div>}
+                                         </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
+                                <div className="border border-(--platform-border-color) rounded-xl overflow-hidden">
+                                     <div className="flex items-center justify-between cursor-pointer py-4 px-5 select-none bg-(--platform-bg) hover:bg-black/5" onClick={() => toggleSection('published')}>
+                                        <div className="font-semibold text-(--platform-text-primary) flex items-center gap-2"><Globe size={18} className="text-(--platform-accent)"/> Опубліковані ({adminPublishedTemplates.length})</div>
+                                        <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.published ? 'rotate-180' : ''}`} />
+                                    </div>
+                                    {expandedSections.published && (
+                                         <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
+                                              {adminPublishedTemplates.length > 0 ? (
+                                                <div className="mt-4 flex flex-col gap-3">
+                                                    {adminPublishedTemplates.map(template => (
+                                                        <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 flex justify-between items-center gap-4">
+                                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                                <div className="w-12 h-12 rounded-lg bg-(--platform-bg) overflow-hidden flex items-center justify-center border border-(--platform-border-color) shadow-sm shrink-0">{getTemplateIcon(template)}</div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="font-semibold text-(--platform-text-primary) text-lg mb-1 truncate pr-2" title={template.name}>
+                                                                        {template.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-(--platform-text-secondary) wrap-break-word line-clamp-2">
+                                                                        {template.description}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-2 shrink-0">
+                                                                <Button variant="outline" style={{ borderColor: 'var(--platform-accent)', color: 'var(--platform-accent)' }} onClick={() => handleApplyTemplate(template.id, false, template.name)} title="Застосувати"><Grid size={18} /></Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                             ) : <div className="text-center p-8 text-(--platform-text-secondary)">Немає опублікованих шаблонів.</div>}
+                                         </div>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="border border-(--platform-border-color) rounded-xl overflow-hidden">
+                                    <div 
+                                        className="flex items-center justify-between cursor-pointer py-4 px-5 select-none transition-all duration-200 bg-(--platform-bg) hover:bg-black/5" 
+                                        onClick={() => toggleSection('personal')}
+                                    >
+                                        <div className="font-semibold text-(--platform-text-primary)">Ваші шаблони ({personalTemplates.length})</div>
+                                        <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.personal ? 'rotate-180' : ''}`} />
+                                    </div>
+                                    {expandedSections.personal && (
+                                        <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
+                                                {personalTemplates.length > 0 ? (
+                                                    <div className="mt-4 flex flex-col gap-3">
+                                                        {personalTemplates.map(template => (
+                                                            <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-5 flex justify-between items-center gap-4 transition-all duration-200 hover:shadow-sm hover:border-(--platform-accent)/30">
+                                                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                                    <div className="w-12 h-12 rounded-lg bg-(--platform-bg) overflow-hidden flex items-center justify-center border border-(--platform-border-color) shadow-sm shrink-0">
+                                                                                {getTemplateIcon(template)}
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="font-semibold text-(--platform-text-primary) text-lg mb-1 truncate pr-2" title={template.name}>
+                                                                            {template.name}
+                                                                        </div>
+                                                                        <div className="text-sm text-(--platform-text-secondary) wrap-break-word line-clamp-2">
+                                                                            {template.description || 'Опис відсутній'} • {new Date(template.created_at).toLocaleDateString()}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex gap-2 shrink-0">
+                                                                    <Button variant="outline" style={{ borderColor: '#f59e0b', color: '#f59e0b' }} onClick={() => handleApplyTemplate(template.id, true, template.name)} title="Застосувати"><Grid size={18} /></Button>
+                                                                    <Button variant="outline" onClick={(e) => handleOpenEditModal(e, template)} title="Редагувати"><Edit size={18} /></Button>
+                                                                    <Button variant="outline-danger" onClick={() => handleDeleteTemplate(template.id, template.name, false)} title="Видалити"><Trash size={18} /></Button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center opacity-60 text-sm py-4">У вас поки немає збережених шаблонів</div>
+                                                )}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="border border-(--platform-border-color) rounded-xl overflow-hidden">
+                                    <div 
+                                        className="flex items-center justify-between cursor-pointer py-4 px-5 select-none transition-all duration-200 bg-(--platform-bg) hover:bg-black/5" 
+                                        onClick={() => toggleSection('system_public')}
+                                    >
+                                        <div className="font-semibold text-(--platform-text-primary) flex items-center gap-2">
+                                            <Globe size={18} className="text-blue-500"/> Системні шаблони ({systemTemplates.length})
+                                        </div>
+                                        <ChevronDown size={20} className={`text-(--platform-text-secondary) transition-transform duration-300 ${expandedSections.system_public ? 'rotate-180' : ''}`} />
+                                    </div>
+                                    {expandedSections.system_public && (
+                                        <div className="px-5 pb-5 bg-(--platform-bg) border-t border-(--platform-border-color)">
+                                                {systemTemplates.length > 0 ? (
+                                                    <div className="mt-4 flex flex-col gap-3">
+                                                        {systemTemplates.map(template => (
+                                                            <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-5 flex justify-between items-center gap-4 transition-all duration-200 hover:shadow-sm">
+                                                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                                    <div className="w-12 h-12 rounded-lg bg-(--platform-bg) overflow-hidden flex items-center justify-center border border-(--platform-border-color) shadow-sm shrink-0">
+                                                                                {getTemplateIcon(template)}
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="font-semibold text-(--platform-text-primary) text-lg mb-1 truncate pr-2" title={template.name}>
+                                                                            {template.name}
+                                                                        </div>
+                                                                        <div className="text-sm text-(--platform-text-secondary) wrap-break-word line-clamp-2">
+                                                                            {template.description || 'Стандартний шаблон'}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex gap-2 shrink-0">
+                                                                    <Button variant="outline" style={{ borderColor: 'var(--platform-accent)', color: 'var(--platform-accent)' }} onClick={() => handleApplyTemplate(template.id, false, template.name)} title="Застосувати"><Grid size={18} /></Button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center opacity-60 text-sm py-4">Немає доступних системних шаблонів</div>
+                                                )}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </div>
-
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
                     <div>
@@ -836,18 +1085,16 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 </div>
             </div>
 
-            <SaveTemplateModal
+            <TemplateModal
                 isOpen={isSaveTemplateModalOpen}
                 onClose={() => setIsSaveTemplateModalOpen(false)}
                 onSave={handleSaveTemplate}
             />
-            
-            <EditTemplateModal 
+            <TemplateModal 
                 isOpen={isEditModalOpen}
                 initialData={editingTemplate}
                 onClose={() => { setIsEditModalOpen(false); setEditingTemplate(null); }}
                 onSave={handleSaveTemplateChanges}
-                isSaving={isSavingTemplate}
             />
             
             <style>{`

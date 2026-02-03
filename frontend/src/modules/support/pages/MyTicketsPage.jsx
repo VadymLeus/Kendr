@@ -4,12 +4,13 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
 import { Helmet } from 'react-helmet-async';
-import { Plus, MessageSquare, Loader } from 'lucide-react';
+import { Plus, MessageSquare, Loader, Gavel, FileText } from 'lucide-react';
 
 const MyTicketsPage = () => {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    
     useEffect(() => {
         const fetchTickets = async () => {
             try {
@@ -42,6 +43,32 @@ const MyTicketsPage = () => {
             default:
                 return null;
         }
+    };
+
+    const getTypeBadge = (type) => {
+        const baseStyle = {
+            padding: '4px 8px',
+            borderRadius: '6px',
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            marginRight: '8px'
+        };
+
+        if (type === 'appeal') {
+            return (
+                <span style={{ ...baseStyle, background: 'rgba(239, 68, 68, 0.1)', color: 'var(--platform-danger)' }}>
+                    <Gavel size={12} /> Апеляція
+                </span>
+            );
+        }
+        return (
+            <span style={{ ...baseStyle, background: 'rgba(66, 153, 225, 0.1)', color: 'var(--platform-accent)' }}>
+                <FileText size={12} /> Загальне
+            </span>
+        );
     };
 
     const containerStyle = {
@@ -164,8 +191,11 @@ const MyTicketsPage = () => {
                             }}
                         >
                             <div>
+                                <div style={{ marginBottom: '0.5rem' }}>
+                                    {getTypeBadge(ticket.type)}
+                                </div>
                                 <h3 style={{ 
-                                    margin: '0 0 0.5rem 0', 
+                                    margin: '0 0 0.25rem 0', 
                                     color: 'var(--platform-text-primary)',
                                     fontSize: '1.1rem'
                                 }}>

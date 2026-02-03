@@ -1,9 +1,10 @@
 // frontend/src/shared/ui/complex/SiteGridCard.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import SiteCoverDisplay from './SiteCoverDisplay';
 import ReportModal from './ReportModal';
-import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock } from 'lucide-react';
+import { AuthContext } from '../../../app/providers/AuthContext';
+import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock, AlertTriangle, Construction, Wrench } from 'lucide-react';
 
 const cardStyles = `
     .site-grid-card {
@@ -21,6 +22,41 @@ const cardStyles = `
     .site-grid-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+    
+    .site-grid-card.is-draft {
+        border: 1px dashed var(--platform-border-color);
+        background: repeating-linear-gradient(
+            45deg,
+            var(--platform-card-bg),
+            var(--platform-card-bg) 10px,
+            var(--platform-bg) 10px,
+            var(--platform-bg) 20px
+        );
+    }
+    
+    .site-grid-card.is-draft .site-card-title {
+        opacity: 0.8;
+    }
+
+    .draft-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #fbbf24;
+        backdrop-filter: blur(2px);
+        text-align: center;
+        padding: 1rem;
+        z-index: 10;
+        transition: opacity 0.2s;
+    }
+    
+    .site-grid-card:hover .draft-overlay {
+        background: rgba(0, 0, 0, 0.75);
     }
 
     .site-card-tag {
@@ -108,6 +144,13 @@ const cardStyles = `
         background: var(--platform-accent-hover) !important;
         text-decoration: none !important;
     }
+
+    .site-card-action-btn.disabled {
+        background: var(--platform-border-color) !important;
+        color: var(--platform-text-secondary) !important;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
     
     .site-card-dropdown {
         position: absolute;
@@ -134,9 +177,10 @@ const cardStyles = `
 const SiteStatusBadge = ({ status }) => {
     const config = {
         published: { label: 'Опубліковано', color: '#38a169', bg: 'rgba(56, 161, 105, 0.1)', icon: Globe },
-        draft: { label: 'Чернетка', color: 'var(--platform-text-secondary)', bg: 'rgba(0,0,0,0.05)', icon: FileText },
-        suspended: { label: 'Призупинено', color: '#dd6b20', bg: 'rgba(221, 107, 32, 0.1)', icon: Pause },
-        private: { label: 'Прихований', color: '#805ad5', bg: 'rgba(128, 90, 213, 0.1)', icon: Lock }
+        draft: { label: 'Тех. Роботи', color: '#d69e2e', bg: 'rgba(214, 158, 46, 0.1)', icon: Construction },
+        suspended: { label: 'Призупинено', color: '#e53e3e', bg: 'rgba(229, 62, 62, 0.1)', icon: Pause },
+        private: { label: 'Прихований', color: '#805ad5', bg: 'rgba(128, 90, 213, 0.1)', icon: Lock },
+        probation: { label: 'На модерації', color: '#d69e2e', bg: 'rgba(214, 158, 46, 0.1)', icon: AlertTriangle }
     };
     const s = config[status] || config.draft;
     const Icon = s.icon;
@@ -199,7 +243,7 @@ const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) =
     );
 };
 
-const CardMenu = ({ site, isOwner, onToggleStatus, onDelete, onReport }) => {
+const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
     useEffect(() => {
@@ -209,6 +253,8 @@ const CardMenu = ({ site, isOwner, onToggleStatus, onDelete, onReport }) => {
         if (isOpen) document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen]);
+
+    const isLocked = site.status === 'suspended' || site.status === 'probation';
 
     return (
         <div ref={menuRef}>
@@ -229,7 +275,7 @@ const CardMenu = ({ site, isOwner, onToggleStatus, onDelete, onReport }) => {
                         onClick={() => setIsOpen(false)}
                     />
 
-                    {!isOwner && (
+                    {!isOwner && !isAdmin && (
                         <MenuItem 
                             icon={Flag} 
                             label="Поскаржитись" 
@@ -237,46 +283,58 @@ const CardMenu = ({ site, isOwner, onToggleStatus, onDelete, onReport }) => {
                         />
                     )}
                     
-                    {isOwner && (
+                    {isOwner && !isAdmin && (
                         <>
-                            <MenuItem 
-                                icon={site.status === 'published' ? GlobeLock : Globe} 
-                                label={site.status === 'published' ? 'Зняти з публікації' : 'Опублікувати'}
-                                onClick={(e) => { 
-                                    setIsOpen(false); 
-                                    onToggleStatus(site, site.status === 'published' ? 'draft' : 'published'); 
-                                }}
-                            />
+                            {!isLocked && (
+                                <>
+                                    <MenuItem 
+                                        icon={site.status === 'published' ? GlobeLock : Globe} 
+                                        label={site.status === 'published' ? 'Зняти з публікації' : 'Опублікувати'}
+                                        onClick={(e) => { 
+                                            setIsOpen(false); 
+                                            onToggleStatus(site, site.status === 'published' ? 'draft' : 'published'); 
+                                        }}
+                                    />
 
-                            {site.status !== 'private' ? (
-                                <MenuItem 
-                                    icon={Lock} 
-                                    label="Приховати (Приватний)"
-                                    onClick={(e) => { 
-                                        setIsOpen(false); 
-                                        onToggleStatus(site, 'private'); 
-                                    }}
-                                />
-                            ) : (
-                                <MenuItem 
-                                    icon={FileText} 
-                                    label="Зробити чернеткою"
-                                    onClick={(e) => { 
-                                        setIsOpen(false); 
-                                        onToggleStatus(site, 'draft'); 
-                                    }}
-                                />
+                                    {site.status !== 'private' ? (
+                                        <MenuItem 
+                                            icon={Lock} 
+                                            label="Приховати (Приватний)"
+                                            onClick={(e) => { 
+                                                setIsOpen(false); 
+                                                onToggleStatus(site, 'private'); 
+                                            }}
+                                        />
+                                    ) : (
+                                        <MenuItem 
+                                            icon={FileText} 
+                                            label="Зробити чернеткою"
+                                            onClick={(e) => { 
+                                                setIsOpen(false); 
+                                                onToggleStatus(site, 'draft'); 
+                                            }}
+                                        />
+                                    )}
+                                </>
+                            )}
+
+                            {isLocked && (
+                                <div style={{ padding: '8px 12px', fontSize: '11px', color: 'var(--platform-danger)', fontStyle: 'italic', textAlign: 'center' }}>
+                                    Зміна статусу заблокована
+                                </div>
                             )}
                             
                             <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
-                            
-                            <MenuItem 
-                                icon={Trash} 
-                                label="Видалити" 
-                                style={{ color: 'var(--platform-danger)' }}
-                                onClick={(e) => { setIsOpen(false); onDelete(e, site.site_path, site.title); }}
-                            />
                         </>
+                    )}
+
+                    {(isOwner || isAdmin) && (
+                        <MenuItem 
+                            icon={Trash} 
+                            label="Видалити" 
+                            style={{ color: 'var(--platform-danger)' }}
+                            onClick={(e) => { setIsOpen(false); onDelete(e, site.site_path, site.title); }}
+                        />
                     )}
                 </div>
             )}
@@ -296,7 +354,10 @@ const SiteGridCard = ({
     formatDate 
 }) => {
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const { user } = useContext(AuthContext);
+    const isUserAdmin = user?.role === 'admin';
     const isOwner = variant === 'owner';
+    const isEffectiveAdmin = variant === 'admin' || isUserAdmin;
     const mainLink = isOwner ? `/dashboard/${site.site_path}` : `/site/${site.site_path}`;
     const isPinnedOrFav = isOwner ? site.is_pinned : isFavorite;
     const noDecorationStyle = { 
@@ -306,10 +367,13 @@ const SiteGridCard = ({
         display: 'block' 
     };
 
+    const isSuspended = site.status === 'suspended';
+    const isDraft = site.status === 'draft';
+
     return (
         <>
             <style>{cardStyles}</style>
-            <div className="site-grid-card">
+            <div className={`site-grid-card ${isDraft ? 'is-draft' : ''}`}>
                 <button 
                     className="site-card-fav-btn"
                     onClick={(e) => {
@@ -329,19 +393,51 @@ const SiteGridCard = ({
                 <CardMenu 
                     site={site} 
                     isOwner={isOwner} 
+                    isAdmin={isEffectiveAdmin} 
                     onToggleStatus={onToggleStatus} 
                     onDelete={onDelete} 
                     onReport={() => setIsReportOpen(true)}
                 />
 
-                <Link to={mainLink} style={{ ...noDecorationStyle, height: '180px', width: '100%', overflow: 'hidden', borderBottom: '1px solid var(--platform-border-color)' }}>
-                    <SiteCoverDisplay site={site} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <Link 
+                    to={isSuspended ? '#' : mainLink} 
+                    style={{ 
+                        ...noDecorationStyle, 
+                        height: '180px', 
+                        width: '100%', 
+                        overflow: 'hidden', 
+                        borderBottom: '1px solid var(--platform-border-color)', 
+                        cursor: isSuspended ? 'not-allowed' : 'pointer',
+                        position: 'relative'
+                    }}
+                >
+                    <SiteCoverDisplay 
+                        site={site} 
+                        style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'cover', 
+                            filter: isSuspended ? 'grayscale(1)' : (isDraft ? 'blur(1px) grayscale(0.3)' : 'none') 
+                        }} 
+                    />
+
+                    {isDraft && (
+                        <div className="draft-overlay">
+                            <Construction size={40} className="mb-2" />
+                            <div style={{ fontWeight: 'bold', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                Технічні роботи
+                            </div>
+                            <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '4px' }}>
+                                Сайт оновлюється
+                            </div>
+                        </div>
+                    )}
                 </Link>
 
                 <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                         <div style={{ overflow: 'hidden' }}>
-                            <Link to={mainLink} style={noDecorationStyle}>
+                            <Link to={isSuspended ? '#' : mainLink} style={{ ...noDecorationStyle, cursor: isSuspended ? 'not-allowed' : 'pointer' }}>
                                 <h3 
                                     className="site-card-title" 
                                     style={{ 
@@ -393,22 +489,36 @@ const SiteGridCard = ({
                     
                     <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
                         {isOwner ? (
-                            <Link 
-                                to={`/dashboard/${site.site_path}`}
-                                className="site-card-action-btn"
-                                style={noDecorationStyle}
-                            >
-                                <Edit size={16} /> Редагувати
-                            </Link>
+                            isSuspended ? (
+                                <button className="site-card-action-btn disabled" disabled>
+                                    <Lock size={16} /> Заблоковано
+                                </button>
+                            ) : (
+                                <Link 
+                                    to={`/dashboard/${site.site_path}`}
+                                    className="site-card-action-btn"
+                                    style={noDecorationStyle}
+                                >
+                                    {isDraft ? (
+                                        <><Wrench size={16} /> Налаштувати</>
+                                    ) : (
+                                        <><Edit size={16} /> Редагувати</>
+                                    )}
+                                </Link>
+                            )
                         ) : (
                             <a 
                                 href={`/site/${site.site_path}`}
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="site-card-action-btn"
-                                style={noDecorationStyle}
+                                className={`site-card-action-btn ${isDraft ? 'disabled' : ''}`}
+                                style={{ ...noDecorationStyle, ...(isDraft ? { opacity: 0.8, background: 'var(--platform-secondary)' } : {}) }}
                             >
-                                Відвідати <ExternalLink size={16} />
+                                {isDraft ? (
+                                    <><Construction size={16} /> Роботи</>
+                                ) : (
+                                    <><ExternalLink size={16} /> Відвідати</>
+                                )}
                             </a>
                         )}
                     </div>
@@ -421,6 +531,7 @@ const SiteGridCard = ({
                 siteId={site.id} 
             />
         </>
+        
     );
 };
 

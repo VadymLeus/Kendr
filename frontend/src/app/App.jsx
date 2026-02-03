@@ -1,5 +1,5 @@
 // frontend/src/app/App.jsx
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ToastContainer } from 'react-toastify';
@@ -29,8 +29,12 @@ import NewTicketPage from '../modules/support/pages/NewTicketPage';
 import AppealPage from '../modules/support/pages/AppealPage';
 import MyTicketsPage from '../modules/support/pages/MyTicketsPage';
 import TicketDetailPage from '../modules/support/pages/TicketDetailPage';
-import AdminDashboardPage from '../modules/admin/pages/DashboardPage';
-import AdminSupportPage from '../modules/admin/pages/AdminSupportPage';
+import AdminDashboardPage from '../modules/admin/pages/AdminDashboardPage';
+import AdminReportsPage from '../modules/admin/pages/AdminReportsPage';
+import AdminUsersPage from '../modules/admin/pages/AdminUsersPage';
+import AdminSitesPage from '../modules/admin/pages/AdminSitesPage';
+import AdminTicketsPage from '../modules/admin/pages/AdminTicketsPage';
+import AdminTemplatesPage from '../modules/admin/pages/AdminTemplatesPage';
 
 function App() {
     return (
@@ -43,6 +47,7 @@ function App() {
                             <Route path="/register" element={<AuthPage />} />
                             <Route path="/reset-password" element={<ResetPasswordPage />} />
                         </Route>
+
                         <Route path="/" element={<HomePage />} />
                         <Route path="/catalog" element={<CatalogPage />} />
                         <Route path="/profile/:username" element={<ProfilePage />} />
@@ -55,14 +60,14 @@ function App() {
                         <Route element={<ProtectedRoute />}>
                             <Route path="/settings" element={<SettingsPage />} />
                             <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
+                            <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />
+                            <Route path="/my-sites" element={<MySitesPage />} />
+                            <Route path="/create-site" element={<CreateSitePage />} />
+                            <Route path="/media-library" element={<MediaLibraryPage />} />
                         </Route>
 
                         <Route element={<ProtectedRoute excludeAdmin={true} />}>
-                            <Route path="/my-sites" element={<MySitesPage />} />
-                            <Route path="/create-site" element={<CreateSitePage />} />
                             <Route path="/cart" element={<CartPage />} />
-                            <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />
-                            <Route path="/media-library" element={<MediaLibraryPage />} />
                             <Route path="/support" element={<SupportPage />} />
                             <Route path="/support/new-ticket" element={<NewTicketPage />} />
                             <Route path="/support/appeal" element={<AppealPage />} />
@@ -70,8 +75,14 @@ function App() {
                         </Route>
                         
                         <Route element={<ProtectedRoute requireAdmin={true} />}>
-                            <Route path="/admin" element={<AdminDashboardPage />} />
-                            <Route path="/admin/support" element={<AdminSupportPage />} />
+                            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+                            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+                            <Route path="/admin/reports" element={<AdminReportsPage />} />
+                            <Route path="/admin/users" element={<AdminUsersPage />} />
+                            <Route path="/admin/sites" element={<AdminSitesPage />} />
+                            <Route path="/admin/tickets" element={<AdminTicketsPage />} />
+                            <Route path="/admin/templates" element={<AdminTemplatesPage />} />
+                            <Route path="/admin/support" element={<Navigate to="/admin/tickets" replace />} />
                         </Route>
                         
                         <Route path="*" element={<NotFoundPage />} />
