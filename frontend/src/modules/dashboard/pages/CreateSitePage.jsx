@@ -60,7 +60,14 @@ const CreateSitePage = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [templateToDeleteId, setTemplateToDeleteId] = useState(null);
-    const [previewData, setPreviewData] = useState({ pages: [], theme: {}, header: [], footer: [], siteData: {} });
+    const [previewData, setPreviewData] = useState({ 
+        pages: [], 
+        theme: { mode: 'light', accent: 'blue' },
+        header: [], 
+        footer: [], 
+        siteData: {} 
+    });
+    
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
     useEffect(() => {
         const loadData = async () => {
@@ -122,14 +129,22 @@ const CreateSitePage = () => {
             : Array.isArray(content) ? [{ slug: 'home', blocks: content }]
             : Array.isArray(content.blocks) ? [{ slug: 'home', blocks: content.blocks }]
             : [{ slug: 'home', blocks: [] }];
-
+        const themeSettings = content.theme_settings || {};
+        const mode = content.site_theme_mode || themeSettings.mode || 'light';
+        const accent = content.site_theme_accent || themeSettings.accent || 'orange';
+        
         setPreviewData({ 
             pages, 
-            theme: content.theme_settings || {}, 
+            theme: { 
+                ...themeSettings,
+                mode: mode,
+                accent: accent
+            }, 
             header: content.header_content || [], 
             footer: content.footer_content || [],
             siteData: { title: template.name, ...content.site_settings } 
         });
+        
         const hasHomePage = pages.find(p => p.slug === 'home');
         setCurrentPreviewSlug(hasHomePage ? 'home' : (pages[0]?.slug || 'home'));
     };

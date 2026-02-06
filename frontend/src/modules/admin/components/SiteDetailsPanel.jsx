@@ -1,5 +1,6 @@
 // frontend/src/modules/admin/components/SiteDetailsPanel.jsx
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../shared/ui/elements/Button';
 import BaseDetailsPanel from './BaseDetailsPanel';
 import { ExternalLink, Clock, ShieldCheck, RefreshCw, Ban, FileEdit, Eye, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
@@ -14,11 +15,7 @@ const calculateTimeLeft = (dateString) => {
 };
 
 const SiteDetailsPanel = ({ site, onClose, actions }) => {
-    if (!site) return null;
-
-    const isSuspended = site.status === 'suspended';
-    const isProbation = site.status === 'probation';
-    const { expired: isExpired, text: timeLeftString } = calculateTimeLeft(site.deletion_scheduled_for);
+    const navigate = useNavigate();
     const statusConfig = {
         published: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981', label: 'Активний', icon: CheckCircle },
         suspended: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', label: 'Бан', icon: Ban },
@@ -27,7 +24,8 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
         private: { bg: 'rgba(100, 116, 139, 0.1)', color: '#64748b', label: 'Приват', icon: Clock }
     };
 
-    const currentStatus = statusConfig[site.status] || statusConfig.draft;
+    const safeStatusKey = site?.status || 'draft';
+    const currentStatus = statusConfig[safeStatusKey] || statusConfig.draft;
     const StatusIcon = currentStatus.icon;
     const styles = useMemo(() => ({
         section: { marginBottom: '24px' },
@@ -54,6 +52,14 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
             gap: '6px'
         }
     }), [currentStatus]);
+    if (!site) return null;
+    const isSuspended = site.status === 'suspended';
+    const isProbation = site.status === 'probation';
+    const { expired: isExpired, text: timeLeftString } = calculateTimeLeft(site.deletion_scheduled_for);
+
+    const handleVisitProfile = () => {
+        navigate(`/profile/${site.author}`);
+    };
 
     return (
         <BaseDetailsPanel 
@@ -80,7 +86,22 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
 
             <div style={styles.section}>
                 <div style={styles.label}>Власник</div>
-                <div style={styles.value}>{site.author}</div>
+                <div 
+                    onClick={handleVisitProfile}
+                    style={{
+                        ...styles.value, 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px',
+                        transition: 'color 0.2s'
+                    }}
+                    className="hover:text-(--platform-accent)"
+                    title="Відкрити профіль користувача"
+                >
+                    {site.author}
+                    <ExternalLink size={14} style={{ opacity: 0.5 }} />
+                </div>
                 <div style={{fontSize: '13px', opacity: 0.7}}>{site.author_email}</div>
             </div>
 
@@ -135,7 +156,7 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', borderTop: '1px solid var(--platform-border-color)', paddingTop: '24px' }}>
                  {(isSuspended || isProbation) ? (
                     <>
-                        <Button variant="success" onClick={() => actions.restore(site.site_path)} icon={<RefreshCw size={18} />} style={{ width: '100%' }}>Відновити (Опублікувати)</Button>
+                        <Button variant="success" onClick={() => actions.restore(site.site_path)} icon={<RefreshCw size={18} />} style={{ width: '100%' }}>Відновити</Button>
                         {isSuspended && <Button variant="outline-warning" onClick={() => actions.probation(site.site_path)} icon={<FileEdit size={18} />} style={{ width: '100%' }}>Надати доступ до редагування</Button>}
                         {isProbation && <Button variant="outline-danger" onClick={() => actions.suspend(site.site_path)} icon={<Ban size={18} />} style={{ width: '100%' }}>Повернути в бан</Button>}
                     </>

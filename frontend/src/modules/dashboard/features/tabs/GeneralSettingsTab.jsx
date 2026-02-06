@@ -15,9 +15,10 @@ import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { TEXT_LIMITS } from '../../../../shared/config/limits';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { exportSiteToZip } from '../../../../shared/utils/siteExporter';
-import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown, Lock, Construction, ArrowUpCircle, Play, Eye, RefreshCw, Camera, Coffee, Music, Star, Heart, ShoppingBag } from 'lucide-react';
+import { Settings, Image, Shield, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown, Lock, Construction, ArrowUpCircle, Play, Eye, RefreshCw, Camera, Coffee, Music, Star, Heart, ShoppingBag, ShieldAlert } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
+
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
@@ -311,7 +312,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     access_level: 'admin_only' 
                 });
                 
-                setSystemTemplates(prev => prev.map(t => 
+                setSystemTemplates(prev => 
+                    prev.map(t => 
                     t.id === template.id ? { ...t, is_ready: 1, access_level: 'admin_only' } : t
                 ));
                 toast.success(`Шаблон "${template.name}" готовий до перевірки!`);
@@ -410,7 +412,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const adminPublishedTemplates = systemTemplates.filter(t => t.is_ready && t.access_level === 'public');
     const getTemplateIcon = (template) => {
         const iconProps = { size: 24, className: "text-(--platform-text-primary)" };
-        
         if (template.icon) {
             switch (template.icon) {
                 case 'Layout': return <Layout {...iconProps} />;
@@ -569,40 +570,49 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
             </div>
-            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
-                <div className="mb-6">
-                    <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                        <Globe size={22} className="text-(--platform-accent)" /> Статус сайту
-                    </h3>
-                    <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
-                        Визначає видимість вашого сайту для відвідувачів.
-                    </p>
-                </div>
-                <div className="max-w-md mx-auto">
-                    <label className="block mb-2 font-medium text-(--platform-text-primary) text-sm">
-                        Поточний статус
-                    </label>
-                    
-                    {isAdmin ? (
-                        <div className="p-4 rounded-lg bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary) flex items-start gap-3">
-                            <Lock size={20} className="shrink-0 mt-0.5" />
+
+            {!isAdmin && (
+                <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
+                    <div className="mb-6">
+                        <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                            <Globe size={22} className="text-(--platform-accent)" /> Статус сайту
+                        </h3>
+                        <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
+                            Визначає видимість вашого сайту для відвідувачів.
+                        </p>
+                    </div>
+
+                    {siteData.status === 'probation' ? (
+                        <div className="p-4 rounded-xl bg-orange-50 border border-orange-200 text-orange-800 flex items-start gap-4 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-200">
+                            <ShieldAlert size={24} className="shrink-0 mt-0.5 text-orange-600 dark:text-orange-400" />
                             <div>
-                                <div className="font-semibold mb-1 text-(--platform-text-primary)">Системний (Приватний)</div>
+                                <div className="font-bold text-orange-700 dark:text-orange-300 mb-1 text-base">
+                                    Режим обмеженого доступу
+                                </div>
                                 <div className="text-sm opacity-90 leading-relaxed">
-                                    Цей сайт є системним і використовується для створення шаблонів. Він завжди має статус "Приватний".
+                                    Ваш сайт знаходиться на <strong>випробувальному терміні</strong>. 
+                                    Доступ до зміни статусу тимчасово заблоковано адміністратором. 
+                                    Ви можете редагувати контент, але публікація обмежена до вирішення питань модерації.
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <CustomSelect 
-                            name="status"
-                            value={data.status} 
-                            onChange={(e) => handleChange('status', e.target.value)}
-                            options={statusOptions}
-                        />
+                        <div className="max-w-md mx-auto">
+                            <label className="block mb-2 font-medium text-(--platform-text-primary) text-sm">
+                                Поточний статус
+                            </label>
+                            
+                            <CustomSelect 
+                                name="status"
+                                value={data.status} 
+                                onChange={(e) => handleChange('status', e.target.value)}
+                                options={statusOptions}
+                            />
+                        </div>
                     )}
                 </div>
-            </div>
+            )}
+
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
@@ -957,8 +967,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                                         </div>
                                                     ))}
                                                 </div>
-                                             ) : <div className="text-center p-8 text-(--platform-text-secondary)">Немає опублікованих шаблонів.</div>}
-                                         </div>
+                                            ) : <div className="text-center p-8 text-(--platform-text-secondary)">Немає опублікованих шаблонів.</div>}
+                                     </div>
                                     )}
                                 </div>
                             </>
@@ -980,7 +990,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                                             <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-5 flex justify-between items-center gap-4 transition-all duration-200 hover:shadow-sm hover:border-(--platform-accent)/30">
                                                                 <div className="flex items-center gap-4 flex-1 min-w-0">
                                                                     <div className="w-12 h-12 rounded-lg bg-(--platform-bg) overflow-hidden flex items-center justify-center border border-(--platform-border-color) shadow-sm shrink-0">
-                                                                                {getTemplateIcon(template)}
+                                                                                    {getTemplateIcon(template)}
                                                                     </div>
                                                                     <div className="min-w-0 flex-1">
                                                                         <div className="font-semibold text-(--platform-text-primary) text-lg mb-1 truncate pr-2" title={template.name}>
@@ -1023,7 +1033,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                                             <div key={template.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-5 flex justify-between items-center gap-4 transition-all duration-200 hover:shadow-sm">
                                                                 <div className="flex items-center gap-4 flex-1 min-w-0">
                                                                     <div className="w-12 h-12 rounded-lg bg-(--platform-bg) overflow-hidden flex items-center justify-center border border-(--platform-border-color) shadow-sm shrink-0">
-                                                                                {getTemplateIcon(template)}
+                                                                                    {getTemplateIcon(template)}
                                                                     </div>
                                                                     <div className="min-w-0 flex-1">
                                                                         <div className="font-semibold text-(--platform-text-primary) text-lg mb-1 truncate pr-2" title={template.name}>

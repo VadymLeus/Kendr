@@ -29,8 +29,8 @@ const SitePreviewer = ({
             id: 'preview',
             title: mergedTitle,
             logo_url: mergedLogo,
-            site_theme_mode: themeSettings.mode || 'light',
-            site_theme_accent: themeSettings.accent || 'blue',
+            site_theme_mode: themeSettings.mode || themeSettings.site_theme_mode || 'light',
+            site_theme_accent: themeSettings.accent || themeSettings.site_theme_accent || 'orange',
             theme_settings: themeSettings,
             site_name: mergedTitle 
         };
@@ -114,6 +114,7 @@ const SitePreviewer = ({
                     <div 
                         className="flex-1 overflow-y-auto custom-scrollbar site-theme-context"
                         data-site-mode={simulatedSiteData.site_theme_mode}
+                        data-site-accent={simulatedSiteData.site_theme_accent}
                         style={{ backgroundColor: 'var(--site-bg)', color: 'var(--site-text-primary)' }}
                         onClickCapture={blockInput}
                         onChangeCapture={blockInput}

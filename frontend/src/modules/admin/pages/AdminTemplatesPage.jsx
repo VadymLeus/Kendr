@@ -41,6 +41,7 @@ const AdminTemplatesPage = () => {
     const [isToggling, setIsToggling] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, template: null });
+
     const fetchTemplates = async () => {
         setIsLoading(true);
         try {
@@ -61,7 +62,6 @@ const AdminTemplatesPage = () => {
         if (!template) return;
         setConfirmModal({ ...confirmModal, isOpen: false });
         if (isToggling) return;
-        
         setIsToggling(template.id);
         const newAccess = template.access_level === 'public' ? 'admin_only' : 'public';
         
@@ -91,9 +91,17 @@ const AdminTemplatesPage = () => {
             const content = typeof selectedTemplate.default_block_content === 'string'
                 ? JSON.parse(selectedTemplate.default_block_content)
                 : selectedTemplate.default_block_content;
+            const themeSettings = content.theme_settings || {};
+            const mode = content.site_theme_mode || themeSettings.mode || 'light';
+            const accent = content.site_theme_accent || themeSettings.accent || 'orange';
+
             return {
                 siteData: { title: selectedTemplate.name },
-                theme: content.theme_settings || {},
+                theme: {
+                    ...themeSettings,
+                    mode: mode,
+                    accent: accent
+                },
                 header: content.header_content || [],
                 footer: content.footer_content || [],
                 pages: Array.isArray(content.pages) ? content.pages : [{ slug: 'home', blocks: content.blocks || [] }]

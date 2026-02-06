@@ -1,10 +1,9 @@
-// frontend/src/modules/admin/components/SiteDetailsPanel.jsx
+// frontend/src/modules/admin/components/UserDetailsPanel.jsx
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import BaseDetailsPanel from './BaseDetailsPanel';
-import { Mail, Calendar, Layout, AlertTriangle, UserCheck, Ban, Shield, Smartphone, Hash, Globe, CheckCircle, ExternalLink, X, Trash } from 'lucide-react';
+import { Mail, Calendar, Layout, AlertTriangle, Smartphone, Hash, Globe, CheckCircle, ExternalLink } from 'lucide-react';
 
 const UserDetailsPanel = ({ user, onClose, onDelete }) => {
     const navigate = useNavigate();
@@ -19,17 +18,13 @@ const UserDetailsPanel = ({ user, onClose, onDelete }) => {
         statCard: { background: 'var(--platform-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--platform-border-color)', display: 'flex', flexDirection: 'column', gap: '8px' },
         avatarWrapper: { position: 'relative', cursor: 'pointer', transition: 'transform 0.2s' }
     }), []);
+
     if (!user) return null;
 
     const handleVisitProfile = () => navigate(`/profile/${user.username}`);
 
     return (
-        <BaseDetailsPanel 
-            title="Деталі користувача" 
-            onClose={onClose} 
-            onDelete={() => onDelete(user.id)}
-            deleteLabel="Видалити користувача"
-        >
+        <BaseDetailsPanel title="Деталі користувача" onClose={onClose} onDelete={() => onDelete(user.id)} deleteLabel="Видалити користувача">
             <div style={styles.hero}>
                 <div style={styles.avatarWrapper} onClick={handleVisitProfile} className="group hover:scale-105">
                     <Avatar url={user.avatar_url} name={user.username} size={96} style={{ marginBottom: '16px', fontSize: '36px', border: '4px solid var(--platform-bg)', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
@@ -37,10 +32,6 @@ const UserDetailsPanel = ({ user, onClose, onDelete }) => {
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full p-1 text-white"><ExternalLink size={16} /></div>
                 </div>
                 <div onClick={handleVisitProfile} style={{fontSize: '22px', fontWeight: 'bold', marginBottom: '4px', cursor: 'pointer'}} className="hover:text-(--platform-accent) transition-colors">{user.username}</div>
-                <div style={{display: 'flex', gap: '8px', marginTop: '8px'}}>
-                    <div style={{padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', background: 'var(--platform-bg)', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid var(--platform-border-color)'}}>{user.role === 'admin' && <Shield size={12}/>} {user.role}</div>
-                    <div style={{padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', background: user.status === 'banned' ? '#fee2e2' : '#dcfce7', color: user.status === 'banned' ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', gap: '4px'}}>{user.status === 'banned' ? <Ban size={12}/> : <UserCheck size={12}/>} {user.status}</div>
-                </div>
             </div>
 
             <div style={styles.section}>

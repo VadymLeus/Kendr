@@ -24,7 +24,7 @@ const ReportModal = ({ isOpen, onClose, siteId }) => {
     if (!isOpen) return null;
     const reportOptions = [
         { value: 'spam', label: 'Спам або реклама', icon: Ban },
-        { value: 'scam', label: 'Шахрайство (Scam)', icon: ShieldAlert },
+        { value: 'scam', label: 'Шахрайство', icon: ShieldAlert },
         { value: 'inappropriate_content', label: 'Заборонений контент', icon: FileWarning },
         { value: 'copyright', label: 'Порушення авторських прав', icon: Copyright },
         { value: 'other', label: 'Інше', icon: HelpCircle }

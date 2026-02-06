@@ -27,6 +27,7 @@ const ProfilePage = () => {
     const [sitesLoading, setSitesLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState('created_at:desc');
+
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -182,6 +183,7 @@ const ProfilePage = () => {
     const avatarWrapperStyle = { borderRadius: '50%', border: '6px solid var(--platform-card-bg)', background: 'var(--platform-bg)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' };
     const headerContentStyle = { flex: 1, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' };
     const infoGridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', marginBottom: '2rem' };
+    
     return (
         <div style={containerStyle}>
             <Helmet>
@@ -265,9 +267,11 @@ const ProfilePage = () => {
                                 </div>
                             ))}
                         </div>
-                        <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
-                            При досягненні 3-х страйків ваш акаунт буде заблоковано або видалено.
-                        </div>
+                        {isOwner && (
+                            <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
+                                При досягненні 3-х страйків ваш акаунт буде заблоковано або видалено.
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

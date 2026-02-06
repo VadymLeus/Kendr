@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Warning = require('../models/Warning');
 const db = require('../config/db');
 const { deleteFile } = require('../utils/fileUtils');
+const logAdminAction = require('../utils/adminLogger');
 const deleteFullUserAccount = async (userId) => {
     const user = await User.findById(userId);
     if (user && user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
@@ -35,7 +36,6 @@ exports.getDashboardStats = async (req, res, next) => {
         let tableName = 'users';
         let dateColumn = 'created_at';
         let whereCondition = '1=1'; 
-
         switch (type) {
             case 'sites':
                 tableName = 'sites';
@@ -71,9 +71,7 @@ exports.getDashboardStats = async (req, res, next) => {
             d.setDate(today.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
             const shortDate = d.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' });
-            
             const found = chartRows.find(row => row.date === dateStr);
-            
             chartData.push({
                 date: dateStr,
                 shortDate: shortDate,
@@ -129,6 +127,38 @@ exports.getDashboardStats = async (req, res, next) => {
     }
 };
 
+exports.getAdminLogs = async (req, res, next) => {
+    try {
+        const { admin_id, type } = req.query;
+        let query = `
+            SELECT l.*, 
+                   u.username as admin_name, 
+                   u.avatar_url as admin_avatar, 
+                   u.email as admin_email
+            FROM admin_logs l
+            JOIN users u ON l.admin_id = u.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (admin_id) {
+            query += ' AND l.admin_id = ?';
+            params.push(admin_id);
+        }
+        if (type && type !== 'all') {
+            query += ' AND l.action_type = ?';
+            params.push(type);
+        }
+
+        query += ' ORDER BY l.created_at DESC LIMIT 100';
+
+        const [logs] = await db.query(query, params);
+        res.json(logs);
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.getAllUsers = async (req, res, next) => {
     try {
         const query = `
@@ -154,7 +184,14 @@ exports.deleteUser = async (req, res, next) => {
             return res.status(400).json({ message: 'Ви не можете видалити свій власний акаунт з адмінки.' });
         }
 
+        const [users] = await db.query('SELECT username, email FROM users WHERE id = ?', [id]);
+        const userDetails = users[0] || {};
         await deleteFullUserAccount(id);
+        await logAdminAction(req, 'user_delete', 'user', id, { 
+            username: userDetails.username, 
+            email: userDetails.email 
+        });
+
         res.json({ message: 'Користувача та всі його дані успішно видалено.' });
     } catch (error) {
         next(error);
@@ -166,6 +203,7 @@ exports.getAllSites = async (req, res, next) => {
         const query = `
             SELECT 
                 s.id, s.site_path, s.title, s.status, s.user_id, s.created_at, s.deletion_scheduled_for,
+                s.view_count,
                 u.username as author, u.email as author_email,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = s.user_id) as warning_count,
                 
@@ -174,6 +212,7 @@ exports.getAllSites = async (req, res, next) => {
                 
             FROM sites s
             JOIN users u ON s.user_id = u.id
+            WHERE u.role != 'admin'
             ORDER BY s.created_at DESC
         `;
         const [sites] = await db.query(query);
@@ -205,8 +244,12 @@ exports.suspendSite = async (req, res, next) => {
             strikeMessage = ' (Страйк за цей сайт вже існує).';
         }
 
-        const warningCount = await Warning.countForUser(site.user_id);
+        await logAdminAction(req, 'site_suspend', 'site', site.id, { 
+            title: site.title, 
+            path: site.site_path 
+        });
 
+        const warningCount = await Warning.countForUser(site.user_id);
         if (warningCount >= 3) {
             await deleteFullUserAccount(site.user_id);
             return res.json({ 
@@ -227,8 +270,11 @@ exports.setProbation = async (req, res, next) => {
         const [sites] = await db.query('SELECT * FROM sites WHERE site_path = ?', [site_path]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
         const site = sites[0];
-
         await Site.updateStatus(site.id, 'probation', null);
+        await logAdminAction(req, 'site_probation', 'site', site.id, { 
+            title: site.title,
+            path: site.site_path
+        });
 
         res.json({ message: 'Сайт переведено на випробувальний термін. Таймер видалення зупинено.' });
     } catch (error) {
@@ -245,6 +291,7 @@ exports.restoreSite = async (req, res, next) => {
         await Site.updateStatus(site.id, 'published', null);
         await db.query('UPDATE site_appeals SET status = "approved", resolved_at = NOW() WHERE site_id = ? AND status = "pending"', [site.id]);
         await db.query('DELETE FROM user_warnings WHERE site_id = ?', [site.id]);
+        await logAdminAction(req, 'site_restore', 'site', site.id, { title: site.title });
         res.json({ message: 'Сайт успішно відновлено. Страйк анульовано.' });
     } catch (error) {
         next(error);
@@ -276,6 +323,11 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
         }
 
         await Site.delete(site.id);
+        await logAdminAction(req, 'site_delete', 'site', site.id, { 
+            title: site.title, 
+            path: site.site_path 
+        });
+
         const warningCount = await Warning.countForUser(site.user_id);
         let userActionMessage = '';
         if (warningCount >= 3) {
@@ -318,6 +370,7 @@ exports.dismissReport = async (req, res, next) => {
     try {
         const { id } = req.params;
         await db.query('UPDATE site_reports SET status = "dismissed" WHERE id = ?', [id]);
+        await logAdminAction(req, 'report_dismiss', 'report', id, { status: 'dismissed' });
         res.json({ message: 'Скаргу відхилено.' });
     } catch (error) {
         next(error);
@@ -328,6 +381,7 @@ exports.reopenReport = async (req, res, next) => {
     try {
         const { id } = req.params;
         await db.query('UPDATE site_reports SET status = "new" WHERE id = ?', [id]);
+        await logAdminAction(req, 'report_reopen', 'report', id, { status: 'new' });
         res.json({ message: 'Скаргу повернуто до розгляду (статус New).' });
     } catch (error) {
         next(error);
@@ -337,21 +391,16 @@ exports.reopenReport = async (req, res, next) => {
 exports.banSiteFromReport = async (req, res, next) => {
     try {
         const { id } = req.params;
-        
         const [reports] = await db.query('SELECT * FROM site_reports WHERE id = ?', [id]);
         if (reports.length === 0) return res.status(404).json({ message: 'Скаргу не знайдено' });
         const report = reports[0];
-
         const [sites] = await db.query('SELECT * FROM sites WHERE id = ?', [report.site_id]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
         const site = sites[0];
-
         await db.query('UPDATE site_reports SET status = "banned" WHERE id = ?', [id]);
-
         const deletionDate = new Date();
         deletionDate.setDate(deletionDate.getDate() + 7); 
         await Site.updateStatus(site.id, 'suspended', deletionDate);
-
         const [existingWarning] = await db.query(
             'SELECT id FROM user_warnings WHERE user_id = ? AND site_id = ?', 
             [site.user_id, site.id]
@@ -365,8 +414,13 @@ exports.banSiteFromReport = async (req, res, next) => {
             strikeMessage = ' (Страйк вже існував).';
         }
 
-        const warningCount = await Warning.countForUser(site.user_id);
+        await logAdminAction(req, 'report_ban', 'report', id, { 
+            site_id: site.id,
+            site_title: site.title,
+            reason: report.reason 
+        });
 
+        const warningCount = await Warning.countForUser(site.user_id);
         if (warningCount >= 3) {
             await deleteFullUserAccount(site.user_id);
             return res.json({ 
@@ -401,7 +455,6 @@ exports.createSystemTemplate = async (req, res, next) => {
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт-джерело не знайдено' });
         const site = sites[0];
         const [pages] = await db.query('SELECT name, slug, block_content, is_homepage, seo_title, seo_description FROM pages WHERE site_id = ?', [siteId]);
-
         const templateContent = {
             theme_settings: typeof site.theme_settings === 'string' ? JSON.parse(site.theme_settings) : (site.theme_settings || {}),
             site_theme_mode: site.site_theme_mode,
@@ -419,7 +472,8 @@ exports.createSystemTemplate = async (req, res, next) => {
         };
         const query = `INSERT INTO templates (user_id, name, description, thumbnail_url, default_block_content, type, is_ready, access_level) VALUES (?, ?, ?, ?, ?, 'system', 0, 'admin_only')`;
         const thumbnail = site.cover_image || '/previews/empty.png';
-        await db.query(query, [adminId, templateName, description, thumbnail, JSON.stringify(templateContent)]);
+        const [result] = await db.query(query, [adminId, templateName, description, thumbnail, JSON.stringify(templateContent)]);
+        await logAdminAction(req, 'template_create', 'template', result.insertId || null, { name: templateName });
         res.status(201).json({ message: 'Системний шаблон створено (Статус: В розробці).' });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: 'Шаблон з такою назвою вже існує.' });
@@ -431,7 +485,6 @@ exports.updateSystemTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { name, description, is_ready, access_level } = req.body;
-
         if (access_level === 'public') {
             if (is_ready === false || is_ready === 0) return res.status(400).json({ message: 'Не можна опублікувати шаблон, який має статус "В розробці".' });
             if (is_ready === undefined) {
@@ -449,11 +502,16 @@ exports.updateSystemTemplate = async (req, res, next) => {
         if (description) { updates.push('description = ?'); params.push(description); }
         if (is_ready !== undefined) { updates.push('is_ready = ?'); params.push(is_ready ? 1 : 0); }
         if (finalAccessLevel !== undefined) { updates.push('access_level = ?'); params.push(finalAccessLevel); }
-
         if (updates.length === 0) return res.json({ message: 'Немає даних для оновлення' });
         query += updates.join(', ') + ' WHERE id = ?';
         params.push(id);
         await db.query(query, params);
+        await logAdminAction(req, 'template_update', 'template', id, { 
+            name, 
+            is_ready, 
+            access_level: finalAccessLevel 
+        });
+
         res.json({ message: 'Шаблон оновлено.' });
     } catch (error) { next(error); }
 };
@@ -461,7 +519,12 @@ exports.updateSystemTemplate = async (req, res, next) => {
 exports.deleteSystemTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const [tpl] = await db.query('SELECT name FROM templates WHERE id = ?', [id]);
         await db.query('DELETE FROM templates WHERE id = ?', [id]);
+        await logAdminAction(req, 'template_delete', 'template', id, { 
+            name: tpl[0]?.name 
+        });
+
         res.json({ message: 'Системний шаблон видалено.' });
     } catch (error) { next(error); }
 };

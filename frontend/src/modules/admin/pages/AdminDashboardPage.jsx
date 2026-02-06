@@ -1,11 +1,11 @@
 // frontend/src/modules/admin/pages/AdminDashboardPage.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'react-toastify';
 import apiClient from '../../../shared/api/api';
-import { Button } from '../../../shared/ui/elements/Button';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect'; 
 import AdminPageLayout from '../components/AdminPageLayout';
-import { toast } from 'react-toastify';
-import { Users, Globe, AlertTriangle, MessageSquare, LayoutDashboard, TrendingUp, BarChart2, Construction, ArrowUpRight, ArrowDownRight, Calendar, Activity, Zap } from 'lucide-react';
+import AdminLogsPage from './AdminLogsPage'; 
+import { Users, Globe, AlertTriangle, MessageSquare, LayoutDashboard, TrendingUp, BarChart2, ArrowUpRight, ArrowDownRight, Calendar, Activity, Zap, Check, Ban, Lock, EyeOff, Shield, Archive, CheckCircle } from 'lucide-react';
 
 const GRAPH_TYPE_OPTIONS = [
     { label: 'Користувачі', value: 'users', icon: Users },
@@ -50,6 +50,89 @@ const formatDate = (dateString) => {
     return `${day}.${month}.${year} ${hours}:${minutes}`;
 };
 
+const StatusBadge = ({ label, icon: Icon, colorVar }) => {
+    const style = {
+        color: `var(${colorVar})`,
+        backgroundColor: `color-mix(in srgb, var(${colorVar}), transparent 90%)`,
+        borderColor: `color-mix(in srgb, var(${colorVar}), transparent 80%)`,
+        borderWidth: '1px',
+        borderStyle: 'solid'
+    };
+
+    return (
+        <span 
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors duration-300" 
+            style={style}
+        >
+            {Icon && <Icon size={10} style={{ color: `var(${colorVar})` }} />}
+            {label}
+        </span>
+    );
+};
+
+const renderStatusBadge = (type, statusInfo) => {
+    if (type === 'site_create') {
+        const status = statusInfo || 'draft';
+        switch (status) {
+            case 'published':
+                return <StatusBadge label="Published" icon={Globe} colorVar="--platform-success" />;
+            case 'suspended':
+                return <StatusBadge label="Suspended" icon={Ban} colorVar="--platform-danger" />;
+            case 'probation':
+                return <StatusBadge label="Probation" icon={Shield} colorVar="--platform-warning" />;
+            case 'private':
+                return <StatusBadge label="Private" icon={Lock} colorVar="--platform-text-secondary" />;
+            case 'draft':
+            default:
+                return <StatusBadge label="Draft" icon={EyeOff} colorVar="--platform-text-secondary" />;
+        }
+    }
+
+    if (type === 'user_register') {
+        const strikes = statusInfo || 0;
+        
+        if (strikes === 0) {
+            return <StatusBadge label="Clean" icon={CheckCircle} colorVar="--platform-success" />;
+        } else if (strikes === 1) {
+            return <StatusBadge label="1 Strike" icon={Zap} colorVar="--platform-warning" />;
+        } else {
+            return <StatusBadge label={`${strikes}/3 Strikes`} icon={AlertTriangle} colorVar="--platform-danger" />;
+        }
+    }
+
+    if (type === 'ticket') {
+        const status = statusInfo || 'open';
+        
+        switch (status) {
+            case 'answered':
+                return <StatusBadge label="Answered" icon={MessageSquare} colorVar="--platform-success" />;
+            case 'closed':
+                return <StatusBadge label="Closed" icon={Archive} colorVar="--platform-text-secondary" />;
+            case 'open':
+            default:
+                return <StatusBadge label="Open" icon={Activity} colorVar="--platform-accent" />;
+        }
+    }
+
+    if (type === 'report') {
+        const status = statusInfo || 'new';
+
+        switch (status) {
+            case 'reviewed':
+                return <StatusBadge label="Reviewed" icon={Check} colorVar="--platform-success" />;
+            case 'dismissed':
+                return <StatusBadge label="Dismissed" icon={Archive} colorVar="--platform-text-secondary" />;
+            case 'banned':
+                return <StatusBadge label="Banned" icon={Ban} colorVar="--platform-text-primary" />;
+            case 'new':
+            default:
+                return <StatusBadge label="New" icon={AlertTriangle} colorVar="--platform-danger" />;
+        }
+    }
+
+    return null;
+};
+
 const StatCard = ({ title, value, type, trend, trendValue, loading }) => {
     const styleConfig = ENTITY_STYLES[type] || ENTITY_STYLES.default;
     const Icon = styleConfig.icon;
@@ -60,10 +143,10 @@ const StatCard = ({ title, value, type, trend, trendValue, loading }) => {
             background: 'var(--platform-card-bg)',
             border: '1px solid var(--platform-border-color)',
             borderRadius: '16px',
-            padding: '24px',
+            padding: '20px', 
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px', 
+            gap: '6px', 
             position: 'relative',
             overflow: 'hidden',
             boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
@@ -73,29 +156,29 @@ const StatCard = ({ title, value, type, trend, trendValue, loading }) => {
             justifyContent: 'center'
         },
         iconBox: {
-            width: '48px', height: '48px', borderRadius: '12px',
+            width: '42px', height: '42px', borderRadius: '10px', 
             background: bgOpacity, color: iconColor,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: '8px' 
+            marginBottom: '4px' 
         },
         value: { 
-            fontSize: '32px', 
+            fontSize: '28px', 
             fontWeight: 'bold', 
             color: 'var(--platform-text-primary)',
             lineHeight: 1.2
         },
         label: { 
-            fontSize: '14px', 
+            fontSize: '13px', 
             fontWeight: '600', 
             color: 'var(--platform-text-secondary)' 
         },
         trend: { 
-            fontSize: '12px', fontWeight: '600', 
+            fontSize: '11px', fontWeight: '600', 
             color: trend === 'up' ? '#10b981' : trend === 'down' ? '#ef4444' : 'var(--platform-text-secondary)',
             display: 'flex', alignItems: 'center', gap: '4px',
             justifyContent: 'center',
             marginTop: '4px',
-            padding: '4px 10px',
+            padding: '4px 8px',
             borderRadius: '20px',
             background: trend === 'up' ? 'rgba(16, 185, 129, 0.1)' : trend === 'down' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0,0,0,0.05)'
         }
@@ -103,14 +186,13 @@ const StatCard = ({ title, value, type, trend, trendValue, loading }) => {
 
     return (
         <div style={styles.card}>
-            <div style={styles.iconBox}><Icon size={24} /></div>
-            
+            <div style={styles.iconBox}><Icon size={22} /></div>
             <div style={styles.value}>{loading ? '...' : value}</div>
             <div style={styles.label}>{title}</div>
             
             {trendValue && (
                 <div style={styles.trend}>
-                    {trend === 'up' ? <ArrowUpRight size={14}/> : trend === 'down' ? <ArrowDownRight size={14}/> : null}
+                    {trend === 'up' ? <ArrowUpRight size={12}/> : trend === 'down' ? <ArrowDownRight size={12}/> : null}
                     {trendValue}
                 </div>
             )}
@@ -194,62 +276,14 @@ const ModernChart = ({ data, period, setPeriod, type, setType }) => {
     );
 };
 
-const renderStatusBadge = (type, statusInfo) => {
-    if (type === 'site_create') {
-        const status = statusInfo || 'draft';
-        let colorClass = 'bg-gray-100 text-gray-600 border-gray-200';
-        let label = 'Draft';
-        if (status === 'published') { colorClass = 'bg-emerald-100 text-emerald-600 border-emerald-200'; label = 'Published'; }
-        else if (status === 'suspended') { colorClass = 'bg-red-100 text-red-600 border-red-200'; label = 'Suspended'; }
-        else if (status === 'probation') { colorClass = 'bg-amber-100 text-amber-600 border-amber-200'; label = 'Probation'; }
-        else if (status === 'private') { colorClass = 'bg-gray-100 text-gray-500 border-gray-200'; label = 'Private'; }
-        return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${colorClass}`}>{label}</span>;
-    }
-
-    if (type === 'user_register') {
-        const strikes = statusInfo || 0;
-        let colorClass = 'bg-gray-100 text-gray-500 border-gray-200';
-        if (strikes === 1) colorClass = 'bg-yellow-100 text-yellow-600 border-yellow-200';
-        if (strikes >= 2) colorClass = 'bg-red-100 text-red-600 border-red-200';
-        return (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 ${colorClass}`}>
-                <Zap size={10} /> {strikes}/3 Strikes
-            </span>
-        );
-    }
-
-    if (type === 'ticket') {
-        const status = statusInfo || 'open';
-        let colorClass = 'bg-blue-100 text-blue-600 border-blue-200';
-        let label = 'Open';
-        if (status === 'answered') { colorClass = 'bg-purple-100 text-purple-600 border-purple-200'; label = 'Answered'; }
-        else if (status === 'closed') { colorClass = 'bg-gray-100 text-gray-500 border-gray-200'; label = 'Closed'; }
-        return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${colorClass}`}>{label}</span>;
-    }
-
-    if (type === 'report') {
-        const status = statusInfo || 'new';
-        let colorClass = 'bg-red-100 text-red-600 border-red-200';
-        let label = 'New';
-        if (status === 'reviewed') { colorClass = 'bg-blue-100 text-blue-600 border-blue-200'; label = 'Reviewed'; }
-        else if (status === 'dismissed') { colorClass = 'bg-gray-100 text-gray-500 border-gray-200'; label = 'Dismissed'; }
-        else if (status === 'banned') { colorClass = 'bg-gray-900 text-white border-gray-900'; label = 'Banned'; }
-        return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${colorClass}`}>{label}</span>;
-    }
-
-    return null;
-};
-
 const LogItem = ({ log }) => {
     let typeKey = 'default';
     if (log.type === 'user_register') typeKey = 'users';
     else if (log.type === 'site_create') typeKey = 'sites';
     else if (log.type === 'report') typeKey = 'reports';
     else if (log.type === 'ticket') typeKey = 'tickets';
-
     const styleConfig = ENTITY_STYLES[typeKey];
     const Icon = styleConfig.icon;
-
     return (
         <div style={{ 
             display: 'flex', alignItems: 'center', gap: '12px', 
@@ -298,6 +332,7 @@ const AdminDashboardPage = () => {
     const [logTypeFilter, setLogTypeFilter] = useState('all');
     const [logSortOrder, setLogSortOrder] = useState('newest');
     const fetchData = useCallback(async (isRefresh = false) => {
+        if (activeTab !== 'overview') return;
         setLoading(true);
         try {
             const response = await apiClient.get('/admin/dashboard-stats', {
@@ -311,15 +346,17 @@ const AdminDashboardPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [period, graphType]);
+    }, [period, graphType, activeTab]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
     const stats = data?.stats || { users: 0, usersGrowth: 0, sites: 0, reports: 0, tickets: 0 };
     const processedLogs = useMemo(() => {
         if (!data?.activityLog) return [];
         let logs = [...data.activityLog];
+        
         if (logTypeFilter !== 'all') {
             logs = logs.filter(log => {
                 if (logTypeFilter === 'user') return log.type === 'user_register';
@@ -355,17 +392,28 @@ const AdminDashboardPage = () => {
         <AdminPageLayout 
             title="Дашборд" 
             icon={LayoutDashboard} 
-            onRefresh={() => fetchData(true)} 
-            loading={loading}
+            onRefresh={() => {
+                if (activeTab === 'overview') fetchData(true);
+            }} 
+            loading={loading && activeTab === 'overview'}
         >
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--platform-border-color)', paddingBottom: '12px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--platform-border-color)', paddingBottom: '8px' }}>
                 <button onClick={() => setActiveTab('overview')} style={tabStyle('overview')}>Огляд</button>
                 <button onClick={() => setActiveTab('admins')} style={tabStyle('admins')}>Адміністратори</button>
             </div>
 
             {activeTab === 'overview' ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', height: '100%', overflow: 'hidden' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', flexShrink: 0 }}>
+                <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '16px', 
+                    width: '100%', 
+                    height: '100%', 
+                    overflowY: 'auto',
+                    paddingBottom: '24px' 
+                }} className="custom-scrollbar">
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', flexShrink: 0 }}>
                         <StatCard 
                             title="Всього користувачів" value={stats.users} type="users"
                             trend="up" trendValue={`+${stats.usersGrowth} за місяць`} loading={loading}
@@ -384,7 +432,7 @@ const AdminDashboardPage = () => {
                         />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', flex: 1, minHeight: 0 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', flex: 1, minHeight: '400px' }}>
                         <div style={{ 
                             background: 'var(--platform-card-bg)', borderRadius: '16px', padding: '24px', 
                             border: '1px solid var(--platform-border-color)', display: 'flex', flexDirection: 'column', overflow: 'hidden'
@@ -445,27 +493,8 @@ const AdminDashboardPage = () => {
                     </div>
                 </div>
             ) : (
-                <div style={{ 
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                    height: '60vh', background: 'var(--platform-card-bg)', borderRadius: '16px',
-                    border: '1px dashed var(--platform-border-color)', gap: '16px'
-                }}>
-                    <div style={{
-                        width: '80px', height: '80px', borderRadius: '50%', background: 'var(--platform-bg)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: '1px solid var(--platform-border-color)'
-                    }}>
-                        <Construction size={40} color="var(--platform-accent)" />
-                    </div>
-                    <div style={{textAlign: 'center'}}>
-                        <h2 style={{fontSize: '20px', fontWeight: 'bold', marginBottom: '8px'}}>Розділ "Адміністратори" в розробці</h2>
-                        <p style={{color: 'var(--platform-text-secondary)', maxWidth: '400px'}}>
-                            Тут буде список адміністраторів платформи, управління ролями та журнал дій персоналу.
-                        </p>
-                    </div>
-                    <Button variant="outline" onClick={() => setActiveTab('overview')}>
-                        Повернутися до огляду
-                    </Button>
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: '24px' }}>
+                    <AdminLogsPage />
                 </div>
             )}
         </AdminPageLayout>

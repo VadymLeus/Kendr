@@ -22,5 +22,6 @@ router.get('/templates', adminController.getSystemTemplates);
 router.post('/templates', adminController.createSystemTemplate);
 router.put('/templates/:id', adminController.updateSystemTemplate);
 router.delete('/templates/:id', adminController.deleteSystemTemplate);
+router.get('/logs', adminController.getAdminLogs);
 
 module.exports = router;
