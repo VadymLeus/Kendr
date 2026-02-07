@@ -8,65 +8,19 @@ import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { Input } from '../../../shared/ui/elements/Input';
 import AdminPageLayout from '../components/AdminPageLayout';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
-import { AdminTable, AdminTh, AdminRow, AdminCell, LoadingRow, EmptyRow, FilterBar, GenericBadge } from '../components/AdminTableComponents';
+import { AdminTable, AdminTh, AdminRow, AdminCell, LoadingRow, EmptyRow, FilterBar, GenericBadge, CsvExportButton } from '../components/AdminTableComponents';
 import { useDataList } from '../../../shared/hooks/useDataList';
 import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog';
 import apiClient from '../../../shared/api/api';
+import { exportToCsv } from '../../../shared/utils/exportToCsv';
 import { MessageSquare, CheckCircle, Gavel, XCircle, RotateCcw, Clock, ExternalLink, Inbox, User, HelpCircle, Wrench, CreditCard, Handshake, Search } from 'lucide-react';
 
-
 const CATEGORY_OPTIONS = [
-    { value: 'all', label: 'Всі категорії', icon: Inbox },
-    { value: 'general', label: 'Загальні питання', icon: HelpCircle },
-    { value: 'technical', label: 'Технічна проблема', icon: Wrench },
-    { value: 'billing', label: 'Оплата та тариф', icon: CreditCard },
-    { value: 'complaint', label: 'Скарга на контент', icon: MessageSquare },
-    { value: 'partnership', label: 'Співпраця', icon: Handshake },
-    { value: 'appeal', label: 'Апеляція', icon: Gavel }
+    { value: 'all', label: 'Всі', icon: Inbox }, { value: 'general', label: 'Загальні', icon: HelpCircle },
+    { value: 'technical', label: 'Технічні', icon: Wrench }, { value: 'billing', label: 'Оплата', icon: CreditCard },
+    { value: 'complaint', label: 'Скарга', icon: MessageSquare }, { value: 'partnership', label: 'Співпраця', icon: Handshake }, { value: 'appeal', label: 'Апеляція', icon: Gavel }
 ];
-
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-};
-
-const CategoryBadge = ({ type }) => {
-    const option = CATEGORY_OPTIONS.find(opt => opt.value === type) || CATEGORY_OPTIONS[1];
-    const Icon = option.icon;
-    const colors = {
-        general: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
-        technical: { bg: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' },
-        billing: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981' },
-        complaint: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' },
-        partnership: { bg: 'rgba(236, 72, 153, 0.1)', color: '#ec4899' },
-        appeal: { bg: 'rgba(249, 115, 22, 0.1)', color: '#f97316' }
-    };
-    
-    const style = colors[type] || colors.general;
-    return (
-        <GenericBadge color={style.color} bg={style.bg} icon={Icon}>
-            {option.label === 'Всі категорії' ? type : option.label}
-        </GenericBadge>
-    );
-};
-
-const StatusBadge = ({ status }) => {
-    const isOpen = status === 'open';
-    const isAnswered = status === 'answered';
-    let props = { bg: 'rgba(148, 163, 184, 0.1)', color: '#64748b', icon: CheckCircle, label: 'Закрито' };
-    if (isOpen) { 
-        props = { bg: 'rgba(245, 158, 11, 0.1)', color: '#d97706', icon: Clock, label: 'Відкрито' };
-    } else if (isAnswered) { 
-        props = { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981', icon: MessageSquare, label: 'Є відповідь' };
-    }
-    
-    return (
-        <GenericBadge color={props.color} bg={props.bg} icon={props.icon}>
-            {props.label}
-        </GenericBadge>
-    );
-};
+const COLORS = { general: '#3b82f6', technical: '#8b5cf6', billing: '#10b981', complaint: '#ef4444', partnership: '#ec4899', appeal: '#f97316' };
 
 const AdminTicketsPage = () => {
     const navigate = useNavigate();
@@ -75,219 +29,66 @@ const AdminTicketsPage = () => {
     const [sortConfig, setSortConfig] = useState({ key: 'updated_at', direction: 'desc' });
     const { filteredData: rawTickets, loading, searchQuery, setSearchQuery, refresh } = useDataList(`/support/admin/tickets?status=${statusFilter}`, ['subject', 'username', 'user_email', 'id']);
     const { isOpen, config, requestConfirm, close } = useConfirmDialog();
+
     const processedTickets = useMemo(() => {
-        let result = [...rawTickets];
-        if (categoryFilter !== 'all') {
-            result = result.filter(item => item.type === categoryFilter);
-        }
-        result.sort((a, b) => {
-            const aValue = a[sortConfig.key];
-            const bValue = b[sortConfig.key];
-            if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-            if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-            return 0;
-        });
-        return result;
+        let res = categoryFilter !== 'all' ? rawTickets.filter(t => t.type === categoryFilter) : [...rawTickets];
+        return res.sort((a, b) => (a[sortConfig.key] < b[sortConfig.key] ? -1 : 1) * (sortConfig.direction === 'asc' ? 1 : -1));
     }, [rawTickets, categoryFilter, sortConfig]);
 
-    const handleSort = (key) => {
-        setSortConfig(curr => ({ key, direction: curr.key === key && curr.direction === 'desc' ? 'asc' : 'desc' }));
-    };
-
-    const filterByUser = (username, e) => {
-        e.stopPropagation();
-        setSearchQuery(username);
-        toast.info(`Фільтр по користувачу: ${username}`);
-    };
-
-    const handleGoToChat = (e, ticketId) => {
-        e.stopPropagation();
-        navigate(`/support/ticket/${ticketId}`);
-    };
-
-    const handleAction = async (actionFn, successMessage) => {
-        try {
-            await actionFn();
-            toast.success(successMessage);
-            close();
-            refresh();
-        } catch (err) {
-            console.error(err);
-            toast.error('Помилка виконання дії');
-        }
-    };
+    const handleSort = (key) => setSortConfig(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
+    const handleAction = async (fn, msg) => { try { await fn(); toast.success(msg); close(); refresh(); } catch { toast.error('Помилка'); } };
 
     const actions = {
-        closeTicket: (id) => requestConfirm({
-            title: 'Закрити звернення?',
-            message: `Тікет #${id} буде переміщено до архіву.`,
-            type: 'warning',
-            confirmLabel: 'Закрити',
-            onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'closed' }), `Тікет #${id} закрито`)
-        }),
-        restoreTicket: (id) => requestConfirm({
-            title: 'Відновити звернення?',
-            message: `Тікет #${id} повернеться до списку активних.`,
-            type: 'info',
-            confirmLabel: 'Відновити',
-            onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'open' }), `Тікет #${id} відновлено`)
-        })
+        closeTicket: (id) => requestConfirm({ title: 'Закрити?', message: `Тікет #${id} в архів.`, type: 'warning', confirmLabel: 'Закрити', onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'closed' }), 'Закрито') }),
+        restoreTicket: (id) => requestConfirm({ title: 'Відновити?', message: `Тікет #${id} активний.`, type: 'info', confirmLabel: 'Відновити', onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'open' }), 'Відновлено') })
+    };
+
+    const handleExport = () => {
+        if (!processedTickets?.length) return toast.info('Немає даних');
+        exportToCsv(processedTickets.map(t => ({
+            id: t.id, subject: t.subject, category: CATEGORY_OPTIONS.find(o => o.value === t.type)?.label || t.type,
+            user: t.username, email: t.user_email, status: t.status === 'open' ? 'Відкрито' : t.status === 'answered' ? 'Відповідь' : 'Закрито',
+            updated: new Date(t.updated_at).toLocaleString('uk-UA')
+        })), { id: 'ID', subject: 'Тема', category: 'Категорія', user: 'Користувач', email: 'Email', status: 'Статус', updated: 'Оновлено' }, `tickets_${new Date().toLocaleDateString('uk-UA')}`);
     };
 
     return (
-        <AdminPageLayout 
-            title="Центр підтримки" icon={MessageSquare} count={processedTickets.length}
-            onRefresh={refresh} loading={loading}
-        >
+        <AdminPageLayout title="Підтримка" icon={MessageSquare} count={processedTickets.length} onRefresh={refresh} loading={loading}>
             <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                 <FilterBar>
                     <div style={{ display: 'flex', background: 'var(--platform-card-bg)', padding: '2px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
-                        {['active', 'closed'].map(status => (
-                            <Button
-                                key={status}
-                                variant="ghost"
-                                onClick={() => setStatusFilter(status)}
-                                style={{
-                                    padding: '4px 12px', height: '30px', fontSize: '13px', borderRadius: '6px',
-                                    background: statusFilter === status ? 'var(--platform-bg)' : 'transparent',
-                                    color: statusFilter === status ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)',
-                                    boxShadow: statusFilter === status ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
-                                }}
-                            >
-                                {status === 'active' ? 'Активні' : 'Архів'}
-                            </Button>
-                        ))}
+                        {['active', 'closed'].map(s => <Button key={s} variant="ghost" onClick={() => setStatusFilter(s)} style={{ padding: '4px 12px', height: '30px', fontSize: '13px', borderRadius: '6px', background: statusFilter === s ? 'var(--platform-bg)' : 'transparent', color: statusFilter === s ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)' }}>{s === 'active' ? 'Активні' : 'Архів'}</Button>)}
                     </div>
-
-                    <div style={{ width: '220px' }}>
-                        <CustomSelect 
-                            value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}
-                            options={CATEGORY_OPTIONS} variant="minimal" style={{ height: '36px', background: 'var(--platform-card-bg)' }}
-                        />
-                    </div>
+                    <div style={{ width: '220px' }}><CustomSelect value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} options={CATEGORY_OPTIONS} variant="minimal" style={{ height: '36px', background: 'var(--platform-card-bg)' }} /></div>
                 </FilterBar>
-                <div style={{ width: '300px' }}>
-                    <Input 
-                        placeholder="Пошук (тема, користувач, ID)..."
-                        leftIcon={<Search size={16}/>}
-                        value={searchQuery || ''} 
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        wrapperStyle={{margin: 0}}
-                    />
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ width: '300px' }}><Input placeholder="Пошук..." leftIcon={<Search size={16}/>} value={searchQuery || ''} onChange={(e) => setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                    <CsvExportButton onClick={handleExport} disabled={loading || !processedTickets.length} />
                 </div>
             </div>
-
             <AdminTable>
-                <colgroup>
-                    <col style={{width: '80px'}} />
-                    <col style={{width: '30%'}} />
-                    <col style={{width: '140px'}} />
-                    <col style={{width: '25%'}} />
-                    <col style={{width: '140px'}} />
-                    <col style={{width: '160px'}} />
-                    <col style={{width: '100px'}} />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <AdminTh label="ID" sortKey="id" currentSort={sortConfig} onSort={handleSort} />
-                        <AdminTh label="Тема / Опис" sortKey="subject" currentSort={sortConfig} onSort={handleSort} />
-                        <AdminTh label="Категорія" sortKey="type" currentSort={sortConfig} onSort={handleSort} />
-                        <AdminTh label="Користувач" sortKey="username" currentSort={sortConfig} onSort={handleSort} />
-                        <AdminTh label="Статус" sortKey="status" currentSort={sortConfig} onSort={handleSort} />
-                        <AdminTh label="Оновлено" sortKey="updated_at" currentSort={sortConfig} onSort={handleSort} align="right" />
-                        <AdminTh label="Дії" align="right" />
-                    </tr>
-                </thead>
+                <colgroup><col style={{width: '80px'}} /><col style={{width: '30%'}} /><col style={{width: '140px'}} /><col style={{width: '25%'}} /><col style={{width: '140px'}} /><col style={{width: '160px'}} /><col style={{width: '100px'}} /></colgroup>
+                <thead><tr><AdminTh label="ID" sortKey="id" currentSort={sortConfig} onSort={handleSort} /><AdminTh label="Тема" sortKey="subject" currentSort={sortConfig} onSort={handleSort} /><AdminTh label="Категорія" sortKey="type" currentSort={sortConfig} onSort={handleSort} /><AdminTh label="Користувач" sortKey="username" currentSort={sortConfig} onSort={handleSort} /><AdminTh label="Статус" sortKey="status" currentSort={sortConfig} onSort={handleSort} /><AdminTh label="Оновлено" sortKey="updated_at" currentSort={sortConfig} onSort={handleSort} align="right" /><AdminTh label="Дії" align="right" /></tr></thead>
                 <tbody>
-                    {loading ? (
-                        <LoadingRow cols={7} />
-                    ) : processedTickets.length === 0 ? (
-                        <EmptyRow cols={7} message="У цій категорії звернень немає" />
-                    ) : processedTickets.map(ticket => {
-                        const isClosed = ticket.status === 'closed';
+                    {loading ? <LoadingRow cols={7} /> : !processedTickets.length ? <EmptyRow cols={7} /> : processedTickets.map(t => {
+                        const catOpt = CATEGORY_OPTIONS.find(o => o.value === t.type) || CATEGORY_OPTIONS[1];
+                        const sProps = t.status === 'open' ? {bg:'rgba(245,158,11,0.1)',c:'#d97706',i:Clock,l:'Відкрито'} : t.status==='answered'?{bg:'rgba(16,185,129,0.1)',c:'#10b981',i:MessageSquare,l:'Відповідь'}:{bg:'rgba(148,163,184,0.1)',c:'#64748b',i:CheckCircle,l:'Закрито'};
                         return (
-                            <AdminRow 
-                                key={ticket.id} 
-                                onClick={(e) => handleGoToChat(e, ticket.id)}
-                                style={{ background: !isClosed ? 'rgba(59, 130, 246, 0.02)' : 'transparent' }}
-                            >
-                                <AdminCell style={{opacity: 0.6, fontSize: '13px'}}>#{ticket.id}</AdminCell>
-                                
-                                <AdminCell>
-                                    <div style={{fontWeight: '600', fontSize: '15px', marginBottom: '4px', color: 'var(--platform-text-primary)'}}>
-                                        {ticket.subject}
-                                    </div>
-                                    <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: '350px'}}>
-                                        {ticket.body}
-                                    </div>
-                                </AdminCell>
-
-                                <AdminCell>
-                                    <CategoryBadge type={ticket.type || 'general'} />
-                                </AdminCell>
-
-                                <AdminCell>
-                                    <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                                        <Avatar url={ticket.user_avatar_url} name={ticket.username} size={32} />
-                                        <div style={{display: 'flex', flexDirection: 'column', minWidth: 0}}>
-                                            <div style={{fontWeight: '500', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                                                {ticket.username}
-                                            </div>
-                                            <div style={{fontSize: '12px', opacity: 0.6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                                                {ticket.user_email}
-                                            </div>
-                                        </div>
-                                        <div 
-                                            title="Фільтрувати по цьому користувачу"
-                                            onClick={(e) => filterByUser(ticket.username, e)}
-                                            style={{
-                                                padding: '6px', borderRadius: '6px', cursor: 'pointer', 
-                                                color: 'var(--platform-text-secondary)', marginLeft: 'auto',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                            }}
-                                            className="hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-(--platform-accent)"
-                                        >
-                                            <User size={14} />
-                                        </div>
-                                    </div>
-                                </AdminCell>
-
-                                <AdminCell>
-                                    <StatusBadge status={ticket.status} />
-                                </AdminCell>
-
-                                <AdminCell align="right" style={{fontSize: '13px', fontFamily: 'monospace', color: 'var(--platform-text-secondary)'}}>
-                                    {formatDate(ticket.updated_at)}
-                                </AdminCell>
-
-                                <AdminCell align="right">
-                                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
-                                        <Button 
-                                            variant="ghost" title="Відкрити чат"
-                                            onClick={(e) => handleGoToChat(e, ticket.id)}
-                                            className="text-blue-500 hover:bg-blue-50"
-                                            style={{ color: '#3b82f6', padding: '6px' }}
-                                            icon={<ExternalLink size={18} />}
-                                        />
-                                        <Button 
-                                            variant="ghost"
-                                            title={isClosed ? "Відновити звернення" : "Закрити звернення"}
-                                            onClick={() => isClosed ? actions.restoreTicket(ticket.id) : actions.closeTicket(ticket.id)}
-                                            className={isClosed ? "text-green-500 hover:bg-green-50" : "text-red-500 hover:bg-red-50"}
-                                            style={{ color: isClosed ? 'var(--platform-success)' : 'var(--platform-danger)', padding: '6px' }}
-                                            icon={isClosed ? <RotateCcw size={18} /> : <XCircle size={18} />}
-                                        />
-                                    </div>
-                                </AdminCell>
+                            <AdminRow key={t.id} onClick={(e) => {e.stopPropagation();navigate(`/support/ticket/${t.id}`)}} style={{ background: t.status!=='closed' ? 'rgba(59, 130, 246, 0.02)' : 'transparent' }}>
+                                <AdminCell style={{opacity: 0.6, fontSize: '13px'}}>#{t.id}</AdminCell>
+                                <AdminCell><div style={{fontWeight: '600', fontSize: '15px'}}>{t.subject}</div><div style={{fontSize: '13px', opacity: 0.7, maxWidth: '350px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{t.body}</div></AdminCell>
+                                <AdminCell><GenericBadge color={COLORS[t.type] || '#3b82f6'} bg={`${COLORS[t.type] || '#3b82f6'}1a`} icon={catOpt.icon}>{catOpt.label}</GenericBadge></AdminCell>
+                                <AdminCell><div style={{display:'flex', alignItems:'center', gap:'10px'}}><Avatar url={t.user_avatar_url} name={t.username} size={32} /><div><div style={{fontWeight: '500'}}>{t.username}</div><div style={{fontSize: '12px', opacity: 0.6}}>{t.user_email}</div></div></div></AdminCell>
+                                <AdminCell><GenericBadge color={sProps.c} bg={sProps.bg} icon={sProps.i}>{sProps.l}</GenericBadge></AdminCell>
+                                <AdminCell align="right" style={{fontFamily: 'monospace', opacity: 0.7}}>{new Date(t.updated_at).toLocaleString('uk-UA')}</AdminCell>
+                                <AdminCell align="right"><div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}><Button variant="ghost" style={{ color: '#3b82f6', padding: '6px' }} icon={<ExternalLink size={18} />} onClick={(e) => {e.stopPropagation();navigate(`/support/ticket/${t.id}`)}} /><Button variant="ghost" title={t.status==='closed'?"Відновити":"Закрити"} onClick={() => t.status==='closed' ? actions.restoreTicket(t.id) : actions.closeTicket(t.id)} style={{ color: t.status==='closed'?'#10b981':'#ef4444', padding: '6px' }} icon={t.status==='closed' ? <RotateCcw size={18} /> : <XCircle size={18} />} /></div></AdminCell>
                             </AdminRow>
                         );
                     })}
                 </tbody>
             </AdminTable>
-
             <ConfirmModal isOpen={isOpen} {...config} onCancel={close} />
         </AdminPageLayout>
     );
 };
-
 export default AdminTicketsPage;
