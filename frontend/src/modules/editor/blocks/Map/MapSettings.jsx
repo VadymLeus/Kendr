@@ -12,14 +12,13 @@ const MapSettings = ({ data, onChange }) => {
         { value: 'medium', label: 'Середня (650px)' },
         { value: 'large', label: 'На всю ширину' }
     ];
-
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<Code size={18}/>}>Код карти</SectionTitle>
                 
-                <div style={commonStyles.formGroup}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div className="mb-5">
+                    <div className="flex justify-between items-center mb-2">
                         <label style={{...commonStyles.label, marginBottom: 0}}>HTML код (iframe)</label>
                         {data.embed_code && (
                             <Button 
@@ -27,7 +26,7 @@ const MapSettings = ({ data, onChange }) => {
                                 size="sm" 
                                 onClick={() => updateData({ embed_code: '' })}
                                 icon={<Trash2 size={14}/>}
-                                style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto' }}
+                                className="py-1! px-2! text-xs! h-auto!"
                             >
                                 Очистити
                             </Button>
@@ -36,32 +35,16 @@ const MapSettings = ({ data, onChange }) => {
                     
                     <textarea
                         name="embed_code"
-                        className="custom-scrollbar"
+                        className="custom-scrollbar custom-input min-h-30 font-mono text-[0.85rem] whitespace-pre-wrap resize-y"
                         value={data.embed_code || ''}
                         onChange={(e) => updateData({ embed_code: e.target.value })}
-                        style={{
-                            ...commonStyles.textarea,
-                            minHeight: '120px',
-                            fontFamily: 'monospace',
-                            fontSize: '0.85rem',
-                            whiteSpace: 'pre-wrap'
-                        }}
                         placeholder='<iframe src="https://www.google.com/maps/embed?..." ...></iframe>'
                         rows="5"
                     />
                     
-                    <div style={{ 
-                        marginTop: '8px', 
-                        padding: '10px', 
-                        background: 'var(--platform-bg)', 
-                        borderRadius: '6px',
-                        border: '1px dashed var(--platform-border-color)',
-                        fontSize: '0.75rem',
-                        color: 'var(--platform-text-secondary)',
-                        lineHeight: '1.4'
-                    }}>
+                    <div className="mt-2 p-2.5 bg-(--platform-bg) rounded-md border border-dashed border-(--platform-border-color) text-xs text-(--platform-text-secondary) leading-snug">
                         <strong>Як додати:</strong>
-                        <ol style={{ paddingLeft: '16px', margin: '4px 0 0 0' }}>
+                        <ol className="pl-4 m-0 mt-1 list-decimal">
                             <li>Відкрийте Google Maps.</li>
                             <li>Знайдіть локацію та натисніть <strong>Поділитися</strong>.</li>
                             <li>Виберіть <strong>Вбудувати карту</strong>.</li>
@@ -73,8 +56,7 @@ const MapSettings = ({ data, onChange }) => {
             
             <div>
                 <SectionTitle icon={<Maximize size={18}/>}>Розмір та Вигляд</SectionTitle>
-                
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Ширина блоку</label>
                     <CustomSelect
                         value={data.sizePreset || 'medium'}

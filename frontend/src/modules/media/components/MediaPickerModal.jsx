@@ -3,10 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Search, X, Upload, Check, Image, Calendar, FileText, Clock } from 'lucide-react';
 import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
 import { API_URL } from '../../../shared/utils/mediaUtils';
 import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
+import { Search, X, Upload, Check, Image, Calendar, FileText, Clock } from 'lucide-react';
 
 const MediaPickerModal = ({ 
     isOpen, 
@@ -197,61 +197,77 @@ const MediaPickerModal = ({
     );
 
     const isCropMode = aspect && !multiple && selectedIds.size === 1 && activeFile?.file_type === 'image';
+    const overlayStyle = {
+        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px'
+    };
+
+    const modalStyle = {
+        backgroundColor: 'var(--platform-bg)', width: '100%', maxWidth: '1024px', height: '85vh',
+        borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+        border: '1px solid var(--platform-border-color)', overflow: 'hidden', animation: 'popIn 0.2s ease-out'
+    };
+
+    const headerStyle = {
+        padding: '16px 24px', backgroundColor: 'var(--platform-card-bg)', borderBottom: '1px solid var(--platform-border-color)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0
+    };
+
+    const searchBarStyle = {
+        padding: '12px 24px', display: 'flex', gap: '16px', backgroundColor: 'var(--platform-bg)', 
+        borderBottom: '1px solid var(--platform-border-color)', flexShrink: 0
+    };
+
+    const searchInputStyle = {
+        width: '100%', height: '40px', paddingLeft: '40px', paddingRight: '12px', borderRadius: '8px',
+        border: '1px solid var(--platform-border-color)', backgroundColor: 'var(--platform-input-bg)',
+        color: 'var(--platform-text-primary)', fontSize: '0.9rem', outline: 'none'
+    };
+
+    const footerStyle = {
+        padding: '16px 24px', borderTop: '1px solid var(--platform-border-color)', backgroundColor: 'var(--platform-card-bg)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0
+    };
+
     return ReactDOM.createPortal(
         <>
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-2000 p-5">
-                <div className="bg-(--platform-bg) w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col shadow-2xl border border-(--platform-border-color) overflow-hidden animate-[popIn_0.2s_ease-out]">
-                    <div className="p-4 px-6 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex justify-between items-center shrink-0">
-                        <div className="flex items-center gap-3 font-semibold text-(--platform-text-primary)">
-                            <Image size={20} />
-                            <h3 className="text-lg m-0">{title}</h3>
+            <div style={overlayStyle}>
+                <div style={modalStyle}>
+                    <div style={headerStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, color: 'var(--platform-text-primary)' }}>
+                            <Image size={20} color="var(--platform-accent)" />
+                            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>{title}</h3>
                         </div>
-                        <button 
-                            onClick={onClose} 
-                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-(--platform-card-bg) border border-(--platform-border-color) text-(--platform-text-secondary) hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-200 cursor-pointer" 
-                            title="Закрити"
-                        >
+                        <button onClick={onClose} style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-secondary)', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <X size={20}/>
                         </button>
                     </div>
 
-                    <div className="p-3 px-6 flex gap-4 bg-(--platform-bg) border-b border-(--platform-border-color) shrink-0">
-                        <div className="relative flex-1">
-                            <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-(--platform-text-secondary) pointer-events-none">
+                    <div style={searchBarStyle}>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--platform-text-secondary)', pointerEvents: 'none' }}>
                                 <Search size={18} />
                             </div>
-                            <input 
-                                type="text" 
-                                placeholder="Пошук у медіатеці..." 
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full h-10 pl-10! pr-3 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) text-sm focus:outline-none focus:border-(--platform-accent) transition-colors"
-                            />
+                            <input type="text" placeholder="Пошук у медіатеці..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={searchInputStyle} onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'} onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'} />
                         </div>
-                        <button 
-                            className="flex items-center gap-2 px-5 h-10 bg-(--platform-accent) text-white rounded-lg font-medium hover:bg-(--platform-accent-hover) transition-colors whitespace-nowrap cursor-pointer border-none" 
-                            onClick={() => fileInputRef.current?.click()}
-                        >
+                        <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 20px', height: '40px', background: 'var(--platform-accent)', color: 'var(--platform-accent-text)', borderRadius: '8px', fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => fileInputRef.current?.click()}>
                             <Upload size={16} /> Завантажити
                         </button>
-                        <input 
-                            type="file" multiple ref={fileInputRef} 
-                            style={{display: 'none'}} onChange={handleUpload} 
-                        />
+                        <input type="file" multiple ref={fileInputRef} style={{display: 'none'}} onChange={handleUpload} />
                     </div>
 
-                    <div className="flex flex-1 overflow-hidden">
-                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }} className="custom-scrollbar">
                             {loading ? (
-                                <div className="p-12 text-center text-(--platform-text-secondary) italic">Завантаження...</div>
+                                <div style={{ padding: '48px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>Завантаження...</div>
                             ) : filteredFiles.length === 0 ? (
-                                <div className="p-12 text-center text-(--platform-text-secondary) italic">
+                                <div style={{ padding: '48px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
                                     {files.length === 0 
                                         ? `Немає файлів типу: ${allowedTypes.join(', ')}` 
                                         : 'Нічого не знайдено за запитом'}
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '20px' }}>
                                     {filteredFiles.map(file => {
                                         const isSelected = selectedIds.has(file.id);
                                         const isActive = activeFile?.id === file.id;
@@ -259,23 +275,35 @@ const MediaPickerModal = ({
                                         return (
                                             <div 
                                                 key={file.id} 
-                                                className={`
-                                                    aspect-square rounded-xl bg-(--platform-card-bg) border-2 overflow-hidden relative cursor-pointer shadow-sm transition-all duration-200
-                                                    hover:-translate-y-1 hover:shadow-md
-                                                    ${isSelected ? 'border-(--platform-accent)' : 'border-transparent'}
-                                                    ${isActive ? 'ring-2 ring-(--platform-accent) shadow-lg' : ''}
-                                                `}
+                                                style={{
+                                                    aspectRatio: '1/1', borderRadius: '12px', backgroundColor: 'var(--platform-card-bg)',
+                                                    border: isSelected ? '2px solid var(--platform-accent)' : '2px solid transparent',
+                                                    overflow: 'hidden', position: 'relative', cursor: 'pointer',
+                                                    boxShadow: isActive ? '0 0 0 2px var(--platform-accent), 0 10px 15px -3px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
+                                                    transition: 'all 0.2s',
+                                                    backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')",
+                                                    backgroundRepeat: 'repeat'
+                                                }}
                                                 onClick={() => handleFileClick(file)}
                                             >
                                                 <MediaFilePreview file={file} />
                                                 
                                                 {isSelected && (
-                                                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-(--platform-accent) text-white flex items-center justify-center z-10 shadow-sm">
+                                                    <div style={{ 
+                                                        position: 'absolute', top: '8px', right: '8px', width: '24px', height: '24px',
+                                                        borderRadius: '50%', backgroundColor: 'var(--platform-accent)', color: 'white',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10
+                                                    }}>
                                                         <Check size={14} />
                                                     </div>
                                                 )}
                                                 
-                                                <div className="absolute bottom-0 left-0 right-0 p-1.5 px-2.5 bg-linear-to-t from-black/80 to-transparent pt-6 text-white text-xs truncate">
+                                                <div style={{ 
+                                                    position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 10px',
+                                                    background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                                                    paddingTop: '24px', color: 'white', fontSize: '0.75rem', whiteSpace: 'nowrap',
+                                                    overflow: 'hidden', textOverflow: 'ellipsis'
+                                                }}>
                                                     {file.original_file_name}
                                                 </div>
                                             </div>
@@ -285,8 +313,19 @@ const MediaPickerModal = ({
                             )}
                         </div>
                         {activeFile && (
-                            <div className="w-80 shrink-0 border-l border-(--platform-border-color) bg-(--platform-card-bg) p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar animate-[slideIn_0.2s_ease-out]">
-                                <div className="w-full aspect-16/10 rounded-xl overflow-hidden border border-(--platform-border-color) flex items-center justify-center shrink-0 relative bg-(--platform-bg)">
+                            <div style={{ 
+                                width: '320px', flexShrink: 0, borderLeft: '1px solid var(--platform-border-color)',
+                                backgroundColor: 'var(--platform-card-bg)', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px',
+                                overflowY: 'auto' 
+                            }} className="custom-scrollbar">
+                                <div style={{ 
+                                    width: '100%', aspectRatio: '16/10', borderRadius: '12px', overflow: 'hidden',
+                                    border: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', flexShrink: 0, position: 'relative', 
+                                    backgroundColor: 'var(--platform-bg)',
+                                    backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')",
+                                    backgroundRepeat: 'repeat'
+                                }}>
                                     <MediaFilePreview 
                                         file={activeFile} 
                                         showVideoControls={true} 
@@ -294,19 +333,19 @@ const MediaPickerModal = ({
                                     />
                                 </div>
                                 
-                                <div className="flex flex-col gap-3">
-                                    <p className="font-semibold m-0 break-all text-(--platform-text-primary)">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <p style={{ fontWeight: 600, margin: 0, wordBreak: 'break-all', color: 'var(--platform-text-primary)' }}>
                                         {activeFile.original_file_name}
                                     </p>
-                                    <div className="flex flex-col gap-1.5 text-sm text-(--platform-text-secondary)">
-                                        <span className="flex items-center gap-2">
-                                            <FileText size={14} className="opacity-70"/> {activeFile.file_size_kb} KB
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem', color: 'var(--platform-text-secondary)' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <FileText size={14} style={{ opacity: 0.7 }}/> {activeFile.file_size_kb} KB
                                         </span>
-                                        <span className="flex items-center gap-2">
-                                            <Calendar size={14} className="opacity-70"/> {new Date(activeFile.created_at).toLocaleDateString()}
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <Calendar size={14} style={{ opacity: 0.7 }}/> {new Date(activeFile.created_at).toLocaleDateString()}
                                         </span>
                                         {activeFile.file_type === 'video' && videoDuration && (
-                                            <span className="flex items-center gap-2 text-(--platform-accent)">
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--platform-accent)' }}>
                                                 <Clock size={14} /> Тривалість: {formatDuration(videoDuration)}
                                             </span>
                                         )}
@@ -316,22 +355,15 @@ const MediaPickerModal = ({
                         )}
                     </div>
 
-                    <div className="p-4 px-6 border-t border-(--platform-border-color) bg-(--platform-card-bg) flex justify-between items-center shrink-0">
-                        <div className="text-(--platform-text-primary) text-sm">
-                            Вибрано: <b className="text-(--platform-accent)">{selectedIds.size}</b> {multiple ? 'файлів' : 'файл'}
+                    <div style={footerStyle}>
+                       <div style={{ color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
+                            Вибрано: <b style={{ color: 'var(--platform-accent)' }}>{selectedIds.size}</b> {multiple ? 'файлів' : 'файл'}
                         </div>
-                        <div className="flex gap-3">
-                            <button 
-                                onClick={onClose} 
-                                className="px-5 py-2.5 bg-transparent border border-(--platform-border-color) text-(--platform-text-primary) rounded-lg font-medium transition-colors cursor-pointer hover:border-(--platform-accent) hover:text-(--platform-accent)"
-                            >
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'transparent', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-primary)', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', transition: 'border-color 0.2s' }}>
                                 Скасувати
                             </button>
-                            <button 
-                                onClick={handleSubmit} 
-                                className="px-6 py-2.5 bg-(--platform-accent) text-white border-none rounded-lg font-semibold hover:bg-(--platform-accent-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                                disabled={selectedIds.size === 0}
-                            >
+                            <button onClick={handleSubmit} style={{ padding: '10px 24px', backgroundColor: 'var(--platform-accent)', color: 'var(--platform-accent-text)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', opacity: selectedIds.size === 0 ? 0.5 : 1, pointerEvents: selectedIds.size === 0 ? 'none' : 'auto' }} disabled={selectedIds.size === 0}>
                                 {isCropMode ? 'Далі' : 'Підтвердити'}
                             </button>
                         </div>
@@ -340,7 +372,6 @@ const MediaPickerModal = ({
                 
                 <style>{`
                     @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-                    @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
                 `}</style>
             </div>
 

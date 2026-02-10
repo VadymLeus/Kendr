@@ -65,15 +65,12 @@ const FontPicker = ({
 
                 setLocalFonts(prev => {
                     const uniqueMap = new Map();
-                    
                     prev.forEach(item => {
                         if (item.isTemp) uniqueMap.set(item.path_full, item);
                     });
-                    
                     formattedFonts.forEach(item => {
                         uniqueMap.set(item.path_full, item);
                     });
-                    
                     return Array.from(uniqueMap.values());
                 });
             }
@@ -90,7 +87,6 @@ const FontPicker = ({
         const handleRemoteChange = () => {
             fetchAllFonts();
         };
-
         window.addEventListener(EVENT_FONT_CHANGED, handleRemoteChange);
         return () => window.removeEventListener(EVENT_FONT_CHANGED, handleRemoteChange);
     }, [fetchAllFonts]);
@@ -98,10 +94,8 @@ const FontPicker = ({
     useEffect(() => {
         const syncCurrentValue = async () => {
             if (!value || value === 'global' || value === 'site_heading' || value === 'site_body' || !value.includes('/uploads/')) return;
-
             setLocalFonts(prev => {
                 if (prev.some(f => f.path_full === value)) return prev;
-
                 const fileName = value.split('/').pop();
                 const newFont = {
                     id: null,
@@ -113,11 +107,9 @@ const FontPicker = ({
                     isCustom: true,
                     isTemp: true
                 };
-
                 return [newFont, ...prev];
             });
         };
-
         syncCurrentValue();
     }, [value]);
 
@@ -159,9 +151,7 @@ const FontPicker = ({
 
     const handleDelete = async (listId, name, e) => {
         e.stopPropagation();
-        
         const itemToDelete = localFonts.find(f => f.listId === listId);
-
         const isConfirmed = await confirm({
             title: "Прибрати шрифт?",
             message: `Прибрати "${name}" зі списку? Файл залишиться в медіатеці, але не буде відображатися тут.`,
@@ -170,7 +160,6 @@ const FontPicker = ({
         });
 
         if (!isConfirmed) return;
-
         if (itemToDelete) {
             try {
                 const hiddenFonts = JSON.parse(localStorage.getItem(STORAGE_HIDDEN_KEY) || '[]');
@@ -435,10 +424,10 @@ const FontPicker = ({
                             <div 
                                 style={{...sectionHeaderStyle, borderTop: 'none'}}
                                 onClick={() => toggleSection('custom')}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                className="hover-bg-platform"
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Folder size={14} style={{ color: '#EAB308' }} />
+                                    <Folder size={14} style={{ color: 'var(--platform-warning)' }} />
                                     Власні шрифти ({customList.length})
                                 </div>
                                 {renderArrow(sections.custom)}
@@ -501,7 +490,7 @@ const FontPicker = ({
                                 borderTop: customList.length > 0 ? '1px solid var(--platform-border-color)' : 'none'
                             }}
                             onClick={() => toggleSection('google')}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                            className="hover-bg-platform"
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Globe size={14} />
@@ -579,18 +568,19 @@ const FontPicker = ({
                     to { opacity: 1; transform: translateY(0); } 
                 }
                 .font-item { padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--platform-border-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; min-height: 42px; color: var(--platform-text-primary); font-size: 0.9rem; background: transparent; }
-                .font-item:hover { background: rgba(0,0,0,0.02); }
+                .font-item:hover { background: var(--platform-hover-bg); }
                 .font-item.active { background: var(--platform-accent); color: var(--platform-accent-text); font-weight: 500; }
                 .font-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; padding-right: 10px; }
                 .actions-group { display: flex; gap: 4px; }
                 .action-btn { background: transparent; border: none; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--platform-text-secondary); opacity: 0.7; }
                 .font-item.active .action-btn { color: currentColor; opacity: 0.9; }
                 .font-item:not(.active) .action-btn:hover { background: rgba(255,255,255,0.1); color: var(--platform-text-primary); opacity: 1; }
-                .font-item:not(.active) .action-btn.delete:hover { background: rgba(220, 38, 38, 0.15); color: #ef4444; opacity: 1; }
+                .font-item:not(.active) .action-btn.delete:hover { background: color-mix(in srgb, var(--platform-danger), transparent 90%); color: var(--platform-danger); opacity: 1; }
                 .font-item.active .action-btn:hover { background: rgba(255, 255, 255, 0.2); opacity: 1; }
-                .font-item.active .action-btn.delete:hover { background: #ffffff; color: #dc2626 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-                [data-theme='dark'] .font-item:not(.active) .action-btn:hover { background: rgba(255,255,255,0.1); }
+                .font-item.active .action-btn.delete:hover { background: #ffffff; color: var(--platform-danger) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
                 
+                .hover-bg-platform:hover { background-color: var(--platform-hover-bg); }
+
                 .font-picker-scroll::-webkit-scrollbar-track {
                     background: transparent !important;
                 }

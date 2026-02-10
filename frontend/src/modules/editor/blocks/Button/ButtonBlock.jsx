@@ -5,6 +5,27 @@ import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 import { ArrowRight, ShoppingCart, Mail, Phone, Check, Star, MousePointer2, Download, FileText } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
+const ButtonIcon = ({ name, size, flip }) => {
+    if (!name || name === 'none') return null;
+    const s = size === 'large' ? 20 : 18;
+    const style = {
+        transform: flip ? 'scaleX(-1)' : 'none',
+        flexShrink: 0
+    };
+    const icons = {
+        arrowRight: <ArrowRight size={s} style={style} />,
+        cart: <ShoppingCart size={s} style={style} />,
+        mail: <Mail size={s} style={style} />,
+        phone: <Phone size={s} style={style} />,
+        check: <Check size={s} style={style} />,
+        star: <Star size={s} fill="currentColor" style={style} />,
+        pointer: <MousePointer2 size={s} style={style} />,
+        download: <Download size={s} style={style} />, 
+        file: <FileText size={s} style={style} />      
+    };
+    return icons[name] || icons.arrowRight;
+};
+
 const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { 
         text = 'Кнопка', 
@@ -25,7 +46,6 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         height = 'small',
         styles = {}
     } = blockData;
-
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         main: fontFamily
     }, siteData);
@@ -41,18 +61,19 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         border: isOutline ? `2px solid ${colorVar}` : '2px solid transparent',
     };
 
-    const sizeMap = {
-        small:  { padding: '8px 16px',  fontSize: '0.85rem' },
-        medium: { padding: '12px 24px', fontSize: '1rem' },
-        large:  { padding: '16px 32px', fontSize: '1.2rem' }
+    const sizeClasses = {
+        small: 'px-4 py-2 text-[0.85rem]',
+        medium: 'px-6 py-3 text-base',
+        large: 'px-8 py-4 text-lg'
     };
 
     const justifyMap = {
-        left: 'flex-start',
-        center: 'center',
-        right: 'flex-end'
+        left: 'justify-start',
+        center: 'justify-center',
+        right: 'justify-end'
     };
-    const justifyContent = width === 'full' ? 'stretch' : (justifyMap[alignment] || 'center');
+    
+    const justifyContentClass = width === 'full' ? 'justify-stretch' : (justifyMap[alignment] || 'justify-center');
     const safeRadius = parseInt(borderRadius) || 0;
     const uniqueClass = `btn-scope-${blockData.id || 'preview'}`;
     const heightMap = { 
@@ -73,18 +94,15 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     }
 
     const effectiveIcon = (isFile && icon === 'none') ? 'download' : icon;
-    
     return (
         <div 
-            className={uniqueClass}
+            className={`
+                flex w-full items-center bg-(--site-bg) text-(--site-text-primary)
+                ${justifyContentClass}
+                ${uniqueClass}
+            `}
             style={{ 
-                display: 'flex',
-                width: '100%',
-                justifyContent: justifyContent,
                 minHeight: heightMap[height] || 'auto',
-                alignItems: 'center',
-                backgroundColor: 'var(--site-bg, #f7fafc)', 
-                color: 'var(--site-text-primary)',
                 ...styles,
                 ...style,
                 ...cssVariables 
@@ -100,58 +118,31 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             
             <a 
                 href={hrefValue} 
-                className={`btn-${styleType}-${variant}`}
+                className={`
+                    btn-${styleType}-${variant}
+                    inline-flex items-center justify-center gap-2 no-underline cursor-pointer font-semibold
+                    transition-all duration-200 ease-out leading-none
+                    ${sizeClasses[size || 'medium']}
+                `}
                 target={(targetBlank || isFile) ? '_blank' : '_self'}
                 rel={(targetBlank || isFile) ? 'noopener noreferrer' : ''}
                 download={isFile} 
                 onClick={(e) => isEditorPreview && e.preventDefault()}
                 style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    transition: 'transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s',
                     width: width === 'full' ? '100%' : 'auto',
                     fontFamily: fontStyles.main,
                     borderRadius: `${safeRadius}px`,
-                    lineHeight: 1, 
-                    ...sizeMap[size || 'medium'],
                     ...dynamicBtnStyle
                 }}
             >
                 {iconPosition === 'left' && <ButtonIcon name={effectiveIcon} size={size} flip={iconFlip} />}
-                <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span className="flex items-center">
                     {text}
                 </span>
                 {iconPosition === 'right' && <ButtonIcon name={effectiveIcon} size={size} flip={iconFlip} />}
             </a>
         </div>
     );
-};
-
-const ButtonIcon = ({ name, size, flip }) => {
-    if (!name || name === 'none') return null;
-    const s = size === 'large' ? 20 : 18;
-    const style = {
-        transform: flip ? 'scaleX(-1)' : 'none',
-        flexShrink: 0
-    };
-
-    const icons = {
-        arrowRight: <ArrowRight size={s} style={style} />,
-        cart: <ShoppingCart size={s} style={style} />,
-        mail: <Mail size={s} style={style} />,
-        phone: <Phone size={s} style={style} />,
-        check: <Check size={s} style={style} />,
-        star: <Star size={s} fill="currentColor" style={style} />,
-        pointer: <MousePointer2 size={s} style={style} />,
-        download: <Download size={s} style={style} />, 
-        file: <FileText size={s} style={style} />      
-    };
-    return icons[name] || icons.arrowRight;
 };
 
 export default ButtonBlock;

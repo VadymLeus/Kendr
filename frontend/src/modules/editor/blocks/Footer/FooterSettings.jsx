@@ -7,7 +7,6 @@ import { FileText, Link, Shield, File, Check, X } from 'lucide-react';
 
 const FooterSettings = ({ initialData, onSave, onClose }) => {
     const [data, setData] = useState(initialData || {});
-
     const handleChange = (name, value) => {
         setData(prev => ({ ...prev, [name]: value }));
     };
@@ -18,10 +17,10 @@ const FooterSettings = ({ initialData, onSave, onClose }) => {
     };
 
     return (
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <form onSubmit={handleSave} className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<FileText size={18}/>}>Текст копірайту</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <Input 
                         name="copyright" 
                         value={data.copyright || `© ${new Date().getFullYear()} Ваш Сайт. Всі права захищені.`} 
@@ -35,8 +34,7 @@ const FooterSettings = ({ initialData, onSave, onClose }) => {
 
             <div>
                 <SectionTitle icon={<Link size={18}/>}>Юридичні посилання</SectionTitle>
-                
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Політика конфіденційності</label>
                     <Input 
                         type="text" 
@@ -48,7 +46,7 @@ const FooterSettings = ({ initialData, onSave, onClose }) => {
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Умови використання</label>
                     <Input 
                         type="text" 
@@ -61,10 +59,7 @@ const FooterSettings = ({ initialData, onSave, onClose }) => {
                 </div>
             </div>
 
-            <div style={{ 
-                display: 'flex', justifyContent: 'flex-end', gap: '10px', 
-                paddingTop: '16px', borderTop: '1px solid var(--platform-border-color)' 
-            }}>
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-(--platform-border-color)">
                 <Button variant="secondary" onClick={onClose} icon={<X size={16}/>}>
                     Скасувати
                 </Button>

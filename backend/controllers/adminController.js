@@ -305,7 +305,6 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено.' });
         const site = sites[0];
         await db.query('UPDATE site_appeals SET status = "rejected", resolved_at = NOW() WHERE site_id = ? AND status = "pending"', [site.id]);
-
         if (site.logo_url && !site.logo_url.includes('/default/')) {
             await deleteFile(site.logo_url);
         }
@@ -449,7 +448,7 @@ exports.getSystemTemplates = async (req, res, next) => {
 
 exports.createSystemTemplate = async (req, res, next) => {
     try {
-        const { siteId, templateName, description } = req.body;
+        const { siteId, templateName, description, icon, category } = req.body;
         const adminId = req.user ? req.user.id : null;
         const [sites] = await db.query('SELECT * FROM sites WHERE id = ?', [siteId]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт-джерело не знайдено' });
@@ -470,9 +469,18 @@ exports.createSystemTemplate = async (req, res, next) => {
                 seo_description: p.seo_description
             }))
         };
-        const query = `INSERT INTO templates (user_id, name, description, thumbnail_url, default_block_content, type, is_ready, access_level) VALUES (?, ?, ?, ?, ?, 'system', 0, 'admin_only')`;
+        const query = `INSERT INTO templates (user_id, name, description, thumbnail_url, default_block_content, type, is_ready, access_level, icon, category) VALUES (?, ?, ?, ?, ?, 'system', 0, 'admin_only', ?, ?)`;
         const thumbnail = site.cover_image || '/previews/empty.png';
-        const [result] = await db.query(query, [adminId, templateName, description, thumbnail, JSON.stringify(templateContent)]);
+        const [result] = await db.query(query, [
+            adminId, 
+            templateName, 
+            description, 
+            thumbnail, 
+            JSON.stringify(templateContent),
+            icon || 'Layout',
+            category || 'General'
+        ]);
+        
         await logAdminAction(req, 'template_create', 'template', result.insertId || null, { name: templateName });
         res.status(201).json({ message: 'Системний шаблон створено (Статус: В розробці).' });
     } catch (error) {
@@ -484,7 +492,7 @@ exports.createSystemTemplate = async (req, res, next) => {
 exports.updateSystemTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { name, description, is_ready, access_level } = req.body;
+        const { name, description, is_ready, access_level, icon, category } = req.body;
         if (access_level === 'public') {
             if (is_ready === false || is_ready === 0) return res.status(400).json({ message: 'Не можна опублікувати шаблон, який має статус "В розробці".' });
             if (is_ready === undefined) {
@@ -494,12 +502,13 @@ exports.updateSystemTemplate = async (req, res, next) => {
         }
         let finalAccessLevel = access_level;
         if (is_ready === false || is_ready === 0) finalAccessLevel = 'admin_only';
-
         let query = 'UPDATE templates SET ';
         const params = [];
         const updates = [];
         if (name) { updates.push('name = ?'); params.push(name); }
         if (description) { updates.push('description = ?'); params.push(description); }
+        if (icon) { updates.push('icon = ?'); params.push(icon); }
+        if (category) { updates.push('category = ?'); params.push(category); }
         if (is_ready !== undefined) { updates.push('is_ready = ?'); params.push(is_ready ? 1 : 0); }
         if (finalAccessLevel !== undefined) { updates.push('access_level = ?'); params.push(finalAccessLevel); }
         if (updates.length === 0) return res.json({ message: 'Немає даних для оновлення' });
@@ -509,7 +518,8 @@ exports.updateSystemTemplate = async (req, res, next) => {
         await logAdminAction(req, 'template_update', 'template', id, { 
             name, 
             is_ready, 
-            access_level: finalAccessLevel 
+            access_level: finalAccessLevel,
+            category
         });
 
         res.json({ message: 'Шаблон оновлено.' });

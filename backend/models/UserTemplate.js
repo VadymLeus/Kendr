@@ -2,19 +2,19 @@
 const db = require('../config/db');
 
 class UserTemplate {
-    static async create(userId, name, description, icon, snapshot) {
+    static async create(userId, name, description, icon, category, snapshot) {
         const [result] = await db.query(
             `INSERT INTO templates 
-            (user_id, name, description, icon, default_block_content, type, access_level, is_ready) 
-            VALUES (?, ?, ?, ?, ?, 'personal', 'private', 1)`,
-            [userId, name, description, icon, JSON.stringify(snapshot)]
+            (user_id, name, description, icon, category, default_block_content, type, access_level, is_ready) 
+            VALUES (?, ?, ?, ?, ?, ?, 'personal', 'private', 1)`,
+            [userId, name, description, icon, category || 'General', JSON.stringify(snapshot)]
         );
         return result.insertId;
     }
 
     static async findAllForUser(userId) {
         const [rows] = await db.query(
-            `SELECT id, name, description, icon, default_block_content, created_at 
+            `SELECT id, name, description, icon, category, default_block_content, created_at 
              FROM templates 
              WHERE user_id = ? AND type = 'personal' 
              ORDER BY created_at DESC`,
@@ -44,21 +44,21 @@ class UserTemplate {
         return rows[0];
     }
 
-    static async update(id, userId, name, description, icon, snapshot) {
+    static async update(id, userId, name, description, icon, category, snapshot) {
         const [result] = await db.query(
             `UPDATE templates 
-             SET name = ?, description = ?, icon = ?, default_block_content = ?, created_at = NOW() 
+             SET name = ?, description = ?, icon = ?, category = ?, default_block_content = ?, created_at = NOW() 
              WHERE id = ? AND user_id = ? AND type = 'personal'`,
-            [name, description, icon, JSON.stringify(snapshot), id, userId]
+            [name, description, icon, category || 'General', JSON.stringify(snapshot), id, userId]
         );
         return result.affectedRows > 0;
     }
 
-    static async updateInfo(id, userId, name, description, icon) {
+    static async updateInfo(id, userId, name, description, icon, category) {
         const [result] = await db.query(
-            `UPDATE templates SET name = ?, description = ?, icon = ? 
+            `UPDATE templates SET name = ?, description = ?, icon = ?, category = ? 
              WHERE id = ? AND user_id = ? AND type = 'personal'`,
-            [name, description, icon, id, userId]
+            [name, description, icon, category || 'General', id, userId]
         );
         return result.affectedRows > 0;
     }

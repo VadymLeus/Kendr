@@ -43,14 +43,11 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         navText: nav_fontFamily,
         btnFont: buttonSettings.fontFamily 
     }, siteData);
-
     let effectiveLogoSrc = blockData.logo_src;
     let effectiveTitle = blockData.site_title;
-
     if (effectiveLogoSrc === undefined || effectiveLogoSrc === null) {
         if (siteData?.logo_url) effectiveLogoSrc = siteData.logo_url;
     }
-
     if (effectiveTitle === undefined || effectiveTitle === null) {
         if (siteData?.title) effectiveTitle = siteData.title || 'Site Title';
     }
@@ -59,7 +56,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const { favoriteSiteIds, addFavorite, removeFavorite } = useContext(FavoritesContext);
     const headerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(1200);
-
     useLayoutEffect(() => {
         if (!headerRef.current) return;
         const observer = new ResizeObserver((entries) => {
@@ -71,9 +67,8 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         return () => observer.disconnect();
     }, []);
 
-    const IS_COMPACT_NAV = containerWidth < 850;   
-    const IS_COMPACT_BTN = containerWidth < 480;   
-
+    const IS_COMPACT_NAV = containerWidth < 850;
+    const IS_COMPACT_BTN = containerWidth < 480;
     const getLogoHeight = () => {
         switch (logo_size) {
             case 'small': return '30px';
@@ -90,20 +85,16 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
             borderRadius: btnRadius, 
             size = 'medium'
         } = buttonSettings;
-
         const accentColor = 'var(--site-accent, #3b82f6)';
         const textColor = 'var(--site-text-primary, #111827)'; 
         const whiteColor = '#ffffff';
         const colorVar = styleType === 'secondary' ? textColor : accentColor;
         const isOutline = variant === 'outline';
-
         let padding = '8px 16px';
         let fontSize = '0.95rem';
         if (size === 'small') { padding = '6px 12px'; fontSize = '0.85rem'; }
         if (size === 'large') { padding = '12px 24px'; fontSize = '1.05rem'; }
-
         let background, color, border;
-
         if (isOutline) {
             background = isHovered ? colorVar : 'transparent';
             color = isHovered ? (styleType === 'secondary' ? 'var(--site-bg)' : whiteColor) : colorVar;
@@ -118,7 +109,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         }
 
         const safeRadius = btnRadius !== undefined ? parseInt(btnRadius) : 4;
-
         return {
             display: 'flex',
             alignItems: 'center',
@@ -141,29 +131,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         };
     };
 
-    const headerStyle = {
-        ...cssVariables,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: IS_COMPACT_BTN ? '0.8rem 1rem' : '1rem 2rem', 
-        backgroundColor: 'var(--site-header-bg, var(--site-bg))',
-        borderBottom: `1px solid var(--site-border-color)`,
-        color: 'var(--site-text-primary)', 
-        position: 'relative',
-        transition: 'all 0.3s ease',
-        gap: IS_COMPACT_BTN ? '1rem' : '2rem'
-    };
-
-    const logoImgStyle = {
-        height: getLogoHeight(),
-        width: 'auto',
-        objectFit: 'contain',
-        transition: 'height 0.2s ease',
-        borderRadius: formatRadius(effectiveLogoRadius),
-        maxWidth: '150px' 
-    };
-
     const [hoveredNavId, setHoveredNavId] = useState(null);
     const [isBtnHovered, setIsBtnHovered] = useState(false);
     const [isMenuHovered, setIsMenuHovered] = useState(false);
@@ -172,73 +139,60 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const logoUrl = (effectiveLogoSrc && typeof effectiveLogoSrc === 'string')
         ? (effectiveLogoSrc.startsWith('http') ? effectiveLogoSrc : `${API_URL}${effectiveLogoSrc}`)
         : null;
-        
     const NavWrapper = isEditorPreview ? 'div' : Link;
     const ActionWrapper = isEditorPreview ? 'div' : Link;
     const siteRoot = resolveSiteLink('/', siteData?.site_path);
     const homeLink = isEditorPreview ? '#' : siteRoot;
-    const iconBtnBaseStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '40px',
-        height: '40px',
-        borderRadius: '8px',
-        border: '1px solid',
-        cursor: isEditorPreview ? 'default' : 'pointer',
-        transition: 'all 0.2s ease',
-        flexShrink: 0
-    };
-
-    const actionBtnStyle = {
-        ...iconBtnBaseStyle,
-        borderColor: isBtnHovered ? 'var(--site-accent)' : 'var(--site-border-color)',
-        backgroundColor: isBtnHovered ? 'var(--site-bg)' : 'var(--site-card-bg)',
-        color: (isBtnHovered || (isFavorite && !isOwner)) ? 'var(--site-accent)' : 'var(--site-text-secondary)',
-        textDecoration: 'none'
-    };
-
-    const menuBtnStyle = {
-        ...iconBtnBaseStyle,
-        borderColor: isMenuHovered ? 'var(--site-accent)' : 'var(--site-border-color)',
-        backgroundColor: isMenuHovered ? 'var(--site-bg)' : 'var(--site-card-bg)',
-        color: isMenuHovered ? 'var(--site-accent)' : 'var(--site-text-primary)',
-    };
-
+    const iconBtnBaseClass = "flex items-center justify-center w-10 h-10 rounded-lg border cursor-pointer transition-all duration-200 shrink-0";
     return (
-        <header ref={headerRef} style={headerStyle}>
+        <header 
+            ref={headerRef} 
+            className={`
+                flex items-center justify-between bg-(--site-header-bg,var(--site-bg)) border-b border-(--site-border-color) text-(--site-text-primary) relative transition-all duration-300 gap-4
+                ${IS_COMPACT_BTN ? 'py-3 px-4' : 'py-4 px-8 gap-8'}
+            `}
+            style={cssVariables}
+        >
             <RenderFonts />
-
-            <NavWrapper to={homeLink} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit', flexShrink: 0 }} onClick={e => isEditorPreview && e.preventDefault()}>
-                {logoUrl && <img src={logoUrl} alt="Logo" style={logoImgStyle} />}
+            <NavWrapper 
+                to={homeLink} 
+                className="flex items-center gap-3 no-underline text-inherit shrink-0 cursor-pointer" 
+                onClick={e => isEditorPreview && e.preventDefault()}
+            >
+                {logoUrl && (
+                    <img 
+                        src={logoUrl} 
+                        alt="Logo" 
+                        className="w-auto object-contain transition-[height] duration-200 max-w-37.5"
+                        style={{
+                            height: getLogoHeight(),
+                            borderRadius: formatRadius(effectiveLogoRadius),
+                        }} 
+                    />
+                )}
                 {show_title && (
-                    <span style={{ 
-                        fontWeight: '700', 
-                        fontFamily: fontStyles.navText,
-                        fontSize: IS_COMPACT_BTN ? '1rem' : '1.2rem',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: IS_COMPACT_NAV ? '150px' : '300px'
-                    }}>
+                    <span 
+                        className="font-bold whitespace-nowrap overflow-hidden text-ellipsis"
+                        style={{ 
+                            fontFamily: fontStyles.navText,
+                            fontSize: IS_COMPACT_BTN ? '1rem' : '1.2rem',
+                            maxWidth: IS_COMPACT_NAV ? '150px' : '300px'
+                        }}
+                    >
                         {effectiveTitle}
                     </span>
                 )}
             </NavWrapper>
-
             {!IS_COMPACT_NAV && (
-                <nav style={{ 
-                    display: 'flex', 
-                    gap: '24px', 
-                    flex: 1, 
-                    justifyContent: nav_alignment === 'center' ? 'center' : (nav_alignment === 'left' ? 'flex-start' : 'flex-end'),
-                    padding: '0 20px',
-                    alignItems: 'center'
-                }}>
+                <nav 
+                    className="flex gap-6 flex-1 px-5 items-center"
+                    style={{ 
+                        justifyContent: nav_alignment === 'center' ? 'center' : (nav_alignment === 'left' ? 'flex-start' : 'flex-end'),
+                    }}
+                >
                     {nav_items.map((item) => {
                         const isHovered = hoveredNavId === item.id;
                         let itemStyle = {};
-
                         if (nav_style === 'button') {
                             const btnStyle = getButtonStyle(isHovered);
                             itemStyle = { ...btnStyle };
@@ -260,7 +214,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                             : null;
                         const iconPos = buttonSettings.iconPosition || 'right';
                         const isFlipped = buttonSettings.iconFlip;
-
                         return (
                             <NavWrapper 
                                 key={item.id} 
@@ -285,10 +238,13 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                 </nav>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <div className="flex items-center gap-2 shrink-0">
                 {IS_COMPACT_NAV && (
                     <div 
-                        style={menuBtnStyle}
+                        className={`
+                            ${iconBtnBaseClass}
+                            ${isMenuHovered ? 'border-(--site-accent) bg-(--site-bg) text-(--site-accent)' : 'border-(--site-border-color) bg-(--site-card-bg) text-(--site-text-primary)'}
+                        `}
                         title="Меню"
                         onMouseEnter={() => setIsMenuHovered(true)}
                         onMouseLeave={() => setIsMenuHovered(false)}
@@ -300,7 +256,10 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                 {isOwner ? (
                     <ActionWrapper 
                         to={`/dashboard/${siteData?.site_path}`}
-                        style={actionBtnStyle}
+                        className={`
+                            ${iconBtnBaseClass} no-underline
+                            ${isBtnHovered ? 'border-(--site-accent) bg-(--site-bg) text-(--site-accent)' : 'border-(--site-border-color) bg-(--site-card-bg) text-(--site-text-secondary)'}
+                        `}
                         title="Налаштування сайту"
                         onClick={e => isEditorPreview && e.preventDefault()}
                         onMouseEnter={() => setIsBtnHovered(true)}
@@ -310,7 +269,10 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                     </ActionWrapper>
                 ) : (
                     <button 
-                        style={actionBtnStyle}
+                        className={`
+                            ${iconBtnBaseClass}
+                            ${(isBtnHovered || (isFavorite && !isOwner)) ? 'border-(--site-accent) bg-(--site-bg) text-(--site-accent)' : 'border-(--site-border-color) bg-(--site-card-bg) text-(--site-text-secondary)'}
+                        `}
                         onClick={() => !isEditorPreview && (isFavorite ? removeFavorite(siteData.id) : addFavorite(siteData.id))}
                         title={isFavorite ? "Видалити з обраних" : "Додати в обрані"}
                         onMouseEnter={() => setIsBtnHovered(true)}

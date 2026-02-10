@@ -15,7 +15,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     const [sortBy, setSortBy] = useState('name');
     const [sortOrder, setSortOrder] = useState('asc');
     const [loading, setLoading] = useState(false);
-
     useEffect(() => {
         if (isOpen && siteId) {
             setLoading(true);
@@ -61,7 +60,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         const newSelected = new Set(selectedIds);
         let addedCount = 0;
         const limit = 20;
-
         if (newSelected.size >= limit) {
             toast.warning('Ліміт у 20 товарів вже досягнуто');
             return;
@@ -113,32 +111,28 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
 
     const sortedProducts = [...filteredProducts].sort((a, b) => {
         let aValue, bValue;
-        
         if (sortBy === 'name') {
             aValue = a.name.toLowerCase();
             bValue = b.name.toLowerCase();
             const aIsCyrillic = /[а-яіїєґ]/.test(aValue);
             const bIsCyrillic = /[а-яіїєґ]/.test(bValue);
-            
             if (aIsCyrillic && !bIsCyrillic) return 1;
             if (!aIsCyrillic && bIsCyrillic) return -1;
         } else if (sortBy === 'price') {
             aValue = a.price || 0;
             bValue = b.price || 0;
         }
-        
         if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
         return 0;
     });
 
     if (!isOpen) return null;
-
     const overlayStyle = {
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.5)', zIndex: 3000,
+        background: 'rgba(0,0,0,0.6)', zIndex: 3000,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '1rem', backdropFilter: 'blur(3px)'
+        padding: '1rem', backdropFilter: 'blur(4px)'
     };
 
     const modalStyle = {
@@ -147,10 +141,10 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         maxWidth: '95%', 
         height: '650px',
         maxHeight: '90vh',
-        borderRadius: '12px', 
+        borderRadius: '16px', 
         display: 'flex', 
         flexDirection: 'column',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)', 
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)', 
         border: '1px solid var(--platform-border-color)',
         overflow: 'hidden'
     };
@@ -189,7 +183,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         padding: '10px 36px 10px 36px', 
         borderRadius: '8px', 
         border: '1px solid var(--platform-border-color)',
-        background: 'var(--platform-bg)', 
+        background: 'var(--platform-input-bg)', 
         color: 'var(--platform-text-primary)', 
         fontSize: '0.9rem', width: '100%',
         transition: 'border-color 0.2s',
@@ -220,7 +214,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     const sortButtonStyle = (isActive) => ({
         padding: '8px 12px', borderRadius: '6px', 
         border: `1px solid ${isActive ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
-        background: isActive ? 'rgba(var(--platform-accent-rgb), 0.1)' : 'var(--platform-bg)',
+        background: isActive ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'var(--platform-bg)',
         color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-primary)',
         cursor: 'pointer', fontSize: '0.85rem',
         display: 'flex', alignItems: 'center', gap: '6px',
@@ -250,7 +244,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         display: 'flex', alignItems: 'center', gap: '12px',
         padding: '10px 14px', borderRadius: '8px', marginBottom: '8px',
         border: isSelected ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-        background: isSelected ? 'rgba(var(--platform-accent-rgb), 0.05)' : 'var(--platform-card-bg)',
+        background: isSelected ? 'color-mix(in srgb, var(--platform-accent), transparent 95%)' : 'var(--platform-card-bg)',
         cursor: 'pointer', transition: 'all 0.2s ease',
         transform: isSelected ? 'translateX(2px)' : 'none'
     });
@@ -258,10 +252,10 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     const checkboxStyle = {
         width: '20px', height: '20px', borderRadius: '5px',
         border: '2px solid var(--platform-border-color)',
-        background: 'var(--platform-bg)',
+        background: 'var(--platform-input-bg)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'all 0.2s',
-        color: 'white',
+        color: 'var(--platform-accent-text)',
         flexShrink: 0
     };
 
@@ -314,8 +308,8 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
 
     const clearSelectionButtonStyle = {
         ...secondaryButtonStyle,
-        color: '#e53e3e',
-        borderColor: '#e53e3e',
+        color: 'var(--platform-danger)',
+        borderColor: 'var(--platform-danger)',
         fontSize: '0.85rem',
         padding: '8px 12px',
         background: 'transparent',
@@ -331,7 +325,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
     return (
         <div style={overlayStyle} onClick={onClose}>
             <div style={modalStyle} onClick={e => e.stopPropagation()}>
-                
                 <div style={headerStyle}>
                     <div>
                         <h3 style={{margin: 0, color: 'var(--platform-text-primary)', fontSize: '1.25rem'}}>
@@ -345,8 +338,8 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                         onClick={onClose}
                         style={closeHeaderBtnStyle}
                         onMouseEnter={e => {
-                            e.target.style.background = 'rgba(229, 62, 62, 0.1)';
-                            e.target.style.color = '#e53e3e';
+                            e.target.style.background = 'color-mix(in srgb, var(--platform-danger), transparent 90%)';
+                            e.target.style.color = 'var(--platform-danger)';
                         }}
                         onMouseLeave={e => {
                             e.target.style.background = 'transparent';
@@ -357,7 +350,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                         <X size={20} />
                     </button>
                 </div>
-
                 <div style={toolbarStyle}>
                     <div style={searchContainerStyle}>
                         <div style={searchIconStyle}>
@@ -382,7 +374,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                             </button>
                         )}
                     </div>
-                    
                     <div style={selectWrapperStyle}>
                         <CustomSelect 
                             value={selectedCategory} 
@@ -391,7 +382,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                             style={{...inputStyle, padding: '10px 12px'}}
                         />
                     </div>
-
                     <div style={sortButtonsContainerStyle}>
                         <button 
                             onClick={() => toggleSort('name')}
@@ -407,7 +397,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                         </button>
                     </div>
                 </div>
-
                 <div style={listStyle} className="custom-scrollbar">
                     {loading ? (
                         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--platform-text-secondary)'}}>
@@ -424,7 +413,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                             const isSelected = selectedIds.has(product.id);
                             const imgUrl = product.image_gallery?.[0] ? `${API_URL}${product.image_gallery[0]}` : 'https://placehold.co/50x50/EFEFEF/31343C?text=📷';
                             const category = categories.find(c => c.id === product.category_id);
-                            
                             return (
                                 <div 
                                     key={product.id} 
@@ -484,13 +472,11 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                         })
                     )}
                 </div>
-
                 <div style={footerStyle}>
                     <div style={{display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap'}}>
                         <span style={{color: 'var(--platform-text-secondary)', fontSize: '0.9rem', marginRight: '8px'}}>
                             Обрано: <strong style={{color: 'var(--platform-text-primary)'}}>{selectedIds.size}</strong> / 20
                         </span>
-                        
                         <button 
                             onClick={selectAllFiltered}
                             style={selectAllButtonStyle}
@@ -506,18 +492,17 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                         >
                             + Всі ({sortedProducts.length})
                         </button>
-
                         {selectedIds.size > 0 && (
                             <button 
                                 onClick={clearSelection}
                                 style={clearSelectionButtonStyle}
                                 onMouseEnter={e => {
-                                    e.target.style.background = '#e53e3e';
+                                    e.target.style.background = 'var(--platform-danger)';
                                     e.target.style.color = 'white';
                                 }}
                                 onMouseLeave={e => {
                                     e.target.style.background = 'transparent';
-                                    e.target.style.color = '#e53e3e';
+                                    e.target.style.color = 'var(--platform-danger)';
                                 }}
                             >
                                 <Trash size={14} /> Очистити

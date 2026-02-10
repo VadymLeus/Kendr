@@ -9,43 +9,31 @@ import { ChevronDown, ChevronRight, Trash2, Edit, Check, X, Package, PanelTop, B
 
 const Section = ({ title, children, defaultOpen = false, icon }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
-    const headerStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 0',
-        cursor: 'pointer',
-        userSelect: 'none',
-        color: isOpen ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)',
-        borderBottom: isOpen ? 'none' : '1px solid var(--platform-border-color)',
-        transition: 'color 0.2s ease' 
-    };
 
     return (
-        <div style={{ marginBottom: isOpen ? '16px' : '0' }}>
-            <div style={headerStyle} onClick={() => setIsOpen(!isOpen)}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', fontSize: '0.9rem' }}>
-                    {icon && <span style={{ color: 'var(--platform-accent)' }}>{icon}</span>}
+        <div className={`border-b border-(--platform-border-color) ${isOpen ? 'mb-4' : 'mb-0'}`}>
+            <div 
+                className={`
+                    flex items-center justify-between py-3 cursor-pointer select-none
+                    ${isOpen ? 'text-(--platform-text-primary)' : 'text-(--platform-text-secondary)'}
+                    transition-colors duration-200
+                `}
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <div className="flex items-center gap-2.5 font-semibold text-sm">
+                    {icon && <span className="text-(--platform-accent)">{icon}</span>}
                     {title}
                 </div>
-                <div style={{ color: 'var(--platform-text-secondary)' }}>
+                <div className="text-(--platform-text-secondary)">
                     {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                 </div>
             </div>
             
             {isOpen && (
-                <div style={{ 
-                    animation: 'slideDown 0.2s ease-out',
-                    paddingLeft: '0',
-                    borderBottom: '1px solid var(--platform-border-color)',
-                    paddingBottom: '16px'
-                }}>
+                <div className="animate-in slide-in-from-top-1 duration-200 pb-4">
                     {children}
                 </div>
             )}
-            <style>{`
-                @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-            `}</style>
         </div>
     );
 };
@@ -88,33 +76,12 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
         onDelete(e, block.id, block.name);
     };
 
-    const actionBtnStyle = {
-        width: '28px',
-        height: '28px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: 'none',
-        background: 'transparent',
-        cursor: 'pointer',
-        color: 'var(--platform-text-secondary)',
-        borderRadius: '4px',
-        transition: 'all 0.2s'
-    };
+    const actionBtnClasses = "w-7 h-7 flex items-center justify-center border-none bg-transparent cursor-pointer text-(--platform-text-secondary) rounded hover:bg-(--platform-hover-bg) transition-all duration-200";
 
     if (isEditing) {
         return (
-            <div style={{ 
-                padding: '6px', 
-                background: 'var(--platform-card-bg)', 
-                border: '1px solid var(--platform-accent)',
-                borderRadius: '8px',
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-            }}>
-                <div style={{ flex: 1 }}>
+            <div className="p-1.5 bg-(--platform-card-bg) border border-(--platform-accent) rounded-lg mb-2 flex items-center gap-2">
+                <div className="flex-1">
                     <Input 
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
@@ -129,10 +96,18 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
                         wrapperStyle={{ marginBottom: 0 }}
                     />
                 </div>
-                <button onClick={handleSaveEdit} disabled={isSaving} style={{ ...actionBtnStyle, background: 'var(--platform-accent)', color: '#fff' }}>
+                <button 
+                    onClick={handleSaveEdit} 
+                    disabled={isSaving} 
+                    className={`${actionBtnClasses} bg-(--platform-accent) text-white hover:bg-(--platform-accent-hover)`}
+                >
                     <Check size={16} />
                 </button>
-                <button onClick={handleCancelEdit} disabled={isSaving} style={{ ...actionBtnStyle, border: '1px solid var(--platform-border-color)' }}>
+                <button 
+                    onClick={handleCancelEdit} 
+                    disabled={isSaving} 
+                    className={`${actionBtnClasses} border border-(--platform-border-color) hover:bg-(--platform-hover-bg)`}
+                >
                     <X size={16} />
                 </button>
             </div>
@@ -140,30 +115,10 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
     }
 
     return (
-        <div style={{ 
-            position: 'relative',
-            background: 'var(--platform-card-bg)', 
-            border: '1px solid var(--platform-border-color)',
-            borderRadius: '8px',
-            marginBottom: '8px',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingRight: '8px',
-            transition: 'border-color 0.2s, box-shadow 0.2s',
-            height: '46px'
-        }}
-        onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'var(--platform-accent)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
-        }}
-        onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-            e.currentTarget.style.boxShadow = 'none';
-        }}
+        <div 
+            className="relative bg-(--platform-card-bg) border border-(--platform-border-color) rounded-lg mb-2 overflow-hidden flex items-center justify-between pr-2 transition-all duration-200 h-11.5 hover:border-(--platform-accent) hover:shadow-sm"
         >
-            <div style={{ flex: 1, height: '100%', minWidth: 0 }}>
+            <div className="flex-1 h-full min-w-0">
                 <DraggableBlockItem
                     name={block.name}
                     icon={<Package size={16} />}
@@ -187,31 +142,27 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
                         alignItems: 'center'
                     }}
                     customContent={
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', overflow: 'hidden' }}>
-                            <span style={{ color: 'var(--platform-text-secondary)', cursor: 'grab' }}><GripVertical size={14} /></span>
-                            <span style={{ color: 'var(--platform-accent)' }}><Package size={16} /></span>
-                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.85rem', fontWeight: '500' }}>{block.name}</span>
+                         <div className="flex items-center gap-2.5 w-full overflow-hidden">
+                            <span className="text-(--platform-text-secondary) cursor-grab"><GripVertical size={14} /></span>
+                            <span className="text-(--platform-accent)"><Package size={16} /></span>
+                            <span className="whitespace-nowrap overflow-hidden text-ellipsis text-sm font-medium">{block.name}</span>
                         </div>
                     }
                 />
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginLeft: '8px', zIndex: 10 }}>
+            <div className="flex items-center gap-0.5 ml-2 z-10">
                 <button 
                     onClick={handleStartEdit}
                     title="Перейменувати"
-                    style={actionBtnStyle}
-                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--platform-accent)'; e.currentTarget.style.background = 'var(--platform-hover-bg)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--platform-text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
+                    className={`${actionBtnClasses} hover:text-(--platform-accent)`}
                 >
                     <Edit size={14} />
                 </button>
                 <button 
                     onClick={handleDeleteClick}
                     title="Видалити"
-                    style={actionBtnStyle}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#e53e3e'; e.currentTarget.style.background = '#fff5f5'; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--platform-text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
+                    className={`${actionBtnClasses} hover:text-(--platform-danger) hover:bg-red-50`}
                 >
                     <Trash2 size={14} />
                 </button>
@@ -274,14 +225,11 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
         <div>
             <Section title="Ваша бібліотека" defaultOpen={false} icon={<Package size={18} />}>
                 {isLoading ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem', color: 'var(--platform-text-secondary)' }}>
+                    <div className="flex justify-center p-4 text-(--platform-text-secondary)">
                         <span className="animate-spin">⌛</span>
                     </div>
                 ) : savedBlocks.length === 0 ? (
-                    <div style={{
-                        padding: '1.5rem 1rem', border: '1px dashed var(--platform-border-color)', 
-                        borderRadius: '8px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontSize: '0.85rem', background: 'var(--platform-bg)'
-                    }}>
+                    <div className="p-6 border border-dashed border-(--platform-border-color) rounded-lg text-center text-(--platform-text-secondary) text-sm bg-(--platform-bg)">
                         Тут будуть ваші збережені варіанти блоків.
                     </div>
                 ) : (

@@ -19,7 +19,8 @@ const AdminPageLayout = ({
             flexDirection: 'column', 
             gap: '12px', 
             padding: '20px 32px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            background: 'var(--platform-bg)'
         },
         header: { 
             display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap', gap: '16px',
@@ -30,7 +31,7 @@ const AdminPageLayout = ({
         controls: { display: 'flex', gap: '12px', alignItems: 'center' },
         countBadge: {
             fontSize: '14px', color: 'var(--platform-text-secondary)', fontWeight: 'normal', 
-            marginLeft: '8px', background: 'var(--platform-bg)', padding: '2px 8px', 
+            marginLeft: '8px', background: 'var(--platform-card-bg)', padding: '2px 8px', 
             borderRadius: '8px', border: '1px solid var(--platform-border-color)'
         },
         content: {
@@ -54,14 +55,12 @@ const AdminPageLayout = ({
                         )}
                     </h1>
                 </div>
-
                 <div style={styles.controls}>
                     <Button variant="outline" onClick={onRefresh} disabled={loading} style={{width: '40px', height: '40px', padding: 0, justifyContent: 'center'}}>
                         <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                     </Button>
                 </div>
             </div>
-            
             <div style={styles.content}>
                 {children}
             </div>

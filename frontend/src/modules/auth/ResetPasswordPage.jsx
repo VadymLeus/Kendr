@@ -39,23 +39,16 @@ const ResetPasswordPage = () => {
         }
     };
 
-    if (!token) return <div style={{padding: '2rem', textAlign: 'center'}}>Невірне посилання</div>;
-    const cardStyle = {
-        maxWidth: '400px', width: '90%', margin: '0 auto',
-        background: 'var(--platform-card-bg)', padding: '2rem',
-        borderRadius: '16px', border: '1px solid var(--platform-border-color)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
-    };
-
+    if (!token) return <div className="p-8 text-center text-(--platform-danger)">Невірне посилання</div>;
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--platform-bg)' }}>
-            <div style={cardStyle}>
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <h2 style={{ color: 'var(--platform-text-primary)', margin: 0 }}>Новий пароль</h2>
-                    <p style={{ color: 'var(--platform-text-secondary)', fontSize: '0.9rem' }}>Придумайте надійний пароль</p>
+        <div className="min-h-screen flex items-center justify-center bg-(--platform-bg) p-4">
+            <div className="w-full max-w-100 bg-(--platform-card-bg) p-8 rounded-2xl border border-(--platform-border-color) shadow-sm">
+                <div className="text-center mb-8">
+                    <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-1">Новий пароль</h2>
+                    <p className="text-(--platform-text-secondary) text-sm">Придумайте надійний пароль</p>
                 </div>
-                <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '1rem' }}>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <div>
                         <Input 
                             type="password" 
                             label="Новий пароль" 
@@ -63,10 +56,11 @@ const ResetPasswordPage = () => {
                             onChange={e => setPassword(e.target.value)} 
                             required 
                         />
-                        <PasswordStrengthMeter password={password} />
+                        <div className="mt-2">
+                             <PasswordStrengthMeter password={password} />
+                        </div>
                     </div>
-
-                    <div style={{ marginBottom: '1rem' }}>
+                    <div>
                         <Input 
                             type="password" 
                             label="Підтвердіть пароль" 
@@ -75,8 +69,7 @@ const ResetPasswordPage = () => {
                             required 
                         />
                     </div>
-
-                    <Button type="submit" disabled={isLoading} style={{ width: '100%', marginTop: '1rem' }}>
+                    <Button type="submit" disabled={isLoading} className="w-full mt-4">
                         {isLoading ? 'Збереження...' : 'Змінити пароль'}
                     </Button>
                 </form>

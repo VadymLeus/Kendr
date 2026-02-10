@@ -10,13 +10,11 @@ import { Type, List, Layers, Settings, LayoutGrid } from 'lucide-react';
 
 const CatalogSettings = ({ data, onChange, siteData }) => {
     const [categories, setCategories] = useState([]);
-    
     const themeSettings = siteData?.theme_settings || {};
     const currentSiteFonts = {
         heading: themeSettings.font_heading,
         body: themeSettings.font_body
     };
-
     useEffect(() => {
         if (siteData?.id) {
             apiClient.get(`/categories/site/${siteData.id}`)
@@ -49,10 +47,10 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
     ];
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<Type size={16} />}>Заголовок та Шрифт</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <Input 
                         name="title" 
                         value={data.title || ''} 
@@ -60,7 +58,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                         placeholder="Напр. Наш Каталог"
                     />
                 </div>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <FontSelector 
                         value={data.titleFontFamily}
                         onChange={(val) => updateData({ titleFontFamily: val })}
@@ -69,10 +67,9 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
             </div>
-
             <div>
                 <SectionTitle icon={<Layers size={16} />}>Джерело товарів</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Що показувати?</label>
                     <ToggleGroup 
                         options={sourceTypeOptions}
@@ -80,9 +77,8 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                         onChange={(val) => updateData({ source_type: val })}
                     />
                 </div>
-                
                 {data.source_type === 'category' && (
-                    <div style={commonStyles.formGroup}>
+                    <div className="mb-5">
                         <label style={{...commonStyles.label}}>Оберіть категорію:</label>
                         <CustomSelect 
                             name="root_category_id" 
@@ -94,30 +90,30 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                     </div>
                 )}
             </div>
-
             <div>
                 <SectionTitle icon={<Settings size={16} />}>Інструменти для клієнта</SectionTitle>
-                <ToggleSwitch 
-                    checked={data.show_search !== false}
-                    onChange={(val) => handleSwitchChange('show_search', val)}
-                    label="Показувати рядок пошуку"
-                />
-                <ToggleSwitch 
-                    checked={data.show_category_filter !== false}
-                    onChange={(val) => handleSwitchChange('show_category_filter', val)}
-                    label="Показувати фільтр категорій"
-                />
-                <ToggleSwitch 
-                    checked={data.show_sorting !== false}
-                    onChange={(val) => handleSwitchChange('show_sorting', val)}
-                    label="Показувати сортування"
-                />
+                <div className="flex flex-col gap-2">
+                    <ToggleSwitch 
+                        checked={data.show_search !== false}
+                        onChange={(val) => handleSwitchChange('show_search', val)}
+                        label="Показувати рядок пошуку"
+                    />
+                    <ToggleSwitch 
+                        checked={data.show_category_filter !== false}
+                        onChange={(val) => handleSwitchChange('show_category_filter', val)}
+                        label="Показувати фільтр категорій"
+                    />
+                    <ToggleSwitch 
+                        checked={data.show_sorting !== false}
+                        onChange={(val) => handleSwitchChange('show_sorting', val)}
+                        label="Показувати сортування"
+                    />
+                </div>
             </div>
 
             <div>
                 <SectionTitle icon={<LayoutGrid size={16} />}>Налаштування відображення</SectionTitle>
-
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Кількість колонок (Desktop)</label>
                     <ToggleGroup 
                         options={[
@@ -131,7 +127,7 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <RangeSlider 
                         label="Товарів на одній сторінці"
                         value={data.items_per_page || 12}

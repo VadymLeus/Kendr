@@ -1,7 +1,7 @@
 // frontend/src/modules/media/components/MediaGridItem.jsx
 import React, { memo } from 'react';
-import { Star } from 'lucide-react';
 import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
+import { Star } from 'lucide-react';
 
 const MediaGridItem = memo(({ file, selected, onSelect, onToggleFavorite, isChecked, onCheck }) => {
     const containerStyle = {
@@ -14,7 +14,9 @@ const MediaGridItem = memo(({ file, selected, onSelect, onToggleFavorite, isChec
             : isChecked 
                 ? '2px solid var(--platform-accent)' 
                 : '1px solid var(--platform-border-color)',
-        background: isChecked ? 'rgba(var(--platform-accent-rgb, 59, 130, 246), 0.05)' : 'var(--platform-card-bg)',
+        backgroundColor: isChecked ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'var(--platform-card-bg)',
+        backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')",
+        backgroundRepeat: 'repeat',
         cursor: 'pointer',
         transition: 'all 0.1s ease-in-out',
         transform: selected || isChecked ? 'scale(0.98)' : 'scale(1)',
@@ -75,18 +77,18 @@ const MediaGridItem = memo(({ file, selected, onSelect, onToggleFavorite, isChec
                     borderRadius: '6px',
                     background: isChecked ? 'var(--platform-accent)' : 'rgba(255,255,255,0.8)',
                     border: isChecked ? 'none' : '1px solid #ccc',
+                    color: isChecked ? 'var(--platform-accent-text)' : '#333'
                 }}
                 onClick={(e) => { e.stopPropagation(); onCheck(file, e); }}
             >
                 {isChecked && (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                 )}
             </div>
 
             <MediaFilePreview file={file} />
-
             <div className="info-bar" style={infoBarStyle}>
                 {file.display_name}
             </div>

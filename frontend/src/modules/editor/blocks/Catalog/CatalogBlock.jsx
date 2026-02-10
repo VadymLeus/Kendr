@@ -10,7 +10,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const [products, setProducts] = useState([]);
     const [availableCategories, setAvailableCategories] = useState([]);
     const [loading, setLoading] = useState(false);
-    
     const [filters, setFilters] = useState({
         searchQuery: "",
         selectedCategoryId: "all",
@@ -19,7 +18,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     });
     
     const [currentPage, setCurrentPage] = useState(1);
-
     const { 
         title, source_type = 'all', root_category_id, 
         show_search = true, show_category_filter = true, show_sorting = true,
@@ -37,14 +35,11 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         auto: 'auto'
     };
     const currentHeight = heightMap[height] || 'auto';
-
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         title: titleFontFamily
     }, siteData);
-
     const safeItemsPerPage = (parseInt(items_per_page, 10) > 0 && parseInt(items_per_page, 10) <= 100) ? parseInt(items_per_page, 10) : 12;
     const safeColumns = (parseInt(columns, 10) >= 1 && parseInt(columns, 10) <= 6) ? parseInt(columns, 10) : 3;
-
     useEffect(() => {
         const fetchData = async () => {
             if (!siteData?.id) return;
@@ -89,7 +84,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
     const processedProducts = useMemo(() => {
         let result = [...products];
-
         if (filters.searchQuery) {
             const q = filters.searchQuery.toLowerCase();
             result = result.filter(p => 
@@ -120,7 +114,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
     const totalPages = Math.ceil(processedProducts.length / safeItemsPerPage);
     const paginatedProducts = processedProducts.slice((currentPage - 1) * safeItemsPerPage, currentPage * safeItemsPerPage);
-
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
@@ -131,45 +124,32 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
     const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
     const showFilters = show_search || show_category_filter || show_sorting;
-
-    const filterBtnStyle = {
-        height: '38px', minWidth: '38px', padding: '0 12px',
-        background: 'var(--site-card-bg)', border: '1px solid var(--site-border-color)',
-        borderRadius: '8px', color: 'var(--site-text-primary)',
-        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-        fontSize: '0.9rem', transition: 'all 0.2s'
-    };
-    
-    const iconBtnStyle = { ...filterBtnStyle, padding: 0, width: '38px' };
-
-    const containerStyle = {
-        padding: '60px 20px',
-        maxWidth: '1280px',
-        margin: '0 auto',
-        backgroundColor: isEditorPreview ? 'var(--site-bg)' : 'transparent',
-        border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
-        minHeight: currentHeight,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        ...styles,
-        ...style
-    };
-
-    const gridStyle = {
-        display: 'grid',
-        gridTemplateColumns: `repeat(${safeColumns}, minmax(0, 1fr))`,
-        gap: '24px',
-        marginBottom: '3rem',
-        width: '100%'
-    };
-
+    const filterBtnClass = "h-9.5 min-w-9.5 px-3 bg-(--site-card-bg) border border-(--site-border-color) rounded-lg text-(--site-text-primary) cursor-pointer flex items-center justify-center gap-2 text-sm transition-all duration-200 hover:border-(--site-accent)";
     return (
-        <div style={containerStyle} id={`catalog-${blockData.block_id || 'preview'}`} className={uniqueClass}>
+        <div 
+            id={`catalog-${blockData.block_id || 'preview'}`} 
+            className={`
+                py-15 px-5 max-w-7xl mx-auto flex flex-col justify-start
+                ${isEditorPreview ? 'bg-(--site-bg) border border-dashed border-(--site-border-color)' : 'bg-transparent border-none'}
+                ${uniqueClass}
+            `}
+            style={{
+                minHeight: currentHeight,
+                ...styles,
+                ...style
+            }}
+        >
             <RenderFonts />
             <style>{`.${uniqueClass} { ${Object.entries(cssVariables).map(([k,v]) => `${k}:${v}`).join(';')} }`}</style>
             
             <style>{`
+                .${uniqueClass} .catalog-grid {
+                    display: grid;
+                    grid-template-columns: repeat(${safeColumns}, minmax(0, 1fr));
+                    gap: 24px;
+                    margin-bottom: 3rem;
+                    width: 100%;
+                }
                 @media (max-width: 1024px) { 
                     .${uniqueClass} .catalog-grid { grid-template-columns: repeat(${Math.min(3, safeColumns)}, minmax(0, 1fr)) !important; } 
                 }
@@ -179,42 +159,21 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 @media (max-width: 480px) { 
                     .${uniqueClass} .catalog-grid { grid-template-columns: minmax(0, 1fr) !important; } 
                 }
-                
-                .catalog-select-wrapper { position: relative; }
-                .catalog-select-wrapper::after {
-                    content: '▼'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-                    font-size: 0.6rem; color: var(--site-text-secondary); pointer-events: none;
-                }
-                .catalog-select {
-                    appearance: none; -webkit-appearance: none;
-                    height: 38px; padding: 0 30px 0 12px;
-                    background: var(--site-card-bg); border: 1px solid var(--site-border-color);
-                    border-radius: 8px; color: var(--site-text-primary);
-                    font-size: 0.9rem; width: 100%; cursor: pointer; outline: none;
-                }
-                .catalog-select:focus { border-color: var(--site-accent); }
             `}</style>
-
             {title && (
-                <h2 style={{ 
-                    textAlign: 'center', marginBottom: '2rem', 
-                    color: 'var(--site-text-primary)', fontSize: '2rem',
-                    fontFamily: fontStyles.title, lineHeight: '1.2'
-                }}>
+                <h2 
+                    className="text-center mb-8 text-(--site-text-primary) text-[2rem] leading-tight"
+                    style={{ fontFamily: fontStyles.title }}
+                >
                     {title}
                 </h2>
             )}
 
             {showFilters && (
-                <div style={{
-                    zIndex: 10, marginBottom: '2rem',
-                    background: 'var(--site-card-bg)',
-                    padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--site-border-color)',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: '0.75rem'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <div className="z-10 mb-8 bg-(--site-card-bg) p-3 rounded-xl border border-(--site-border-color) shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex flex-col gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                         {show_search && (
-                            <div style={{ flex: '1 1 200px', minWidth: '200px' }}>
+                            <div className="flex-auto min-w-50">
                                 <Input 
                                     placeholder="Пошук..." 
                                     value={filters.searchQuery} 
@@ -229,11 +188,11 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flexShrink: 0, marginLeft: 'auto' }}>
+                        <div className="flex items-center gap-2 flex-wrap shrink-0 ml-auto">
                             {show_category_filter && availableCategories.length > 0 && (
-                                <div className="catalog-select-wrapper" style={{ width: '180px' }}>
-                                    <select 
-                                        className="catalog-select"
+                                <div className="relative w-45">
+                                    <select
+                                        className="appearance-none h-9.5 pl-3 pr-7.5 bg-(--site-card-bg) border border-(--site-border-color) rounded-lg text-(--site-text-primary) text-sm w-full cursor-pointer outline-none focus:border-(--site-accent)"
                                         value={filters.selectedCategoryId}
                                         onChange={(e) => {
                                             setFilters(prev => ({ ...prev, selectedCategoryId: e.target.value }));
@@ -245,28 +204,28 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                                         ))}
                                     </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.6rem] text-(--site-text-secondary) pointer-events-none">▼</div>
                                 </div>
                             )}
 
                             {show_sorting && (
                                 <>
-                                    <div className="catalog-select-wrapper" style={{ width: '150px' }}>
-                                        <select 
-                                            className="catalog-select"
+                                    <div className="relative w-37.5">
+                                        <select
+                                            className="appearance-none h-9.5 pl-3 pr-7.5 bg-(--site-card-bg) border border-(--site-border-color) rounded-lg text-(--site-text-primary) text-sm w-full cursor-pointer outline-none focus:border-(--site-accent)"
                                             value={filters.sortBy}
                                             onChange={(e) => handleSortFieldChange(e.target.value)}
                                         >
                                             <option value="name">За назвою</option>
                                             <option value="price">За ціною</option>
                                         </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.6rem] text-(--site-text-secondary) pointer-events-none">▼</div>
                                     </div>
 
                                     <button 
-                                        onClick={toggleSortOrder} 
-                                        style={iconBtnStyle}
+                                        onClick={toggleSortOrder}
+                                        className={`${filterBtnClass} p-0! w-9.5!`}
                                         title={filters.sortOrder === 'desc' ? "За спаданням" : "За зростанням"}
-                                        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--site-accent)'}
-                                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--site-border-color)'}
                                     >
                                         {filters.sortOrder === 'asc' ? <ArrowUpAZ size={18}/> : <ArrowDownAZ size={18}/>}
                                     </button>
@@ -274,11 +233,9 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                             )}
 
                             <button 
-                                onClick={handleClearAll} 
-                                style={{ ...iconBtnStyle, borderColor: '#e53e3e', color: '#e53e3e' }}
+                                onClick={handleClearAll}
+                                className={`${filterBtnClass} p-0! w-9.5! border-[#e53e3e] text-[#e53e3e] hover:bg-[#e53e3e10] hover:border-[#e53e3e]`}
                                 title="Очистити фільтри"
-                                onMouseEnter={e => e.currentTarget.style.background = '#e53e3e10'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             >
                                 <X size={18} />
                             </button>
@@ -288,33 +245,25 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             )}
 
             {loading ? (
-                <div style={{textAlign: 'center', padding: '60px', color: 'var(--site-text-secondary)'}}>
-                    <div className="animate-spin" style={{ display: 'inline-block', marginBottom: '10px' }}>⏳</div>
+                <div className="text-center p-15 text-(--site-text-secondary)">
+                    <div className="animate-spin inline-block mb-2.5">⏳</div>
                     <div>Завантаження каталогу...</div>
                 </div>
             ) : paginatedProducts.length === 0 ? (
-                <div style={{
-                    textAlign: 'center', padding: '80px 20px', color: 'var(--site-text-secondary)',
-                    border: '1px dashed var(--site-border-color)', borderRadius: '12px',
-                    backgroundColor: 'var(--site-card-bg)'
-                }}>
-                    <ShoppingBag size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                    <p style={{ fontSize: '1.1rem' }}>Товарів не знайдено</p>
+                <div className="text-center py-20 px-5 text-(--site-text-secondary) border border-dashed border-(--site-border-color) rounded-xl bg-(--site-card-bg)">
+                    <ShoppingBag size={48} className="opacity-20 mb-4 mx-auto" />
+                    <p className="text-lg mb-0">Товарів не знайдено</p>
                     {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
                         <button 
                             onClick={handleClearAll}
-                            style={{
-                                marginTop: '10px', background: 'transparent', border: 'none',
-                                color: 'var(--site-accent)', textDecoration: 'underline', cursor: 'pointer',
-                                fontSize: '0.9rem'
-                            }}
+                            className="mt-2.5 bg-transparent border-none text-(--site-accent) underline cursor-pointer text-sm"
                         >
                             Очистити пошук
                         </button>
                     )}
                 </div>
             ) : (
-                <div className="catalog-grid" style={gridStyle}>
+                <div className="catalog-grid">
                     {paginatedProducts.map(product => (
                         <ProductCard 
                             key={product.id} 
@@ -328,18 +277,17 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             )}
 
             {totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem' }}>
+                <div className="flex justify-center gap-2 mt-8">
                     <button 
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        style={{
-                            ...filterBtnStyle, padding: '0 16px',
-                            opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-                        }}
+                        className={`
+                            ${filterBtnClass} px-4
+                            ${currentPage === 1 ? 'opacity-50 cursor-not-allowed hover:border-(--site-border-color)' : ''}
+                        `}
                     >
                         Назад
                     </button>
-                    
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
                         const isActive = currentPage === page;
                         const showEllipsis = totalPages > 7 && ((page > 2 && page < currentPage - 1) || (page > currentPage + 1 && page < totalPages - 1));
@@ -349,19 +297,20 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                 <button
                                     key={page}
                                     onClick={() => handlePageChange(page)}
-                                    style={{
-                                        ...iconBtnStyle,
-                                        borderColor: isActive ? 'var(--site-accent)' : 'var(--site-border-color)',
-                                        background: isActive ? 'var(--site-accent)' : 'var(--site-card-bg)',
-                                        color: isActive ? 'var(--site-accent-text)' : 'var(--site-text-primary)',
-                                    }}
+                                    className={`
+                                        ${filterBtnClass} p-0! w-9.5!
+                                        ${isActive 
+                                            ? 'border-(--site-accent) bg-(--site-accent) text-(--site-accent-text) hover:border-(--site-accent)' 
+                                            : 'bg-(--site-card-bg) hover:border-(--site-accent)'
+                                        }
+                                    `}
                                 >
                                     {page}
                                 </button>
                             );
                         } else if (showEllipsis) {
                             if (page === currentPage - 2 || page === currentPage + 2) {
-                                return <span key={page} style={{padding: '0.5rem', color: 'var(--site-text-secondary)'}}>...</span>;
+                                return <span key={page} className="p-2 text-(--site-text-secondary)">...</span>;
                             }
                         }
                         return null;
@@ -370,10 +319,10 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     <button 
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        style={{
-                            ...filterBtnStyle, padding: '0 16px',
-                            opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
-                        }}
+                        className={`
+                            ${filterBtnClass} px-4
+                            ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed hover:border-(--site-border-color)' : ''}
+                        `}
                     >
                         Далі
                     </button>

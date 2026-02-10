@@ -1,6 +1,8 @@
 // frontend/src/pages/NotFoundPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '../shared/ui/elements/Button';
+import { ArrowLeft } from 'lucide-react';
 
 const NotFoundPage = () => {
     const containerStyle = {
@@ -34,36 +36,20 @@ const NotFoundPage = () => {
         lineHeight: 1.4
     };
 
-    const buttonStyle = {
-        padding: '12px 32px',
-        fontSize: '1rem',
-        borderRadius: '8px',
-        transition: 'all 0.3s ease',
-        transform: 'translateY(0)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-    };
-
     return (
         <div style={containerStyle}>
             <div style={{ marginBottom: '2rem' }}>
                 <h1 style={codeStyle}>404</h1>
                 <p style={titleStyle}>Сторінку не знайдено</p>
             </div>
-            <Link to="/">
-                <button 
-                    className="btn btn-primary" 
-                    style={buttonStyle}
-                    onMouseOver={(e) => {
-                        e.target.style.transform = 'translateY(-2px)';
-                        e.target.style.boxShadow = '0 6px 16px rgba(0,0,0,0.15)';
-                    }}
-                    onMouseOut={(e) => {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                    }}
+            <Link to="/" style={{ textDecoration: 'none' }}>
+                <Button 
+                    variant="primary" 
+                    icon={<ArrowLeft size={18} />}
+                    style={{ padding: '12px 32px', fontSize: '1rem' }}
                 >
                     Повернутися на головну
-                </button>
+                </Button>
             </Link>
         </div>
     );

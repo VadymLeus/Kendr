@@ -1,12 +1,12 @@
 // frontend/src/modules/editor/ui/components/ButtonEditor.jsx
 import React from 'react';
-import { commonStyles, ToggleGroup } from '../configuration/SettingsUI';
+import { ToggleGroup } from '../configuration/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import RangeSlider from '../../../../shared/ui/elements/RangeSlider';
 import { Input } from '../../../../shared/ui/elements/Input';
 import AlignmentControl from './AlignmentControl'; 
 import FontSelector from './FontSelector';
-import { Link, ArrowRight, ShoppingCart, Mail, Phone, Check, X,MousePointer2, FlipHorizontal, SquareArrowOutUpRight, Star } from 'lucide-react';
+import { Link, ArrowRight, ShoppingCart, Mail, Phone, Check, X, MousePointer2, FlipHorizontal, SquareArrowOutUpRight, Star } from 'lucide-react';
 
 const ButtonEditor = ({ 
     data, 
@@ -24,7 +24,6 @@ const ButtonEditor = ({
     };
 
     const val = (key, def) => (data && data[key] !== undefined ? data[key] : def);
-
     const handleChange = (name, value) => {
         onChange({ ...data, [name]: value });
     };
@@ -41,41 +40,27 @@ const ButtonEditor = ({
     ];
 
     const hasIcon = val('icon', 'none') !== 'none';
-    
-    const dividerStyle = {
-        height: '1px',
-        backgroundColor: 'var(--platform-border-color)',
-        margin: '12px 0',
-        opacity: 0.5
-    };
-
-    const sectionLabelStyle = {
-        fontSize: '0.75rem',
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        color: 'var(--platform-text-secondary)',
-        marginBottom: '12px',
-        display: 'block'
+    const activeBtnStyle = {
+        borderColor: 'var(--platform-accent)',
+        backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)',
+        color: 'var(--platform-accent)'
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
             <div>
-                <span style={sectionLabelStyle}>Текст кнопки</span>
-                
-                <div style={commonStyles.formGroup}>
+                <span className="text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary) mb-3 block">Текст кнопки</span>
+                <div className="form-group">
                     <Input 
                         value={val('text', 'Кнопка')}
                         onChange={(e) => handleChange('text', e.target.value)}
                         placeholder="Текст кнопки"
                     />
                 </div>
-
                 {!hideLinks && (
-                    <div style={commonStyles.formGroup}>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-                            <div style={{ flex: 1 }}>
+                    <div className="form-group">
+                        <div className="flex gap-2 items-end">
+                            <div className="flex-1">
                                 <Input 
                                     value={val('link', '')}
                                     onChange={(e) => handleChange('link', e.target.value)}
@@ -86,17 +71,8 @@ const ButtonEditor = ({
                             <button
                                 title="Відкривати у новій вкладці"
                                 onClick={() => handleChange('targetBlank', !val('targetBlank', false))}
-                                style={{
-                                    width: '40px', height: '40px',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--platform-border-color)',
-                                    background: val('targetBlank') ? 'var(--platform-accent-light)' : 'var(--platform-input-bg)',
-                                    color: val('targetBlank') ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    flexShrink: 0
-                                }}
+                                className={`btn btn-icon-square ${!val('targetBlank') ? 'btn-outline' : ''}`}
+                                style={val('targetBlank') ? activeBtnStyle : {}}
                             >
                                 <SquareArrowOutUpRight size={18} />
                             </button>
@@ -105,13 +81,11 @@ const ButtonEditor = ({
                 )}
             </div>
             
-            <div style={dividerStyle} />
-
+            <div className="h-px bg-(--platform-border-color) opacity-50 my-1" />
             <div>
-                <span style={sectionLabelStyle}>Дизайн</span>
-
-                <div style={commonStyles.formGroup}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <span className="text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary) mb-3 block">Дизайн</span>
+                <div className="form-group">
+                    <div className="grid grid-cols-2 gap-2">
                         <CustomSelect 
                             value={val('styleType', 'primary')}
                             onChange={(e) => handleChange('styleType', e.target.value)}
@@ -131,7 +105,7 @@ const ButtonEditor = ({
                     </div>
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="form-group">
                     <ToggleGroup 
                         options={[
                             { value: 'small', label: 'S' },
@@ -144,7 +118,7 @@ const ButtonEditor = ({
                 </div>
 
                 {showAlignment && val('width') !== 'full' && (
-                    <div style={commonStyles.formGroup}>
+                    <div className="form-group">
                          <AlignmentControl 
                             label="Розміщення кнопки"
                             value={val('alignment', 'center')}
@@ -153,7 +127,7 @@ const ButtonEditor = ({
                     </div>
                 )}
 
-                <div style={commonStyles.formGroup}>
+                <div className="form-group">
                     <FontSelector 
                         value={val('fontFamily', 'global')}
                         onChange={(val) => handleChange('fontFamily', val)}
@@ -162,7 +136,7 @@ const ButtonEditor = ({
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="form-group">
                     <RangeSlider 
                         label="Скруглення"
                         value={val('borderRadius', 4)}
@@ -176,15 +150,10 @@ const ButtonEditor = ({
 
             {!hideIcons && (
                 <>
-                    <div style={dividerStyle} />
-                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                        <span style={sectionLabelStyle}>Іконка</span>
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(4, 1fr)', 
-                            gap: '8px',
-                            width: '100%'
-                        }}>
+                    <div className="h-px bg-(--platform-border-color) opacity-50 my-1" />
+                    <div className="flex flex-col w-full">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary) mb-3 block">Іконка</span>
+                        <div className="grid grid-cols-4 gap-2 w-full">
                             {iconList.map((item) => {
                                 const isActive = val('icon', 'none') === item.value;
                                 return (
@@ -192,16 +161,8 @@ const ButtonEditor = ({
                                         key={item.value}
                                         onClick={() => handleChange('icon', item.value)}
                                         title={item.label}
-                                        style={{
-                                            height: '36px',
-                                            borderRadius: '6px',
-                                            border: isActive ? '2px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-                                            background: isActive ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
-                                            color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                                            cursor: 'pointer',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            width: '100%',
-                                        }}
+                                        className={`btn btn-icon-square w-full ${!isActive ? 'btn-outline' : ''}`}
+                                        style={isActive ? activeBtnStyle : {}}
                                     >
                                         {item.icon}
                                     </button>
@@ -209,17 +170,14 @@ const ButtonEditor = ({
                             })}
                         </div>
 
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'stretch',
-                            gap: '8px',
-                            opacity: hasIcon ? 1 : 0.4,
-                            pointerEvents: hasIcon ? 'auto' : 'none',
-                            transition: 'opacity 0.2s ease',
-                            height: '40px',
-                            marginTop: '20px'
-                        }}>
-                            <div style={{ flex: 1 }}>
+                        <div 
+                            className="flex items-stretch gap-2 mt-5 transition-opacity duration-200"
+                            style={{
+                                opacity: hasIcon ? 1 : 0.4,
+                                pointerEvents: hasIcon ? 'auto' : 'none'
+                            }}
+                        >
+                            <div className="flex-1">
                                 <ToggleGroup 
                                     options={[
                                         { value: 'left', label: 'Зліва' },
@@ -233,16 +191,8 @@ const ButtonEditor = ({
                             <button
                                 onClick={() => handleChange('iconFlip', !val('iconFlip', false))}
                                 title="Віддзеркалити"
-                                style={{
-                                    width: '40px',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    border: '1px solid var(--platform-border-color)',
-                                    borderRadius: '8px',
-                                    background: val('iconFlip', false) ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
-                                    color: val('iconFlip', false) ? 'var(--platform-accent)' : 'var(--platform-text-primary)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
+                                className={`btn btn-icon-square ${!val('iconFlip') ? 'btn-outline' : ''}`}
+                                style={val('iconFlip') ? activeBtnStyle : {}}
                             >
                                 <FlipHorizontal size={18} />
                             </button>

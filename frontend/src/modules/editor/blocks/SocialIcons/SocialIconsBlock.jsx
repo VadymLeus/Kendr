@@ -16,28 +16,10 @@ const IconWrapper = ({ children, href, isEditorPreview, baseColor }) => (
         target="_blank"
         rel="noopener noreferrer"
         onClick={isEditorPreview ? (e) => e.preventDefault() : undefined}
+        className="inline-flex items-center justify-center w-10 h-10 mx-1 no-underline transition-all duration-200 rounded-full hover:text-(--site-accent) hover:bg-black/5 hover:-translate-y-0.5"
         style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '40px',
-            height: '40px',
-            margin: '0 4px',
             color: baseColor, 
-            textDecoration: 'none',
             opacity: isEditorPreview ? 0.8 : 1, 
-            transition: 'all 0.2s ease',
-            borderRadius: '50%',
-        }}
-        onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--site-accent)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-        }}
-        onMouseLeave={(e) => {
-            e.currentTarget.style.color = baseColor;
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.backgroundColor = 'transparent';
         }}
     >
         {children}
@@ -46,11 +28,9 @@ const IconWrapper = ({ children, href, isEditorPreview, baseColor }) => (
 
 const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
     const { alignment, theme_mode = 'auto', facebook, instagram, telegram, youtube, tiktok } = blockData;
-
     let baseColor = 'var(--site-text-primary)';
-    if (theme_mode === 'light') baseColor = '#1a202c'; 
-    if (theme_mode === 'dark') baseColor = '#ffffff';  
-
+    if (theme_mode === 'light') baseColor = '#1a202c';
+    if (theme_mode === 'dark') baseColor = '#ffffff';
     const socialLinks = [
         { key: 'facebook', href: facebook },
         { key: 'instagram', href: instagram },
@@ -60,45 +40,34 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
     ].filter(item => item.href); 
 
     const hasLinks = socialLinks.length > 0;
-    
     if (!hasLinks && isEditorPreview) {
         return (
-            <div style={{
-                padding: '2rem',
-                textAlign: 'center',
-                backgroundColor: 'var(--site-card-bg)', 
-                border: '1px dashed var(--site-border-color)', 
-                borderRadius: '8px',
-                color: 'var(--site-text-secondary)',
-                minHeight: '150px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                gap: '12px',
-                ...style
-            }}>
-                <div style={{ color: 'var(--site-accent)', opacity: 0.7 }}>
+            <div 
+                className="p-8 text-center bg-(--site-card-bg) border border-dashed border-(--site-border-color) rounded-lg text-(--site-text-secondary) min-h-37.5 flex items-center justify-center flex-col gap-3"
+                style={style}
+            >
+                <div className="text-(--site-accent) opacity-70">
                     <Share2 size={48} />
                 </div>
                 <div>
-                    <p style={{margin: '0', fontWeight: '600', color: 'var(--site-text-primary)', fontSize: '1.1rem'}}>Соцмережі</p>
-                    <small style={{display: 'block', marginTop: '4px', opacity: 0.8}}>Додайте посилання в налаштуваннях.</small>
+                    <p className="m-0 font-semibold text-(--site-text-primary) text-lg">Соцмережі</p>
+                    <small className="block mt-1 opacity-80">Додайте посилання в налаштуваннях.</small>
                 </div>
             </div>
         );
     }
 
     return (
-        <div style={{ 
-            padding: '20px',
-            textAlign: alignment || 'left',
-            background: 'transparent',
-            border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
-borderRadius: isEditorPreview ? '8px' : '0',
-            backgroundColor: isEditorPreview ? 'var(--site-card-bg)' : 'transparent',
-            ...style
-        }}>
+        <div 
+            className={`
+                p-5 bg-transparent
+                ${isEditorPreview ? 'border border-dashed border-(--site-border-color) rounded-lg bg-(--site-card-bg)' : ''}
+            `}
+            style={{ 
+                textAlign: alignment || 'left',
+                ...style
+            }}
+        >
             {socialLinks.map((net) => {
                 const IconComponent = IconsMap[net.key];
                 return (

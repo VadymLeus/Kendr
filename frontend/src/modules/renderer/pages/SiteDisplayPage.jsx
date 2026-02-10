@@ -13,7 +13,6 @@ import FontLoader from '../components/FontLoader';
 import ReportModal from '../../../shared/ui/complex/ReportModal';
 
 const API_URL = 'http://localhost:5000';
-
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
     const { site_path } = useParams();
@@ -27,7 +26,7 @@ const SiteDisplayPage = () => {
         }
     }, [isSiteLoading, siteData, site_path]);
     if (isSiteLoading) {
-        return <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh' }}>Завантаження...</div>;
+        return <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh', color: 'var(--platform-text-secondary)' }}>Завантаження...</div>;
     }
 
     if (!siteData) return <NotFoundPage />;
@@ -74,7 +73,9 @@ const SiteDisplayPage = () => {
         minHeight: '100vh',
         width: '100%',
         margin: 0,
-        padding: 0
+        padding: 0,
+        backgroundColor: 'var(--site-bg)',
+        color: 'var(--site-text-primary)'
     };
 
     const mainContentStyle = {
@@ -87,8 +88,8 @@ const SiteDisplayPage = () => {
 
     const footerStyle = {
         flexShrink: 0,
-        backgroundColor: siteData.site_theme_mode === 'dark' ? '#1a202c' : '#f7fafc',
-        borderTop: `1px solid ${siteData.site_theme_mode === 'dark' ? '#2d3748' : '#e2e8f0'}`,
+        backgroundColor: 'var(--site-bg)',
+        borderTop: '1px solid var(--site-border-color)',
         width: '100%',
         margin: 0,
         padding: 0,
@@ -99,7 +100,7 @@ const SiteDisplayPage = () => {
         textAlign: 'center',
         padding: '1.5rem',
         fontSize: '0.8rem',
-        color: siteData.site_theme_mode === 'dark' ? '#a0aec0' : '#718096',
+        color: 'var(--site-text-secondary)',
         width: '100%',
         boxSizing: 'border-box',
         display: 'flex',
@@ -109,7 +110,12 @@ const SiteDisplayPage = () => {
     };
 
     return (
-        <div className="site-root" style={layoutStyle}>
+        <div 
+            className="site-root site-theme-context" 
+            style={layoutStyle}
+            data-site-mode={siteData.site_theme_mode || 'light'}
+            data-site-accent={siteData.site_accent || 'blue'}
+        >
             <Helmet>
                 <title>{finalTitle}</title>
                 <meta name="description" content={description} />
@@ -154,7 +160,7 @@ const SiteDisplayPage = () => {
                                         opacity: 0.8,
                                         padding: 0
                                     }}
-                                    onMouseEnter={(e) => e.target.style.color = '#e53e3e'}
+                                    onMouseEnter={(e) => e.target.style.color = 'var(--platform-danger)'}
                                     onMouseLeave={(e) => e.target.style.color = 'inherit'}
                                     title="Report Abuse / Поскаржитись"
                                 >

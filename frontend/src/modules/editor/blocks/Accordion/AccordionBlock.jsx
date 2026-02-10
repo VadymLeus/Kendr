@@ -17,37 +17,22 @@ const AccordionBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     }, siteData);
     
     const uniqueClass = `accordion-scope-${blockData.id || 'preview'}`;
-
-    const containerStyle = {
-        padding: '20px',
-        maxWidth: '900px',
-        margin: '0 auto',
-        background: 'transparent',
-        border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
-        borderRadius: isEditorPreview ? '8px' : '0',
-        ...style,
-        ...cssVariables
-    };
-
     if (items.length === 0) {
         return (
-            <div style={{
-                ...containerStyle, 
-                textAlign: 'center', 
-                padding: '3rem',
-                border: '1px dashed var(--platform-border-color)',
-                backgroundColor: 'var(--site-card-bg)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px'
-            }}>
-                <div style={{ color: 'var(--site-accent)', opacity: 0.7 }}>
+            <div 
+                className={`
+                    flex flex-col items-center justify-center gap-3 text-center p-12 
+                    border border-dashed border-(--platform-border-color) bg-(--site-card-bg)
+                    max-w-225 mx-auto
+                    ${isEditorPreview ? 'rounded-lg' : ''}
+                `}
+                style={style}
+            >
+                <div className="text-(--site-accent) opacity-70">
                      <HelpCircle size={48} />
                 </div>
-                 <h4 style={{color: 'var(--site-text-primary)', margin: 0}}>Акордеон</h4>
-                <p style={{color: 'var(--site-text-secondary)', margin: 0}}>
+                 <h4 className="text-(--site-text-primary) m-0 font-medium text-lg">Акордеон</h4>
+                <p className="text-(--site-text-secondary) m-0">
                      Блок порожній. Додайте елементи у налаштуваннях.
                 </p>
             </div>
@@ -55,10 +40,19 @@ const AccordionBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     }
 
     return (
-        <div style={containerStyle} className={uniqueClass}>
+        <div 
+            className={`
+                p-5 max-w-225 mx-auto bg-transparent
+                ${isEditorPreview ? 'border border-dashed border-(--site-border-color) rounded-lg' : ''}
+                ${uniqueClass}
+            `}
+            style={{
+                ...style,
+                ...cssVariables
+            }}
+        >
             <RenderFonts />
             <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
-
             {items.map((item) => (
                 <AccordionItem
                     key={item.id}

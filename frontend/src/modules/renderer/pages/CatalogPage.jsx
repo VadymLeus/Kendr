@@ -86,6 +86,7 @@ const CatalogPage = () => {
             top: 0,
             zIndex: 50,
             backgroundColor: 'var(--platform-bg)',
+            borderBottom: '1px solid var(--platform-border-color)', 
         },
         header: {
             padding: '12px 24px', 
@@ -111,7 +112,7 @@ const CatalogPage = () => {
             <div style={styles.stickyContainer}>
                 <div style={styles.header}>
                     <div style={{ textAlign: 'center' }}>
-                        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Каталог Сайтiв</h1>
+                        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, color: 'var(--platform-text-primary)' }}>Каталог Сайтiв</h1>
                         <span style={{ fontSize: '0.85rem', color: 'var(--platform-text-secondary)' }}>
                             Знайдено: {filteredSites.length}
                         </span>
@@ -142,7 +143,7 @@ const CatalogPage = () => {
 
             <div style={styles.gridArea}>
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '40px' }}><Loader2 size={32} className="animate-spin" /></div>
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}><Loader2 size={32} className="animate-spin" /></div>
                 ) : filteredSites.length === 0 ? (
                     <EmptyState 
                         title="Нічого не знайдено"

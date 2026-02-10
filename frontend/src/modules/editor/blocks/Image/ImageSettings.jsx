@@ -42,26 +42,9 @@ const ImageSettings = ({ data, onChange }) => {
         updateData({ items: newItems });
     };
 
-    const customStyles = `
-        .grid-add-trigger {
-            width: 100%; height: 100%; border-radius: 8px;
-            border: 1px dashed var(--platform-border-color);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--platform-text-secondary); background: var(--platform-card-bg);
-            gap: 4px; transition: all 0.2s ease;
-        }
-        .grid-add-trigger:hover {
-            border-color: var(--platform-accent);
-            color: var(--platform-accent);
-            background: rgba(59, 130, 246, 0.05);
-            transform: translateY(-1px);
-        }
-    `;
-
     const currentAspect = normalizedData.aspectRatio;
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <style>{customStyles}</style>
+        <div className="flex flex-col gap-5">
             <ToggleGroup 
                 options={[
                     { value: 'single', label: 'Одне', icon: <Image size={16} /> },
@@ -72,9 +55,9 @@ const ImageSettings = ({ data, onChange }) => {
                 onChange={(val) => updateData({ mode: val })}
             />
 
-            <div style={{ background: 'var(--platform-bg)', padding: '12px', borderRadius: '12px', border: '1px solid var(--platform-border-color)' }}>
+            <div className="bg-(--platform-bg) p-3 rounded-xl border border-(--platform-border-color)">
                 {normalizedData.mode === 'single' ? (
-                    <div style={{ width: '100%', height: '200px' }}>
+                    <div className="w-full h-50">
                         <UniversalMediaInput 
                             type="image"
                             value={normalizedData.items[0]?.src || ''}
@@ -86,9 +69,9 @@ const ImageSettings = ({ data, onChange }) => {
                         />
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                    <div className="grid grid-cols-3 gap-2">
                         {normalizedData.items.map((item, idx) => (
-                            <div key={item.id || idx} style={{ aspectRatio: '1/1', width: '100%' }}>
+                            <div key={item.id || idx} className="aspect-square w-full">
                                 <UniversalMediaInput 
                                     type="image"
                                     value={item.src}
@@ -97,7 +80,7 @@ const ImageSettings = ({ data, onChange }) => {
                                 />
                             </div>
                         ))}
-                        <div style={{ aspectRatio: '1/1', width: '100%' }}>
+                        <div className="aspect-square w-full">
                             <UniversalMediaInput 
                                 type="image" 
                                 value="" 
@@ -105,9 +88,9 @@ const ImageSettings = ({ data, onChange }) => {
                                 aspect={currentAspect}
                                 triggerStyle={{ width: '100%', height: '100%', padding: 0, border: 'none', background: 'transparent' }}
                             >
-                                <div className="grid-add-trigger">
+                                <div className="w-full h-full rounded-lg border border-dashed border-(--platform-border-color) flex flex-col items-center justify-center cursor-pointer text-(--platform-text-secondary) bg-(--platform-card-bg) gap-1 transition-all duration-200 hover:border-(--platform-accent) hover:text-(--platform-accent) hover:bg-blue-500/5 hover:-translate-y-px">
                                     <Plus size={24} />
-                                    <span style={{fontSize: '0.75rem', fontWeight: 500}}>Додати</span>
+                                    <span className="text-xs font-medium">Додати</span>
                                 </div>
                             </UniversalMediaInput>
                         </div>
@@ -117,13 +100,13 @@ const ImageSettings = ({ data, onChange }) => {
 
             <div>
                 <SectionTitle icon={<Crop size={16}/>}>Формат</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                       <ToggleSwitch 
                         label="Квадратне зображення (1:1)"
                         checked={normalizedData.aspectRatio === 1}
                         onChange={(val) => updateData({ aspectRatio: val ? 1 : null })}
                       />
-                      <div style={{fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginTop: '6px', lineHeight: '1.4'}}>
+                      <div className="text-xs text-(--platform-text-secondary) mt-1.5 leading-snug">
                         {normalizedData.aspectRatio === 1 
                             ? "При завантаженні буде запропоновано обрізати фото під квадрат." 
                             : "Зображення відображатиметься в оригінальних пропорціях."}
@@ -132,7 +115,7 @@ const ImageSettings = ({ data, onChange }) => {
             </div>
 
             {normalizedData.mode === 'slider' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="flex flex-col gap-2">
                     <SectionTitle icon={<Settings size={16}/>}>Налаштування слайдера</SectionTitle>
                     <ToggleSwitch checked={normalizedData.settings_slider.navigation} label="Стрілки" onChange={(v) => updateData({ settings_slider: {...normalizedData.settings_slider, navigation: v}})} />
                     <ToggleSwitch checked={normalizedData.settings_slider.autoplay} label="Автопрокрутка" onChange={(v) => updateData({ settings_slider: {...normalizedData.settings_slider, autoplay: v}})} />
@@ -141,9 +124,9 @@ const ImageSettings = ({ data, onChange }) => {
             )}
 
             {normalizedData.mode === 'grid' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="flex flex-col gap-2">
                     <SectionTitle icon={<Grid size={16}/>}>Налаштування сітки</SectionTitle>
-                    <div style={commonStyles.formGroup}>
+                    <div className="mb-5">
                          <label style={commonStyles.label}>Кількість колонок</label>
                          <CustomSelect 
                             value={normalizedData.settings_grid.columns}
@@ -161,7 +144,7 @@ const ImageSettings = ({ data, onChange }) => {
 
             <div>
                 <SectionTitle icon={<Image size={16}/>}>Вигляд</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <RangeSlider 
                         label="Скруглення кутів"
                         value={normalizedData.borderRadius}

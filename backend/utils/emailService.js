@@ -1,6 +1,5 @@
 // backend/utils/emailService.js
 const nodemailer = require('nodemailer');
-
 const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
     port: process.env.MAIL_PORT,
@@ -31,7 +30,6 @@ exports.sendSubmissionNotification = async (toEmail, siteTitle, formData) => {
             subject: `Нова заявка з форми на сайті "${siteTitle}"`,
             html: html,
         });
-        console.log('Email-сповіщення успішно надіслано до:', toEmail);
     } catch (error) {
         console.error('Помилка надсилання email-сповіщення:', error);
     }
@@ -42,7 +40,7 @@ exports.sendVerificationEmail = async (toEmail, token) => {
 
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #4299e1;">Ласкаво просимо до Kendr! 🚀</h2>
+            <h2 style="color: #4299e1;">Ласкаво просимо до Kendr!</h2>
             <p>Дякуємо за реєстрацію. Щоб активувати ваш акаунт, будь ласка, підтвердіть вашу електронну пошту.</p>
             <div style="text-align: center; margin: 30px 0;">
                 <a href="${link}" style="background-color: #48bb78; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Підтвердити Email</a>
@@ -58,7 +56,6 @@ exports.sendVerificationEmail = async (toEmail, token) => {
             subject: 'Підтвердження реєстрації на Kendr',
             html: html,
         });
-        console.log('Verification email sent to:', toEmail);
     } catch (error) {
         console.error('Error sending verification email:', error);
     }
@@ -69,7 +66,7 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
 
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h2 style="color: #ed8936; text-align: center;">Відновлення пароля 🔐</h2>
+            <h2 style="color: #ed8936; text-align: center;">Відновлення пароля</h2>
             <p>Ми отримали запит на скидання пароля для вашого акаунту Kendr.</p>
             <p>Якщо це були не ви, просто проігноруйте цей лист.</p>
             <div style="text-align: center; margin: 30px 0;">
@@ -87,7 +84,6 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
             subject: 'Відновлення пароля Kendr',
             html: html,
         });
-        console.log('Reset email sent to:', toEmail);
     } catch (error) {
         console.error('Error sending reset email:', error);
         throw error;

@@ -1,85 +1,86 @@
 // frontend/src/app/providers/ThemeContext.jsx
-import React, { createContext, useState, useEffect, useContext } from 'react'; 
-import { AuthContext } from './AuthContext'; 
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { AuthContext } from './AuthContext';
 import apiClient from '../../shared/api/api';
 
 export const ThemeContext = createContext(null);
 export const ThemeProvider = ({ children }) => {
-    const { user, updateUser, isLoading: isAuthLoading } = useContext(AuthContext);
-    const [platformMode, setPlatformModeState] = useState('system');
-    const [platformAccent, setPlatformAccentState] = useState('blue');
-    const [siteMode, setSiteModeState] = useState('light');
-    const [siteAccent, setSiteAccentState] = useState('orange');
-    const [detectedSystemMode, setDetectedSystemMode] = useState('light');
+    const { user, updateUser, isLoading } = useContext(AuthContext);
+    const DEFAULT_MODE = 'system';
+    const DEFAULT_ACCENT = 'blue';
+    const getSystemTheme = () => 
+        window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const [detectedSystemMode, setDetectedSystemMode] = useState(getSystemTheme);
+    const [platformMode, setPlatformModeState] = useState(() => {
+        return localStorage.getItem('themeMode') || DEFAULT_MODE;
+    });
+    const [platformAccent, setPlatformAccentState] = useState(() => {
+        return localStorage.getItem('themeAccent') || DEFAULT_ACCENT;
+    });
+    const [siteMode, setSiteMode] = useState('light');
+    const [siteAccent, setSiteAccent] = useState('orange');
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        
-        const updateSystemMode = (event) => {
-            const newMode = event.matches ? 'dark' : 'light';
-            setDetectedSystemMode(newMode);
-            if (platformMode === 'system') {
-                document.body.dataset.platformMode = newMode;
-            }
+        const handler = (e) => {
+            setDetectedSystemMode(e.matches ? 'dark' : 'light');
         };
-
-        updateSystemMode(mediaQuery);
-
-        mediaQuery.addEventListener('change', updateSystemMode);
-        return () => mediaQuery.removeEventListener('change', updateSystemMode);
-    }, [platformMode]);
-
+        mediaQuery.addEventListener('change', handler);
+        return () => mediaQuery.removeEventListener('change', handler);
+    }, []);
     useEffect(() => {
-        if (isAuthLoading) return;
-        const targetMode = user?.platform_theme_mode || localStorage.getItem('themeMode') || 'system';
-        const targetAccent = user?.platform_theme_accent || localStorage.getItem('themeAccent') || 'blue';
-        setPlatformModeState(targetMode);
-        setPlatformAccentState(targetAccent);
-        const effectiveMode = targetMode === 'system' ? detectedSystemMode : targetMode;
-        document.body.dataset.platformMode = effectiveMode;
-        document.body.dataset.platformAccent = targetAccent;
-        if (!user) {
-             if (targetMode !== 'system') localStorage.setItem('themeMode', targetMode);
-             if (targetAccent !== 'blue') localStorage.setItem('themeAccent', targetAccent);
+        if (isLoading) return;
+        if (user) {
+            if (user.platform_theme_mode && user.platform_theme_mode !== platformMode) {
+                setPlatformModeState(user.platform_theme_mode);
+                localStorage.setItem('themeMode', user.platform_theme_mode);
+            }
+            if (user.platform_theme_accent && user.platform_theme_accent !== platformAccent) {
+                setPlatformAccentState(user.platform_theme_accent);
+                localStorage.setItem('themeAccent', user.platform_theme_accent);
+            }
+        } else {
+            setPlatformModeState(DEFAULT_MODE);
+            setPlatformAccentState(DEFAULT_ACCENT);
+            localStorage.removeItem('themeMode');
+            localStorage.removeItem('themeAccent');
         }
-
-    }, [user, isAuthLoading, detectedSystemMode]);
-
-    const setPlatformMode = async (mode) => {
-        setPlatformModeState(mode);
-        const effectiveMode = mode === 'system' ? detectedSystemMode : mode;
+    }, [user, isLoading]); 
+    useEffect(() => {
+        const effectiveMode = platformMode === 'system' ? detectedSystemMode : platformMode;
         document.body.dataset.platformMode = effectiveMode;
         document.body.dataset.platformAccent = platformAccent;
-        localStorage.setItem('themeMode', mode);
+        if (platformMode !== DEFAULT_MODE) localStorage.setItem('themeMode', platformMode);
+        if (platformAccent !== DEFAULT_ACCENT) localStorage.setItem('themeAccent', platformAccent);
 
+    }, [platformMode, platformAccent, detectedSystemMode]);
+
+    const setPlatformMode = useCallback(async (mode) => {
+        setPlatformModeState(mode);
         if (user) {
             updateUser({ ...user, platform_theme_mode: mode });
             try {
                 await apiClient.put('/users/profile', { platform_theme_mode: mode });
             } catch (error) {
-                console.error("Помилка збереження режиму теми:", error);
+                console.error("Theme save error:", error);
             }
+        } else {
+            localStorage.setItem('themeMode', mode);
         }
-    };
+    }, [user, updateUser]);
 
-    const setPlatformAccent = async (accent) => {
+    const setPlatformAccent = useCallback(async (accent) => {
         setPlatformAccentState(accent);
-        const effectiveMode = platformMode === 'system' ? detectedSystemMode : platformMode;
-        document.body.dataset.platformMode = effectiveMode;
-        document.body.dataset.platformAccent = accent;
-        localStorage.setItem('themeAccent', accent);
-
         if (user) {
             updateUser({ ...user, platform_theme_accent: accent });
             try {
                 await apiClient.put('/users/profile', { platform_theme_accent: accent });
             } catch (error) {
-                console.error("Помилка збереження акцентного кольору:", error);
+                console.error("Accent save error:", error);
             }
+        } else {
+            localStorage.setItem('themeAccent', accent);
         }
-    };
-
-    const setSiteMode = (mode) => setSiteModeState(mode);
-    const setSiteAccent = (accent) => setSiteAccentState(accent);
+    }, [user, updateUser]);
 
     return (
         <ThemeContext.Provider value={{

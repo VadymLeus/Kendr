@@ -13,14 +13,12 @@ const socialNetworks = [
 ];
 
 const SocialIconsSettings = ({ data, onChange }) => {
-    
     const updateData = (updates) => onChange({ ...data, ...updates });
-
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<LayoutTemplate size={18}/>}>Вигляд</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Вирівнювання</label>
                     <ToggleGroup 
                         options={[
@@ -33,13 +31,13 @@ const SocialIconsSettings = ({ data, onChange }) => {
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Колір іконок (Тема)</label>
                     <ToggleGroup 
                         options={[
                             { value: 'auto', label: 'Авто' },
-                            { value: 'light', label: <div style={{display:'flex', gap:'6px'}}><Sun size={16}/> Темні</div> },
-                            { value: 'dark', label: <div style={{display:'flex', gap:'6px'}}><Moon size={16}/> Світлі</div> },
+                            { value: 'light', label: <div className="flex gap-1.5"><Sun size={16}/> Темні</div> },
+                            { value: 'dark', label: <div className="flex gap-1.5"><Moon size={16}/> Світлі</div> },
                         ]}
                         value={data.theme_mode || 'auto'}
                         onChange={(val) => updateData({ theme_mode: val })}
@@ -49,7 +47,7 @@ const SocialIconsSettings = ({ data, onChange }) => {
             <div>
                 <SectionTitle icon={<Share2 size={18}/>}>Посилання</SectionTitle>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="flex flex-col gap-3">
                     {socialNetworks.map(net => (
                         <Input
                             key={net.key}

@@ -34,20 +34,12 @@ export const commonStyles = {
 };
 
 export const SectionTitle = ({ children, style }) => (
-    <div style={{
-        fontSize: '0.75rem',
-        fontWeight: '700',
-        textTransform: 'uppercase',
-        color: 'var(--platform-text-secondary)',
-        letterSpacing: '0.5px',
-        margin: '1.5rem 0 0.8rem 0',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        ...style
-    }}>
+    <div 
+        className="text-xs font-bold uppercase text-(--platform-text-secondary) tracking-wider mt-6 mb-3 flex items-center gap-2"
+        style={style}
+    >
         {children}
-        <div style={{ flex: 1, height: '1px', background: 'var(--platform-border-color)', opacity: 0.5 }}></div>
+        <div className="flex-1 h-px bg-(--platform-border-color) opacity-50"></div>
     </div>
 );
 
@@ -56,28 +48,21 @@ export const ToggleButton = ({ isActive, onClick, children, style, title }) => (
         type="button" 
         onClick={onClick}
         title={title}
-        style={{
-            flex: 1,
-            padding: '8px 4px',
-            border: 'none',
-            background: isActive ? 'var(--platform-card-bg)' : 'transparent',
-            color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontWeight: isActive ? '600' : '500',
-            fontSize: '0.85rem',
-            boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-            transition: 'all 0.2s',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px',
-            ...style
-        }}
+        className={`
+            flex-1 py-2 px-1 border-none rounded-md cursor-pointer font-medium text-sm
+            flex flex-col items-center justify-center gap-1 transition-all duration-200
+            ${isActive 
+                ? 'bg-(--platform-card-bg) text-(--platform-accent) shadow-sm font-semibold' 
+                : 'bg-transparent text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}
+        `}
+        style={style}
     >
         {children}
     </button>
 );
 
 export const ToggleGroup = ({ options, value, onChange }) => (
-    <div style={commonStyles.toggleContainer}>
+    <div className="flex bg-(--platform-bg) p-1 rounded-lg border border-(--platform-border-color) mb-4 gap-0.5">
         {options.map((option) => (
             <ToggleButton
                 key={option.value}
@@ -92,30 +77,30 @@ export const ToggleGroup = ({ options, value, onChange }) => (
     </div>
 );
 
-export const ToggleSwitch = ({ checked, onChange, label }) => (
-    <label style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        cursor: 'pointer', padding: '0.75rem 0',
-        borderBottom: '1px dashed var(--platform-border-color)',
-        marginBottom: '0.5rem'
-    }}>
-        <span style={{ fontSize: '0.9rem', color: 'var(--platform-text-primary)' }}>{label}</span>
-        <div style={{ position: 'relative', width: '40px', height: '22px' }}>
+export const ToggleSwitch = ({ checked, onChange, label, icon }) => (
+    <label className="flex items-center justify-between cursor-pointer py-3 border-b border-dashed border-(--platform-border-color) mb-2 last:border-0">
+        <div className="flex items-center gap-2">
+            {icon && <span className="text-(--platform-text-secondary)">{icon}</span>}
+            <span className="text-sm text-(--platform-text-primary)">{label}</span>
+        </div>
+        
+        <div className="relative w-10 h-5.5">
             <input 
-                type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} 
-                style={{ opacity: 0, width: 0, height: 0 }} 
+                type="checkbox" 
+                checked={checked} 
+                onChange={(e) => onChange(e.target.checked)} 
+                className="sr-only" 
             />
-            <div style={{
-                position: 'absolute', inset: 0, borderRadius: '20px',
-                background: checked ? 'var(--platform-accent)' : 'var(--platform-input-bg)',
-                border: checked ? 'none' : '1px solid var(--platform-border-color)',
-                transition: 'background 0.2s',
-            }}></div>
-            <div style={{
-                position: 'absolute', top: '2px', left: checked ? '20px' : '2px',
-                width: '18px', height: '18px', borderRadius: '50%', background: 'white',
-                transition: 'left 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-            }}></div>
+            <div className={`
+                absolute inset-0 rounded-full transition-colors duration-200 border
+                ${checked 
+                    ? 'bg-(--platform-accent) border-(--platform-accent)' 
+                    : 'bg-(--platform-input-bg) border-(--platform-border-color)'}
+            `}></div>
+            <div className={`
+                absolute top-0.5 w-4.5 h-4.5 rounded-full bg-white shadow-sm transition-all duration-200
+                ${checked ? 'left-5' : 'left-0.5'}
+            `}></div>
         </div>
     </label>
 );

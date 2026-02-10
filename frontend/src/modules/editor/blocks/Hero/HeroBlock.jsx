@@ -28,11 +28,9 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         title: titleFontFamily,
         content: contentFontFamily
     }, siteData);
-
     const videoRef = useRef(null);
     const safeOpacity = (overlay_opacity === undefined || isNaN(Number(overlay_opacity))) 
         ? 0.5 : Number(overlay_opacity);
-
     const getTextColor = () => {
         if (theme_mode === 'dark') return '#ffffff';
         if (theme_mode === 'light') return 'var(--site-text-primary, #000000)';
@@ -55,65 +53,14 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         }
     }, [bg_type, fullVideoUrl]);
 
-    const heightMap = { 
-        small: '300px', 
-        medium: '500px', 
-        large: '700px', 
-        full: 'calc(100vh - 60px)'
+    const heightClasses = { 
+        small: 'min-h-75',
+        medium: 'min-h-125',
+        large: 'min-h-175',
+        full: 'min-h-[calc(100vh-60px)]'
     };
 
-    const activeMinHeight = heightMap[height] || '500px';
-    const alignMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
-    const containerStyle = {
-        position: 'relative',
-        width: '100%',
-        minHeight: activeMinHeight,
-        ...styles,
-        backgroundColor: 'var(--site-bg)', 
-        color: computedTextColor,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: alignMap[alignment] || 'center',
-        boxSizing: 'border-box',
-        overflow: 'hidden',
-        ...style 
-    };
-
-    const contentStyle = {
-        position: 'relative', 
-        zIndex: 2, 
-        maxWidth: '800px', 
-        width: '100%',
-        textAlign: alignment,
-        padding: '0 20px', 
-        color: 'inherit',
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: alignMap[alignment] || 'center'
-    };
-
-    const isTransparent = overlay_color === 'transparent';
-    const renderBackground = () => {
-        if (bg_type === 'video' && fullVideoUrl) {
-            return (
-                <video ref={videoRef} src={fullVideoUrl} poster={fullImageUrl}
-                    autoPlay muted loop playsInline
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-            );
-        }
-        if (fullImageUrl) {
-            return (
-                <div style={{
-                    width: '100%', height: '100%',
-                    backgroundImage: `url(${fullImageUrl})`,
-                    backgroundSize: 'cover', backgroundPosition: 'center'
-                }} />
-            );
-        }
-        return null;
-    };
-
+    const alignClasses = { left: 'justify-start items-start text-left', center: 'justify-center items-center text-center', right: 'justify-end items-end text-right' };
     const resolvedButtonData = {
         text: button.text || button_text,
         link: button.link || button_link,
@@ -131,46 +78,80 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
     };
 
     const uniqueClass = `hero-scope-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
+    const isTransparent = overlay_color === 'transparent';
     return (
         <div 
             style={{ 
-                ...containerStyle, 
-                ...cssVariables 
-            }} 
-            className={uniqueClass}
+                ...styles,
+                backgroundColor: 'var(--site-bg)', 
+                color: computedTextColor,
+                ...style,
+                ...cssVariables
+            }}
+            className={`
+                relative w-full flex box-border overflow-hidden
+                ${heightClasses[height] || 'min-h-125'}
+                ${alignClasses[alignment] || 'justify-center items-center text-center'}
+                ${uniqueClass}
+            `}
             id={blockData.anchorId}
         >
             <RenderFonts />
-            
-            <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-                {renderBackground()}
+            <div className="absolute inset-0 z-0">
+                {bg_type === 'video' && fullVideoUrl ? (
+                    <video ref={videoRef} src={fullVideoUrl} poster={fullImageUrl}
+                        autoPlay muted loop playsInline
+                        className="w-full h-full object-cover"
+                    />
+                ) : fullImageUrl ? (
+                    <div 
+                        className="w-full h-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${fullImageUrl})` }} 
+                    />
+                ) : null}
             </div>
 
             {!isTransparent && (
-                <div style={{
-                    position: 'absolute', inset: 0, backgroundColor: overlay_color,
-                    opacity: safeOpacity, zIndex: 1, transition: 'background-color 0.3s, opacity 0.3s'
-                }}></div>
+                <div
+                    className="absolute inset-0 z-1 transition-all duration-300"
+                    style={{ backgroundColor: overlay_color, opacity: safeOpacity }}
+                ></div>
             )}
 
-            <div style={contentStyle}>
-                {title && <h1 style={{ 
-                    fontFamily: fontStyles.title, 
-                    fontSize: isEditorPreview ? '2rem' : 'clamp(2rem, 5vw, 3.5rem)',
-                    fontWeight: '800', margin: '0 0 1rem 0', lineHeight: '1.1',
-                    color: 'inherit', textShadow: computedTextShadow
-                }}>{title}</h1>}
+            <div
+                className={`
+                    relative z-2 max-w-200 w-full px-5 text-inherit flex flex-col
+                    ${alignClasses[alignment] || 'items-center'}
+                `}
+            >
+                {title && (
+                    <h1 
+                        className="m-0 mb-4 font-extrabold leading-[1.1] text-inherit"
+                        style={{ 
+                            fontFamily: fontStyles.title, 
+                            fontSize: isEditorPreview ? '2rem' : 'clamp(2rem, 5vw, 3.5rem)',
+                            textShadow: computedTextShadow
+                        }}
+                    >
+                        {title}
+                    </h1>
+                )}
                 
-                {subtitle && <p style={{ 
-                    fontFamily: fontStyles.content,
-                    fontSize: isEditorPreview ? '1rem' : 'clamp(1rem, 2vw, 1.25rem)',
-                    margin: '0 0 2rem 0', opacity: 0.9, lineHeight: '1.6',
-                    color: 'inherit', maxWidth: '600px',
-                    textShadow: computedTextShadow, whiteSpace: 'pre-wrap'
-                }}>{subtitle}</p>}
+                {subtitle && (
+                    <p 
+                        className="m-0 mb-8 opacity-90 leading-[1.6] text-inherit max-w-150 whitespace-pre-wrap"
+                        style={{ 
+                            fontFamily: fontStyles.content,
+                            fontSize: isEditorPreview ? '1rem' : 'clamp(1rem, 2vw, 1.25rem)',
+                            textShadow: computedTextShadow, 
+                        }}
+                    >
+                        {subtitle}
+                    </p>
+                )}
                 
                 {resolvedButtonData.text && (
-                    <div style={{ marginTop: '8px', width: '100%', display: 'flex', justifyContent: alignMap[alignment] || 'center' }}>
+                    <div className={`mt-2 w-full flex ${alignClasses[alignment].split(' ')[0] || 'justify-center'}`}>
                         <ButtonBlock 
                             blockData={resolvedButtonData} 
                             siteData={siteData} 

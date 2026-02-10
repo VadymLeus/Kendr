@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../../../shared/ui/elements/Button';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Download, Trash2, Copy, ExternalLink, X, Type, Save } from 'lucide-react';
 import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
 import { API_URL, getFileExtension } from '../../../shared/utils/mediaUtils';
+import { Download, Trash2, Copy, ExternalLink, X, Type, Save } from 'lucide-react';
 
 const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     const [formData, setFormData] = useState({
@@ -21,7 +21,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     );
 
     const isFont = file && (file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name));
-    
     useEffect(() => {
         if (isFont && file) {
             const fontUrl = `${API_URL}${file.path_full}`;
@@ -91,7 +90,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             const response = await fetch(`${API_URL}${file.path_full}`);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
-            
             const link = document.createElement('a');
             link.href = url;
             link.download = file.original_file_name || 'download';
@@ -114,6 +112,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             flexDirection: 'column',
             background: 'var(--platform-sidebar-bg)',
             minHeight: '100%', 
+            borderLeft: '1px solid var(--platform-border-color)'
         },
         header: {
             padding: '16px',
@@ -122,11 +121,15 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             justifyContent: 'space-between',
             alignItems: 'center',
             background: 'var(--platform-bg)',
+            color: 'var(--platform-text-primary)',
             flexShrink: 0
         },
         previewArea: {
             padding: '20px',
             background: 'var(--platform-bg)',
+            backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')",
+            backgroundRepeat: 'repeat',
+            
             borderBottom: '1px solid var(--platform-border-color)',
             display: 'flex',
             justifyContent: 'center',
@@ -154,7 +157,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             padding: '8px 12px',
             borderRadius: '6px',
             border: '1px solid var(--platform-border-color)',
-            background: 'var(--platform-card-bg)',
+            background: 'var(--platform-input-bg)',
             color: 'var(--platform-text-primary)',
             fontSize: '0.85rem',
             boxSizing: 'border-box',
@@ -281,6 +284,8 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         onChange={e => setFormData({...formData, display_name: e.target.value})}
                         onBlur={handleBlur}
                         style={styles.input}
+                        onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
+                        onBlurCapture={(e) => { e.target.style.borderColor = 'var(--platform-border-color)'; handleBlur(); }}
                     />
                 </div>
 
@@ -294,6 +299,8 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                             onBlur={handleBlur}
                             style={styles.input}
                             placeholder="Опис для пошуковиків"
+                            onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
+                            onBlurCapture={(e) => { e.target.style.borderColor = 'var(--platform-border-color)'; handleBlur(); }}
                         />
                     </div>
                 )}
@@ -306,6 +313,8 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         onBlur={handleBlur}
                         style={{...styles.input, resize: 'vertical', minHeight: '60px', fontFamily: 'inherit'}}
                         placeholder="Для внутрішнього користування..."
+                        onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
+                        onBlurCapture={(e) => { e.target.style.borderColor = 'var(--platform-border-color)'; handleBlur(); }}
                     />
                 </div>
 

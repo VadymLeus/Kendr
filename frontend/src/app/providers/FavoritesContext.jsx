@@ -4,11 +4,9 @@ import apiClient from '../../shared/api/api';
 import { AuthContext } from './AuthContext';
 
 export const FavoritesContext = createContext(null);
-
 export const FavoritesProvider = ({ children }) => {
     const [favoriteSiteIds, setFavoriteSiteIds] = useState(new Set());
     const { user } = useContext(AuthContext);
-
     useEffect(() => {
         if (user) {
             apiClient.get('/favorites/ids')
@@ -20,12 +18,10 @@ export const FavoritesProvider = ({ children }) => {
             setFavoriteSiteIds(new Set());
         }
     }, [user]);
-
     const addFavorite = async (siteId) => {
         await apiClient.post(`/favorites/${siteId}`);
         setFavoriteSiteIds(prev => new Set(prev).add(siteId));
     };
-
     const removeFavorite = async (siteId) => {
         await apiClient.delete(`/favorites/${siteId}`);
         setFavoriteSiteIds(prev => {
@@ -34,7 +30,6 @@ export const FavoritesProvider = ({ children }) => {
             return newSet;
         });
     };
-
     return (
         <FavoritesContext.Provider value={{ favoriteSiteIds, addFavorite, removeFavorite }}>
             {children}

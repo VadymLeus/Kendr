@@ -20,7 +20,6 @@ const ICON_MAP = {
     'Briefcase': Briefcase, 'Camera': Camera, 'Coffee': Coffee,
     'Music': Music, 'Star': Star, 'Heart': Heart, 'Globe': Globe,
 };
-
 const TEMPLATE_CATEGORIES = [
     { id: 'All', label: 'Всі' },
     { id: 'General', label: 'Загальне' },
@@ -31,14 +30,12 @@ const TEMPLATE_CATEGORIES = [
     { id: 'Blog', label: 'Блог' },
     { id: 'Creative', label: 'Креатив' },
 ];
-
 const getTemplateIcon = (iconName) => ICON_MAP[iconName] || Layout; 
 const getCategoryLabel = (catId) => {
     if (!catId) return null;
     const found = TEMPLATE_CATEGORIES.find(c => c.id.toLowerCase() === catId.toLowerCase());
     return found ? found.label : catId;
 };
-
 const CreateSitePage = () => {
     const navigate = useNavigate();
     const { isAdmin } = useContext(AuthContext);
@@ -73,13 +70,11 @@ const CreateSitePage = () => {
         const loadData = async () => {
             try {
                 const templatesUrl = isAdmin ? '/sites/templates?include_drafts=true' : '/sites/templates';
-                
                 const [sysRes, persRes, logosRes] = await Promise.allSettled([
                     apiClient.get(templatesUrl),
                     apiClient.get('/user-templates'),
                     apiClient.get('/sites/default-logos')
                 ]);
-
                 if (sysRes.status === 'fulfilled') {
                     setSystemTemplates(sysRes.value.data);
                     if (sysRes.value.data.length > 0) handleSelectTemplate(sysRes.value.data[0], 'system');
@@ -99,7 +94,6 @@ const CreateSitePage = () => {
         };
         loadData();
     }, [isAdmin]);
-
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (!formData.slug || formData.slug.length < 3) {
@@ -114,7 +108,6 @@ const CreateSitePage = () => {
         }, 500);
         return () => clearTimeout(timer);
     }, [formData.slug]);
-
     const handleSelectTemplate = (template, type) => {
         if (!template) return;
         setSelectedTemplateId(template.id);
@@ -124,7 +117,6 @@ const CreateSitePage = () => {
             content = (typeof raw === 'string' ? JSON.parse(raw) : raw);
         } catch (e) { return; }
         if (!content) return;
-
         let pages = Array.isArray(content.pages) ? content.pages 
             : Array.isArray(content) ? [{ slug: 'home', blocks: content }]
             : Array.isArray(content.blocks) ? [{ slug: 'home', blocks: content.blocks }]
@@ -132,7 +124,6 @@ const CreateSitePage = () => {
         const themeSettings = content.theme_settings || {};
         const mode = content.site_theme_mode || themeSettings.mode || 'light';
         const accent = content.site_theme_accent || themeSettings.accent || 'orange';
-        
         setPreviewData({ 
             pages, 
             theme: { 
@@ -148,18 +139,15 @@ const CreateSitePage = () => {
         const hasHomePage = pages.find(p => p.slug === 'home');
         setCurrentPreviewSlug(hasHomePage ? 'home' : (pages[0]?.slug || 'home'));
     };
-
     const effectiveLogo = customLogo || defaultRandomLogo || '/uploads/shops/logos/default/default-logo.webp';
     const currentBlocks = useMemo(() => {
         const page = previewData.pages.find(p => p.slug === currentPreviewSlug);
         return page ? (page.blocks || []) : [];
     }, [previewData.pages, currentPreviewSlug]);
-
     const handleTitleChange = (e) => {
         const val = e.target.value;
         setFormData(prev => ({ ...prev, title: val }));
     };
-
     const handleSubmit = async () => {
         if (!formData.title || !formData.slug || !selectedTemplateId || slugStatus === 'taken') return;
         setIsSubmitting(true);
@@ -173,7 +161,6 @@ const CreateSitePage = () => {
             setIsSubmitting(false);
         }
     };
-
     const handleClearLogo = (e) => { e.stopPropagation(); setCustomLogo(null); };
     const getFullUrl = (path) => path?.startsWith('http') ? path : `${API_URL}${path}`;
     const handleOpenEditModal = (e, template) => { e.stopPropagation(); setEditingTemplate(template); setIsEditModalOpen(true); };
@@ -193,7 +180,6 @@ const CreateSitePage = () => {
             toast.success('Шаблон видалено');
         } catch (error) { toast.error('Помилка видалення'); } finally { setIsDeleteModalOpen(false); }
     };
-
     const filteredTemplates = useMemo(() => {
         let source = templateSourceTab === 'system' ? systemTemplates : personalTemplates;
         if (searchQuery) {
@@ -221,24 +207,22 @@ const CreateSitePage = () => {
         } else {
             badgeConfig = { text: 'Private', Icon: Lock, colorVar: '--platform-text-secondary' };
         }
-
         const { text, Icon, colorVar } = badgeConfig;
-        const style = {
-            color: `var(${colorVar})`,
-            backgroundColor: `color-mix(in srgb, var(${colorVar}), transparent 90%)`,
-            borderColor: `color-mix(in srgb, var(${colorVar}), transparent 80%)`,
-        };
-
         return (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-colors duration-300" style={style}>
+            <div 
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border transition-colors duration-300" 
+                style={{
+                    color: `var(${colorVar})`,
+                    backgroundColor: `color-mix(in srgb, var(${colorVar}), transparent 90%)`,
+                    borderColor: `color-mix(in srgb, var(${colorVar}), transparent 80%)`,
+                }}
+            >
                 {Icon && <Icon size={10} style={{ color: `var(${colorVar})` }} />}
                 {text}
             </div>
         );
     };
-
     if (isLoadingData) return <div className="flex h-full items-center justify-center bg-(--platform-bg)"><Loader size={48} className="text-(--platform-accent) animate-spin" /></div>;
-
     return (
         <div className="flex h-full w-full overflow-hidden bg-(--platform-bg) min-h-0">
             <ConfirmModal 
@@ -251,17 +235,15 @@ const CreateSitePage = () => {
                 onCancel={() => setIsDeleteModalOpen(false)} 
                 type="danger" 
             />
-            
             <TemplateModal 
                 isOpen={isEditModalOpen} 
                 initialData={editingTemplate} 
                 onClose={() => { setIsEditModalOpen(false); setEditingTemplate(null); }} 
                 onSave={handleSaveTemplateChanges} 
             />
-
             <div className={`
                 flex flex-col w-105 min-w-105 h-full max-h-full
-                border-r border-gray-200 dark:border-gray-800
+                border-r border-(--platform-border-color)
                 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.08)] 
                 transition-transform duration-300 min-h-0
                 bg-(--platform-card-bg)
@@ -273,11 +255,20 @@ const CreateSitePage = () => {
                         <h1 className="text-xl font-bold text-(--platform-text-primary) m-0">Новий сайт</h1>
                     </div>
                     <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
-                        <button className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${panelTab === 'info' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`} onClick={() => setPanelTab('info')}><Info size={16} /> 1. Інформація</button>
-                        <button className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${panelTab === 'design' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`} onClick={() => setPanelTab('design')}><Palette size={16} /> 2. Дизайн</button>
+                        <button 
+                            className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${panelTab === 'info' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`} 
+                            onClick={() => setPanelTab('info')}
+                        >
+                            <Info size={16} /> 1. Інформація
+                        </button>
+                        <button 
+                            className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${panelTab === 'design' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`} 
+                            onClick={() => setPanelTab('design')}
+                        >
+                            <Palette size={16} /> 2. Дизайн
+                        </button>
                     </div>
                 </div>
-
                 <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6 pt-0 bg-(--platform-bg) min-h-0 [scrollbar-gutter:stable]">
                     {panelTab === 'info' ? (
                          <div className="flex flex-col gap-6 pt-6">
@@ -285,7 +276,6 @@ const CreateSitePage = () => {
                                 <Input label="Назва сайту" value={formData.title} onChange={handleTitleChange} maxLength={TEXT_LIMITS.SITE_NAME} autoFocus />
                                 <Input label="Веб-адреса (Slug)" value={formData.slug} onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})} rightIcon={slugStatus === 'checking' ? <Loader size={16} className="animate-spin" /> : slugStatus === 'available' ? <Check size={18} className="text-emerald-500" /> : slugStatus === 'taken' ? <AlertCircle size={18} className="text-red-500" /> : <Globe size={16} />} error={slugStatus === 'taken' ? 'Адреса зайнята' : null} helperText={`kendr.site/${formData.slug || '...'}`} />
                             </div>
-
                             <div className="p-5 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm">
                                 <label className="mb-3 font-semibold text-(--platform-text-primary) text-sm flex items-center gap-2">
                                     <Sparkles size={18} className="text-(--platform-accent)" />
@@ -318,7 +308,6 @@ const CreateSitePage = () => {
                                     </div>
                                     <Input placeholder="Пошук..." leftIcon={<Search size={16} />} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} wrapperStyle={{ marginBottom: 0 }} />
                                 </div>
-
                                 <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar mask-gradient-right">
                                     {TEMPLATE_CATEGORIES.map(cat => (
                                         <button
@@ -337,13 +326,11 @@ const CreateSitePage = () => {
                                     ))}
                                 </div>
                             </div>
-
                             <div className="grid grid-cols-1 gap-3 pb-4">
                                 {filteredTemplates.length > 0 ? filteredTemplates.map(tpl => {
                                     const TemplateIcon = getTemplateIcon(tpl.icon);
                                     const hasValidImage = tpl.thumbnail_url && tpl.thumbnail_url !== 'null' && !tpl.thumbnail_url.includes('empty.png');
                                     const isSelected = selectedTemplateId === tpl.id;
-
                                     return (
                                         <div 
                                             key={tpl.id} 
@@ -361,7 +348,6 @@ const CreateSitePage = () => {
                                                     <TemplateIcon size={32} strokeWidth={1.5} />
                                                 )}
                                             </div>
-
                                             <div className="flex-1 min-w-0 flex flex-col gap-1">
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     <div className="font-semibold text-(--platform-text-primary) truncate">{tpl.name}</div>
@@ -377,13 +363,11 @@ const CreateSitePage = () => {
                                                      </div>
                                                 )}
                                             </div>
-                                            
                                             {isSelected && (
                                                 <div className="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-(--platform-accent) text-white flex items-center justify-center shadow-sm animate-[popIn_0.2s_ease-out]">
                                                     <Check size={14} strokeWidth={3} />
                                                 </div>
                                             )}
-                                            
                                             {(templateSourceTab === 'personal') && (
                                                 <div className="absolute top-2 right-2 flex gap-1 z-10">
                                                     <button onClick={(e) => handleOpenEditModal(e, tpl)} className="p-1.5 rounded-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors" title="Редагувати"> <Edit size={14} /> </button>
@@ -397,7 +381,6 @@ const CreateSitePage = () => {
                         </div>
                     )}
                 </div>
-
                 <div className="p-6 bg-(--platform-card-bg) border-t border-(--platform-border-color) shrink-0">
                     {panelTab === 'info' ? 
                         <Button variant="primary" className="w-full py-3 justify-center" onClick={handleSubmit} disabled={!formData.title || !formData.slug || slugStatus !== 'available' || isSubmitting}>{isSubmitting ? <Loader size={18} className="animate-spin" /> : <>Створити сайт <ArrowLeft size={18} className="rotate-180" /></>}</Button> 

@@ -9,20 +9,14 @@ import TitleManager from './TitleManager';
 import apiClient from '../../api/api';
 import { resolveAccentColor, isLightColor, adjustColor } from '../../utils/themeUtils';
 import FontLoader from '../../../modules/renderer/components/FontLoader';
-
-const EXPANDED_SIDEBAR_WIDTH = '280px';
-const COLLAPSED_SIDEBAR_WIDTH = '80px';
+import PlatformBackground from './PlatformBackground';
 
 const Layout = () => {
     const { user, isAdmin, isLoading: isAuthLoading } = useContext(AuthContext);
-    const [isCollapsed, setIsCollapsed] = useState(() => {
-        const savedState = localStorage.getItem('sidebarCollapsed');
-        return savedState === 'true';
-    });
+    const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
     const location = useLocation();
     const [siteData, setSiteData] = useState(null);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
-    const currentSidebarWidth = isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
     const handleToggleSidebar = () => {
         setIsCollapsed(prev => {
             const newState = !prev;
@@ -31,16 +25,10 @@ const Layout = () => {
         });
     };
 
-    useEffect(() => {
-        document.documentElement.style.setProperty('--sidebar-width', currentSidebarWidth);
-    }, [currentSidebarWidth]);
-
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
-    const createSiteMatch = location.pathname === '/create-site';
-    const adminTemplatesMatch = location.pathname === '/admin/templates';
-    const isAppPage = !!(dashboardMatch || createSiteMatch || adminTemplatesMatch);
+    const isAppPage = !!(dashboardMatch || location.pathname === '/create-site' || location.pathname === '/admin/templates');
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isHiddenStatus = siteData && ['draft', 'suspended', 'private'].includes(siteData.status);
     const isMaintenanceMode = isHiddenStatus && !isOwner && !isAdmin;
@@ -52,104 +40,51 @@ const Layout = () => {
             setSiteData(null);
             try {
                 let url = null;
-                let params = { increment_view: 'false' }; 
-                if (dashboardMatch) {
-                    const sitePath = dashboardMatch[1];
-                    url = `/sites/${sitePath}`;
-                } else if (productInsideSiteMatch) {
-                    const sitePath = productInsideSiteMatch[1];
-                    url = `/sites/${sitePath}`;
-                } else if (publicMatch) {
-                    const sitePath = publicMatch[1];
-                    const slug = publicMatch[2];
-                    if (slug) {
-                        url = `/sites/${sitePath}/${slug}`;
-                    } else {
-                        url = `/sites/${sitePath}`;
-                    }
-                }
+                const params = { increment_view: 'false' };
+                if (dashboardMatch) url = `/sites/${dashboardMatch[1]}`;
+                else if (productInsideSiteMatch) url = `/sites/${productInsideSiteMatch[1]}`;
+                else if (publicMatch) url = `/sites/${publicMatch[1]}${publicMatch[2] ? `/${publicMatch[2]}` : ''}`;
 
                 if (url) {
                     const response = await apiClient.get(url, { params });
                     setSiteData(response.data);
                 }
             } catch (err) {
-                console.error("Layout: не вдалося завантажити дані сайту", err.response?.data?.message || err.message);
-                setSiteData(null);
+                console.error("Layout load error", err);
             } finally {
                 setIsSiteLoading(false);
             }
         };
 
-        if (dashboardMatch || publicMatch || productInsideSiteMatch) {
-            fetchSiteData();
-        } else {
-            setIsSiteLoading(false);
-            setSiteData(null);
-        }
+        if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
+        else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
-
-    if (isAuthLoading) {
-        return <div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'100vh'}}>Завантаження...</div>;
-    }
-
+    if (isAuthLoading) return <div className="flex justify-center items-center h-screen">Завантаження...</div>;
+    const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
-    const isPublicPage = !!(publicMatch || productInsideSiteMatch);
-    const siteAccentHex = resolveAccentColor(siteData?.site_theme_accent || 'orange');
-    const siteThemeMode = siteData?.site_theme_mode || 'light';
-    const siteAccentHover = adjustColor(siteAccentHex, -10);
-    const siteAccentLight = adjustColor(siteAccentHex, 90);
-    const siteAccentText = isLightColor(siteAccentHex) ? '#000000' : '#ffffff';
-    const isSiteThemeActive = isPublicPage && !isSiteLoading && siteData && !isMaintenanceMode;
-    const mainStyles = {
-        padding: (isAppPage || isPublicPage) ? 0 : '2rem', 
-        flexGrow: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        height: isAppPage ? '100%' : 'auto', 
-        overflow: isAppPage ? 'hidden' : 'visible',
-        '--site-accent': siteAccentHex,
-        '--site-accent-hover': siteAccentHover,
-        '--site-accent-light': siteAccentLight,
-        '--site-accent-text': siteAccentText,
+    const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');
+    const dynamicStyle = isSiteThemeActive ? {
+        '--site-bg': '#ffffff',
+        '--site-text-primary': '#1a202c',
+        '--site-accent': siteAccent,
+        '--site-accent-hover': adjustColor(siteAccent, -10),
+        '--site-accent-text': isLightColor(siteAccent) ? '#000' : '#fff',
         '--font-heading': themeSettings.font_heading || "'Inter', sans-serif",
         '--font-body': themeSettings.font_body || "'Inter', sans-serif",
         '--btn-radius': themeSettings.button_radius || '8px',
+        padding: 0,
+        height: 'auto',
+        overflow: 'visible'
+    } : {
+        padding: isAppPage ? 0 : '2rem',
+        height: isAppPage ? '100%' : 'auto',
+        overflow: isAppPage ? 'hidden' : 'visible'
     };
-    
-    if (isSiteThemeActive) {
-        mainStyles.background = 'var(--site-bg)';
-        mainStyles.color = 'var(--site-text-primary)';
-        document.documentElement.style.setProperty('--site-accent', siteAccentHex);
-        document.documentElement.style.setProperty('--site-accent-hover', siteAccentHover);
-        document.documentElement.style.setProperty('--site-accent-light', siteAccentLight);
-        document.documentElement.style.setProperty('--site-accent-text', siteAccentText);
-        document.documentElement.style.setProperty('--font-heading', themeSettings.font_heading || "'Inter', sans-serif");
-        document.documentElement.style.setProperty('--font-body', themeSettings.font_body || "'Inter', sans-serif");
-        document.documentElement.style.setProperty('--btn-radius', themeSettings.button_radius || '8px');
-    } else if (shouldShowSiteHeader) {
-        mainStyles.background = 'var(--platform-bg)';
-        mainStyles.color = 'var(--platform-text-primary)';
-        document.documentElement.style.removeProperty('--site-accent');
-        document.documentElement.style.removeProperty('--site-accent-hover');
-        document.documentElement.style.removeProperty('--site-accent-light');
-        document.documentElement.style.removeProperty('--site-accent-text');
-        document.documentElement.style.removeProperty('--font-heading');
-        document.documentElement.style.removeProperty('--font-body');
-        document.documentElement.style.removeProperty('--btn-radius');
-    }
 
-    const layoutContentStyle = {
-        overflowY: isAppPage ? 'hidden' : 'auto', 
-        width: '100%',
-        height: '100vh',
-        maxHeight: '100vh',
-        position: 'relative' 
-    };
-    
     return (
-        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+        <div className="layout-wrapper">
             <TitleManager siteData={siteData} key={location.pathname} />
+            <PlatformBackground />
             <PlatformSidebar 
                 isCollapsed={isCollapsed} 
                 onToggle={handleToggleSidebar} 
@@ -157,33 +92,21 @@ const Layout = () => {
             />
 
             <div 
-                className={`layout-content ${isSiteThemeActive ? 'site-theme-context' : ''}`}
-                style={layoutContentStyle}
-                data-site-mode={isSiteThemeActive ? siteThemeMode : undefined}
-                data-site-accent={isSiteThemeActive ? (siteData?.site_theme_accent || 'orange') : undefined}
+                className={`layout-content custom-scrollbar ${isCollapsed ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''}`}
+                style={isSiteThemeActive ? dynamicStyle : undefined}
             >
-                {siteData && siteData.theme_settings && (
-                    <FontLoader 
-                        fontHeading={siteData.theme_settings.font_heading}
-                        fontBody={siteData.theme_settings.font_body}
-                    />
+                {siteData?.theme_settings && (
+                    <FontLoader fontHeading={siteData.theme_settings.font_heading} fontBody={siteData.theme_settings.font_body} />
                 )}
 
                 {shouldShowSiteHeader && (
-                    <SiteHeader 
-                        siteData={siteData} 
-                        loading={isSiteLoading} 
-                        sidebarWidth={currentSidebarWidth} 
-                    />
+                    <SiteHeader siteData={siteData} loading={isSiteLoading} />
                 )}
                 
-                <main 
-                    style={mainStyles}
-                    data-site-mode={siteThemeMode}
-                    data-site-accent={siteData?.site_theme_accent || 'orange'}
-                >
-                    <Outlet context={{ siteData, setSiteData, isSiteLoading }} />
+                <main style={dynamicStyle}>
+                    <Outlet context={{ siteData, setSiteData, isSiteLoading, isCollapsed }} />
                 </main>
+
                 {shouldShowFooter && <Footer />}
             </div>
         </div>

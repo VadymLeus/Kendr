@@ -6,174 +6,6 @@ import ReportModal from './ReportModal';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock, AlertTriangle, Construction, Wrench } from 'lucide-react';
 
-const cardStyles = `
-    .site-grid-card {
-        background: var(--platform-card-bg);
-        border-radius: 12px;
-        border: 1px solid var(--platform-border-color);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        height: 100%;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .site-grid-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-    }
-    
-    .site-grid-card.is-draft {
-        border: 1px dashed var(--platform-border-color);
-        background: repeating-linear-gradient(
-            45deg,
-            var(--platform-card-bg),
-            var(--platform-card-bg) 10px,
-            var(--platform-bg) 10px,
-            var(--platform-bg) 20px
-        );
-    }
-    
-    .site-grid-card.is-draft .site-card-title {
-        opacity: 0.8;
-    }
-
-    .draft-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #fbbf24;
-        backdrop-filter: blur(2px);
-        text-align: center;
-        padding: 1rem;
-        z-index: 10;
-        transition: opacity 0.2s;
-    }
-    
-    .site-grid-card:hover .draft-overlay {
-        background: rgba(0, 0, 0, 0.75);
-    }
-
-    .site-card-tag {
-        font-size: 0.75rem;
-        padding: 2px 8px;
-        border-radius: 12px;
-        background: var(--platform-bg);
-        color: var(--platform-text-secondary);
-        border: 1px solid var(--platform-border-color);
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .site-card-tag:hover {
-        background: var(--platform-accent);
-        color: white !important;
-        border-color: var(--platform-accent);
-    }
-    
-    .site-card-fav-btn {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 20;
-        background: rgba(0,0,0,0.4);
-        backdrop-filter: blur(4px);
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        border: 1px solid rgba(255,255,255,0.1);
-        transition: background 0.2s;
-        padding: 0;
-    }
-    .site-card-fav-btn:hover {
-        background: rgba(0,0,0,0.6);
-    }
-
-    .site-card-menu-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 20;
-        background: rgba(0,0,0,0.4);
-        backdrop-filter: blur(4px);
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        border: 1px solid rgba(255,255,255,0.1);
-        transition: background 0.2s;
-        padding: 0;
-    }
-    .site-card-menu-btn:hover, .site-card-menu-btn.active {
-        background: var(--platform-accent);
-        border-color: var(--platform-accent);
-    }
-
-    .site-card-action-btn {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        padding: 10px 20px;
-        border-radius: 8px;
-        background: var(--platform-accent) !important;
-        color: white !important;
-        border: none;
-        font-weight: 500;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        margin-top: auto;
-        text-decoration: none !important;
-        outline: none;
-    }
-
-    .site-card-action-btn:hover {
-        background: var(--platform-accent-hover) !important;
-        text-decoration: none !important;
-    }
-
-    .site-card-action-btn.disabled {
-        background: var(--platform-border-color) !important;
-        color: var(--platform-text-secondary) !important;
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
-    
-    .site-card-dropdown {
-        position: absolute;
-        top: 46px;
-        right: 10px;
-        background: var(--platform-card-bg);
-        border: 1px solid var(--platform-border-color);
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        min-width: 200px;
-        padding: 4px;
-        display: flex;
-        flex-direction: column;
-        z-index: 30;
-        animation: fadeIn 0.1s ease-out;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-`;
-
 const SiteStatusBadge = ({ status }) => {
     const config = {
         published: { label: 'Опубліковано', color: '#38a169', bg: 'rgba(56, 161, 105, 0.1)', icon: Globe },
@@ -185,42 +17,35 @@ const SiteStatusBadge = ({ status }) => {
     const s = config[status] || config.draft;
     const Icon = s.icon;
     return (
-        <div style={{ 
-            backgroundColor: s.bg, color: s.color, padding: '4px 8px', borderRadius: '6px', 
-            fontSize: '0.75rem', fontWeight: '600', border: `1px solid ${s.color}33`, 
-            display: 'flex', alignItems: 'center', gap: '4px', width: 'fit-content'
-        }}>
+        <div 
+            className="px-2 py-1 rounded-md text-xs font-semibold border flex items-center gap-1 w-fit"
+            style={{ 
+                backgroundColor: s.bg, 
+                color: s.color, 
+                borderColor: `${s.color}33`
+            }}
+        >
             <Icon size={12} /> {s.label}
         </div>
     );
 };
 
-const menuItemStyle = {
-    textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none',
-    cursor: 'pointer', color: 'var(--platform-text-primary)', fontSize: '0.85rem',
-    display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textDecoration: 'none',
-    boxSizing: 'border-box', borderRadius: '4px', transition: 'background 0.2s'
-};
-
 const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) => {
-    const [hover, setHover] = useState(false);
+    const baseClass = "text-left px-3 py-2 bg-transparent border-none cursor-pointer text-(--platform-text-primary) text-sm flex items-center gap-2 w-full no-underline box-border rounded hover:bg-(--platform-bg) transition-colors";
     const content = (
         <>
             <Icon size={14} /> {label}
         </>
     );
 
-    const finalStyle = hover ? { ...menuItemStyle, ...style, background: 'var(--platform-bg)' } : { ...menuItemStyle, ...style };
     if (href) {
         return (
             <a 
                 href={href} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                style={finalStyle}
-                onMouseEnter={() => setHover(true)}
-                onMouseLeave={() => setHover(false)}
-                className={className}
+                className={`${baseClass} ${className || ''}`}
+                style={style}
                 onClick={(e) => {
                    if (onClick) onClick(e);
                 }}
@@ -232,11 +57,9 @@ const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) =
 
     return (
         <button 
-            style={finalStyle}
-            onMouseEnter={() => setHover(true)}
-            onMouseLeave={() => setHover(false)}
             onClick={onClick}
-            className={className}
+            className={`${baseClass} ${className || ''}`}
+            style={style}
         >
             {content}
         </button>
@@ -255,19 +78,26 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
     }, [isOpen]);
 
     const isLocked = site.status === 'suspended' || site.status === 'probation';
-
     return (
         <div ref={menuRef}>
             <button 
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(!isOpen); }}
-                className={`site-card-menu-btn ${isOpen ? 'active' : ''}`}
+                className={`
+                    absolute top-2.5 right-2.5 z-20 bg-black/40 backdrop-blur-xs rounded-full w-8 h-8 
+                    flex items-center justify-center cursor-pointer border border-white/10 transition-colors p-0
+                    hover:bg-(--platform-accent) hover:border-(--platform-accent)
+                    ${isOpen ? 'bg-(--platform-accent) border-(--platform-accent)' : ''}
+                `}
                 title="Меню"
             >
                 <MoreVertical size={16} color="white" />
             </button>
             
             {isOpen && (
-                <div className="site-card-dropdown" onClick={(e) => e.stopPropagation()}>
+                <div 
+                    className="absolute top-11.5 right-2.5 bg-(--platform-card-bg) border border-(--platform-border-color) rounded-lg shadow-lg min-w-50 p-1 flex flex-col z-30 animate-in fade-in slide-in-from-top-1 duration-100"
+                    onClick={(e) => e.stopPropagation()}
+                >
                     <MenuItem 
                         icon={ExternalLink} 
                         label="Відвідати" 
@@ -319,12 +149,12 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                             )}
 
                             {isLocked && (
-                                <div style={{ padding: '8px 12px', fontSize: '11px', color: 'var(--platform-danger)', fontStyle: 'italic', textAlign: 'center' }}>
+                                <div className="px-3 py-2 text-[11px] text-(--platform-danger) italic text-center">
                                     Зміна статусу заблокована
                                 </div>
                             )}
                             
-                            <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
+                            <div className="h-px bg-(--platform-border-color) my-1" />
                         </>
                     )}
 
@@ -360,22 +190,17 @@ const SiteGridCard = ({
     const isEffectiveAdmin = variant === 'admin' || isUserAdmin;
     const mainLink = isOwner ? `/dashboard/${site.site_path}` : `/site/${site.site_path}`;
     const isPinnedOrFav = isOwner ? site.is_pinned : isFavorite;
-    const noDecorationStyle = { 
-        textDecoration: 'none', 
-        color: 'inherit',
-        border: 'none',
-        display: 'block' 
-    };
-
     const isSuspended = site.status === 'suspended';
     const isDraft = site.status === 'draft';
 
     return (
         <>
-            <style>{cardStyles}</style>
-            <div className={`site-grid-card ${isDraft ? 'is-draft' : ''}`}>
+            <div className={`
+                bg-(--platform-card-bg) rounded-xl border border-(--platform-border-color) overflow-hidden flex flex-col relative h-full transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg
+                ${isDraft ? 'border-dashed border-(--platform-border-color) bg-[repeating-linear-gradient(45deg,var(--platform-card-bg),var(--platform-card-bg)_10px,var(--platform-bg)_10px,var(--platform-bg)_20px)]' : ''}
+            `}>
                 <button 
-                    className="site-card-fav-btn"
+                    className="absolute top-2.5 left-2.5 z-20 bg-black/40 backdrop-blur-xs rounded-full w-8 h-8 flex items-center justify-center cursor-pointer border border-white/10 transition-colors p-0 hover:bg-black/60"
                     onClick={(e) => {
                         e.preventDefault(); e.stopPropagation();
                         if (isOwner && onTogglePin) onTogglePin(site.id);
@@ -401,54 +226,44 @@ const SiteGridCard = ({
 
                 <Link 
                     to={isSuspended ? '#' : mainLink} 
-                    style={{ 
-                        ...noDecorationStyle, 
-                        height: '180px', 
-                        width: '100%', 
-                        overflow: 'hidden', 
-                        borderBottom: '1px solid var(--platform-border-color)', 
-                        cursor: isSuspended ? 'not-allowed' : 'pointer',
-                        position: 'relative'
-                    }}
+                    className={`
+                        block w-full h-45 overflow-hidden border-b border-(--platform-border-color) relative
+                        ${isSuspended ? 'cursor-not-allowed' : 'cursor-pointer'}
+                    `}
                 >
                     <SiteCoverDisplay 
                         site={site} 
+                        className="w-full h-full object-cover"
                         style={{ 
-                            width: '100%', 
-                            height: '100%', 
-                            objectFit: 'cover', 
                             filter: isSuspended ? 'grayscale(1)' : (isDraft ? 'blur(1px) grayscale(0.3)' : 'none') 
                         }} 
                     />
 
                     {isDraft && (
-                        <div className="draft-overlay">
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-amber-400 backdrop-blur-[2px] text-center p-4 z-10 transition-opacity duration-200 group-hover:bg-black/75">
                             <Construction size={40} className="mb-2" />
-                            <div style={{ fontWeight: 'bold', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                            <div className="font-bold text-lg uppercase tracking-widest">
                                 Технічні роботи
                             </div>
-                            <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '4px' }}>
+                            <div className="text-xs opacity-90 mt-1">
                                 Сайт оновлюється
                             </div>
                         </div>
                     )}
                 </Link>
 
-                <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                        <div style={{ overflow: 'hidden' }}>
-                            <Link to={isSuspended ? '#' : mainLink} style={{ ...noDecorationStyle, cursor: isSuspended ? 'not-allowed' : 'pointer' }}>
+                <div className="p-4 flex-1 flex flex-col gap-3">
+                    <div className="flex justify-between items-start gap-2">
+                        <div className="overflow-hidden">
+                            <Link 
+                                to={isSuspended ? '#' : mainLink} 
+                                className={`block no-underline text-inherit ${isSuspended ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                            >
                                 <h3 
-                                    className="site-card-title" 
-                                    style={{ 
-                                        margin: 0, 
-                                        fontSize: '1.1rem', 
-                                        fontWeight: '600', 
-                                        whiteSpace: 'nowrap', 
-                                        overflow: 'hidden', 
-                                        textOverflow: 'ellipsis',
-                                        textDecoration: 'none'
-                                    }} 
+                                    className={`
+                                        m-0 text-lg font-semibold whitespace-nowrap overflow-hidden text-ellipsis no-underline
+                                        ${isDraft ? 'opacity-80' : ''}
+                                    `}
                                     title={site.title}
                                 >
                                     {site.title}
@@ -456,48 +271,47 @@ const SiteGridCard = ({
                             </Link>
 
                             {!isOwner && (
-                                <div style={{ fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginTop: '4px' }}>
-                                    Автор: <span style={{ color: 'var(--platform-text-primary)', fontWeight: '500' }}>{site.author}</span>
+                                <div className="text-xs text-(--platform-text-secondary) mt-1">
+                                    Автор: <span className="text-(--platform-text-primary) font-medium">{site.author}</span>
                                 </div>
                             )}
                         </div>
                         {isOwner && <SiteStatusBadge status={site.status} />}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.85rem', color: 'var(--platform-text-secondary)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="grid grid-cols-2 gap-2.5 text-sm text-(--platform-text-secondary)">
+                        <div className="flex items-center gap-1.5">
                             <Calendar size={14} /> {formatDate(site.created_at)}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div className="flex items-center gap-1.5">
                             <Eye size={14} /> {site.view_count || 0}
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', minHeight: '26px' }}>
+                    <div className="flex gap-1.5 flex-wrap min-h-6.5">
                         {site.tags && site.tags.length > 0 ? site.tags.slice(0, 4).map(tag => (
                             <span 
                                 key={tag.id}
-                                className="site-card-tag"
+                                className="text-xs px-2 py-0.5 rounded-xl bg-(--platform-bg) text-(--platform-text-secondary) border border-(--platform-border-color) cursor-pointer transition-all hover:bg-(--platform-accent) hover:text-white hover:border-(--platform-accent)"
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onTagClick && onTagClick(tag.id); }}
                             >
                                 #{tag.name}
                             </span>
                         )) : (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--platform-text-secondary)', opacity: 0.5 }}>Без тегів</span>
+                            <span className="text-xs text-(--platform-text-secondary) opacity-50">Без тегів</span>
                         )}
                     </div>
                     
-                    <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
+                    <div className="mt-auto pt-3">
                         {isOwner ? (
                             isSuspended ? (
-                                <button className="site-card-action-btn disabled" disabled>
+                                <button className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-lg bg-(--platform-border-color) text-(--platform-text-secondary) cursor-not-allowed opacity-70 font-medium text-sm border-none" disabled>
                                     <Lock size={16} /> Заблоковано
                                 </button>
                             ) : (
                                 <Link 
                                     to={`/dashboard/${site.site_path}`}
-                                    className="site-card-action-btn"
-                                    style={noDecorationStyle}
+                                    className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-lg bg-(--platform-accent) text-white border-none font-medium text-sm cursor-pointer transition-all hover:bg-(--platform-accent-hover) no-underline outline-none"
                                 >
                                     {isDraft ? (
                                         <><Wrench size={16} /> Налаштувати</>
@@ -511,8 +325,12 @@ const SiteGridCard = ({
                                 href={`/site/${site.site_path}`}
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className={`site-card-action-btn ${isDraft ? 'disabled' : ''}`}
-                                style={{ ...noDecorationStyle, ...(isDraft ? { opacity: 0.8, background: 'var(--platform-secondary)' } : {}) }}
+                                className={`
+                                    flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-lg border-none font-medium text-sm cursor-pointer transition-all no-underline outline-none
+                                    ${isDraft 
+                                        ? 'bg-(--platform-border-color) text-(--platform-text-secondary) cursor-not-allowed opacity-80' 
+                                        : 'bg-(--platform-accent) text-white hover:bg-(--platform-accent-hover)'}
+                                `}
                             >
                                 {isDraft ? (
                                     <><Construction size={16} /> Роботи</>

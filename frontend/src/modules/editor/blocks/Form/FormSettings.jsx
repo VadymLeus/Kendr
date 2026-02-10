@@ -4,7 +4,7 @@ import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import ButtonEditor from '../../ui/components/ButtonEditor';
-import { CheckCircle, Mail, Trash2, MessageSquare,MousePointerClick } from 'lucide-react';
+import { CheckCircle, Mail, Trash2, MessageSquare, MousePointerClick } from 'lucide-react';
 
 const FormSettings = ({ data, onChange, siteData }) => {
     const DEFAULT_BUTTON_DATA = {
@@ -35,48 +35,30 @@ const FormSettings = ({ data, onChange, siteData }) => {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            
+        <div className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<MessageSquare size={18}/>}>Тексти та Кнопка</SectionTitle>
-                
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Повідомлення про успіх</label>
-                    <div style={{ position: 'relative' }}>
+                    <div className="relative">
                         <textarea 
-                            className="custom-scrollbar"
+                            className="custom-scrollbar custom-input min-h-20 pl-9 w-full resize-y"
                             value={data.successMessage || ''}
                             onChange={(e) => updateData({ successMessage: e.target.value })}
                             placeholder="Дякуємо! Ваше повідомлення надіслано."
-                            style={{
-                                ...commonStyles.textarea, 
-                                minHeight: '80px',
-                                paddingLeft: '36px'
-                            }}
                         />
-                        <div style={{ position: 'absolute', top: '10px', left: '10px', color: 'var(--platform-text-secondary)' }}>
+                        <div className="absolute top-2.5 left-2.5 text-(--platform-text-secondary)">
                             <CheckCircle size={16} />
                         </div>
                     </div>
                 </div>
 
-                <div style={{ marginTop: '24px' }}>
-                     <div style={{
-                         fontSize: '0.85rem', 
-                         fontWeight: '600', 
-                         marginBottom: '16px', 
-                         display: 'flex', 
-                         alignItems: 'center', 
-                         gap: '8px',
-                         color: 'var(--platform-text-primary)',
-                         paddingBottom: '8px',
-                         borderBottom: '1px solid var(--platform-border-color)'
-                     }}>
-                        <MousePointerClick size={16} style={{ color: 'var(--platform-accent)' }}/>
+                <div className="mt-6">
+                      <div className="text-sm font-semibold mb-4 flex items-center gap-2 text-(--platform-text-primary) pb-2 border-b border-(--platform-border-color)">
+                        <MousePointerClick size={16} className="text-(--platform-accent)"/>
                         Кнопка відправки
-                     </div>
-                     
-                     <ButtonEditor 
+                      </div>
+                      <ButtonEditor 
                         data={buttonData}
                         onChange={handleButtonChange}
                         siteData={siteData}
@@ -88,9 +70,8 @@ const FormSettings = ({ data, onChange, siteData }) => {
 
             <div>
                 <SectionTitle icon={<Mail size={18}/>}>Налаштування сповіщень</SectionTitle>
-
-                <div style={commonStyles.formGroup}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div className="mb-5">
+                    <div className="flex justify-between items-center mb-2">
                         <label style={{...commonStyles.label, marginBottom: 0}}>Email для сповіщень</label>
                         {data.notifyEmail && (
                             <Button 
@@ -98,7 +79,7 @@ const FormSettings = ({ data, onChange, siteData }) => {
                                 size="sm" 
                                 onClick={() => updateData({ notifyEmail: '' })}
                                 icon={<Trash2 size={14}/>}
-                                style={{ padding: '4px 8px', fontSize: '0.75rem', height: 'auto' }}
+                                className="py-1! px-2! text-xs! h-auto!"
                             >
                                 Очистити
                             </Button>
@@ -112,7 +93,7 @@ const FormSettings = ({ data, onChange, siteData }) => {
                         placeholder="admin@example.com"
                         leftIcon={<Mail size={16}/>}
                     />
-                    <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', marginTop: '6px', display: 'block' }}>
+                    <small className="text-(--platform-text-secondary) text-xs mt-1.5 block">
                         Якщо залишити порожнім, листи надходитимуть на пошту власника акаунту.
                     </small>
                 </div>

@@ -84,9 +84,7 @@ const BlockEditor = ({
     const handleContextMenuAction = async (action) => {
         const { path } = contextMenu;
         if (!path) return;
-
         handleCloseContextMenu();
-
         switch (action) {
             case 'edit':
                 onSelectBlock(path);
@@ -162,56 +160,34 @@ const BlockEditor = ({
         '--site-font-main': themeSettings.font_body || "'Inter', sans-serif",
         '--site-font-headings': themeSettings.font_heading || "'Inter', sans-serif",
         '--site-btn-radius': themeSettings.button_radius || '8px',
-        background: 'transparent',
-        width: '100%',
-        minHeight: '100%',
-        padding: '0', 
-        position: 'relative'
     };
 
     return (
-        <div style={{ padding: '0 2rem 2rem 2rem' }}>
+        <div className="px-8 pb-8">
             {blocks.length === 0 && (
                 <div
                     ref={emptyDropRef}
-                    style={{
-                        padding: '3rem',
-                        textAlign: 'center',
-                        border: '2px dashed var(--platform-border-color)',
-                        borderRadius: '12px',
-                        color: 'var(--platform-text-secondary)',
-                        margin: '20px 0',
-                        background: 'var(--platform-bg)',
-                        transition: 'all 0.3s ease',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        overflow: 'hidden'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.target.style.borderColor = 'var(--platform-accent)';
-                        e.target.style.color = 'var(--platform-accent)';
-                        e.target.style.background = 'rgba(var(--platform-accent-rgb), 0.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.borderColor = 'var(--platform-border-color)';
-                        e.target.style.color = 'var(--platform-text-secondary)';
-                        e.target.style.background = 'var(--platform-bg)';
-                    }}
+                    className="
+                        p-12 text-center border-2 border-dashed border-(--platform-border-color) rounded-xl 
+                        text-(--platform-text-secondary) my-5 bg-(--platform-bg) transition-all duration-300 
+                        cursor-pointer relative overflow-hidden
+                        hover:border-(--platform-accent) hover:text-(--platform-accent) hover:bg-[rgba(var(--platform-accent-rgb),0.05)]
+                    "
                 >
-                    <div style={{ marginBottom: '1rem', color: 'var(--platform-accent)', display: 'flex', justifyContent: 'center' }}>
+                    <div className="mb-4 text-(--platform-accent) flex justify-center">
                         <PackageOpen size={48} />
                     </div>
-                    <h3 style={{ color: 'inherit', marginBottom: '0.5rem', fontSize: '1.2rem' }}>
+                    <h3 className="text-inherit mb-2 text-[1.2rem]">
                         Початок роботи
                     </h3>
-                    <p style={{ margin: 0, fontSize: '0.95rem', opacity: 0.8 }}>
+                    <p className="m-0 text-[0.95rem] opacity-80">
                         Перетягніть блок з бібліотеки або натисніть "+" у панелі додавання блоків
                     </p>
                 </div>
             )}
 
             <div 
-                className="site-theme-preview" 
+                className="site-theme-preview w-full min-h-full p-0 relative bg-transparent" 
                 style={siteIsolationStyles}
                 data-site-mode={siteData?.site_theme_mode || 'light'}
                 data-site-accent={siteData?.site_theme_accent || 'orange'}
@@ -242,27 +218,10 @@ const BlockEditor = ({
                 {blocks.length > 0 && !isHeaderMode && (
                     <div 
                         ref={bottomDropRef}
-                        style={{
-                            height: '150px',
-                            marginTop: '-12px',
-                            width: '100%',
-                            background: 'transparent',
-                            position: 'relative',
-                            zIndex: 1
-                        }}
+                        className="h-37.5 -mt-3 w-full bg-transparent relative z-1"
                     >
                         {isOverBottom && (
-                            <div style={{
-                                position: 'absolute',
-                                top: '0',
-                                left: 0, 
-                                right: 0,
-                                height: '4px',
-                                backgroundColor: 'var(--platform-accent)',
-                                borderRadius: '2px',
-                                boxShadow: '0 0 6px rgba(0,0,0,0.3)',
-                                zIndex: 100,
-                            }} />
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-(--platform-accent) rounded-sm shadow-md z-50" />
                         )}
                     </div>
                 )}

@@ -6,7 +6,6 @@ import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 
 const API_URL = 'http://localhost:5000';
-
 const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const cartContext = useContext(CartContext);
     const authContext = useContext(AuthContext);
@@ -28,7 +27,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
         }
         return ['https://placehold.co/300?text=No+Image'];
     }, [product.image_gallery]);
-
     const isOwner = user && siteData && user.id === siteData.user_id;
     const hasDiscount = product.sale_percentage > 0;
     const finalPrice = product.price ? (hasDiscount 
@@ -40,27 +38,16 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const productLink = sitePath 
         ? `/site/${sitePath}/product/${product.id}` 
         : `/product/${product.id}`; 
-
-    const handleMouseEnter = (e) => {
-        if (!isEditorPreview) {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.1)';
-        }
+    const handleMouseEnter = () => {
         setIsHovered(true);
-
         if (isEditorPreview || images.length <= 1) return;
         intervalRef.current = setInterval(() => {
             setActiveImgIndex(prev => (prev + 1) % images.length);
         }, 1200);
     };
 
-    const handleMouseLeave = (e) => {
-        if (!isEditorPreview) {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-        }
+    const handleMouseLeave = () => {
         setIsHovered(false);
-        
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -83,7 +70,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             }
             return;
         }
-        
         if (addToCart) {
             addToCart(product, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
         }
@@ -92,138 +78,101 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     return (
         <Link 
             to={isEditorPreview ? '#' : productLink}
-            style={{
-                textDecoration: 'none', 
-                pointerEvents: isEditorPreview ? 'none' : 'auto', 
-                color: 'inherit',
-                display: 'block',
-                height: '100%',
-                width: '100%',
-                minWidth: 0
-            }}
             onClick={(e) => isEditorPreview && e.preventDefault()}
+            className={`
+                block h-full w-full min-w-0 no-underline text-inherit 
+                ${isEditorPreview ? 'pointer-events-none' : 'pointer-events-auto'}
+            `}
         >
             <div 
+                className={`
+                    border border-(--site-border-color) rounded-lg overflow-hidden bg-(--site-card-bg) 
+                    h-full w-full flex flex-col relative transition-all duration-200 box-border
+                `}
                 style={{
-                    border: '1px solid var(--site-border-color)',
-                    borderRadius: '8px', 
-                    overflow: 'hidden',
-                    background: 'var(--site-card-bg)',
-                    height: '100%',
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    position: 'relative',
-                    cursor: isEditorPreview ? 'default' : 'pointer',
-                    boxSizing: 'border-box'
+                    transform: (!isEditorPreview && isHovered) ? 'translateY(-4px)' : 'translateY(0)',
+                    boxShadow: (!isEditorPreview && isHovered) ? '0 10px 20px rgba(0,0,0,0.1)' : 'none'
                 }}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
             >
-                <div style={{ position: 'relative', paddingTop: '100%', overflow: 'hidden', backgroundColor: 'var(--site-bg)' }}>
+                <div className="relative pt-[100%] overflow-hidden bg-(--site-bg)">
                     {images.map((imgSrc, idx) => (
                         <img 
                             key={idx}
                             src={imgSrc} 
                             alt={product.name}
+                            className={`
+                                absolute top-0 left-0 w-full h-full object-contain p-2.5 box-border transition-all duration-500 ease-in-out
+                            `}
                             style={{
-                                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                                objectFit: 'contain', 
                                 opacity: idx === activeImgIndex ? 1 : 0,
                                 transform: `scale(${idx === activeImgIndex && isHovered ? 1.05 : 1})`,
-                                transition: 'opacity 0.3s ease, transform 0.5s ease',
                                 filter: isSoldOut ? 'grayscale(100%)' : 'none',
-                                padding: '10px', boxSizing: 'border-box'
                             }}
                         />
                     ))}
 
                     {images.length > 1 && !isSoldOut && (
-                        <div style={{
-                            position: 'absolute', bottom: '10px', left: 0, right: 0,
-                            display: 'flex', justifyContent: 'center', gap: '4px', zIndex: 2,
-                            opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s'
-                        }}>
+                        <div className={`
+                            absolute bottom-2.5 left-0 right-0 flex justify-center gap-1 z-10 transition-opacity duration-200
+                        `} style={{ opacity: isHovered ? 1 : 0 }}>
                             {images.map((_, idx) => (
-                                <div key={idx} style={{
-                                    width: '6px', height: '6px', borderRadius: '50%',
-                                    background: idx === activeImgIndex ? 'var(--site-accent)' : 'rgba(0,0,0,0.1)',
-                                    transition: 'all 0.3s ease'
-                                }} />
+                                <div key={idx} 
+                                    className="w-1.5 h-1.5 rounded-full transition-all duration-300"
+                                    style={{
+                                        background: idx === activeImgIndex ? 'var(--site-accent)' : 'rgba(0,0,0,0.1)'
+                                    }} 
+                                />
                             ))}
                         </div>
                     )}
-
+                    
                     {hasDiscount && !isSoldOut && (
-                        <div style={{
-                            position: 'absolute', top: '8px', right: '8px',
-                            background: '#e53e3e', color: 'white',
-                            padding: '2px 6px', borderRadius: '4px',
-                            fontSize: '0.75rem', fontWeight: 'bold', zIndex: 3,
-                        }}>
+                        <div className="absolute top-2 right-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-xs font-bold z-10">
                             -{product.sale_percentage}%
                         </div>
                     )}
 
                     {isSoldOut && (
-                        <div style={{
-                            position: 'absolute', inset: 0,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: 'rgba(255,255,255,0.8)',
-                            color: '#555', fontWeight: 'bold', zIndex: 3,
-                            backdropFilter: 'blur(2px)'
-                        }}>
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-gray-600 font-bold z-10 backdrop-blur-sm">
                             Закінчився
                         </div>
                     )}
                 </div>
-                
-                <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <h4 style={{
-                        margin: '0 0 8px 0', fontSize: '1rem', color: 'var(--site-text-primary)',
-                        fontWeight: '600',
-                        fontFamily: fontStyles?.content || 'inherit',
-                        lineHeight: '1.4',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word'
-                    }}>
+                <div className="p-4 flex-1 flex flex-col min-w-0">
+                    <h4 
+                        className="m-0 mb-2 text-base text-(--site-text-primary) font-semibold leading-snug line-clamp-2 overflow-hidden text-ellipsi wrap-break-words"
+                        style={{ fontFamily: fontStyles?.content || 'inherit' }}
+                    >
                         {product.name}
                     </h4>
                     
-                    <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                    <div className="mt-auto flex justify-between items-center">
+                        <div className="min-w-0 flex-1 overflow-hidden">
                             {hasDiscount ? (
-                                <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span style={{ color: '#e53e3e', fontWeight: 'bold', fontSize: '1.1rem' }}>{finalPrice} ₴</span>
-                                    <span style={{ textDecoration: 'line-through', fontSize: '0.85rem', color: 'var(--site-text-secondary)' }}>
+                                <div className="flex flex-col">
+                                    <span className="text-red-600 font-bold text-lg">{finalPrice} ₴</span>
+                                    <span className="text-xs text-(--site-text-secondary) line-through">
                                         {product.price} ₴
                                     </span>
                                 </div>
                             ) : (
-                                <span style={{ color: 'var(--site-text-primary)', fontWeight: 'bold', fontSize: '1.1rem' }}>{product.price} ₴</span>
+                                <span className="text-(--site-text-primary) font-bold text-lg">{product.price} ₴</span>
                             )}
                         </div>
                         
                         <button
                             onClick={handleAction}
                             disabled={isSoldOut || (isOwner && !hasVariants)}
+                            className={`
+                                w-9 h-9 flex items-center justify-center rounded-lg ml-2 shrink-0 transition-all duration-200
+                                ${isSoldOut || isOwner ? 'cursor-default' : 'cursor-pointer'}
+                            `}
                             style={{
                                 background: isOwner ? 'transparent' : 'var(--site-accent)',
                                 color: isOwner ? 'var(--site-text-secondary)' : 'var(--site-accent-text)',
-                                border: isOwner ? '1px solid var(--site-border-color)' : 'none', 
-                                borderRadius: '8px',
-                                width: '36px', height: '36px',
-                                cursor: (isSoldOut || isOwner) ? 'default' : 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                transition: 'all 0.2s ease',
-                                flexShrink: 0,
-                                marginLeft: '8px'
+                                border: isOwner ? '1px solid var(--site-border-color)' : 'none',
                             }}
                         >
                             {isOwner ? (

@@ -53,7 +53,6 @@ const MediaLibraryPage = () => {
     const dragCounter = useRef(0);
     const fileInputRef = useRef(null);
     const { confirm } = useConfirm();
-
     useEffect(() => {
         fetchMedia();
     }, []);
@@ -307,7 +306,7 @@ const MediaLibraryPage = () => {
         stickyHeader: {
             position: 'sticky',
             top: 0,
-            zIndex: 100,
+            zIndex: 90,
             backgroundColor: 'var(--platform-bg)',
             borderBottom: '1px solid var(--platform-border-color)',
         },
@@ -318,7 +317,8 @@ const MediaLibraryPage = () => {
             alignItems: 'center',
             height: '60px', 
             position: 'relative',
-            borderBottom: '1px solid var(--platform-border-color)'
+            borderBottom: '1px solid var(--platform-border-color)',
+            color: 'var(--platform-text-primary)'
         },
         mainContent: {
             display: 'flex',
@@ -394,7 +394,8 @@ const MediaLibraryPage = () => {
             {isDragging && (
                 <div style={{
                     position: 'fixed', inset: 0, zIndex: 200, 
-                    backgroundColor: 'rgba(var(--platform-accent-rgb), 0.1)', border: '4px dashed var(--platform-accent)',
+                    backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', 
+                    border: '4px dashed var(--platform-accent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: 'var(--platform-accent)', fontSize: '1.5rem', fontWeight: 'bold', pointerEvents: 'none',
                     margin: '2rem' 

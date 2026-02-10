@@ -6,14 +6,14 @@ import AccentColorSelector from '../../../shared/ui/complex/AccentColorSelector'
 
 const ProfileAppearanceTab = () => {
     const { platformMode, setPlatformMode, platformAccent, setPlatformAccent } = useContext(ThemeContext);
-    const container = { maxWidth: '800px', margin: '0 auto' };
+    const container = { maxWidth: '800px', margin: '0 auto', width: '100%' };
     const card = { 
         background: 'var(--platform-card-bg)', 
         borderRadius: '16px', 
         border: '1px solid var(--platform-border-color)', 
         padding: '32px', 
         marginBottom: '24px', 
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)' 
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' 
     };
     const cardTitle = { 
         fontSize: '1.3rem', 
@@ -39,6 +39,10 @@ const ProfileAppearanceTab = () => {
                 </div>
 
                 <div style={{ marginBottom: 0 }}>
+                    <h3 style={cardTitle}>Акцентний колір</h3>
+                    <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '16px', fontSize: '0.9rem' }}>
+                        Оберіть основний колір для кнопок та активних елементів.
+                    </p>
                      <AccentColorSelector 
                         value={platformAccent}
                         onChange={setPlatformAccent}

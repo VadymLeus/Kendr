@@ -22,7 +22,6 @@ const CookieBanner = ({ settings, siteId }) => {
     };
 
     if (!isVisible) return null;
-
     const positionStyle = settings.position === 'top' 
         ? { top: '0', bottom: 'auto', borderRadius: '0 0 12px 12px', transform: 'translateX(-50%) translateY(0)' }
         : { bottom: '20px', top: 'auto', borderRadius: '12px', transform: 'translateX(-50%)' };
@@ -33,50 +32,47 @@ const CookieBanner = ({ settings, siteId }) => {
             left: '50%',
             width: '90%',
             maxWidth: '600px',
-            backgroundColor: 'var(--site-card-bg, #fff)', 
-            color: 'var(--site-text-primary, #000)',
+            backgroundColor: 'var(--site-bg)', 
+            color: 'var(--site-text-primary)',
             padding: '20px',
             boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
             display: 'flex',
             flexDirection: 'column',
             gap: '15px',
             zIndex: 10000,
-            border: '1px solid var(--site-border-color, #eee)',
+            border: '1px solid var(--site-border-color)',
             animation: 'slideUp 0.5s ease-out',
             ...positionStyle
         }}>
             <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5' }}>
                 {settings.text || "Цей сайт використовує файли cookie для покращення роботи."}
             </p>
-            
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 {(settings.showReject !== false) && (
                     <button 
                         onClick={() => handleAction('denied')}
                         style={{
-                            backgroundColor: 'var(--site-card-bg, #fff)',
-                            color: 'var(--site-text-secondary, #666)',
-                            border: '2px solid var(--site-border-color, #ddd)',
+                            backgroundColor: 'transparent',
+                            color: 'var(--site-text-secondary)',
+                            border: '1px solid var(--site-border-color)',
                             padding: '8px 20px',
-                            borderRadius: 'var(--btn-radius, 6px)',
+                            borderRadius: '6px',
                             cursor: 'pointer',
                             fontSize: '14px',
                             fontWeight: '600',
                             transition: 'all 0.2s ease',
                             flex: '1 1 auto',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            boxShadow: 'none'
                         }}
                         onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = 'var(--site-bg, #f8f9fa)';
-                            e.target.style.borderColor = 'var(--site-text-secondary, #999)';
-                            e.target.style.transform = 'translateY(-1px)';
-                            e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                            e.target.style.color = 'var(--site-text-primary)';
+                            e.target.style.borderColor = 'var(--site-text-primary)';
+                            e.target.style.backgroundColor = 'rgba(0,0,0,0.05)';
                         }}
                         onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'var(--site-card-bg, #fff)';
-                            e.target.style.borderColor = 'var(--site-border-color, #ddd)';
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                            e.target.style.color = 'var(--site-text-secondary)';
+                            e.target.style.borderColor = 'var(--site-border-color)';
+                            e.target.style.backgroundColor = 'transparent';
                         }}
                     >
                         {settings.rejectText || "Відхилити"}
@@ -86,11 +82,11 @@ const CookieBanner = ({ settings, siteId }) => {
                 <button 
                     onClick={() => handleAction('granted')}
                     style={{
-                        backgroundColor: 'var(--site-accent, #007bff)',
-                        color: 'var(--site-accent-text, #fff)',
+                        backgroundColor: 'var(--site-accent)',
+                        color: 'var(--site-accent-text)',
                         border: 'none',
                         padding: '8px 20px',
-                        borderRadius: 'var(--btn-radius, 6px)',
+                        borderRadius: '6px',
                         cursor: 'pointer',
                         fontWeight: 'bold',
                         fontSize: '14px',
@@ -99,14 +95,12 @@ const CookieBanner = ({ settings, siteId }) => {
                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                     }}
                     onMouseEnter={(e) => {
-                        e.target.style.opacity = '0.9';
+                        e.target.style.filter = 'brightness(1.1)';
                         e.target.style.transform = 'translateY(-1px)';
-                        e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
                     }}
                     onMouseLeave={(e) => {
-                        e.target.style.opacity = '1';
+                        e.target.style.filter = 'none';
                         e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
                     }}
                 >
                     {settings.acceptText || settings.buttonText || "Прийняти"}

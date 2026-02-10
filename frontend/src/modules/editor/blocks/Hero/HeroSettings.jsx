@@ -45,7 +45,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
         setLocalTitle(safeData.title);
         setLocalSubtitle(safeData.subtitle);
     }, [safeData.title, safeData.subtitle]);
-
     const handleChange = (name, value) => {
         onChange({ ...safeData, [name]: value }, true);
     };
@@ -90,20 +89,20 @@ const HeroSettings = ({ data, onChange, siteData }) => {
     };
 
     const bgTypeOptions = [
-        { value: 'image', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><Image size={16}/> Фото</div> },
-        { value: 'video', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><Video size={16}/> Відео</div> }
+        { value: 'image', label: <div className="flex items-center gap-1.5"><Image size={16}/> Фото</div> },
+        { value: 'video', label: <div className="flex items-center gap-1.5"><Video size={16}/> Відео</div> }
     ];
 
     const themeOptions = [
-        { value: 'light', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><Sun size={16}/> Світла</div>, title: 'Темний текст на світлому' },
-        { value: 'dark', label: <div style={{display:'flex', alignItems:'center', gap:'6px'}}><Moon size={16}/> Темна</div>, title: 'Світлий текст на темному' },
+        { value: 'light', label: <div className="flex items-center gap-1.5"><Sun size={16}/> Світла</div>, title: 'Темний текст на світлому' },
+        { value: 'dark', label: <div className="flex items-center gap-1.5"><Moon size={16}/> Темна</div>, title: 'Світлий текст на темному' },
     ];
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}> 
+        <div className="flex flex-col gap-6"> 
             <div>
                 <SectionTitle icon={<Palette size={18}/>}>Фон блоку</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Тип фону</label>
                     <ToggleGroup 
                         options={bgTypeOptions}
@@ -113,9 +112,9 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                 </div>
 
                 {safeData.bg_type === 'image' && (
-                    <div style={commonStyles.formGroup}>
+                    <div className="mb-5">
                         <label style={commonStyles.label}>Зображення</label>
-                        <div style={{height: '200px'}}>
+                        <div className="h-50">
                             <UniversalMediaInput 
                                 type="image"
                                 value={safeData.bg_image}
@@ -128,9 +127,9 @@ const HeroSettings = ({ data, onChange, siteData }) => {
 
                 {safeData.bg_type === 'video' && (
                     <>
-                        <div style={commonStyles.formGroup}>
+                        <div className="mb-5">
                             <label style={commonStyles.label}>Відео файл</label>
-                            <div style={{height: '150px', marginBottom: '8px'}}>
+                            <div className="h-37.5 mb-2">
                                 <UniversalMediaInput 
                                     type="video"
                                     value={safeData.bg_video}
@@ -140,12 +139,12 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                             </div>
                         </div>
 
-                        <div style={commonStyles.formGroup}>
-                            <label style={{...commonStyles.label, display: 'flex', alignItems: 'center', gap: '6px'}}>
+                        <div className="mb-5">
+                            <label className="flex items-center gap-1.5 mb-1.5 font-medium text-sm text-(--platform-text-primary)">
                                 <ImageIcon size={14} />
                                 Обкладинка (Poster)
                             </label>
-                            <div style={{height: '150px'}}>
+                            <div className="h-37.5">
                                 <UniversalMediaInput 
                                     type="image"
                                     value={safeData.bg_image}
@@ -157,7 +156,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                     </>
                 )}
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Тема тексту (Контраст)</label>
                     <ToggleGroup 
                         options={themeOptions}
@@ -176,7 +175,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
 
             <div>
                 <SectionTitle icon={<Type size={18}/>}>Вміст</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <FontSelector 
                         value={safeData.titleFontFamily}
                         onChange={(val) => handleChange('titleFontFamily', val)}
@@ -185,7 +184,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
                 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <Input 
                         label="Заголовок"
                         type="text" 
@@ -197,7 +196,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <FontSelector 
                         value={safeData.contentFontFamily}
                         onChange={(val) => handleChange('contentFontFamily', val)}
@@ -206,29 +205,19 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
                 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Підзаголовок</label>
                     <textarea 
-                        name="subtitle" 
-                        className="custom-scrollbar"
+                        name="subtitle"
+                        className="custom-scrollbar custom-input min-h-20 max-h-50 h-25 resize-y overflow-y-auto"
                         value={localSubtitle}
                         onChange={(e) => setLocalSubtitle(e.target.value)} 
                         onBlur={handleSubtitleBlur}
                         placeholder="Короткий опис або слоган"
-                        style={{
-                            ...commonStyles.textarea, 
-                            height: '100px',
-                            minHeight: '80px',
-                            maxHeight: '200px',
-                            resize: 'vertical',
-                            fontFamily: 'inherit',
-                            fontSize: '0.9rem',
-                            overflowY: 'auto'
-                        }}
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <AlignmentControl 
                         label="Вирівнювання тексту"
                         value={safeData.alignment}

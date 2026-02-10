@@ -13,7 +13,6 @@ const VerifyEmailPage = () => {
     const effectRan = useRef(false);
     useEffect(() => {
         if (effectRan.current === true || !token) return;
-
         const verify = async () => {
             effectRan.current = true;
             try {
@@ -31,96 +30,53 @@ const VerifyEmailPage = () => {
                 }
             }
         };
-
         verify();
     }, [token, navigate]);
-
-    const containerStyle = {
-        minHeight: '100vh',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--platform-bg)',
-        padding: '20px'
-    };
-
-    const cardStyle = {
-        width: '100%',
-        maxWidth: '450px',
-        background: 'var(--platform-card-bg)',
-        padding: '3rem 2rem',
-        borderRadius: '16px',
-        border: '1px solid var(--platform-border-color)',
-        boxShadow: '0 10px 40px rgba(0,0,0,0.08)',
-        textAlign: 'center',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '1.5rem'
-    };
-
-    const titleStyle = {
-        fontSize: '1.5rem',
-        fontWeight: '700',
-        color: 'var(--platform-text-primary)',
-        margin: 0
-    };
-
-    const textStyle = {
-        color: 'var(--platform-text-secondary)',
-        fontSize: '1rem',
-        lineHeight: 1.6,
-        margin: 0
-    };
-
-    const buttonStyle = {
-        padding: '12px 24px',
-        background: 'var(--platform-accent)',
-        color: 'white',
-        border: 'none',
-        borderRadius: '8px',
-        fontSize: '1rem',
-        fontWeight: '600',
-        cursor: 'pointer',
-        marginTop: '1rem'
-    };
-
     return (
-        <div style={containerStyle}>
-            <div style={cardStyle}>
+        <div className="min-h-screen w-full flex items-center justify-center bg-(--platform-bg) p-5">
+            <div className="w-full max-w-112.5 bg-(--platform-card-bg) p-12 px-8 rounded-2xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] text-center flex flex-col items-center gap-6">
                 {status === 'verifying' && (
                     <>
-                        <div style={{ color: 'var(--platform-accent)' }}>
+                        <div className="text-(--platform-accent) animate-spin">
                             <Loader size={64} />
                         </div>
-                        <h2 style={titleStyle}>Верифікація...</h2>
-                        <p style={textStyle}>{message}</p>
+                        <div>
+                            <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2">Верифікація...</h2>
+                            <p className="text-(--platform-text-secondary)]">{message}</p>
+                        </div>
                     </>
                 )}
-                
                 {status === 'success' && (
                     <>
-                        <div style={{ color: 'var(--platform-success)' }}>
+                        <div className="text-(--platform-success)">
                             <CheckCircle size={80} />
                         </div>
-                        <h2 style={titleStyle}>Успішно!</h2>
-                        <p style={textStyle}>{message}</p>
-                        <p style={{...textStyle, fontSize: '0.9rem', opacity: 0.8}}>Перенаправлення на сторінку входу...</p>
-                        <button onClick={() => navigate('/login')} style={buttonStyle}>
+                        <div>
+                            <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2">Успішно!</h2>
+                            <p className="text-(--platform-text-secondary) mb-1">{message}</p>
+                            <p className="text-sm text-(--platform-text-secondary) opacity-80">Перенаправлення на сторінку входу...</p>
+                        </div>
+                        <button 
+                            onClick={() => navigate('/login')} 
+                            className="px-6 py-3 bg-(--platform-accent) text-white border-none rounded-lg text-base font-semibold cursor-pointer mt-4 hover:brightness-95 transition-all"
+                        >
                             Увійти зараз
                         </button>
                     </>
                 )}
-                
                 {status === 'error' && (
                     <>
-                        <div style={{ color: 'var(--platform-danger)' }}>
+                        <div className="text-(--platform-danger)">
                             <AlertCircle size={80} />
                         </div>
-                        <h2 style={titleStyle}>Помилка</h2>
-                        <p style={textStyle}>{message}</p>
-                        <button onClick={() => navigate('/login')} style={buttonStyle}>
+                        <div>
+                            <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2">Помилка</h2>
+                            <p className="text-(--platform-text-secondary)">{message}</p>
+                        </div>
+                        <button 
+                            onClick={() => navigate('/login')} 
+                            className="px-6 py-3 bg-(--platform-accent) text-white border-none rounded-lg text-base font-semibold cursor-pointer mt-4 hover:brightness-95 transition-all"
+                        >
                             Повернутися до входу
                         </button>
                     </>

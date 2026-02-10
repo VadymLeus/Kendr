@@ -18,11 +18,12 @@ const REASON_OPTIONS = [
     { value: 'scam', label: 'Шахрайство', icon: ShieldAlert }, { value: 'inappropriate_content', label: 'Заборонений контент', icon: FileWarning },
     { value: 'copyright', label: 'Авторські права', icon: Copyright }, { value: 'other', label: 'Інше', icon: HelpCircle }
 ];
+
 const STATUS_CONFIG = {
-    new: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', label: 'Нова', icon: AlertTriangle },
-    dismissed: { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280', label: 'Відхилено', icon: X },
-    banned: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', label: 'Забанено', icon: Ban },
-    resolved: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981', label: 'Вирішено', icon: CheckCircle }
+    new: { bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)', label: 'Нова', icon: AlertTriangle },
+    dismissed: { bg: 'var(--platform-hover-bg)', color: 'var(--platform-text-secondary)', label: 'Відхилено', icon: X },
+    banned: { bg: 'color-mix(in srgb, var(--platform-text-primary), transparent 90%)', color: 'var(--platform-text-primary)', label: 'Забанено', icon: Ban },
+    resolved: { bg: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)', label: 'Вирішено', icon: CheckCircle }
 };
 
 const AdminReportsPage = () => {
@@ -31,16 +32,13 @@ const AdminReportsPage = () => {
     const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
     const { filteredData: rawReports, loading, searchQuery, setSearchQuery, refresh } = useDataList(`/admin/reports?status=${statusFilter}`, ['site_title', 'reporter_email', 'reason', 'description', 'id']);
     const { isOpen, config, requestConfirm, close } = useConfirmDialog();
-    
     const processedReports = useMemo(() => {
         let res = reasonFilter !== 'all' ? rawReports.filter(i => i.reason === reasonFilter) : [...rawReports];
         return res.sort((a, b) => (a[sortConfig.key] < b[sortConfig.key] ? -1 : 1) * (sortConfig.direction === 'asc' ? 1 : -1));
     }, [rawReports, reasonFilter, sortConfig]);
-
     const handleSort = (key) => setSortConfig(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const filterByUser = (email, e) => { e.stopPropagation(); setSearchQuery(email); toast.info(`Фільтр: ${email}`); };
     const handleAction = async (fn, msg) => { try { await fn(); toast.success(msg); close(); refresh(); } catch { toast.error('Помилка'); } };
-
     const actions = {
         dismiss: (id) => requestConfirm({ title: 'Відхилити?', message: 'В архів без санкцій.', type: 'warning', confirmLabel: 'Відхилити', onConfirm: () => handleAction(() => apiClient.put(`/admin/reports/${id}/dismiss`), 'Відхилено') }),
         ban: (id) => requestConfirm({ title: 'Заблокувати?', message: 'Сайт буде заблоковано.', type: 'danger', confirmLabel: 'Бан', onConfirm: () => handleAction(() => apiClient.post(`/admin/reports/${id}/ban`), 'Заблоковано') }),
@@ -54,7 +52,6 @@ const AdminReportsPage = () => {
             reporter: r.reporter_email || 'Анонім', status: STATUS_CONFIG[r.status]?.label || r.status, created: new Date(r.created_at).toLocaleString('uk-UA'), desc: r.description
         })), { id: 'ID', site: 'Сайт', url: 'URL', reason: 'Причина', reporter: 'Скаржник', status: 'Статус', created: 'Дата', desc: 'Опис' }, `reports_${new Date().toLocaleDateString('uk-UA')}`);
     };
-
     return (
         <AdminPageLayout title="Центр Скарг" icon={ShieldAlert} count={processedReports.length} onRefresh={refresh} loading={loading}>
             <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -79,15 +76,15 @@ const AdminReportsPage = () => {
                         const RIcon = (REASON_OPTIONS.find(o => o.value === r.reason) || REASON_OPTIONS[5]).icon;
                         const sStyle = STATUS_CONFIG[r.status] || STATUS_CONFIG.new;
                         return (
-                            <AdminRow key={r.id} style={{ background: r.status === 'new' ? 'rgba(59, 130, 246, 0.02)' : 'transparent' }}>
+                            <AdminRow key={r.id} style={{ background: r.status === 'new' ? 'color-mix(in srgb, var(--platform-danger), transparent 98%)' : 'transparent' }}>
                                 <AdminCell style={{opacity: 0.6}}>#{r.id}</AdminCell>
                                 <AdminCell><div style={{ fontWeight: '600', fontSize: '15px' }}>{r.site_title || 'N/A'}</div>{r.site_path && <a href={`/site/${r.site_path}`} target="_blank" onClick={e=>e.stopPropagation()}><Button variant="outline" icon={<ExternalLink size={12} />} style={{ height: '24px', fontSize: '11px', padding: '0 8px' }}>Перевірити</Button></a>}</AdminCell>
-                                <AdminCell><GenericBadge bg="rgba(245, 158, 11, 0.1)" color="#d97706" icon={RIcon} style={{marginBottom:'4px'}}>{REASON_OPTIONS.find(o=>o.value===r.reason)?.label}</GenericBadge>{r.description && <div style={{ fontSize: '12px', opacity: 0.7, overflow: 'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis', maxWidth:'200px' }}>"{r.description}"</div>}</AdminCell>
+                                <AdminCell><GenericBadge bg="color-mix(in srgb, var(--platform-warning), transparent 90%)" color="var(--platform-warning)" icon={RIcon} style={{marginBottom:'4px'}}>{REASON_OPTIONS.find(o=>o.value===r.reason)?.label}</GenericBadge>{r.description && <div style={{ fontSize: '12px', opacity: 0.7, overflow: 'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis', maxWidth:'200px' }}>"{r.description}"</div>}</AdminCell>
                                 <AdminCell><div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}><span title={r.reporter_email}>{r.reporter_email || 'Анонім'}</span>{r.reporter_email && <div onClick={(e)=>filterByUser(r.reporter_email, e)} style={{cursor:'pointer', opacity:0.5}}><User size={14}/></div>}</div></AdminCell>
                                 <AdminCell><div style={{fontSize: '13px'}}>{new Date(r.created_at).toLocaleDateString()}</div><div style={{fontSize: '11px', opacity: 0.6}}>{new Date(r.created_at).toLocaleTimeString()}</div></AdminCell>
                                 <AdminCell><GenericBadge color={sStyle.color} bg={sStyle.bg} icon={sStyle.icon}>{sStyle.label}</GenericBadge></AdminCell>
                                 <AdminCell align="right"><div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
-                                    {r.status === 'new' ? <><Button variant="ghost" style={{ color: '#ef4444', padding: '6px' }} title="Бан" onClick={() => actions.ban(r.id)} icon={<Check size={18} />} /><Button variant="ghost" style={{ color: 'var(--platform-text-secondary)', padding: '6px' }} title="Відхилити" onClick={() => actions.dismiss(r.id)} icon={<X size={18} />} /></> : <Button variant="ghost" style={{ color: '#3b82f6', padding: '6px' }} title="Відновити" onClick={() => actions.reopen(r.id)} icon={<RotateCcw size={18} />} />}
+                                    {r.status === 'new' ? <><Button variant="ghost" style={{ color: 'var(--platform-danger)', padding: '6px' }} title="Бан" onClick={() => actions.ban(r.id)} icon={<Check size={18} />} /><Button variant="ghost" style={{ color: 'var(--platform-text-secondary)', padding: '6px' }} title="Відхилити" onClick={() => actions.dismiss(r.id)} icon={<X size={18} />} /></> : <Button variant="ghost" style={{ color: 'var(--platform-accent)', padding: '6px' }} title="Відновити" onClick={() => actions.reopen(r.id)} icon={<RotateCcw size={18} />} />}
                                 </div></AdminCell>
                             </AdminRow>
                         );

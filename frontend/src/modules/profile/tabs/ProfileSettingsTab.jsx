@@ -16,7 +16,6 @@ const ProfileSettingsTab = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
-
     useEffect(() => {
         if (!user) {
             navigate('/login');
@@ -24,7 +23,6 @@ const ProfileSettingsTab = () => {
             setFormData(prev => ({ ...prev, username: user.username, newPassword: '', currentPassword: '' }));
         }
     }, [user, navigate]);
-
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const passwordValidation = validatePassword(formData.newPassword);
     const handleUpdateProfile = async (e) => {
@@ -54,6 +52,7 @@ const ProfileSettingsTab = () => {
             updateUser(response.data.user);
             toast.success('Профіль успішно оновлено!');
         } catch (err) {
+            console.error(err);
         } finally {
             setIsLoading(false);
             setFormData(prev => ({...prev, newPassword: '', currentPassword: ''}));
@@ -70,6 +69,7 @@ const ProfileSettingsTab = () => {
             updateUser(response.data.user);
             toast.success('Аватар успішно оновлено!');
         } catch (err) {
+            console.error(err);
         } finally {
             setIsAvatarUploading(false);
         }
@@ -84,6 +84,7 @@ const ProfileSettingsTab = () => {
                 toast.success('Аватар успішно оновлено!');
             }
         } catch (err) {
+            console.error(err);
         } finally {
             setIsLoading(false);
         }
@@ -111,24 +112,26 @@ const ProfileSettingsTab = () => {
         marginTop: '8px', 
         borderRadius: '8px', 
         border: '1px solid var(--platform-border-color)', 
-        background: 'var(--platform-card-bg)', 
-        color: 'var(--platform-text-primary)' 
+        background: 'var(--platform-input-bg)', 
+        color: 'var(--platform-text-primary)',
+        outline: 'none',
+        transition: 'border-color 0.2s'
     };
     
     const labelStyle = { 
         display: 'block', 
         color: 'var(--platform-text-primary)', 
-        marginBottom: '0.5rem' 
+        marginBottom: '0.5rem',
+        fontWeight: '500'
     };
 
     return (
         <div>
             {isModalOpen && <AvatarModal onClose={() => setIsModalOpen(false)} onAvatarUpdate={handleAvatarUpdateFromModal} />}
-            
             <div style={gridContainerStyle}>
                 <div style={tileStyle}>
-                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Аватар</h3>
-                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Натисніть на зображення, щоб завантажити нове, або кнопку нижче для вибору стандартного.</p>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Аватар</h3>
+                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem', fontSize: '0.9rem'}}>Натисніть на зображення, щоб завантажити нове, або кнопку нижче для вибору стандартного.</p>
                     
                     <div style={{ 
                         textAlign: 'center', 
@@ -186,7 +189,6 @@ const ProfileSettingsTab = () => {
                                 </div>
                             </div>
                         </ImageUploader>
-
                         <button 
                             onClick={() => setIsModalOpen(true)}
                             className="btn btn-secondary"
@@ -198,8 +200,8 @@ const ProfileSettingsTab = () => {
                 </div>
 
                 <div style={tileStyle}>
-                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Загальні відомості</h3>
-                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>Змініть ім'я користувача.</p>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Загальні відомості</h3>
+                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem', fontSize: '0.9rem'}}>Змініть ім'я користувача.</p>
                     <form onSubmit={handleUpdateProfile}>
                         <div style={{ marginBottom: '1rem' }}>
                             <label style={labelStyle}>
@@ -211,6 +213,8 @@ const ProfileSettingsTab = () => {
                                 value={formData.username} 
                                 onChange={handleChange} 
                                 style={inputStyle} 
+                                onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
+                                onBlur={(e) => e.target.style.borderColor = 'var(--platform-border-color)'}
                             />
                         </div>
                         <button 
@@ -225,10 +229,10 @@ const ProfileSettingsTab = () => {
                 </div>
 
                 <div style={tileStyle}>
-                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>
+                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem', fontSize: '1.25rem' }}>
                         {hasPassword ? 'Змінити пароль' : 'Створити пароль'}
                     </h3>
-                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem'}}>
+                    <p style={{color: 'var(--platform-text-secondary)', marginBottom: '1rem', fontSize: '0.9rem'}}>
                         {hasPassword 
                             ? 'Зробіть пароль більш надійним.' 
                             : 'Додайте пароль, щоб входити не тільки через Google.'}
@@ -244,6 +248,8 @@ const ProfileSettingsTab = () => {
                                 onChange={handleChange} 
                                 style={inputStyle} 
                                 placeholder={hasPassword ? "Залиште пустим, якщо не міняєте" : "Придумайте пароль"} 
+                                onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
+                                onBlur={(e) => e.target.style.borderColor = 'var(--platform-border-color)'}
                             />
                             {formData.newPassword && (
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '8px', flexWrap: 'wrap' }}>
@@ -271,6 +277,8 @@ const ProfileSettingsTab = () => {
                                     style={inputStyle} 
                                     required={!!formData.newPassword}
                                     placeholder="Для підтвердження"
+                                    onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
+                                    onBlur={(e) => e.target.style.borderColor = 'var(--platform-border-color)'}
                                 />
                             </div>
                         )}

@@ -30,82 +30,27 @@ const FeaturesBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         content: contentFontFamily
     }, siteData);
 
-    const cssVarsString = Object.entries(cssVariables)
-        .map(([key, val]) => `${key}: ${val};`)
-        .join(' ');
-
-    const uniqueClass = `features-vars-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
-    const heightMap = { 
-        small: 'auto', 
-        medium: '600px', 
-        large: '800px', 
-        full: 'calc(100vh - 60px)',
-        auto: 'auto'
+    const uniqueClass = `features-scope-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
+    const heightClasses = { 
+        small: 'min-h-auto', 
+        medium: 'min-h-[600px]', 
+        large: 'min-h-[800px]', 
+        full: 'min-h-[calc(100vh-60px)]',
+        auto: 'min-h-auto'
     };
-
-    const gridStyle = {
-        display: 'grid',
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gap: '24px',
-        marginTop: '32px',
-        textAlign: layout === 'list' ? 'left' : align,
-        width: '100%'
-    };
-
-    const wrapperStyle = {
-        padding: '60px 20px',
-        backgroundColor: 'var(--site-bg, #ffffff)', 
-        color: 'var(--site-text-primary)',
-        border: 'none',
-        borderRadius: '0',
-        minHeight: heightMap[height] || 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        ...styles,
-        ...style 
-    };
-
     const isCard = layout === 'cards';
     const isList = layout === 'list';
-    
-    const getFlexAlign = () => {
-        if (isList) return 'flex-start'; 
-        if (align === 'center') return 'center';
-        if (align === 'right') return 'flex-end'; 
-        return 'flex-start'; 
+    const gridCols = {
+        1: 'md:grid-cols-1',
+        2: 'md:grid-cols-2',
+        3: 'md:grid-cols-3',
+        4: 'md:grid-cols-4'
     };
-
-    const getItemStyle = () => ({
-        display: 'flex',
-        flexDirection: isList ? 'row' : 'column',
-        alignItems: getFlexAlign(),
-        gap: '16px',
-        background: isCard ? 'var(--site-card-bg)' : 'transparent',
-        border: isCard ? `1px solid var(--site-border-color)` : 'none',
-        padding: isCard ? '24px' : '0',
-        borderRadius: isCard ? borderRadius : '0',
-        boxShadow: isCard ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
-        transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-        height: '100%',
-        position: 'relative',
-        zIndex: 1
-    });
-
-    const iconWrapperStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: showIconBackground ? '64px' : 'auto',
-        height: showIconBackground ? '64px' : 'auto',
-        borderRadius: showIconBackground ? '50%' : '0',
-        background: showIconBackground ? 'var(--site-accent)' : 'transparent',
-        color: showIconBackground ? '#ffffff' : 'var(--site-accent)',
-        flexShrink: 0,
-        marginBottom: isList ? '0' : '8px',
-        transition: 'all 0.3s ease',
-        boxShadow: showIconBackground ? '0 4px 10px rgba(0,0,0,0.15)' : 'none'
-    };
+    let alignClass = 'items-start text-left';
+    if (!isList) {
+        if (align === 'center') alignClass = 'items-center text-center';
+        else if (align === 'right') alignClass = 'items-end text-right';
+    }
 
     const renderIcon = (iconName) => {
         const IconComponent = ICON_MAP[iconName] || ICON_MAP.default;
@@ -113,72 +58,84 @@ const FeaturesBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     };
 
     return (
-        <div style={wrapperStyle} className={uniqueClass}>
+        <div 
+            className={`
+                py-15 px-5 flex flex-col justify-center bg-(--site-bg) text-(--site-text-primary)
+                ${heightClasses[height] || 'min-h-auto'}
+                ${uniqueClass}
+            `}
+            style={{ 
+                ...styles,
+                ...style,
+                ...cssVariables
+            }}
+        >
             <RenderFonts />
-            <style>{`.${uniqueClass} { ${cssVarsString} }`}</style>
-
+            <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
             <style>{`
-                .feature-item-hoverable:hover {
-                    ${isCard ? 'transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important;' : ''}
+                .${uniqueClass} .feature-card:hover {
+                    transform: translateY(-8px);
+                    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
                 }
-                .feature-item-hoverable:hover .feature-icon-wrapper {
+                .${uniqueClass} .feature-card:hover .feature-icon {
                     transform: scale(1.1) rotate(5deg);
                 }
-                @media (max-width: 768px) {
-                    .features-grid-resp-${columns} {
-                        grid-template-columns: 1fr !important;
-                    }
-                }
             `}</style>
-
             {title && (
-                <h2 style={{ 
-                    textAlign: 'center', 
-                    marginBottom: '10px',
-                    fontSize: '2rem',
-                    color: 'var(--site-text-primary)',
-                    fontFamily: fontStyles.title,
-                    width: '100%'
-                }}>
+                <h2 
+                    className="text-center mb-8 text-[2rem] text-(--site-text-primary) w-full leading-tight"
+                    style={{ fontFamily: fontStyles.title }}
+                >
                     {title}
                 </h2>
             )}
-
-            <div style={gridStyle} className={`features-grid-resp-${columns}`}>
+            <div 
+                className={`
+                    grid grid-cols-1 gap-6 w-full
+                    ${gridCols[columns] || 'md:grid-cols-2'}
+                `}
+            >
                 {items.map((item, index) => (
-                    <div key={item.id || index} className="feature-item-hoverable" style={getItemStyle()}>
-                        <div className="feature-icon-wrapper" style={iconWrapperStyle}>
+                    <div 
+                        key={item.id || index} 
+                        className={`
+                            flex relative z-10 h-full transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
+                            ${isList ? 'flex-row items-start gap-4' : `flex-col gap-4 ${alignClass}`}
+                            ${isCard ? 'feature-card bg-(--site-card-bg) border border-(--site-border-color) p-6 shadow-sm' : 'bg-transparent border-none p-0'}
+                        `}
+                        style={{ 
+                            borderRadius: isCard ? borderRadius : '0' 
+                        }}
+                    >
+                        <div 
+                            className={`
+                                feature-icon flex items-center justify-center shrink-0 transition-all duration-300 ease-out
+                                ${showIconBackground ? 'w-16 h-16 rounded-full bg-(--site-accent) text-white shadow-lg' : 'w-auto h-auto bg-transparent text-(--site-accent)'}
+                                ${(!isList && !showIconBackground) ? 'mb-2' : ''}
+                            `}
+                        >
                             {renderIcon(item.icon)}
                         </div>
-                        
-                        <div style={{ width: '100%' }}>
-                            <h4 style={{ 
-                                margin: '0 0 8px 0', 
-                                fontSize: '1.25rem', 
-                                fontWeight: 600,
-                                color: 'var(--site-text-primary)',
-                                fontFamily: fontStyles.content
-                            }}>
+                        <div className="w-full">
+                            <h4 
+                                className="m-0 mb-2 text-xl font-semibold text-(--site-text-primary)"
+                                style={{ fontFamily: fontStyles.content }}
+                            >
                                 {item.title}
                             </h4>
-                            <p style={{ 
-                                margin: 0, 
-                                color: 'var(--site-text-secondary)',
-                                lineHeight: '1.6',
-                                fontSize: '0.95rem',
-                                wordBreak: 'break-word',
-                                fontFamily: fontStyles.content
-                            }}>
+                            <p 
+                                className="m-0 text-(--site-text-secondary) leading-relaxed text-[0.95rem] wrap-break-word"
+                                style={{ fontFamily: fontStyles.content }}
+                            >
                                 {item.text}
                             </p>
                         </div>
                     </div>
                 ))}
             </div>
-
             {isEditorPreview && items.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '40px', opacity: 0.5, border: '2px dashed var(--site-border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                    <div style={{ marginBottom: '10px', color: 'var(--site-accent)' }}>
+                <div className="text-center p-10 opacity-50 border-2 border-dashed border-(--site-border-color) rounded-lg flex flex-col items-center justify-center w-full">
+                    <div className="mb-2.5 text-(--site-accent)">
                         <Star size={32} />
                     </div>
                     <span>Додайте переваги у налаштуваннях блоку</span>

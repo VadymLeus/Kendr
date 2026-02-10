@@ -42,177 +42,75 @@ const BlockSettingsModal = ({ block, isOpen, onClose, onSave, siteData }) => {
         onClose();
     };
 
-    const modalStyle = {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 2000,
-        backdropFilter: 'blur(4px)'
-    };
-
-    const contentStyle = {
-        background: 'var(--site-card-bg)',
-        padding: '30px',
-        borderRadius: '12px',
-        width: '90%',
-        maxWidth: '700px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-        position: 'relative',
-        border: '1px solid var(--site-border-color)'
-    };
-
-    const modalHeaderStyle = {
-        borderBottom: '1px solid var(--site-border-color)',
-        paddingBottom: '15px',
-        marginBottom: '20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    };
-
-    const closeButtonStyle = {
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        padding: '4px',
-        borderRadius: '4px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--site-text-secondary)',
-        transition: 'all 0.2s ease'
-    };
-
-    const warningTextStyle = {
-        color: 'var(--site-warning)',
-        marginBottom: '1rem'
-    };
-
-    const preStyle = {
-        background: 'var(--site-bg)',
-        padding: '15px',
-        borderRadius: '8px',
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-all',
-        border: '1px solid var(--site-border-color)',
-        color: 'var(--site-text-primary)',
-        fontSize: '0.9rem'
-    };
-
-    const buttonContainerStyle = {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        gap: '10px',
-        marginTop: '20px'
-    };
-
-    const buttonStyle = {
-        padding: '10px 20px',
-        border: 'none',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontWeight: '500',
-        transition: 'all 0.2s ease'
-    };
-
-    const secondaryButtonStyle = {
-        ...buttonStyle,
-        background: 'transparent',
-        color: 'var(--site-text-primary)',
-        border: '1px solid var(--site-border-color)'
-    };
-    
-    const primaryButtonStyle = {
-        ...buttonStyle,
-        background: 'var(--site-accent)',
-        color: 'var(--site-accent-text)',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    };
-
     return (
-        <div style={modalStyle} onClick={onClose}>
-            <div style={contentStyle} onClick={e => e.stopPropagation()} className="custom-scrollbar">
-                <div style={modalHeaderStyle}>
-                    <h4 style={{ 
-                        margin: 0,
-                        color: 'var(--site-text-primary)',
-                        fontSize: '1.25rem',
-                        fontWeight: '600'
-                    }}>
+        <div 
+            className="fixed inset-0 z-2000 flex justify-center items-center bg-black/60 backdrop-blur-xs" 
+            onClick={onClose}
+        >
+            <div 
+                className="bg-(--site-card-bg) border border-(--site-border-color) rounded-xl w-[90%] max-w-175 max-h-[90vh] overflow-y-auto shadow-2xl relative custom-scrollbar flex flex-col" 
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="flex justify-between items-center p-6 pb-4 border-b border-(--site-border-color) mb-5">
+                    <h4 className="m-0 text-(--site-text-primary) text-xl font-semibold">
                         Налаштування блоку: {block.type}
                     </h4>
                     <button 
                         onClick={onClose} 
-                        style={closeButtonStyle}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(0,0,0,0.05)';
-                            e.currentTarget.style.color = 'var(--site-text-primary)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = 'var(--site-text-secondary)';
-                        }}
+                        className="bg-transparent border-none cursor-pointer p-1 rounded flex items-center justify-center text-(--site-text-secondary) transition-all duration-200 hover:bg-black/5 hover:text-(--site-text-primary)"
                     >
                         <X size={20} />
                     </button>
                 </div>
-                
-                {SettingsComponent ? (
-                    <>
-                        <SettingsComponent 
-                            initialData={block.data} 
-                            onSave={handleInternalSave} 
-                            onClose={onClose}
-                            siteData={siteData}
-                        />
-                        <AnimationSettings 
-                            animationConfig={animationConfig} 
-                            onChange={setAnimationConfig} 
-                        />
-                    </>
-                ) : (
-                    <>
-                        <p style={warningTextStyle}>
-                            Редактор для цього блоку поки не реалізовано. Ось його дані:
-                        </p>
-                        <pre style={preStyle}>
-                            {JSON.stringify(block.data, null, 2)}
-                        </pre>
-                        
-                        <AnimationSettings 
-                            animationConfig={animationConfig} 
-                            onChange={setAnimationConfig} 
-                        />
+                <div className="px-6 pb-6">
+                    {SettingsComponent ? (
+                        <>
+                            <SettingsComponent 
+                                initialData={block.data} 
+                                onSave={handleInternalSave} 
+                                onClose={onClose}
+                                siteData={siteData}
+                            />
+                            <div className="mt-6 pt-6 border-t border-(--site-border-color)">
+                                 <AnimationSettings 
+                                    animationConfig={animationConfig} 
+                                    onChange={setAnimationConfig} 
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            <p className="text-(--site-warning) mb-4">
+                                Редактор для цього блоку поки не реалізовано. Ось його дані:
+                            </p>
+                            <pre className="bg-(--site-bg) p-4 rounded-lg border border-(--site-border-color) text-(--site-text-primary) text-sm whitespace-pre-wrap break-all">
+                                {JSON.stringify(block.data, null, 2)}
+                            </pre>
+                            
+                            <div className="mt-4 pt-4 border-t border-(--site-border-color)">
+                                <AnimationSettings 
+                                    animationConfig={animationConfig} 
+                                    onChange={setAnimationConfig} 
+                                />
+                            </div>
 
-                        <div style={buttonContainerStyle}>
-                            <button 
-                                onClick={onClose}
-                                style={secondaryButtonStyle}
-                                onMouseEnter={(e) => e.target.style.background = 'rgba(0,0,0,0.02)'}
-                                onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                            >
-                                Закрити
-                            </button>
-                            <button
-                                onClick={() => handleInternalSave(block.data)}
-                                style={primaryButtonStyle}
-                                onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-                                onMouseLeave={(e) => e.target.style.opacity = '1'}
-                            >
-                                Зберегти
-                            </button>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button 
+                                    onClick={onClose}
+                                    className="px-5 py-2.5 bg-transparent text-(--site-text-primary) border border-(--site-border-color) rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-black/5"
+                                >
+                                    Закрити
+                                </button>
+                                <button
+                                    onClick={() => handleInternalSave(block.data)}
+                                    className="px-5 py-2.5 bg-(--site-accent) text-(--site-accent-text) border-none rounded-md cursor-pointer font-medium text-sm transition-all shadow-sm hover:opacity-90"
+                                >
+                                    Зберегти
+                                </button>
+                            </div>
                         </div>
-                    </>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );

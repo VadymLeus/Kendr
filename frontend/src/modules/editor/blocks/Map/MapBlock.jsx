@@ -11,44 +11,33 @@ const parseSrcFromIframe = (embedCode) => {
 const MapBlock = ({ blockData, isEditorPreview, style }) => {
     const { embed_code, sizePreset = 'medium' } = blockData;
     const mapSrc = parseSrcFromIframe(embed_code);
-
-    const sizeMap = { small: '400px', medium: '800px', large: '100%' }; 
-    const maxWidth = sizeMap[sizePreset] || '800px';
-
-    const wrapperStyle = {
-        maxWidth: maxWidth,
-        margin: '0 auto',
-        width: '100%',
-        ...style
+    const maxWidthClasses = {
+        small: 'max-w-[400px]',
+        medium: 'max-w-[800px]',
+        large: 'max-w-full'
     };
-
+    
+    const wrapperClass = `mx-auto w-full ${maxWidthClasses[sizePreset] || 'max-w-[800px]'}`;
     if (!mapSrc) {
         return (
-            <div style={{ padding: '20px 0' }}>
-                <div style={{
-                    ...wrapperStyle,
-                    padding: '40px 20px',
-                    textAlign: 'center',
-                    background: 'var(--site-card-bg)', 
-                    border: isEditorPreview ? `1px dashed var(--site-border-color)` : 'none',
-                    borderRadius: '8px',
-                    color: 'var(--site-text-secondary)',
-                    minHeight: '250px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'column',
-                    gap: '12px'
-                }}>
-                    <div style={{ color: 'var(--site-accent)', opacity: 0.7 }}>
+            <div className="py-5">
+                <div 
+                    className={`
+                        py-10 px-5 text-center bg-(--site-card-bg) rounded-lg text-(--site-text-secondary) min-h-62.5 flex flex-col items-center justify-center gap-3
+                        ${wrapperClass}
+                        ${isEditorPreview ? 'border border-dashed border-(--site-border-color)' : ''}
+                    `}
+                    style={style}
+                >
+                    <div className="text-(--site-accent) opacity-70">
                         <MapPin size={48} />
                     </div>
                     <div>
-                        <p style={{ margin: '0', fontWeight: '600', color: 'var(--site-text-primary)', fontSize: '1.1rem' }}>
+                        <p className="m-0 font-semibold text-(--site-text-primary) text-lg">
                             Карту не додано
                         </p> 
                         {isEditorPreview && (
-                            <small style={{ display:'block', marginTop: '4px', opacity: 0.8 }}>
+                            <small className="block mt-1 opacity-80">
                                 Вставте код iframe у налаштуваннях блоку
                             </small>
                         )}
@@ -61,16 +50,10 @@ const MapBlock = ({ blockData, isEditorPreview, style }) => {
     const iframeContent = (
         <iframe
             src={mapSrc}
-            width="100%"
-            height="450"
-            style={{ 
-                border: 0, 
-                display: 'block', 
-                borderRadius: '8px',
-                width: '100%',
-                height: sizePreset === 'large' ? '500px' : '400px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }}
+            className={`
+                border-0 block w-full rounded-lg shadow-sm
+                ${sizePreset === 'large' ? 'h-125' : 'h-100'}
+            `}
             allowFullScreen=""
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
@@ -80,14 +63,14 @@ const MapBlock = ({ blockData, isEditorPreview, style }) => {
 
     if (isEditorPreview) {
         return (
-            <div style={{ padding: '20px 0' }}>
-                <div style={{ 
-                    ...wrapperStyle,
-                    border: `1px dashed var(--site-border-color)`, 
-                    padding: '4px',
-                    borderRadius: '10px',
-                    pointerEvents: 'none',
-                }}>
+            <div className="py-5">
+                <div 
+                    className={`
+                        border border-dashed border-(--site-border-color) p-1 rounded-xl pointer-events-none
+                        ${wrapperClass}
+                    `}
+                    style={style}
+                >
                     {iframeContent}
                 </div>
             </div>
@@ -95,8 +78,8 @@ const MapBlock = ({ blockData, isEditorPreview, style }) => {
     }
 
     return (
-        <div style={{ padding: '20px 0' }}>
-            <div style={wrapperStyle}>
+        <div className="py-5">
+            <div className={wrapperClass} style={style}>
                 {iframeContent}
             </div>
         </div>

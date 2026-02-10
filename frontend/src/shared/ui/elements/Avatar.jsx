@@ -1,6 +1,5 @@
 // frontend/src/shared/ui/elements/Avatar.jsx
 import React, { useState, useEffect } from 'react';
-
 const API_URL = 'http://localhost:5000'; 
 const stringToColor = (string) => {
     if (!string) return '#cbd5e1'; 
@@ -32,45 +31,34 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
     };
 
     const finalUrl = getFullUrl(url);
-    
-    const containerBaseStyle = {
+    const sizeStyle = {
         width: `${size}px`,
         height: `${size}px`,
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        flexShrink: 0,
+        fontSize: fontSize || `${Math.round(size * 0.45)}px`,
         ...style
     };
 
     if (finalUrl && !imgError) {
         return (
-            <img 
-                src={finalUrl} 
-                alt={name || 'User'} 
-                className={`object-cover ${className}`}
-                style={{ ...containerBaseStyle, objectFit: 'cover' }}
-                onError={() => setImgError(true)}
-            />
+            <div className={`avatar-container ${className}`} style={sizeStyle}>
+                <img 
+                    src={finalUrl} 
+                    alt={name || 'User'} 
+                    className="w-full h-full object-cover"
+                    onError={() => setImgError(true)}
+                />
+            </div>
         );
     }
 
     const bgColor = stringToColor(name || 'User');
-    const calculatedFontSize = fontSize || `${Math.round(size * 0.45)}px`;
-
     return (
         <div 
-            className={className}
+            className={`avatar-container ${className}`}
             style={{ 
-                ...containerBaseStyle, 
+                ...sizeStyle, 
                 backgroundColor: bgColor,
-                color: '#fff',
-                fontWeight: '600',
-                fontSize: calculatedFontSize,
-                textTransform: 'uppercase',
-                userSelect: 'none'
+                color: '#ffffff',
             }}
             title={name}
         >

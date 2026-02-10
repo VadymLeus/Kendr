@@ -5,7 +5,7 @@ import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Input, Button } from '../../../shared/ui/elements';
 import { InputWithCounter } from '../../../shared/ui/complex/InputWithCounter';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import { Layout, FileText, Loader2, Check, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Globe, Palette, Tag } from 'lucide-react';
+import { Layout, FileText, Loader2, Check, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Globe, Palette } from 'lucide-react';
 
 const ICON_OPTIONS = [
     { id: 'Layout', component: Layout },
@@ -63,10 +63,18 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
     }, [isOpen, initialData, isEditMode]);
 
     if (!isOpen) return null;
+    const handleCategoryChange = (valOrEvent) => {
+        if (valOrEvent && valOrEvent.target) {
+            setCategory(valOrEvent.target.value);
+        } else {
+            setCategory(valOrEvent);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!name.trim()) return;
-
+        console.log("Saving template with category:", category);
         if (isEditMode) {
             const isConfirmed = await confirm({
                 title: "Зберегти зміни?",
@@ -90,7 +98,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                 confirmLabel: "Оновити шаблон",
                 type: "warning"
             });
-            
             if (isConfirmed) {
                 onSave(name, description, selectedIcon, category, duplicate.id);
                 onClose();
@@ -127,7 +134,7 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
     const headerStyle = { display: 'flex', gap: '16px', alignItems: 'flex-start' };
     const iconBoxStyle = {
         width: '48px', height: '48px', borderRadius: '12px',
-        backgroundColor: isEditMode ? 'rgba(245, 158, 11, 0.1)' : 'rgba(66, 153, 225, 0.1)', 
+        backgroundColor: isEditMode ? 'color-mix(in srgb, var(--platform-warning), transparent 90%)' : 'color-mix(in srgb, var(--platform-accent), transparent 90%)', 
         color: isEditMode ? 'var(--platform-warning)' : 'var(--platform-accent)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         transition: 'all 0.2s'
@@ -159,13 +166,12 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes slideUp { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-                
                 .icon-btn {
                     width: 100%;
                     aspect-ratio: 1;
                     border-radius: 8px;
                     border: 1px solid var(--platform-border-color);
-                    background: var(--platform-bg);
+                    background: var(--platform-input-bg);
                     color: var(--platform-text-secondary);
                     display: flex; align-items: center; justify-content: center;
                     cursor: pointer; transition: all 0.2s;
@@ -178,11 +184,10 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                 .icon-btn.active {
                     background: var(--platform-accent);
                     border-color: var(--platform-accent);
-                    color: white;
+                    color: var(--platform-accent-text);
                     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
                 }
             `}</style>
-            
             <div style={modalStyle}>
                 <div style={contentStyle}>
                     <div style={headerStyle}>
@@ -200,7 +205,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                             </p>
                         </div>
                     </div>
-
                     <div style={{marginTop: '24px'}}>
                         <form id="template-modal-form" onSubmit={handleSubmit}>
                             <div style={{marginBottom: '16px'}}>
@@ -216,7 +220,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                                     customLimit={50}
                                 />
                             </div>
-
                             <div style={{marginBottom: '16px'}}>
                                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500', color: 'var(--platform-text-secondary)' }}>
                                     Категорія (Тег)
@@ -224,13 +227,12 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                                 <CustomSelect 
                                     name="category"
                                     value={category}
-                                    onChange={(e) => setCategory(e.target.value)}
+                                    onChange={handleCategoryChange}
                                     options={CATEGORY_OPTIONS}
                                     placeholder="Оберіть категорію"
                                     disabled={loading}
                                 />
                             </div>
-
                             <div style={{marginBottom: '16px'}}>
                                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500', color: 'var(--platform-text-secondary)' }}>
                                     Іконка прев'ю
@@ -249,7 +251,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                                     ))}
                                 </div>
                             </div>
-
                             <div>
                                 <Input 
                                     label="Опис (необов'язково)"
@@ -260,11 +261,10 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                                     leftIcon={<FileText size={18} />}
                                 />
                             </div>
-
                             {!isEditMode && name && existingTemplates.some(t => t.name.toLowerCase() === name.trim().toLowerCase()) && (
                                 <div style={{ 
                                     marginTop: '16px', fontSize: '0.85rem', color: 'var(--platform-warning)', 
-                                    background: 'rgba(236, 201, 75, 0.1)', padding: '10px 12px', 
+                                    background: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', padding: '10px 12px', 
                                     borderRadius: '8px', border: '1px solid var(--platform-warning)',
                                     display: 'flex', alignItems: 'center', gap: '8px'
                                 }}>
@@ -274,7 +274,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                         </form>
                     </div>
                 </div>
-
                 <div style={footerStyle}>
                     <Button variant="outline" onClick={onClose}>
                         Скасувати

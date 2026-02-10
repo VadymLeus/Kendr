@@ -12,9 +12,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
     const [existingBlocks, setExistingBlocks] = useState([]);
     const [isChecking, setIsChecking] = useState(false);
     const { confirm } = useConfirm();
-
     const overlayRef = useRef(null);
-
     useEffect(() => {
         if (isOpen) {
             setName('');
@@ -27,7 +25,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
     }, [isOpen]);
 
     if (!isOpen) return null;
-
     const handleMouseDown = (e) => {
         if (e.target === overlayRef.current) {
             overlayRef.current.isSelfClick = true;
@@ -45,14 +42,12 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
     const handleSaveAsNew = async (e) => {
         if (e) e.preventDefault();
         const trimmedName = name.trim();
-        
         if (!trimmedName) {
             toast.warning("Введіть назву блоку");
             return;
         }
 
         const duplicate = existingBlocks.find(b => b.name.toLowerCase() === trimmedName.toLowerCase());
-
         if (duplicate) {
             const isConfirmed = await confirm({
                 title: "Блок вже існує",
@@ -85,62 +80,27 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
         }
     };
 
-    const overlayStyle = {
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 9999, backdropFilter: 'blur(4px)',
-        animation: 'fadeIn 0.2s ease-out'
-    };
-
-    const modalStyle = {
-        backgroundColor: 'var(--platform-card-bg)',
-        color: 'var(--platform-text-primary)',
-        border: '1px solid var(--platform-border-color)',
-        borderRadius: '16px',
-        width: '90%', maxWidth: '460px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-        overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        animation: 'slideUp 0.3s ease-out'
-    };
-
-    const contentStyle = { padding: '24px 24px 8px 24px' };
-    const headerStyle = { display: 'flex', gap: '16px', alignItems: 'flex-start' };
-    
-    const iconBoxStyle = {
-        width: '48px', height: '48px', borderRadius: '12px',
-        backgroundColor: 'rgba(66, 153, 225, 0.1)', 
-        color: 'var(--platform-accent)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-    };
-
-    const footerStyle = {
-        padding: '16px 24px',
-        display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px',
-        backgroundColor: 'var(--platform-bg)',
-        borderTop: '1px solid var(--platform-border-color)',
-        marginTop: '16px'
-    };
-
     return (
         <div 
             ref={overlayRef} 
-            style={overlayStyle} 
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999 backdrop-blur-xs animate-in fade-in duration-200"
             onMouseDown={handleMouseDown} 
             onMouseUp={handleMouseUp}
         >
-            <div style={modalStyle} onClick={e => e.stopPropagation()}>
-                <div style={contentStyle}>
-                    <div style={headerStyle}>
-                        <div style={iconBoxStyle}>
+            <div 
+                className="bg-(--platform-card-bg) text-(--platform-text-primary) border border-(--platform-border-color) rounded-2xl w-[90%] max-w-115 shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-300" 
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="p-6 pb-2">
+                    <div className="flex gap-4 items-start">
+                        <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-(--platform-accent) flex items-center justify-center shrink-0">
                             <Save size={24} />
                         </div>
-                        <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px'}}>
-                            <h3 style={{fontSize: '1.15rem', fontWeight: '600', margin: 0}}>
+                        <div className="flex-1 flex flex-col gap-2 pt-0.5">
+                            <h3 className="text-lg font-semibold m-0">
                                 {originBlockInfo ? 'Оновлення блоку' : 'Зберегти блок'}
                             </h3>
-                            <p style={{margin: 0, fontSize: '0.95rem', color: 'var(--platform-text-secondary)', lineHeight: '1.5'}}>
+                            <p className="m-0 text-[0.95rem] text-(--platform-text-secondary) leading-relaxed">
                                 {originBlockInfo 
                                     ? 'Оновіть існуючий або створіть копію.' 
                                     : 'Додайте блок в бібліотеку для використання на інших сторінках.'
@@ -150,22 +110,14 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                     </div>
 
                     {originBlockInfo && (
-                        <div style={{
-                            marginTop: '16px',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            background: 'var(--platform-bg)',
-                            border: '1px solid var(--platform-border-color)',
-                            display: 'flex', alignItems: 'center', gap: '10px',
-                            fontSize: '0.85rem'
-                        }}>
-                            <Package size={16} style={{color: 'var(--platform-text-secondary)'}} />
-                            <span style={{fontWeight: '500'}}>Оригінал: </span>
-                            <span style={{color: 'var(--platform-accent)', fontWeight: '600'}}>{originBlockInfo.name}</span>
+                        <div className="mt-4 p-2.5 rounded-lg bg-(--platform-bg) border border-(--platform-border-color) flex items-center gap-2.5 text-sm">
+                            <Package size={16} className="text-(--platform-text-secondary)" />
+                            <span className="font-medium">Оригінал: </span>
+                            <span className="text-(--platform-accent) font-semibold">{originBlockInfo.name}</span>
                         </div>
                     )}
 
-                    <div style={{marginTop: '20px'}}>
+                    <div className="mt-5">
                         <Input 
                             label={originBlockInfo ? "Назва нового варіанту (опціонально)" : "Назва блоку"}
                             value={name}
@@ -180,7 +132,7 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                     </div>
                 </div>
 
-                <div style={footerStyle}>
+                <div className="p-4 px-6 flex justify-end items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color) mt-4">
                     <Button variant="outline" onClick={onClose}>
                         Скасувати
                     </Button>
@@ -205,10 +157,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                     </Button>
                 </div>
             </div>
-            <style>{`
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes slideUp { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-            `}</style>
         </div>
     );
 };

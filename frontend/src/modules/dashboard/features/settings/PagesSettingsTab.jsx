@@ -1,4 +1,4 @@
-// frontend/src/modules/dashboard/features/tabs/PagesSettingsTab.jsx
+// frontend/src/modules/dashboard/features/settings/PagesSettingsTab.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../../../../shared/api/api';
 import { toast } from 'react-toastify';
@@ -14,9 +14,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
     const [seoDescription, setSeoDescription] = useState('');
     const [showSeo, setShowSeo] = useState(false);
     const [loading, setLoading] = useState(false);
-
     const overlayRef = useRef(null);
-
     useEffect(() => {
         if (isOpen) {
             setName(page ? page.name : '');
@@ -26,29 +24,25 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
             setShowSeo(false);
         }
     }, [page, isOpen]);
-
     const handleSlugChange = (e) => {
         setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!name || !slug) {
             toast.warning('Назва та Slug є обов\'язковими.');
             return;
         }
-
         if (onSavingChange) onSavingChange(true);
         setLoading(true);
-
         try {
             const payload = { name, slug, seo_title: seoTitle, seo_description: seoDescription };
             if (page) {
                 await apiClient.put(`/pages/${page.id}/settings`, payload);
-                toast.success(`✅ Сторінку "${name}" оновлено!`);
+                toast.success(`Сторінку "${name}" оновлено!`);
             } else {
                 await apiClient.post(`/sites/${siteId}/pages`, payload);
-                toast.success(`✅ Сторінку "${name}" створено!`);
+                toast.success(`Сторінку "${name}" створено!`);
             }
             onSave();
             if (onPageUpdate) onPageUpdate();
@@ -62,56 +56,10 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
 
     if (!isOpen) return null;
 
-    const overlayStyle = {
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 2100, backdropFilter: 'blur(4px)',
-        animation: 'fadeIn 0.2s ease-out'
-    };
-
-    const modalStyle = {
-        backgroundColor: 'var(--platform-card-bg)',
-        color: 'var(--platform-text-primary)',
-        border: '1px solid var(--platform-border-color)',
-        borderRadius: '16px',
-        width: '90%', maxWidth: '460px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-        overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        animation: 'slideUp 0.3s ease-out',
-        boxSizing: 'border-box'
-    };
-
-    const contentStyle = { padding: '24px 24px 8px 24px' };
-    
-    const headerStyle = { display: 'flex', gap: '16px', alignItems: 'flex-start' };
-    
-    const iconBoxStyle = {
-        width: '48px', height: '48px', borderRadius: '12px',
-        backgroundColor: 'rgba(66, 153, 225, 0.1)', 
-        color: 'var(--platform-accent)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-    };
-
-    const footerStyle = {
-        padding: '16px 24px',
-        display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px',
-        backgroundColor: 'var(--platform-bg)',
-        borderTop: '1px solid var(--platform-border-color)',
-        marginTop: '16px'
-    };
-    
-    const textareaStyle = { 
-        width: '100%', padding: '10px 12px', border: '1px solid var(--platform-border-color)', borderRadius: '8px', 
-        fontSize: '0.9rem', background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', 
-        outline: 'none', minHeight: '80px', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit'
-    };
-
     return (
         <div 
             ref={overlayRef}
-            style={overlayStyle} 
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-2100 backdrop-blur-xs animate-[fadeIn_0.2s_ease-out]"
             onMouseDown={(e) => {
                 overlayRef.current.isSelfClick = (e.target === overlayRef.current);
             }}
@@ -121,25 +69,24 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
                 }
             }}
         >
-            <div style={modalStyle}>
-                <div style={contentStyle}>
-                    <div style={headerStyle}>
-                        <div style={iconBoxStyle}>
+            <div className="bg-(--platform-card-bg) text-(--platform-text-primary) border border-(--platform-border-color) rounded-2xl w-[90%] max-w-115 shadow-2xl overflow-hidden flex flex-col animate-[slideUp_0.3s_ease-out]">
+                <div className="p-6 pb-2">
+                    <div className="flex gap-4 items-start">
+                        <div className="w-12 h-12 rounded-xl bg-(--platform-accent)/10 text-(--platform-accent) flex items-center justify-center shrink-0">
                              {page ? <Settings size={24} /> : <Plus size={24} />}
                         </div>
-                        <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px'}}>
-                            <h3 style={{fontSize: '1.15rem', fontWeight: '600', margin: 0}}>
+                        <div className="flex-1 flex flex-col gap-2 pt-0.5">
+                            <h3 className="text-lg font-semibold m-0">
                                 {page ? 'Налаштування сторінки' : 'Створити сторінку'}
                             </h3>
-                            <p style={{margin: 0, fontSize: '0.95rem', color: 'var(--platform-text-secondary)', lineHeight: '1.5'}}>
+                            <p className="m-0 text-sm text-(--platform-text-secondary) leading-relaxed">
                                 {page ? 'Змініть основні налаштування та SEO параметри.' : 'Заповніть інформацію для створення нової сторінки.'}
                             </p>
                         </div>
                     </div>
-
-                    <div style={{marginTop: '24px'}}>
+                    <div className="mt-6">
                         <form id="page-form" onSubmit={handleSubmit}>
-                            <div style={{marginBottom: '16px'}}>
+                            <div className="mb-4">
                                 <Input 
                                     label="Назва сторінки"
                                     value={name}
@@ -149,26 +96,27 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
                                     autoFocus={!page}
                                 />
                             </div>
-
-                            <div style={{marginBottom: '16px'}}>
+                            <div className="mb-4">
                                 <Input 
                                     label="URL (Slug)"
                                     value={slug}
                                     onChange={handleSlugChange}
                                     placeholder="about-us"
                                     disabled={loading}
-                                    leftIcon={<span style={{fontSize: '1rem', color: 'var(--platform-text-secondary)', fontWeight: 'bold'}}>/</span>}
+                                    leftIcon={<span className="text-base text-(--platform-text-secondary) font-bold">/</span>}
                                 />
                             </div>
-
-                            <div style={{ borderTop: '1px solid var(--platform-border-color)', paddingTop: '16px', marginTop: '20px' }}>
-                                <button type="button" onClick={() => setShowSeo(!showSeo)} style={{ background: 'none', border: 'none', color: 'var(--platform-accent)', cursor: 'pointer', fontSize: '0.9rem', padding: 0, display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
+                            <div className="border-t border-(--platform-border-color) pt-4 mt-5">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowSeo(!showSeo)} 
+                                    className="bg-transparent border-none text-(--platform-accent) cursor-pointer text-sm p-0 flex items-center gap-1.5 font-semibold hover:opacity-80 transition-opacity"
+                                >
                                     <Search size={16} /> SEO Налаштування {showSeo ? <X size={14}/> : null}
                                 </button>
-                                
                                 {showSeo && (
-                                    <div style={{ marginTop: '16px', animation: 'fadeIn 0.3s ease' }}>
-                                        <div style={{marginBottom: '16px'}}>
+                                    <div className="mt-4 animate-[fadeIn_0.3s_ease]">
+                                        <div className="mb-4">
                                             <Input 
                                                 label="Meta Title (Заголовок)"
                                                 value={seoTitle}
@@ -178,14 +126,13 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
                                             />
                                         </div>
                                         <div>
-                                            <label style={{display: 'block', marginBottom: '6px', fontWeight: '500', color: 'var(--platform-text-primary)', fontSize: '0.85rem'}}>Meta Description</label>
+                                            <label className="block mb-1.5 font-medium text-(--platform-text-primary) text-[0.85rem]">Meta Description</label>
                                             <textarea 
                                                 value={seoDescription} 
                                                 onChange={(e) => setSeoDescription(e.target.value)} 
-                                                style={textareaStyle} 
                                                 placeholder="Опис для пошукових систем..." 
                                                 disabled={loading} 
-                                                className="custom-input-textarea"
+                                                className="w-full p-2.5 border border-(--platform-border-color) rounded-lg text-sm bg-(--platform-bg) text-(--platform-text-primary) outline-none min-h-20 resize-y font-inherit focus:border-(--platform-accent) focus:shadow-[0_0_0_3px_var(--platform-accent-transparent,rgba(66,153,225,0.15))]"
                                             />
                                         </div>
                                     </div>
@@ -194,126 +141,83 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
                         </form>
                     </div>
                 </div>
-
-                <div style={footerStyle}>
+                <div className="p-4 px-6 flex justify-end items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color) mt-4">
                     <UIButton variant="outline" onClick={onClose} disabled={loading}>Скасувати</UIButton>
                     <UIButton type="submit" form="page-form" disabled={loading}>{page ? 'Зберегти' : 'Створити'}</UIButton>
                 </div>
             </div>
-            
-            <style>{`
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes slideUp { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-                .custom-input-textarea:focus {
-                    border-color: var(--platform-accent) !important;
-                    box-shadow: 0 0 0 3px var(--platform-accent-transparent, rgba(66, 153, 225, 0.15));
-                }
-            `}</style>
         </div>
     );
 };
 
-const GRID_LAYOUT = '2fr 1.5fr 110px 220px'; 
-
+const GRID_COLS_CLASS = "grid grid-cols-[2fr_1.5fr_110px_220px] items-center gap-4";
+const GLOBAL_GRID_COLS_CLASS = "grid grid-cols-[1fr_auto] items-center gap-4";
 const CustomActionButton = ({ onClick, title, children, variant = 'default', loading = false }) => {
-    const variants = {
-        editor: { bg: '#10B981', hover: '#059669' },
-        settings: { bg: '#6B7280', hover: '#4B5563' },
-        home: { bg: '#F59E0B', hover: '#D97706' },
-        delete: { bg: '#EF4444', hover: '#DC2626' }
+    const variantClasses = {
+        editor: "bg-[#10B981] hover:bg-[#059669]",
+        settings: "bg-[#6B7280] hover:bg-[#4B5563]",
+        home: "bg-[#F59E0B] hover:bg-[#D97706]",
+        delete: "bg-[#EF4444] hover:bg-[#DC2626]"
     };
-    const v = variants[variant] || variants.editor;
-    const [hover, setHover] = useState(false);
-
+    const bgClass = variantClasses[variant] || variantClasses.editor;
     return (
         <button
             onClick={onClick} title={title} disabled={loading}
-            onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-            style={{
-                padding: '8px 12px', border: 'none', borderRadius: '8px',
-                cursor: loading ? 'wait' : 'pointer',
-                fontSize: '0.85rem', fontWeight: '600',
-                display: 'flex', alignItems: 'center', gap: '6px',
-                transition: 'all 0.2s ease',
-                color: '#fff',
-                background: hover ? v.hover : v.bg,
-                opacity: loading ? 0.7 : 1
-            }}
+            className={`
+                px-3 py-2 border-none rounded-lg cursor-pointer text-[0.85rem] font-semibold 
+                flex items-center gap-1.5 transition-all duration-200 text-white
+                ${bgClass} ${loading ? 'opacity-70 cursor-wait' : ''}
+            `}
         >
             {children}
         </button>
     );
 };
-
 const ListRow = ({ icon, title, subtitle, badges, actions, isGlobal = false }) => {
-    const gridStyle = {
-        display: 'grid',
-        gridTemplateColumns: isGlobal ? '1fr auto' : GRID_LAYOUT, 
-        alignItems: 'center',
-        gap: '16px',
-        background: 'var(--platform-bg)',
-        border: '1px solid var(--platform-border-color)',
-        borderRadius: '12px',
-        padding: '12px 20px',
-        marginBottom: '12px',
-        transition: 'all 0.2s ease'
-    };
-
     return (
-        <div style={gridStyle} className="list-row-hover">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', overflow: 'hidden' }}>
-                <div style={{ 
-                    padding: '8px',
-                    background: isGlobal ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255, 0.05)', 
-                    border: isGlobal ? 'none' : '1px solid var(--platform-border-color)',
-                    borderRadius: '10px', 
-                    color: isGlobal ? '#3b82f6' : 'var(--platform-text-secondary)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0
-                }}>
+        <div className={`
+            ${isGlobal ? GLOBAL_GRID_COLS_CLASS : GRID_COLS_CLASS}
+            bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-3 px-5 mb-3 transition-all duration-200
+            hover:border-(--platform-accent) hover:bg-white/5
+        `}>
+            <div className="flex items-center gap-4 overflow-hidden">
+                <div className={`
+                    p-2 rounded-xl flex items-center justify-center shrink-0
+                    ${isGlobal 
+                        ? 'bg-blue-500/10 text-blue-500 border-none' 
+                        : 'bg-white/5 border border-(--platform-border-color) text-(--platform-text-secondary)'
+                    }
+                `}>
                     {icon}
                 </div>
-                <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--platform-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-                    {subtitle && <div style={{ fontSize: '0.8rem', color: 'var(--platform-text-secondary)', marginTop: '2px' }}>{subtitle}</div>}
+                <div className="min-w-0">
+                    <div className="font-bold text-base text-(--platform-text-primary) whitespace-nowrap overflow-hidden text-ellipsis">
+                        {title}
+                    </div>
+                    {subtitle && <div className="text-xs text-(--platform-text-secondary) mt-0.5">{subtitle}</div>}
                 </div>
             </div>
-
             {!isGlobal && (
                 <>
-                    <div style={{ fontFamily: 'monospace', color: 'var(--platform-text-secondary)', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div className="font-mono text-(--platform-text-secondary) text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                         {badges.slug}
                     </div>
                     <div>{badges.status}</div>
                 </>
             )}
-
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <div className="flex gap-2 justify-end">
                 {actions}
             </div>
-            
-            <style>{`
-                .list-row-hover:hover {
-                    border-color: var(--platform-accent);
-                    background: rgba(255,255,255, 0.02);
-                }
-            `}</style>
         </div>
     );
 };
 
 const HeaderRow = () => (
-    <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: GRID_LAYOUT,
-        gap: '16px', 
-        padding: '0 20px 10px 20px',
-        color: 'var(--platform-text-secondary)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em'
-    }}>
+    <div className={`${GRID_COLS_CLASS} px-5 pb-2.5 text-(--platform-text-secondary) text-xs font-bold uppercase tracking-wider`}>
         <div>Назва</div>
         <div>URL (Slug)</div>
         <div>Статус</div>
-        <div style={{textAlign: 'right'}}>Дії</div>
+        <div className="text-right">Дії</div>
     </div>
 );
 
@@ -323,7 +227,6 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
     const { confirm } = useConfirm();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPage, setEditingPage] = useState(null);
-
     const fetchPages = useCallback(async () => {
         setLoading(true);
         try {
@@ -335,14 +238,11 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
             setLoading(false);
         }
     }, [siteId]);
-
     useEffect(() => { fetchPages(); }, [fetchPages]);
-
     const handleOpenCreate = () => { setEditingPage(null); setIsModalOpen(true); };
     const handleOpenEdit = (page) => { setEditingPage(page); setIsModalOpen(true); };
     const handleCloseModal = () => { setIsModalOpen(false); setEditingPage(null); };
     const handleSaveSuccess = () => { handleCloseModal(); fetchPages(); if (onPageUpdate) onPageUpdate(); };
-
     const handleDelete = async (page) => {
         if (page.is_homepage) return toast.warning('Неможливо видалити головну сторінку.');
         if (!await confirm({ title: "Видалити?", message: `Видалити сторінку "${page.name}"?`, type: "danger", confirmLabel: "Видалити" })) return;
@@ -368,27 +268,23 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
     };
 
     return (
-        <div style={{ background: 'var(--platform-card-bg)', padding: '32px', borderRadius: '20px', border: '1px solid var(--platform-border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <div className="bg-(--platform-card-bg) p-8 rounded-[20px] border border-(--platform-border-color) shadow-sm">
             <PageModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveSuccess} page={editingPage} siteId={siteId} onPageUpdate={onPageUpdate} onSavingChange={onSavingChange} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 style={{ color: 'var(--platform-text-primary)', margin: '0 0 4px 0', fontSize: '1.5rem', fontWeight: '700' }}>Структура сайту</h2>
-                    <p style={{ margin: 0, color: 'var(--platform-text-secondary)', fontSize: '0.9rem' }}>Керуйте сторінками та глобальними блоками</p>
+                    <h2 className="text-(--platform-text-primary) m-0 mb-1 text-2xl font-bold">Структура сайту</h2>
+                    <p className="m-0 text-(--platform-text-secondary) text-sm">Керуйте сторінками та глобальними блоками</p>
                 </div>
                 <UIButton onClick={handleOpenCreate}><Plus size={18} /> Додати сторінку</UIButton>
             </div>
-
             {loading ? (
-                <div style={{textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)'}}>Завантаження...</div>
+                <div className="text-center p-10 text-(--platform-text-secondary)">Завантаження...</div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                    
+                <div className="flex flex-col gap-8">
                     <div>
-                        <h4 style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--platform-text-secondary)', marginBottom: '12px', letterSpacing: '0.05em' }}>
+                        <h4 className="text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) mb-3 tracking-wider">
                             Глобальні області
                         </h4>
-                        
                         <ListRow 
                             isGlobal={true}
                             icon={<PanelTop size={24} />}
@@ -412,39 +308,36 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                             }
                         />
                     </div>
-
                     <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', marginBottom: '12px' }}>
-                            <h4 style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--platform-text-secondary)', margin: 0, letterSpacing: '0.05em' }}>
+                        <div className="flex justify-between items-end mb-3">
+                            <h4 className="text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) m-0 tracking-wider">
                                 Сторінки ({pages.length})
                             </h4>
                         </div>
-                        
                         <HeaderRow />
-
                         {pages.length === 0 ? (
-                             <div style={{ textAlign: 'center', padding: '40px', border: '2px dashed var(--platform-border-color)', borderRadius: '12px' }}>
-                                <div style={{ color: 'var(--platform-text-secondary)', marginBottom: '16px' }}>Немає сторінок</div>
+                             <div className="text-center p-10 border-2 dashed border-(--platform-border-color) rounded-xl">
+                                <div className="text-(--platform-text-secondary) mb-4">Немає сторінок</div>
                                 <UIButton onClick={handleOpenCreate} variant="outline">Створити першу</UIButton>
                             </div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div className="flex flex-col">
                                 {pages.map(page => (
                                     <ListRow 
                                         key={page.id}
                                         icon={<FileText size={20} />}
                                         title={
-                                            <span style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                            <span className="flex items-center gap-2">
                                                 {page.name}
-                                                {!!page.is_homepage && <Star size={16} style={{color: '#F59E0B', fill: '#F59E0B'}} />}
+                                                {!!page.is_homepage && <Star size={16} className="text-amber-500 fill-amber-500" />}
                                             </span>
                                         }
                                         badges={{
-                                            slug: <span style={{background: 'rgba(0,0,0,0.04)', padding: '4px 8px', borderRadius: '6px'}}>/{page.slug}</span>,
+                                            slug: <span className="bg-black/5 px-2 py-1 rounded-md">/{page.slug}</span>,
                                             status: !!page.is_homepage ? (
-                                                <span style={{color: '#10B981', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700'}}>ГОЛОВНА</span>
+                                                <span className="text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full text-xs font-bold">ГОЛОВНА</span>
                                             ) : (
-                                                <span style={{color: 'var(--platform-text-secondary)', fontSize: '0.85rem'}}>Звичайна</span>
+                                                <span className="text-(--platform-text-secondary) text-sm">Звичайна</span>
                                             )
                                         }}
                                         actions={
@@ -455,7 +348,6 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
                                                 <CustomActionButton variant="settings" onClick={() => handleOpenEdit(page)} title="Налаштування">
                                                     <Settings size={16} />
                                                 </CustomActionButton>
-                                                
                                                 {!page.is_homepage && (
                                                     <>
                                                         <CustomActionButton variant="home" onClick={() => handleSetHome(page.id, page.name)} title="Зробити головною">

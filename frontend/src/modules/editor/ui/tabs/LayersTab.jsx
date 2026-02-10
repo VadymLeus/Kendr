@@ -13,69 +13,44 @@ const LayersTab = ({
     
     if (typeof onMoveBlock !== 'function' || typeof onSelectBlock !== 'function') {
         return (
-             <div style={{ padding: '1rem', color: '#e53e3e', display: 'flex', alignItems: 'center', gap: '8px', background: '#fff5f5', borderRadius: '8px', margin: '1rem' }}>
+             <div className="p-4 m-4 text-red-600 bg-red-50 rounded-lg flex items-center gap-2 border border-red-100">
                 <AlertCircle size={20} />
-                <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>Помилка ініціалізації шарів.</span>
+                <span className="text-sm font-medium">Помилка ініціалізації шарів.</span>
             </div>
         )
     }
 
     if (!blocks || blocks.length === 0) {
         return (
-            <div style={{ 
-                height: '100%', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                padding: '20px',
-                textAlign: 'center',
-                color: 'var(--platform-text-secondary)'
-            }}>
-                <div style={{ 
-                    width: '72px', height: '72px', borderRadius: '50%', background: 'var(--platform-bg)', 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px',
-                    border: '1px solid var(--platform-border-color)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-                }}>
-                    <Layers size={32} style={{ color: 'var(--platform-accent)', opacity: 0.9 }} />
+            <div className="h-full flex flex-col items-center justify-center p-5 text-center text-(--platform-text-secondary)">
+                <div className="w-18 h-18 rounded-full bg-(--platform-bg) flex items-center justify-center mb-5 border border-(--platform-border-color) shadow-sm">
+                    <Layers size={32} className="text-(--platform-accent) opacity-90" />
                 </div>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: '600', color: 'var(--platform-text-primary)', marginBottom: '8px' }}>
+                <h4 className="text-[1.05rem] font-semibold text-(--platform-text-primary) mb-2">
                     Сторінка порожня
                 </h4>
-                <p style={{ fontSize: '0.85rem', lineHeight: '1.5', maxWidth: '240px' }}>
+                <p className="text-sm leading-relaxed max-w-60">
                     Додайте перші блоки з меню "Додати", щоб побачити структуру сторінки.
                 </p>
                 
-                <div style={{ 
-                    marginTop: '30px', 
-                    padding: '12px 16px', 
-                    background: 'var(--platform-bg)', 
-                    border: '1px dashed var(--platform-border-color)',
-                    borderRadius: '8px',
-                    fontSize: '0.8rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    color: 'var(--platform-text-secondary)'
-                }}>
-                   <PlusCircle size={14} /> 
-                   <span>Перейдіть у вкладку "Додати"</span>
+                <div className="mt-7.5 py-3 px-4 bg-(--platform-bg) border border-dashed border-(--platform-border-color) rounded-lg text-xs flex items-center gap-2 text-(--platform-text-secondary)">
+                    <PlusCircle size={14} /> 
+                    <span>Перейдіть у вкладку "Додати"</span>
                 </div>
             </div>
         );
     }
 
     return (
-        <div style={{ padding: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--platform-border-color)' }}>
-                <Layers size={18} style={{ color: 'var(--platform-accent)' }} />
-                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: 'var(--platform-text-primary)' }}>
+        <div className="p-4">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-(--platform-border-color)">
+                <Layers size={18} className="text-(--platform-accent)" />
+                <h3 className="m-0 text-[0.95rem] font-semibold text-(--platform-text-primary)">
                     Структура сторінки
                 </h3>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="flex flex-col gap-1">
                 {blocks.map((block, index) => (
                     <BlockLayerItem
                         key={block.block_id}

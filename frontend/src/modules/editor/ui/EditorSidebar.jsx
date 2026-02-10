@@ -6,15 +6,6 @@ import SettingsTab from './tabs/SettingsTab';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { Save, Plus, Layers, Settings, Star, PanelTop, PanelBottom, File } from 'lucide-react';
 
-const rigidIconWrapper = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '24px',
-    height: '24px',
-    flexShrink: 0,
-};
-
 const EditorSidebar = ({
     blocks,
     siteData,
@@ -84,87 +75,32 @@ const EditorSidebar = ({
         });
     }, [allPages]);
 
-    const saveButtonStyle = {
-        backgroundColor: 'var(--platform-accent)',
-        color: 'var(--platform-accent-text)',
-        padding: '0 12px', 
-        height: '38px', 
-        borderRadius: '8px',
-        border: 'none',
-        fontSize: '13px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px', 
-        whiteSpace: 'nowrap',
-        overflow: 'hidden'
-    };
-
-    const saveButtonHoverStyle = {
-        backgroundColor: 'var(--platform-accent-hover)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
-    };
-
-    const tabStyle = (tabName) => ({
-        flex: 1,
-        padding: '10px 4px',
-        background: activeTab === tabName ? 'var(--platform-card-bg)' : 'transparent',
-        border: 'none',
-        borderBottom: activeTab === tabName ? '2px solid var(--platform-accent)' : '2px solid transparent',
-        cursor: 'pointer',
-        color: activeTab === tabName ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-        fontWeight: activeTab === tabName ? '600' : '500',
-        transition: 'all 0.2s ease',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '4px',
-        minWidth: 0,
-        fontSize: '11px',
-        lineHeight: '1.2'
-    });
-
-    const tabHoverStyle = (tabName) => ({
-        background: activeTab !== tabName ? 'rgba(0,0,0,0.03)' : 'var(--platform-card-bg)',
-        color: activeTab !== tabName ? 'var(--platform-text-primary)' : 'var(--platform-accent)'
-    });
-    
-    const handleMouseOver = (element, hoverStyle) => {
-        Object.assign(element.style, hoverStyle);
-    };
-
-    const handleMouseOut = (element, originalStyle) => {
-        Object.assign(element.style, originalStyle);
+    const TabButton = ({ id, label, icon: Icon }) => {
+        const isActive = activeTab === id;
+        return (
+            <button 
+                onClick={() => handleTabChange(id)}
+                className={`
+                    flex-1 py-2.5 bg-transparent border-none border-b-2 cursor-pointer 
+                    flex flex-col items-center justify-center gap-1 min-w-0 
+                    text-[11px] leading-tight transition-all duration-200
+                    ${isActive 
+                        ? 'border-(--platform-accent) text-(--platform-accent) bg-(--platform-card-bg) font-semibold' 
+                        : 'border-transparent text-(--platform-text-secondary) font-medium hover:bg-black/5 hover:text-(--platform-text-primary)'}
+                `}
+            >
+                <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                    <Icon size={20} />
+                </div>
+                <span>{label}</span>
+            </button>
+        );
     };
     
     return (
-        <div style={{
-            width: '300px',
-            minWidth: '300px',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--platform-sidebar-bg)',
-            borderLeft: '1px solid var(--platform-border-color)',
-            flexShrink: 0
-        }}>
-            <div style={{
-                padding: '12px',
-                borderBottom: '1px solid var(--platform-border-color)',
-                background: 'var(--platform-card-bg)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                flexShrink: 0
-            }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="w-75 min-w-75 h-full flex flex-col bg-(--platform-sidebar-bg) border-l border-(--platform-border-color) shrink-0">
+            <div className="p-3 border-b border-(--platform-border-color) bg-(--platform-card-bg) flex items-center gap-2 shrink-0">
+                <div className="flex-1 min-w-0">
                     <CustomSelect 
                         value={currentPageId || ''}
                         onChange={(e) => {
@@ -184,67 +120,32 @@ const EditorSidebar = ({
 
                 <button
                     onClick={handleSave}
-                    style={saveButtonStyle}
-                    onMouseOver={(e) => handleMouseOver(e.currentTarget, saveButtonHoverStyle)}
-                    onMouseOut={(e) => handleMouseOut(e.currentTarget, saveButtonStyle)}
                     title="Зберегти зміни"
+                    className={`
+                        bg-(--platform-accent) text-(--platform-accent-text) px-3 h-9.5 rounded-lg 
+                        border-none text-[13px] font-semibold cursor-pointer transition-all duration-200 
+                        shadow-sm flex items-center justify-center gap-2 whitespace-nowrap overflow-hidden
+                        hover:bg-(--platform-accent-hover) hover:-translate-y-px hover:shadow-md
+                    `}
                 >
-                    <div style={{...rigidIconWrapper, width: '16px', height: '16px'}}>
+                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
                         <Save size={16} />
                     </div>
                     <span>Зберегти</span>
                 </button>
             </div>
-
-            <nav style={{ 
-                display: 'flex', 
-                borderBottom: '1px solid var(--platform-border-color)',
-                background: 'var(--platform-sidebar-bg)',
-                flexShrink: 0
-            }}>
+            <nav className="flex border-b border-(--platform-border-color) bg-(--platform-sidebar-bg) shrink-0">
                 {!isHeaderMode && (
                     <>
-                        <button 
-                            style={tabStyle('add')} 
-                            onClick={() => handleTabChange('add')}
-                            onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('add'))}
-                            onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('add'))}
-                        >
-                            <div style={rigidIconWrapper}><Plus size={20} /></div>
-                            <span>Додати блок</span>
-                        </button>
-                        <button 
-                            style={tabStyle('layers')} 
-                            onClick={() => handleTabChange('layers')}
-                            onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('layers'))}
-                            onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('layers'))}
-                        >
-                            <div style={rigidIconWrapper}><Layers size={20} /></div>
-                            <span>Шари</span>
-                        </button>
+                        <TabButton id="add" label="Додати блок" icon={Plus} />
+                        <TabButton id="layers" label="Шари" icon={Layers} />
                     </>
                 )}
-                <button 
-                    style={tabStyle('settings')} 
-                    onClick={() => handleTabChange('settings')}
-                    onMouseOver={(e) => handleMouseOver(e.currentTarget, tabHoverStyle('settings'))}
-                    onMouseOut={(e) => handleMouseOut(e.currentTarget, tabStyle('settings'))}
-                >
-                    <div style={rigidIconWrapper}><Settings size={20} /></div>
-                    <span>Налаштування</span>
-                </button>
+                <TabButton id="settings" label="Налаштування" icon={Settings} />
             </nav>
-            
-            <div style={{ 
-                    overflowY: 'auto', 
-                    flex: 1, 
-                    padding: 0,
-                    background: 'var(--platform-sidebar-bg)',
-                }}
-                className="custom-scrollbar"
-            >
+            <div className="overflow-y-auto flex-1 p-0 bg-(--platform-sidebar-bg) custom-scrollbar">
                 {activeTab === 'add' && !isHeaderMode && (
-                    <div style={{ padding: '1rem' }}>
+                    <div className="p-4">
                         <AddBlocksTab 
                             savedBlocksUpdateTrigger={savedBlocksUpdateTrigger} 
                         />

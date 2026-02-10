@@ -10,7 +10,6 @@ const MyTicketsPage = () => {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    
     useEffect(() => {
         const fetchTickets = async () => {
             try {
@@ -35,9 +34,9 @@ const MyTicketsPage = () => {
         };
         switch (status) {
             case 'open':
-                return <span style={{ ...baseStyle, background: 'rgba(221, 107, 32, 0.1)', color: 'var(--platform-warning)' }}>Відкрито</span>;
+                return <span style={{ ...baseStyle, background: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', color: 'var(--platform-warning)' }}>Відкрито</span>;
             case 'answered':
-                return <span style={{ ...baseStyle, background: 'rgba(56, 161, 105, 0.1)', color: 'var(--platform-success)' }}>Є відповідь</span>;
+                return <span style={{ ...baseStyle, background: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)' }}>Є відповідь</span>;
             case 'closed':
                 return <span style={{ ...baseStyle, background: 'var(--platform-bg)', color: 'var(--platform-text-secondary)', border: '1px solid var(--platform-border-color)' }}>Закрито</span>;
             default:
@@ -59,13 +58,13 @@ const MyTicketsPage = () => {
 
         if (type === 'appeal') {
             return (
-                <span style={{ ...baseStyle, background: 'rgba(239, 68, 68, 0.1)', color: 'var(--platform-danger)' }}>
+                <span style={{ ...baseStyle, background: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)' }}>
                     <Gavel size={12} /> Апеляція
                 </span>
             );
         }
         return (
-            <span style={{ ...baseStyle, background: 'rgba(66, 153, 225, 0.1)', color: 'var(--platform-accent)' }}>
+            <span style={{ ...baseStyle, background: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', color: 'var(--platform-accent)' }}>
                 <FileText size={12} /> Загальне
             </span>
         );
@@ -110,12 +109,12 @@ const MyTicketsPage = () => {
     if (error) return (
         <div style={{ 
             color: 'var(--platform-danger)', 
-            background: '#fff2f0',
+            background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)',
             padding: '1rem',
             borderRadius: '8px',
             textAlign: 'center',
             margin: '2rem',
-            border: '1px solid #ffccc7'
+            border: '1px solid color-mix(in srgb, var(--platform-danger), transparent 80%)'
         }}>
             {error}
         </div>
@@ -178,7 +177,6 @@ const MyTicketsPage = () => {
                             to={`/support/ticket/${ticket.id}`} 
                             key={ticket.id} 
                             style={ticketLinkStyle}
-                            className="hover-card-effect"
                             onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = 'translateY(-2px)';
                                 e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';

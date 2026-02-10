@@ -58,15 +58,9 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
         return `${API_URL}${src}`;
     };
 
-    const navItemStyle = { 
-        display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-start',
-        background: 'var(--platform-card-bg)', padding: '10px', 
-        borderRadius: '8px', border: '1px solid var(--platform-border-color)'
-    };
-
     const currentLogoRadius = data.logo_radius !== undefined ? data.logo_radius : (data.borderRadius || 0);
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-6">
             <ConfirmModal 
                 isOpen={isDeleteModalOpen}
                 title="Видалити пункт меню?"
@@ -77,18 +71,12 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                 onCancel={() => setIsDeleteModalOpen(false)}
                 type="danger"
             />
-
             <div>
                 <SectionTitle icon={<Image size={18}/>}>Логотип та Назва</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Центральний логотип</label>
-                    <div style={{ 
-                        background: 'var(--platform-bg)', 
-                        padding: '12px', 
-                        borderRadius: '12px', 
-                        border: '1px solid var(--platform-border-color)' 
-                    }}>
-                        <div style={{ width: '100%', height: '200px' }}>
+                    <div className="bg-(--platform-bg) p-3 rounded-xl border border-(--platform-border-color)">
+                        <div className="w-full h-50">
                             <UniversalMediaInput 
                                 type="image"
                                 value={data.logo_src} 
@@ -97,18 +85,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                                 triggerStyle={{ width: '100%', height: '100%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }}
                             >
                                 <div 
-                                    style={{ 
-                                        width: '100%', 
-                                        height: '100%', 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        borderRadius: '8px',
-                                        overflow: 'hidden',
-                                        backgroundColor: 'var(--platform-card-bg)',
-                                        border: '1px dashed var(--platform-border-color)'
-                                    }}
+                                    className="w-full h-full flex items-center justify-center relative rounded-lg overflow-hidden bg-(--platform-card-bg) border border-dashed border-(--platform-border-color)"
                                     onMouseEnter={() => setIsLogoHovered(true)}
                                     onMouseLeave={() => setIsLogoHovered(false)}
                                 >
@@ -117,32 +94,18 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                                             <img 
                                                 src={getLogoUrl(data.logo_src)} 
                                                 alt="Logo" 
-                                                style={{ 
-                                                    maxWidth: '80%', 
-                                                    maxHeight: '80%', 
-                                                    objectFit: 'contain',
-                                                    borderRadius: `${currentLogoRadius}px`,
-                                                    transition: 'all 0.2s'
-                                                }} 
+                                                className="max-w-[80%] max-h-[80%] object-contain transition-all duration-200"
+                                                style={{ borderRadius: `${currentLogoRadius}px` }} 
                                             />
-                                            <div style={{
-                                                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                opacity: isLogoHovered ? 1 : 0, transition: 'opacity 0.2s',
-                                                backdropFilter: 'blur(2px)'
-                                            }}>
-                                                <div style={{ color: 'white', display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 500 }}>
+                                            <div 
+                                                className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200 backdrop-blur-[2px] ${isLogoHovered ? 'opacity-100' : 'opacity-0'}`}
+                                            >
+                                                <div className="text-white flex gap-2 items-center font-medium">
                                                     <Upload size={18} /> Змінити
                                                 </div>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleLogoChange(''); }}
-                                                    style={{
-                                                        position: 'absolute', top: '8px', right: '8px',
-                                                        width: '28px', height: '28px', borderRadius: '50%',
-                                                        background: 'rgba(0,0,0,0.5)', color: 'white',
-                                                        border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        cursor: 'pointer'
-                                                    }}
+                                                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white border-none flex items-center justify-center cursor-pointer hover:bg-black/70 transition-colors"
                                                     title="Видалити"
                                                 >
                                                     <Trash2 size={14} />
@@ -150,9 +113,9 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                                             </div>
                                         </>
                                     ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--platform-text-secondary)', opacity: 0.6 }}>
+                                        <div className="flex flex-col items-center gap-2 text-(--platform-text-secondary) opacity-60">
                                             <Image size={32} />
-                                            <span style={{ fontSize: '0.9rem' }}>Завантажити лого</span>
+                                            <span className="text-sm">Завантажити лого</span>
                                         </div>
                                     )}
                                 </div>
@@ -160,8 +123,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         </div>
                     </div>
                 </div>
-
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Розмір логотипу</label>
                     <ToggleGroup 
                         options={[
@@ -173,8 +135,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         onChange={(val) => updateData({ logo_size: val })}
                     />
                 </div>
-
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <RangeSlider 
                         label="Скруглення логотипу"
                         value={currentLogoRadius}
@@ -184,8 +145,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         unit="px"
                     />
                 </div>
-
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <Input 
                         label="Назва сайту (текст)"
                         value={data.site_title}
@@ -193,30 +153,26 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         leftIcon={<Type size={16}/>}
                     />
                 </div>
-
                 <ToggleSwitch 
                     checked={data.show_title}
                     onChange={(checked) => updateData({ show_title: checked })}
                     label="Показувати назву поруч з лого"
                 />
             </div>
-            
-            <div style={{ fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4', display: 'flex', gap: '8px' }}>
-                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--platform-accent)' }} />
+            <div className="text-xs text-(--platform-text-secondary) leading-snug flex gap-2">
+                <AlertCircle size={16} className="shrink-0 mt-0.5 text-(--platform-accent)" />
                 <span>Логотип і назву сайту синхронізовано глобальними налаштуваннями.</span>
             </div>
-
             <div>
                 <SectionTitle icon={<LayoutTemplate size={18}/>}>Розміщення та Стиль</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <AlignmentControl 
                         label="Вирівнювання меню"
                         value={data.nav_alignment || 'right'}
                         onChange={(val) => updateData({ nav_alignment: val })}
                     />
                 </div>
-
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Тип відображення</label>
                     <ToggleGroup 
                         options={[
@@ -227,16 +183,9 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         onChange={(val) => updateData({ nav_style: val })}
                     />
                 </div>
-
                 {data.nav_style === 'button' ? (
-                    <div style={{ 
-                        marginTop: '16px', 
-                        padding: '16px', 
-                        background: 'var(--platform-bg)', 
-                        borderRadius: '8px',
-                        border: '1px solid var(--platform-border-color)'
-                    }}>
-                        <div style={{ marginBottom: '12px', fontWeight: '600', fontSize: '0.9rem' }}>Стиль кнопок меню</div>
+                    <div className="mt-4 p-4 bg-(--platform-bg) rounded-lg border border-(--platform-border-color)">
+                        <div className="mb-3 font-semibold text-sm">Стиль кнопок меню</div>
                         <ButtonEditor 
                             data={data.buttonSettings || {}}
                             onChange={(val) => updateData({ buttonSettings: val })}
@@ -247,7 +196,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         />
                     </div>
                 ) : (
-                    <div style={commonStyles.formGroup}>
+                    <div className="mb-5">
                         <FontSelector 
                             label="Шрифт меню"
                             value={data.nav_fontFamily}
@@ -257,38 +206,29 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                     </div>
                 )}
             </div>
-
             <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div className="flex items-center justify-between mb-3">
                     <SectionTitle icon={<List size={18}/>} style={{marginBottom: 0}}>Пункти меню</SectionTitle>
-                    <span style={{ 
-                        fontSize: '0.8rem', 
-                        fontWeight: '600', 
-                        color: isLimitReached ? 'var(--platform-danger)' : 'var(--platform-text-secondary)',
-                        background: isLimitReached ? 'rgba(var(--platform-danger-rgb), 0.1)' : 'var(--platform-bg)',
-                        padding: '2px 8px',
-                        borderRadius: '4px'
-                    }}>
+                    <span 
+                        className={`
+                            text-xs font-semibold px-2 py-0.5 rounded
+                            ${isLimitReached ? 'text-(--platform-danger) bg-red-500/10' : 'text-(--platform-text-secondary) bg-(--platform-bg)'}
+                        `}
+                    >
                         {navItemsCount} / {MAX_NAV_ITEMS}
                     </span>
                 </div>
-                
-                <div style={{ 
-                    marginBottom: '12px', padding: '8px', 
-                    background: 'rgba(66, 153, 225, 0.1)', color: 'var(--platform-accent)', 
-                    borderRadius: '6px', fontSize: '0.8rem', lineHeight: '1.4'
-                }}>
+                <div className="mb-3 p-2 bg-blue-500/10 text-(--platform-accent) rounded-md text-xs leading-snug">
                     <strong>Формат посилань:</strong>
-                    <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
-                        <li><code>/page</code> - внутрішня сторінка</li>
-                        <li><code>#blockId</code> - якір (скрол до блоку)</li>
+                    <ul className="m-1 ml-4 p-0 list-disc">
+                        <li><code className="bg-black/5 px-1 rounded">/page</code> - внутрішня сторінка</li>
+                        <li><code className="bg-black/5 px-1 rounded">#blockId</code> - якір (скрол до блоку)</li>
                     </ul>
                 </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div className="flex flex-col gap-2">
                     {data.nav_items && data.nav_items.map((item) => (
-                        <div key={item.id} style={navItemStyle}>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div key={item.id} className="flex gap-2 items-start bg-(--platform-card-bg) p-2.5 rounded-lg border border-(--platform-border-color)">
+                            <div className="flex-1 flex flex-col gap-2">
                                 <Input 
                                     value={item.label} 
                                     onChange={(e) => handleNavItemChange(item.id, 'label', e.target.value)}
@@ -309,7 +249,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                                 size="sm"
                                 onClick={() => requestDelete(item.id)}
                                 title="Видалити"
-                                style={{ height: 'auto', padding: '6px' }}
+                                className="h-auto! p-1.5!"
                             >
                                 <Trash2 size={16} />
                             </Button>
@@ -321,14 +261,10 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                     variant="outline"
                     onClick={addNavItem}
                     disabled={isLimitReached}
-                    style={{ 
-                        width: '100%', 
-                        marginTop: '8px',
-                        borderColor: isLimitReached ? 'var(--platform-border-color)' : 'var(--platform-accent)', 
-                        color: isLimitReached ? 'var(--platform-text-secondary)' : 'var(--platform-accent)',
-                        opacity: isLimitReached ? 0.6 : 1,
-                        cursor: isLimitReached ? 'not-allowed' : 'pointer'
-                    }}
+                    className={`
+                        w-full mt-2 transition-opacity
+                        ${isLimitReached ? 'border-(--platform-border-color) text-(--platform-text-secondary) opacity-60 cursor-not-allowed' : 'border-(--platform-accent) text-(--platform-accent) cursor-pointer'}
+                    `}
                     icon={<Plus size={16} />}
                 >
                     {isLimitReached ? 'Ліміт досягнуто' : 'Додати пункт меню'}

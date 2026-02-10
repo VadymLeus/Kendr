@@ -4,86 +4,49 @@ import { ChevronDown } from 'lucide-react';
 
 const AccordionItem = ({ item, isEditorPreview, titleFont, contentFont }) => {
     const [isExpanded, setIsExpanded] = useState(item.isOpenDefault || false);
-    
     useEffect(() => {
         setIsExpanded(item.isOpenDefault || false);
     }, [item.isOpenDefault]);
-
-    const borderColor = 'var(--site-border-color)';
-    const headerBg = 'var(--site-card-bg)'; 
-    const bodyBg = 'var(--site-bg)';
-    const textPrimary = 'var(--site-text-primary)';
-    const textSecondary = 'var(--site-text-secondary)';
-    const accent = 'var(--site-accent)';
-
-    const itemStyle = {
-        border: `1px solid ${borderColor}`,
-        borderRadius: '8px',
-        marginBottom: '0.75rem',
-        overflow: 'hidden',
-        background: headerBg, 
-        transition: 'all 0.2s ease'
-    };
-
-    const headerStyle = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '1rem 1.25rem',
-        cursor: 'pointer',
-        background: 'transparent',
-        borderBottom: isExpanded ? `1px solid ${borderColor}` : 'none',
-        userSelect: 'none'
-    };
-
-    const titleStyle = {
-        fontWeight: '600',
-        color: textPrimary,
-        margin: 0,
-        fontSize: '1.1rem',
-        fontFamily: titleFont || 'inherit'
-    };
-
-    const iconWrapperStyle = {
-        color: accent,
-        transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-        transition: 'transform 0.3s ease',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-    };
-
-    const bodyStyle = {
-        padding: '1.5rem 1.25rem',
-        color: textSecondary,
-        lineHeight: '1.6',
-        whiteSpace: 'pre-wrap',
-        display: isExpanded ? 'block' : 'none',
-        backgroundColor: bodyBg,
-        fontFamily: contentFont || 'inherit'
-    };
 
     const handleClick = () => {
         setIsExpanded(!isExpanded);
     };
 
     return (
-        <div style={itemStyle}>
+        <div className="border border-(--site-border-color) rounded-lg mb-3 overflow-hidden bg-(--site-card-bg) transition-all duration-200">
             <div
-                style={headerStyle}
+                className={`
+                    flex justify-between items-center px-5 py-4 cursor-pointer bg-transparent select-none
+                    ${isExpanded ? 'border-b border-(--site-border-color)' : ''}
+                `}
                 onClick={handleClick}
                 aria-expanded={isExpanded}
             >
-                <h4 style={titleStyle}>{item.title || 'Питання'}</h4>
-                <div style={iconWrapperStyle}>
+                <h4 
+                    className="font-semibold text-(--site-text-primary) m-0 text-lg"
+                    style={{ fontFamily: titleFont || 'inherit' }}
+                >
+                    {item.title || 'Питання'}
+                </h4>
+                <div 
+                    className={`
+                        text-(--site-accent) flex items-center justify-center transition-transform duration-300
+                        ${isExpanded ? 'rotate-180' : 'rotate-0'}
+                    `}
+                >
                     <ChevronDown size={20} />
                 </div>
             </div>
-            {isExpanded && (
-                 <div style={bodyStyle}>
-                    {item.content || 'Відповідь...'}
-                </div>
-            )}
+            
+            <div 
+                className={`
+                    px-5 py-6 text-(--site-text-secondary) leading-relaxed whitespace-pre-wrap bg-(--site-bg)
+                    ${isExpanded ? 'block' : 'hidden'}
+                `}
+                style={{ fontFamily: contentFont || 'inherit' }}
+            >
+                {item.content || 'Відповідь...'}
+            </div>
         </div>
     );
 };

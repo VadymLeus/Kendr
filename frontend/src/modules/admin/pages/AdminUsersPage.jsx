@@ -22,15 +22,12 @@ const AdminUsersPage = () => {
     const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
     const { filteredData: rawUsers, loading, searchQuery, setSearchQuery, refresh } = useDataList('/admin/users', ['username', 'email', 'id']);
     const { isOpen, config, requestConfirm, close } = useConfirmDialog();
-
     const processedUsers = useMemo(() => {
         let res = [...rawUsers];
         return res.sort((a, b) => (a[sortConfig.key] < b[sortConfig.key] ? -1 : 1) * (sortConfig.direction === 'asc' ? 1 : -1));
     }, [rawUsers, sortConfig]);
-
     const handleSort = (key) => setSortConfig(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const handleDelete = (userId) => requestConfirm({ title: 'Видалити?', message: 'Незворотно.', type: 'danger', confirmLabel: 'Видалити', onConfirm: async () => { try { await apiClient.delete(`/admin/users/${userId}`); toast.success('Видалено'); close(); setSelectedUser(null); refresh(); } catch { toast.error('Помилка'); } } });
-
     const handleExport = () => {
         if (!processedUsers?.length) return toast.info('Немає даних');
         exportToCsv(processedUsers.map(u => ({
@@ -38,7 +35,6 @@ const AdminUsersPage = () => {
             is_verified: u.is_verified ? 'Так' : 'Ні', sites: u.site_count || 0, warnings: u.warning_count || 0, created: new Date(u.created_at).toLocaleString('uk-UA')
         })), { id: 'ID', username: "Ім'я", email: 'Email', phone: 'Телефон', role: 'Роль', is_verified: 'Верифікований', sites: 'Сайти', warnings: 'Страйки', created: 'Дата' }, `users_${new Date().toLocaleDateString('uk-UA')}`);
     };
-
     return (
         <AdminPageLayout title="Користувачі" icon={Users} count={processedUsers.length} viewMode={viewMode} setViewMode={setViewMode} onRefresh={refresh} loading={loading}>
             <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -56,7 +52,7 @@ const AdminUsersPage = () => {
                         {loading ? <LoadingRow cols={6} /> : !processedUsers.length ? <EmptyRow cols={6} /> : processedUsers.map(u => (
                             <AdminRow key={u.id} onClick={() => setSelectedUser(u)} isSelected={selectedUser?.id === u.id}>
                                 <AdminCell style={{opacity: 0.6}}>#{u.id}</AdminCell>
-                                <AdminCell><div style={{display:'flex', alignItems:'center', gap:'12px'}}><div onClick={(e)=>{e.stopPropagation(); navigate(`/profile/${u.username}`)}} className="hover:opacity-80 cursor-pointer"><Avatar url={u.avatar_url} name={u.username} size={36} /></div><div><div style={{fontWeight: '600'}}>{u.username}</div>{u.is_verified && <div style={{fontSize: '11px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '3px'}}><CheckCircle size={10}/> Verified</div>}</div></div></AdminCell>
+                                <AdminCell><div style={{display:'flex', alignItems:'center', gap:'12px'}}><div onClick={(e)=>{e.stopPropagation(); navigate(`/profile/${u.username}`)}} className="hover:opacity-80 cursor-pointer"><Avatar url={u.avatar_url} name={u.username} size={36} /></div><div><div style={{fontWeight: '600'}}>{u.username}</div>{u.is_verified && <div style={{fontSize: '11px', color: 'var(--platform-success)', display: 'flex', alignItems: 'center', gap: '3px'}}><CheckCircle size={10}/> Verified</div>}</div></div></AdminCell>
                                 <AdminCell><div style={{fontSize: '13px'}}><div>{u.email}</div>{u.phone_number && <div style={{color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px'}}><Smartphone size={10}/> {u.phone_number}</div>}</div></AdminCell>
                                 <AdminCell><div style={{display: 'flex', gap: '16px'}}><div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px'}}><Layout size={14} color="var(--platform-text-secondary)" /> {u.site_count}</div>{u.warning_count > 0 && <div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--platform-danger)'}}><AlertTriangle size={14} /> {u.warning_count}</div>}</div></AdminCell>
                                 <AdminCell style={{fontSize: '13px', color: 'var(--platform-text-secondary)'}}>{new Date(u.created_at).toLocaleDateString()}</AdminCell>

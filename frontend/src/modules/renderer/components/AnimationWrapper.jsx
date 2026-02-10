@@ -35,6 +35,7 @@ const AnimationWrapper = ({ children, animationConfig }) => {
     const duration = parseFloat(animationConfig?.duration || 0.6);
     const delay = parseFloat(animationConfig?.delay || 0);
     const repeat = animationConfig?.repeat || false;
+
     if (type === 'none') {
         return <>{children}</>;
     }

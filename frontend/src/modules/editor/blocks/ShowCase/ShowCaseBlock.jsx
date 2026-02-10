@@ -8,7 +8,6 @@ import { ShoppingBag } from 'lucide-react';
 const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
-
     const {
         columns = 4,
         source_type = 'category',
@@ -55,103 +54,91 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
         if (siteData?.id) fetchProducts();
     }, [blockData.selected_product_ids, blockData.category_id, source_type, siteData?.id]);
 
-    const heightMap = {
-        small: '300px',
-        medium: '500px',
-        large: '700px',
-        full: 'calc(100vh - 80px)',
-        auto: 'auto'
+    const heightClasses = {
+        small: 'min-h-[300px]',
+        medium: 'min-h-[500px]',
+        large: 'min-h-[700px]',
+        full: 'min-h-[calc(100vh-80px)]',
+        auto: 'min-h-auto'
     };
-    const currentHeight = heightMap[height] || 'auto';
-    const isFixedHeight = currentHeight !== 'auto';
-
+    const currentHeightClass = heightClasses[height] || 'min-h-auto';
+    const isFixedHeight = height !== 'auto';
     const uniqueClass = `showcase-${blockData.id || 'preview'}`;
-
-    const containerStyle = {
-        padding: '40px 20px', 
-        maxWidth: '1200px',
-        margin: '0 auto',
-        backgroundColor: isEditorPreview ? 'var(--site-bg)' : 'transparent',
-        border: isEditorPreview ? '1px dashed var(--site-border-color)' : 'none',
-        minHeight: currentHeight,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: isFixedHeight ? 'center' : 'flex-start',
-        ...styles 
+    const alignmentClasses = {
+        center: 'justify-center',
+        right: 'justify-end',
+        start: 'justify-start'
     };
 
-    const gridStyle = {
-        display: 'grid',
-        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, 
-        gap: '24px',
-        width: '100%',
-        justifyContent: alignment === 'center' ? 'center' : (alignment === 'right' ? 'end' : 'start')
-    };
-
+    const containerAlignmentClass = isFixedHeight ? 'justify-center' : 'justify-start';
     return (
-        <div style={containerStyle} className={uniqueClass}>
+        <div 
+            style={{ 
+                ...styles,
+                backgroundColor: isEditorPreview ? 'var(--site-bg)' : 'transparent',
+            }} 
+            className={`
+                py-10 px-5 max-w-300 mx-auto flex flex-col w-full
+                ${currentHeightClass}
+                ${containerAlignmentClass}
+                ${isEditorPreview ? 'border border-dashed border-(--site-border-color)' : ''}
+                ${uniqueClass}
+            `}
+        >
             <RenderFonts />
             <style>{`.${uniqueClass} { ${Object.entries(cssVariables).map(([k,v]) => `${k}:${v}`).join(';')} }`}</style>
-            
-            <style>{`
-                @media (max-width: 1024px) {
-                    .${uniqueClass} .showcase-grid {
-                        grid-template-columns: repeat(${Math.min(3, columns)}, minmax(0, 1fr)) !important;
-                    }
-                }
-                @media (max-width: 768px) {
-                    .${uniqueClass} .showcase-grid {
-                        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                    }
-                }
-                @media (max-width: 480px) {
-                    .${uniqueClass} .showcase-grid {
-                        grid-template-columns: minmax(0, 1fr) !important;
-                    }
-                }
-            `}</style>
-
             {title && (
-                <h2 style={{ 
-                    textAlign: alignment, 
-                    marginBottom: '32px', 
-                    color: 'var(--site-text-primary)',
-                    fontFamily: fontStyles.title,
-                    fontSize: '2rem',
-                    lineHeight: '1.2'
-                }}>
+                <h2 
+                    className={`mb-8 text-(--site-text-primary) text-[2rem] leading-[1.2]`}
+                    style={{ 
+                        textAlign: alignment, 
+                        fontFamily: fontStyles.title,
+                    }}
+                >
                     {title}
                 </h2>
             )}
 
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--site-text-secondary)' }}>
+                <div className="text-center p-10 text-(--site-text-secondary)">
                     Завантаження товарів...
                 </div>
             ) : products.length === 0 ? (
-                <div style={{
-                    textAlign: 'center', padding: '40px', 
-                    color: 'var(--site-text-secondary)', 
-                    border: '1px dashed var(--site-border-color)', borderRadius: '12px',
-                    backgroundColor: 'var(--site-card-bg)',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px'
-                }}>
-                    <div style={{
-                        width: '60px', height: '60px', borderRadius: '50%',
-                        background: 'rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'var(--site-text-secondary)'
-                    }}>
+                <div className="text-center p-10 text-(--site-text-secondary) border border-dashed border-(--site-border-color) rounded-xl bg-(--site-card-bg) flex flex-col items-center gap-4">
+                    <div className="w-15 h-15 rounded-full bg-black/5 flex items-center justify-center text-(--site-text-secondary)">
                         <ShoppingBag size={32} />
                     </div>
                     <div>
                         <strong>Товарів не знайдено</strong>
-                        <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>Перевірте налаштування категорії або додайте товари.</p>
+                        <p className="m-0 mt-1 text-sm">Перевірте налаштування категорії або додайте товари.</p>
                     </div>
                 </div>
             ) : (
-                <div style={gridStyle} className="showcase-grid">
+                <div 
+                    className={`grid gap-6 w-full ${alignmentClasses[alignment] || 'justify-center'}`}
+                    style={{
+                        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
+                    }}
+                >
+                    <style>{`
+                        @media (max-width: 1024px) {
+                            .${uniqueClass} .grid {
+                                grid-template-columns: repeat(${Math.min(3, columns)}, minmax(0, 1fr)) !important;
+                            }
+                        }
+                        @media (max-width: 768px) {
+                            .${uniqueClass} .grid {
+                                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                            }
+                        }
+                        @media (max-width: 480px) {
+                            .${uniqueClass} .grid {
+                                grid-template-columns: minmax(0, 1fr) !important;
+                            }
+                        }
+                    `}</style>
                     {products.map(product => (
-                        <div key={product.id} style={{ height: '100%' }}>
+                        <div key={product.id} className="h-full">
                             <ProductCard 
                                 product={product} 
                                 isEditorPreview={isEditorPreview} 

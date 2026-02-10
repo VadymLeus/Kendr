@@ -5,18 +5,6 @@ import { BLOCK_LIBRARY } from '../core/editorConfig';
 import { useBlockDrop, DND_TYPE_EXISTING } from '../core/useBlockDrop';
 import { Settings, Trash2, PanelTop, HelpCircle, GripVertical } from 'lucide-react';
 
-const rigidIconWrapper = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    width: '20px', height: '20px', minWidth: '20px', flexShrink: 0
-};
-
-const rigidButtonWrapper = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    width: '24px', height: '24px', minWidth: '24px', flexShrink: 0,
-    border: 'none', background: 'transparent', cursor: 'pointer',
-    borderRadius: '4px', padding: 0, transition: 'all 0.2s'
-};
-
 const BlockLayerItem = ({
     block,
     path,
@@ -44,6 +32,7 @@ const BlockLayerItem = ({
 
     drag(drop(ref));
     const showDropIndicator = dropPosition && !isDragging;
+    
     const handleDelete = (e) => {
         e.stopPropagation();
         onDeleteBlock(path);
@@ -59,96 +48,20 @@ const BlockLayerItem = ({
         }
     };
 
-    const handleBtnEnter = (e, color, bg) => {
-        e.currentTarget.style.color = color;
-        e.currentTarget.style.background = bg;
-    };
-    const handleBtnLeave = (e, color) => {
-        e.currentTarget.style.color = color;
-        e.currentTarget.style.background = 'transparent';
-    };
-
-    const styles = {
-        layerItem: {
-            position: 'relative',
-            padding: '0.6rem 0.4rem 0.6rem 0.8rem',
-            margin: '0.25rem 0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            background: isDragging ? 'var(--platform-bg)' : 'var(--platform-card-bg)',
-            border: '1px solid',
-            borderColor: isDragging ? 'var(--platform-accent)' : 'var(--platform-border-color)',
-            borderRadius: '8px',
-            cursor: 'grab',
-            transition: 'all 0.2s ease',
-            color: 'var(--platform-text-primary)',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            opacity: isDragging ? 0.5 : 1
-        },
-        dropIndicator: {
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            height: '2px',
-            background: 'var(--platform-accent)',
-            zIndex: 10,
-            pointerEvents: 'none',
-            boxShadow: '0 0 4px rgba(0,0,0,0.3)'
-        },
-        nestedContainer: {
-            marginLeft: '1.25rem',
-            paddingLeft: '0.75rem',
-            borderLeft: '2px solid var(--platform-border-color)',
-            marginTop: '0.5rem'
-        },
-        columnLabel: {
-            padding: '0.5rem',
-            fontStyle: 'italic',
-            color: 'var(--platform-text-secondary)',
-            fontSize: '0.8rem',
-            background: 'var(--platform-bg)',
-            borderRadius: '4px',
-            marginBottom: '0.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-        },
-        iconContainer: {
-            ...rigidIconWrapper,
-            color: 'var(--platform-accent)',
-            opacity: 0.8
-        },
-        nameContainer: {
-            flex: 1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            minWidth: 0,
-            lineHeight: '1.2'
-        },
-        actionsContainer: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2px',
-            flexShrink: 0
-        }
-    };
-
     let nestedBlocks = null;
     if (block.type === 'layout' && block.data.columns) {
         nestedBlocks = (
-            <div style={styles.nestedContainer}>
+            <div className="ml-5 pl-3 border-l-2 border-(--platform-border-color) mt-2">
                 {block.data.columns.map((column, colIndex) => (
                     <div key={colIndex}>
-                        <div style={styles.columnLabel}>
-                            <div style={{...rigidIconWrapper, width: '16px', height: '16px', minWidth: '16px'}}>
+                        <div className="p-2 italic text-(--platform-text-secondary) text-xs bg-(--platform-bg) rounded mb-1 flex items-center gap-2">
+                            <div className="w-4 h-4 min-w-4 flex items-center justify-center shrink-0">
                                 <PanelTop size={14} />
                             </div>
-                            <span style={styles.nameContainer}>Колонка {colIndex + 1}</span>
-                            <small style={{ marginLeft: 'auto', opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis min-w-0 leading-tight">
+                                Колонка {colIndex + 1}
+                            </span>
+                            <small className="ml-auto opacity-70 whitespace-nowrap shrink-0">
                                 {column.length} ел.
                             </small>
                         </div>
@@ -168,56 +81,53 @@ const BlockLayerItem = ({
         );
     }
 
+    const actionBtnClasses = "flex items-center justify-center w-6 h-6 min-w-6 shrink-0 border-none bg-transparent cursor-pointer rounded p-0 transition-all duration-200 text-(--platform-text-secondary)";
+
     return (
         <>
             <div
                 ref={ref}
-                style={styles.layerItem}
                 onClick={handleSelectAndScroll}
-                onMouseEnter={(e) => {
-                    if (!isDragging) e.currentTarget.style.borderColor = 'var(--platform-accent)';
-                }}
-                onMouseLeave={(e) => {
-                    if (!isDragging) e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                }}
+                className={`
+                    relative py-2.5 pr-1.5 pl-3 my-1 flex items-center gap-3 border rounded-lg cursor-grab transition-all duration-200 text-sm font-medium shadow-sm group
+                    ${isDragging 
+                        ? 'opacity-50 bg-(--platform-bg) border-(--platform-accent)' 
+                        : 'bg-(--platform-card-bg) border-(--platform-border-color) hover:border-(--platform-accent)'}
+                `}
             >
                 
                 {showDropIndicator && dropPosition === 'top' && (
-                    <div style={{ ...styles.dropIndicator, top: '-2px' }} />
+                    <div className="absolute left-0 right-0 h-0.5 bg-(--platform-accent) z-10 pointer-events-none shadow-sm -top-0.5" />
                 )}
 
                 {showDropIndicator && dropPosition === 'bottom' && (
-                    <div style={{ ...styles.dropIndicator, bottom: '-2px' }} />
+                    <div className="absolute left-0 right-0 h-0.5 bg-(--platform-accent) z-10 pointer-events-none shadow-sm -bottom-0.5" />
                 )}
 
-                <div style={{ ...rigidIconWrapper, color: 'var(--platform-text-secondary)', cursor: 'grab', marginRight: '4px' }}>
+                <div className="flex items-center justify-center w-5 h-5 min-w-5 shrink-0 text-(--platform-text-secondary) cursor-grab mr-1">
                     <GripVertical size={14} />
                 </div>
 
-                <div style={styles.iconContainer}>
+                <div className="flex items-center justify-center w-5 h-5 min-w-5 shrink-0 text-(--platform-accent) opacity-80">
                     {blockInfo.icon}
                 </div>
 
-                <div style={styles.nameContainer}>
+                <div className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis min-w-0 leading-tight">
                     {blockInfo.name}
                 </div>
                 
-                <div style={styles.actionsContainer}>
+                <div className="flex items-center gap-0.5 shrink-0">
                     <button 
                         title="Налаштування" 
                         onClick={handleSelectAndScroll}
-                        style={{ ...rigidButtonWrapper, color: 'var(--platform-text-secondary)' }}
-                        onMouseEnter={(e) => handleBtnEnter(e, 'var(--platform-accent)', 'var(--platform-bg)')}
-                        onMouseLeave={(e) => handleBtnLeave(e, 'var(--platform-text-secondary)')}
+                        className={`${actionBtnClasses} hover:text-(--platform-accent) hover:bg-(--platform-bg)`}
                     >
                         <Settings size={14} />
                     </button>
                     <button 
                         title="Видалити" 
                         onClick={handleDelete} 
-                        style={{ ...rigidButtonWrapper, color: 'var(--platform-danger)' }}
-                        onMouseEnter={(e) => handleBtnEnter(e, 'white', 'var(--platform-danger)')}
-                        onMouseLeave={(e) => handleBtnLeave(e, 'var(--platform-danger)')}
+                        className={`${actionBtnClasses} hover:text-white hover:bg-(--platform-danger)`}
                     >
                         <Trash2 size={14} />
                     </button>

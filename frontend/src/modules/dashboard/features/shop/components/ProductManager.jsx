@@ -1,16 +1,16 @@
-// frontend/src/modules/dashboard/features/ProductManager.jsx
+// frontend/src/modules/features/shop/components/ProductManager.jsx
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import apiClient from '../../../shared/api/api';
-import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
-import { Input } from '../../../shared/ui/elements/Input';
-import { InputWithCounter } from '../../../shared/ui/complex/InputWithCounter';
-import { Button } from '../../../shared/ui/elements/Button';
-import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import MediaPickerModal from '../../media/components/MediaPickerModal';
-import { SplitViewLayout } from '../../../shared/ui/layouts/SplitViewLayout';
-import { TEXT_LIMITS } from '../../../shared/config/limits';
+import apiClient from '../../../../../shared/api/api';
+import ConfirmModal from '../../../../../shared/ui/complex/ConfirmModal';
+import { Input } from '../../../../../shared/ui/elements/Input';
+import { InputWithCounter } from '../../../../../shared/ui/complex/InputWithCounter';
+import { Button } from '../../../../../shared/ui/elements/Button';
+import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
+import MediaPickerModal from '../../../../media/components/MediaPickerModal';
+import { SplitViewLayout } from '../../../../../shared/ui/layouts/SplitViewLayout';
+import { TEXT_LIMITS } from '../../../../../shared/config/limits';
 import { ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
@@ -32,7 +32,6 @@ const useProducts = (siteId) => {
                 apiClient.get(`/products/site/${siteId}`),
                 apiClient.get(`/categories/site/${siteId}`)
             ]);
-            
             const productsData = (pRes.data || []).map(p => ({
                 ...p,
                 variants: Array.isArray(p.variants) ? p.variants : 
@@ -50,9 +49,7 @@ const useProducts = (siteId) => {
             setLoading(false);
         }
     }, [siteId]);
-
     useEffect(() => { fetchData(); }, [fetchData]);
-
     const handleDelete = useCallback(async (id, onSuccess) => {
         try {
             await apiClient.delete(`/products/${id}`);
@@ -63,7 +60,6 @@ const useProducts = (siteId) => {
             toast.error('Помилка видалення');
         }
     }, []);
-
     return { 
         products, categories, loading, filters, setFilters,
         fetchData, handleDelete
@@ -73,7 +69,6 @@ const useProducts = (siteId) => {
 const VariantEditor = memo(({ variant, onChange, onRemove }) => {
     const [inputState, setInputState] = useState({ label: '', price: '', sale: '' });
     const [editingIndex, setEditingIndex] = useState(null);
-
     useEffect(() => {
         if (editingIndex !== null && variant.values[editingIndex]) {
             const val = variant.values[editingIndex];
@@ -86,23 +81,19 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
             setInputState({ label: '', price: '', sale: '' });
         }
     }, [editingIndex, variant.values]);
-
     const handleSaveValue = () => {
         if (!inputState.label.trim()) return;
-        
         const valueData = { 
             label: inputState.label.trim(), 
             priceModifier: parseFloat(inputState.price) || 0,
             salePercentage: parseInt(inputState.sale) || 0
         };
-
         let newValues = [...(variant.values || [])];
         if (editingIndex !== null) {
             newValues[editingIndex] = valueData;
         } else {
             newValues.push(valueData);
         }
-        
         onChange({ ...variant, values: newValues });
         setEditingIndex(null);
         setInputState({ label: '', price: '', sale: '' });
@@ -115,14 +106,13 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                     value={variant.name} 
                     onChange={(e) => onChange({...variant, name: e.target.value})}
                     placeholder="Назва опції (напр. Розмір)"
-                    style={{margin: 0, fontWeight: '600', fontSize: '0.95rem'}}
+                    className="m-0 font-semibold text-[0.95rem]"
                     wrapperStyle={{margin: 0, flex: 1}}
                 />
                 <Button variant="square-danger" onClick={onRemove} title="Видалити опцію">
                     <Trash size={18}/>
                 </Button>
             </div>
-
             <div className="flex flex-wrap gap-2 mb-4">
                 {variant.values && variant.values.map((val, idx) => {
                     const isActive = idx === editingIndex;
@@ -160,7 +150,6 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                     );
                 })}
             </div>
-
             <div className={`
                 border-t border-dashed border-(--platform-border-color) pt-4
                 ${editingIndex !== null ? 'bg-(--platform-card-bg) rounded-lg p-3 mt-2' : ''}
@@ -169,16 +158,16 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                     {editingIndex !== null ? <><Edit size={14}/> Редагування значення</> : <><Plus size={14}/> Додати значення</>}
                 </div>
                 <div className="grid grid-cols-[2fr_1fr_1fr] gap-3 items-start mb-3">
-                    <Input placeholder="Значення (XL)" value={inputState.label} onChange={e => setInputState({...inputState, label: e.target.value})} style={{margin:0}} wrapperStyle={{margin:0}} />
-                    <Input placeholder="+Ціна" type="number" value={inputState.price} onChange={e => setInputState({...inputState, price: e.target.value})} style={{margin:0}} wrapperStyle={{margin:0}} />
-                    <Input placeholder="Зниж. %" type="number" value={inputState.sale} onChange={e => setInputState({...inputState, sale: e.target.value})} style={{margin:0}} wrapperStyle={{margin:0}} />
+                    <Input placeholder="Значення (XL)" value={inputState.label} onChange={e => setInputState({...inputState, label: e.target.value})} className="m-0" wrapperStyle={{margin:0}} />
+                    <Input placeholder="+Ціна" type="number" value={inputState.price} onChange={e => setInputState({...inputState, price: e.target.value})} className="m-0" wrapperStyle={{margin:0}} />
+                    <Input placeholder="Зниж. %" type="number" value={inputState.sale} onChange={e => setInputState({...inputState, sale: e.target.value})} className="m-0" wrapperStyle={{margin:0}} />
                 </div>
                 <div className="flex gap-2.5 mt-2.5">
-                    <Button onClick={handleSaveValue} style={{flex: 1, justifyContent: 'center'}}>
+                    <Button onClick={handleSaveValue} className="flex-1 justify-center">
                         {editingIndex !== null ? <><Save size={18}/> Зберегти зміни</> : <><Plus size={18}/> Додати</>}
                     </Button>
                     {editingIndex !== null && (
-                        <Button variant="secondary" onClick={() => {setEditingIndex(null); setInputState({label:'', price:'', sale:''});}} style={{flex: 1, justifyContent: 'center'}} title="Скасувати">
+                        <Button variant="secondary" onClick={() => {setEditingIndex(null); setInputState({label:'', price:'', sale:''});}} className="flex-1 justify-center" title="Скасувати">
                             <Undo size={18}/> Скасувати
                         </Button>
                     )}
@@ -197,7 +186,6 @@ const ProductTable = memo(({
         { value: 'all', label: 'Всі категорії' },
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
     ];
-
     if (loading) return <div className="p-10 text-center text-(--platform-text-secondary)">Завантаження...</div>;
     return (
         <div className="flex flex-col h-full bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) overflow-hidden">
@@ -228,15 +216,14 @@ const ProductTable = memo(({
                         <Button 
                             variant="outline" 
                             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                            style={{ width: '42px', height: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            className="w-10.5 h-10.5 p-0 flex items-center justify-center"
                         >
                             <span className="text-lg leading-none">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                         </Button>
                     </div>
                 </div>
-                <Button onClick={onCreate} icon={<Plus size={18}/>} style={{height: '42px'}}>Додати</Button>
+                <Button onClick={onCreate} icon={<Plus size={18}/>} className="h-10.5">Додати</Button>
             </div>
-
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 {products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-(--platform-text-secondary) py-10">
@@ -273,14 +260,12 @@ const ProductTable = memo(({
                                          ) : (
                                             <Image size={32} className="opacity-20 text-slate-400" />
                                          )}
-                                         
                                          <div className={`
                                             absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded text-[0.7rem] font-bold z-10 border border-slate-100
                                             ${product.stock_quantity > 0 ? 'text-emerald-500' : 'text-red-500'}
                                          `}>
                                                  {product.stock_quantity} шт.
                                          </div>
-                                         
                                          <button
                                                  onClick={(e) => { e.stopPropagation(); onDelete(product); }}
                                                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer z-20 text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:border-red-500 hover:scale-110"
@@ -288,7 +273,6 @@ const ProductTable = memo(({
                                          >
                                                  <X size={16} />
                                          </button>
-
                                          {isSelected && (
                                             <div className="absolute top-2 right-10 text-(--platform-accent) bg-white rounded-full p-0.5 shadow-sm z-10 animate-in fade-in zoom-in duration-200">
                                                 <CheckCircle size={20} />
@@ -331,7 +315,6 @@ const ProductEditorPanel = ({
         stock_quantity: 1, category_id: '', image_gallery: [],
         variants: [], sale_percentage: 0
     };
-    
     const [formData, setFormData] = useState(initialFormData);
     const DESCRIPTION_LIMIT = 2000;
     useEffect(() => {
@@ -344,12 +327,10 @@ const ProductEditorPanel = ({
             setFormData(initialFormData);
         }
     }, [productToEdit]);
-
     const handleClearForm = () => {
         setFormData(initialFormData);
         if (onCancel) onCancel();
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         onSavingChange(true);
@@ -362,12 +343,10 @@ const ProductEditorPanel = ({
         } catch (e) { toast.error('Помилка'); }
         finally { onSavingChange(false); }
     };
-
     const categoryOptions = [
         { value: '', label: 'Без категорії' },
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
     ];
-
     return (
         <div className={`
             flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) overflow-hidden
@@ -382,7 +361,6 @@ const ProductEditorPanel = ({
                 }}
                 multiple={true} allowedTypes={['image']}
             />
-
             <div className="h-18 px-6 border-b border-(--platform-border-color) flex items-center justify-between bg-(--platform-bg) shrink-0">
                 <h3 className="m-0 text-lg font-bold flex items-center gap-2.5 text-(--platform-text-primary)">
                     {isMobile && (
@@ -394,7 +372,6 @@ const ProductEditorPanel = ({
                     <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><X size={20}/></Button>
                 )}
             </div>
-
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
                     <InputWithCounter 
@@ -404,12 +381,10 @@ const ProductEditorPanel = ({
                         required 
                         limitKey="PRODUCT_NAME"
                     />
-                    
                     <div className="flex gap-3">
                         <Input label="Ціна (₴)" type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} wrapperStyle={{flex: 1}} />
                         <Input label="Знижка (%)" type="number" value={formData.sale_percentage} onChange={e => setFormData({...formData, sale_percentage: e.target.value})} wrapperStyle={{flex: 1}} />
                     </div>
-                    
                     <div>
                         <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">Категорія</label>
                         <CustomSelect value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})} options={categoryOptions} />
@@ -436,11 +411,10 @@ const ProductEditorPanel = ({
                             </button>
                         </div>
                     </div>
-                    
                     <div className="border-t border-(--platform-border-color) pt-5">
                          <div className="flex justify-between items-center mb-3">
                             <span className="font-bold text-sm text-(--platform-text-primary)">Опції (варіанти)</span>
-                            <Button type="button" variant="outline" onClick={() => setFormData(p => ({...p, variants: [...p.variants, {id: Date.now(), name: '', values: []}]}))} style={{height:'30px', fontSize:'0.8rem'}}><Plus size={14}/> Додати</Button>
+                            <Button type="button" variant="outline" onClick={() => setFormData(p => ({...p, variants: [...p.variants, {id: Date.now(), name: '', values: []}]}))} className="h-7.5 text-[0.8rem]"><Plus size={14}/> Додати</Button>
                          </div>
                          {formData.variants.map((v, i) => (
                             <VariantEditor key={v.id} variant={v} onRemove={() => setFormData(p => ({...p, variants: p.variants.filter((_, idx) => idx !== i)}))} onChange={upd => {
@@ -448,7 +422,6 @@ const ProductEditorPanel = ({
                             }} />
                          ))}
                     </div>
-                    
                     <div>
                         <textarea 
                             className="w-full min-h-25 p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-primary) resize-y custom-scrollbar focus:outline-none focus:ring-2 focus:ring-(--platform-accent)/20 focus:border-(--platform-accent)"
@@ -457,22 +430,21 @@ const ProductEditorPanel = ({
                             placeholder="Опис товару..." 
                             maxLength={DESCRIPTION_LIMIT}
                         />
-                        <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--platform-text-secondary)', marginTop: '4px' }}>
+                        <div className="text-right text-[11px] text-(--platform-text-secondary) mt-1">
                             {formData.description.length} / {DESCRIPTION_LIMIT}
                         </div>
                     </div>
                 </div>
-                
                 <div className="p-6 border-t border-(--platform-border-color) grid grid-cols-2 gap-4 mt-auto bg-(--platform-bg) shrink-0">
                     <Button 
                         type="button" 
                         variant="outline-danger" 
                         onClick={handleClearForm} 
-                        style={{justifyContent: 'center', height: '42px'}}
+                        className="justify-center h-10.5"
                     >
                         <X size={18}/> Скасувати
                     </Button>
-                    <Button type="submit" variant="primary" icon={<Save size={18}/>} style={{justifyContent: 'center', height: '42px'}}>
+                    <Button type="submit" variant="primary" icon={<Save size={18}/>} className="justify-center h-10.5">
                         Зберегти
                     </Button>
                 </div>
@@ -486,7 +458,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
     const { 
         products, categories, loading, filters, setFilters, fetchData, handleDelete
     } = useProducts(siteId);
-    
     const [isPanelOpen, setIsPanelOpen] = useState(true);
     const [activeProduct, setActiveProduct] = useState(null); 
     const [sortOrder, setSortOrder] = useState('asc');
@@ -506,7 +477,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             }
         }
     }, [loading, products, searchParams]);
-
     const processedProducts = useMemo(() => {
         let result = products.filter(product => {
             const matchesSearch = filters.search === '' || 
@@ -514,7 +484,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             const matchesCategory = filters.category === 'all' || product.category_id === parseInt(filters.category);
             return matchesSearch && matchesCategory;
         });
-
         result.sort((a, b) => {
             let comp = 0;
             if (filters.sortBy === 'name') comp = a.name.localeCompare(b.name);
@@ -524,7 +493,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
         });
         return result;
     }, [products, filters, sortOrder]);
-
     const handleProductSelect = useCallback((product) => {
         if (activeProduct && activeProduct.id === product.id) {
             setActiveProduct(null);
@@ -535,7 +503,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setSearchParams(prev => { prev.set('productId', product.id); return prev; });
         }
     }, [activeProduct, setSearchParams]);
-
     const handleCreateNew = useCallback(() => {
         setActiveProduct(null);
         setIsPanelOpen(true);
@@ -550,7 +517,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
     const handleCancelForm = useCallback(() => {
         setActiveProduct(null);
         setSearchParams(prev => { prev.delete('productId'); return prev; });
-        
         if (window.innerWidth < 1100) {
             setIsPanelOpen(false);
         }
@@ -571,7 +537,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setProductToDelete(null);
         }
     }, [productToDelete, handleDelete, activeProduct, handleClosePanel]);
-
     return (
         <>
             <SplitViewLayout

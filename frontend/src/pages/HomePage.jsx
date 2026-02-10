@@ -5,73 +5,35 @@ import { Button } from '../shared/ui/elements/Button';
 import { Eye, ArrowRight } from 'lucide-react';
 
 const HomePage = () => {
-    const containerStyle = {
-        minHeight: '80vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: '2rem',
-        maxWidth: '800px',
-        margin: '0 auto'
-    };
-
-    const titleStyle = {
-        color: 'var(--platform-text-primary)',
-        fontSize: '3rem',
-        marginBottom: '1.5rem',
-        fontWeight: '800',
-        lineHeight: '1.2',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-        flexWrap: 'wrap',
-        justifyContent: 'center'
-    };
-
-    const subtitleStyle = {
-        color: 'var(--platform-text-secondary)',
-        fontSize: '1.25rem',
-        marginBottom: '3rem',
-        lineHeight: '1.6',
-        maxWidth: '600px'
-    };
-
-    const iconStyle = {
-        color: 'var(--platform-accent)',
-        display: 'inline-flex'
-    };
-
     return (
-        <div style={containerStyle}>
-            <h1 style={titleStyle}>
+        <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-8 max-w-200 mx-auto">
+            <h1 className="text-(--platform-text-primary) text-5xl mb-6 font-extrabold leading-tight flex items-center gap-4 flex-wrap justify-center">
                 Ласкаво просимо до Kendr! 
-                <span style={iconStyle}>
+                <span className="inline-flex text-(--platform-accent)">
                     <Eye size={48} />
                 </span>
             </h1>
             
-            <p style={subtitleStyle}>
+            <p className="text-(--platform-text-secondary) text-xl mb-12 leading-relaxed max-w-150">
                 Ваша платформа для створення неймовірних сайтів. 
                 Просто, швидко та ефективно.
             </p>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
-                <Link to="/register" style={{ textDecoration: 'none' }}>
+            <div className="flex gap-4">
+                <Link to="/register" className="no-underline">
                     <Button 
                         variant="primary" 
-                        style={{ padding: '12px 32px', fontSize: '1.1rem' }}
+                        className="py-3 px-8 text-lg"
                         icon={<ArrowRight size={20}/>}
                     >
                         Почати безкоштовно
                     </Button>
                 </Link>
                 
-                <Link to="/catalog" style={{ textDecoration: 'none' }}>
+                <Link to="/catalog" className="no-underline">
                     <Button 
                         variant="outline" 
-                        style={{ padding: '12px 32px', fontSize: '1.1rem' }}
+                        className="py-3 px-8 text-lg"
                     >
                         Каталог
                     </Button>

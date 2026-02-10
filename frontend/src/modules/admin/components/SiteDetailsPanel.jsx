@@ -17,13 +17,12 @@ const calculateTimeLeft = (dateString) => {
 const SiteDetailsPanel = ({ site, onClose, actions }) => {
     const navigate = useNavigate();
     const statusConfig = {
-        published: { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981', label: 'Активний', icon: CheckCircle },
-        suspended: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', label: 'Бан', icon: Ban },
-        probation: { bg: 'rgba(245, 158, 11, 0.1)', color: '#d97706', label: 'Модерація', icon: ShieldAlert },
-        draft: { bg: 'rgba(148, 163, 184, 0.1)', color: '#94a3b8', label: 'Чернетка', icon: Clock },
-        private: { bg: 'rgba(100, 116, 139, 0.1)', color: '#64748b', label: 'Приват', icon: Clock }
+        published: { bg: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)', label: 'Активний', icon: CheckCircle },
+        suspended: { bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)', label: 'Бан', icon: Ban },
+        probation: { bg: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', color: 'var(--platform-warning)', label: 'Модерація', icon: ShieldAlert },
+        draft: { bg: 'var(--platform-hover-bg)', color: 'var(--platform-text-secondary)', label: 'Чернетка', icon: Clock },
+        private: { bg: 'var(--platform-hover-bg)', color: 'var(--platform-text-secondary)', label: 'Приват', icon: Clock }
     };
-
     const safeStatusKey = site?.status || 'draft';
     const currentStatus = statusConfig[safeStatusKey] || statusConfig.draft;
     const StatusIcon = currentStatus.icon;
@@ -32,10 +31,10 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
         label: { fontSize: '13px', color: 'var(--platform-text-secondary)', marginBottom: '6px', fontWeight: '500' },
         value: { fontSize: '15px', color: 'var(--platform-text-primary)', fontWeight: '500' },
         infoBox: (type) => ({
-            background: type === 'error' ? 'rgba(239, 68, 68, 0.05)' : type === 'warning' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(59, 130, 246, 0.05)',
-            border: `1px solid ${type === 'error' ? '#ef444433' : type === 'warning' ? '#f59e0b33' : '#3b82f633'}`,
+            background: type === 'error' ? 'color-mix(in srgb, var(--platform-danger), transparent 95%)' : type === 'warning' ? 'color-mix(in srgb, var(--platform-warning), transparent 95%)' : 'color-mix(in srgb, var(--platform-accent), transparent 95%)',
+            border: `1px solid ${type === 'error' ? 'var(--platform-danger)' : type === 'warning' ? 'var(--platform-warning)' : 'var(--platform-accent)'}`,
             padding: '16px', borderRadius: '8px', marginBottom: '24px',
-            color: type === 'error' ? '#ef4444' : type === 'warning' ? '#d97706' : '#3b82f6',
+            color: type === 'error' ? 'var(--platform-danger)' : type === 'warning' ? 'var(--platform-warning)' : 'var(--platform-accent)',
             display: 'flex', gap: '12px', alignItems: 'flex-start'
         }),
         statusBadge: { 
@@ -46,7 +45,7 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
             textTransform: 'uppercase', 
             background: currentStatus.bg, 
             color: currentStatus.color,
-            border: `1px solid ${currentStatus.color}20`,
+            border: `1px solid color-mix(in srgb, ${currentStatus.color}, transparent 80%)`,
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px'
@@ -56,11 +55,9 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
     const isSuspended = site.status === 'suspended';
     const isProbation = site.status === 'probation';
     const { expired: isExpired, text: timeLeftString } = calculateTimeLeft(site.deletion_scheduled_for);
-
     const handleVisitProfile = () => {
         navigate(`/profile/${site.author}`);
     };
-
     return (
         <BaseDetailsPanel 
             title="Керування сайтом" 
@@ -83,7 +80,6 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
                     </Button>
                 </a>
             </div>
-
             <div style={styles.section}>
                 <div style={styles.label}>Власник</div>
                 <div 
@@ -96,15 +92,15 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
                         gap: '6px',
                         transition: 'color 0.2s'
                     }}
-                    className="hover:text-(--platform-accent)"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--platform-accent)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--platform-text-primary)'}
                     title="Відкрити профіль користувача"
                 >
                     {site.author}
                     <ExternalLink size={14} style={{ opacity: 0.5 }} />
                 </div>
-                <div style={{fontSize: '13px', opacity: 0.7}}>{site.author_email}</div>
+                <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', opacity: 0.8}}>{site.author_email}</div>
             </div>
-
             <div style={styles.section}>
                 <div style={styles.label}>Статус</div>
                 <span style={styles.statusBadge}>
@@ -112,7 +108,6 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
                     {currentStatus.label}
                 </span>
             </div>
-
             <div style={styles.section}>
                 <div style={styles.label}>Репутація власника</div>
                 <div style={{display: 'flex', gap: '4px'}}>
@@ -122,7 +117,6 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
                     {site.warning_count >= 3 && <AlertTriangle size={12}/>} {site.warning_count} / 3 страйків
                 </div>
             </div>
-
             {isSuspended && (
                 <div style={styles.infoBox('error')}>
                     <Clock size={20} />
@@ -133,7 +127,6 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
                     </div>
                 </div>
             )}
-
             {isProbation && (
                 <div style={styles.infoBox('warning')}>
                     <Eye size={20} />
@@ -143,7 +136,6 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
                     </div>
                 </div>
             )}
-
             {site.appeal_status === 'pending' && (
                 <div style={styles.infoBox('info')}>
                     <ShieldCheck size={20} />

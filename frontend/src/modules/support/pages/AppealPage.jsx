@@ -39,7 +39,7 @@ const AppealPage = () => {
     };
 
     const warningBoxStyle = {
-        background: 'rgba(221, 107, 32, 0.1)',
+        background: 'color-mix(in srgb, var(--platform-warning), transparent 90%)',
         color: 'var(--platform-warning)',
         padding: '12px',
         borderRadius: '8px',
@@ -47,26 +47,56 @@ const AppealPage = () => {
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        border: '1px solid rgba(221, 107, 32, 0.2)'
+        border: '1px solid color-mix(in srgb, var(--platform-warning), transparent 80%)'
     };
 
     const getAppealStatusBadge = (status) => {
         switch (status) {
             case 'pending':
                 return (
-                    <Button variant="secondary" disabled icon={<Clock size={18}/>} style={{opacity: 1, background: 'rgba(255, 193, 7, 0.1)', color: '#d97706', borderColor: '#d97706'}}>
+                    <Button 
+                        variant="secondary" 
+                        disabled 
+                        icon={<Clock size={18}/>} 
+                        style={{
+                            opacity: 1, 
+                            background: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', 
+                            color: 'var(--platform-warning)', 
+                            borderColor: 'var(--platform-warning)'
+                        }}
+                    >
                         На розгляді
                     </Button>
                 );
             case 'approved':
                 return (
-                    <Button variant="secondary" disabled icon={<Check size={18}/>} style={{opacity: 1, background: 'rgba(16, 185, 129, 0.1)', color: '#059669', borderColor: '#059669'}}>
+                    <Button 
+                        variant="secondary" 
+                        disabled 
+                        icon={<Check size={18}/>} 
+                        style={{
+                            opacity: 1, 
+                            background: 'color-mix(in srgb, var(--platform-success), transparent 90%)', 
+                            color: 'var(--platform-success)', 
+                            borderColor: 'var(--platform-success)'
+                        }}
+                    >
                         Схвалено
                     </Button>
                 );
             case 'rejected':
                 return (
-                    <Button variant="secondary" disabled icon={<XCircle size={18}/>} style={{opacity: 1, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', borderColor: '#dc2626'}}>
+                    <Button 
+                        variant="secondary" 
+                        disabled 
+                        icon={<XCircle size={18}/>} 
+                        style={{
+                            opacity: 1, 
+                            background: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', 
+                            color: 'var(--platform-danger)', 
+                            borderColor: 'var(--platform-danger)'
+                        }}
+                    >
                         Відхилено
                     </Button>
                 );

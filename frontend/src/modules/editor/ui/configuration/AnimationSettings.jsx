@@ -14,7 +14,6 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
     };
 
     const [config, setConfig] = useState({ ...defaultConfig, ...animationConfig });
-
     useEffect(() => {
         setConfig({ ...defaultConfig, ...animationConfig });
     }, [animationConfig]);
@@ -41,28 +40,11 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
         { value: "zoomIn", label: "Масштабування (Zoom In)" }
     ];
 
-    const labelStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        fontSize: '0.9rem',
-        fontWeight: '500',
-        color: 'var(--platform-text-primary)',
-        marginBottom: '8px'
-    };
-
-    const subLabelStyle = {
-        ...labelStyle,
-        fontSize: '0.8rem', 
-        color: 'var(--platform-text-secondary)',
-        marginBottom: '4px'
-    };
-
     return (
         <div>
-            <div style={{ marginBottom: config.type !== 'none' ? '20px' : '0' }}>
-                <label style={labelStyle}>
-                    <Play size={16} style={{ color: 'var(--platform-accent)' }} /> 
+            <div className={`form-group ${config.type !== 'none' ? 'mb-5' : ''}`}>
+                <label className="form-label flex items-center gap-2">
+                    <Play size={16} className="text-(--platform-accent)" /> 
                     Ефект появи
                 </label>
                 <CustomSelect 
@@ -74,11 +56,11 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
             </div>
 
             {config.type !== 'none' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="flex flex-col gap-5">
                     
                     <div>
-                        <div style={subLabelStyle}>
-                            <Clock size={14} /> Тривалість: <span style={{ color: 'var(--platform-text-primary)' }}>{config.duration}s</span>
+                        <div className="flex items-center gap-2 text-xs font-medium text-(--platform-text-secondary) mb-1">
+                            <Clock size={14} /> Тривалість: <span className="text-(--platform-text-primary)">{config.duration}s</span>
                         </div>
                         <RangeSlider 
                             value={Math.round((config.duration || 0.6) * 1000)} 
@@ -91,8 +73,8 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                     </div>
 
                     <div>
-                        <div style={subLabelStyle}>
-                            <Hourglass size={14} /> Затримка: <span style={{ color: 'var(--platform-text-primary)' }}>{config.delay}s</span>
+                        <div className="flex items-center gap-2 text-xs font-medium text-(--platform-text-secondary) mb-1">
+                            <Hourglass size={14} /> Затримка: <span className="text-(--platform-text-primary)">{config.delay}s</span>
                         </div>
                         <RangeSlider 
                             value={Math.round((config.delay || 0) * 1000)} 
@@ -104,16 +86,10 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                         />
                     </div>
 
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between', 
-                        paddingTop: '16px',
-                        borderTop: '1px dashed var(--platform-border-color)'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Repeat size={16} style={{ color: 'var(--platform-text-secondary)' }} />
-                            <span style={{ fontSize: '0.9rem', color: 'var(--platform-text-primary)' }}>Зациклити анімацію</span>
+                    <div className="flex items-center justify-between pt-4 border-t border-dashed border-(--platform-border-color)">
+                        <div className="flex items-center gap-2">
+                            <Repeat size={16} className="text-(--platform-text-secondary)" />
+                            <span className="text-sm text-(--platform-text-primary)">Зациклити анімацію</span>
                         </div>
                         <Switch 
                             checked={config.repeat || false}

@@ -4,6 +4,7 @@
     min-height: 100%; 
     display: flex;
     flex-direction: column;
+    color: var(--site-text-primary);
 }
 
 .mainContent {
@@ -49,6 +50,7 @@
     transition: all 0.2s;
     flex-shrink: 0;
     border: 1px solid var(--site-border-color);
+    background: var(--site-bg);
 }
 
 .thumbnailBox.active {
@@ -73,6 +75,7 @@
     align-items: center;
     justify-content: center;
     user-select: none;
+    background: var(--site-bg);
 }
 
 .mainImageBox.zoomable { cursor: zoom-in; }
@@ -131,6 +134,7 @@
     background: var(--site-text-secondary);
     cursor: not-allowed;
     opacity: 0.4;
+    color: var(--site-bg);
 }
 
 .zoomInfo {
@@ -174,8 +178,8 @@
     font-size: 0.9rem;
 }
 
-.badge.inStock { background: var(--badge-instock-bg); color: #38a169; }
-.badge.outOfStock { background: var(--badge-outofstock-bg); color: #e53e3e; }
+.badge.inStock { background: var(--badge-instock-bg); color: var(--platform-success); }
+.badge.outOfStock { background: var(--badge-outofstock-bg); color: var(--platform-danger); }
 
 .categoryTag {
     color: var(--site-text-secondary);
@@ -192,7 +196,7 @@
     padding: 8px 16px;
     border-radius: 4px;
     border: 1px solid var(--site-border-color);
-    background: var(--site-card-bg);
+    background: var(--site-bg);
     color: var(--site-text-primary);
     cursor: pointer;
     transition: all 0.2s;
@@ -201,13 +205,14 @@
 
 .chipButton.active {
     border: 2px solid var(--site-accent);
-    background: var(--site-bg);
+    background: color-mix(in srgb, var(--site-accent), transparent 95%);
     font-weight: 600;
+    color: var(--site-accent);
 }
 
 .descriptionContainer {
     grid-column: 1 / -1;
-    background: var(--site-card-bg);
+    background: var(--site-bg);
     border: 1px solid var(--site-border-color);
     border-radius: 12px;
     margin-top: 30px;
@@ -256,7 +261,7 @@
     position: absolute;
     top: 10px;
     right: 10px;
-    background: #e53e3e;
+    background: var(--platform-danger);
     color: white;
     font-weight: bold;
     padding: 4px 10px;
@@ -277,7 +282,7 @@
 }
 
 .addToCartButton.available { background: var(--site-accent); color: var(--site-accent-text); }
-.addToCartButton.disabled { background: var(--site-text-secondary); color: var(--site-accent-text); cursor: not-allowed; opacity: 0.7; }
+.addToCartButton.disabled { background: var(--site-text-secondary); color: var(--site-bg); cursor: not-allowed; opacity: 0.7; }
 .variantContainer { margin-bottom: 20px; }
 .variantLabel { display: block; margin-bottom: 10px; font-weight: 600; color: var(--site-text-secondary); }
 .variantOptions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -300,7 +305,7 @@
     color: var(--site-text-primary);
 }
 
-.loadingContainer, .errorContainer { padding: 50px; text-align: center; }
+.loadingContainer, .errorContainer { padding: 50px; text-align: center; color: var(--site-text-secondary); }
 
 @media (max-width: 1200px) {
     .productsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }

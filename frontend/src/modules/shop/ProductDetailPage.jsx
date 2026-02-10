@@ -13,7 +13,6 @@ import NotFoundPage from '../../pages/NotFoundPage';
 import styles from './ProductDetailPage.module.css';
 
 const API_URL = 'http://localhost:5000';
-
 const safeParseFloat = (val) => {
     if (val === null || val === undefined || val === '') return 0;
     const num = parseFloat(val);
@@ -59,12 +58,9 @@ const ProductDetailPage = () => {
                 setLoading(true);
                 setIsNotFound(false);
                 setIsRestricted(false);
-
                 if (!productId) throw new Error("No ID");
-
                 const response = await apiClient.get(`/products/${productId}`);
                 const prod = response.data;
-                
                 if (!prod || Object.keys(prod).length === 0) {
                     throw new Error("Empty product");
                 }
@@ -139,7 +135,6 @@ const ProductDetailPage = () => {
         const catSale = safeParseFloat(product.category_discount);
         let activeDiscount = maxVariantDiscount || prodSale || catSale || 0;
         const finalPrice = Math.round(basePrice * (1 - activeDiscount / 100));
-
         setPriceData({
             finalPrice, originalPrice: basePrice, activeDiscount, isDiscounted: activeDiscount > 0
         });
@@ -178,7 +173,6 @@ const ProductDetailPage = () => {
             });
         }
     }, [isDragging, dragStart, imageScale]);
-
     const handleAddToCart = () => {
         if (!user) {
             if (window.confirm("Щоб додати товар до кошика, необхідно увійти. Перейти на сторінку входу?")) navigate('/login');
@@ -201,7 +195,6 @@ const ProductDetailPage = () => {
     }
 
     if (isNotFound || !product || Object.keys(product).length === 0) return <NotFoundPage />;
-
     const galleryImages = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length > 0)
         ? product.image_gallery.map(img => img.startsWith('http') ? img : `${API_URL}${img}`)
         : ['https://placehold.co/600x600?text=No+Image'];
@@ -212,11 +205,11 @@ const ProductDetailPage = () => {
         '--zoom-controls-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
         '--zoom-controls-border': isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
         '--zoom-info-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
-        '--badge-instock-bg': isDarkMode ? 'rgba(56, 161, 105, 0.2)' : '#c6f6d5',
-        '--badge-outofstock-bg': isDarkMode ? 'rgba(229, 62, 62, 0.2)' : '#fed7d7',
-        '--footer-bg': isDarkMode ? '#1a202c' : '#f7fafc',
-        '--footer-border': isDarkMode ? '#2d3748' : '#e2e8f0',
-        color: 'var(--site-text-primary, #000000)',
+        '--badge-instock-bg': 'color-mix(in srgb, var(--platform-success), transparent 90%)',
+        '--badge-outofstock-bg': 'color-mix(in srgb, var(--platform-danger), transparent 90%)',
+        '--footer-bg': 'var(--site-bg)',
+        '--footer-border': 'var(--site-border-color)',
+        color: 'var(--site-text-primary)',
     };
 
     return (
@@ -285,7 +278,7 @@ const ProductDetailPage = () => {
                                 </div>
                                 {product.category_name && (
                                     <div className={styles.categoryTag}>
-                                        <Folder size={18} style={{color: 'var(--site-accent, orange)'}} />
+                                        <Folder size={18} style={{color: 'var(--site-accent)'}} />
                                         <span>{product.category_name}</span>
                                     </div>
                                 )}

@@ -12,7 +12,6 @@ const ReportModal = ({ isOpen, onClose, siteId }) => {
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
-
     useEffect(() => {
         if (isOpen) {
             setErrorMessage(null);
@@ -60,81 +59,31 @@ const ReportModal = ({ isOpen, onClose, siteId }) => {
 
     return createPortal(
         <div 
-            style={{
-                position: 'fixed', inset: 0, zIndex: 9999,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
-                fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-                textAlign: 'left',
-                lineHeight: 1.5,
-                color: 'var(--platform-text-primary)'
-            }} 
+            className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 backdrop-blur-[2px] text-left leading-normal text-(--platform-text-primary) font-sans"
             onClick={onClose}
         >
             <div 
-                style={{
-                    backgroundColor: 'var(--platform-card-bg, #fff)', 
-                    padding: '24px', 
-                    borderRadius: '12px', 
-                    width: '100%', 
-                    maxWidth: '450px',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                    border: '1px solid var(--platform-border-color)',
-                    position: 'relative',
-                    margin: '16px'
-                }} 
+                className="bg-(--platform-card-bg) p-6 rounded-xl w-full max-w-112.5 shadow-2xl border border-(--platform-border-color) relative m-4"
                 onClick={e => e.stopPropagation()}
             >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h3 style={{ 
-                        margin: 0, 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '10px', 
-                        fontSize: '1.25rem', 
-                        fontWeight: 600,
-                        color: 'var(--platform-text-primary)' 
-                    }}>
-                        <div style={{ 
-                            background: 'rgba(229, 62, 62, 0.1)', 
-                            borderRadius: '8px', 
-                            padding: '6px',
-                            display: 'flex' 
-                        }}>
-                            <AlertTriangle color="#e53e3e" size={24} />
+                <div className="flex justify-between items-center mb-5">
+                    <h3 className="m-0 flex items-center gap-2.5 text-xl font-semibold text-(--platform-text-primary)">
+                        <div className="bg-red-500/10 rounded-lg p-1.5 flex">
+                            <AlertTriangle className="text-red-600" size={24} />
                         </div>
                         Поскаржитись на сайт
                     </h3>
                     <button 
                         onClick={onClose} 
-                        style={{ 
-                            background: 'transparent', 
-                            border: 'none', 
-                            cursor: 'pointer', 
-                            color: 'var(--platform-text-secondary)',
-                            padding: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '4px',
-                            transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--platform-hover-bg)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        className="bg-transparent border-none cursor-pointer text-(--platform-text-secondary) p-1 flex items-center justify-center rounded hover:bg-(--platform-hover-bg) transition-colors"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '16px' }}>
-                        <label style={{ 
-                            display: 'block', 
-                            marginBottom: '8px', 
-                            fontWeight: 500, 
-                            fontSize: '0.9rem',
-                            color: 'var(--platform-text-primary)'
-                        }}>
+                    <div className="mb-4">
+                        <label className="block mb-2 font-medium text-sm text-(--platform-text-primary)">
                             Причина:
                         </label>
                         <CustomSelect 
@@ -146,14 +95,8 @@ const ReportModal = ({ isOpen, onClose, siteId }) => {
                         />
                     </div>
 
-                    <div style={{ marginBottom: '24px' }}>
-                        <label style={{ 
-                            display: 'block', 
-                            marginBottom: '8px', 
-                            fontWeight: 500, 
-                            fontSize: '0.9rem',
-                            color: 'var(--platform-text-primary)'
-                        }}>
+                    <div className="mb-6">
+                        <label className="block mb-2 font-medium text-sm text-(--platform-text-primary)">
                             Деталі (необов'язково):
                         </label>
                         <textarea
@@ -161,44 +104,18 @@ const ReportModal = ({ isOpen, onClose, siteId }) => {
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Опишіть проблему детальніше..."
                             rows={4}
-                            className="custom-scrollbar"
-                            style={{
-                                width: '100%', 
-                                padding: '10px 12px', 
-                                borderRadius: '8px',
-                                border: '1px solid var(--platform-border-color, #ccc)',
-                                backgroundColor: 'var(--platform-input-bg, #fff)',
-                                color: 'var(--platform-text-primary)', 
-                                resize: 'vertical', 
-                                fontFamily: 'inherit',
-                                fontSize: '0.9rem',
-                                outline: 'none',
-                                boxSizing: 'border-box'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--platform-border-color)'}
+                            className="custom-scrollbar w-full p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-input-bg) text-(--platform-text-primary) resize-y font-inherit text-sm outline-none box-border focus:border-(--platform-accent) focus:ring-1 focus:ring-(--platform-accent)"
                         />
                     </div>
 
                     {errorMessage && (
-                        <div style={{
-                            marginBottom: '16px',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            backgroundColor: '#fff5f5',
-                            border: '1px solid #fc8181',
-                            color: '#c53030',
-                            fontSize: '0.9rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                        }}>
-                            <AlertCircle size={18} flexShrink={0} />
+                        <div className="mb-4 p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                            <AlertCircle size={18} className="shrink-0" />
                             <span>{errorMessage}</span>
                         </div>
                     )}
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                    <div className="flex justify-end gap-3">
                         <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
                             Скасувати
                         </Button>

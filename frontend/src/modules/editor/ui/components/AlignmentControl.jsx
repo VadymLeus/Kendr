@@ -15,14 +15,8 @@ const AlignmentControl = ({ value, onChange, label = "Вирівнювання",
     }
 
     return (
-        <div style={{ marginBottom: '16px' }}>
-            <label style={{ 
-                display: 'block', 
-                fontSize: '0.85rem', 
-                fontWeight: '500', 
-                color: 'var(--platform-text-secondary)', 
-                marginBottom: '8px' 
-            }}>
+        <div className="mb-4">
+            <label className="form-label">
                 {label}
             </label>
             <ToggleGroup 

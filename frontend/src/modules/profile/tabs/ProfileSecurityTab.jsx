@@ -1,17 +1,17 @@
 // frontend/src/modules/profile/tabs/ProfileSecurityTab.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 import apiClient from '../../../shared/api/api';
 import { Input, Button } from '../../../shared/ui/elements';
 import PasswordStrengthMeter from '../../../shared/ui/complex/PasswordStrengthMeter';
 import { analyzePassword } from '../../../shared/utils/validationUtils';
-import { Lock, LogOut, AlertCircle } from 'lucide-react';
+import { Lock, Trash2, AlertCircle } from 'lucide-react';
 
 const ProfileSecurityTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
-    const navigate = useNavigate();
+    const confirm = useConfirm();
     const [isLoading, setIsLoading] = useState(false);
     const hasPassword = user.has_password === true;
     const [passwords, setPasswords] = useState({
@@ -19,11 +19,9 @@ const ProfileSecurityTab = () => {
         newPassword: '',
         confirmPassword: ''
     });
-
     useEffect(() => {
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     }, [hasPassword]);
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setPasswords(prev => ({ ...prev, [name]: value }));
@@ -31,26 +29,21 @@ const ProfileSecurityTab = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (passwords.newPassword !== passwords.confirmPassword) {
             toast.error("Нові паролі не співпадають");
             return;
         }
-
         const validation = analyzePassword(passwords.newPassword);
         if (!validation.isValid) {
             toast.warning("Пароль має містити мінімум 8 символів, велику літеру, малу літеру та цифру.");
             return;
         }
-
         setIsLoading(true);
         try {
             const payload = { newPassword: passwords.newPassword };
-            
             if (hasPassword) {
                 payload.currentPassword = passwords.currentPassword;
             }
-
             const response = await apiClient.put('/users/profile/password', payload);
             toast.success(hasPassword ? "Пароль успішно змінено!" : "Пароль успішно встановлено!");
             const updatedUser = {
@@ -69,10 +62,25 @@ const ProfileSecurityTab = () => {
         }
     };
 
-    const handleLogout = () => {
-        logout();
-        navigate('/auth');
-        toast.info("Ви вийшли з системи");
+    const handleDeleteAccount = () => {
+        confirm({
+            title: 'Видалити акаунт?',
+            message: 'Ця дія незворотна. Всі ваші сайти будуть видалені. Напишіть "DELETE" для підтвердження.',
+            requireInput: true,
+            confirmText: 'Видалити назавжди',
+            danger: true,
+            onConfirm: async (inputValue) => {
+                if (inputValue !== 'DELETE') return toast.error('Невірне підтвердження.');
+                try {
+                    await apiClient.delete('/users/me', { data: { confirmation: 'DELETE' } });
+                    toast.success('Акаунт видалено.');
+                    logout();
+                } catch (err) {
+                    console.error(err);
+                    toast.error('Помилка при видаленні акаунту');
+                }
+            }
+        });
     };
 
     const container = { maxWidth: '800px', margin: '0 auto', width: '100%' };
@@ -101,15 +109,14 @@ const ProfileSecurityTab = () => {
     };
     const dangerCardStyle = {
         ...card,
-        borderColor: '#fed7d7',
-        background: 'linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%)',
+        borderColor: 'var(--platform-danger)',
+        background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)',
         marginBottom: 0,
         padding: '32px'
     };
 
     return (
         <div style={container}>
-            
             <div style={card}>
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                     <h3 style={{ ...cardTitle, justifyContent: 'center' }}>
@@ -123,10 +130,8 @@ const ProfileSecurityTab = () => {
                         }
                     </p>
                 </div>
-
                 <form onSubmit={handleSubmit}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px', margin: '0 auto' }}>
-                        
                         {hasPassword && (
                             <Input 
                                 name="currentPassword" 
@@ -151,7 +156,6 @@ const ProfileSecurityTab = () => {
                             />
                             <PasswordStrengthMeter password={passwords.newPassword} />
                         </div>
-
                         <Input 
                             name="confirmPassword" 
                             label="Підтвердження" 
@@ -162,7 +166,6 @@ const ProfileSecurityTab = () => {
                             required
                             error={passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword ? "Паролі не співпадають" : ""}
                         />
-
                         <div style={{ marginTop: '8px' }}>
                             <Button 
                                 type="submit" 
@@ -185,22 +188,22 @@ const ProfileSecurityTab = () => {
                     gap: '16px' 
                 }}>
                     <div style={{ flex: 1 }}>
-                        <h3 style={{ ...cardTitle, color: '#c53030', marginBottom: '4px' }}>
+                        <h3 style={{ ...cardTitle, color: 'var(--platform-danger)', marginBottom: '4px' }}>
                             <AlertCircle size={22} />
-                            Вихід з акаунту
+                            Небезпечна зона
                         </h3>
-                        <p style={{ margin: 0, color: '#c53030', fontSize: '0.9rem', opacity: 0.8 }}>
-                            Це завершить вашу поточну сесію в цьому браузері.
+                        <p style={{ margin: 0, color: 'var(--platform-danger)', fontSize: '0.9rem', opacity: 0.8 }}>
+                             Видалення акаунту призведе до <strong>незворотної</strong> втрати всіх ваших сайтів та даних.
                         </p>
                     </div>
                     
                     <Button 
                         variant="danger"
-                        onClick={handleLogout}
-                        icon={<LogOut size={18} />}
+                        onClick={handleDeleteAccount}
+                        icon={<Trash2 size={18} />}
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
                     >
-                        Вийти з системи
+                        Видалити акаунт
                     </Button>
                 </div>
             </div>

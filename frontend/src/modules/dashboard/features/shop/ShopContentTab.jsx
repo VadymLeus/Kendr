@@ -1,21 +1,18 @@
-// frontend/src/modules/dashboard/features/tabs/ShopContentTab.jsx
+// frontend/src/modules/features/shop/ShopContentTab.jsx
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import CategoryManager from '../CategoryManager';
-import ProductManager from '../ProductManager'; 
+import CategoryManager from './components/CategoryManager';
+import ProductManager from './components/ProductManager'; 
 import { Button } from '../../../../shared/ui/elements/Button'; 
-import { Grid, Folder } from 'lucide-react';
+import { Grid, Folder, Loader2 } from 'lucide-react';
 
 const ShopContentTab = ({ siteData, onSavingChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [isShopSaving, setIsShopSaving] = React.useState(false);
-    
     const activeSubTab = searchParams.get('shopTab') || 'products';
-
     React.useEffect(() => {
         if (onSavingChange) onSavingChange(isShopSaving);
     }, [isShopSaving, onSavingChange]);
-
     const handleTabChange = (tabName) => {
         setSearchParams(prev => {
             prev.set('shopTab', tabName);
@@ -24,68 +21,25 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
             return prev;
         });
     };
-
-    const styles = {
-        container: {
-            height: '100%', 
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '24px', 
-            overflow: 'hidden',
-            paddingBottom: '20px',
-            boxSizing: 'border-box'
-        },
-        header: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center', 
-            padding: '0 4px',
-            flexShrink: 0,
-            flexWrap: 'wrap',
-            gap: '16px'
-        },
-        headerRight: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-        },
-        tabsContainer: {
-            display: 'flex',
-            gap: '4px',
-            background: 'var(--platform-card-bg)',
-            padding: '4px',
-            borderRadius: '8px',
-            border: '1px solid var(--platform-border-color)',
-            flexShrink: 0
-        },
-        contentArea: {
-            flex: 1,
-            minHeight: 0,
-            position: 'relative'
-        }
-    };
-
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
+        <div className="h-full flex flex-col gap-6 overflow-hidden pb-5 box-border">
+            <div className="flex justify-between items-center px-1 shrink-0 flex-wrap gap-4">
                 <div>
-                    <h2 style={{fontSize: '1.5rem', fontWeight: '700', color: 'var(--platform-text-primary)', margin: 0}}>
+                    <h2 className="text-2xl font-bold text-(--platform-text-primary) m-0">
                         Управління магазином
                     </h2>
-                    <p style={{fontSize: '0.9rem', color: 'var(--platform-text-secondary)', margin: '4px 0 0 0'}}>
+                    <p className="text-sm text-(--platform-text-secondary) mt-1 m-0">
                         Управління товарами та категоріями
                     </p>
                 </div>
-
-                <div style={styles.headerRight}>
+                <div className="flex items-center gap-4">
                     {isShopSaving && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--platform-accent)', fontWeight: '500', fontSize: '0.9rem' }}>
-                            <div className="spinner" style={{width: 14, height: 14, border: '2px solid currentColor', borderRightColor: 'transparent', borderRadius: '50%'}}></div>
+                        <div className="flex items-center gap-2 text-(--platform-accent) font-medium text-sm">
+                            <Loader2 size={14} className="animate-spin" />
                             Збереження...
                         </div>
                     )}
-
-                    <div style={styles.tabsContainer}>
+                    <div className="flex gap-1 bg-(--platform-card-bg) p-1 rounded-lg border border-(--platform-border-color) shrink-0">
                         <Button 
                             variant={activeSubTab === 'products' ? 'primary' : 'ghost'} 
                             onClick={() => handleTabChange('products')}
@@ -105,8 +59,7 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                     </div>
                 </div>
             </div>
-
-            <div style={styles.contentArea}>
+            <div className="flex-1 min-h-0 relative">
                 {activeSubTab === 'products' && (
                     <ProductManager 
                         siteId={siteData.id} 
@@ -120,11 +73,6 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                     />
                 )}
             </div>
-            
-            <style>{`
-                .spinner { animation: spin 1s linear infinite; }
-                @keyframes spin { 100% { transform: rotate(360deg); } }
-            `}</style>
         </div>
     );
 };

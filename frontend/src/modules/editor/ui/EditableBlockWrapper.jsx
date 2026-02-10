@@ -29,6 +29,7 @@ const EditableBlockWrapper = ({
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const { confirm } = useConfirm();
+    
     useEffect(() => {
         const handleResize = () => setIsCompact(window.innerWidth < 1024);
         window.addEventListener('resize', handleResize);
@@ -52,7 +53,6 @@ const EditableBlockWrapper = ({
 
     drag(drop(ref));
     const showDropIndicator = dropPosition && !isDragging;
-    const opacity = isDragging ? 0 : 1;
     const blockType = { name: block.type, icon: <Settings size={14} /> };
     const blockDomId = `block-${block.block_id}`;
     const isSelected = selectedBlockPath && Array.isArray(selectedBlockPath) && Array.isArray(path) && selectedBlockPath.join(',') === path.join(',');
@@ -81,7 +81,6 @@ const EditableBlockWrapper = ({
     const handleSaveBlock = async (name, mode, targetOverrideId = null) => {
         try {
             const targetId = targetOverrideId || block._library_origin_id;
-
             if (mode === 'overwrite' && targetId) {
                  await apiClient.put(`/saved-blocks/${targetId}`, { content: block.data });
                 toast.success(`Блок успішно оновлено в бібліотеці!`);
@@ -102,113 +101,26 @@ const EditableBlockWrapper = ({
 
     const originBlockInfo = block._library_origin_id ? { id: block._library_origin_id, name: block._library_name } : null;
     const themeSettings = siteData?.theme_settings || {};
-    const baseBtnStyle = {
-        background: 'transparent',
-        border: '1px solid var(--platform-border-color)',
-        color: 'var(--platform-text-secondary)',
-        padding: isCompact ? '6px' : '6px 10px',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.2s ease',
-        fontSize: '12px',
-        fontWeight: '500',
-        gap: '6px'
+    const baseBtnClass = `
+        bg-transparent border border-(--platform-border-color) text-(--platform-text-secondary)
+        ${isCompact ? 'p-1.5' : 'py-1.5 px-2.5'} rounded-md cursor-pointer flex items-center justify-center
+        transition-all duration-200 text-xs font-medium gap-1.5
+        hover:-translate-y-px hover:shadow-sm
+    `;
+
+    const getBtnHoverClass = (type) => {
+        if (type === 'danger') return 'hover:bg-(--platform-danger) hover:text-white hover:border-(--platform-danger)';
+        if (type === 'primary') return 'hover:bg-(--platform-accent) hover:text-(--platform-accent-text) hover:border-(--platform-accent)';
+        return 'hover:bg-(--platform-hover-bg) hover:text-(--platform-text-primary) hover:border-(--platform-accent)';
     };
 
-    const handleBtnHover = (e, type) => {
-        const style = e.currentTarget.style;
-        if (type === 'danger') {
-            style.background = 'var(--platform-danger)';
-            style.color = '#fff';
-            style.borderColor = 'var(--platform-danger)';
-        } else if (type === 'primary') {
-            style.background = 'var(--platform-accent)';
-            style.color = 'var(--platform-accent-text)';
-            style.borderColor = 'var(--platform-accent)';
-        } else {
-            style.background = 'var(--platform-hover-bg)';
-            style.color = 'var(--platform-text-primary)';
-            style.borderColor = 'var(--platform-accent)';
-        }
-        style.transform = 'translateY(-1px)';
-    };
-
-    const handleBtnOut = (e) => {
-        const style = e.currentTarget.style;
-        style.background = 'transparent';
-        style.borderColor = 'var(--platform-border-color)';
-        style.color = 'var(--platform-text-secondary)';
-        style.transform = 'translateY(0)';
-    };
-
-    const wrapperStyle = {
-        opacity,
-        position: 'relative',
-        margin: '24px 0',
-        zIndex: isSelected ? 10 : (isHovered ? 5 : 1),
-        transition: 'all 0.2s ease',
-        outline: 'none',
-    };
-
-    const gapSize = '3px'; 
-    let selectionBorder = '1px dashed var(--platform-accent)';
+    const gapSize = '3px';
+    let borderClass = 'hidden';
     if (isSelected) {
-        selectionBorder = '3px solid var(--platform-accent)';
+        borderClass = 'block border-3 border-solid border-(--platform-accent)';
     } else if (isHovered) {
-        selectionBorder = '3px dashed var(--platform-accent)';
+        borderClass = 'block border-3 border-dashed border-(--platform-accent)';
     }
-
-    const selectionBorderStyle = {
-        position: 'absolute',
-        top: `-${gapSize}`,
-        left: `-${gapSize}`,
-        right: `-${gapSize}`,
-        bottom: `-${gapSize}`,
-        border: selectionBorder,
-        borderRadius: '12px',
-        pointerEvents: 'none', 
-        zIndex: 2,
-        display: (isSelected || isHovered) ? 'block' : 'none',
-        transition: 'all 0.2s ease',
-    };
-
-    const contentBoxStyle = {
-        position: 'relative',
-        background: block.type === 'layout' ? 'transparent' : 'var(--site-bg)',
-        borderRadius: '8px',
-        boxShadow: isDragging ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
-        border: '1px solid var(--platform-border-color)',
-        overflow: 'hidden', 
-        zIndex: 3,
-    };
-
-    const dropIndicatorStyle = {
-        position: 'absolute',
-        left: 0, 
-        right: 0,
-        height: '4px',
-        backgroundColor: 'var(--platform-accent)',
-        zIndex: 100,
-        borderRadius: '2px',
-        pointerEvents: 'none',
-        boxShadow: '0 0 6px rgba(0,0,0,0.3)',
-    };
-    
-    const TOP_OFFSET = '-14px';
-    const BOTTOM_OFFSET = '-14px';
-    const headerStyle = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '8px 12px',
-        background: 'var(--platform-card-bg)',
-        borderBottom: '1px solid var(--platform-border-color)',
-        gap: '10px',
-        cursor: 'grab'
-    };
 
     return (
         <div
@@ -216,45 +128,54 @@ const EditableBlockWrapper = ({
             ref={ref}
             onClick={handleSelect}
             onContextMenu={(e) => onContextMenu && onContextMenu(e, path, block.block_id)}
-            style={wrapperStyle}
-            className="editable-block-wrapper"
+            className={`
+                relative my-6 transition-all duration-200 outline-none group
+                ${isDragging ? 'opacity-0' : 'opacity-100'}
+                ${isSelected ? 'z-10' : (isHovered ? 'z-5' : 'z-1')}
+            `}
             data-handler-id={handlerId}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             {showDropIndicator && dropPosition === 'top' && (
-                <div style={{ ...dropIndicatorStyle, top: TOP_OFFSET }} />
+                <div className="absolute left-0 right-0 h-1 bg-(--platform-accent) z-100 rounded-sm pointer-events-none shadow-md -top-3.5" />
             )}
-            <div style={selectionBorderStyle} />
-            <div style={contentBoxStyle}>
-                <div style={headerStyle} className="editable-block-header">
-                    <span style={{
-                        fontSize: '14px', fontWeight: '500', color: 'var(--platform-text-primary)',
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'
-                    }} title={blockType?.name}>
-                        <span style={{display: 'flex', alignItems: 'center', color: 'var(--platform-text-secondary)'}}>
+            
+            <div 
+                className={`absolute rounded-xl pointer-events-none z-2 transition-all duration-200 ${borderClass}`}
+                style={{ top: `-${gapSize}`, left: `-${gapSize}`, right: `-${gapSize}`, bottom: `-${gapSize}` }} 
+            />
+            
+            <div className={`
+                relative rounded-lg overflow-hidden z-3
+                ${block.type === 'layout' ? 'bg-transparent' : 'bg-(--site-bg)'}
+                ${isDragging ? 'shadow-none' : 'shadow-sm border border-(--platform-border-color)'}
+            `}>
+                <div className="flex justify-between items-center px-3 py-2 bg-(--platform-card-bg) border-b border-(--platform-border-color) gap-2.5 cursor-grab">
+                    <span 
+                        className="text-sm font-medium text-(--platform-text-primary) flex items-center gap-2 flex-1 overflow-hidden whitespace-nowrap text-ellipsis"
+                        title={blockType?.name}
+                    >
+                        <span className="flex items-center text-(--platform-text-secondary)">
                             <GripVertical size={16} />
                         </span>
-                        <span style={{display: 'flex', alignItems: 'center', color: 'var(--platform-accent)'}}>
+                        <span className="flex items-center text-(--platform-accent)">
                             {block.icon || <HelpCircle size={16} />} 
                         </span>
                         <span>{blockType?.name}</span>
                         {anchorId && (
-                            <span style={{ fontSize: '0.75rem', background: 'rgba(var(--platform-accent-rgb), 0.1)', color: 'var(--platform-accent)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--platform-accent)' }}>
+                            <span className="text-xs bg-blue-500/10 text-(--platform-accent) px-1.5 py-0.5 rounded border border-(--platform-accent)">
                                 #{anchorId}
                             </span>
                         )}
                     </span>
                     
-                    <div style={{display: 'flex', gap: '4px', cursor: 'default'}} onClick={e => e.stopPropagation()}>
+                    <div className="flex gap-1 cursor-default" onClick={e => e.stopPropagation()}>
                         {!isHeaderBlock && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); setIsSaveModalOpen(true); }}
-                                style={baseBtnStyle}
+                                className={`${baseBtnClass} ${getBtnHoverClass('default')}`}
                                 title="Зберегти"
-                                onMouseEnter={(e) => handleBtnHover(e, 'default')}
-                                onMouseLeave={handleBtnOut}
                             >
                                 <Save size={16} />
                             </button>
@@ -262,20 +183,16 @@ const EditableBlockWrapper = ({
 
                         <button 
                             onClick={(e) => { e.stopPropagation(); onToggleCollapse(block.block_id); }}
-                            style={baseBtnStyle}
+                            className={`${baseBtnClass} ${getBtnHoverClass('default')}`}
                             title={isCollapsed ? 'Розгорнути' : 'Згорнути'}
-                            onMouseEnter={(e) => handleBtnHover(e, 'default')}
-                            onMouseLeave={handleBtnOut}
                         >
                             {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                         </button>
 
                         <button 
                             onClick={handleSelect}
-                            style={baseBtnStyle}
+                            className={`${baseBtnClass} ${getBtnHoverClass('primary')}`}
                             title="Налаштування"
-                            onMouseEnter={(e) => handleBtnHover(e, 'primary')}
-                            onMouseLeave={handleBtnOut}
                         >
                             {isCompact ? <Settings size={16} /> : <><Settings size={16} /> Налаштування</>}
                         </button>
@@ -284,9 +201,7 @@ const EditableBlockWrapper = ({
                             <button 
                                 onClick={handleDelete}
                                 title="Видалити"
-                                style={baseBtnStyle}
-                                onMouseEnter={(e) => handleBtnHover(e, 'danger')}
-                                onMouseLeave={handleBtnOut}
+                                className={`${baseBtnClass} ${getBtnHoverClass('danger')}`}
                             >
                                 <Trash2 size={16} />
                             </button>
@@ -295,12 +210,7 @@ const EditableBlockWrapper = ({
                 </div>
 
                 {isCollapsed ? (
-                    <div style={{ 
-                        padding: '1.5rem', 
-                        textAlign: 'center', 
-                        background: 'var(--platform-bg)', 
-                        color: 'var(--platform-text-secondary)'
-                    }}>
+                    <div className="p-6 text-center bg-(--platform-bg) text-(--platform-text-secondary)">
                         <small>Вміст блоку згорнуто</small>
                     </div>
                 ) : (
@@ -309,9 +219,8 @@ const EditableBlockWrapper = ({
                         data-site-mode={siteData?.site_theme_mode || 'light'}
                         data-site-accent={siteData?.site_theme_accent || 'orange'}
                         style={{
-                            background: 'var(--site-bg)', 
+                            background: block.type === 'layout' ? 'transparent' : 'var(--site-bg)', 
                             color: 'var(--platform-text-primary)',
-                            ...(block.type === 'layout' && { background: 'transparent' }),
                             '--font-heading': themeSettings.font_heading || "'Inter', sans-serif",
                             '--font-body': themeSettings.font_body || "'Inter', sans-serif",
                             '--btn-radius': themeSettings.button_radius || '8px',
@@ -343,7 +252,7 @@ const EditableBlockWrapper = ({
             )}
             
             {showDropIndicator && dropPosition === 'bottom' && (
-                <div style={{ ...dropIndicatorStyle, bottom: BOTTOM_OFFSET }} />
+                <div className="absolute left-0 right-0 h-1 bg-(--platform-accent) z-100 rounded-sm pointer-events-none shadow-md -bottom-3.5" />
             )}
         </div>
     );

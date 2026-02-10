@@ -37,19 +37,15 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const safeRadius = (rawRadius !== undefined && rawRadius !== null && rawRadius !== '') 
         ? parseInt(rawRadius, 10) 
         : 6;
-
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         button: buttonConfig.fontFamily
     }, siteData);
-
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (isEditorPreview) return;
-
         setStatus({ loading: true, error: '', success: '' });
         try {
             await apiClient.post(`/public/form/${siteData.id}/submit`, formData);
@@ -73,160 +69,100 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         opacity: status.loading ? 0.7 : 1,
     };
 
-    const sizeMap = {
-        small:  { padding: '8px 16px',  fontSize: '0.85rem' },
-        medium: { padding: '12px 24px', fontSize: '1rem' },
-        large:  { padding: '16px 32px', fontSize: '1.2rem' }
+    const sizeClasses = {
+        small: 'px-4 py-2 text-[0.85rem]',
+        medium: 'px-6 py-3 text-base',
+        large: 'px-8 py-4 text-[1.2rem]'
     };
     
     const alignMap = {
-        left: 'flex-start',
-        center: 'center',
-        right: 'flex-end'
+        left: 'justify-start',
+        center: 'justify-center',
+        right: 'justify-end'
     };
 
-    const heightMap = { 
-        small: 'auto',
-        medium: '500px',
-        large: '700px',
-        full: 'calc(100vh - 60px)' 
+    const heightClasses = { 
+        small: 'min-h-auto',
+        medium: 'min-h-[500px]',
+        large: 'min-h-[700px]',
+        full: 'min-h-[calc(100vh-60px)]' 
     };
 
     const scopeClass = `form-scope-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
     const btnClass = `form-btn-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
-
-    const containerStyle = { 
-        padding: '30px',
-        backgroundColor: 'var(--site-card-bg, #ffffff)',
-        color: 'var(--site-text-primary)',
-        border: '1px solid var(--site-border-color)',
-        maxWidth: '600px',
-        width: '100%',
-        margin: '0 auto',
-        borderRadius: '12px',
-        minHeight: heightMap[height] || 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        ...style,
-        ...cssVariables 
-    };
-
-    const inputStyle = {
-        width: '100%', 
-        padding: '12px 16px', 
-        backgroundColor: 'var(--site-bg)',
-        border: '1px solid var(--site-border-color)',
-        color: 'var(--site-text-primary)',
-        borderRadius: '8px', 
-        marginBottom: '1rem', 
-        boxSizing: 'border-box',
-        fontSize: '1rem',
-        fontFamily: 'inherit',
-        transition: 'all 0.2s ease',
-        outline: 'none'
-    };
-
-    const handleFocus = (e) => {
-        e.target.style.borderColor = 'var(--site-accent)';
-        e.target.style.boxShadow = '0 0 0 1px var(--site-accent)'; 
-    };
-
-    const handleBlur = (e) => {
-        e.target.style.borderColor = 'var(--site-border-color)';
-        e.target.style.boxShadow = 'none';
-    };
-
+    const inputClasses = "w-full px-4 py-3 bg-(--site-bg) border border-(--site-border-color) text-(--site-text-primary) rounded-lg mb-4 text-base transition-all duration-200 outline-none focus:border-(--site-accent) focus:ring-1 focus:ring-(--site-accent) hover:border-(--site-accent)";
     return (
-        <div className={scopeClass} style={containerStyle}>
+        <div 
+            className={`
+                p-7.5 bg-(--site-card-bg) text-(--site-text-primary) border border-(--site-border-color)
+                max-w-150 w-full mx-auto rounded-xl flex flex-col justify-center
+                ${heightClasses[height]}
+                ${scopeClass}
+            `}
+            style={{ 
+                ...style,
+                ...cssVariables 
+            }}
+        >
             <RenderFonts />
-            
             <style>{`
                 .${btnClass} { ${fontStyles.button || ''} }
                 button.${btnClass} {
                     border-radius: ${safeRadius}px !important;
                 }
-
                 .${scopeClass} input::placeholder,
                 .${scopeClass} textarea::placeholder {
                     color: var(--site-text-secondary);
                     opacity: 0.7;
                 }
             `}</style>
-            
-            <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+            <form onSubmit={handleSubmit} className="w-full">
                 {status.error && (
-                    <div style={{
-                        padding: '12px', border: '1px solid var(--site-danger)', 
-                        background: 'rgba(229, 62, 62, 0.1)', color: 'var(--site-danger)', 
-                        borderRadius: '6px', marginBottom: '1.5rem', fontSize: '0.9rem', textAlign: 'center'
-                    }}>
+                    <div className="p-3 border border-(--site-danger) bg-red-500/10 text-(--site-danger) rounded-md mb-6 text-sm text-center">
                         {status.error}
                     </div>
                 )}
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '0' }}>
+                <div className="grid grid-cols-2 gap-4 mb-0">
                     <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Ваше ім'я*" required 
-                        style={{ ...inputStyle, marginBottom: '1rem' }} onFocus={handleFocus} onBlur={handleBlur} />
+                        className={inputClasses} />
                     <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Ваш Email*" required 
-                        style={{ ...inputStyle, marginBottom: '1rem' }} onFocus={handleFocus} onBlur={handleBlur} />
+                        className={inputClasses} />
                 </div>
-
                 <input type="text" name="subject" value={formData.subject} onChange={handleChange} placeholder="Тема (необов'язково)" 
-                    style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-
+                    className={inputClasses} />
                 <textarea 
                     name="message" 
                     value={formData.message} 
                     onChange={handleChange} 
                     placeholder="Ваше повідомлення*" 
                     required 
-                    className="custom-scrollbar"
-                    style={{ ...inputStyle, minHeight: '150px', resize: 'vertical' }} 
-                    onFocus={handleFocus} 
-                    onBlur={handleBlur} 
+                    className={`custom-scrollbar min-h-37.5 resize-y ${inputClasses}`}
                 />
-                
-                <div style={{ 
-                    textAlign: buttonConfig.width === 'full' ? 'center' : (buttonConfig.alignment || 'center'),
-                    display: 'flex',
-                    justifyContent: buttonConfig.width === 'full' ? 'stretch' : (alignMap[buttonConfig.alignment] || 'center')
-                }}> 
+                <div 
+                    className={`
+                        flex w-full
+                        ${buttonConfig.width === 'full' ? 'text-center justify-stretch' : (alignMap[buttonConfig.alignment] || 'justify-center')}
+                    `}
+                    style={{ textAlign: buttonConfig.width === 'full' ? 'center' : (buttonConfig.alignment || 'center') }}
+                > 
                     <button 
                         type="submit" 
-                        className={btnClass}
+                        className={`
+                            ${btnClass}
+                            inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 appearance-none
+                            ${(isEditorPreview || status.loading) ? 'cursor-default' : 'cursor-pointer hover:-translate-y-px hover:opacity-90'}
+                            ${sizeClasses[buttonConfig.size || 'medium']}
+                        `}
                         disabled={status.loading} 
                         style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            cursor: (isEditorPreview || status.loading) ? 'default' : 'pointer',
-                            fontWeight: '600',
-                            transition: 'all 0.2s ease',
                             width: buttonConfig.width === 'full' ? '100%' : 'auto',
                             fontFamily: fontStyles.button,
-                            appearance: 'none',
-                            WebkitAppearance: 'none',
                             borderRadius: `${safeRadius}px`,
-                            ...sizeMap[buttonConfig.size || 'medium'],
                             ...dynamicBtnStyle
                         }}
                         onClick={(e) => {
                             if (isEditorPreview) {
                                 e.preventDefault();
-                            }
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!isEditorPreview && !status.loading) {
-                                e.target.style.transform = 'translateY(-1px)';
-                                e.target.style.opacity = '0.9';
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (!isEditorPreview && !status.loading) {
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.opacity = '1';
                             }
                         }}
                     >

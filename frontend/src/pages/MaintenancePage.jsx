@@ -14,6 +14,8 @@ const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
         '--color-secondary': colors.secondary || '#718096',
         '--font-heading': fonts.heading || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         '--font-body': fonts.body || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        '--platform-accent': primaryColor, 
+        '--platform-accent-hover': primaryColor, 
     };
 
     const containerStyle = {
@@ -22,7 +24,7 @@ const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100%', 
+        minHeight: '100vh',
         width: '100%',
         background: 'var(--color-bg)',
         color: 'var(--color-text)',
@@ -30,6 +32,7 @@ const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
         padding: '40px 20px',
         fontFamily: 'var(--font-body)',
         transition: 'all 0.3s ease',
+        overflowY: 'auto'
     };
 
     const logoStyle = {
@@ -94,15 +97,7 @@ const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
     };
 
     return (
-        <div style={containerStyle}>
-            <style>
-                {`
-                    .layout-content::-webkit-scrollbar-thumb:hover {
-                        background-color: ${primaryColor} !important;
-                    }
-                `}
-            </style>
-
+        <div style={containerStyle} className="custom-scrollbar">
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                 <div style={{ marginBottom: '1.5rem' }}>
                     {logoUrl && !logoUrl.includes('default') ? (

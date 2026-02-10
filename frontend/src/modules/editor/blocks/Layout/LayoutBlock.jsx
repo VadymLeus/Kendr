@@ -8,51 +8,38 @@ import { Plus } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000';
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
-const getGridStyles = (direction = 'row', preset, verticalAlign = 'top', gap = 20) => {
-    
+const getGridClasses = (direction = 'row', preset, verticalAlign = 'top') => {
     const verticalAlignMap = {
-        top: 'start',
-        middle: 'center',
-        bottom: 'end',
-        stretch: 'stretch'
+        top: 'items-start',
+        middle: 'items-center',
+        bottom: 'items-end',
+        stretch: 'items-stretch'
     };
 
-    const baseStyle = {
-        display: 'grid',
-        gap: `${gap}px`,
-        width: '100%',
-        alignItems: verticalAlignMap[verticalAlign] || 'start', 
-        zIndex: 2,
-        position: 'relative'
-    };
-
+    const alignClass = verticalAlignMap[verticalAlign] || 'items-start';
     if (direction === 'column') {
-        baseStyle.gridTemplateColumns = '1fr';
-        return baseStyle;
+        return `grid grid-cols-1 ${alignClass}`;
     }
 
+    let colsClass = 'grid-cols-2';
     switch (preset) {
-        case '50-50': baseStyle.gridTemplateColumns = '1fr 1fr'; break;
-        case '75-25': baseStyle.gridTemplateColumns = '3fr 1fr'; break;
-        case '25-75': baseStyle.gridTemplateColumns = '1fr 3fr'; break;
-        case '33-33-33': baseStyle.gridTemplateColumns = '1fr 1fr 1fr'; break;
-        case '25-25-25-25': baseStyle.gridTemplateColumns = '1fr 1fr 1fr 1fr'; break;
-        default: baseStyle.gridTemplateColumns = '1fr 1fr';
+        case '50-50': colsClass = 'grid-cols-2'; break;
+        case '75-25': colsClass = 'grid-cols-[3fr_1fr]'; break;
+        case '25-75': colsClass = 'grid-cols-[1fr_3fr]'; break;
+        case '33-33-33': colsClass = 'grid-cols-3'; break;
+        case '25-25-25-25': colsClass = 'grid-cols-4'; break;
+        default: colsClass = 'grid-cols-2';
     }
     
-    return baseStyle;
+    return `grid ${colsClass} ${alignClass}`;
 };
 
 const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock }) => {
-    const siteAccent = 'var(--platform-accent)'; 
-    const siteBorderColor = 'var(--platform-border-color)';
-
     const [{ isOver, canDrop }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
         drop: (item, monitor) => {
             if (monitor.didDrop()) return;
             const dragType = monitor.getItemType();
-            
             if (dragType === DRAG_ITEM_TYPE_EXISTING) {
                 const dragPath = item.path;
                 const dropZonePath = path;
@@ -77,7 +64,6 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
     const columnRef = useRef(null);
     const contentRef = useRef(null);
     const [scale, setScale] = useState(1);
-
     useEffect(() => {
         if (!isEditorPreview) return;
         const calculateScale = () => {
@@ -100,46 +86,32 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         drop(node);
         columnRef.current = node;
     }, [drop]);
-
-    const columnStyle = {
-        minHeight: '100px',
-        padding: '10px',
-        borderRadius: '8px',
-        border: isOver && canDrop ? `2px dashed ${siteAccent}` : `1px dashed ${isEditorPreview ? siteBorderColor : 'transparent'}`,
-        transition: 'all 0.2s ease',
-        backgroundColor: isOver && canDrop ? 'rgba(66, 153, 225, 0.05)' : 'transparent',
-        width: '100%', 
-        boxSizing: 'border-box',
-        overflow: 'hidden', 
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative'
-    };
-
-    const contentWrapperStyle = {
-        flex: 1,
-        width: scale < 1 ? `${(1/scale) * 100}%` : '100%',
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left',
-        marginBottom: scale < 1 ? `-${(1 - scale) * 100}%` : '0',
-    };
-
+    const isActive = isOver && canDrop;
     return (
-        <div ref={setRefs} style={columnStyle}>
-            <div ref={contentRef} style={contentWrapperStyle}>
+        <div 
+            ref={setRefs} 
+            className={`
+                min-h-25 p-2.5 rounded-lg w-full box-border overflow-hidden flex flex-col relative transition-all duration-200
+                ${isActive ? 'border-2 border-dashed border-(--platform-accent) bg-blue-500/5' : `border border-dashed ${isEditorPreview ? 'border-(--platform-border-color)' : 'border-transparent'}`}
+            `}
+        >
+            <div 
+                ref={contentRef} 
+                style={{
+                    flex: 1,
+                    width: scale < 1 ? `${(1/scale) * 100}%` : '100%',
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'top left',
+                    marginBottom: scale < 1 ? `-${(1 - scale) * 100}%` : '0',
+                }}
+            >
                 {children}
                 {isEditorPreview && React.Children.count(children) === 0 && (
-                    <div style={{ 
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        height: '100px', color: 'var(--platform-text-secondary)', opacity: 0.6, pointerEvents: 'none'
-                    }}>
-                        <div style={{ 
-                            width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--platform-border-color)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '6px', background: 'var(--platform-bg)'
-                        }}>
+                    <div className="flex flex-col items-center justify-center h-25 text-(--platform-text-secondary) opacity-60 pointer-events-none">
+                        <div className="w-8 h-8 rounded-full border border-(--platform-border-color) flex items-center justify-center mb-1.5 bg-(--platform-bg)">
                             <Plus size={16} />
                         </div>
-                        <span style={{ fontSize: '0.75rem' }}>Сюди блок</span>
+                        <span className="text-xs">Сюди блок</span>
                     </div>
                 )}
             </div>
@@ -178,86 +150,86 @@ const LayoutBlock = ({
     } = block.data;
 
     const videoRef = useRef(null);
-    const heightMap = { 
-        small: '300px',
-        medium: '500px',
-        large: '700px',
-        full: '100vh',
-        auto: 'auto'
+    const heightClasses = { 
+        small: 'min-h-75',
+        medium: 'min-h-125',
+        large: 'min-h-175',
+        full: 'min-h-screen',
+        auto: 'min-h-auto'
     };
 
-    const activeMinHeight = heightMap[height] || (legacyMinHeight === 'screen' ? '100vh' : legacyMinHeight) || 'auto';
+    const activeMinHeightClass = heightClasses[height] || (legacyMinHeight === 'screen' ? 'min-h-screen' : '') || 'min-h-auto';
+    const activeMinHeightStyle = (!heightClasses[height] && legacyMinHeight !== 'screen' && legacyMinHeight) ? { minHeight: legacyMinHeight } : {};
     const fullImageUrl = bg_image 
         ? (bg_image.startsWith('http') ? bg_image : `${API_URL}${bg_image}`)
         : null;
     const fullVideoUrl = bg_video 
         ? (bg_video.startsWith('http') ? bg_video : `${API_URL}${bg_video}`)
         : null;
-
     useEffect(() => {
         if (videoRef.current && bg_type === 'video') {
             videoRef.current.play().catch(e => console.error("Autoplay failed", e));
         }
     }, [bg_type, fullVideoUrl]);
 
-    const containerStyle = {
-        position: 'relative',
-        minHeight: activeMinHeight,
-        padding: legacyPadding,
-        ...styles, 
-        backgroundColor: bg_type === 'color' ? bg_color : 'var(--site-bg, #f7fafc)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: activeMinHeight !== 'auto' ? (
-            verticalAlign === 'middle' ? 'center' : (verticalAlign === 'bottom' ? 'flex-end' : 'flex-start')
-        ) : 'flex-start',
-    };
+    const alignmentClass = activeMinHeightClass !== 'min-h-auto' 
+        ? (verticalAlign === 'middle' ? 'justify-center' : (verticalAlign === 'bottom' ? 'justify-end' : 'justify-start'))
+        : 'justify-start';
 
-    const renderBackground = () => {
-        if (bg_type === 'image' && fullImageUrl) {
-            return (
-                <div style={{
-                    position: 'absolute', inset: 0, zIndex: 0,
-                    backgroundImage: `url(${fullImageUrl})`,
-                    backgroundSize: 'cover', backgroundPosition: 'center'
-                }} />
-            );
-        }
-        if (bg_type === 'video' && fullVideoUrl) {
-            return (
+    return (
+        <div 
+            className={`
+                relative flex flex-col overflow-hidden
+                ${activeMinHeightClass}
+                ${alignmentClass}
+            `}
+            style={{
+                padding: legacyPadding,
+                ...styles, 
+                ...activeMinHeightStyle,
+                backgroundColor: bg_type === 'color' ? bg_color : 'var(--site-bg, #f7fafc)',
+            }}
+            id={block.data.anchorId}
+        >
+            {bg_type === 'image' && fullImageUrl && (
+                 <div 
+                    className="absolute inset-0 z-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${fullImageUrl})` }} 
+                />
+            )}
+            {bg_type === 'video' && fullVideoUrl && (
                 <video
                     ref={videoRef}
                     src={fullVideoUrl}
                     poster={fullImageUrl}
                     autoPlay muted loop playsInline
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
+                    className="absolute inset-0 w-full h-full object-cover z-0"
                 />
-            );
-        }
-        return null;
-    };
-
-    const gridStyle = getGridStyles(direction, preset, verticalAlign, gap);
-
-    return (
-        <div style={containerStyle} id={block.data.anchorId}>
-            {renderBackground()}
-            {(bg_type === 'image' || bg_type === 'video') && (
-                <div style={{
-                    position: 'absolute', inset: 0, zIndex: 1,
-                    backgroundColor: overlay_color,
-                    opacity: parseFloat(overlay_opacity) || 0
-                }} />
             )}
-            <div style={gridStyle}>
+            {(bg_type === 'image' || bg_type === 'video') && (
+                <div
+                    className="absolute inset-0 z-1"
+                    style={{
+                        backgroundColor: overlay_color,
+                        opacity: parseFloat(overlay_opacity) || 0
+                    }} 
+                />
+            )}
+            
+            <div 
+                className={`
+                    w-full relative z-2
+                    ${getGridClasses(direction, preset, verticalAlign)}
+                `}
+                style={{ gap: `${gap}px` }}
+            >
                 {columns.map((columnBlocks, colIndex) => {
                     const safePath = path || [];
                     const columnPath = [...safePath, 'data', 'columns', colIndex];
                     
                     if (!isEditorPreview) {
                         return (
-                            <div key={colIndex} style={{ minWidth: '0' }}>
+                            <div key={colIndex} className="min-w-0">
                                 <BlockRenderer
                                     blocks={columnBlocks}
                                     siteData={siteData}

@@ -52,7 +52,7 @@ const PublicProfileTab = () => {
             <style>{STYLES}</style>
             <div className="profile-card">
                 <div className="status-header">
-                    <div>
+                    <div className="status-text">
                         <h3 className="section-title">
                             {formData.is_profile_public ? <Eye size={20} className="accent-icon" /> : <EyeOff size={20} />}
                             Статус профілю
@@ -172,6 +172,7 @@ const STYLES = `
         margin-bottom: 24px;
         display: flex;
         flex-direction: column;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
     }
     .section-title {
         font-size: 1.1rem;
@@ -191,13 +192,18 @@ const STYLES = `
         margin-bottom: 1.5rem;
         line-height: 1.5;
     }
+    
     .status-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         gap: 20px;
+        margin-bottom: 10px;
     }
-    
+    .status-text .section-desc {
+        margin-bottom: 0;
+    }
+
     .link-box {
         background: var(--platform-bg);
         border: 1px solid var(--platform-border-color);
@@ -246,10 +252,14 @@ const STYLES = `
         color: var(--platform-text-primary);
         margin-left: 4px;
     }
+
     .form-footer {
         margin-top: 10px;
+        padding-top: 24px;
+        border-top: 1px solid var(--platform-border-color);
         display: flex;
         justify-content: flex-end;
+        align-items: center;
     }
 
     .bio-textarea {
@@ -257,7 +267,7 @@ const STYLES = `
         padding: 12px 16px;
         border-radius: 12px;
         border: 1px solid var(--platform-border-color);
-        background: var(--platform-bg);
+        background: var(--platform-input-bg);
         color: var(--platform-text-primary);
         font-size: 0.95rem;
         resize: vertical;
@@ -271,6 +281,7 @@ const STYLES = `
     }
     .bio-textarea:focus {
         border-color: var(--platform-accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--platform-accent), transparent 85%);
     }
     
     .bio-textarea::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -283,7 +294,7 @@ const STYLES = `
     }
     .bio-textarea::-webkit-scrollbar-thumb:hover { background-color: var(--platform-accent); }
 
-    .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .slider {
         position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;

@@ -35,6 +35,7 @@ const ConfirmModal = ({
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
     }, [isOpen, onCancel]);
+
     if (!isVisible && !isOpen) return null;
     const getTypeConfig = () => {
         switch (type) {
@@ -43,141 +44,78 @@ const ConfirmModal = ({
                     icon: <AlertCircle size={24} />,
                     iconColor: 'var(--platform-danger)',
                     iconBg: 'rgba(229, 62, 62, 0.1)',
-                    confirmVariant: 'danger'
+                    confirmVariant: 'danger',
+                    confirmStyle: {} 
                 };
             case 'success':
                 return {
                     icon: <CheckCircle size={24} />,
                     iconColor: 'var(--platform-success)',
                     iconBg: 'rgba(56, 161, 105, 0.1)',
-                    confirmVariant: 'primary'
+                    confirmVariant: 'primary',
+                    confirmStyle: { backgroundColor: 'var(--platform-success)', borderColor: 'var(--platform-success)', color: '#fff' }
                 };
             case 'warning':
                 return {
                     icon: <AlertCircle size={24} />,
                     iconColor: 'var(--platform-warning)',
                     iconBg: 'rgba(221, 107, 32, 0.1)',
-                    confirmVariant: 'warning'
+                    confirmVariant: 'warning',
+                    confirmStyle: { 
+                        backgroundColor: 'var(--platform-warning)', 
+                        borderColor: 'var(--platform-warning)', 
+                        color: '#fff' 
+                    }
                 };
-            default: 
+            default:
                 return {
                     icon: <HelpCircle size={24} />,
                     iconColor: 'var(--platform-accent)',
                     iconBg: 'rgba(66, 153, 225, 0.1)',
-                    confirmVariant: 'primary'
+                    confirmVariant: 'primary',
+                    confirmStyle: {}
                 };
         }
     };
 
     const config = getTypeConfig();
 
-    const overlayStyle = {
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        backdropFilter: 'blur(4px)',
-        opacity: isOpen ? 1 : 0,
-        transition: 'opacity 0.2s ease-in-out'
-    };
-
-    const modalStyle = {
-        backgroundColor: 'var(--platform-card-bg)',
-        color: 'var(--platform-text-primary)',
-        border: '1px solid var(--platform-border-color)',
-        borderRadius: '16px',
-        padding: '0', 
-        width: '90%',
-        maxWidth: '420px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-        transform: isOpen ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(10px)',
-        opacity: isOpen ? 1 : 0,
-        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-    };
-
-    const contentStyle = {
-        padding: '24px',
-        flex: 1
-    };
-
-    const headerStyle = {
-        display: 'flex',
-        gap: '16px',
-        alignItems: 'flex-start',
-    };
-
-    const iconBoxStyle = {
-        width: '48px',
-        height: '48px',
-        borderRadius: '12px',
-        backgroundColor: config.iconBg,
-        color: config.iconColor,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0
-    };
-
-    const textContainerStyle = {
-        paddingTop: '2px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px'
-    };
-
-    const titleStyle = {
-        fontSize: '1.15rem',
-        fontWeight: '600',
-        margin: 0,
-        color: 'var(--platform-text-primary)',
-        lineHeight: '1.2'
-    };
-
-    const messageStyle = {
-        margin: 0,
-        fontSize: '0.95rem',
-        lineHeight: '1.5',
-        color: 'var(--platform-text-secondary)'
-    };
-
-    const footerStyle = {
-        padding: '16px 24px',
-        display: 'flex',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        gap: '12px',
-        backgroundColor: 'var(--platform-bg)',
-        borderTop: '1px solid var(--platform-border-color)'
-    };
-
     return (
-        <div style={overlayStyle} ref={overlayRef} onClick={(e) => e.target === overlayRef.current && onCancel()}>
-            <div style={modalStyle}>
-                
-                <div style={contentStyle}>
-                    <div style={headerStyle}>
-                        <div style={iconBoxStyle}>
+        <div 
+            ref={overlayRef} 
+            className={`
+                fixed inset-0 z-9999 flex items-center justify-center bg-black/50 backdrop-blur-[2px] transition-opacity duration-200
+                ${isOpen ? 'opacity-100' : 'opacity-0'}
+            `}
+            onClick={(e) => e.target === overlayRef.current && onCancel()}
+        >
+            <div 
+                className={`
+                    bg-(--platform-card-bg) text-(--platform-text-primary) border border-(--platform-border-color) rounded-2xl w-[90%] max-w-105 shadow-2xl overflow-hidden flex flex-col transition-all duration-200
+                    ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-2.5 opacity-0'}
+                `}
+            >
+                <div className="p-6 flex-1">
+                    <div className="flex gap-4 items-start">
+                        <div 
+                            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: config.iconBg, color: config.iconColor }}
+                        >
                             {config.icon}
                         </div>
                         
-                        <div style={textContainerStyle}>
-                            <h3 style={titleStyle}>{title}</h3>
-                            <p style={messageStyle}>{message}</p>
+                        <div className="pt-0.5 flex flex-col gap-1.5">
+                            <h3 className="text-lg font-semibold m-0 text-(--platform-text-primary) leading-tight">{title}</h3>
+                            <p className="m-0 text-[0.95rem] leading-relaxed text-(--platform-text-secondary)">{message}</p>
                         </div>
                     </div>
                 </div>
 
-                <div style={footerStyle}>
+                <div className="px-6 py-4 flex justify-end items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color)">
                     <Button 
                         variant="outline" 
                         onClick={onCancel}
-                        style={{ minWidth: '90px' }}
+                        className="min-w-22.5"
                     >
                         {cancelLabel}
                     </Button>
@@ -185,15 +123,12 @@ const ConfirmModal = ({
                         variant={config.confirmVariant} 
                         onClick={onConfirm} 
                         autoFocus
-                        style={{ 
-                            minWidth: '90px', 
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.05)' 
-                        }}
+                        className="min-w-22.5 shadow-sm text-white"
+                        style={config.confirmStyle}
                     >
                         {confirmLabel}
                     </Button>
                 </div>
-
             </div>
         </div>
     );

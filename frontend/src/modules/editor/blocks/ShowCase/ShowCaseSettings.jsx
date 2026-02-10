@@ -60,7 +60,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
     }, [siteData?.id]);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-6">
             <ProductPickerModal 
                 isOpen={isPickerOpen}
                 onClose={() => setIsPickerOpen(false)}
@@ -71,7 +71,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
 
             <div>
                 <SectionTitle icon={<Type size={18}/>}>Заголовок</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <Input 
                         value={normalizedData.title}
                         onChange={(e) => updateData({ title: e.target.value })}
@@ -79,7 +79,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
                 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <FontSelector 
                         value={normalizedData.titleFontFamily}
                         onChange={(val) => updateData({ titleFontFamily: val })}
@@ -92,7 +92,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
             <div>
                 <SectionTitle icon={<Layers size={18}/>}>Джерело товарів</SectionTitle>
                 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Режим відображення</label>
                     <ToggleGroup 
                         options={[
@@ -105,25 +105,25 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                 </div>
 
                 {normalizedData.source_type === 'manual' ? (
-                    <div style={commonStyles.formGroup}>
-                        <div style={{ marginBottom: '12px' }}>
+                    <div className="mb-5">
+                        <div className="mb-3">
                             <Button 
                                 variant="outline" 
-                                style={{ width: '100%', borderColor: 'var(--platform-accent)', color: 'var(--platform-accent)' }}
+                                className="w-full border-(--platform-accent) text-(--platform-accent)"
                                 icon={<ShoppingBag size={16} />}
                                 onClick={() => setIsPickerOpen(true)}
                             >
                                 Обрати товари зі списку
                             </Button>
                         </div>
-                        <small style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', display: 'block', textAlign: 'center' }}>
+                        <small className="block text-center text-xs text-(--platform-text-secondary)">
                             {normalizedData.selected_product_ids?.length > 0 
                                 ? `Обрано: ${normalizedData.selected_product_ids.length} шт.` 
                                 : 'Товари не обрано'}
                         </small>
                     </div>
                 ) : (
-                    <div style={commonStyles.formGroup}>
+                    <div className="mb-5">
                         <label style={commonStyles.label}>Категорія</label>
                         <CustomSelect 
                             value={normalizedData.category_id}
@@ -135,15 +135,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                     </div>
                 )}
                 
-                <div style={{ 
-                    fontSize: '0.8rem', 
-                    color: 'var(--platform-text-secondary)', 
-                    marginTop: '8px', 
-                    padding: '8px 12px', 
-                    background: 'var(--platform-bg)', 
-                    borderRadius: '6px',
-                    border: '1px solid var(--platform-border-color)'
-                }}>
+                <div className="text-[0.8rem] text-(--platform-text-secondary) mt-2 p-3 bg-(--platform-bg) rounded-md border border-(--platform-border-color)">
                     * У блоці будуть відображатися перші <strong>20 товарів</strong> з вибраної категорії.
                 </div>
             </div>
@@ -151,7 +143,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
             <div>
                 <SectionTitle icon={<LayoutGrid size={18}/>}>Вигляд сітки</SectionTitle>
                 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <AlignmentControl 
                         value={normalizedData.alignment}
                         onChange={(val) => updateData({ alignment: val })}
@@ -160,7 +152,7 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Кількість колонок (ПК)</label>
                     <ToggleGroup 
                         options={[

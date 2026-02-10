@@ -9,34 +9,33 @@ const ThemeModeSelector = ({ currentMode, accentColor, onChange }) => {
     const Card = ({ mode, label, icon: Icon, gradient }) => {
         const isActive = currentMode === mode;
         const isHovered = hoveredMode === mode;
-
         return (
             <div
-                style={{
-                    border: `2px solid ${isActive || isHovered ? activeColor : 'var(--platform-border-color)'}`,
-                    borderRadius: '12px',
-                    padding: '16px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    background: 'var(--platform-bg)',
-                    boxShadow: 'none',
-                    position: 'relative'
+                className={`
+                    border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 relative bg-(--platform-bg)
+                    ${isActive || isHovered ? '' : 'border-(--platform-border-color)'}
+                `}
+                style={{ 
+                    borderColor: isActive || isHovered ? activeColor : undefined 
                 }}
                 onClick={() => onChange(mode)}
                 onMouseEnter={() => setHoveredMode(mode)}
                 onMouseLeave={() => setHoveredMode(null)}
             >
-                <div style={{ height: '120px', marginBottom: '16px', borderRadius: '8px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', background: gradient, padding: '12px' }}>
-                        <div style={{ height: '20px', background: activeColor, borderRadius: '4px', marginBottom: '12px', opacity: 0.8 }}></div>
-                        <div style={{ display: 'flex', gap: '8px', height: 'calc(100% - 32px)' }}>
-                            <div style={{ flex: 1, background: 'rgba(255,255,255,0.2)', borderRadius: '4px' }}></div>
-                            <div style={{ flex: 1, background: 'rgba(255,255,255,0.2)', borderRadius: '4px' }}></div>
+                <div className="h-30 mb-4 rounded-lg overflow-hidden">
+                    <div className="h-full p-3" style={{ background: gradient }}>
+                        <div 
+                            className="h-5 rounded mb-3 opacity-80" 
+                            style={{ background: activeColor }}
+                        ></div>
+                        <div className="flex gap-2 h-[calc(100%-32px)]">
+                            <div className="flex-1 bg-white/20 rounded"></div>
+                            <div className="flex-1 bg-white/20 rounded"></div>
                         </div>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', color: 'var(--platform-text-primary)', fontSize: '1rem' }}>
+                <div className="flex items-center gap-2.5 font-semibold text-(--platform-text-primary) text-base">
                     <Icon size={20} color={isActive ? activeColor : 'currentColor'} />
                     <span>{label}</span>
                 </div>
@@ -45,7 +44,7 @@ const ThemeModeSelector = ({ currentMode, accentColor, onChange }) => {
     };
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '16px' }}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 mt-4">
             <Card
                 mode="light"
                 label="Світла тема"

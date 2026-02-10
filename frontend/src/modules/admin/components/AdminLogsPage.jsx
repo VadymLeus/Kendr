@@ -1,27 +1,27 @@
-// frontend/src/modules/admin/pages/AdminLogsPage.jsx
-import React, { useMemo, useState } from 'react';
+// frontend/src/modules/admin/components/AdminLogsPage.jsx
+import React, { useMemo, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useDataList } from '../../../shared/hooks/useDataList';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { Input } from '../../../shared/ui/elements/Input';
-import { AdminTable, AdminTh, AdminRow, AdminCell, LoadingRow, EmptyRow, FilterBar, GenericBadge, CsvExportButton } from '../components/AdminTableComponents';
+import { AdminTable, AdminTh, AdminRow, AdminCell, LoadingRow, EmptyRow, FilterBar, GenericBadge, CsvExportButton } from './AdminTableComponents';
 import { exportToCsv } from '../../../shared/utils/exportToCsv';
 import { UserX, ShieldAlert, Globe, Layout, Trash2, CheckCircle, Ban, AlertTriangle, FileText, Clock, Inbox, Search } from 'lucide-react';
 
 const ACTION_CONFIG = {
-    'user_delete': { label: 'Видалення користувача', icon: UserX, color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
-    'site_suspend': { label: 'Бан сайту', icon: Ban, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-    'site_restore': { label: 'Відновлення сайту', icon: CheckCircle, color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-    'site_delete': { label: 'Видалення сайту', icon: Trash2, color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
-    'site_probation': { label: 'Випробувальний термін', icon: Clock, color: '#d97706', bg: 'rgba(217, 119, 6, 0.1)' },
-    'report_dismiss': { label: 'Відхилення скарги', icon: ShieldAlert, color: '#6b7280', bg: 'rgba(107, 114, 128, 0.1)' },
-    'report_reopen': { label: 'Повернення скарги', icon: ShieldAlert, color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-    'report_ban': { label: 'Бан по скарзі', icon: AlertTriangle, color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
-    'template_create': { label: 'Створено шаблон', icon: Layout, color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-    'template_update': { label: 'Оновлено шаблон', icon: Layout, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
-    'template_delete': { label: 'Видалено шаблон', icon: Trash2, color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
-    'ticket_close': { label: 'Закрито тікет', icon: FileText, color: '#6b7280', bg: 'rgba(107, 114, 128, 0.1)' },
+    'user_delete': { label: 'Видалення користувача', icon: UserX, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
+    'site_suspend': { label: 'Бан сайту', icon: Ban, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
+    'site_restore': { label: 'Відновлення сайту', icon: CheckCircle, color: 'var(--platform-success)', bg: 'color-mix(in srgb, var(--platform-success), transparent 90%)' },
+    'site_delete': { label: 'Видалення сайту', icon: Trash2, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
+    'site_probation': { label: 'Випробувальний термін', icon: Clock, color: 'var(--platform-warning)', bg: 'color-mix(in srgb, var(--platform-warning), transparent 90%)' },
+    'report_dismiss': { label: 'Відхилення скарги', icon: ShieldAlert, color: 'var(--platform-text-secondary)', bg: 'var(--platform-hover-bg)' },
+    'report_reopen': { label: 'Повернення скарги', icon: ShieldAlert, color: 'var(--platform-accent)', bg: 'color-mix(in srgb, var(--platform-accent), transparent 90%)' },
+    'report_ban': { label: 'Бан по скарзі', icon: AlertTriangle, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
+    'template_create': { label: 'Створено шаблон', icon: Layout, color: 'var(--platform-accent)', bg: 'color-mix(in srgb, var(--platform-accent), transparent 90%)' },
+    'template_update': { label: 'Оновлено шаблон', icon: Layout, color: 'var(--platform-accent)', bg: 'color-mix(in srgb, var(--platform-accent), transparent 90%)' },
+    'template_delete': { label: 'Видалено шаблон', icon: Trash2, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
+    'ticket_close': { label: 'Закрито тікет', icon: FileText, color: 'var(--platform-text-secondary)', bg: 'var(--platform-hover-bg)' },
     'default': { label: 'Дія', icon: Layout, color: 'var(--platform-text-primary)', bg: 'var(--platform-bg)' }
 };
 
@@ -30,17 +30,36 @@ const ActionBadge = ({ type }) => { const s = ACTION_CONFIG[type] || ACTION_CONF
 const DetailItem = ({ label, value }) => value ? <div style={{ display: 'flex', gap: '4px', fontSize: '12px', color: 'var(--platform-text-secondary)' }}><span>{label}:</span><span style={{ fontWeight: '500', color: 'var(--platform-text-primary)' }}>{value}</span></div> : null;
 
 const AdminLogsPage = () => {
-    const [actionFilter, setActionFilter] = useState('all');
-    const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+    const [actionFilter, setActionFilter] = useState(() => {
+        return sessionStorage.getItem('admin_logs_action_filter') || 'all';
+    });
+    const [sortConfig, setSortConfig] = useState(() => {
+        const savedSort = sessionStorage.getItem('admin_logs_sort_config');
+        return savedSort ? JSON.parse(savedSort) : { key: 'created_at', direction: 'desc' };
+    });
     const { filteredData: rawLogs, loading, searchQuery, setSearchQuery } = useDataList('/admin/logs', ['admin_name', 'action_type', 'target_type']);
-
+    useEffect(() => {
+        sessionStorage.setItem('admin_logs_action_filter', actionFilter);
+    }, [actionFilter]);
+    useEffect(() => {
+        sessionStorage.setItem('admin_logs_sort_config', JSON.stringify(sortConfig));
+    }, [sortConfig]);
+    useEffect(() => {
+        const savedSearch = sessionStorage.getItem('admin_logs_search_query');
+        if (savedSearch && savedSearch !== searchQuery) {
+            setSearchQuery(savedSearch);
+        }
+    }, []);
+    useEffect(() => {
+        if (searchQuery !== undefined) {
+            sessionStorage.setItem('admin_logs_search_query', searchQuery);
+        }
+    }, [searchQuery]);
     const processedLogs = useMemo(() => {
         let res = actionFilter !== 'all' ? rawLogs.filter(l => l.action_type === actionFilter) : [...rawLogs];
         return res.sort((a, b) => (a[sortConfig.key] < b[sortConfig.key] ? -1 : 1) * (sortConfig.direction === 'asc' ? 1 : -1));
     }, [rawLogs, actionFilter, sortConfig]);
-
     const handleSort = (key) => setSortConfig(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
-
     const handleExport = () => {
         if (!processedLogs?.length) return toast.info('Немає даних');
         exportToCsv(processedLogs.map(log => ({
@@ -49,7 +68,6 @@ const AdminLogsPage = () => {
             created_at: new Date(log.created_at).toLocaleString('uk-UA')
         })), { id: 'ID', admin: 'Адміністратор', ip: 'IP', action: 'Дія', target_type: 'Тип цілі', target_id: 'ID цілі', details: 'Деталі', created_at: 'Дата' }, `logs_${new Date().toLocaleDateString('uk-UA')}`);
     };
-
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>

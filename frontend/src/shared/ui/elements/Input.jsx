@@ -6,160 +6,70 @@ export const Input = ({
     label, 
     error, 
     helperText, 
-    type = 'text',
-    value,
-    onChange,
-    placeholder,
+    type = 'text', 
+    value, 
+    onChange, 
+    placeholder, 
     name,
-    style,       
-    wrapperStyle, 
-    disabled,
-    className,
-    leftIcon,
-    rightIcon,
-    maxLength,
-    showCounter = false,
-    min,
-    max,
+    disabled, 
+    className = '', 
+    leftIcon, 
+    rightIcon, 
+    maxLength, 
+    showCounter, 
+    min, 
+    max, 
     step = 1,
+    wrapperStyle,
+    style,
     ...props 
 }) => {
     const [showPassword, setShowPassword] = useState(false);
-    const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef(null);
-    const isPasswordType = type === 'password';
-    const isNumberType = type === 'number';
-    const inputType = isPasswordType ? (showPassword ? 'text' : 'password') : type;
-    const safeValue =
-        isNumberType && (value === 'all' || value === null || value === undefined)
-            ? ''
-            : value;
-    const currentLength = safeValue ? String(safeValue).length : 0;
-    const showClearButton = !disabled && currentLength > 0 && !rightIcon && !isNumberType;
-    const triggerChange = (newValue) => {
-        if (disabled) return;
-        const syntheticEvent = { target: { name: name, value: newValue } };
-        onChange(syntheticEvent);
-    };
-
+    const isPassword = type === 'password';
+    const isNumber = type === 'number';
+    const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
+    const safeValue = isNumber && (value === null || value === undefined) ? '' : value;
+    const currentLen = safeValue ? String(safeValue).length : 0;
+    const showClear = !disabled && currentLen > 0 && !rightIcon && !isNumber;
     const handleClear = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        triggerChange('');
-        if (inputRef.current) inputRef.current.focus();
+        e.preventDefault(); e.stopPropagation();
+        onChange({ target: { name, value: '' } });
+        inputRef.current?.focus();
     };
 
-    const handleIncrement = (e) => {
-        e.preventDefault(); 
-        if (disabled) return;
-        let currentVal = safeValue === '' ? 0 : parseFloat(safeValue);
-        if (isNaN(currentVal)) currentVal = 0;
-        
-        let nextVal = currentVal + Number(step);
-        if (max !== undefined && nextVal > max) nextVal = max;
-        
-        nextVal = Math.round(nextVal * 100) / 100;
-        triggerChange(nextVal);
-    };
-
-    const handleDecrement = (e) => {
+    const handleNumber = (delta) => (e) => {
         e.preventDefault();
         if (disabled) return;
-        let currentVal = safeValue === '' ? 0 : parseFloat(safeValue);
-        if (isNaN(currentVal)) currentVal = 0;
-
-        let nextVal = currentVal - Number(step);
-        if (min !== undefined && nextVal < min) nextVal = min;
-        
-        nextVal = Math.round(nextVal * 100) / 100;
-        triggerChange(nextVal);
+        let val = parseFloat(safeValue) || 0;
+        let next = Math.round((val + delta) * 100) / 100;
+        if (max !== undefined) next = Math.min(next, max);
+        if (min !== undefined) next = Math.max(next, min);
+        onChange({ target: { name, value: next } });
     };
 
-    let paddingRight = 12;
-    if (isPasswordType) paddingRight += 32;
-    if (showClearButton) paddingRight += 32;
-    if (rightIcon) paddingRight += 32;
-    if (isNumberType && !disabled) paddingRight += 24; 
-
-    let paddingLeft = 12;
-    if (leftIcon) paddingLeft += 32;
-
-    const hasBottomContent = error || helperText || maxLength || showCounter;
-    const isLimitReached = maxLength && currentLength >= maxLength;
+    const paddingLeft = leftIcon ? '40px' : '12px';
+    let paddingRight = '12px';
+    const hasRightElement = rightIcon || isNumber || showClear || isPassword;
+    if (hasRightElement) {
+        if ((showClear || isPassword) && (rightIcon || isNumber)) {
+            paddingRight = '70px';
+        } else {
+            paddingRight = '40px';
+        }
+    }
 
     return (
-        <div className={`form-group ${className || ''}`} style={{ position: 'relative', marginBottom: label ? '20px' : '0', ...wrapperStyle }}>
-            <style>{`
-                .custom-input {
-                    width: 100%;
-                    border-radius: 8px;
-                    background: var(--platform-bg);
-                    color: var(--platform-text-primary);
-                    font-size: 0.9rem;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                    border: 1px solid var(--platform-border-color);
-                    outline: none;
-                    box-sizing: border-box; 
-                }
-                
-                .custom-input::-webkit-outer-spin-button,
-                .custom-input::-webkit-inner-spin-button {
-                    -webkit-appearance: none;
-                    margin: 0;
-                }
-                .custom-input[type=number] {
-                    -moz-appearance: textfield;
-                }
-
-                .custom-input:hover:not(:disabled) { border-color: var(--platform-accent); }
-                
-                .custom-input:focus:not(:disabled) {
-                    border-color: var(--platform-accent);
-                    box-shadow: 0 0 0 3px var(--platform-accent-transparent, rgba(66, 153, 225, 0.15));
-                }
-                
-                .custom-input:disabled { opacity: 0.6; cursor: not-allowed; }
-                
-                .custom-input.has-error { 
-                    border-color: var(--platform-danger); 
-                }
-                .custom-input.has-error:focus {
-                     box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
-                }
-                
-                .input-btn-icon {
-                    background: transparent; border: none; cursor: pointer;
-                    color: var(--platform-text-secondary); display: flex;
-                    align-items: center; justify-content: center;
-                    padding: 4px; border-radius: 4px; transition: all 0.2s;
-                    height: 28px; width: 28px;
-                }
-                .input-btn-icon:hover { color: var(--platform-text-primary); background: rgba(0,0,0,0.05); }
-
-                .number-controls {
-                    display: flex; flex-direction: column; 
-                    height: 100%; justify-content: center;
-                    margin-right: 4px;
-                }
-                .number-btn {
-                    flex: 1; display: flex; align-items: center; justify-content: center;
-                    cursor: pointer; color: var(--platform-text-secondary);
-                    background: transparent; border: none; padding: 0;
-                    transition: color 0.2s; height: 50%; width: 20px;
-                }
-                .number-btn:hover { color: var(--platform-accent); background: var(--platform-hover-bg); border-radius: 2px; }
-                .number-btn:active { opacity: 0.7; }
-            `}</style>
-
-            {label && (
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', color: 'var(--platform-text-primary)', fontSize: '0.85rem' }}>
-                    {label}
-                </label>
-            )}
-
-            <div style={{ position: 'relative', width: '100%' }}>
+        <div className={`form-group mb-4 ${className}`} style={wrapperStyle}>
+            {label && <label className="block mb-1.5 font-medium text-sm text-(--platform-text-primary)">{label}</label>}
+            <div className={`
+                input-wrapper relative w-full h-11 flex items-center bg-(--platform-input-bg) border border-(--platform-border-color) rounded-lg transition-all duration-200
+                focus-within:border-(--platform-accent) focus-within:ring-2 focus-within:ring-(--platform-accent)/20
+                ${error ? 'border-(--platform-danger)!' : ''}
+                ${disabled ? 'opacity-60 cursor-not-allowed bg-(--platform-hover-bg)' : ''}
+            `}>
                 {leftIcon && (
-                    <div style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--platform-text-secondary)', pointerEvents: 'none', zIndex: 5, display: 'flex' }}>
+                    <div className="absolute left-0 top-0 bottom-0 w-10 text-(--platform-text-secondary) pointer-events-none z-10 flex items-center justify-center">
                         {leftIcon}
                     </div>
                 )}
@@ -173,78 +83,49 @@ export const Input = ({
                     placeholder={placeholder}
                     disabled={disabled}
                     maxLength={maxLength}
-                    min={min}
-                    max={max}
-                    step={step}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    className={`custom-input ${error ? 'has-error' : ''}`}
-                    style={{
-                        padding: '10px 12px',
-                        paddingRight: `${paddingRight}px`,
-                        paddingLeft: `${paddingLeft}px`,
-                        height: '42px', 
-                        ...style 
-                    }}
-                    {...props}
+                    className="custom-input appearance-none w-full bg-transparent border-none outline-none text-(--platform-text-primary) placeholder:text-(--platform-text-secondary)/50"
+                    style={{ 
+                        paddingLeft: paddingLeft, 
+                        paddingRight: paddingRight,
+                        height: '100%',
+                        ...style
+                    }} 
+                    {...props} 
                 />
                 
-                <div style={{ position: 'absolute', right: '8px', top: '0', bottom: '0', display: 'flex', alignItems: 'center', gap: '2px', zIndex: 5 }}>
-                   {rightIcon && (
-                       <div className="input-btn-icon" style={{ cursor: 'default' }}>
-                           {rightIcon}
-                       </div>
-                   )}
-
-                   {showClearButton && (
-                        <button type="button" onClick={handleClear} className="input-btn-icon" title="Очистити">
+                <div className="absolute right-2 top-0 bottom-0 flex items-center gap-1 z-10">
+                    {rightIcon && <div className="p-1 opacity-50 flex items-center">{rightIcon}</div>}
+                    
+                    {showClear && (
+                        <button type="button" onClick={handleClear} className="p-1 text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors rounded" title="Очистити">
                             <X size={16} />
                         </button>
                     )}
 
-                    {isPasswordType && (
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="input-btn-icon">
-                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {isPassword && (
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="p-1 text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors rounded">
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     )}
 
-                    {isNumberType && !disabled && (
-                        <div className="number-controls">
-                            <button type="button" onClick={handleIncrement} className="number-btn" tabIndex={-1}>
-                                <ChevronUp size={12} />
-                            </button>
-                            <button type="button" onClick={handleDecrement} className="number-btn" tabIndex={-1}>
-                                <ChevronDown size={12} />
-                            </button>
+                    {isNumber && !disabled && (
+                        <div className="flex flex-col h-full justify-center">
+                            <button onClick={handleNumber(step)} className="h-4 w-5 flex items-center justify-center hover:bg-gray-100 rounded text-(--platform-text-secondary)"><ChevronUp size={10}/></button>
+                            <button onClick={handleNumber(-step)} className="h-4 w-5 flex items-center justify-center hover:bg-gray-100 rounded text-(--platform-text-secondary)"><ChevronDown size={10}/></button>
                         </div>
                     )}
                 </div>
             </div>
             
-            {hasBottomContent && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '4px', minHeight: '18px' }}>
-                    <div style={{ flex: 1, paddingRight: '10px' }}>
-                        {error ? (
-                            <div style={{ color: 'var(--platform-danger)', fontSize: '0.75rem', lineHeight: '1.2' }}>
-                                {error}
-                            </div>
-                        ) : helperText ? (
-                             <div style={{ color: 'var(--platform-text-secondary)', fontSize: '0.75rem', lineHeight: '1.2', opacity: 0.8 }}>
-                                {helperText}
-                            </div>
-                        ) : null}
+            {(error || helperText || maxLength || showCounter) && (
+                <div className="flex justify-between mt-1 min-h-4.5 text-xs leading-tight">
+                    <div className="flex-1 pr-2">
+                        {error ? <span className="text-(--platform-danger)">{error}</span> : 
+                         helperText ? <span className="text-(--platform-text-secondary) opacity-80">{helperText}</span> : null}
                     </div>
-                    
                     {(maxLength || showCounter) && (
-                        <div style={{ 
-                            fontSize: '0.75rem', 
-                            color: isLimitReached ? 'var(--platform-danger)' : 'var(--platform-text-secondary)',
-                            fontWeight: isLimitReached ? '600' : '400',
-                            marginLeft: 'auto',
-                            whiteSpace: 'nowrap',
-                            transition: 'color 0.2s'
-                        }}>
-                            {currentLength}{maxLength ? ` / ${maxLength}` : ''}
+                        <div className={currentLen >= maxLength ? 'text-(--platform-danger) font-bold' : 'text-(--platform-text-secondary)'}>
+                            {currentLen}{maxLength ? ` / ${maxLength}` : ''}
                         </div>
                     )}
                 </div>

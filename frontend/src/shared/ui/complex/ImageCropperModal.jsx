@@ -36,6 +36,7 @@ const ImageCropperModal = ({
     const [completedCrop, setCompletedCrop] = useState();
     const [isProcessing, setIsProcessing] = useState(false);
     const imgRef = useRef(null);
+    
     useEffect(() => {
         if (!isOpen) {
             setCrop(undefined);
@@ -71,40 +72,44 @@ const ImageCropperModal = ({
     };
 
     if (!isOpen || !imageSrc) return null;
+    
     return ReactDOM.createPortal(
-        <div className="cropper-overlay">
-            <div className="cropper-modal">
-                <div className="cropper-header">
-                    <h3>
-                        <Crop size={20} style={{ color: 'var(--platform-accent)' }}/>
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-[5px] z-9999 flex items-center justify-center p-5 animate-in fade-in duration-200">
+            <div className="bg-(--platform-card-bg) rounded-2xl w-full max-w-150 max-h-[90vh] flex flex-col border border-(--platform-border-color) shadow-2xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-(--platform-border-color) flex justify-between items-center shrink-0">
+                    <h3 className="m-0 text-(--platform-text-primary) text-lg flex gap-2.5 items-center font-semibold">
+                        <Crop size={20} className="text-(--platform-accent)"/>
                         Кадрування
                     </h3>
-                    <button onClick={onClose} className="close-btn">
+                    <button 
+                        onClick={onClose} 
+                        className="bg-transparent border-none text-(--platform-text-secondary) cursor-pointer hover:text-(--platform-text-primary) p-1 rounded transition-colors"
+                    >
                         <X size={20}/>
                     </button>
                 </div>
                 
-                <div className="cropper-body custom-scrollbar">
+                <div className="p-5 overflow-auto flex justify-center items-center bg-(--platform-bg) bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat flex-1 min-h-75">
                     <ReactCrop
                         crop={crop}
                         onChange={(_, percentCrop) => setCrop(percentCrop)}
                         onComplete={(c) => setCompletedCrop(c)}
                         aspect={aspect}
                         circularCrop={circularCrop}
-                        className="react-crop-component"
+                        className="shadow-xl"
                     >
                         <img
                             ref={imgRef}
                             alt="Crop me"
                             src={imageSrc}
                             onLoad={onImageLoad}
-                            style={{ maxWidth: '100%', maxHeight: '60vh' }}
+                            className="block max-w-full max-h-[60vh] object-contain shadow-lg"
                             crossOrigin="anonymous"
                         />
                     </ReactCrop>
                 </div>
 
-                <div className="cropper-footer">
+                <div className="px-5 py-4 border-t border-(--platform-border-color) flex justify-end gap-2.5 bg-(--platform-card-bg) shrink-0">
                     <Button variant="secondary" onClick={onClose} disabled={isProcessing}>
                         Скасувати
                     </Button>
@@ -118,58 +123,6 @@ const ImageCropperModal = ({
                     </Button>
                 </div>
             </div>
-
-            <style>{`
-                .cropper-overlay {
-                    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-                    background: rgba(0, 0, 0, 0.85);
-                    backdrop-filter: blur(5px);
-                    z-index: 9999;
-                    display: flex; align-items: center; justify-content: center;
-                    padding: 20px;
-                    animation: fadeIn 0.2s ease-out;
-                }
-                .cropper-modal {
-                    background: var(--platform-card-bg);
-                    border-radius: 16px;
-                    width: 100%; max-width: 600px;
-                    max-height: 90vh;
-                    display: flex; flex-direction: column;
-                    border: 1px solid var(--platform-border-color);
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                    overflow: hidden;
-                }
-                .cropper-header {
-                    padding: 16px 20px;
-                    border-bottom: 1px solid var(--platform-border-color);
-                    display: flex; justify-content: space-between; align-items: center;
-                }
-                .cropper-header h3 { margin: 0; color: var(--platform-text-primary); font-size: 1.1rem; display: flex; gap: 10px; align-items: center;}
-                .close-btn { background: none; border: none; color: var(--platform-text-secondary); cursor: pointer; }
-                
-                .cropper-body {
-                    padding: 20px;
-                    overflow: auto;
-                    display: flex; justify-content: center;
-                    align-items: center;
-                    background-color: var(--platform-bg);
-                    background-image: url('https://transparenttextures.com/patterns/cubes.png');
-                    flex: 1;
-                    min-height: 300px;
-                }
-                .react-crop-component img {
-                    display: block;
-                    max-width: 100%;
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                }
-                .cropper-footer {
-                    padding: 16px 20px;
-                    border-top: 1px solid var(--platform-border-color);
-                    display: flex; justify-content: flex-end; gap: 10px;
-                    background: var(--platform-card-bg);
-                }
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-            `}</style>
         </div>,
         document.body
     );

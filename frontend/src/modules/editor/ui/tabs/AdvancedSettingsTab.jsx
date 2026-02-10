@@ -51,10 +51,10 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
     ];
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<Hash size={16} />}>Якір блоку (ID)</SectionTitle>
-                <div style={{ marginTop: '12px' }}>
+                <div className="mt-3">
                     <Input 
                         value={data.anchorId || ''}
                         onChange={handleAnchorChange}
@@ -62,17 +62,17 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
                         leftIcon={<Link2 size={14} />}
                         wrapperStyle={{ marginBottom: '8px' }}
                     />
-                    <div style={{ fontSize: '0.8rem', color: 'var(--platform-text-secondary)', lineHeight: '1.4' }}>
+                    <div className="text-xs text-(--platform-text-secondary) leading-snug">
                         Використовуйте цей ID для посилань у меню (наприклад, #about-us).
                     </div>
                 </div>
             </div>
 
-            <div style={{ height: '1px', background: 'var(--platform-border-color)', opacity: 0.5 }}></div>
+            <div className="h-px bg-(--platform-border-color) opacity-50"></div>
 
             <div>
                 <SectionTitle icon={<Maximize size={16}/>}>Висота блоку</SectionTitle>
-                <div style={{ marginTop: '12px' }}>
+                <div className="mt-3">
                     <CustomSelect 
                         name="height" 
                         value={data.height || 'medium'} 
@@ -83,11 +83,11 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
                 </div>
             </div>
 
-            <div style={{ height: '1px', background: 'var(--platform-border-color)', opacity: 0.5 }}></div>
+            <div className="h-px bg-(--platform-border-color) opacity-50"></div>
 
             <div>
                 <SectionTitle icon={<MoveVertical size={16} />}>Внутрішні відступи</SectionTitle>
-                <div style={{ marginTop: '12px' }}>
+                <div className="mt-3">
                     <SpacingControl 
                         styles={data.styles || {}} 
                         onChange={handleStyleUpdate} 
@@ -95,7 +95,7 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
                 </div>
             </div>
 
-            <div style={{ height: '1px', background: 'var(--platform-border-color)', opacity: 0.5 }}></div>
+            <div className="h-px bg-(--platform-border-color) opacity-50"></div>
 
             <AnimationSettings 
                 animationConfig={data.animation} 

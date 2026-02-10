@@ -13,12 +13,10 @@ const AuthSuccessPage = () => {
     const processing = useRef(false);
     useEffect(() => {
         const token = searchParams.get('token');
-        
         if (!token) {
             navigate('/login');
             return;
         }
-
         if (processing.current) return;
         processing.current = true;
         const fetchUserData = async () => {
@@ -35,22 +33,12 @@ const AuthSuccessPage = () => {
                 navigate('/login');
             }
         };
-
         fetchUserData();
     }, [searchParams, navigate, login]);
-
     return (
-        <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '100vh', 
-            flexDirection: 'column', 
-            gap: '15px',
-            color: 'var(--platform-text-secondary)'
-        }}>
-            <Loader size={48} />
-            <h2>Вхід у систему...</h2>
+        <div className="h-screen flex flex-col justify-center items-center gap-4 text-(--platform-text-secondary) bg-(--platform-bg)">
+            <Loader size={48} className="animate-spin text-(--platform-accent)" />
+            <h2 className="text-xl font-medium">Вхід у систему...</h2>
         </div>
     );
 };

@@ -5,8 +5,9 @@ const db = require('../config/db');
 
 exports.saveAsTemplate = async (req, res, next) => {
     try {
-        const { siteId, templateName, description, icon } = req.body;
+        const { siteId, templateName, description, icon, category } = req.body;
         const userId = req.user.id;
+        console.log("Saving template:", { siteId, templateName, category });
         if (!siteId || !templateName) {
             return res.status(400).json({ message: 'Необхідно вказати ID сайту та назву шаблону.' });
         }
@@ -46,9 +47,9 @@ exports.saveAsTemplate = async (req, res, next) => {
 
         const jsonSnapshot = JSON.stringify(snapshot);
         await db.query(
-            `INSERT INTO templates (user_id, name, description, icon, default_block_content, type, access_level, is_ready) 
-             VALUES (?, ?, ?, ?, ?, 'personal', 'private', 0)`,
-            [userId, templateName, description || '', icon || 'Layout', jsonSnapshot]
+            `INSERT INTO templates (user_id, name, description, icon, category, default_block_content, type, access_level, is_ready) 
+             VALUES (?, ?, ?, ?, ?, ?, 'personal', 'private', 0)`,
+            [userId, templateName, description || '', icon || 'Layout', category || 'General', jsonSnapshot]
         );
 
         res.status(201).json({ message: 'Шаблон успішно створено!' });
@@ -62,7 +63,7 @@ exports.getMyTemplates = async (req, res, next) => {
     try {
         const userId = req.user.id;
         const query = `
-            SELECT id, name, description, icon, thumbnail_url, default_block_content, type, is_ready, access_level 
+            SELECT id, name, description, icon, category, thumbnail_url, default_block_content, type, is_ready, access_level 
             FROM templates 
             WHERE user_id = ? 
             AND (
@@ -73,7 +74,6 @@ exports.getMyTemplates = async (req, res, next) => {
         `;
         
         const [rows] = await db.query(query, [userId]);
-        
         const processedTemplates = rows.map(t => {
             const rawContent = t.default_block_content;
             let parsedContent = {};
@@ -85,7 +85,8 @@ exports.getMyTemplates = async (req, res, next) => {
 
             return {
                 ...t,
-                icon: t.icon || 'Layout', 
+                icon: t.icon || 'Layout',
+                category: t.category || 'General',
                 full_site_snapshot: parsedContent,
                 default_block_content: parsedContent
             };
@@ -119,13 +120,13 @@ exports.deleteTemplate = async (req, res, next) => {
 exports.updateTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { siteId, templateName, description, icon } = req.body;
+        const { siteId, templateName, description, icon, category } = req.body;
         const userId = req.user.id;
-
+        console.log("Updating template:", { id, templateName, category });
         if (!siteId) {
             const [result] = await db.query(
-                `UPDATE templates SET name = ?, description = ?, icon = ? WHERE id = ? AND user_id = ?`,
-                [templateName, description, icon || 'Layout', id, userId]
+                `UPDATE templates SET name = ?, description = ?, icon = ?, category = ? WHERE id = ? AND user_id = ?`,
+                [templateName, description, icon || 'Layout', category || 'General', id, userId]
             );
 
             if (result.affectedRows === 0) {
@@ -136,10 +137,8 @@ exports.updateTemplate = async (req, res, next) => {
 
         const site = await Site.findByIdAndUserId(siteId, userId);
         if (!site) return res.status(403).json({ message: 'Сайт для оновлення шаблону не знайдено.' });
-
         const siteDetails = await Site.findByPath(site.site_path);
         if (!siteDetails) return res.status(404).json({ message: 'Деталі сайту не знайдено.' });
-
         const pages = await Page.findBySiteId(siteId);
         const pagesWithContent = await Promise.all(pages.map(async (p) => {
             const pageData = await Page.findById(p.id);
@@ -167,8 +166,8 @@ exports.updateTemplate = async (req, res, next) => {
         };
         const jsonSnapshot = JSON.stringify(snapshot);
         const [result] = await db.query(
-            `UPDATE templates SET name = ?, description = ?, icon = ?, default_block_content = ? WHERE id = ? AND user_id = ?`,
-            [templateName, description || '', icon || 'Layout', jsonSnapshot, id, userId]
+            `UPDATE templates SET name = ?, description = ?, icon = ?, category = ?, default_block_content = ? WHERE id = ? AND user_id = ?`,
+            [templateName, description || '', icon || 'Layout', category || 'General', jsonSnapshot, id, userId]
         );
         
         if (result.affectedRows === 0) {

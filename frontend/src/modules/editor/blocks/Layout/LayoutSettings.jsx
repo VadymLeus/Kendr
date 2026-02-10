@@ -32,7 +32,6 @@ const LayoutSettings = ({ data, onChange }) => {
             const columnsToKeep = currentColumns.slice(0, newColumnCount);
             const columnsToMerge = currentColumns.slice(newColumnCount);
             const mergedBlocks = columnsToMerge.flat(); 
-
             if (columnsToKeep.length > 0) {
                 columnsToKeep[newColumnCount - 1] = [
                     ...(columnsToKeep[newColumnCount - 1] || []), 
@@ -50,7 +49,6 @@ const LayoutSettings = ({ data, onChange }) => {
         let finalUrl = '';
         if (val && val.target && typeof val.target.value === 'string') finalUrl = val.target.value;
         else if (typeof val === 'string') finalUrl = val;
-        
         const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
         updateData({ bg_image: relativeUrl });
     };
@@ -62,6 +60,7 @@ const LayoutSettings = ({ data, onChange }) => {
         const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
         updateData({ bg_video: relativeUrl });
     };
+    
     const bgTypeOptions = [
         { value: 'none', label: 'Немає', icon: <X size={16}/> },
         { value: 'color', label: 'Колір', icon: <Palette size={16}/> },
@@ -69,48 +68,34 @@ const LayoutSettings = ({ data, onChange }) => {
         { value: 'video', label: 'Відео', icon: <Video size={16}/> }
     ];
     const directionOptions = [
-        { value: 'row', label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><Columns size={16}/> Рядок</div> },
-        { value: 'column', label: <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}><Rows size={16}/> Стовпчик</div> }
+        { value: 'row', label: <div className="flex items-center gap-1.5"><Columns size={16}/> Рядок</div> },
+        { value: 'column', label: <div className="flex items-center gap-1.5"><Rows size={16}/> Стовпчик</div> }
     ];
     const presetOptions = PRESETS.map(p => ({ value: p.preset, label: p.name }));
     const verticalAlignOptions = [
         { value: 'top', label: <ArrowUpToLine size={18} title="Вгорі"/> },
         { value: 'middle', label: <AlignVerticalJustifyCenter size={18} title="По центру"/> },
         { value: 'bottom', label: <ArrowDownToLine size={18} title="Внизу"/> },
-        { value: 'stretch', label: <div title="Розтягнути" style={{fontSize:'12px', fontWeight:'bold'}}>↕</div> }
+        { value: 'stretch', label: <div title="Розтягнути" className="text-xs font-bold">↕</div> }
     ];
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<Palette size={18}/>}>Фон блоку</SectionTitle>
-                <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1fr 1fr', 
-                    gap: '8px', 
-                    marginBottom: '16px' 
-                }}>
+                <div className="grid grid-cols-2 gap-2 mb-4">
                     {bgTypeOptions.map((opt) => {
                         const isActive = (data.bg_type || 'none') === opt.value;
                         return (
                             <button
                                 key={opt.value}
                                 onClick={() => updateData({ bg_type: opt.value })}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '8px',
-                                    padding: '10px',
-                                    borderRadius: '8px',
-                                    border: isActive ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-                                    background: isActive ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
-                                    color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    fontSize: '0.9rem',
-                                    fontWeight: '500'
-                                }}
+                                className={`
+                                    flex items-center justify-center gap-2 p-2.5 rounded-lg border transition-all duration-200 text-sm font-medium cursor-pointer
+                                    ${isActive 
+                                        ? 'border-(--platform-accent) bg-blue-500/10 text-(--platform-accent)' 
+                                        : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary)'}
+                                `}
                             >
                                 {opt.icon}
                                 {opt.label}
@@ -129,9 +114,9 @@ const LayoutSettings = ({ data, onChange }) => {
                 )}
 
                 {data.bg_type === 'image' && (
-                    <div style={commonStyles.formGroup}>
+                    <div className="mb-5">
                         <label style={commonStyles.label}>Зображення</label>
-                        <div style={{ height: '200px' }}>
+                        <div className="h-50">
                             <UniversalMediaInput 
                                 type="image"
                                 value={data.bg_image}
@@ -144,9 +129,9 @@ const LayoutSettings = ({ data, onChange }) => {
 
                 {data.bg_type === 'video' && (
                     <>
-                        <div style={commonStyles.formGroup}>
+                        <div className="mb-5">
                             <label style={commonStyles.label}>Відео файл</label>
-                            <div style={{ height: '200px' }}>
+                            <div className="h-50">
                                 <UniversalMediaInput 
                                     type="video"
                                     value={data.bg_video}
@@ -155,11 +140,11 @@ const LayoutSettings = ({ data, onChange }) => {
                                 />
                             </div>
                         </div>
-                        <div style={commonStyles.formGroup}>
-                            <label style={{...commonStyles.label, display: 'flex', alignItems: 'center', gap: '6px'}}>
+                        <div className="mb-5">
+                            <label className="flex items-center gap-1.5 mb-1.5 font-medium text-sm text-(--platform-text-primary)">
                                 <ImageIcon size={14} /> Обкладинка (Poster)
                             </label>
-                            <div style={{ height: '200px' }}>
+                            <div className="h-50">
                                 <UniversalMediaInput 
                                     type="image"
                                     value={data.bg_image}
@@ -183,7 +168,7 @@ const LayoutSettings = ({ data, onChange }) => {
 
             <div>
                 <SectionTitle icon={<Layout size={18}/>}>Макет</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Схема колонок</label>
                     <CustomSelect
                         value={data.preset || '50-50'}
@@ -192,33 +177,21 @@ const LayoutSettings = ({ data, onChange }) => {
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Напрямок вмісту</label>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: '1fr 1fr', 
-                        gap: '8px' 
-                    }}>
+                    <div className="grid grid-cols-2 gap-2">
                          {directionOptions.map((opt) => {
                             const isActive = (data.direction || 'row') === opt.value;
                             return (
                                 <button
                                     key={opt.value}
                                     onClick={() => updateData({ direction: opt.value })}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px',
-                                        padding: '10px',
-                                        borderRadius: '6px',
-                                        border: isActive ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-                                        background: isActive ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
-                                        color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        fontSize: '0.85rem'
-                                    }}
+                                    className={`
+                                        flex items-center justify-center gap-2 p-2.5 rounded-md border transition-all duration-200 cursor-pointer text-sm
+                                        ${isActive 
+                                            ? 'border-(--platform-accent) bg-blue-500/10 text-(--platform-accent)' 
+                                            : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary)'}
+                                    `}
                                 >
                                     {opt.label}
                                 </button>
@@ -227,13 +200,9 @@ const LayoutSettings = ({ data, onChange }) => {
                     </div>
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Вертикальне вирівнювання</label>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(4, 1fr)', 
-                        gap: '4px' 
-                    }}>
+                    <div className="grid grid-cols-4 gap-1">
                         {verticalAlignOptions.map((opt) => {
                              const isActive = (data.verticalAlign || 'top') === opt.value;
                              return (
@@ -241,18 +210,12 @@ const LayoutSettings = ({ data, onChange }) => {
                                     key={opt.value}
                                     onClick={() => updateData({ verticalAlign: opt.value })}
                                     title={opt.label.props?.title}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        padding: '8px',
-                                        borderRadius: '6px',
-                                        border: isActive ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-                                        background: isActive ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
-                                        color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease'
-                                    }}
+                                    className={`
+                                        flex items-center justify-center p-2 rounded-md border transition-all duration-200 cursor-pointer
+                                        ${isActive 
+                                            ? 'border-(--platform-accent) bg-blue-500/10 text-(--platform-accent)' 
+                                            : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary)'}
+                                    `}
                                 >
                                     {opt.label}
                                 </button>

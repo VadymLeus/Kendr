@@ -1,18 +1,18 @@
 // frontend/src/modules/profile/tabs/ProfileGeneralTab.jsx
 import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
-import { useConfirm } from '../../../shared/hooks/useConfirm';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Input, Button } from '../../../shared/ui/elements';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import ImageUploadTrigger from '../../../shared/ui/complex/ImageUploadTrigger';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
-import { User, Mail, Phone, Trash2, Camera, AlertCircle, Check, Upload } from 'lucide-react';
+import { User, Mail, Phone, Trash2, Camera, LogOut, Check, Upload } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
-    const confirm = useConfirm();
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         username: '',
         phone_number: ''
@@ -75,24 +75,10 @@ const ProfileGeneralTab = () => {
         }
     };
 
-    const handleDeleteAccount = () => {
-        confirm({
-            title: 'Видалити акаунт?',
-            message: 'Ця дія незворотна. Всі ваші сайти будуть видалені. Напишіть "DELETE" для підтвердження.',
-            requireInput: true,
-            confirmText: 'Видалити назавжди',
-            danger: true,
-            onConfirm: async (inputValue) => {
-                if (inputValue !== 'DELETE') return toast.error('Невірне підтвердження.');
-                try {
-                    await apiClient.delete('/users/me', { data: { confirmation: 'DELETE' } });
-                    toast.success('Акаунт видалено.');
-                    logout();
-                } catch (err) {
-                    console.error(err);
-                }
-            }
-        });
+    const handleLogout = () => {
+        logout();
+        navigate('/auth');
+        toast.info("Ви вийшли з системи");
     };
 
     if (!user) return null;
@@ -116,7 +102,8 @@ const ProfileGeneralTab = () => {
         padding: '24px',
         height: '100%',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
     };
     
     const sectionTitleStyle = {
@@ -250,7 +237,6 @@ const ProfileGeneralTab = () => {
                                     </div>
                                 </ImageUploadTrigger>
                             </div>
-
                             {user.avatar_url && (
                                 <button
                                     type="button"
@@ -290,7 +276,7 @@ const ProfileGeneralTab = () => {
                             label="Нікнейм" 
                             value={formData.username} 
                             onChange={handleChange} 
-                            icon={<User size={18} />}
+                            leftIcon={<User size={18} />} 
                             maxLength={TEXT_LIMITS.USERNAME}
                             showCounter={true}
                             helperText="Мінімум 3 символи"
@@ -301,7 +287,7 @@ const ProfileGeneralTab = () => {
                             label="Email" 
                             value={user.email} 
                             disabled 
-                            icon={<Mail size={18} />}
+                            leftIcon={<Mail size={18} />}
                             style={{ opacity: 0.7, cursor: 'not-allowed' }}
                         />
 
@@ -310,7 +296,7 @@ const ProfileGeneralTab = () => {
                             label="Телефон" 
                             value={formData.phone_number} 
                             onChange={handleChange}
-                            icon={<Phone size={18} />}
+                            leftIcon={<Phone size={18} />}
                             placeholder="+380..."
                             maxLength={20}
                         />
@@ -329,8 +315,8 @@ const ProfileGeneralTab = () => {
 
                 <div style={{ 
                     ...cardStyle, 
-                    borderColor: '#fed7d7', 
-                    background: 'linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%)',
+                    borderColor: 'var(--platform-border-color)', 
+                    background: 'var(--platform-card-bg)',
                     gridColumn: '1 / -1',
                     padding: '32px'
                 }}>
@@ -344,28 +330,27 @@ const ProfileGeneralTab = () => {
                         <div style={{ flex: 1 }}>
                             <h3 style={{ 
                                 ...sectionTitleStyle, 
-                                color: '#c53030', 
                                 marginBottom: '4px' 
                             }}>
-                                <AlertCircle size={22} />
-                                Небезпечна зона
+                                <LogOut size={22} style={{ color: 'var(--platform-text-secondary)' }} />
+                                Вихід з акаунту
                             </h3>
                             <p style={{ 
                                 margin: 0, 
-                                color: '#c53030', 
+                                color: 'var(--platform-text-secondary)', 
                                 fontSize: '0.9rem', 
                                 opacity: 0.8 
                             }}>
-                                Видалення акаунту призведе до <strong>незворотної</strong> втрати всіх ваших сайтів та даних.
+                                Це завершить вашу поточну сесію в цьому браузері.
                             </p>
                         </div>
                         <Button 
-                            variant="danger" 
-                            onClick={handleDeleteAccount} 
-                            icon={<Trash2 size={16} />}
+                            variant="secondary" 
+                            onClick={handleLogout} 
+                            icon={<LogOut size={16} />}
                             style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
                         >
-                            Видалити акаунт
+                            Вийти з системи
                         </Button>
                     </div>
                 </div>

@@ -7,7 +7,7 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
     const [hoveredValue, setHoveredValue] = useState(null);
     const [localColor, setLocalColor] = useState(() => resolveAccentColor(value));
     const timeoutRef = useRef(null);
-
+    const visiblePresets = PRESET_COLORS.filter(p => p.id !== 'black' && p.color !== '#000000');
     useEffect(() => {
         setLocalColor(resolveAccentColor(value));
     }, [value]);
@@ -26,23 +26,28 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
         onChange(presetId);
     };
 
-    const isPreset = PRESET_COLORS.some(p => p.id === value);
-    const currentPresetName = PRESET_COLORS.find(p => p.id === value)?.name;
-    const displayHex = localColor; 
-
+    const isPreset = visiblePresets.some(p => p.id === value);
+    const currentPresetName = visiblePresets.find(p => p.id === value)?.name;
+    const displayHex = localColor;
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: '600', color: 'var(--platform-text-primary)', margin: 0 }}>Акцентний колір</h3>
-                <div style={{ fontSize: '0.9rem', color: displayHex, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: displayHex, border: '1px solid var(--platform-border-color)' }}></div>
-                    {isPreset ? currentPresetName : 'Власний колір'}
-                    {!isPreset && <span style={{color: 'var(--platform-text-secondary)', fontSize: '0.8rem'}}>({displayHex})</span>}
+            <div className="flex justify-between items-center mb-5">
+                <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0">Акцентний колір</h3>
+                <div 
+                    className="text-sm font-semibold flex items-center gap-2"
+                    style={{ color: displayHex }}
+                >
+                    <div 
+                        className="w-4 h-4 rounded bg-current border border-(--platform-border-color)"
+                        style={{ backgroundColor: displayHex }}
+                    ></div>
+                    {isPreset ? currentPresetName : (enableCustom ? 'Власний колір' : 'Обраний колір')}
+                    {!isPreset && <span className="text-(--platform-text-secondary) text-xs font-normal">({displayHex})</span>}
                 </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '8px 0', justifyContent: 'center' }}>
-                {PRESET_COLORS.map(preset => {
+            <div className="flex gap-3 flex-wrap py-2 justify-center">
+                {visiblePresets.map(preset => {
                     const isSelected = value === preset.id;
                     const isHovered = hoveredValue === preset.id;
                     
@@ -53,9 +58,11 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
                             onMouseEnter={() => setHoveredValue(preset.id)}
                             onMouseLeave={() => setHoveredValue(null)}
                             title={preset.name}
+                            className={`
+                                w-10.5 h-10.5 rounded-[10px] cursor-pointer flex items-center justify-center p-0 transition-transform duration-200 ease-in-out
+                                ${isSelected || isHovered ? 'scale-110' : 'scale-100'}
+                            `}
                             style={{
-                                width: '42px', height: '42px', 
-                                borderRadius: '10px', 
                                 background: preset.color,
                                 border: isSelected 
                                     ? `3px solid var(--platform-card-bg)` 
@@ -63,10 +70,6 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
                                 boxShadow: isSelected 
                                     ? `0 0 0 2px ${preset.color}` 
                                     : (isHovered ? `0 0 0 1px ${preset.color}` : 'none'),
-                                cursor: 'pointer', 
-                                transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                transform: (isSelected || isHovered) ? 'scale(1.1)' : 'scale(1)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
                             }}
                         />
                     );
@@ -74,21 +77,18 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
 
                 {enableCustom && (
                     <label 
+                        className={`
+                            w-10.5 h-10.5 rounded-[10px] cursor-pointer flex items-center justify-center relative transition-transform duration-200 ease-in-out
+                            ${(!isPreset || hoveredValue === 'custom') ? 'scale-110' : 'scale-100'}
+                        `}
                         style={{
-                            width: '42px', height: '42px', 
-                            borderRadius: '10px', 
-                            cursor: 'pointer',
                             border: !isPreset 
                                 ? `3px solid var(--platform-card-bg)` 
                                 : (hoveredValue === 'custom' ? `1px solid ${displayHex}` : '2px dashed var(--platform-border-color)'),
                             boxShadow: !isPreset 
                                 ? `0 0 0 2px ${displayHex}` 
                                 : (hoveredValue === 'custom' ? `0 0 0 1px ${displayHex}` : 'none'),
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
                             backgroundColor: !isPreset ? displayHex : 'transparent',
-                            transition: 'all 0.2s ease',
-                            transform: (!isPreset || hoveredValue === 'custom') ? 'scale(1.1)' : 'scale(1)',
-                            position: 'relative'
                         }}
                         onMouseEnter={() => setHoveredValue('custom')}
                         onMouseLeave={() => setHoveredValue(null)}
@@ -98,35 +98,40 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
                             type="color" 
                             value={displayHex} 
                             onChange={(e) => handleCustomColorChange(e.target.value)}
-                            style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', top:0, left:0 }}
+                            className="absolute opacity-0 w-full h-full cursor-pointer top-0 left-0"
                         />
                         {!isPreset ? (
                             <Edit size={18} color={isLightColor(displayHex) ? '#000' : '#fff'} />
                         ) : (
-                            <Plus size={20} color="var(--platform-text-secondary)" />
+                            <Plus size={20} className="text-(--platform-text-secondary)" />
                         )}
                     </label>
                 )}
             </div>
 
-            <div style={{ marginTop: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', padding: '24px', background: 'var(--platform-bg)', borderRadius: '12px', border: '1px solid var(--platform-border-color)' }}>
-                <button style={{
-                    padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'default', fontWeight: '500', fontSize: '0.9rem',
-                    background: displayHex,
-                    color: isLightColor(displayHex) ? '#000' : '#fff',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}>
+            <div className="mt-6 flex gap-3 flex-wrap items-center justify-center p-6 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
+                <button 
+                    className="py-2.5 px-5 rounded-lg border-none cursor-default font-medium text-sm shadow-sm"
+                    style={{
+                        background: displayHex,
+                        color: isLightColor(displayHex) ? '#000' : '#fff'
+                    }}
+                >
                     Основна кнопка
                 </button>
-                <button style={{
-                    padding: '10px 20px', borderRadius: '8px', cursor: 'default', fontWeight: '500', fontSize: '0.9rem',
-                    background: 'transparent',
-                    border: `1px solid ${displayHex}`,
-                    color: displayHex
-                }}>
+                <button 
+                    className="py-2.5 px-5 rounded-lg cursor-default font-medium text-sm bg-transparent"
+                    style={{
+                        border: `1px solid ${displayHex}`,
+                        color: displayHex
+                    }}
+                >
                     Другорядна кнопка
                 </button>
-                <div style={{ padding: '8px 12px', background: displayHex + '20', color: displayHex, borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600' }}>
+                <div 
+                    className="py-2 px-3 rounded-lg text-xs font-semibold"
+                    style={{ background: displayHex + '20', color: displayHex }}
+                >
                     Активний елемент
                 </div>
             </div>

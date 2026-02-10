@@ -7,7 +7,6 @@ const SpacingControl = ({ styles = {}, onChange }) => {
     const defaultPadding = 60;
     const minPadding = 10;
     const maxPadding = 240;
-    
     const getSafeValue = (val) => {
         if (val === undefined || val === null || val === '') return defaultPadding;
         const parsed = parseInt(val, 10);
@@ -17,18 +16,14 @@ const SpacingControl = ({ styles = {}, onChange }) => {
     const [paddingTop, setPaddingTop] = useState(getSafeValue(styles.paddingTop));
     const [paddingBottom, setPaddingBottom] = useState(getSafeValue(styles.paddingBottom));
     const [isLinked, setIsLinked] = useState(false);
-
     useEffect(() => {
         setPaddingTop(getSafeValue(styles.paddingTop));
         setPaddingBottom(getSafeValue(styles.paddingBottom));
     }, [styles.paddingTop, styles.paddingBottom]);
-
     const handleSliderChange = (key, value) => {
         const val = typeof value === 'string' ? parseInt(value, 10) : value;
         const finalValue = isNaN(val) ? 0 : Math.max(minPadding, Math.min(val, maxPadding));
-        
         let newStyles = { ...styles };
-
         if (key === 'paddingTop') {
             setPaddingTop(finalValue);
             newStyles.paddingTop = finalValue;
@@ -50,39 +45,30 @@ const SpacingControl = ({ styles = {}, onChange }) => {
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <label style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--platform-text-primary)' }}>
+            <div className="flex justify-between items-center mb-4">
+                <label className="text-sm font-semibold text-(--platform-text-primary)">
                     Внутрішні відступи
                 </label>
-                
                 <button 
                     type="button"
                     onClick={() => setIsLinked(!isLinked)}
                     title={isLinked ? "Роз'єднати значення" : "Зв'язати верх і низ"}
-                    style={{
-                        background: isLinked ? 'var(--platform-accent-transparent)' : 'transparent',
-                        border: isLinked ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        color: isLinked ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.2s',
-                        width: '28px',
-                        height: '28px'
-                    }}
+                    className={`
+                        w-7 h-7 flex items-center justify-center rounded transition-all duration-200 p-1 cursor-pointer border
+                        ${isLinked 
+                            ? 'bg-blue-500/10 border-(--platform-accent) text-(--platform-accent)' 
+                            : 'bg-transparent border-(--platform-border-color) text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}
+                    `}
                 >
                     {isLinked ? <Link size={14} /> : <Unlink size={14} />}
                 </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="flex flex-col gap-5">
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem', fontWeight: '500' }}>
+                    <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-(--platform-text-secondary)">
                         <ArrowUp size={14} /> 
-                        <span>Відступ зверху: <span style={{ color: 'var(--platform-text-primary)' }}>{paddingTop}px</span></span>
+                        <span>Відступ зверху: <span className="text-(--platform-text-primary)">{paddingTop}px</span></span>
                     </div>
                     <RangeSlider 
                         value={paddingTop} 
@@ -95,9 +81,9 @@ const SpacingControl = ({ styles = {}, onChange }) => {
                 </div>
 
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--platform-text-secondary)', fontSize: '0.8rem', fontWeight: '500' }}>
+                    <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-(--platform-text-secondary)">
                         <ArrowDown size={14} />
-                        <span>Відступ знизу: <span style={{ color: 'var(--platform-text-primary)' }}>{paddingBottom}px</span></span>
+                        <span>Відступ знизу: <span className="text-(--platform-text-primary)">{paddingBottom}px</span></span>
                     </div>
                     <RangeSlider 
                         value={paddingBottom} 

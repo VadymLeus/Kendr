@@ -14,6 +14,7 @@ const ImageUploadTrigger = ({
     const [selectedImage, setSelectedImage] = useState(null);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
     const fileInputRef = useRef(null);
+    
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -62,19 +63,20 @@ const ImageUploadTrigger = ({
         <>
             <div 
                 onClick={handleClick} 
-                style={{ display: 'inline-block', ...triggerStyle }}
-                className={uploading ? 'disabled-uploader' : ''}
+                style={triggerStyle}
+                className={`inline-block ${uploading ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer'}`}
             >
                 <input
                     type="file"
                     accept="image/png, image/jpeg, image/jpg, image/webp"
                     onChange={handleFileChange}
                     ref={fileInputRef}
-                    style={{ display: 'none' }}
+                    className="hidden"
                     disabled={uploading}
                 />
                 {children}
             </div>
+            
             {isCropperOpen && (
                 <ImageCropperModal
                     isOpen={isCropperOpen}

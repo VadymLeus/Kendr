@@ -12,7 +12,6 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
         };
         
         const handleScroll = () => onClose();
-
         if (visible) {
             document.addEventListener('click', handleClickOutside);
             document.addEventListener('contextmenu', handleClickOutside);
@@ -27,119 +26,62 @@ const ContextMenu = ({ x, y, visible, onClose, onAction }) => {
     }, [visible, onClose]);
 
     if (!visible) return null;
-
-    const menuStyle = {
-        position: 'fixed',
+    const positionStyle = {
         top: y,
         left: x,
-        zIndex: 9999,
-        backgroundColor: 'var(--platform-card-bg)',
-        color: 'var(--platform-text-primary)',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        padding: '6px 0',
-        minWidth: '180px',
-        display: 'flex',
-        flexDirection: 'column',
-        animation: 'fadeIn 0.1s ease-out',
-        border: '1px solid var(--platform-border-color)'
     };
 
     if (y + 250 > window.innerHeight) {
-        menuStyle.top = 'auto';
-        menuStyle.bottom = window.innerHeight - y;
+        positionStyle.top = 'auto';
+        positionStyle.bottom = window.innerHeight - y;
     }
 
-    const itemStyle = {
-        padding: '10px 16px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        fontSize: '14px',
-        transition: 'background 0.2s',
-        border: 'none',
-        background: 'transparent',
-        color: 'inherit',
-        textAlign: 'left',
-        width: '100%',
-        outline: 'none'
-    };
-
-    const hoverHandler = (e) => {
-        e.currentTarget.style.backgroundColor = 'var(--platform-bg)';
-    };
-    
-    const unhoverHandler = (e) => {
-        e.currentTarget.style.backgroundColor = 'transparent';
-    };
-
-    const deleteHoverHandler = (e) => {
-        e.currentTarget.style.backgroundColor = '#e53e3e';
-        e.currentTarget.style.color = '#fff';
-    };
-
-    const deleteUnhoverHandler = (e) => {
-        e.currentTarget.style.backgroundColor = 'transparent';
-        e.currentTarget.style.color = 'inherit';
-    };
+    const itemClass = "w-full text-left px-4 py-2.5 cursor-pointer flex items-center gap-2.5 text-sm transition-colors duration-200 border-none bg-transparent text-inherit hover:bg-(--platform-bg) focus:outline-none";
+    const deleteItemClass = "w-full text-left px-4 py-2.5 cursor-pointer flex items-center gap-2.5 text-sm transition-colors duration-200 border-none bg-transparent text-inherit hover:bg-(--platform-danger) hover:text-white focus:outline-none";
 
     return (
-        <div ref={menuRef} style={menuStyle} className="context-menu">
+        <div 
+            ref={menuRef} 
+            style={positionStyle} 
+            className="fixed z-9999 bg-(--platform-card-bg) text-(--platform-text-primary) rounded-lg shadow-xl py-1.5 min-w-45 flex flex-col border border-(--platform-border-color) animate-in fade-in zoom-in-95 duration-100"
+        >
             <button 
-                style={itemStyle} 
+                className={itemClass}
                 onClick={() => onAction('edit')}
-                onMouseEnter={hoverHandler}
-                onMouseLeave={unhoverHandler}
             >
                 <Settings size={16} /> Налаштувати
             </button>
             
             <button 
-                style={itemStyle} 
+                className={itemClass}
                 onClick={() => onAction('duplicate')}
-                onMouseEnter={hoverHandler}
-                onMouseLeave={unhoverHandler}
             >
                 <Copy size={16} /> Дублювати
             </button>
 
-            <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
+            <div className="h-px bg-(--platform-border-color) my-1" />
 
             <button 
-                style={itemStyle} 
+                className={itemClass}
                 onClick={() => onAction('moveUp')}
-                onMouseEnter={hoverHandler}
-                onMouseLeave={unhoverHandler}
             >
                 <ArrowUp size={16} /> Вгору
             </button>
             <button 
-                style={itemStyle} 
+                className={itemClass}
                 onClick={() => onAction('moveDown')}
-                onMouseEnter={hoverHandler}
-                onMouseLeave={unhoverHandler}
             >
                 <ArrowDown size={16} /> Вниз
             </button>
 
-            <div style={{ height: '1px', background: 'var(--platform-border-color)', margin: '4px 0' }} />
+            <div className="h-px bg-(--platform-border-color) my-1" />
 
             <button 
-                style={itemStyle} 
+                className={deleteItemClass}
                 onClick={() => onAction('delete')}
-                onMouseEnter={deleteHoverHandler}
-                onMouseLeave={deleteUnhoverHandler}
             >
                 <Trash2 size={16} /> Видалити
             </button>
-            
-            <style>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: scale(0.95); }
-                    to { opacity: 1; transform: scale(1); }
-                }
-            `}</style>
         </div>
     );
 };

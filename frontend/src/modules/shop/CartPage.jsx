@@ -96,23 +96,25 @@ const CartPage = () => {
         }
         
         .qty-btn:hover:not(:disabled) {
-            background-color: var(--platform-border-color) !important;
-            transform: translateY(-1px);
+            background-color: var(--platform-hover-bg) !important;
+            color: var(--platform-accent) !important;
+            border-color: var(--platform-accent) !important;
         }
         
         .remove-btn:hover {
-            background-color: rgba(229, 62, 62, 0.1) !important;
+            background-color: color-mix(in srgb, var(--platform-danger), transparent 90%) !important;
             color: var(--platform-danger) !important;
             transform: scale(1.1);
         }
 
         .checkout-btn:hover {
-            filter: brightness(1.05);
+            filter: brightness(1.1);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .clear-btn:hover {
-            background-color: var(--platform-bg) !important;
+            background-color: var(--platform-hover-bg) !important;
             color: var(--platform-text-primary) !important;
             border-color: var(--platform-text-primary) !important;
         }
@@ -141,7 +143,8 @@ const CartPage = () => {
             padding: '40px 10px',
             minHeight: 'calc(100vh - 80px)',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            color: 'var(--platform-text-primary)'
         },
         header: {
             marginBottom: '30px',
@@ -192,7 +195,7 @@ const CartPage = () => {
             border: '1px solid var(--platform-border-color)',
             overflow: 'hidden',
             flexShrink: 0,
-            background: '#fff',
+            background: 'var(--platform-bg)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -239,7 +242,7 @@ const CartPage = () => {
         salePrice: {
             fontSize: '1.4rem',
             fontWeight: '700',
-            color: '#e53e3e',
+            color: 'var(--platform-danger)',
             display: 'block',
         },
         oldPrice: {
@@ -265,7 +268,7 @@ const CartPage = () => {
         qtyBtn: {
             width: '36px',
             height: '36px',
-            border: 'none',
+            border: '1px solid transparent',
             background: 'transparent',
             borderRadius: '6px',
             display: 'flex',
@@ -273,12 +276,14 @@ const CartPage = () => {
             justifyContent: 'center',
             cursor: 'pointer',
             color: 'var(--platform-text-primary)',
+            transition: 'all 0.2s',
         },
         qtyValue: {
             width: '40px',
             textAlign: 'center',
             fontWeight: '600',
             fontSize: '1.1rem',
+            color: 'var(--platform-text-primary)',
         },
         removeBtn: {
             background: 'transparent',
@@ -290,6 +295,7 @@ const CartPage = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            transition: 'all 0.2s',
         },
         summaryCard: {
             background: 'var(--platform-card-bg)',
@@ -333,6 +339,7 @@ const CartPage = () => {
             justifyContent: 'center',
             gap: '12px',
             marginBottom: '16px',
+            transition: 'all 0.2s',
         },
         clearBtn: {
             width: '100%',
@@ -343,6 +350,7 @@ const CartPage = () => {
             borderRadius: '10px',
             cursor: 'pointer',
             fontSize: '1rem',
+            transition: 'all 0.2s',
         },
         emptyState: {
             textAlign: 'center',
@@ -503,7 +511,7 @@ const CartPage = () => {
                             {totalDiscount > 0 && (
                                 <div style={styles.summaryRow}>
                                     <span>Знижка</span>
-                                    <span style={{color: '#e53e3e', fontWeight: '600'}}>-{totalDiscount.toFixed(2)} ₴</span>
+                                    <span style={{color: 'var(--platform-danger)', fontWeight: '600'}}>-{totalDiscount.toFixed(2)} ₴</span>
                                 </div>
                             )}
                             

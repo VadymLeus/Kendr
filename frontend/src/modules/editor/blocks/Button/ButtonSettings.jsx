@@ -7,7 +7,6 @@ import { Link, FileText } from 'lucide-react';
 
 const ButtonSettings = ({ data, onChange, siteData }) => {
     const currentMode = data.isFile ? 'file' : 'url';
-
     const handleModeChange = (mode) => {
         if (mode === 'url') {
             onChange({ ...data, isFile: false, link: '' });
@@ -25,10 +24,10 @@ const ButtonSettings = ({ data, onChange, siteData }) => {
     };
 
     return (
-        <div style={{ paddingBottom: '20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="pb-5 flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<Link size={18}/>}>Дія кнопки</SectionTitle>
-                <div style={commonStyles.formGroup}>
+                <div className="mb-5">
                     <label style={commonStyles.label}>Тип посилання</label>
                     <ToggleGroup 
                         options={[
@@ -39,9 +38,8 @@ const ButtonSettings = ({ data, onChange, siteData }) => {
                         onChange={handleModeChange}
                     />
                 </div>
-
                 {currentMode === 'file' && (
-                    <div style={commonStyles.formGroup}>
+                    <div className="mb-5">
                         <label style={commonStyles.label}>Файл для завантаження</label>
                         
                         <UniversalMediaInput
@@ -50,8 +48,7 @@ const ButtonSettings = ({ data, onChange, siteData }) => {
                             onChange={handleFileChange}
                             placeholder="Виберіть документ (PDF, DOCX...)"
                         />
-                        
-                        <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--platform-text-secondary)' }}>
+                        <div className="mt-2 text-xs text-(--platform-text-secondary)">
                             Підтримуються: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV
                         </div>
                     </div>

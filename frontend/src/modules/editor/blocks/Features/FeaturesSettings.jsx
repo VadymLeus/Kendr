@@ -9,17 +9,6 @@ import AlignmentControl from '../../ui/components/AlignmentControl';
 import { generateBlockId } from '../../core/editorConfig';
 import { List, Grid, Trash2, Plus, Star, Zap, Shield, Truck, Gift, Clock, Phone, Settings, User, Globe, Heart, ShoppingBag, Check, Type } from 'lucide-react';
 
-const STYLES = {
-  container: { display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' },
-  itemWrapper: { border: '1px solid var(--platform-border-color)', borderRadius: '8px', marginBottom: '0.75rem', background: 'var(--platform-card-bg)', overflow: 'hidden', transition: 'border-color 0.2s ease' },
-  itemHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', cursor: 'pointer', background: 'var(--platform-bg)', borderBottom: '1px solid transparent', transition: 'background 0.2s' },
-  iconPreview: { color: 'var(--platform-accent)', display: 'flex', background: 'var(--platform-card-bg)', padding: '6px', borderRadius: '6px', border: '1px solid var(--platform-border-color)' },
-  itemContent: { padding: '16px', borderTop: '1px solid var(--platform-border-color)' },
-  iconGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', width: '100%' },
-  iconButton: { width: '100%', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '1px solid var(--platform-border-color)', background: 'transparent', color: 'var(--platform-text-secondary)', cursor: 'pointer', transition: 'all 0.2s ease' },
-  addButton: { width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'transparent', border: '1px dashed var(--platform-border-color)', borderRadius: '8px', color: 'var(--platform-text-secondary)', fontWeight: '500', transition: 'all 0.2s' }
-};
-
 const CONFIG = {
   MAX_ITEMS: 8,
   DEFAULT_DATA: {
@@ -61,14 +50,6 @@ const ICON_OPTIONS = [
   { key: 'shop', icon: <ShoppingBag size={20} /> }
 ];
 
-const customStyles = `
-  .settings-hover-item:hover { border-color: var(--platform-accent) !important; }
-  .settings-hover-btn:hover { border-color: var(--platform-accent) !important; color: var(--platform-accent) !important; background-color: transparent !important; }
-  .icon-grid-btn { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--platform-border-color); background: transparent; color: var(--platform-text-secondary); cursor: pointer; transition: all 0.2s ease; }
-  .icon-grid-btn:hover { border-color: var(--platform-accent) !important; color: var(--platform-accent); }
-  .icon-grid-btn.active { border-color: var(--platform-accent); color: var(--platform-accent); box-shadow: 0 0 0 1px var(--platform-accent); }
-`;
-
 const FeaturesSettings = ({ data, onChange, siteData }) => {
   const [openIndex, setOpenIndex] = useState(null);
   const { confirm } = useConfirm();
@@ -96,7 +77,6 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
   
   const handleAddFeature = () => {
     if (normalizedData.items.length >= CONFIG.MAX_ITEMS) return;
-    
     const newItem = {
       id: generateBlockId(),
       icon: 'star',
@@ -131,10 +111,8 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
   };
   
   const isMaxItemsReached = normalizedData.items.length >= CONFIG.MAX_ITEMS;
-  
   return (
-    <div style={STYLES.container}>
-      <style>{customStyles}</style>
+    <div className="flex flex-col gap-6 w-full">
       <div>
         <SectionTitle icon={<Grid size={16} />}>
           Загальні
@@ -151,7 +129,7 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
         <SectionTitle icon={<Type size={16} />}>
           Типографіка
         </SectionTitle>
-        <div style={commonStyles.formGroup}>
+        <div className="mb-5">
             <FontSelector 
                 value={normalizedData.titleFontFamily}
                 onChange={(val) => updateData({ titleFontFamily: val })}
@@ -159,7 +137,7 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
                 siteFonts={currentSiteFonts}
             />
         </div>
-        <div style={commonStyles.formGroup}>
+        <div className="mb-5">
             <FontSelector 
                 value={normalizedData.contentFontFamily}
                 onChange={(val) => updateData({ contentFontFamily: val })}
@@ -174,7 +152,7 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
           Макет та Вигляд
         </SectionTitle>
         
-        <div style={commonStyles.formGroup}>
+        <div className="mb-5">
           <label style={commonStyles.label}>Стиль відображення</label>
           <ToggleGroup
             options={CONFIG.LAYOUT_OPTIONS}
@@ -183,7 +161,7 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
           />
         </div>
         
-        <div style={commonStyles.formGroup}>
+        <div className="mb-5">
           <label style={commonStyles.label}>Кількість колонок</label>
           <ToggleGroup
             options={CONFIG.COLUMN_OPTIONS}
@@ -206,7 +184,7 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
           Стилізація
         </SectionTitle>
         
-        <div style={commonStyles.formGroup}>
+        <div className="mb-5">
           <ToggleSwitch
             checked={normalizedData.showIconBackground}
             onChange={(val) => updateData({ showIconBackground: val })}
@@ -219,7 +197,6 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
         <SectionTitle>
           Елементи ({normalizedData.items.length}/{CONFIG.MAX_ITEMS})
         </SectionTitle>
-        
         {normalizedData.items.map((item, index) => (
           <FeatureItem
             key={item.id || index}
@@ -238,12 +215,11 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
           type="button"
           onClick={handleAddFeature}
           disabled={isMaxItemsReached}
-          className="settings-hover-btn"
-          style={{
-            ...STYLES.addButton,
-            cursor: isMaxItemsReached ? 'not-allowed' : 'pointer',
-            opacity: isMaxItemsReached ? 0.5 : 1
-          }}
+          className={`
+            w-full p-3 flex items-center justify-center gap-2 bg-transparent border border-dashed border-(--platform-border-color) rounded-lg 
+            text-(--platform-text-secondary) font-medium transition-all duration-200 
+            ${isMaxItemsReached ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-(--platform-accent) hover:text-(--platform-accent) hover:bg-transparent'}
+          `}
         >
           <Plus size={18} />
           Додати перевагу
@@ -256,15 +232,20 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
 const FeatureItem = ({ item, index, isOpen, onToggle, onRemove, onChange, iconOptions, getIconComponent }) => {
   return (
     <div
-      style={{ ...STYLES.itemWrapper, borderColor: isOpen ? 'var(--platform-accent)' : 'var(--platform-border-color)' }}
-      className="settings-hover-item"
+      className={`
+        border rounded-lg mb-3 bg-(--platform-card-bg) overflow-hidden transition-colors duration-200
+        ${isOpen ? 'border-(--platform-accent)' : 'border-(--platform-border-color) hover:border-(--platform-accent)'}
+      `}
     >
-      <div style={STYLES.itemHeader} onClick={onToggle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={STYLES.iconPreview}>
+      <div 
+        className="flex justify-between items-center px-4 py-3 cursor-pointer bg-(--platform-bg) border-b border-transparent transition-colors duration-200" 
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="text-(--platform-accent) flex bg-(--platform-card-bg) p-1.5 rounded-md border border-(--platform-border-color)">
             {getIconComponent(item.icon)}
           </div>
-          <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>
+          <span className="font-medium text-sm">
             {item.title}
           </span>
         </div>
@@ -273,7 +254,7 @@ const FeatureItem = ({ item, index, isOpen, onToggle, onRemove, onChange, iconOp
           variant="danger"
           size="sm"
           onClick={(e) => onRemove(e, index)}
-          style={{ width: '28px', height: '28px', opacity: 0.6, padding: 0 }}
+          className="w-7! h-7! opacity-60 p-0!"
           title="Видалити"
         >
           <Trash2 size={14} />
@@ -281,15 +262,21 @@ const FeatureItem = ({ item, index, isOpen, onToggle, onRemove, onChange, iconOp
       </div>
       
       {isOpen && (
-        <div style={STYLES.itemContent}>
-          <div style={commonStyles.formGroup}>
+        <div className="p-4 border-t border-(--platform-border-color)">
+          <div className="mb-5">
             <label style={commonStyles.label}>Виберіть іконку</label>
-            <div style={STYLES.iconGrid}>
+            <div className="grid grid-cols-4 gap-2 w-full">
               {iconOptions.map(opt => (
                 <button
                   key={opt.key}
                   type="button"
-                  className={`icon-grid-btn ${item.icon === opt.key ? 'active' : ''}`}
+                  className={`
+                    w-full aspect-square flex items-center justify-center rounded-lg border bg-transparent cursor-pointer transition-all duration-200
+                    ${item.icon === opt.key 
+                        ? 'border-(--platform-accent) text-(--platform-accent) ring-1 ring-(--platform-accent)' 
+                        : 'border-(--platform-border-color) text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-accent)'
+                    }
+                  `}
                   onClick={() => onChange(index, 'icon', opt.key)}
                   title={opt.key}
                 >
@@ -305,8 +292,7 @@ const FeatureItem = ({ item, index, isOpen, onToggle, onRemove, onChange, iconOp
             onChange={(e) => onChange(index, 'title', e.target.value)}
             placeholder="Назва переваги"
           />
-          
-          <div style={commonStyles.formGroup}>
+          <div className="mb-5">
             <label style={commonStyles.label}>Опис</label>
             <textarea
               value={item.text}

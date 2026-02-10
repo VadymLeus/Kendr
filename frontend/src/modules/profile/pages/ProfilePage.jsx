@@ -8,7 +8,7 @@ import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import SiteGridCard from '../../../shared/ui/complex/SiteGridCard'; 
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';   
-import { Send, Instagram, Globe, Settings, Calendar, Grid, User, Loader, ExternalLink, EyeOff, Search, Layout, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Send, Instagram, Globe, Settings, Calendar, Grid, User, Loader, ExternalLink, EyeOff, Search, Layout, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 const SORT_OPTIONS = [
     { value: 'created_at:desc', label: 'Нові' },
@@ -27,7 +27,6 @@ const ProfilePage = () => {
     const [sitesLoading, setSitesLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState('created_at:desc');
-
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -98,8 +97,8 @@ const ProfilePage = () => {
 
     const warningSectionStyle = {
         ...sectionStyle,
-        borderColor: 'rgba(239, 68, 68, 0.3)',
-        background: 'rgba(239, 68, 68, 0.03)'
+        borderColor: 'var(--platform-danger)',
+        background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)'
     };
 
     const errorContainerStyle = {
@@ -136,7 +135,11 @@ const ProfilePage = () => {
     const cardBodyStyle = { padding: '1.5rem' };
     const bioTextStyle = { color: 'var(--platform-text-secondary)', lineHeight: '1.7', fontSize: '1rem', whiteSpace: 'pre-wrap' };
     const statItemStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: '1px solid var(--platform-border-color)', fontSize: '1rem', color: 'var(--platform-text-secondary)' };
-    const socialLinkStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '12px', background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500', transition: 'all 0.2s ease', border: '1px solid transparent', marginBottom: '0.75rem' };
+    const socialLinkStyle = { 
+        display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '12px', 
+        background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', textDecoration: 'none', 
+        fontSize: '0.95rem', fontWeight: '500', transition: 'all 0.2s ease', border: '1px solid transparent', marginBottom: '0.75rem' 
+    };
 
     if (loadingProfile) return (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
@@ -183,7 +186,6 @@ const ProfilePage = () => {
     const avatarWrapperStyle = { borderRadius: '50%', border: '6px solid var(--platform-card-bg)', background: 'var(--platform-bg)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' };
     const headerContentStyle = { flex: 1, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' };
     const infoGridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', marginBottom: '2rem' };
-    
     return (
         <div style={containerStyle}>
             <Helmet>
@@ -221,7 +223,7 @@ const ProfilePage = () => {
 
             {profileData.warnings && profileData.warnings.length > 0 && (
                 <div style={warningSectionStyle}>
-                    <div style={{...cardHeaderStyle, borderBottomColor: 'rgba(239, 68, 68, 0.2)'}}>
+                    <div style={{...cardHeaderStyle, borderBottomColor: 'color-mix(in srgb, var(--platform-danger), transparent 80%)'}}>
                         <ShieldAlert size={24} style={{ color: 'var(--platform-danger)' }} />
                         <h3 style={{...cardTitleStyle, color: 'var(--platform-danger)'}}>
                             Активні страйки ({profileData.warnings.length}/3)
@@ -316,12 +318,12 @@ const ProfilePage = () => {
                         </div>
                         <div style={cardBodyStyle}>
                             {profileData.socials.telegram && (
-                                <a href={`https://t.me/${profileData.socials.telegram.replace('@', '')}`} target="_blank" rel="noreferrer" style={socialLinkStyle} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 136, 204, 0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--platform-bg)'}>
+                                <a href={`https://t.me/${profileData.socials.telegram.replace('@', '')}`} target="_blank" rel="noreferrer" style={socialLinkStyle} onMouseEnter={e => e.currentTarget.style.background = 'var(--platform-hover-bg)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--platform-bg)'}>
                                     <Send size={22} style={{ color: '#0088cc' }}/> Telegram <ExternalLink size={16} style={{ marginLeft: 'auto', opacity: 0.5 }}/>
                                 </a>
                             )}
                             {profileData.socials.instagram && (
-                                <a href={`https://instagram.com/${profileData.socials.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" style={socialLinkStyle} onMouseEnter={e => e.currentTarget.style.background = 'rgba(225, 48, 108, 0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--platform-bg)'}>
+                                <a href={`https://instagram.com/${profileData.socials.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" style={socialLinkStyle} onMouseEnter={e => e.currentTarget.style.background = 'var(--platform-hover-bg)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--platform-bg)'}>
                                     <Instagram size={22} style={{ color: '#E1306C' }}/> Instagram <ExternalLink size={16} style={{ marginLeft: 'auto', opacity: 0.5 }}/>
                                 </a>
                             )}
@@ -360,7 +362,7 @@ const ProfilePage = () => {
                 <div style={gridStyle}>
                     {sitesLoading ? (
                         <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
-                            <Loader size={24} className="animate-spin" style={{ margin: '0 auto' }} />
+                            <Loader size={24} className="animate-spin" style={{ margin: '0 auto', color: 'var(--platform-text-secondary)' }} />
                         </div>
                     ) : userSites.length > 0 ? (
                         userSites.map(site => (

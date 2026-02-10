@@ -1,14 +1,14 @@
 // frontend/src/shared/ui/complex/PasswordStrengthMeter.jsx
 import React from 'react';
-import { Check, X } from 'lucide-react';
 import { analyzePassword } from '../../utils/validationUtils';
+import { Check, X } from 'lucide-react';
 
 const PasswordStrengthMeter = ({ password }) => {
     const { score, checks } = analyzePassword(password);
-    const getStrengthColor = () => {
-        if (score <= 1) return '#e53e3e';
-        if (score === 2 || score === 3) return '#ecc94b';
-        return '#48bb78';
+    const getStrengthColorClass = () => {
+        if (score <= 1) return 'bg-(--platform-danger)';
+        if (score === 2 || score === 3) return 'bg-(--platform-warning)';
+        return 'bg-(--platform-success)';
     };
 
     const getStrengthLabel = () => {
@@ -27,51 +27,36 @@ const PasswordStrengthMeter = ({ password }) => {
     ];
 
     return (
-        <div style={{ marginTop: '8px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+        <div className="mt-2 mb-4">
+            <div className="flex gap-1 mb-2">
                 {bars.map((barIndex) => (
                     <div 
                         key={barIndex}
-                        style={{
-                            height: '4px',
-                            flex: 1,
-                            borderRadius: '2px',
-                            backgroundColor: barIndex <= score ? getStrengthColor() : 'var(--platform-border-color)',
-                            transition: 'background-color 0.3s ease'
-                        }} 
+                        className={`
+                            h-1 flex-1 rounded-sm transition-colors duration-300
+                            ${barIndex <= score ? getStrengthColorClass() : 'bg-(--platform-border-color)'}
+                        `}
                     />
                 ))}
             </div>
-
-            <div style={{ 
-                fontSize: '0.8rem', 
-                color: 'var(--platform-text-secondary)', 
-                fontWeight: '600',
-                marginBottom: '12px',
-                textAlign: 'right'
-            }}>
+            <div className="text-xs text-(--platform-text-secondary) font-semibold mb-3 text-right">
                 {getStrengthLabel()}
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div className="grid grid-cols-2 gap-2">
                 {requirements.map((req, index) => (
                     <div 
                         key={index} 
-                        style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '6px',
-                            fontSize: '0.75rem',
-                            color: req.met ? 'var(--platform-success)' : 'var(--platform-text-secondary)',
-                            transition: 'color 0.2s ease'
-                        }}
+                        className={`
+                            flex items-center gap-1.5 text-xs transition-colors duration-200
+                            ${req.met ? 'text-(--platform-success)' : 'text-(--platform-text-secondary)'}
+                        `}
                     >
                         {req.met ? (
-                            <Check size={14} color="var(--platform-success)" strokeWidth={3} />
+                            <Check size={14} className="text-(--platform-success)" strokeWidth={3} />
                         ) : (
-                            <X size={14} color="var(--platform-text-secondary)" style={{ opacity: 0.5 }} />
+                            <X size={14} className="text-(--platform-text-secondary) opacity-50" />
                         )}
-                        <span style={{ opacity: req.met ? 1 : 0.8 }}>{req.label}</span>
+                        <span className={req.met ? 'opacity-100' : 'opacity-80'}>{req.label}</span>
                     </div>
                 ))}
             </div>

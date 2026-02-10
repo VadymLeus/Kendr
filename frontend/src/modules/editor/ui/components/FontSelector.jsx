@@ -59,12 +59,9 @@ const FontSelector = ({ value, onChange, label = "Шрифт", siteFonts }) => {
     ];
 
     return (
-        <div style={{ marginBottom: '16px' }}>
+        <div className="form-group">
             {label && (
-                <label style={{ 
-                    display: 'block', fontSize: '0.85rem', fontWeight: '500', 
-                    color: 'var(--platform-text-secondary)', marginBottom: '8px' 
-                }}>
+                <label className="form-label">
                     {label}
                 </label>
             )}

@@ -1,14 +1,14 @@
-// frontend/src/modules/dashboard/features/CategoryManager.jsx
+// frontend/src/modules/features/shop/components/CategoryManager.jsx
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import apiClient from '../../../shared/api/api';
+import apiClient from '../../../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { useConfirm } from '../../../shared/hooks/useConfirm';
-import { Input } from '../../../shared/ui/elements/Input';
-import { InputWithCounter } from '../../../shared/ui/complex/InputWithCounter';
-import { Button } from '../../../shared/ui/elements/Button';
-import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import { SplitViewLayout } from '../../../shared/ui/layouts/SplitViewLayout';
+import { useConfirm } from '../../../../../shared/hooks/useConfirm';
+import { Input } from '../../../../../shared/ui/elements/Input';
+import { InputWithCounter } from '../../../../../shared/ui/complex/InputWithCounter';
+import { Button } from '../../../../../shared/ui/elements/Button';
+import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
+import { SplitViewLayout } from '../../../../../shared/ui/layouts/SplitViewLayout';
 import { Search, Folder, Plus, Trash, Edit, ChevronLeft, Save, Star, Home, Heart, Package, Tag, ShoppingBag, Grid, X, Camera, Music, Smartphone, Coffee, Briefcase, Gift, Truck, Zap, MapPin, Image, Video, User, Type, List, Store } from 'lucide-react';
 
 const ICON_MAP = {
@@ -45,7 +45,6 @@ const useCategories = (siteId) => {
             setLoading(false);
         }
     }, [siteId]);
-
     useEffect(() => { fetchData(); }, [fetchData]);
     return { categories, products, loading, fetchData, setCategories };
 };
@@ -55,11 +54,9 @@ const CategoryList = memo(({
     sortBy, setSortBy, sortOrder, setSortOrder, 
     activeCategoryId, onSelect, onCreate, onDelete 
 }) => {
-
     const getProductCount = useCallback((categoryId) => {
         return products.filter(p => p.category_id === categoryId).length;
     }, [products]);
-
     const processedCategories = useMemo(() => {
         let result = [...categories];
         if (search.trim()) {
@@ -76,11 +73,9 @@ const CategoryList = memo(({
         });
         return result;
     }, [categories, search, sortBy, sortOrder, getProductCount]);
-
     const toggleSortOrder = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
-
     return (
         <div className="flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl overflow-hidden">
             <div className="h-18 px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 bg-(--platform-bg) shrink-0">
@@ -94,7 +89,6 @@ const CategoryList = memo(({
                             wrapperStyle={{margin: 0}}
                         />
                     </div>
-                    
                     <div className="w-50 flex gap-2 items-center shrink-0">
                         <div className="flex-1">
                             <CustomSelect 
@@ -107,18 +101,16 @@ const CategoryList = memo(({
                         <Button 
                             variant="outline" 
                             onClick={toggleSortOrder} 
-                            style={{ padding: '0', height: '38px', width: '38px', minWidth: '38px', background: 'var(--platform-card-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderColor: 'var(--platform-border-color)' }}
+                            className="p-0 h-9.5 w-9.5 min-w-9.5 bg-(--platform-card-bg) flex items-center justify-center border-(--platform-border-color)"
                         >
                             <span className="text-lg leading-none font-bold">{sortOrder === 'desc' ? '↓' : '↑'}</span>
                         </Button>
                     </div>
                 </div>
-                
                 <div className="flex items-center gap-3">
                     <Button onClick={onCreate} icon={<Plus size={16}/>}>Додати</Button>
                 </div>
             </div>
-
             <div className="flex-1 overflow-y-auto p-5 bg-(--platform-card-bg) custom-scrollbar">
                 {processedCategories.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-(--platform-text-secondary) py-10">
@@ -152,7 +144,12 @@ const CategoryList = memo(({
                                     `}
                                 >
                                     <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="square-danger" onClick={(e) => onDelete(e, cat.id, cat.name)} style={{width: '28px', height: '28px', opacity: 0.8}} title="Видалити">
+                                        <Button 
+                                            variant="square-danger" 
+                                            onClick={(e) => onDelete(e, cat.id, cat.name)} 
+                                            className="w-7 h-7 opacity-80"
+                                            title="Видалити"
+                                        >
                                             <Trash size={14}/>
                                         </Button>
                                     </div>
@@ -179,11 +176,9 @@ const CategoryEditor = memo(({
     formData, setFormData, onSubmit, onClear, 
     onClose, isMobile, onSavingChange 
 }) => {
-    
     const handleSubmit = (e) => {
         onSubmit(e);
     };
-
     return (
         <div className={`flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) overflow-hidden ${isMobile ? 'border-0' : 'rounded-2xl'}`}>
             <div className="h-18 px-6 border-b border-(--platform-border-color) flex items-center justify-between bg-(--platform-bg) shrink-0">
@@ -197,7 +192,6 @@ const CategoryEditor = memo(({
                     <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><X size={20} /></Button>
                 )}
             </div>
-
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden bg-(--platform-card-bg)">
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <div className="mb-6">
@@ -208,10 +202,9 @@ const CategoryEditor = memo(({
                             required
                             placeholder="Наприклад: Ноутбуки"
                             limitKey="CATEGORY_NAME"
-                            style={{height: '48px', fontSize: '1rem'}}
+                            className="h-12 text-base"
                         />
                     </div>
-
                     <div className="mb-6 flex-1">
                         <label className="block mb-3 text-sm font-semibold text-(--platform-text-primary)">
                             Оберіть іконку
@@ -240,18 +233,17 @@ const CategoryEditor = memo(({
                         </div>
                     </div>
                 </div>
-
                 <div className="p-6 border-t border-(--platform-border-color) grid grid-cols-2 gap-4 mt-auto bg-(--platform-bg) shrink-0">
                     <Button 
                         type="button" 
                         variant="outline-danger" 
                         onClick={onClear} 
                         title="Очистити форму" 
-                        style={{justifyContent: 'center', height: '42px'}}
+                        className="justify-center h-10.5"
                     >
                         <X size={18} /> Скасувати
                     </Button>
-                    <Button type="submit" variant="primary" icon={<Save size={18}/>} style={{justifyContent: 'center', height: '42px'}}>
+                    <Button type="submit" variant="primary" icon={<Save size={18}/>} className="justify-center h-10.5">
                         {formData.id ? 'Зберегти' : 'Створити'}
                     </Button>
                 </div>
@@ -331,7 +323,6 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
     const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
         const trimmedName = formData.name.trim();
-
         if (!trimmedName) {
             toast.warning("Введіть назву категорії");
             return;
@@ -378,9 +369,7 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
             finally { if (onSavingChange) onSavingChange(false); }
         }
     }, [confirm, onSavingChange, activeCategory, handleCreateNew, fetchData]);
-
     if (loading) return <div className="p-10 text-center text-(--platform-text-secondary)">Завантаження...</div>;
-
     return (
         <SplitViewLayout 
             isOpen={isPanelOpen}

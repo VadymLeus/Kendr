@@ -21,10 +21,8 @@ const SitePreviewer = ({
     const simulatedSiteData = useMemo(() => {
         const baseSettings = previewData?.siteData || {};
         const themeSettings = previewData?.theme || {};
-
         const mergedTitle = userTitle || baseSettings.title || 'My Site';
         const mergedLogo = userLogo || baseSettings.logo_url || null;
-
         return {
             id: 'preview',
             title: mergedTitle,
@@ -106,7 +104,7 @@ const SitePreviewer = ({
                     className={`
                         transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] shadow-sm overflow-hidden flex flex-col bg-(--site-bg)
                         ${viewMode === 'mobile' 
-                            ? 'w-93.75 h-203 max-h-[90%] rounded-[40px] border-12 border-[#2d2d2d] shadow-2xl' 
+                            ? 'w-93.75 h-187.5 max-h-[90%] rounded-[40px] border-12 border-[#2d2d2d] shadow-2xl' 
                             : 'w-full h-full rounded-none border-none'
                         }
                     `}

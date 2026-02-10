@@ -1,6 +1,6 @@
 // frontend/src/modules/editor/blocks/Video/VideoSettings.jsx
 import React from 'react';
-import { commonStyles, SectionTitle, ToggleSwitch } from '../../ui/configuration/SettingsUI';
+import { SectionTitle, ToggleSwitch } from '../../ui/configuration/SettingsUI';
 import OverlayControl from '../../ui/components/OverlayControl';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { Video, Palette, Settings, Play, VolumeX, Repeat, Image as ImageIcon } from 'lucide-react';
@@ -37,12 +37,13 @@ const VideoSettings = ({ data, onChange }) => {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<Video size={18}/>}>Відео контент</SectionTitle>
-                <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Відео файл</label>
-                    <div style={{height: '150px', marginBottom: '16px'}}>
+                
+                <div className="form-group">
+                    <label className="form-label">Відео файл</label>
+                    <div className="h-37.5 mb-4">
                         <UniversalMediaInput 
                             type="video"
                             value={safeData.url}
@@ -51,11 +52,11 @@ const VideoSettings = ({ data, onChange }) => {
                         />
                     </div>
 
-                    <label style={{...commonStyles.label, display: 'flex', alignItems: 'center', gap: '6px'}}>
+                    <label className="form-label flex items-center gap-1.5">
                         <ImageIcon size={14} />
                         Обкладинка (Poster)
                     </label>
-                    <div style={{height: '150px'}}>
+                    <div className="h-37.5">
                         <UniversalMediaInput 
                             type="image"
                             value={safeData.poster}
@@ -68,7 +69,7 @@ const VideoSettings = ({ data, onChange }) => {
 
             <div>
                 <SectionTitle icon={<Settings size={18}/>}>Поведінка плеєра</SectionTitle>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="flex flex-col gap-3">
                     <ToggleSwitch 
                         checked={safeData.autoplay}
                         onChange={(val) => updateData({ autoplay: val, muted: val ? true : safeData.muted })}

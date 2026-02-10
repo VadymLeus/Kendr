@@ -43,34 +43,26 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
     const borderColor = 'var(--site-border-color)';
     const textPrimary = 'var(--site-text-primary)';
     const textSecondary = 'var(--site-text-secondary)';
-    const danger = 'var(--site-danger)';
+    const danger = 'var(--site-danger, #ef4444)';
     const headerBlock = blocks?.find(b => b.type === 'header');
     const navItems = headerBlock?.data?.nav_items || [];
-    
     if (!Array.isArray(blocks) || blocks.length === 0) {
         return (
-            <div style={{ 
-                textAlign: 'center', 
-                padding: '3rem 1.5rem',
-                color: textSecondary,
-                background: bg,
-                borderRadius: '8px',
-                margin: '1rem 0',
-                border: isEditorPreview ? `1px dashed ${borderColor}` : 'none',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-            }}>
-                <div style={{ marginBottom: '1rem', opacity: 0.7, display: 'flex', justifyContent: 'center' }}>
+            <div 
+                className="text-center py-12 px-6 rounded-lg my-4 font-sans"
+                style={{ 
+                    color: textSecondary,
+                    background: bg,
+                    border: isEditorPreview ? `1px dashed ${borderColor}` : 'none',
+                }}
+            >
+                <div className="mb-4 opacity-70 flex justify-center">
                     <Construction size={48} />
                 </div>
-                <h3 style={{ 
-                    color: textPrimary, 
-                    marginBottom: '0.5rem', 
-                    fontWeight: '500',
-                    fontFamily: 'inherit' 
-                }}>
+                <h3 className="mb-2 font-medium font-inherit" style={{ color: textPrimary }}>
                     Ця сторінка порожня
                 </h3>
-                <p style={{ margin: 0, fontSize: '0.95rem', fontFamily: 'inherit' }}>
+                <p className="m-0 text-[0.95rem] font-inherit">
                     Додайте блоки для створення контенту
                 </p>
             </div>
@@ -78,7 +70,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
     }
 
     return (
-        <div style={{ position: 'relative', width: '100%' }}>
+        <div className="relative w-full">
             {blocks.map((block, index) => {
                 const Component = blockMap[block.type];
                 const elementId = block.data?.anchorId || undefined;
@@ -89,22 +81,18 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                         <div
                             key={block.block_id || index}
                             id={elementId}
+                            className="p-6 rounded-lg my-2 text-center font-sans"
                             style={{
-                                padding: '1.5rem',
                                 background: isEditorPreview ? 'rgba(229, 62, 62, 0.1)' : cardBg,
                                 border: isEditorPreview ? `1px solid ${danger}` : `1px solid ${borderColor}`,
-                                borderRadius: '8px',
-                                margin: '0.5rem 0',
                                 color: isEditorPreview ? danger : textPrimary,
-                                textAlign: 'center',
-                                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                             }}
                         >
-                            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+                            <div className="text-2xl mb-2 flex justify-center">
                                 <AlertTriangle size={32} />
                             </div>
-                            <div style={{ fontWeight: '500' }}>Невідомий тип блоку</div>
-                            <div style={{ fontSize: '0.9rem', marginTop: '0.25rem', opacity: 0.8 }}>{block.type}</div>
+                            <div className="font-medium">Невідомий тип блоку</div>
+                            <div className="text-sm mt-1 opacity-80">{block.type}</div>
                         </div>
                     );
                 }
@@ -119,26 +107,16 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                     <div 
                         key={block.block_id || index}
                         id={elementId}
-                        style={{ width: '100%' }}
+                        className="w-full"
                     >
                         <AnimationWrapper animationConfig={block.data?.animation}>
                             <Suspense
                                 fallback={
-                                    <div style={{
-                                        padding: '2rem 1rem',
-                                        textAlign: 'center',
-                                        background: 'transparent',
-                                        borderRadius: '8px',
-                                        margin: '0.5rem 0',
-                                        border: 'none',
-                                        color: textSecondary,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minHeight: '100px'
-                                    }}>
-                                        <div style={{ marginBottom: '0.5rem', opacity: 0.5 }}>
+                                    <div 
+                                        className="py-8 px-4 text-center bg-transparent rounded-lg my-2 border-none flex flex-col items-center justify-center min-h-25"
+                                        style={{ color: textSecondary }}
+                                    >
+                                        <div className="mb-2 opacity-50">
                                             <Loader size={24} className="animate-spin" />
                                         </div>
                                     </div>
@@ -160,70 +138,43 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
             })}
             
             {isMobileMenuOpen && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 10000,
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                }}>
+                <div className="fixed inset-0 z-10000 flex justify-end">
                     <div 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        style={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundColor: 'rgba(0,0,0,0.4)',
-                            backdropFilter: 'blur(3px)'
-                        }}
+                        className="absolute inset-0 bg-black/40 backdrop-blur-[3px]"
                     />
-                    <div style={{
-                        position: 'relative',
-                        width: '80%',
-                        maxWidth: '300px',
-                        height: '100%',
-                        backgroundColor: 'var(--site-bg, #ffffff)',
-                        boxShadow: '-5px 0 25px rgba(0,0,0,0.15)',
-                        padding: '24px',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}>
+                    <div 
+                        className="relative w-[80%] max-w-75 h-full shadow-[-5px_0_25px_rgba(0,0,0,0.15)] p-6 flex flex-col"
+                        style={{ backgroundColor: 'var(--site-bg, #ffffff)' }}
+                    >
                         <button 
                             onClick={() => setIsMobileMenuOpen(false)}
-                            style={{
-                                alignSelf: 'flex-end',
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '8px',
-                                color: 'var(--site-text-primary)'
-                            }}
+                            className="self-end bg-none border-none cursor-pointer p-2"
+                            style={{ color: 'var(--site-text-primary)' }}
                         >
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
                         </button>
-                        <nav style={{ marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <nav className="mt-8 flex flex-col gap-5">
                             {navItems.length > 0 ? (
                                 navItems.map((item) => (
                                     <Link
                                         key={item.id}
                                         to={resolveSiteLink(item.link, siteData?.site_path)}
                                         onClick={() => setIsMobileMenuOpen(false)}
+                                        className="text-[1.2rem] font-semibold no-underline pb-2 border-b"
                                         style={{
-                                            fontSize: '1.2rem',
-                                            fontWeight: '600',
-                                            textDecoration: 'none',
                                             color: 'var(--site-text-primary)',
-                                            paddingBottom: '8px',
-                                            borderBottom: '1px solid var(--site-border-color)'
+                                            borderBottomColor: 'var(--site-border-color)'
                                         }}
                                     >
                                         {item.label}
                                     </Link>
                                 ))
                             ) : (
-                                <p style={{ color: textSecondary, textAlign: 'center' }}>Меню порожнє</p>
+                                <p className="text-center" style={{ color: textSecondary }}>Меню порожнє</p>
                             )}
                         </nav>
                     </div>

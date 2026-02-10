@@ -8,7 +8,7 @@ const PRESET_COLORS = {
 };
 
 const SiteCoverDisplay = ({ site, style, className }) => {
-    if (!site) return <div style={{ width: '100%', height: '100%', background: '#eee' }} />;
+    if (!site) return <div className="w-full h-full bg-gray-200" />;
     const { 
         cover_image, 
         cover_layout = 'centered', 
@@ -35,116 +35,75 @@ const SiteCoverDisplay = ({ site, style, className }) => {
 
     const accentColor = PRESET_COLORS[site_theme_accent] || site_theme_accent || '#ed8936';
     const isDark = site_theme_mode === 'dark';
-    const wrapperStyle = {
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        boxSizing: 'border-box',
-        background: isDark ? '#2d3748' : '#f7fafc',
-        color: isDark ? '#fff' : '#1a202c',
-        transition: 'background 0.3s ease',
-        ...style
-    };
+    const wrapperBaseClass = `w-full h-full relative overflow-hidden flex items-center justify-center p-4 box-border transition-colors duration-300 ${isDark ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} ${className || ''}`;
 
     if (fullCoverImage) {
         return (
-            <div className={`site-cover-display mode-image ${className || ''}`} style={wrapperStyle}>
+            <div className={`site-cover-display mode-image ${wrapperBaseClass}`} style={style}>
                 <img 
                     src={fullCoverImage} 
                     alt={title} 
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
+                    className="absolute top-0 left-0 w-full h-full object-cover"
                 />
             </div>
         );
     }
 
     const generatedStyle = {
-        ...wrapperStyle,
+        ...style,
         background: isDark 
             ? `linear-gradient(135deg, #1a202c 0%, ${accentColor}22 100%)`
             : `linear-gradient(135deg, #ffffff 0%, ${accentColor}15 100%)`,
         borderBottom: `6px solid ${accentColor}`
     };
 
-    const logoStyle = {
-        height: `${logoSize}px`,
-        width: 'auto',
-        objectFit: 'contain',
-        maxWidth: '100%',
-        maxHeight: '120px',
-        display: 'block',
-        borderRadius: `${logoRadius}px`,
-        transition: 'all 0.2s ease',
-        flexShrink: 0
-    };
-
-    const titleStyle = {
-        fontSize: `${titleSize}px`,
-        fontWeight: '700',
-        lineHeight: '1.2',
-        color: 'inherit',
-        margin: 0,
-        textAlign: 'center',
-        transition: 'all 0.2s ease',
-        maxWidth: '100%',
-        wordBreak: 'break-word',
-        display: '-webkit-box',
-        WebkitLineClamp: 3,
-        WebkitBoxOrient: 'vertical',
-        overflow: 'hidden'
-    };
-
-    let contentContainerStyle = {
-        display: 'flex',
-        gap: '12px',
-        alignItems: 'center',
-        justifyContent: 'center',
-        maxWidth: '100%',
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden' 
-    };
-
+    let layoutClasses = "flex gap-3 items-center justify-center max-w-full w-full h-full overflow-hidden";
     switch (cover_layout) {
         case 'classic':
-            contentContainerStyle.flexDirection = 'row';
-            contentContainerStyle.textAlign = 'left';
-            contentContainerStyle.justifyContent = 'flex-start';
+            layoutClasses += " flex-row text-left justify-start";
             break;
         case 'reverse':
-            contentContainerStyle.flexDirection = 'row-reverse';
-            contentContainerStyle.textAlign = 'right';
-            contentContainerStyle.justifyContent = 'flex-end';
+            layoutClasses += " flex-row-reverse text-right justify-end";
             break;
         case 'centered_reverse':
-            contentContainerStyle.flexDirection = 'column-reverse';
-            contentContainerStyle.textAlign = 'center';
+            layoutClasses += " flex-col-reverse text-center";
             break;
         case 'minimal': 
         case 'logo_only': 
         case 'centered':
         default:
-            contentContainerStyle.flexDirection = 'column';
-            contentContainerStyle.textAlign = 'center';
+            layoutClasses += " flex-col text-center";
             break;
     }
 
     const showLogo = fullLogoUrl && cover_layout !== 'minimal';
     const showText = cover_layout !== 'logo_only';
+
     return (
-        <div className={`site-cover-display mode-${cover_layout} ${className || ''}`} style={generatedStyle}>
-            <div style={contentContainerStyle}>
+        <div className={`site-cover-display mode-${cover_layout} ${wrapperBaseClass}`} style={generatedStyle}>
+            <div className={layoutClasses}>
                 {showLogo && (
-                    <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <img src={fullLogoUrl} alt="Logo" style={logoStyle} />
+                    <div className="shrink-0 flex justify-center items-center">
+                        <img 
+                            src={fullLogoUrl} 
+                            alt="Logo" 
+                            className="block max-w-full max-h-30 object-contain shrink-0 transition-all duration-200"
+                            style={{ 
+                                height: `${logoSize}px`, 
+                                width: 'auto', 
+                                borderRadius: `${logoRadius}px` 
+                            }} 
+                        />
                     </div>
                 )}
-                {showText && <div style={titleStyle}>{title}</div>}
+                {showText && (
+                    <div 
+                        className="font-bold leading-tight m-0 transition-all duration-200 max-w-full wrap-break-word line-clamp-3 overflow-hidden text-inherit"
+                        style={{ fontSize: `${titleSize}px` }}
+                    >
+                        {title}
+                    </div>
+                )}
             </div>
         </div>
     );

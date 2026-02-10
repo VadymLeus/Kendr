@@ -5,13 +5,11 @@ export const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     const initAuth = async () => {
       try {
         const token = localStorage.getItem('token');
         const userDataRaw = localStorage.getItem('user');
-        
         if (token && userDataRaw && userDataRaw !== 'undefined' && userDataRaw !== 'null') {
           const parsedUser = JSON.parse(userDataRaw);
           setUser(parsedUser);
@@ -19,12 +17,13 @@ export const AuthProvider = ({ children }) => {
           if (token || userDataRaw) {
              localStorage.removeItem('token');
              localStorage.removeItem('user');
+             localStorage.removeItem('themeMode');
+             localStorage.removeItem('themeAccent');
           }
         }
       } catch (error) {
         console.error("Помилка під час ініціалізації AuthContext:", error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.clear();
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -36,7 +35,6 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData, token) => {
     if (!userData || !token) return;
-    
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
@@ -52,7 +50,6 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (userData) => {
     if (!userData) return;
-    
     try {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
@@ -60,7 +57,6 @@ export const AuthProvider = ({ children }) => {
         console.error("Помилка при збереженні даних користувача", e);
     }
   };
-
   return (
     <AuthContext.Provider value={{ 
       user, 

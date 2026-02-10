@@ -1,14 +1,13 @@
 // frontend/src/modules/editor/blocks/Text/TextSettings.jsx
 import React, { useRef, useEffect, useState } from 'react';
-import { commonStyles, ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
+import { ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
 import AlignmentControl from '../../ui/components/AlignmentControl';
 import FontSelector from '../../ui/components/FontSelector';
-import { FileText, Type, Heading1, Heading2, Heading3, Pilcrow,Bold, Italic, Underline } from 'lucide-react';
+import { FileText, Type, Heading1, Heading2, Heading3, Pilcrow, Bold, Italic, Underline } from 'lucide-react';
 
 const TextSettings = ({ data, onChange, siteData }) => {
     const textareaRef = useRef(null);
     const [localContent, setLocalContent] = useState(data.content || '');
-
     const themeSettings = siteData?.theme_settings || {};
     const currentSiteFonts = {
         heading: themeSettings.font_heading,
@@ -26,7 +25,7 @@ const TextSettings = ({ data, onChange, siteData }) => {
     const toggleStyle = (key) => {
         onChange({ ...data, [key]: !data[key] }, true);
     };
-
+    
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
@@ -41,29 +40,15 @@ const TextSettings = ({ data, onChange, siteData }) => {
         { value: 'h3', label: <div title="Заголовок H3"><Heading3 size={18} /></div> },
     ];
 
-    const formatBtnStyle = (isActive) => ({
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '8px',
-        cursor: 'pointer',
-        borderRadius: '6px',
-        border: isActive ? '1px solid var(--platform-accent)' : '1px solid var(--platform-border-color)',
-        background: isActive ? 'var(--platform-accent-light)' : 'var(--platform-card-bg)',
-        color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-        transition: 'all 0.2s ease'
-    });
-
     return (
         <div>
-            <div style={{ marginBottom: '2rem' }}>
+            <div className="mb-8">
                 <SectionTitle icon={<FileText size={18}/>}>Вміст</SectionTitle>
                 
-                <div style={commonStyles.formGroup}>
+                <div className="form-group">
                     <textarea 
                         ref={textareaRef}
-                        className="custom-scrollbar"
+                        className="custom-input custom-scrollbar"
                         value={localContent}
                         onChange={(e) => {
                             setLocalContent(e.target.value);
@@ -72,33 +57,32 @@ const TextSettings = ({ data, onChange, siteData }) => {
                         onBlur={() => onChange({ ...data, content: localContent }, true)}
                         placeholder="Введіть текст..."
                         style={{
-                            ...commonStyles.input, 
                             minHeight: '100px',
                             resize: 'none',
                             lineHeight: '1.5',
-                            fontFamily: 'inherit',
-                            marginBottom: '12px'
+                            marginBottom: '12px',
+                            height: 'auto'
                         }}
                     />
 
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="flex gap-2">
                         <button 
                             onClick={() => toggleStyle('isBold')}
-                            style={formatBtnStyle(data.isBold)}
+                            className={`btn btn-icon-square ${data.isBold ? 'btn-primary' : 'btn-outline'}`}
                             title="Напівжирний"
                         >
                             <Bold size={18} />
                         </button>
                         <button 
                             onClick={() => toggleStyle('isItalic')}
-                            style={formatBtnStyle(data.isItalic)}
+                            className={`btn btn-icon-square ${data.isItalic ? 'btn-primary' : 'btn-outline'}`}
                             title="Курсив"
                         >
                             <Italic size={18} />
                         </button>
                         <button 
                             onClick={() => toggleStyle('isUnderline')}
-                            style={formatBtnStyle(data.isUnderline)}
+                            className={`btn btn-icon-square ${data.isUnderline ? 'btn-primary' : 'btn-outline'}`}
                             title="Підкреслений"
                         >
                             <Underline size={18} />
@@ -106,7 +90,7 @@ const TextSettings = ({ data, onChange, siteData }) => {
                     </div>
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="form-group">
                     <AlignmentControl 
                         value={data.alignment}
                         onChange={(val) => handleChange('alignment', val)}
@@ -118,8 +102,8 @@ const TextSettings = ({ data, onChange, siteData }) => {
             <div>
                 <SectionTitle icon={<Type size={18}/>}>Типографіка</SectionTitle>
 
-                <div style={commonStyles.formGroup}>
-                    <label style={commonStyles.label}>Семантика</label>
+                <div className="form-group">
+                    <label className="form-label">Семантика</label>
                     <ToggleGroup 
                         options={tagOptions}
                         value={data.tag || 'p'}
@@ -127,7 +111,7 @@ const TextSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
 
-                <div style={commonStyles.formGroup}>
+                <div className="form-group">
                     <FontSelector 
                         value={data.fontFamily}
                         onChange={(val) => handleChange('fontFamily', val)}

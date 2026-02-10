@@ -8,8 +8,7 @@ const RangeSlider = ({
     min = 0, 
     max = 50, 
     step = 1,
-    unit = 'px',
-    accentColor = 'var(--platform-accent)'
+    unit = 'px'
 }) => {
     const numericValue = parseInt(value) || 0;
     const handleChange = (e) => {
@@ -34,7 +33,7 @@ const RangeSlider = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {label && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--platform-text-primary)' }}>
+                    <label className="form-label" style={{ marginBottom: 0 }}>
                         {label}
                     </label>
                 </div>
@@ -54,7 +53,7 @@ const RangeSlider = ({
                             width: '100%',
                             appearance: 'none',
                             height: '6px',
-                            background: `linear-gradient(to right, ${accentColor} 0%, ${accentColor} ${percentage}%, var(--platform-border-color) ${percentage}%, var(--platform-border-color) 100%)`,
+                            background: `linear-gradient(to right, var(--platform-accent) 0%, var(--platform-accent) ${percentage}%, var(--platform-border-color) ${percentage}%, var(--platform-border-color) 100%)`,
                             borderRadius: '3px',
                             outline: 'none',
                             cursor: 'pointer'
@@ -67,20 +66,12 @@ const RangeSlider = ({
                         type="text"
                         value={numericValue}
                         onChange={handleInputChange}
+                        className="custom-input"
                         style={{
-                            width: '100%',
                             padding: '6px 30px 6px 8px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--platform-border-color)',
-                            background: 'var(--platform-bg)',
-                            color: 'var(--platform-text-primary)',
-                            fontSize: '0.9rem',
+                            height: '34px',
                             textAlign: 'center',
-                            outline: 'none',
-                            transition: 'border-color 0.2s'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = accentColor}
-                        onBlur={(e) => e.target.style.borderColor = 'var(--platform-border-color)'}
                     />
                     <span style={{ 
                         position: 'absolute', 
@@ -103,7 +94,7 @@ const RangeSlider = ({
                     width: 20px;
                     height: 20px;
                     background: var(--platform-card-bg);
-                    border: 2px solid ${accentColor};
+                    border: 2px solid var(--platform-accent);
                     border-radius: 50%;
                     cursor: pointer;
                     transition: transform 0.1s, box-shadow 0.2s;
@@ -118,7 +109,7 @@ const RangeSlider = ({
                     width: 20px;
                     height: 20px;
                     background: var(--platform-card-bg);
-                    border: 2px solid ${accentColor};
+                    border: 2px solid var(--platform-accent);
                     border-radius: 50%;
                     cursor: pointer;
                     transition: transform 0.1s;

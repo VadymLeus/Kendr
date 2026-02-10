@@ -36,16 +36,13 @@ const NewTicketPage = () => {
             );
         }
     }, [isAppeal, appealSite]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!subject.trim() || !body.trim()) {
             toast.warning('Будь ласка, заповніть всі обов\'язкові поля');
             return;
         }
-
         setLoading(true);
-        
         try {
             await apiClient.post('/support', { 
                 subject, 
@@ -69,7 +66,6 @@ const NewTicketPage = () => {
             maxWidth: '800px',
             margin: '0 auto',
             padding: '24px',
-            minHeight: 'calc(100vh - 64px)',
             display: 'flex',
             flexDirection: 'column',
             gap: '24px'
@@ -136,8 +132,8 @@ const NewTicketPage = () => {
             outline: 'none'
         },
         appealBanner: {
-            background: 'rgba(249, 115, 22, 0.05)',
-            border: '1px solid rgba(249, 115, 22, 0.2)',
+            background: 'color-mix(in srgb, var(--platform-warning), transparent 95%)',
+            border: '1px solid color-mix(in srgb, var(--platform-warning), transparent 80%)',
             borderRadius: '12px',
             padding: '16px',
             display: 'flex',
@@ -145,8 +141,8 @@ const NewTicketPage = () => {
             alignItems: 'flex-start'
         },
         infoBanner: {
-            background: 'rgba(59, 130, 246, 0.05)',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
+            background: 'color-mix(in srgb, var(--platform-accent), transparent 95%)',
+            border: '1px solid color-mix(in srgb, var(--platform-accent), transparent 80%)',
             borderRadius: '12px',
             padding: '16px',
             display: 'flex',
@@ -161,7 +157,7 @@ const NewTicketPage = () => {
                 <title>{isAppeal ? 'Оскарження блокування' : 'Нове звернення'} | Kendr Support</title>
             </Helmet>
             <div style={styles.header}>
-                <div style={styles.backBtn} onClick={() => navigate(-1)} className="hover:text-(--platform-text-primary) transition-colors">
+                <div style={styles.backBtn} onClick={() => navigate(-1)} onMouseEnter={e => e.target.style.color = 'var(--platform-text-primary)'} onMouseLeave={e => e.target.style.color = 'var(--platform-text-secondary)'}>
                     <ArrowLeft size={16} />
                     <span>Повернутися назад</span>
                 </div>
@@ -169,8 +165,8 @@ const NewTicketPage = () => {
                 <div style={styles.titleRow}>
                     <div style={{
                         width: '48px', height: '48px', borderRadius: '12px',
-                        background: isAppeal ? 'rgba(249, 115, 22, 0.1)' : 'rgba(59, 130, 246, 0.1)',
-                        color: isAppeal ? '#f97316' : '#3b82f6',
+                        background: isAppeal ? 'color-mix(in srgb, var(--platform-warning), transparent 90%)' : 'color-mix(in srgb, var(--platform-accent), transparent 90%)',
+                        color: isAppeal ? 'var(--platform-warning)' : 'var(--platform-accent)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
                         {isAppeal ? <ShieldAlert size={24} /> : <FileText size={24} />}
@@ -191,9 +187,9 @@ const NewTicketPage = () => {
             <form onSubmit={handleSubmit} style={styles.card}>
                 {isAppeal ? (
                     <div style={styles.appealBanner}>
-                        <AlertCircle size={20} color="#f97316" style={{marginTop: '2px'}} />
+                        <AlertCircle size={20} style={{ color: 'var(--platform-warning)', marginTop: '2px' }} />
                         <div>
-                            <div style={{fontWeight: '600', color: '#f97316', marginBottom: '4px'}}>Важлива інформація</div>
+                            <div style={{fontWeight: '600', color: 'var(--platform-warning)', marginBottom: '4px'}}>Важлива інформація</div>
                             <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', lineHeight: '1.5'}}>
                                 Це звернення буде прив'язане до сайту <strong>/{appealSite.site_path}</strong>. 
                                 Адміністратор перегляне історію змін та причину блокування. 
@@ -203,9 +199,9 @@ const NewTicketPage = () => {
                     </div>
                 ) : (
                     <div style={styles.infoBanner}>
-                        <Info size={20} color="#3b82f6" style={{marginTop: '2px'}} />
+                        <Info size={20} style={{ color: 'var(--platform-accent)', marginTop: '2px' }} />
                         <div>
-                            <div style={{fontWeight: '600', color: '#3b82f6', marginBottom: '4px'}}>Порада</div>
+                            <div style={{fontWeight: '600', color: 'var(--platform-accent)', marginBottom: '4px'}}>Порада</div>
                             <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', lineHeight: '1.5'}}>
                                 Для швидшого вирішення питання додайте посилання на сторінку, де виникла помилка, 
                                 або детально опишіть кроки для її відтворення.
@@ -240,7 +236,8 @@ const NewTicketPage = () => {
                             placeholder={isAppeal ? "Причина апеляції" : "Коротко про суть проблеми"}
                             required
                             style={{...styles.input, height: '42px', boxSizing: 'border-box'}}
-                            className="focus:border-(--platform-accent) focus:ring-1 focus:ring-(--platform-accent)"
+                            onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'}
+                            onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'}
                             readOnly={isAppeal}
                         />
                     </div>
@@ -254,7 +251,8 @@ const NewTicketPage = () => {
                         placeholder="Опишіть ситуацію максимально детально..."
                         required
                         style={{...styles.input, minHeight: '250px', resize: 'vertical', lineHeight: '1.6'}}
-                        className="focus:border-(--platform-accent) focus:ring-1 focus:ring-(--platform-accent)"
+                        onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'}
+                        onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'}
                     />
                 </div>
 
@@ -275,7 +273,6 @@ const NewTicketPage = () => {
                         variant={isAppeal ? "danger" : "primary"}
                         disabled={loading}
                         icon={!loading && <Send size={18} />}
-                        style={isAppeal ? { background: '#f97316', borderColor: '#f97316', color: 'white' } : {}}
                     >
                         {loading ? 'Надсилання...' : (isAppeal ? 'Надіслати апеляцію' : 'Створити тікет')}
                     </Button>

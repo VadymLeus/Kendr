@@ -56,7 +56,6 @@ const TextBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         >
             <RenderFonts />
             <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
-            
             {paragraphs.length > 0 ? (
                 paragraphs.map((line, index) => (
                     <ValidTag 
@@ -81,7 +80,7 @@ const TextBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 ))
             ) : (
                 isEditorPreview && (
-                    <div style={{opacity: 0.5, fontStyle: 'italic', padding: '10px 0'}}>
+                    <div style={{ opacity: 0.5, fontStyle: 'italic', padding: '10px 0', color: 'var(--site-text-secondary)' }}>
                         Натисніть, щоб додати текст...
                     </div>
                 )

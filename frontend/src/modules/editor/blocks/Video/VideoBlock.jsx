@@ -57,41 +57,13 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     };
 
     const currentHeight = heightMap[height] || '500px';
-    const containerStyle = {
-        position: 'relative',
-        width: '100%',
-        minHeight: currentHeight,
-        backgroundColor: 'var(--site-bg)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        ...styles,
-        ...style 
-    };
-
     const isTransparent = overlay_color === 'transparent';
     const Placeholder = () => (
-        <div style={{
-            width: '100%',
-            height: '100%',
-            minHeight: '300px',
-            padding: '3rem', 
-            textAlign: 'center', 
-            background: 'var(--site-card-bg, #f9f9f9)', 
-            border: `1px dashed var(--site-border-color, #ccc)`,
-            color: 'var(--site-text-secondary)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            boxSizing: 'border-box'
-        }}>
-            <div style={{ opacity: 0.4, color: 'var(--site-text-primary)' }}>
+        <div className="w-full h-full min-h-75 p-12 text-center bg-(--site-card-bg) border border-dashed border-(--site-border-color) text-(--site-text-secondary) flex flex-col items-center justify-center gap-3 box-border">
+            <div className="opacity-40 text-(--site-text-primary)">
                 <VideoIcon size={64} />
             </div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>
+            <div className="text-sm font-medium">
                 Відео не вибрано
             </div>
         </div>
@@ -109,12 +81,7 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
                     loop={loop}
                     controls={controls}
                     playsInline
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block'
-                    }}
+                    className="w-full h-full object-cover block"
                 />
             );
         }
@@ -124,12 +91,7 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
                 <img 
                     src={fullPosterUrl}
                     alt="Video poster"
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block'
-                    }}
+                    className="w-full h-full object-cover block"
                 />
             );
         }
@@ -138,32 +100,35 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
             return <Placeholder />;
         }
 
-        return <div style={{ width: '100%', height: '100%', background: '#000', opacity: 0.1 }}></div>;
+        return <div className="w-full h-full bg-black/10"></div>;
     };
 
     return (
-        <div style={containerStyle} className={`block-theme-${block_theme}`}>
-            <div style={{ 
-                position: 'relative', 
-                width: '100%', 
-                height: height === 'auto' ? 'auto' : '100%', 
-                flex: 1, 
-                display: 'flex'
-            }}>
-                <div style={{ width: '100%', height: '100%' }}>
+        <div 
+            className={`block-theme-${block_theme} relative w-full overflow-hidden flex flex-col justify-center`}
+            style={{
+                minHeight: currentHeight,
+                backgroundColor: 'var(--site-bg)',
+                ...styles,
+                ...style 
+            }}
+        >
+            <div 
+                className="relative w-full flex-1 flex"
+                style={{ height: height === 'auto' ? 'auto' : '100%' }}
+            >
+                <div className="w-full h-full">
                     {renderContent()}
                 </div>
 
                 {(fullVideoUrl || fullPosterUrl) && !isTransparent && (
-                    <div style={{
-                        position: 'absolute', 
-                        inset: 0,
-                        backgroundColor: overlay_color,
-                        opacity: safeOpacity,
-                        zIndex: 1,
-                        pointerEvents: 'none', 
-                        transition: 'background-color 0.3s, opacity 0.3s'
-                    }}></div>
+                    <div 
+                        className="absolute inset-0 z-1 pointer-events-none transition-all duration-300"
+                        style={{
+                            backgroundColor: overlay_color,
+                            opacity: safeOpacity,
+                        }}
+                    ></div>
                 )}
             </div>
         </div>

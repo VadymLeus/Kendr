@@ -104,13 +104,13 @@ const DashboardHeader = ({
                     justify-content: space-between;
                     align-items: center;
                     padding: 0 24px;
-                    height: 64px;
+                    height: var(--header-height);
                     background-color: var(--platform-card-bg);
                     border-bottom: 1px solid var(--platform-border-color);
                     gap: 20px;
                     position: sticky;
                     top: 0;
-                    z-index: 1000;
+                    z-index: 90;
                     color: var(--platform-text-primary);
                     transition: background-color 0.3s ease, border-color 0.3s ease;
                 }
@@ -211,7 +211,7 @@ const DashboardHeader = ({
 
                 .tab-btn:hover {
                     color: var(--platform-text-primary);
-                    background: rgba(128, 128, 128, 0.1);
+                    background: var(--platform-hover-bg);
                 }
 
                 .tab-btn.active {
@@ -279,8 +279,8 @@ const DashboardHeader = ({
 
                 .action-btn:hover:not(:disabled) {
                     background: var(--platform-card-bg);
-                    border-color: var(--platform-text-primary);
-                    color: var(--platform-text-primary);
+                    border-color: var(--platform-accent);
+                    color: var(--platform-accent);
                 }
 
                 .action-btn:disabled {

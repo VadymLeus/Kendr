@@ -5,12 +5,12 @@ import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import BlockEditor from '../../editor/core/BlockEditor';
 import EditorSidebar from '../../editor/ui/EditorSidebar';
-import PagesSettingsTab from '../features/tabs/PagesSettingsTab';
-import ShopContentTab from '../features/tabs/ShopContentTab';
-import ThemeSettingsTab from '../features/tabs/ThemeSettingsTab';
-import SubmissionsTab from '../features/tabs/SubmissionsTab';
-import GeneralSettingsTab from '../features/tabs/GeneralSettingsTab';
-import OrdersTab from '../features/tabs/OrdersTab';
+import GeneralSettingsTab from '../features/settings/GeneralSettingsTab';
+import PagesSettingsTab from '../features/settings/PagesSettingsTab';
+import ThemeSettingsTab from '../features/settings/ThemeSettingsTab';
+import ShopContentTab from '../features/shop/ShopContentTab';
+import OrdersTab from '../features/shop/OrdersTab';
+import SubmissionsTab from '../features/content/SubmissionsTab';
 import DashboardHeader from '../components/DashboardHeader';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
@@ -30,7 +30,6 @@ const SiteDashboardPage = () => {
             navigate('/dashboard');
         }
     }, [siteData, navigate]);
-
     useEffect(() => {
         if (site_path) {
             localStorage.setItem(`editor_active_tab_${site_path}`, activeTab);
@@ -45,7 +44,6 @@ const SiteDashboardPage = () => {
         }
         return savedPage ? parseInt(savedPage, 10) : null;
     });
-
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [selectedBlockPath, setSelectedBlockPath] = useState(null);
     const [allPages, setAllPages] = useState([]);
@@ -55,7 +53,6 @@ const SiteDashboardPage = () => {
         const savedPage = localStorage.getItem(`last_edited_page_${site_path}`);
         if (savedPage === 'header' || savedPage === 'footer') targetId = savedPage;
         else if (savedPage) targetId = parseInt(savedPage, 10);
-
         if (targetId) {
             const key = `collapsed_blocks_${site_path}_${targetId}`;
             try {
@@ -72,7 +69,6 @@ const SiteDashboardPage = () => {
             localStorage.setItem(key, JSON.stringify(collapsedBlocks));
         }
     }, [collapsedBlocks, site_path, currentPageId]);
-
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
@@ -84,7 +80,6 @@ const SiteDashboardPage = () => {
     const setComponentSaving = useCallback((component, isSaving) => {
         setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
-
     const handleBlockSaved = useCallback(() => {
         setSavedBlocksUpdateTrigger(prev => prev + 1);
     }, []);
@@ -93,7 +88,6 @@ const SiteDashboardPage = () => {
         const anyComponentSaving = Object.values(componentsSaving).some(saving => saving);
         setIsSaving(anyComponentSaving);
     }, [componentsSaving]);
-
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
@@ -109,7 +103,6 @@ const SiteDashboardPage = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [undo, redo]);
-
     const fetchPageContent = async (pageId) => {
         setIsPageLoading(true);
         try {
@@ -181,7 +174,6 @@ const SiteDashboardPage = () => {
                 .catch(console.error);
         }
     }, [siteData]);
-
     const handleMoveBlock = (drag, hover) => setBlocks(prev => moveBlock(prev, drag, hover));
     const handleDropBlock = (item, path) => setBlocks(prev => handleDrop(prev, item, path));
     const handleAddBlock = (path, type, preset) => {
@@ -197,21 +189,17 @@ const SiteDashboardPage = () => {
         setBlocks(prev => removeBlockByPath(prev, path));
         setSelectedBlockPath(null);
     };
-    
     const handleUpdateBlockData = (path, data, addToHistory = true) => {
         setBlocks(prev => updateBlockDataByPath(prev, path, data), addToHistory);
     };
-    
     const savePageContent = async (currentBlocks) => {
         const blocksToSave = currentBlocks || blocks;
         setIsSaving(true);
-
         try {
             if (currentPageId === 'header') {
                 const response = await apiClient.put(`/sites/${siteData.site_path}/settings`, {
                     header_content: JSON.stringify(blocksToSave)
                 });
-
                 const headerBlock = blocksToSave.find(b => b.type === 'header');
                 if (headerBlock && headerBlock.data) {
                     setSiteData(prev => ({
@@ -314,13 +302,12 @@ const SiteDashboardPage = () => {
         };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
-
     if (isSiteLoading || !siteData) {
-        return <div className="p-8 text-center" style={{color: 'var(--platform-text-secondary)'}}>Завантаження...</div>;
+        return <div className="p-8 text-center text-(--platform-text-secondary)">Завантаження...</div>;
     }
-
+    const isFullHeightTab = ['store', 'crm', 'orders'].includes(activeTab);
     return (
-        <div className="editor-layout-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+        <div className="flex flex-col h-screen overflow-hidden">
             <DashboardHeader
                 siteData={siteData}
                 activeTab={activeTab}
@@ -329,14 +316,13 @@ const SiteDashboardPage = () => {
                 canUndo={canUndo} canRedo={canRedo}
                 isSaving={isSaving || isThemeSaving}
             />
-
-            <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+            <div className="flex-1 flex overflow-hidden relative">
                 {activeTab === 'editor' && (
                     <>
-                        <div className="editor-canvas-scroll-area" style={{ flex: 1, overflowY: 'auto', background: 'var(--platform-bg)' }}>
-                            <div style={{ paddingBottom: '100px' }}>
+                        <div className="flex-1 overflow-y-auto bg-(--platform-bg)">
+                            <div className="pb-25">
                                 {isPageLoading ? (
-                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+                                    <div className="flex justify-center items-center h-75">
                                         <div>Завантаження сторінки...</div>
                                     </div>
                                 ) : (
@@ -380,8 +366,20 @@ const SiteDashboardPage = () => {
                 )}
 
                 {activeTab !== 'editor' && (
-                    <div className="editor-canvas-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '2rem', background: 'var(--platform-bg)' }}>
-                        <div style={{ maxWidth: (activeTab === 'store' || activeTab === 'crm' || activeTab === 'orders') ? '100%' : '1000px', margin: '0 auto' }}>
+                    <div 
+                        className={`flex-1 bg-(--platform-bg) ${
+                            isFullHeightTab
+                                ? 'overflow-hidden pl-6 pt-6 pr-6 pb-6' 
+                                : 'overflow-y-auto p-8'
+                        }`}
+                    >
+                        <div 
+                            className={`mx-auto ${
+                                isFullHeightTab 
+                                    ? 'w-full h-full' 
+                                    : 'max-w-250'
+                            }`}
+                        >
                             {activeTab === 'pages' && (
                                 <PagesSettingsTab 
                                     siteId={siteData.id} 
@@ -395,11 +393,9 @@ const SiteDashboardPage = () => {
                             {activeTab === 'store' && (
                                 <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />
                             )}
-                            
                             {activeTab === 'orders' && (
                                 <OrdersTab />
                             )}
-
                             {activeTab === 'theme' && (
                                 <ThemeSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />
                             )}

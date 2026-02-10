@@ -34,12 +34,10 @@ const MySitesPage = () => {
     const navigate = useNavigate();
     const { confirm } = useConfirm();
     const searchTimeoutRef = useRef(null);
-
     useEffect(() => {
         if (!user) { navigate('/login'); return; }
         apiClient.get('/tags').then(res => setTags(res.data)).catch(console.error);
     }, [user, navigate]);
-
     const fetchMySites = async () => {
         try {
             setLoading(true);
@@ -67,7 +65,6 @@ const MySitesPage = () => {
         searchTimeoutRef.current = setTimeout(() => { fetchMySites(); }, 500);
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm, selectedTag, sortOption, user]);
-
     const handleSearchSubmit = () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); fetchMySites(); };
     const handleLoadMore = () => setVisibleCount(prev => prev + ITEMS_PER_PAGE);
     const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit' });
@@ -110,56 +107,21 @@ const MySitesPage = () => {
     const filteredSites = safeSites.filter(s => onlyPinned ? s.is_pinned : true)
         .sort((a, b) => (a.is_pinned === b.is_pinned ? 0 : a.is_pinned ? -1 : 1));
     const visibleSites = filteredSites.slice(0, visibleCount);
-    const styles = {
-        pageWrapper: {
-            margin: '-2rem', 
-            width: 'calc(100% + 4rem)', 
-            minHeight: 'calc(100vh - 64px + 4rem)',
-            display: 'flex', 
-            flexDirection: 'column', 
-            backgroundColor: 'var(--platform-bg)', 
-        },
-        stickyContainer: {
-            position: 'sticky',
-            top: 0,
-            zIndex: 50,
-            backgroundColor: 'var(--platform-bg)',
-        },
-        header: {
-            padding: '12px 24px', 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            borderBottom: '1px solid var(--platform-border-color)', 
-            height: '60px', 
-            flexShrink: 0,
-            position: 'relative',
-            backgroundColor: 'var(--platform-bg)'
-        },
-        gridArea: { 
-            flex: 1, 
-            padding: '24px', 
-            position: 'relative' 
-        },
-        grid: { display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }
-    };
-
     return (
-        <div style={styles.pageWrapper}>
-            <div style={styles.stickyContainer}>
-                <div style={styles.header}>
-                    <div style={{ textAlign: 'center' }}>
-                        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Мої Сайти</h1>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--platform-text-secondary)' }}>
+        <div className="-m-8 w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)">
+            <div className="sticky top-0 z-50 bg-(--platform-bg)">
+                <div className="px-6 py-3 flex justify-center items-center border-b border-(--platform-border-color) h-15 shrink-0 relative bg-(--platform-bg)">
+                    <div className="text-center">
+                        <h1 className="text-xl font-bold m-0">Мої Сайти</h1>
+                        <span className="text-[0.85rem] text-(--platform-text-secondary)">
                             Всього: {safeSites.length}
                         </span>
                     </div>
                     
-                    <Link to="/create-site" style={{ textDecoration: 'none', position: 'absolute', right: '24px' }}>
+                    <Link to="/create-site" className="absolute right-6 no-underline">
                         <Button variant="primary"><Plus size={18} /> Створити новий</Button>
                     </Link>
                 </div>
-
                 <SiteFilters 
                     searchTerm={searchTerm} 
                     onSearchChange={setSearchTerm} 
@@ -176,11 +138,10 @@ const MySitesPage = () => {
                     starTitle="Тільки закріплені"
                 />
             </div>
-
-            <div style={styles.gridArea}>
+            <div className="flex-1 p-6 relative">
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}>
-                        <Loader2 size={32} className="animate-spin" style={{ marginBottom: '10px' }} />
+                    <div className="text-center p-10 text-(--platform-text-secondary)">
+                        <Loader2 size={32} className="animate-spin mb-2.5 mx-auto" />
                         <div>Завантаження...</div>
                     </div>
                 ) : filteredSites.length === 0 ? (
@@ -194,7 +155,7 @@ const MySitesPage = () => {
                                     Очистити фільтри
                                 </Button>
                             ) : (
-                                <Link to="/create-site" style={{ textDecoration: 'none' }}>
+                                <Link to="/create-site" className="no-underline">
                                     <Button variant="outline"><Plus size={16} /> Створити сайт</Button>
                                 </Link>
                             )
@@ -202,7 +163,7 @@ const MySitesPage = () => {
                     />
                 ) : (
                     <>
-                        <div style={styles.grid}>
+                        <div className="grid gap-5 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                             {visibleSites.map(site => (
                                 <SiteGridCard 
                                     key={site.id} site={site} variant="owner"
@@ -214,7 +175,7 @@ const MySitesPage = () => {
                             ))}
                         </div>
                         {filteredSites.length > visibleCount && (
-                            <div style={{ textAlign: 'center', marginTop: '30px' }}>
+                            <div className="text-center mt-8">
                                 <Button variant="outline" onClick={handleLoadMore}>
                                     Показати ще ({filteredSites.length - visibleCount})
                                 </Button>

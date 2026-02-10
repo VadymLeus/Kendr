@@ -22,11 +22,17 @@ const InterfaceSettingsTab = () => {
     ];
 
     return (
-        <div className="card">
-            <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>
+        <div style={{ 
+            background: 'var(--platform-card-bg)', 
+            borderRadius: '16px', 
+            border: '1px solid var(--platform-border-color)', 
+            padding: '24px',
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+        }}>
+            <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem', fontSize: '1.25rem', fontWeight: '600' }}>
                 Зовнішній вигляд платформи
             </h3>
-            <p className="text-secondary" style={{ marginBottom: '1.5rem' }}>
+            <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
                 Налаштуйте вигляд інтерфейсу Kendr.
             </p>
 
@@ -52,7 +58,9 @@ const InterfaceSettingsTab = () => {
                                 backgroundColor: platformMode === mode.value ? 'var(--platform-accent)' : 'transparent',
                                 color: platformMode === mode.value ? 'var(--platform-accent-text)' : 'var(--platform-text-secondary)',
                                 transition: 'all 0.2s ease',
-                                fontWeight: platformMode === mode.value ? '500' : 'normal'
+                                fontWeight: platformMode === mode.value ? '500' : 'normal',
+                                display: 'flex',
+                                alignItems: 'center'
                             }}
                         >
                             <input
@@ -61,7 +69,7 @@ const InterfaceSettingsTab = () => {
                                 value={mode.value}
                                 checked={platformMode === mode.value}
                                 onChange={() => setPlatformMode(mode.value)}
-                                style={{ marginRight: '8px' }}
+                                style={{ marginRight: '8px', accentColor: 'var(--platform-accent-text)' }}
                             />
                             {mode.label}
                         </label>
@@ -94,13 +102,14 @@ const InterfaceSettingsTab = () => {
                                     '3px solid transparent',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease',
-                                transform: platformAccent === opt.value ? 'scale(1.1)' : 'scale(1)'
+                                transform: platformAccent === opt.value ? 'scale(1.1)' : 'scale(1)',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                             }}
                             aria-label={`Обрати ${opt.name} колір`}
                         />
                     ))}
                 </div>
-                <p className="text-secondary" style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                <p style={{ color: 'var(--platform-text-secondary)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
                     Поточний колір: {accentColors.find(color => color.value === platformAccent)?.name}
                 </p>
             </div>
