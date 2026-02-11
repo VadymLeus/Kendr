@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
-
 const authRoutes = require('./routes/authRoutes');
 const siteRoutes = require('./routes/siteRoutes');
 const pageRoutes = require('./routes/pageRoutes');
@@ -20,15 +19,15 @@ const mediaRoutes = require('./routes/mediaRoutes');
 const formRoutes = require('./routes/formRoutes');
 const publicFormRoutes = require('./routes/publicFormRoutes');
 const savedBlockRoutes = require('./routes/savedBlockRoutes');
+const userTemplateRoutes = require('./routes/userTemplateRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const verifyToken = require('./middleware/verifyToken');
-const userTemplateRoutes = require('./routes/userTemplateRoutes');
 const passport = require('./config/passport');
-const reportRoutes = require('./routes/reportRoutes');
-
+const { checkMaintenance } = require('./middleware/platformGuards');
+const verifyTokenOptional = require('./middleware/verifyTokenOptional');
 const app = express();
 const PORT = process.env.PORT || 5000;
-
 app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
@@ -36,7 +35,8 @@ app.use(cors({
 app.use(express.json());
 app.use(passport.initialize());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
+app.use(verifyTokenOptional);
+app.use(checkMaintenance);
 app.use('/api/auth', authRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/pages', pageRoutes);
@@ -55,7 +55,6 @@ app.use('/api/public/form', publicFormRoutes);
 app.use('/api/saved-blocks', savedBlockRoutes);
 app.use('/api/user-templates', userTemplateRoutes);
 app.use('/api/reports', reportRoutes);
-
 app.get('/', (req, res) => {
   res.send('Welcome to Kendr API!');
 });

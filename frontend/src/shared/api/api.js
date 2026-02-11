@@ -9,57 +9,60 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
+
+const safeB64Decode = (str) => {
+    try {
+        return decodeURIComponent(escape(atob(str)));
+    } catch (e) {
+        return '';
+    }
+};
 
 apiClient.interceptors.response.use(
   (response) => {
+    const isLockedHeader = response.headers['x-editor-locked'];
+    if (isLockedHeader === 'true') {
+        window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: true }));
+    } else if (isLockedHeader === 'false') {
+        window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: false }));
+    }
+    const announcementHeader = response.headers['x-global-announcement'];
+    if (announcementHeader !== undefined) {
+        const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
+        window.dispatchEvent(new CustomEvent('global_announcement_update', { detail: message }));
+    }
+
     return response;
   },
   (error) => {
     if (error.response) {
-      const { status, data } = error.response;
-      const message = data.message || 'Щось пішло не так';
-      if (status === 401) {
-        console.error("Термін дії сесії вийшов або токен недійсний.");
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+      const { status, data, headers } = error.response;
+      const announcementHeader = headers['x-global-announcement'];
+      if (announcementHeader !== undefined) {
+          const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
+          window.dispatchEvent(new CustomEvent('global_announcement_update', { detail: message }));
       }
-      else if (error.config && error.config.suppressToast) {
-      }
-      else if (status === 403) {
-        toast.error(`Доступ заборонено: ${message}`);
-      }
-      else if (status === 404) {
-        if (error.config.method !== 'get') {
-             toast.error(`Ресурс не знайдено: ${message}`);
+
+      if (status === 503) {
+        if (data.editor_locked) {
+            window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: true }));
+            toast.warning(`Режим читання: ${data.message}`, { autoClose: 5000 });
+            return Promise.reject(error);
+        }
+        if (data.maintenance_mode) {
+           window.dispatchEvent(new CustomEvent('maintenance_mode_active', { detail: { message: data.message } }));
+           return Promise.reject(error); 
         }
       }
-      else if (status >= 500) {
-        toast.error(`Помилка сервера: ${message}`);
-      }
-      else {
-         if (error.config.method !== 'get') {
-            toast.error(`Помилка: ${message}`);
-         }
-      }
-    } else if (error.request) {
-      if (!error.config?.suppressToast) {
-          toast.error('Сервер не відповідає. Перевірте підключення до інтернету.');
-      }
-    } else {
-      if (!error.config?.suppressToast) {
-          toast.error(`Помилка: ${error.message}`);
+      if (!error.config?.suppressToast && status !== 503 && status !== 401) {
+         toast.error(data.message || 'Помилка');
       }
     }
-
     return Promise.reject(error);
   }
 );

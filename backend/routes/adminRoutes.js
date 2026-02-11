@@ -7,6 +7,9 @@ const verifyAdmin = require('../middleware/verifyAdmin');
 
 router.use(verifyToken, verifyAdmin);
 router.get('/dashboard-stats', adminController.getDashboardStats);
+router.get('/logs', adminController.getAdminLogs);
+router.get('/control/settings', adminController.getSystemSettings);
+router.put('/control/settings', adminController.updateSystemSettings);
 router.get('/users', adminController.getAllUsers);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/sites', adminController.getAllSites);
@@ -22,6 +25,5 @@ router.get('/templates', adminController.getSystemTemplates);
 router.post('/templates', adminController.createSystemTemplate);
 router.put('/templates/:id', adminController.updateSystemTemplate);
 router.delete('/templates/:id', adminController.deleteSystemTemplate);
-router.get('/logs', adminController.getAdminLogs);
 
 module.exports = router;

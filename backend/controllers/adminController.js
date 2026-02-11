@@ -5,6 +5,8 @@ const Warning = require('../models/Warning');
 const db = require('../config/db');
 const { deleteFile } = require('../utils/fileUtils');
 const logAdminAction = require('../utils/adminLogger');
+const { clearSettingsCache } = require('../middleware/platformGuards');
+
 const deleteFullUserAccount = async (userId) => {
     const user = await User.findById(userId);
     if (user && user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
@@ -109,7 +111,6 @@ exports.getDashboardStats = async (req, res, next) => {
         const activityLog = [...lastUsers, ...lastSites, ...lastReports, ...lastTickets]
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .slice(0, 20);
-
         res.json({
             stats: {
                 users: usersResult[0]?.count || 0,
@@ -140,7 +141,6 @@ exports.getAdminLogs = async (req, res, next) => {
             WHERE 1=1
         `;
         const params = [];
-
         if (admin_id) {
             query += ' AND l.admin_id = ?';
             params.push(admin_id);
@@ -149,9 +149,7 @@ exports.getAdminLogs = async (req, res, next) => {
             query += ' AND l.action_type = ?';
             params.push(type);
         }
-
         query += ' ORDER BY l.created_at DESC LIMIT 100';
-
         const [logs] = await db.query(query, params);
         res.json(logs);
     } catch (error) {
@@ -183,7 +181,6 @@ exports.deleteUser = async (req, res, next) => {
         if (parseInt(id) === req.user.id) {
             return res.status(400).json({ message: 'Ви не можете видалити свій власний акаунт з адмінки.' });
         }
-
         const [users] = await db.query('SELECT username, email FROM users WHERE id = ?', [id]);
         const userDetails = users[0] || {};
         await deleteFullUserAccount(id);
@@ -191,7 +188,6 @@ exports.deleteUser = async (req, res, next) => {
             username: userDetails.username, 
             email: userDetails.email 
         });
-
         res.json({ message: 'Користувача та всі його дані успішно видалено.' });
     } catch (error) {
         next(error);
@@ -206,10 +202,8 @@ exports.getAllSites = async (req, res, next) => {
                 s.view_count,
                 u.username as author, u.email as author_email,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = s.user_id) as warning_count,
-                
                 (SELECT status FROM site_appeals WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as appeal_status,
                 (SELECT created_at FROM site_appeals WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as appeal_date
-                
             FROM sites s
             JOIN users u ON s.user_id = u.id
             WHERE u.role != 'admin'
@@ -318,7 +312,7 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
         );
         
         if (existingWarning.length === 0) {
-            await Warning.create(site.user_id, site.id, `Сайт "${site.title}" був видалений адміністратором через порушення.`);
+            await Warning.create(site.user_id, site.id, `Сайт "${site.title}" был удален администратором из-за нарушений.`);
         }
 
         await Site.delete(site.id);
@@ -537,4 +531,69 @@ exports.deleteSystemTemplate = async (req, res, next) => {
 
         res.json({ message: 'Системний шаблон видалено.' });
     } catch (error) { next(error); }
+};
+
+exports.getSystemSettings = async (req, res, next) => {
+    try {
+        const [rows] = await db.query('SELECT * FROM platform_settings WHERE id = 1');
+        if (rows.length === 0) {
+            return res.json({
+                maintenance_mode: false,
+                editor_locked: false,
+                maintenance_message: '',
+                registration_enabled: true
+            });
+        }
+
+        const dbSettings = rows[0];
+        res.json({
+            maintenance_mode: !!dbSettings.is_platform_maintenance,
+            editor_locked: !!dbSettings.is_editor_locked,
+            maintenance_message: dbSettings.global_announcement || '',
+            registration_enabled: true 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.updateSystemSettings = async (req, res, next) => {
+    try {
+        const { maintenance_mode, editor_locked, maintenance_message, registration_enabled } = req.body;
+        await db.query(`
+            UPDATE platform_settings 
+            SET is_platform_maintenance = ?, 
+                is_editor_locked = ?, 
+                global_announcement = ? 
+            WHERE id = 1
+        `, [
+            maintenance_mode ? 1 : 0,
+            editor_locked ? 1 : 0,
+            maintenance_message || null
+        ]);
+
+        clearSettingsCache();
+        await logAdminAction(req, 'settings_update', 'system', null, {
+            maintenance: maintenance_mode,
+            editor_lock: editor_locked,
+            announcement: maintenance_message
+        });
+        if (maintenance_message) {
+            res.set('X-Global-Announcement', Buffer.from(maintenance_message).toString('base64'));
+        } else {
+            res.set('X-Global-Announcement', '');
+        }
+
+        res.json({ 
+            message: 'Налаштування платформи оновлено',
+            settings: { 
+                maintenance_mode, 
+                editor_locked, 
+                maintenance_message,
+                registration_enabled
+            } 
+        });
+    } catch (error) {
+        next(error);
+    }
 };

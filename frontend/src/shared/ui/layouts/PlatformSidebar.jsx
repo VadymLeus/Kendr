@@ -4,7 +4,8 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import UserMenu from './UserMenu';
-import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, Settings, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette } from 'lucide-react';
+import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders } from 'lucide-react';
+
 const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
     const { cartItems } = useContext(CartContext);
     const { user } = useContext(AuthContext);
@@ -16,7 +17,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
             navigate('/login');
         }
     };
-
     const SidebarLink = ({ to, icon: Icon, label, protectedLink, count, isCreateButton }) => {
         const baseClass = `sidebar-link ${isCreateButton ? 'create-btn' : ''}`;
         return (
@@ -47,7 +47,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
                     {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
             </div>
-
             <div className="sidebar-nav custom-scrollbar">
                 {isAdmin ? (
                     <>
@@ -63,6 +62,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
                         <SidebarLink to="/admin/tickets" icon={MessageSquare} label="Тікети" />
                         <SidebarLink to="/admin/reports" icon={AlertTriangle} label="Скарги" />
                         <div className="nav-separator" />
+                        <SidebarLink to="/admin/control" icon={Sliders} label="Управління" />
                         <SidebarLink to="/admin/dashboard" icon={LayoutDashboard} label="Дашборд" />
                     </>
                 ) : (
@@ -76,11 +76,9 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
                         {user && <SidebarLink to="/cart" icon={ShoppingCart} label="Кошик" count={cartItems.length} />}
                         <div className="nav-separator" />
                         <SidebarLink to="/support" icon={HelpCircle} label="Підтримка" />
-                        {user && <SidebarLink to="/settings" icon={Settings} label="Налаштування" />}
                     </>
                 )}
             </div>
-            
             <div className="sidebar-footer">
                 {!user ? (
                     <Link 

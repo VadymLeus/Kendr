@@ -1,12 +1,15 @@
 // frontend/src/app/App.jsx
+import React, { useState, useEffect, useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ConfirmProvider } from './providers/ConfirmContext';
+import { AuthContext } from './providers/AuthContext';
 import ProtectedRoute from './guards/ProtectedRoute';
 import Layout from '../shared/ui/layouts/Layout';
+import MaintenanceScreen from '../shared/ui/complex/MaintenanceScreen';
 import HomePage from '../pages/HomePage';
 import RulesPage from '../pages/RulesPage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -35,8 +38,23 @@ import AdminUsersPage from '../modules/admin/pages/AdminUsersPage';
 import AdminSitesPage from '../modules/admin/pages/AdminSitesPage';
 import AdminTicketsPage from '../modules/admin/pages/AdminTicketsPage';
 import AdminTemplatesPage from '../modules/admin/pages/AdminTemplatesPage';
+import AdminControlPage from '../modules/admin/pages/AdminControlPage';
 
 function App() {
+    const { isAdmin, isLoading } = useContext(AuthContext);
+    const [maintenanceInfo, setMaintenanceInfo] = useState({ active: false, message: '' });
+    useEffect(() => {
+        const handleMaintenance = (event) => {
+            const message = event.detail?.message || '';
+            setMaintenanceInfo({ active: true, message });
+        };
+        window.addEventListener('maintenance_mode_active', handleMaintenance);
+        return () => window.removeEventListener('maintenance_mode_active', handleMaintenance);
+    }, []);
+    if (maintenanceInfo.active && !isAdmin && !isLoading) {
+        return <MaintenanceScreen message={maintenanceInfo.message} />;
+    }
+
     return (
         <DndProvider backend={HTML5Backend}>
             <ConfirmProvider>
@@ -47,7 +65,6 @@ function App() {
                             <Route path="/register" element={<AuthPage />} />
                             <Route path="/reset-password" element={<ResetPasswordPage />} />
                         </Route>
-
                         <Route path="/" element={<HomePage />} />
                         <Route path="/catalog" element={<CatalogPage />} />
                         <Route path="/profile/:username" element={<ProfilePage />} />
@@ -65,7 +82,6 @@ function App() {
                             <Route path="/create-site" element={<CreateSitePage />} />
                             <Route path="/media-library" element={<MediaLibraryPage />} />
                         </Route>
-
                         <Route element={<ProtectedRoute excludeAdmin={true} />}>
                             <Route path="/cart" element={<CartPage />} />
                             <Route path="/support" element={<SupportPage />} />
@@ -73,7 +89,6 @@ function App() {
                             <Route path="/support/appeal" element={<AppealPage />} />
                             <Route path="/support/my-tickets" element={<MyTicketsPage />} />
                         </Route>
-                        
                         <Route element={<ProtectedRoute requireAdmin={true} />}>
                             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -82,13 +97,12 @@ function App() {
                             <Route path="/admin/sites" element={<AdminSitesPage />} />
                             <Route path="/admin/tickets" element={<AdminTicketsPage />} />
                             <Route path="/admin/templates" element={<AdminTemplatesPage />} />
+                            <Route path="/admin/control" element={<AdminControlPage />} />
                             <Route path="/admin/support" element={<Navigate to="/admin/tickets" replace />} />
                         </Route>
-                        
                         <Route path="*" element={<NotFoundPage />} />
                     </Route>
                 </Routes>
-
                 <ToastContainer
                     position="bottom-right"
                     autoClose={3000}

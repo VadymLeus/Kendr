@@ -1,8 +1,9 @@
 // frontend/src/modules/dashboard/pages/SiteDashboardPage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useParams, useOutletContext, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
+import { AuthContext } from '../../../app/providers/AuthContext';
 import BlockEditor from '../../editor/core/BlockEditor';
 import EditorSidebar from '../../editor/ui/EditorSidebar';
 import GeneralSettingsTab from '../features/settings/GeneralSettingsTab';
@@ -15,14 +16,30 @@ import DashboardHeader from '../components/DashboardHeader';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
 import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, handleDrop } from '../../editor/core/blockUtils';
+import { Lock } from 'lucide-react';
 
 const SiteDashboardPage = () => {
     const { site_path } = useParams();
     const navigate = useNavigate();
     const { siteData, setSiteData, isSiteLoading } = useOutletContext();
+    const { isAdmin } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState(() => {
         return localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
     });
+    const [isReadOnly, setIsReadOnly] = useState(false);
+    useEffect(() => {
+        const handleLockStatus = (e) => {
+            const serverLocked = e.detail;
+            if (serverLocked && !isAdmin) {
+                setIsReadOnly(true);
+            } else {
+                setIsReadOnly(false);
+            }
+        };
+
+        window.addEventListener('editor_locked_status', handleLockStatus);
+        return () => window.removeEventListener('editor_locked_status', handleLockStatus);
+    }, [isAdmin]);
 
     useEffect(() => {
         if (siteData && siteData.status === 'suspended') {
@@ -30,6 +47,7 @@ const SiteDashboardPage = () => {
             navigate('/dashboard');
         }
     }, [siteData, navigate]);
+
     useEffect(() => {
         if (site_path) {
             localStorage.setItem(`editor_active_tab_${site_path}`, activeTab);
@@ -69,6 +87,7 @@ const SiteDashboardPage = () => {
             localStorage.setItem(key, JSON.stringify(collapsedBlocks));
         }
     }, [collapsedBlocks, site_path, currentPageId]);
+    
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
@@ -80,6 +99,7 @@ const SiteDashboardPage = () => {
     const setComponentSaving = useCallback((component, isSaving) => {
         setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
+    
     const handleBlockSaved = useCallback(() => {
         setSavedBlocksUpdateTrigger(prev => prev + 1);
     }, []);
@@ -88,10 +108,13 @@ const SiteDashboardPage = () => {
         const anyComponentSaving = Object.values(componentsSaving).some(saving => saving);
         setIsSaving(anyComponentSaving);
     }, [componentsSaving]);
+    
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
             if (document.querySelector('.ReactModal__Content')) return;
+            if (isReadOnly) return;
+            
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
                 if (e.shiftKey) { e.preventDefault(); redo(); }
                 else { e.preventDefault(); undo(); }
@@ -102,7 +125,8 @@ const SiteDashboardPage = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, redo]);
+    }, [undo, redo, isReadOnly]);
+
     const fetchPageContent = async (pageId) => {
         setIsPageLoading(true);
         try {
@@ -174,9 +198,11 @@ const SiteDashboardPage = () => {
                 .catch(console.error);
         }
     }, [siteData]);
-    const handleMoveBlock = (drag, hover) => setBlocks(prev => moveBlock(prev, drag, hover));
-    const handleDropBlock = (item, path) => setBlocks(prev => handleDrop(prev, item, path));
+
+    const handleMoveBlock = (drag, hover) => !isReadOnly && setBlocks(prev => moveBlock(prev, drag, hover));
+    const handleDropBlock = (item, path) => !isReadOnly && setBlocks(prev => handleDrop(prev, item, path));
     const handleAddBlock = (path, type, preset) => {
+        if (isReadOnly) return;
         const newBlock = { 
             block_id: generateBlockId(), 
             type, 
@@ -186,13 +212,27 @@ const SiteDashboardPage = () => {
     };
     
     const handleDeleteBlock = (path) => {
+        if (isReadOnly) return;
         setBlocks(prev => removeBlockByPath(prev, path));
         setSelectedBlockPath(null);
     };
+    
     const handleUpdateBlockData = (path, data, addToHistory = true) => {
+        if (isReadOnly) return;
         setBlocks(prev => updateBlockDataByPath(prev, path, data), addToHistory);
     };
+
+    const handleSaveError = (error) => {
+        console.error("Помилка при збереженні:", error);
+        if (error.response && (error.response.status === 503 || error.response.data?.editor_locked)) {
+            setIsReadOnly(true);
+        } else {
+            toast.error('Не вдалося зберегти зміни.');
+        }
+    };
+
     const savePageContent = async (currentBlocks) => {
+        if (isReadOnly) return; 
         const blocksToSave = currentBlocks || blocks;
         setIsSaving(true);
         try {
@@ -223,14 +263,14 @@ const SiteDashboardPage = () => {
                 });
             }
         } catch (error) {
-            console.error("Помилка при збереженні:", error);
-            toast.error('Не вдалося зберегти зміни.');
+            handleSaveError(error);
         } finally {
             setTimeout(() => setIsSaving(false), 500);
         }
     };
 
     const saveThemeSettings = async (updatedData) => {
+        if (isReadOnly) return;
         setIsThemeSaving(true);
         try {
             const updateData = {};
@@ -244,8 +284,7 @@ const SiteDashboardPage = () => {
                 setSiteData(prev => ({ ...prev, ...updateData }));
             }
         } catch (error) {
-            console.error("Помилка при збереженні теми:", error);
-            toast.error('Не вдалося зберегти налаштування теми');
+            handleSaveError(error);
         } finally {
             setTimeout(() => setIsThemeSaving(false), 500);
         }
@@ -302,19 +341,29 @@ const SiteDashboardPage = () => {
         };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
+    
     if (isSiteLoading || !siteData) {
         return <div className="p-8 text-center text-(--platform-text-secondary)">Завантаження...</div>;
     }
     const isFullHeightTab = ['store', 'crm', 'orders'].includes(activeTab);
     return (
         <div className="flex flex-col h-screen overflow-hidden">
+            {isReadOnly && (
+                <div className="bg-orange-500 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 shadow-sm z-50 animate-in slide-in-from-top-2 duration-300">
+                    <Lock size={16} />
+                    <span>Редактор тимчасово заблоковано для оновлення платформи. Ви в режимі перегляду.</span>
+                </div>
+            )}
+
             <DashboardHeader
                 siteData={siteData}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 undo={undo} redo={redo}
-                canUndo={canUndo} canRedo={canRedo}
+                canUndo={canUndo && !isReadOnly} 
+                canRedo={canRedo && !isReadOnly}
                 isSaving={isSaving || isThemeSaving}
+                isReadOnly={isReadOnly}
             />
             <div className="flex-1 flex overflow-hidden relative">
                 {activeTab === 'editor' && (
@@ -326,42 +375,46 @@ const SiteDashboardPage = () => {
                                         <div>Завантаження сторінки...</div>
                                     </div>
                                 ) : (
-                                    <BlockEditor 
-                                        blocks={blocks} 
-                                        siteData={siteData}
-                                        onAddBlock={handleAddBlock}
-                                        onMoveBlock={handleMoveBlock}
-                                        onDropBlock={handleDropBlock}
-                                        onDeleteBlock={handleDeleteBlock}
-                                        onSelectBlock={setSelectedBlockPath}
-                                        selectedBlockPath={selectedBlockPath}
-                                        collapsedBlocks={collapsedBlocks}
-                                        onToggleCollapse={toggleBlockCollapse}
-                                        isHeaderMode={isHeaderMode}
-                                        onBlockSaved={handleBlockSaved}
-                                    />
+                                    <div className={isReadOnly ? 'pointer-events-none opacity-80' : ''}>
+                                        <BlockEditor 
+                                            blocks={blocks} 
+                                            siteData={siteData}
+                                            onAddBlock={handleAddBlock}
+                                            onMoveBlock={handleMoveBlock}
+                                            onDropBlock={handleDropBlock}
+                                            onDeleteBlock={handleDeleteBlock}
+                                            onSelectBlock={setSelectedBlockPath}
+                                            selectedBlockPath={selectedBlockPath}
+                                            collapsedBlocks={collapsedBlocks}
+                                            onToggleCollapse={toggleBlockCollapse}
+                                            isHeaderMode={isHeaderMode}
+                                            onBlockSaved={handleBlockSaved}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         </div>
-                        <EditorSidebar
-                            blocks={blocks}
-                            siteData={siteData}
-                            onMoveBlock={handleMoveBlock}
-                            onDeleteBlock={handleDeleteBlock}
-                            selectedBlockPath={selectedBlockPath}
-                            onSelectBlock={setSelectedBlockPath}
-                            onUpdateBlockData={handleUpdateBlockData}
-                            onSave={savePageContent}
-                            allPages={[
-                                { id: 'header', name: 'Глобальний Хедер' },
-                                ...allPages, 
-                                { id: 'footer', name: 'Глобальний Футер' }
-                            ]}
-                            currentPageId={currentPageId}
-                            onSelectPage={(id) => handleEditPage(id)}
-                            savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
-                            isHeaderMode={isHeaderMode}
-                        />
+                        <div className={isReadOnly ? 'pointer-events-none opacity-50 grayscale' : ''}>
+                            <EditorSidebar
+                                blocks={blocks}
+                                siteData={siteData}
+                                onMoveBlock={handleMoveBlock}
+                                onDeleteBlock={handleDeleteBlock}
+                                selectedBlockPath={selectedBlockPath}
+                                onSelectBlock={setSelectedBlockPath}
+                                onUpdateBlockData={handleUpdateBlockData}
+                                onSave={savePageContent}
+                                allPages={[
+                                    { id: 'header', name: 'Глобальний Хедер' },
+                                    ...allPages, 
+                                    { id: 'footer', name: 'Глобальний Футер' }
+                                ]}
+                                currentPageId={currentPageId}
+                                onSelectPage={(id) => handleEditPage(id)}
+                                savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
+                                isHeaderMode={isHeaderMode}
+                            />
+                        </div>
                     </>
                 )}
 
@@ -378,7 +431,7 @@ const SiteDashboardPage = () => {
                                 isFullHeightTab 
                                     ? 'w-full h-full' 
                                     : 'max-w-250'
-                            }`}
+                            } ${isReadOnly ? 'pointer-events-none opacity-70' : ''}`}
                         >
                             {activeTab === 'pages' && (
                                 <PagesSettingsTab 
