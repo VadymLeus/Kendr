@@ -29,9 +29,14 @@ const verifyTokenOptional = require('./middleware/verifyTokenOptional');
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
+    origin: [
+        'http://localhost:5173',
+        'https://kendr.vercel.app',
+        'https://kendr-backend.onrender.com'
+    ],
+    credentials: true
 }));
+
 app.use(express.json());
 app.use(passport.initialize());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -56,10 +61,9 @@ app.use('/api/saved-blocks', savedBlockRoutes);
 app.use('/api/user-templates', userTemplateRoutes);
 app.use('/api/reports', reportRoutes);
 app.get('/', (req, res) => {
-  res.send('Welcome to Kendr API!');
+    res.send('Welcome to Kendr API!');
 });
-
 app.use(errorHandler);
 app.listen(PORT, async () => {
-  console.log(`Сервер запущено на порті ${PORT}`);
+    console.log(`Сервер запущено на порті ${PORT}`);
 });
