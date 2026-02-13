@@ -7,9 +7,12 @@ const pool = mysql.createPool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 25152, 
+    ssl: {
+        rejectUnauthorized: false
+    },
+    
     charset: 'utf8mb4'
 }).promise();
-
-console.log('Успішно підключено до бази даних.');
 
 module.exports = pool;
