@@ -4,9 +4,9 @@ import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../../ui/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../../ui/DraggableBlockItem';
 import BlockRenderer from '../../core/BlockRenderer';
+import { BASE_URL } from '../../../../shared/config';
 import { Plus } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const DRAG_ITEM_TYPE_EXISTING = 'BLOCK';
 const getGridClasses = (direction = 'row', preset, verticalAlign = 'top') => {
     const verticalAlignMap = {
@@ -15,12 +15,10 @@ const getGridClasses = (direction = 'row', preset, verticalAlign = 'top') => {
         bottom: 'items-end',
         stretch: 'items-stretch'
     };
-
     const alignClass = verticalAlignMap[verticalAlign] || 'items-start';
     if (direction === 'column') {
         return `grid grid-cols-1 ${alignClass}`;
     }
-
     let colsClass = 'grid-cols-2';
     switch (preset) {
         case '50-50': colsClass = 'grid-cols-2'; break;
@@ -30,7 +28,6 @@ const getGridClasses = (direction = 'row', preset, verticalAlign = 'top') => {
         case '25-25-25-25': colsClass = 'grid-cols-4'; break;
         default: colsClass = 'grid-cols-2';
     }
-    
     return `grid ${colsClass} ${alignClass}`;
 };
 
@@ -161,21 +158,19 @@ const LayoutBlock = ({
     const activeMinHeightClass = heightClasses[height] || (legacyMinHeight === 'screen' ? 'min-h-screen' : '') || 'min-h-auto';
     const activeMinHeightStyle = (!heightClasses[height] && legacyMinHeight !== 'screen' && legacyMinHeight) ? { minHeight: legacyMinHeight } : {};
     const fullImageUrl = bg_image 
-        ? (bg_image.startsWith('http') ? bg_image : `${API_URL}${bg_image}`)
+        ? (bg_image.startsWith('http') ? bg_image : `${BASE_URL}${bg_image}`)
         : null;
     const fullVideoUrl = bg_video 
-        ? (bg_video.startsWith('http') ? bg_video : `${API_URL}${bg_video}`)
+        ? (bg_video.startsWith('http') ? bg_video : `${BASE_URL}${bg_video}`)
         : null;
     useEffect(() => {
         if (videoRef.current && bg_type === 'video') {
             videoRef.current.play().catch(e => console.error("Autoplay failed", e));
         }
     }, [bg_type, fullVideoUrl]);
-
     const alignmentClass = activeMinHeightClass !== 'min-h-auto' 
         ? (verticalAlign === 'middle' ? 'justify-center' : (verticalAlign === 'bottom' ? 'justify-end' : 'justify-start'))
         : 'justify-start';
-
     return (
         <div 
             className={`
@@ -226,7 +221,6 @@ const LayoutBlock = ({
                 {columns.map((columnBlocks, colIndex) => {
                     const safePath = path || [];
                     const columnPath = [...safePath, 'data', 'columns', colIndex];
-                    
                     if (!isEditorPreview) {
                         return (
                             <div key={colIndex} className="min-w-0">

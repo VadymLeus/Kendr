@@ -4,9 +4,9 @@ import MediaPickerModal from '../../../modules/media/components/MediaPickerModal
 import ImageCropperModal from './ImageCropperModal'; 
 import apiClient from '../../api/api';
 import { toast } from 'react-toastify';
+import { API_URL } from '../../config';
 import { Upload, X, Image as ImageIcon, Video, FileText, Music, Type, Play, FileSpreadsheet } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000'; 
 const UniversalMediaInput = ({ 
     value, 
     onChange, 
@@ -103,7 +103,6 @@ const UniversalMediaInput = ({
                 />
             );
         }
-
         if (type === 'video' || ['mp4', 'webm', 'mov'].includes(ext)) {
             return (
                 <div className="w-full h-full relative bg-black flex items-center justify-center z-10">
@@ -116,13 +115,11 @@ const UniversalMediaInput = ({
                 </div>
             );
         }
-
         let Icon = FileText;
         if (['pdf'].includes(ext)) Icon = FileText;
         if (['xls', 'xlsx', 'csv'].includes(ext)) Icon = FileSpreadsheet;
         if (['ttf', 'otf', 'woff', 'woff2'].includes(ext)) Icon = Type;
         if (['mp3', 'wav'].includes(ext)) Icon = Music;
-
         return (
             <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-(--platform-bg) text-(--platform-text-primary) z-10 relative">
                 <Icon size={32} className="text-(--platform-accent) mb-2" />
@@ -179,7 +176,6 @@ const UniversalMediaInput = ({
                 {safeValue ? (
                     <>
                         {renderPreview()}
-                        
                         <div 
                             className={`
                                 absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center text-white font-semibold z-20 transition-opacity duration-200
@@ -188,7 +184,6 @@ const UniversalMediaInput = ({
                         >
                             <span className="px-3 py-1.5 bg-black/50 rounded-lg text-sm border border-white/20">Змінити</span>
                         </div>
-
                         <button 
                             type="button" 
                             onClick={handleClear}
@@ -211,7 +206,6 @@ const UniversalMediaInput = ({
                     </div>
                 )}
             </div>
-
             <MediaPickerModal 
                 isOpen={isPickerOpen}
                 onClose={() => setIsPickerOpen(false)}
@@ -223,7 +217,6 @@ const UniversalMediaInput = ({
                 }
                 title={`Вибір ${type === 'image' ? 'зображення' : type === 'video' ? 'відео' : type === 'font' ? 'шрифту' : 'файлу'}`}
             />
-
             <ImageCropperModal 
                 isOpen={isCropperOpen}
                 onClose={() => setIsCropperOpen(false)}

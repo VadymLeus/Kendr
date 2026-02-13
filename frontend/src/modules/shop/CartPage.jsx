@@ -4,9 +4,9 @@ import { CartContext } from '../../app/providers/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
+import { BASE_URL } from '../../shared/config';
 import { Trash2, Minus, Plus, Store, ArrowLeft, CreditCard, Tag, AlertCircle, PackageOpen } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const CartPage = () => {
     const { cartItems, removeFromCart, clearCart, updateQuantity } = useContext(CartContext);
     const navigate = useNavigate();
@@ -56,7 +56,6 @@ const CartPage = () => {
             toast.error('Помилка оформлення замовлення');
         }
     };
-
     const getImageUrl = (item) => {
         let gallery = item.image_gallery || item.image_path || item.image;
         let targetPath = null;
@@ -75,11 +74,10 @@ const CartPage = () => {
                 targetPath = gallery;
             }
         }
-
         if (!targetPath) return 'https://placehold.co/120x120?text=No+Image';
         if (targetPath.startsWith('http')) return targetPath;
         const cleanPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
-        return `${API_URL}${cleanPath}`;
+        return `${BASE_URL}${cleanPath}`;
     };
 
     const cssStyles = `
@@ -393,7 +391,6 @@ const CartPage = () => {
                             {totalItemsCount} {totalItemsCount === 1 ? 'товар' : 'товарів'} на суму {total.toFixed(0)} ₴
                         </div>
                     </div>
-
                     <div className="cart-grid">
                         <div style={styles.tableContainer}>
                             {groupedItems.map((group, groupIndex) => (
@@ -405,14 +402,12 @@ const CartPage = () => {
                                         <Store size={24} />
                                         <span>{group.siteName}</span>
                                     </div>
-
                                     {group.items.map((item, idx) => {
                                         const isLastInGroup = idx === group.items.length - 1;
                                         const rowStyle = {
                                             ...styles.itemRow,
                                             borderBottom: isLastInGroup ? 'none' : '1px solid var(--platform-border-color)'
                                         };
-
                                         const itemPrice = parseFloat(item.price);
                                         const itemOriginalPrice = item.originalPrice ? parseFloat(item.originalPrice) : null;
                                         const hasDiscount = itemOriginalPrice && itemOriginalPrice > itemPrice;
@@ -431,12 +426,10 @@ const CartPage = () => {
                                                         }}
                                                     />
                                                 </Link>
-                                                
                                                 <div style={styles.infoCol}>
                                                     <Link to={`/product/${item.id}`} style={styles.productName} className="product-link hover-btn">
                                                         {item.name}
                                                     </Link>
-                                                    
                                                     <div style={styles.metaInfo}>
                                                         {item.category_name && (
                                                             <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
@@ -450,7 +443,6 @@ const CartPage = () => {
                                                         ))}
                                                     </div>
                                                 </div>
-
                                                 <div style={styles.controls}>
                                                     <div style={styles.qtyWrapper}>
                                                         <button 
@@ -471,7 +463,6 @@ const CartPage = () => {
                                                         </button>
                                                     </div>
                                                 </div>
-
                                                 <div style={styles.priceCol}>
                                                     {hasDiscount ? (
                                                         <>
@@ -481,7 +472,6 @@ const CartPage = () => {
                                                     ) : (
                                                         <span style={styles.price}>{totalItemPrice.toFixed(0)} ₴</span>
                                                     )}
-                                                    
                                                     <div style={{marginTop: 'auto', paddingTop: '15px'}}>
                                                         <button 
                                                             style={styles.removeBtn}
@@ -502,33 +492,27 @@ const CartPage = () => {
 
                         <div style={styles.summaryCard} className="summary-card">
                             <h3 style={{fontSize: '1.4rem', marginBottom: '25px', color: 'var(--platform-text-primary)'}}>Підсумок</h3>
-                            
                             <div style={styles.summaryRow}>
                                 <span>Товари ({totalItemsCount} шт.)</span>
                                 <span>{totalOriginal.toFixed(2)} ₴</span>
                             </div>
-                            
                             {totalDiscount > 0 && (
                                 <div style={styles.summaryRow}>
                                     <span>Знижка</span>
                                     <span style={{color: 'var(--platform-danger)', fontWeight: '600'}}>-{totalDiscount.toFixed(2)} ₴</span>
                                 </div>
                             )}
-                            
                             <div style={{ marginTop: '20px', padding: '16px', background: 'var(--platform-bg)', borderRadius: '10px', fontSize: '0.9rem', color: 'var(--platform-text-secondary)', display: 'flex', gap: '10px', lineHeight: '1.4' }}>
                                 <AlertCircle size={20} style={{flexShrink: 0, marginTop: '2px'}} />
                                 <div>Доставка розраховується при оформленні.</div>
                             </div>
-
                             <div style={styles.totalRow}>
                                 <span>До сплати</span>
                                 <span>{total.toFixed(2)} ₴</span>
                             </div>
-
                             <button style={styles.checkoutBtn} className="checkout-btn hover-btn" onClick={handleCheckout}>
                                 <CreditCard size={24} /> Оформити
                             </button>
-                            
                             <button style={styles.clearBtn} className="clear-btn hover-btn" onClick={clearCart}>
                                 Очистити кошик
                             </button>

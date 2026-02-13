@@ -12,9 +12,8 @@ import EmptyState from '../../../shared/ui/complex/EmptyState';
 import SitePreviewer from '../../../shared/ui/complex/SitePreviewer';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { AuthContext } from '../../../app/providers/AuthContext';
+import { BASE_URL } from '../../../shared/config';
 import { ArrowLeft, Layout, Check, Loader, AlertCircle, Grid, User, Search, Edit, Trash, Info, Palette, Sparkles, Globe, Lock, Image, FileText, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Shield, EyeOff, Tag } from 'lucide-react';
-
-const API_URL = 'http://localhost:5000';
 const ICON_MAP = {
     'Layout': Layout, 'FileText': FileText, 'ShoppingBag': ShoppingBag,
     'Briefcase': Briefcase, 'Camera': Camera, 'Coffee': Coffee,
@@ -162,7 +161,7 @@ const CreateSitePage = () => {
         }
     };
     const handleClearLogo = (e) => { e.stopPropagation(); setCustomLogo(null); };
-    const getFullUrl = (path) => path?.startsWith('http') ? path : `${API_URL}${path}`;
+    const getFullUrl = (path) => path?.startsWith('http') ? path : `${BASE_URL}${path}`;
     const handleOpenEditModal = (e, template) => { e.stopPropagation(); setEditingTemplate(template); setIsEditModalOpen(true); };
     const handleSaveTemplateChanges = async (name, description, icon, category) => {
         if (!editingTemplate) return;
@@ -196,7 +195,6 @@ const CreateSitePage = () => {
         }
         return source;
     }, [templateSourceTab, systemTemplates, personalTemplates, searchQuery, selectedCategory]);
-    
     const renderAdminBadge = (tpl) => {
         if (!isAdmin) return null;
         let badgeConfig = { text: '', Icon: null, colorVar: '' };

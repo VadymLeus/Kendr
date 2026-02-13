@@ -7,10 +7,10 @@ import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
-import { Button } from '../../../shared/ui/elements'; 
+import { Button } from '../../../shared/ui/elements';
+import { BASE_URL } from '../../../shared/config';
 import { Upload, Search, Download, Trash2, Check, X as XIcon } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const FILE_TYPES = [
     { id: 'image', name: 'Фото' },
     { id: 'video', name: 'Відео' },
@@ -56,6 +56,7 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         fetchMedia();
     }, []);
+
     const fetchMedia = async () => {
         setLoading(true);
         try {
@@ -76,7 +77,6 @@ const MediaLibraryPage = () => {
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
-
         if (searchTerm) {
             const lowerQuery = searchTerm.toLowerCase();
             result = result.filter(f => 
@@ -256,7 +256,7 @@ const MediaLibraryPage = () => {
         filesToDownload.forEach((file, i) => {
             setTimeout(async () => {
                 try {
-                    const response = await fetch(`${API_URL}${file.path_full}`);
+                    const response = await fetch(`${BASE_URL}${file.path_full}`);
                     if (!response.ok) throw new Error('Network error');
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
@@ -275,7 +275,6 @@ const MediaLibraryPage = () => {
         });
         setCheckedFiles(new Set());
     };
-
     const onDragEvent = (e, active) => {
         e.preventDefault(); e.stopPropagation();
         if (active !== undefined) {
@@ -292,7 +291,6 @@ const MediaLibraryPage = () => {
         const files = e.dataTransfer.files;
         if (files && files.length > 0) handleUpload({ target: { files } });
     };
-
     const styles = {
         pageWrapper: {
             margin: '-2rem', 
@@ -403,7 +401,6 @@ const MediaLibraryPage = () => {
                     Перетягніть файли сюди
                 </div>
             )}
-
             <div style={styles.stickyHeader}>
                 <div style={styles.headerContent}>
                     <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Медіатека</h1>
@@ -415,7 +412,6 @@ const MediaLibraryPage = () => {
                         <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleUpload} />
                     </div>
                 </div>
-
                 <SiteFilters 
                     searchTerm={searchTerm}
                     onSearchChange={setSearchTerm}
@@ -431,7 +427,6 @@ const MediaLibraryPage = () => {
                     afterTags={formatButtons}
                 />
             </div>
-
             <div style={styles.mainContent}>
                 <div 
                     style={{
@@ -486,7 +481,6 @@ const MediaLibraryPage = () => {
                         </>
                     )}
                 </div>
-
                 {selectedFile && (
                     <div style={styles.inspectorPanel} className="hide-scrollbar">
                         <style>{`
@@ -507,11 +501,9 @@ const MediaLibraryPage = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span>Всього: {files.length}</span>
                     <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }} />
-                    
                     <Button variant="ghost" onClick={handleSelectAll} style={{ fontSize: '0.8rem', padding: '4px' }}>
                         <Check size={14} /> Вибрати все
                     </Button>
-
                     {checkedFiles.size > 0 && (
                         <Button 
                             variant="ghost" 
@@ -523,7 +515,6 @@ const MediaLibraryPage = () => {
                         </Button>
                     )}
                 </div>
-
                 {checkedFiles.size > 0 ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Button variant="ghost" onClick={handleBulkDownload} style={{ fontSize: '0.8rem', padding: '4px 8px' }}>

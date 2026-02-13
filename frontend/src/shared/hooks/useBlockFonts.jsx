@@ -1,7 +1,7 @@
 // frontend/src/shared/hooks/useBlockFonts.jsx
 import React, { useMemo } from 'react';
+import { API_URL } from '../config';
 
-const API_URL = 'http://localhost:5000';
 export const useBlockFonts = (fontsConfig, siteData) => {
     const themeSettings = siteData?.theme_settings || {};
     const globalFonts = {
@@ -34,7 +34,6 @@ export const useBlockFonts = (fontsConfig, siteData) => {
             '--site-font-body': bodyFamily,
         };
     }, [themeSettings]); 
-
     const styles = useMemo(() => {
         const result = {};
         Object.keys(fontsConfig).forEach(key => {
@@ -72,7 +71,6 @@ export const useBlockFonts = (fontsConfig, siteData) => {
                         if (url.endsWith('.woff2')) format = 'woff2';
                         else if (url.endsWith('.woff')) format = 'woff';
                         else if (url.endsWith('.otf')) format = 'opentype';
-                        
                         return (
                             <style key={name}>{`
                                 @font-face {
@@ -83,7 +81,6 @@ export const useBlockFonts = (fontsConfig, siteData) => {
                             `}</style>
                         );
                     }
-                    
                     if (!fontVal.includes('var(') && !fontVal.includes('CustomFont-')) {
                         const clean = fontVal.split(',')[0].replace(/['"]/g, '');
                         if(['sans-serif', 'serif', 'monospace', 'inherit'].includes(clean.toLowerCase())) return null;

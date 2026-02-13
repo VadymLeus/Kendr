@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
+import { BASE_URL } from '../../../shared/config';
 import { Search, X, Check, ArrowUp, ArrowDown, ArrowUpDown, Trash, Filter, PackageOpen } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], siteId }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -411,7 +411,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                     ) : (
                         sortedProducts.map(product => {
                             const isSelected = selectedIds.has(product.id);
-                            const imgUrl = product.image_gallery?.[0] ? `${API_URL}${product.image_gallery[0]}` : 'https://placehold.co/50x50/EFEFEF/31343C?text=📷';
+                            const imgUrl = product.image_gallery?.[0] ? `${BASE_URL}${product.image_gallery[0]}` : 'https://placehold.co/50x50/EFEFEF/31343C?text=📷';
                             const category = categories.find(c => c.id === product.category_id);
                             return (
                                 <div 

@@ -3,15 +3,15 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { generateFullHTML } from './htmlGenerator';
 import apiClient from '../api/api';
+import { BASE_URL } from '../config';
 
-const API_BASE_URL = 'http://localhost:5000';
 const getAbsoluteUrl = (url) => {
     if (!url || typeof url !== 'string') return null;
     if (url.startsWith('data:')) return null;
     if (url.startsWith('blob:')) return null;
     if (url.startsWith('http')) return url;
     const cleanPath = url.startsWith('/') ? url.slice(1) : url;
-    return `${API_BASE_URL}/${cleanPath}`;
+    return `${BASE_URL}/${cleanPath}`;
 };
 
 const collectMediaStrings = (obj, foundStrings = new Set()) => {
@@ -73,7 +73,6 @@ const replaceStringsInObject = (obj, mapOriginalToLocal) => {
 
 export const exportSiteToZip = async (initialSiteData) => {
     console.log("[Exporter] Starting export process...");
-    
     try {
         const zip = new JSZip();
         const siteId = initialSiteData.id;
@@ -132,7 +131,6 @@ export const exportSiteToZip = async (initialSiteData) => {
         });
 
         await Promise.all(downloadPromises);
-
         const localizedSiteData = replaceStringsInObject(initialSiteData, mapOriginalToLocal);
         const isDark = localizedSiteData.site_theme_mode === 'dark';
         const theme = localizedSiteData.theme_settings || {};
@@ -155,9 +153,7 @@ export const exportSiteToZip = async (initialSiteData) => {
             img, video { max-width: 100%; display: block; }
             a { text-decoration: none; color: inherit; }
             .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
-            
             [data-lucide] { width: 24px; height: 24px; display: inline-block; stroke-width: 2; }
-            
             .static-slider {
                 display: flex;
                 overflow-x: auto;
@@ -179,21 +175,15 @@ export const exportSiteToZip = async (initialSiteData) => {
 
         for (const page of allPagesMeta) {
             const originalBlocks = pagesContentMap[page.id];
-            
             const localizedBlocks = replaceStringsInObject(originalBlocks, mapOriginalToLocal);
-            
             const filename = page.is_homepage ? 'index.html' : `${page.slug}.html`;
-            
             const html = generateFullHTML(localizedSiteData, localizedBlocks, page.title);
             zip.file(filename, html);
         }
 
         zip.file("README.txt", "Exported from Kendr Website Builder.\n\nTo view your site, open index.html in any browser.");
-        
         const content = await zip.generateAsync({ type: "blob" });
-        
         saveAs(content, `${initialSiteData.site_path || 'website'}_export.zip`);
-        
         return true;
     } catch (error) {
         console.error("[Exporter] Critical Error:", error);

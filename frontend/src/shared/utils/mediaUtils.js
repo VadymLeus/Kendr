@@ -1,7 +1,8 @@
 // frontend/src/shared/lib/utils/mediaUtils.js
+import { BASE_URL } from '../config';
 import { File, FileText, Sheet, Presentation, Type, Image, Video, Music } from 'lucide-react';
 
-export const API_URL = 'http://localhost:5000';
+export const API_URL = BASE_URL;
 export const checkeredStyle = {
     backgroundImage: 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)',
     backgroundSize: '20px 20px',
@@ -33,7 +34,6 @@ export const getFileConfig = (file) => {
         config.type = 'video';
         return config;
     }
-
     switch (ext) {
         case 'PDF':
             config.IconComponent = FileText;

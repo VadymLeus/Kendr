@@ -10,9 +10,9 @@ import AlignmentControl from '../../ui/components/AlignmentControl';
 import ButtonEditor from '../../ui/components/ButtonEditor';
 import FontSelector from '../../ui/components/FontSelector';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
+import { BASE_URL } from '../../../../shared/config';
 import { Trash2, Plus, Image, Type, LayoutTemplate, List, Link, Pencil, AlertCircle, Upload } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const HeaderSettings = ({ data, onChange, siteData }) => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [itemToDeleteId, setItemToDeleteId] = useState(null);
@@ -55,7 +55,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
     const getLogoUrl = (src) => {
         if (!src) return '';
         if (src.startsWith('http')) return src;
-        return `${API_URL}${src}`;
+        return `${BASE_URL}${src}`;
     };
 
     const currentLogoRadius = data.logo_radius !== undefined ? data.logo_radius : (data.borderRadius || 0);
@@ -256,7 +256,6 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         </div>
                     ))}
                 </div>
-
                 <Button 
                     variant="outline"
                     onClick={addNavItem}

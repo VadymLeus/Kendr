@@ -1,6 +1,7 @@
 // frontend/src/shared/ui/elements/Avatar.jsx
 import React, { useState, useEffect } from 'react';
-const API_URL = 'http://localhost:5000'; 
+import { BASE_URL } from '../../config';
+
 const stringToColor = (string) => {
     if (!string) return '#cbd5e1'; 
     let hash = 0;
@@ -18,7 +19,6 @@ const getInitials = (name) => {
 
 const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) => {
     const [imgError, setImgError] = useState(false);
-
     useEffect(() => {
         setImgError(false);
     }, [url]);
@@ -27,7 +27,7 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
         if (!src) return null;
         if (src.startsWith('blob:')) return src;
         if (src.startsWith('http')) return src;
-        return `${API_URL}${src}`;
+        return `${BASE_URL}${src}`;
     };
 
     const finalUrl = getFullUrl(url);
@@ -37,7 +37,6 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
         fontSize: fontSize || `${Math.round(size * 0.45)}px`,
         ...style
     };
-
     if (finalUrl && !imgError) {
         return (
             <div className={`avatar-container ${className}`} style={sizeStyle}>

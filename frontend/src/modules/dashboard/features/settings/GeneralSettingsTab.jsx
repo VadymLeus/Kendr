@@ -14,9 +14,9 @@ import { InputWithCounter } from '../../../../shared/ui/complex/InputWithCounter
 import { TEXT_LIMITS } from '../../../../shared/config/limits';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { exportSiteToZip } from '../../../../shared/utils/siteExporter';
-import { Settings, Image, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout,  FileText, Download, Loader, FileDown, Lock, Construction, ArrowUpCircle, Eye, Camera, Coffee, Music, Star, Heart, ShoppingBag } from 'lucide-react';
+import { BASE_URL } from '../../../../shared/config';
+import { Settings, Image, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown, Lock, Construction, ArrowUpCircle, Eye, Camera, Coffee, Music, Star, Heart, ShoppingBag } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
@@ -76,7 +76,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         if (typeof src === 'string') {
             if (src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('http')) return src;
             const cleanSrc = src.startsWith('/') ? src : `/${src}`;
-            return `${API_URL}${cleanSrc}`;
+            return `${BASE_URL}${cleanSrc}`;
         }
         return '';
     };

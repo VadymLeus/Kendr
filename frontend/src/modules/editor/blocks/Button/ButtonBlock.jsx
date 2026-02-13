@@ -2,9 +2,8 @@
 import React from 'react';
 import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
+import { BASE_URL } from '../../../../shared/config';
 import { ArrowRight, ShoppingCart, Mail, Phone, Check, Star, MousePointer2, Download, FileText } from 'lucide-react';
-
-const API_URL = 'http://localhost:5000';
 const ButtonIcon = ({ name, size, flip }) => {
     if (!name || name === 'none') return null;
     const s = size === 'large' ? 20 : 18;
@@ -87,7 +86,7 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     let hrefValue = '#';
     if (link) {
         if (isFile) {
-            hrefValue = link.startsWith('http') ? link : `${API_URL}${link}`;
+            hrefValue = link.startsWith('http') ? link : `${BASE_URL}${link}`;
         } else {
             hrefValue = resolveSiteLink(link, siteData?.site_path);
         }
@@ -110,7 +109,6 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         >
             <RenderFonts />
             <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
-
             <style>{`
                 .btn-${styleType}-${variant}:hover { opacity: 0.9; transform: translateY(-1px); }
                 .btn-${styleType}-${variant}:active { transform: translateY(0); }

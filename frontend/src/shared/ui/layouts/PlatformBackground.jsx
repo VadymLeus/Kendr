@@ -1,15 +1,14 @@
 // frontend/src/shared/ui/layouts/PlatformBackground.jsx
 import React, { useContext } from 'react';
 import { AuthContext } from '../../../app/providers/AuthContext';
+import { BASE_URL } from '../../config';
 
-const API_URL = 'http://localhost:5000';
 const PlatformBackground = () => {
     const { user } = useContext(AuthContext);
     if (!user?.platform_bg_url) return null;
     const bgUrl = user.platform_bg_url.startsWith('http') 
         ? user.platform_bg_url 
-        : `${API_URL}${user.platform_bg_url}`;
-
+        : `${BASE_URL}${user.platform_bg_url}`;
     return (
         <div style={{
             position: 'fixed',

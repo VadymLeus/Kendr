@@ -3,6 +3,7 @@ import React from 'react';
 import { SectionTitle, ToggleSwitch } from '../../ui/configuration/SettingsUI';
 import OverlayControl from '../../ui/components/OverlayControl';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
+import { BASE_URL } from '../../../../shared/config';
 import { Video, Palette, Settings, Play, VolumeX, Repeat, Image as ImageIcon } from 'lucide-react';
 
 const VideoSettings = ({ data, onChange }) => {
@@ -23,8 +24,7 @@ const VideoSettings = ({ data, onChange }) => {
         let finalUrl = '';
         if (val && val.target && typeof val.target.value === 'string') finalUrl = val.target.value;
         else if (typeof val === 'string') finalUrl = val;
-
-        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
+        const relativeUrl = finalUrl.replace(BASE_URL, '');
         updateData({ url: relativeUrl });
     };
 
@@ -32,7 +32,7 @@ const VideoSettings = ({ data, onChange }) => {
         let posterUrl = '';
         if (val && val.target && typeof val.target.value === 'string') posterUrl = val.target.value;
         else if (typeof val === 'string') posterUrl = val;
-        const relativeUrl = posterUrl.replace(/^http:\/\/localhost:5000/, '');
+        const relativeUrl = posterUrl.replace(BASE_URL, '');
         updateData({ poster: relativeUrl });
     };
 
@@ -76,21 +76,18 @@ const VideoSettings = ({ data, onChange }) => {
                         label="Автоплей (Autoplay)"
                         icon={<Play size={16}/>}
                     />
-
                     <ToggleSwitch 
                         checked={safeData.muted}
                         onChange={(val) => updateData({ muted: val })}
                         label="Без звуку (Muted)"
                         icon={<VolumeX size={16}/>}
                     />
-
                     <ToggleSwitch 
                         checked={safeData.loop}
                         onChange={(val) => updateData({ loop: val })}
                         label="Зациклити (Loop)"
                         icon={<Repeat size={16}/>}
                     />
-
                     <ToggleSwitch 
                         checked={safeData.controls}
                         onChange={(val) => updateData({ controls: val })}

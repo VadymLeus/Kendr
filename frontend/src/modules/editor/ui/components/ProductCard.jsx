@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Settings } from 'lucide-react';
 import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
+import { BASE_URL } from '../../../../shared/config';
 
-const API_URL = 'http://localhost:5000';
 const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const cartContext = useContext(CartContext);
     const authContext = useContext(AuthContext);
@@ -20,9 +20,8 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             let gallery = typeof product.image_gallery === 'string' 
                 ? JSON.parse(product.image_gallery) 
                 : product.image_gallery;
-
             return gallery.map(img => 
-                img.startsWith('http') ? img : `${API_URL}${img}`
+                img.startsWith('http') ? img : `${BASE_URL}${img}`
             );
         }
         return ['https://placehold.co/300?text=No+Image'];
@@ -63,7 +62,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             navigate(productLink);
             return;
         }
-
         if (!user) {
             if (typeof window !== 'undefined' && window.confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
                 navigate('/login');
@@ -112,7 +110,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                             }}
                         />
                     ))}
-
                     {images.length > 1 && !isSoldOut && (
                         <div className={`
                             absolute bottom-2.5 left-0 right-0 flex justify-center gap-1 z-10 transition-opacity duration-200
@@ -147,7 +144,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                     >
                         {product.name}
                     </h4>
-                    
                     <div className="mt-auto flex justify-between items-center">
                         <div className="min-w-0 flex-1 overflow-hidden">
                             {hasDiscount ? (
@@ -161,7 +157,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                                 <span className="text-(--site-text-primary) font-bold text-lg">{product.price} ₴</span>
                             )}
                         </div>
-                        
                         <button
                             onClick={handleAction}
                             disabled={isSoldOut || (isOwner && !hasVariants)}

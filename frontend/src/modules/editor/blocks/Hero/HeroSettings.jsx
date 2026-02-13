@@ -7,6 +7,7 @@ import FontSelector from '../../ui/components/FontSelector';
 import OverlayControl from '../../ui/components/OverlayControl';
 import ButtonEditor from '../../ui/components/ButtonEditor';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
+import { BASE_URL } from '../../../../shared/config';
 import { Image, Video, Moon, Sun, Type, Palette, MousePointerClick, ImageIcon } from 'lucide-react';
 
 const HeroSettings = ({ data, onChange, siteData }) => {
@@ -73,7 +74,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
         } else if (typeof val === 'string') {
             finalUrl = val;
         }
-        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
+        const relativeUrl = finalUrl.replace(BASE_URL, '');
         onChange({ ...safeData, bg_image: relativeUrl }, true);
     };
 
@@ -84,7 +85,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
         } else if (typeof val === 'string') {
             finalUrl = val;
         }
-        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
+        const relativeUrl = finalUrl.replace(BASE_URL, '');
         onChange({ ...safeData, bg_video: relativeUrl }, true);
     };
 

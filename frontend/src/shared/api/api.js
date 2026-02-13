@@ -1,9 +1,11 @@
 // frontend/src/shared/api/api.js
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { API_URL } from '../config'; 
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_URL,
+  withCredentials: true
 });
 
 apiClient.interceptors.request.use(

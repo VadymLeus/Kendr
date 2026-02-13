@@ -2,8 +2,8 @@
 import React, { useRef, useEffect } from 'react';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 import ButtonBlock from '../Button/ButtonBlock'; 
+import { BASE_URL } from '../../../../shared/config';
 
-const API_URL = 'http://localhost:5000';
 const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
     const { 
         bg_type = 'image',
@@ -40,10 +40,10 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
     const computedTextColor = getTextColor();
     const computedTextShadow = theme_mode === 'dark' ? '0 2px 4px rgba(0,0,0,0.5)' : 'none';
     const fullImageUrl = bg_image 
-        ? (bg_image.startsWith('http') ? bg_image : `${API_URL}${bg_image}`)
+        ? (bg_image.startsWith('http') ? bg_image : `${BASE_URL}${bg_image}`)
         : null;
     const fullVideoUrl = bg_video 
-        ? (bg_video.startsWith('http') ? bg_video : `${API_URL}${bg_video}`)
+        ? (bg_video.startsWith('http') ? bg_video : `${BASE_URL}${bg_video}`)
         : null;
 
     useEffect(() => {
@@ -83,9 +83,9 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         <div 
             style={{ 
                 ...styles,
+                ...style,
                 backgroundColor: 'var(--site-bg)', 
                 color: computedTextColor,
-                ...style,
                 ...cssVariables
             }}
             className={`

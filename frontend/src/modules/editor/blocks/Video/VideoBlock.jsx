@@ -1,8 +1,8 @@
 // frontend/src/modules/editor/blocks/Video/VideoBlock.jsx
 import React, { useRef, useEffect } from 'react';
+import { BASE_URL } from '../../../../shared/config';
 import { Video as VideoIcon } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     const { 
         url, 
@@ -22,15 +22,12 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     const safeOpacity = (overlay_opacity === undefined || isNaN(Number(overlay_opacity))) 
         ? 0.5 
         : Number(overlay_opacity);
-
     const fullVideoUrl = url 
-        ? (url.startsWith('http') ? url : `${API_URL}${url}`) 
+        ? (url.startsWith('http') ? url : `${BASE_URL}${url}`) 
         : null;
-
     const fullPosterUrl = poster 
-        ? (poster.startsWith('http') ? poster : `${API_URL}${poster}`) 
+        ? (poster.startsWith('http') ? poster : `${BASE_URL}${poster}`) 
         : null;
-
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
@@ -47,7 +44,6 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
             }
         }
     }, [controls, autoplay, muted, fullVideoUrl]);
-
     const heightMap = { 
         small: '300px', 
         medium: '500px', 
@@ -95,7 +91,6 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
                 />
             );
         }
-
         if (isEditorPreview) {
             return <Placeholder />;
         }

@@ -1,8 +1,8 @@
 // frontend/src/modules/renderer/components/FontLoader.jsx
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { BASE_URL } from '../../../shared/config';
 
-const API_URL = 'http://localhost:5000';
 const FontLoader = ({ fontHeading, fontBody }) => {
     const getFontCss = (fontFamily, type) => {
         if (!fontFamily || fontFamily === 'global') return null;
@@ -11,7 +11,7 @@ const FontLoader = ({ fontHeading, fontBody }) => {
             let fontUrl = fontFamily;
             if (!fontFamily.startsWith('http')) {
                 const path = fontFamily.startsWith('/') ? fontFamily : `/${fontFamily}`;
-                fontUrl = `${API_URL}${path}`;
+                fontUrl = `${BASE_URL}${path}`;
             }
             
             const fontName = `CustomFont-${type}`;
@@ -61,7 +61,6 @@ const FontLoader = ({ fontHeading, fontBody }) => {
             {bodyFont && bodyFont.isCustom && (
                 <style type="text/css">{bodyFont.style}</style>
             )}
-
             <style type="text/css">{`
                 :root {
                     --site-font-heading: ${headingFont ? `'${headingFont.name}', sans-serif` : 'inherit'};

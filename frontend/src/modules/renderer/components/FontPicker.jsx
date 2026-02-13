@@ -6,9 +6,9 @@ import { FONT_LIBRARY } from '../../editor/core/editorConfig';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements/Button';
 import MediaPickerModal from '../../media/components/MediaPickerModal';
+import { BASE_URL } from '../../../shared/config';
 import { Search, Plus, Trash2, Edit2, Check, Type, Globe, Folder, ChevronDown } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const EVENT_FONT_CHANGED = 'platform:font-changed';
 const STORAGE_HIDDEN_KEY = 'platform_hidden_fonts';
 const FontPicker = ({ 
@@ -28,7 +28,6 @@ const FontPicker = ({
             return { custom: true, google: true };
         }
     });
-
     const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
     const [editingListId, setEditingListId] = useState(null); 
     const [editName, setEditName] = useState('');
@@ -45,14 +44,12 @@ const FontPicker = ({
                 try {
                     hiddenFonts = JSON.parse(localStorage.getItem(STORAGE_HIDDEN_KEY) || '[]');
                 } catch (e) { hiddenFonts = []; }
-
                 const serverFonts = res.data.filter(f => 
                     (f.file_type === 'font' || 
                     f.mime_type?.includes('font') || 
                     /\.(ttf|otf|woff|woff2)$/i.test(f.original_file_name)) &&
                     !hiddenFonts.includes(f.path_full)
                 );
-
                 const formattedFonts = serverFonts.map(f => ({
                     ...f,
                     id: f.id,
@@ -62,7 +59,6 @@ const FontPicker = ({
                     isCustom: true,
                     isTemp: false 
                 }));
-
                 setLocalFonts(prev => {
                     const uniqueMap = new Map();
                     prev.forEach(item => {
@@ -116,23 +112,18 @@ const FontPicker = ({
     useEffect(() => {
         setPreviewFont(value);
     }, [value]);
-
     const toggleSection = (section) => {
         setSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
-
     const handleMediaSelect = (file) => {
         const selectedFile = Array.isArray(file) ? file[0] : file;
         if (!selectedFile) return;
-
         const isFont = selectedFile.file_type === 'font' || 
                        selectedFile.mime_type?.includes('font') || 
                        /\.(ttf|otf|woff|woff2)$/i.test(selectedFile.original_file_name);
-        
         if (!isFont) {
             toast.warning('Файл може не працювати як шрифт');
         }
-
         try {
             const hiddenFonts = JSON.parse(localStorage.getItem(STORAGE_HIDDEN_KEY) || '[]');
             if (hiddenFonts.includes(selectedFile.path_full)) {
@@ -158,7 +149,6 @@ const FontPicker = ({
             type: "warning",
             confirmLabel: "Прибрати"
         });
-
         if (!isConfirmed) return;
         if (itemToDelete) {
             try {
@@ -247,9 +237,8 @@ const FontPicker = ({
         const loadFontPreview = async () => {
             const isCustom = previewFont.includes('/uploads/');
             const previewEl = document.getElementById(`font-preview-${type}`);
-            
             if (isCustom) {
-                const url = previewFont.startsWith('http') ? previewFont : `${API_URL}${previewFont}`;
+                const url = previewFont.startsWith('http') ? previewFont : `${BASE_URL}${previewFont}`;
                 const familyName = `Preview-${Date.now()}`; 
                 const fontFace = new FontFace(familyName, `url(${url})`);
                 try {
@@ -267,7 +256,6 @@ const FontPicker = ({
                     if (previewEl) previewEl.style.fontFamily = scopedName;
                     return;
                 }
-
                 try {
                     const response = await fetch(`https://fonts.googleapis.com/css2?family=${cleanName.replace(/ /g, '+')}:wght@400;700&display=swap`);
                     let cssText = await response.text();
@@ -275,12 +263,10 @@ const FontPicker = ({
                         new RegExp(`font-family:\\s*['"]?${cleanName}['"]?;`, 'g'), 
                         `font-family: '${scopedName}';`
                     );
-
                     const style = document.createElement('style');
                     style.id = styleId;
                     style.textContent = cssText;
                     document.head.appendChild(style);
-
                     if (previewEl) previewEl.style.fontFamily = scopedName;
                 } catch (error) {
                     console.error("Failed to fetch Google Font CSS for preview isolation:", error);
@@ -380,7 +366,6 @@ const FontPicker = ({
                 <Type size={16} />
                 {label}
             </label>
-            
             <div style={containerStyle}>
                 <div style={headerStyle}>
                     <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
@@ -403,7 +388,6 @@ const FontPicker = ({
                             }}
                         />
                     </div>
-                    
                     <Button 
                         size="sm" 
                         onClick={() => setIsMediaModalOpen(true)}
@@ -413,13 +397,11 @@ const FontPicker = ({
                         Додати
                     </Button>
                 </div>
-
                 <div style={bodyStyle}>
                     <div 
                         style={listStyle} 
                         className={`custom-scrollbar font-picker-scroll`}
                     >
-                        
                         {customList.length > 0 && (
                             <div 
                                 style={{...sectionHeaderStyle, borderTop: 'none'}}
@@ -433,7 +415,6 @@ const FontPicker = ({
                                 {renderArrow(sections.custom)}
                             </div>
                         )}
-
                         {sections.custom && customList.map((font) => {
                             const isActive = value === font.value;
                             return (
@@ -483,7 +464,6 @@ const FontPicker = ({
                                 </div>
                             );
                         })}
-
                         <div 
                             style={{
                                 ...sectionHeaderStyle, 
@@ -498,7 +478,6 @@ const FontPicker = ({
                             </div>
                             {renderArrow(sections.google)}
                         </div>
-
                         {sections.google && googleList.map((font) => {
                             const isActive = value === font.value;
                             return (
@@ -520,7 +499,6 @@ const FontPicker = ({
                             </div>
                         )}
                     </div>
-
                     <div style={previewAreaStyle}>
                         <div 
                             id={`font-preview-${type}`}
@@ -537,7 +515,6 @@ const FontPicker = ({
                                     : 'Основний текст має бути розбірливим для комфортного читання.'}
                             </p>
                         </div>
-                        
                         {previewFont !== value && (
                             <div style={{ marginTop: '20px', animation: 'fadeIn 0.2s ease-out' }}>
                                 <Button 
@@ -578,9 +555,7 @@ const FontPicker = ({
                 .font-item:not(.active) .action-btn.delete:hover { background: color-mix(in srgb, var(--platform-danger), transparent 90%); color: var(--platform-danger); opacity: 1; }
                 .font-item.active .action-btn:hover { background: rgba(255, 255, 255, 0.2); opacity: 1; }
                 .font-item.active .action-btn.delete:hover { background: #ffffff; color: var(--platform-danger) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-                
                 .hover-bg-platform:hover { background-color: var(--platform-hover-bg); }
-
                 .font-picker-scroll::-webkit-scrollbar-track {
                     background: transparent !important;
                 }

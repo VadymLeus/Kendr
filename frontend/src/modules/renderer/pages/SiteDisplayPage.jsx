@@ -11,8 +11,8 @@ import useScrollToHash from '../../../shared/hooks/useScrollToHash';
 import CookieBanner from '../components/CookieBanner';
 import FontLoader from '../components/FontLoader';
 import ReportModal from '../../../shared/ui/complex/ReportModal';
+import { BASE_URL } from '../../../shared/config';
 
-const API_URL = 'http://localhost:5000';
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
     const { site_path } = useParams();
@@ -41,7 +41,6 @@ const SiteDisplayPage = () => {
     }
 
     if (!siteData.page) return <NotFoundPage />;
-
     const page = siteData.page;
     const titlePart = page.seo_title || page.name;
     const sitePart = siteData.site_title_seo || siteData.title;
@@ -50,16 +49,14 @@ const SiteDisplayPage = () => {
     const favicon = siteData.favicon_url
         ? (siteData.favicon_url.startsWith('http')
             ? siteData.favicon_url
-            : `${API_URL}${siteData.favicon_url.startsWith('/') ? '' : '/'}${siteData.favicon_url}`)
+            : `${BASE_URL}${siteData.favicon_url.startsWith('/') ? '' : '/'}${siteData.favicon_url}`)
         : '/icon-light.webp';
-
     let pageBlocks = [];
     try {
         pageBlocks = Array.isArray(siteData.page.block_content)
             ? siteData.page.block_content
             : JSON.parse(siteData.page.block_content || '[]');
     } catch (e) {}
-
     let footerBlocks = [];
     try {
         footerBlocks = Array.isArray(siteData.footer_content)
@@ -108,7 +105,6 @@ const SiteDisplayPage = () => {
         justifyContent: 'center',
         gap: '8px'
     };
-
     return (
         <div 
             className="site-root site-theme-context" 
@@ -123,26 +119,22 @@ const SiteDisplayPage = () => {
                 <link rel="icon" type="image/webp" href={favicon} />
                 <meta property="og:title" content={finalTitle} />
                 <meta property="og:description" content={description} />
-                <meta property="og:image" content={siteData.logo_url ? (siteData.logo_url.startsWith('http') ? siteData.logo_url : `${API_URL}${siteData.logo_url}`) : favicon} />
+                <meta property="og:image" content={siteData.logo_url ? (siteData.logo_url.startsWith('http') ? siteData.logo_url : `${BASE_URL}${siteData.logo_url}`) : favicon} />
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.href} />
             </Helmet>
-
             {siteData && siteData.theme_settings && (
                 <FontLoader
                     fontHeading={siteData.theme_settings.font_heading}
                     fontBody={siteData.theme_settings.font_body}
                 />
             )}
-
             <main style={mainContentStyle}>
                 <BlockRenderer blocks={pageBlocks} siteData={siteData} />
             </main>
-
             {(footerBlocks.length > 0 || true) && (
                 <footer style={footerStyle}>
                     {footerBlocks.length > 0 && <BlockRenderer blocks={footerBlocks} siteData={siteData} />}
-
                     <div style={copyrightStyle}>
                         <span>Powered by Kendr</span>
                         {!isOwner && (
@@ -171,12 +163,10 @@ const SiteDisplayPage = () => {
                     </div>
                 </footer>
             )}
-
             <CookieBanner
                 settings={siteData.theme_settings?.cookie_banner}
                 siteId={siteData.id}
             />
-
             <ReportModal
                 isOpen={isReportOpen}
                 onClose={() => setIsReportOpen(false)}

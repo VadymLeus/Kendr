@@ -5,9 +5,9 @@ import { AuthContext } from '../../../../app/providers/AuthContext';
 import { FavoritesContext } from '../../../../app/providers/FavoritesContext';
 import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
+import { BASE_URL } from '../../../../shared/config';
 import { Settings, Star, Menu, ArrowRight, ShoppingCart, Mail, Phone, Check, MousePointer2, Star as StarIcon} from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const ICON_MAP = {
     arrowRight: ArrowRight,
     cart: ShoppingCart,
@@ -137,7 +137,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isFavorite = siteData && favoriteSiteIds.has(parseInt(siteData.id));
     const logoUrl = (effectiveLogoSrc && typeof effectiveLogoSrc === 'string')
-        ? (effectiveLogoSrc.startsWith('http') ? effectiveLogoSrc : `${API_URL}${effectiveLogoSrc}`)
+        ? (effectiveLogoSrc.startsWith('http') ? effectiveLogoSrc : `${BASE_URL}${effectiveLogoSrc}`)
         : null;
     const NavWrapper = isEditorPreview ? 'div' : Link;
     const ActionWrapper = isEditorPreview ? 'div' : Link;
@@ -208,7 +208,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                                 fontFamily: fontStyles.navText
                             };
                         }
-
                         const IconComp = (nav_style === 'button' && buttonSettings.icon && buttonSettings.icon !== 'none') 
                             ? ICON_MAP[buttonSettings.icon] 
                             : null;

@@ -11,8 +11,8 @@ import ProductCard from '../editor/ui/components/ProductCard';
 import MaintenancePage from '../../pages/MaintenancePage'; 
 import NotFoundPage from '../../pages/NotFoundPage';
 import styles from './ProductDetailPage.module.css';
+import { BASE_URL } from '../../shared/config';
 
-const API_URL = 'http://localhost:5000';
 const safeParseFloat = (val) => {
     if (val === null || val === undefined || val === '') return 0;
     const num = parseFloat(val);
@@ -70,10 +70,8 @@ const ProductDetailPage = () => {
                         try { prod[key] = JSON.parse(prod[key]); } catch (e) { prod[key] = null; }
                     }
                 });
-                
                 setProduct(prod);
                 setActiveImageIndex(0);
-
                 if (Array.isArray(prod.variants) && prod.variants.length > 0) {
                     const defaults = {};
                     prod.variants.forEach(v => {
@@ -81,9 +79,7 @@ const ProductDetailPage = () => {
                     });
                     setSelectedOptions(defaults);
                 }
-
                 if (prod.site_id) fetchRecommendations(prod.site_id, prod.category_id, prod.id);
-
             } catch (err) {
                 console.error("Product load error:", err);
                 if (err.response && (err.response.status === 403 || err.response.data?.code === 'SITE_DRAFT_MODE')) {
@@ -130,7 +126,6 @@ const ProductDetailPage = () => {
                 }
             });
         }
-
         const prodSale = safeParseFloat(product.sale_percentage);
         const catSale = safeParseFloat(product.category_discount);
         let activeDiscount = maxVariantDiscount || prodSale || catSale || 0;
@@ -196,10 +191,9 @@ const ProductDetailPage = () => {
 
     if (isNotFound || !product || Object.keys(product).length === 0) return <NotFoundPage />;
     const galleryImages = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length > 0)
-        ? product.image_gallery.map(img => img.startsWith('http') ? img : `${API_URL}${img}`)
+        ? product.image_gallery.map(img => img.startsWith('http') ? img : `${BASE_URL}${img}`)
         : ['https://placehold.co/600x600?text=No+Image'];
-
-    const faviconUrl = siteData?.favicon_url?.startsWith('http') ? siteData.favicon_url : `${API_URL}${siteData?.favicon_url || '/icon-light.webp'}`;
+    const faviconUrl = siteData?.favicon_url?.startsWith('http') ? siteData.favicon_url : `${BASE_URL}${siteData?.favicon_url || '/icon-light.webp'}`;
     const pageTitle = `${product.name || 'Товар'} | ${siteData?.site_title_seo || siteData?.title || 'Kendr Store'}`;
     const dynamicStyles = {
         '--zoom-controls-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
@@ -220,7 +214,6 @@ const ProductDetailPage = () => {
                 <meta property="og:title" content={pageTitle} />
                 <meta property="og:image" content={galleryImages[0]} />
             </Helmet>
-
             <div className={styles.mainContent}>
                 <div className={styles.productGrid}>
                     <div className={styles.galleryContainer}>
@@ -237,7 +230,6 @@ const ProductDetailPage = () => {
                                 ))}
                             </div>
                         )}
-                        
                         <div 
                             ref={imageContainerRef}
                             className={`${styles.mainImageBox} ${imageScale > 1 ? (isDragging ? styles.dragging : styles.draggable) : styles.zoomable}`}
@@ -255,20 +247,17 @@ const ProductDetailPage = () => {
                                 style={{ transform: `scale(${imageScale}) translate(${imagePosition.x}px, ${imagePosition.y}px)` }}
                                 draggable="false"
                             />
-                            
                             <div className={styles.zoomInfo}>{Math.round(imageScale * 100)}%</div>
                             <div className={`${styles.zoomControls} zoom-controls`}>
                                 <button onClick={(e) => { e.stopPropagation(); handleZoom('out'); }} disabled={imageScale <= 0.5} className={styles.zoomButton}>−</button>
                                 <button onClick={(e) => { e.stopPropagation(); handleZoom('reset'); }} className={styles.zoomButton}>1:1</button>
                                 <button onClick={(e) => { e.stopPropagation(); handleZoom('in'); }} disabled={imageScale >= 5} className={styles.zoomButton}>+</button>
                             </div>
-
                             {product.sale_percentage > 0 && !isSoldOut && (
                                 <div className={styles.saleBadge}>-{product.sale_percentage}%</div>
                             )}
                         </div>
                     </div>
-
                     <div className={styles.productInfoCol}>
                         <div>
                             <h1 className={styles.productTitle}>{product.name || 'Товар'}</h1>
@@ -284,7 +273,6 @@ const ProductDetailPage = () => {
                                 )}
                             </div>
                         </div>
-
                         <div className={styles.priceContainer}>
                             {priceData.isDiscounted ? (
                                 <>
@@ -295,7 +283,6 @@ const ProductDetailPage = () => {
                                 <span className={styles.finalPrice}>{priceData.finalPrice} ₴</span>
                             )}
                         </div>
-
                         {product.variants?.map((variant, idx) => (
                             <div key={idx} className={styles.variantContainer}>
                                 <label className={styles.variantLabel}>{variant.name}:</label>
@@ -312,7 +299,6 @@ const ProductDetailPage = () => {
                                 </div>
                             </div>
                         ))}
-
                         <div style={{marginTop: '20px'}}>
                             <button
                                 onClick={handleAddToCart}
@@ -324,14 +310,12 @@ const ProductDetailPage = () => {
                         </div>
                     </div>
                 </div>
-
                 <div className={styles.descriptionContainer}>
                     <div className={styles.descriptionHeader}>Характеристики та опис</div>
                     <div className={`${styles.descriptionContent} custom-scrollbar`}>
                         {product.description || 'Опис відсутній'}
                     </div>
                 </div>
-
                 {relatedProducts.length > 0 && (
                     <div className={styles.recommendationsSection}>
                         <h2 className={styles.recommendationsTitle}>Інші товари</h2>
@@ -345,7 +329,6 @@ const ProductDetailPage = () => {
                     </div>
                 )}
             </div>
-
             {siteData?.footer_content && (
                 <footer className={styles.footer}>
                     <BlockRenderer 

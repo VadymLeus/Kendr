@@ -1,8 +1,8 @@
 // frontend/src/pages/MaintenancePage.jsx
 import React from 'react';
+import { BASE_URL } from '../shared/config';
 import { Construction } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
     const colors = themeSettings?.colors || {};
     const fonts = themeSettings?.fonts || {};
@@ -101,8 +101,8 @@ const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                 <div style={{ marginBottom: '1.5rem' }}>
                     {logoUrl && !logoUrl.includes('default') ? (
-                        <img 
-                            src={logoUrl.startsWith('http') ? logoUrl : `${API_URL}${logoUrl}`} 
+                        <img
+                            src={logoUrl.startsWith('http') ? logoUrl : `${BASE_URL}${logoUrl}`} 
                             alt={siteName} 
                             style={logoStyle} 
                         />
@@ -112,9 +112,7 @@ const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
                         </div>
                     )}
                 </div>
-                
                 <h1 style={titleStyle}>Технічне обслуговування</h1>
-                
                 <p style={textStyle}>
                     Сайт <span style={highlightStyle} title={siteName || 'цей сайт'}>"{siteName || 'цей сайт'}"</span> тимчасово недоступний через планові роботи або оновлення.
                     <br />
@@ -123,7 +121,6 @@ const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
                     <br />
                     Будь ласка, спробуйте зайти пізніше.
                 </p>
-                
                 <div style={{ 
                     width: '60px', 
                     height: '4px', 
@@ -132,7 +129,6 @@ const MaintenancePage = ({ logoUrl, siteName, themeSettings = {} }) => {
                     opacity: 0.5 
                 }} />
             </div>
-
             <div style={footerStyle}>
                 &copy; {new Date().getFullYear()} {siteName}. Всі права захищено.
             </div>

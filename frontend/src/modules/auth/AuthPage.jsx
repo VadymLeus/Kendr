@@ -10,9 +10,9 @@ import Avatar from '../../shared/ui/elements/Avatar';
 import ImageUploadTrigger from '../../shared/ui/complex/ImageUploadTrigger';
 import PasswordStrengthMeter from '../../shared/ui/complex/PasswordStrengthMeter';
 import { analyzePassword } from '../../shared/utils/validationUtils';
+import { API_URL } from '../../shared/config';
 import { ArrowLeft, MailOpen, Trash, Camera, Upload } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const AuthPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const view = searchParams.get('view') || 'login';
@@ -49,9 +49,11 @@ const AuthPage = () => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+
     const handleGoogleAuth = () => {
-        window.location.href = `${API_URL}/api/auth/google`;
+        window.location.href = `${API_URL}/auth/google`; 
     };
+
     const handleAvatarUpload = (file) => {
         setIsAvatarUploading(true);
         const previewUrl = URL.createObjectURL(file);

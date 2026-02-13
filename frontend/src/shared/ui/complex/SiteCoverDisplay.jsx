@@ -1,7 +1,7 @@
 // frontend/src/shared/ui/complex/SiteCoverDisplay.jsx
 import React from 'react';
+import { BASE_URL } from '../../config';
 
-const API_URL = 'http://localhost:5000';
 const PRESET_COLORS = {
     green: '#48bb78', orange: '#ed8936', blue: '#4299e1', red: '#f56565',
     purple: '#9f7aea', yellow: '#ecc94b', gray: '#718096', black: '#000000',
@@ -24,19 +24,18 @@ const SiteCoverDisplay = ({ site, style, className }) => {
     const fullCoverImage = cover_image 
         ? (cover_image.startsWith('http') || cover_image.startsWith('data:') 
             ? cover_image 
-            : `${API_URL}${cover_image}`) 
+            : `${BASE_URL}${cover_image}`) 
         : null;
 
     const fullLogoUrl = logo_url 
         ? (logo_url.startsWith('http') || logo_url.startsWith('data:') 
             ? logo_url 
-            : `${API_URL}${logo_url}`)
+            : `${BASE_URL}${logo_url}`)
         : null;
 
     const accentColor = PRESET_COLORS[site_theme_accent] || site_theme_accent || '#ed8936';
     const isDark = site_theme_mode === 'dark';
     const wrapperBaseClass = `w-full h-full relative overflow-hidden flex items-center justify-center p-4 box-border transition-colors duration-300 ${isDark ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} ${className || ''}`;
-
     if (fullCoverImage) {
         return (
             <div className={`site-cover-display mode-image ${wrapperBaseClass}`} style={style}>
@@ -78,7 +77,6 @@ const SiteCoverDisplay = ({ site, style, className }) => {
 
     const showLogo = fullLogoUrl && cover_layout !== 'minimal';
     const showText = cover_layout !== 'logo_only';
-
     return (
         <div className={`site-cover-display mode-${cover_layout} ${wrapperBaseClass}`} style={generatedStyle}>
             <div className={layoutClasses}>

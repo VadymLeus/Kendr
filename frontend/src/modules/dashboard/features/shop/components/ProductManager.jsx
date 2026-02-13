@@ -11,9 +11,9 @@ import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import MediaPickerModal from '../../../../media/components/MediaPickerModal';
 import { SplitViewLayout } from '../../../../../shared/ui/layouts/SplitViewLayout';
 import { TEXT_LIMITS } from '../../../../../shared/config/limits';
+import { BASE_URL } from '../../../../../shared/config';
 import { ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
 const SORT_FIELDS = [
     { value: 'name', label: 'За назвою', icon: Type },
     { value: 'price', label: 'За ціною', icon: List },
@@ -180,7 +180,7 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
 const ProductTable = memo(({ 
     products, categories, loading, filters, setFilters, 
     sortOrder, setSortOrder, sortFields, onSelect, 
-    onCreate, onDelete, selectedId, API_URL 
+    onCreate, onDelete, selectedId 
 }) => {
     const categoryOptions = [
         { value: 'all', label: 'Всі категорії' },
@@ -256,7 +256,7 @@ const ProductTable = memo(({
                                 >
                                     <div className="h-35 bg-slate-50 relative border-b border-(--platform-border-color) flex items-center justify-center overflow-hidden">
                                          {product.image_gallery?.[0] ? (
-                                            <img src={`${API_URL}${product.image_gallery[0]}`} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                            <img src={`${BASE_URL}${product.image_gallery[0]}`} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                          ) : (
                                             <Image size={32} className="opacity-20 text-slate-400" />
                                          )}
@@ -394,7 +394,7 @@ const ProductEditorPanel = ({
                         <div className="grid grid-cols-4 gap-2">
                             {formData.image_gallery.map((img, i) => (
                                 <div key={i} className="aspect-square rounded-lg overflow-hidden border border-(--platform-border-color) relative group">
-                                    <img src={`${API_URL}${img}`} alt="" className="w-full h-full object-cover" />
+                                    <img src={`${BASE_URL}${img}`} alt="" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-start justify-end p-1">
                                         <button type="button" onClick={() => setFormData(p => ({...p, image_gallery: p.image_gallery.filter((_, idx) => idx !== i)}))} className="bg-red-500 text-white rounded cursor-pointer w-5 h-5 flex items-center justify-center border-none">
                                             <X size={14}/>
@@ -556,7 +556,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
                         onCreate={handleCreateNew}
                         onDelete={handleRequestDelete}
                         selectedId={activeProduct?.id}
-                        API_URL={API_URL}
                     />
                 }
                 content={

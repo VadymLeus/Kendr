@@ -4,6 +4,7 @@ import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import OverlayControl from '../../ui/components/OverlayControl';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
+import { BASE_URL } from '../../../../shared/config';
 import { Columns, Rows, ArrowUpToLine, AlignVerticalJustifyCenter, ArrowDownToLine, Palette, Layout, Image, Video, X, ImageIcon } from 'lucide-react';
 
 const PRESETS = [
@@ -49,15 +50,14 @@ const LayoutSettings = ({ data, onChange }) => {
         let finalUrl = '';
         if (val && val.target && typeof val.target.value === 'string') finalUrl = val.target.value;
         else if (typeof val === 'string') finalUrl = val;
-        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
+        const relativeUrl = finalUrl.replace(BASE_URL, '');
         updateData({ bg_image: relativeUrl });
     };
     const handleVideoChange = (val) => {
         let finalUrl = '';
         if (val && val.target && typeof val.target.value === 'string') finalUrl = val.target.value;
         else if (typeof val === 'string') finalUrl = val;
-
-        const relativeUrl = finalUrl.replace(/^http:\/\/localhost:5000/, '');
+        const relativeUrl = finalUrl.replace(BASE_URL, '');
         updateData({ bg_video: relativeUrl });
     };
     
@@ -103,7 +103,6 @@ const LayoutSettings = ({ data, onChange }) => {
                         );
                     })}
                 </div>
-
                 {data.bg_type === 'color' && (
                     <OverlayControl 
                         color={data.bg_color || '#f7fafc'}
@@ -112,7 +111,6 @@ const LayoutSettings = ({ data, onChange }) => {
                         onOpacityChange={() => {}} 
                     />
                 )}
-
                 {data.bg_type === 'image' && (
                     <div className="mb-5">
                         <label style={commonStyles.label}>Зображення</label>
@@ -176,7 +174,6 @@ const LayoutSettings = ({ data, onChange }) => {
                         options={presetOptions}
                     />
                 </div>
-
                 <div className="mb-5">
                     <label style={commonStyles.label}>Напрямок вмісту</label>
                     <div className="grid grid-cols-2 gap-2">

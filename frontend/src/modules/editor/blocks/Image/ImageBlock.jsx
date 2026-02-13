@@ -7,8 +7,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
 import { Image as ImageIcon } from 'lucide-react';
+import { BASE_URL } from '../../../../shared/config';
 
-const API_URL = 'http://localhost:5000';
 const formatBorderRadius = (radius) => {
     if (!radius) return '0px';
     return String(radius).match(/^[0-9]+$/) ? `${radius}px` : radius;
@@ -45,7 +45,7 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
     const isFixedHeight = height !== 'auto';
     const renderImage = (item, customStyle = {}) => {
         if (!item || !item.src) return null;
-        const fullUrl = item.src.startsWith('http') ? item.src : `${API_URL}${item.src}`;
+        const fullUrl = item.src.startsWith('http') ? item.src : `${BASE_URL}${item.src}`;
         return (
             <img 
                 src={fullUrl} 
@@ -168,7 +168,6 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
     };
 
     const widthClasses = { 'small': 'max-w-[400px]', 'medium': 'max-w-[700px]', 'large': 'max-w-[1000px]', 'full': 'max-w-full' };
-    
     return (
         <div 
             className={`
