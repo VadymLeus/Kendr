@@ -1,5 +1,6 @@
 // backend/utils/emailService.js
 const nodemailer = require('nodemailer');
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
     port: process.env.MAIL_PORT,
@@ -12,7 +13,6 @@ const transporter = nodemailer.createTransport({
 
 exports.sendSubmissionNotification = async (toEmail, siteTitle, formData) => {
     const { name, email, subject, message } = formData;
-
     const html = `
         <h2>Нова заявка з сайту "${siteTitle}"</h2>
         <p><strong>Від:</strong> ${name} (${email})</p>
@@ -36,8 +36,7 @@ exports.sendSubmissionNotification = async (toEmail, siteTitle, formData) => {
 };
 
 exports.sendVerificationEmail = async (toEmail, token) => {
-    const link = `http://localhost:5173/verify-email?token=${token}`;
-
+    const link = `${clientUrl}/verify-email?token=${token}`;
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #4299e1;">Ласкаво просимо до Kendr!</h2>
@@ -62,8 +61,7 @@ exports.sendVerificationEmail = async (toEmail, token) => {
 };
 
 exports.sendPasswordResetEmail = async (toEmail, token) => {
-    const link = `http://localhost:5173/reset-password?token=${token}`;
-
+    const link = `${clientUrl}/reset-password?token=${token}`;
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
             <h2 style="color: #ed8936; text-align: center;">Відновлення пароля</h2>

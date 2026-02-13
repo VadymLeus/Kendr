@@ -9,7 +9,6 @@ const db = require('../config/db');
 exports.register = async (req, res, next) => {
     try {
         const { username, email, password, avatar_url: selected_avatar_url } = req.body;
-
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ message: 'Пароль занадто слабкий.' });
@@ -26,7 +25,6 @@ exports.register = async (req, res, next) => {
         }
 
         let avatar_url = null;
-
         if (req.file) {
             avatar_url = `/uploads/avatars/custom/${req.file.filename}`;
         } else if (selected_avatar_url) {
@@ -34,7 +32,6 @@ exports.register = async (req, res, next) => {
         }
 
         const verificationToken = crypto.randomBytes(32).toString('hex');
-
         await User.create({ 
             username, 
             email, 
@@ -63,15 +60,12 @@ exports.verifyEmail = async (req, res, next) => {
     try {
         const { token } = req.body;
         if (!token) return res.status(400).json({ message: 'Токен відсутній' });
-
         const user = await User.findByVerificationToken(token);
-        
         if (!user) {
             return res.status(400).json({ message: 'Недійсний або застарілий токен' });
         }
 
         await User.verifyUser(user.id);
-
         res.json({ message: 'Email успішно підтверджено! Тепер ви можете увійти.' });
     } catch (error) {
         next(error);
@@ -82,9 +76,7 @@ exports.login = async (req, res, next) => {
     try {
         const { loginInput, password } = req.body;
         const user = await User.findByLoginInput(loginInput);
-
         if (!user) return res.status(401).json({ message: 'Невірний логін або пароль.' });
-
         if (user.is_verified === 0) {
             return res.status(403).json({ 
                 message: 'Ваша пошта не підтверджена.',
@@ -106,9 +98,7 @@ exports.login = async (req, res, next) => {
 
         await User.updateLastLogin(user.id);
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-        
         const hasPassword = !!user.password_hash;
-
         res.json({
             token,
             user: { 
@@ -131,16 +121,11 @@ exports.resendVerification = async (req, res, next) => {
     try {
         const { email } = req.body;
         const user = await User.findByEmail(email);
-
         if (!user) return res.status(404).json({ message: 'Користувача не знайдено.' });
         if (user.is_verified) return res.status(400).json({ message: 'Акаунт вже підтверджено.' });
-
         const verificationToken = crypto.randomBytes(32).toString('hex');
-        
         await db.query('UPDATE users SET verification_token = ? WHERE id = ?', [verificationToken, user.id]);
-
         await sendVerificationEmail(email, verificationToken);
-
         res.json({ message: 'Лист успішно відправлено повторно!' });
     } catch (error) {
         next(error);
@@ -158,14 +143,12 @@ exports.forgotPassword = async (req, res, next) => {
 
         const resetToken = crypto.randomBytes(32).toString('hex');
         const expires = new Date(Date.now() + 3600000);
-
         await db.query(
             'UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?',
             [resetToken, expires, user.id]
         );
 
         await sendPasswordResetEmail(email, resetToken);
-
         res.json({ message: 'Інструкції надіслано на вашу пошту.' });
     } catch (error) {
         next(error);
@@ -175,7 +158,6 @@ exports.forgotPassword = async (req, res, next) => {
 exports.resetPassword = async (req, res, next) => {
     try {
         const { token, newPassword } = req.body;
-        
         const [users] = await db.query(
             'SELECT * FROM users WHERE reset_token = ? AND reset_token_expires > NOW()',
             [token]
@@ -186,7 +168,6 @@ exports.resetPassword = async (req, res, next) => {
         }
 
         const user = users[0];
-        
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
         if (!passwordRegex.test(newPassword)) {
             return res.status(400).json({ message: 'Пароль занадто слабкий (мін. 8 символів, цифра, велика літера).' });
@@ -194,7 +175,6 @@ exports.resetPassword = async (req, res, next) => {
 
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(newPassword, salt);
-
         await db.query(
             'UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?',
             [passwordHash, user.id]
@@ -208,17 +188,15 @@ exports.resetPassword = async (req, res, next) => {
 
 exports.googleCallback = async (req, res) => {
     const token = jwt.sign({ id: req.user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    
-    res.redirect(`http://localhost:5173/auth/success?token=${token}`);
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    res.redirect(`${clientUrl}/auth/success?token=${token}`);
 };
 
 exports.getMe = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
-
         const hasPassword = await User.hasPassword(req.user.id);
-
         res.json({
             id: user.id, 
             username: user.username, 
