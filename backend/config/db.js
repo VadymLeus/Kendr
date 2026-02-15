@@ -1,18 +1,18 @@
 // backend/config/db.js
 const mysql = require('mysql2');
 require('dotenv').config();
-
-const pool = mysql.createPool({
+const dbConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 25152, 
-    ssl: {
-        rejectUnauthorized: false
-    },
-    
+    port: process.env.DB_PORT || 3306, 
     charset: 'utf8mb4'
-}).promise();
-
+};
+if (process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1') {
+    dbConfig.ssl = {
+        rejectUnauthorized: false
+    };
+}
+const pool = mysql.createPool(dbConfig).promise();
 module.exports = pool;

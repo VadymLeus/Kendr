@@ -39,7 +39,6 @@ app.use(cors({
     origin: allowedOrigins,
     credentials: true
 }));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 app.use(passport.initialize());
@@ -64,14 +63,10 @@ app.use('/api/public/form', publicFormRoutes);
 app.use('/api/saved-blocks', savedBlockRoutes);
 app.use('/api/user-templates', userTemplateRoutes);
 app.use('/api/reports', reportRoutes);
-
 app.get('/', (req, res) => {
     res.send('Welcome to Kendr API!');
 });
-
 app.use(errorHandler);
-
 app.listen(PORT, async () => {
     console.log(`Сервер запущено на порті ${PORT}`);
-    console.log(`Allowed CORS origins:`, allowedOrigins);
 });

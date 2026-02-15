@@ -10,12 +10,19 @@ import Avatar from '../../shared/ui/elements/Avatar';
 import ImageUploadTrigger from '../../shared/ui/complex/ImageUploadTrigger';
 import PasswordStrengthMeter from '../../shared/ui/complex/PasswordStrengthMeter';
 import { analyzePassword } from '../../shared/utils/validationUtils';
-import { API_URL } from '../../shared/config';
+import { API_URL, GOOGLE_AUTH_URL } from '../../shared/config';
 import { ArrowLeft, MailOpen, Trash, Camera, Upload } from 'lucide-react';
 
 const AuthPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const view = searchParams.get('view') || 'login';
+    const googleError = searchParams.get('error');
+    if (googleError === 'google_auth_failed') {
+        toast.error('Не вдалося увійти через Google', { toastId: 'google-err' });
+        searchParams.delete('error');
+        setSearchParams(searchParams);
+    }
+
     const setView = (newView) => {
         setSearchParams({ view: newView });
     };
@@ -37,6 +44,7 @@ const AuthPage = () => {
         url: null,
         preview: null
     });
+
     const getPageTitle = () => {
         switch(view) {
             case 'register': return 'Реєстрація акаунту | Kendr';
@@ -45,13 +53,13 @@ const AuthPage = () => {
             default: return 'Вхід до системи | Kendr';
         }
     };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
-
     const handleGoogleAuth = () => {
-        window.location.href = `${API_URL}/auth/google`; 
+        window.location.href = GOOGLE_AUTH_URL; 
     };
 
     const handleAvatarUpload = (file) => {
@@ -64,10 +72,12 @@ const AuthPage = () => {
         });
         setIsAvatarUploading(false);
     };
+
     const handleRemoveAvatar = (e) => {
         if(e) e.stopPropagation();
         setAvatarData({ file: null, url: null, preview: null });
     };
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -90,6 +100,7 @@ const AuthPage = () => {
             setIsLoading(false);
         }
     };
+
     const handleRegister = async (e) => {
         e.preventDefault();
         const passwordChecks = analyzePassword(formData.password);
@@ -199,6 +210,7 @@ const AuthPage = () => {
             </div>
         );
     }
+
     return (
         <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
             <Helmet>

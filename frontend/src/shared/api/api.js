@@ -33,6 +33,7 @@ apiClient.interceptors.response.use(
     } else if (isLockedHeader === 'false') {
         window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: false }));
     }
+    
     const announcementHeader = response.headers['x-global-announcement'];
     if (announcementHeader !== undefined) {
         const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
@@ -49,7 +50,15 @@ apiClient.interceptors.response.use(
           const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
           window.dispatchEvent(new CustomEvent('global_announcement_update', { detail: message }));
       }
-
+      if (status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          if (!window.location.pathname.includes('/login')) {
+              window.location.href = '/login';
+          }
+          
+          return Promise.reject(error);
+      }
       if (status === 503) {
         if (data.editor_locked) {
             window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: true }));
