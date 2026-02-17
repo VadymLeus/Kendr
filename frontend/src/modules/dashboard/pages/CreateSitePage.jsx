@@ -14,11 +14,18 @@ import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { BASE_URL } from '../../../shared/config';
 import { ArrowLeft, Layout, Check, Loader, AlertCircle, Grid, User, Search, Edit, Trash, Info, Palette, Sparkles, Globe, Lock, Image, FileText, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Shield, EyeOff, Tag } from 'lucide-react';
+
+const logosModules = import.meta.glob('../../../shared/assets/logos/*.{png,jpg,jpeg,webp,svg}', { 
+    eager: true, 
+    as: 'url' 
+});
+const LOCAL_DEFAULT_LOGOS = Object.values(logosModules);
 const ICON_MAP = {
     'Layout': Layout, 'FileText': FileText, 'ShoppingBag': ShoppingBag,
     'Briefcase': Briefcase, 'Camera': Camera, 'Coffee': Coffee,
     'Music': Music, 'Star': Star, 'Heart': Heart, 'Globe': Globe,
 };
+
 const TEMPLATE_CATEGORIES = [
     { id: 'All', label: 'Всі' },
     { id: 'General', label: 'Загальне' },
@@ -29,12 +36,14 @@ const TEMPLATE_CATEGORIES = [
     { id: 'Blog', label: 'Блог' },
     { id: 'Creative', label: 'Креатив' },
 ];
+
 const getTemplateIcon = (iconName) => ICON_MAP[iconName] || Layout; 
 const getCategoryLabel = (catId) => {
     if (!catId) return null;
     const found = TEMPLATE_CATEGORIES.find(c => c.id.toLowerCase() === catId.toLowerCase());
     return found ? found.label : catId;
 };
+
 const CreateSitePage = () => {
     const navigate = useNavigate();
     const { isAdmin } = useContext(AuthContext);
@@ -69,11 +78,11 @@ const CreateSitePage = () => {
         const loadData = async () => {
             try {
                 const templatesUrl = isAdmin ? '/sites/templates?include_drafts=true' : '/sites/templates';
-                const [sysRes, persRes, logosRes] = await Promise.allSettled([
+                const [sysRes, persRes] = await Promise.allSettled([
                     apiClient.get(templatesUrl),
                     apiClient.get('/user-templates'),
-                    apiClient.get('/sites/default-logos')
                 ]);
+
                 if (sysRes.status === 'fulfilled') {
                     setSystemTemplates(sysRes.value.data);
                     if (sysRes.value.data.length > 0) handleSelectTemplate(sysRes.value.data[0], 'system');
@@ -81,9 +90,12 @@ const CreateSitePage = () => {
                 if (persRes.status === 'fulfilled') {
                     setPersonalTemplates(persRes.value.data);
                 }
-                if (logosRes.status === 'fulfilled' && Array.isArray(logosRes.value.data) && logosRes.value.data.length > 0) {
-                    setDefaultRandomLogo(logosRes.value.data[Math.floor(Math.random() * logosRes.value.data.length)]);
-                }
+
+                if (LOCAL_DEFAULT_LOGOS.length > 0) {
+                    const random = LOCAL_DEFAULT_LOGOS[Math.floor(Math.random() * LOCAL_DEFAULT_LOGOS.length)];
+                    setDefaultRandomLogo(random);
+                } 
+
             } catch (err) {
                 console.error(err);
                 toast.error('Не вдалося завантажити дані');
@@ -93,6 +105,7 @@ const CreateSitePage = () => {
         };
         loadData();
     }, [isAdmin]);
+
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (!formData.slug || formData.slug.length < 3) {
@@ -107,6 +120,7 @@ const CreateSitePage = () => {
         }, 500);
         return () => clearTimeout(timer);
     }, [formData.slug]);
+
     const handleSelectTemplate = (template, type) => {
         if (!template) return;
         setSelectedTemplateId(template.id);
@@ -138,20 +152,28 @@ const CreateSitePage = () => {
         const hasHomePage = pages.find(p => p.slug === 'home');
         setCurrentPreviewSlug(hasHomePage ? 'home' : (pages[0]?.slug || 'home'));
     };
-    const effectiveLogo = customLogo || defaultRandomLogo || '/uploads/shops/logos/default/default-logo.webp';
+
+    const effectiveLogo = customLogo || defaultRandomLogo;
     const currentBlocks = useMemo(() => {
         const page = previewData.pages.find(p => p.slug === currentPreviewSlug);
         return page ? (page.blocks || []) : [];
     }, [previewData.pages, currentPreviewSlug]);
+
     const handleTitleChange = (e) => {
         const val = e.target.value;
         setFormData(prev => ({ ...prev, title: val }));
     };
+
     const handleSubmit = async () => {
         if (!formData.title || !formData.slug || !selectedTemplateId || slugStatus === 'taken') return;
         setIsSubmitting(true);
         try {
-            const payload = { templateId: selectedTemplateId, sitePath: formData.slug, title: formData.title, selected_logo_url: effectiveLogo };
+            const payload = { 
+                templateId: selectedTemplateId, 
+                sitePath: formData.slug, 
+                title: formData.title, 
+                selected_logo_url: effectiveLogo 
+            };
             const res = await apiClient.post('/sites/create', payload);
             toast.success('Сайт створено успішно!');
             window.location.href = `/dashboard/${res.data.site.site_path}`;
@@ -160,8 +182,21 @@ const CreateSitePage = () => {
             setIsSubmitting(false);
         }
     };
+
     const handleClearLogo = (e) => { e.stopPropagation(); setCustomLogo(null); };
-    const getFullUrl = (path) => path?.startsWith('http') ? path : `${BASE_URL}${path}`;
+    const getFullUrl = (path) => {
+        if (!path) return '';
+        if (path.startsWith('http') || path.startsWith('data:')) return path;
+        
+        if (path.startsWith('/logos/')) return path; 
+        
+        if (path.includes('/assets/') || path.includes('/src/') || path.includes('@fs')) {
+            return path;
+        }
+        const cleanPath = path.startsWith('/') ? path : `/${path}`;
+        return `${BASE_URL}${cleanPath}`;
+    };
+
     const handleOpenEditModal = (e, template) => { e.stopPropagation(); setEditingTemplate(template); setIsEditModalOpen(true); };
     const handleSaveTemplateChanges = async (name, description, icon, category) => {
         if (!editingTemplate) return;
@@ -171,6 +206,7 @@ const CreateSitePage = () => {
             toast.success('Шаблон оновлено'); setIsEditModalOpen(false); setEditingTemplate(null);
         } catch (error) { console.error(error); toast.error('Помилка при збереженні'); }
     };
+
     const handleConfirmDelete = async () => {
         if (!templateToDeleteId) return;
         try {
@@ -179,6 +215,7 @@ const CreateSitePage = () => {
             toast.success('Шаблон видалено');
         } catch (error) { toast.error('Помилка видалення'); } finally { setIsDeleteModalOpen(false); }
     };
+
     const filteredTemplates = useMemo(() => {
         let source = templateSourceTab === 'system' ? systemTemplates : personalTemplates;
         if (searchQuery) {
@@ -195,6 +232,7 @@ const CreateSitePage = () => {
         }
         return source;
     }, [templateSourceTab, systemTemplates, personalTemplates, searchQuery, selectedCategory]);
+
     const renderAdminBadge = (tpl) => {
         if (!isAdmin) return null;
         let badgeConfig = { text: '', Icon: null, colorVar: '' };
@@ -220,6 +258,7 @@ const CreateSitePage = () => {
             </div>
         );
     };
+
     if (isLoadingData) return <div className="flex h-full items-center justify-center bg-(--platform-bg)"><Loader size={48} className="text-(--platform-accent) animate-spin" /></div>;
     return (
         <div className="flex h-full w-full overflow-hidden bg-(--platform-bg) min-h-0">

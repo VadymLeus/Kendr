@@ -1,6 +1,16 @@
 // frontend/src/shared/ui/layouts/SiteHeader.jsx
 import React from 'react';
 import BlockRenderer from '../../../modules/editor/core/BlockRenderer';
+import { BASE_URL } from '../../config';
+
+const resolveUrl = (src) => {
+    if (!src) return null;
+    if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:')) return src;
+    if (src.startsWith('/logos/')) return src;
+    if (src.includes('/src/') || src.includes('/assets/') || src.includes('@fs')) return src;
+    const cleanSrc = src.startsWith('/') ? src : `/${src}`;
+    return `${BASE_URL}${cleanSrc}`;
+};
 
 const SiteHeader = ({ siteData, loading }) => {
     if (loading || !siteData) {
@@ -28,17 +38,21 @@ const SiteHeader = ({ siteData, loading }) => {
     }
 
     if (!headerBlocks || headerBlocks.length === 0) return null;
+    const processedSiteData = {
+        ...siteData,
+        logo_url: resolveUrl(siteData.logo_url)
+    };
 
     return (
         <div 
-            style={{ position: 'sticky', top: 0, zIndex: 1000, width: '100%' }}
+            style={{ position: 'sticky', top: 0, zIndex: 100, width: '100%' }}
             className="site-theme-context"
-            data-site-mode={siteData.site_theme_mode || 'light'}
-            data-site-accent={siteData.site_theme_accent || 'orange'}
+            data-site-mode={processedSiteData.site_theme_mode || 'light'}
+            data-site-accent={processedSiteData.site_theme_accent || 'orange'}
         >
             <BlockRenderer 
                 blocks={headerBlocks} 
-                siteData={siteData} 
+                siteData={processedSiteData} 
                 isEditorPreview={false} 
             />
         </div>

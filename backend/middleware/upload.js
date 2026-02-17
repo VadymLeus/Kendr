@@ -4,35 +4,19 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
 const { ensureDirExists } = require('../utils/fileUtils');
-
 const tempUploadPath = path.join(__dirname, '..', 'uploads', 'temp');
 const mediaUploadPath = path.join(__dirname, '..', 'uploads', 'media');
-
 ensureDirExists(tempUploadPath);
 ensureDirExists(mediaUploadPath);
-
 const FONT_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
 const DOC_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'];
-
 const mediaFileFilter = (req, file, cb) => {
     file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
-
     const ext = path.extname(file.originalname).toLowerCase();
-    
     const isImage = /jpeg|jpg|png|webp|gif/.test(file.mimetype) || /jpeg|jpg|png|webp|gif/.test(ext);
     const isVideo = /mp4|webm|ogg/.test(file.mimetype) || /mp4|webm|ogg/.test(ext);
     const isFont = FONT_EXTENSIONS.includes(ext);
     const isDoc = DOC_EXTENSIONS.includes(ext);
-
-    console.log('Upload check:', { 
-        name: file.originalname, 
-        mimetype: file.mimetype,
-        ext, 
-        isImage, 
-        isVideo, 
-        isFont, 
-        isDoc 
-    });
 
     if (isImage || isVideo || isFont || isDoc) {
         return cb(null, true);
@@ -64,11 +48,9 @@ const mediaUpload = multer({
 const memoryStorage = multer.memoryStorage();
 const imageFileFilter = (req, file, cb) => {
     file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const mimetype = allowedTypes.test(file.mimetype);
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    
     if (mimetype && extname) {
         return cb(null, true);
     }
@@ -91,7 +73,6 @@ const processAndSaveImage = (subfolder, filenamePrefix, size = 128) => {
             const finalPrefix = filenamePrefix === 'user' ? `user-${userId}` : filenamePrefix;
             const filename = `${finalPrefix}-${Date.now()}.webp`;
             const fullPath = path.join(uploadPath, filename);
-
             await sharp(req.file.buffer)
                 .resize(size, size, { fit: sharp.fit.cover, position: sharp.strategy.entropy })
                 .toFormat('webp')
@@ -117,10 +98,8 @@ const processAndSaveLogo = (size = 64) => {
         try {
             const uploadPath = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'custom');
             await ensureDirExists(uploadPath);
-
             const filename = `logo-${req.user.id}-${Date.now()}.webp`;
             const fullPath = path.join(uploadPath, filename);
-
             await sharp(req.file.buffer)
                 .resize(size, size, {
                     fit: sharp.fit.inside,
@@ -129,7 +108,6 @@ const processAndSaveLogo = (size = 64) => {
                 .toFormat('webp')
                 .webp({ quality: 85 })
                 .toFile(fullPath);
-            
             req.file.path = `/uploads/shops/logos/custom/${filename}`;
             req.file.filename = filename;
 
@@ -147,12 +125,10 @@ const processAndSaveGeneric = (subfolder, filenamePrefix, maxWidth = 1200) => {
         try {
             const uploadPath = path.join(__dirname, '..', 'uploads', subfolder);
             await ensureDirExists(uploadPath);
-            
             const userId = req.user ? req.user.id : 'guest';
             const finalPrefix = `${filenamePrefix}-${userId}`;
             const filename = `${finalPrefix}-${Date.now()}.webp`;
             const fullPath = path.join(uploadPath, filename);
-
             await sharp(req.file.buffer)
                 .resize({ 
                     width: maxWidth, 

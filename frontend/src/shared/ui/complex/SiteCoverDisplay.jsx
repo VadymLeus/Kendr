@@ -7,6 +7,15 @@ const PRESET_COLORS = {
     purple: '#9f7aea', yellow: '#ecc94b', gray: '#718096', black: '#000000',
 };
 
+const resolveUrl = (src) => {
+    if (!src) return null;
+    if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:')) return src;
+    if (src.startsWith('/logos/')) return src;
+    if (src.includes('/src/') || src.includes('/assets/') || src.includes('@fs')) return src;
+    const cleanSrc = src.startsWith('/') ? src : `/${src}`;
+    return `${BASE_URL}${cleanSrc}`;
+};
+
 const SiteCoverDisplay = ({ site, style, className }) => {
     if (!site) return <div className="w-full h-full bg-gray-200" />;
     const { 
@@ -21,21 +30,12 @@ const SiteCoverDisplay = ({ site, style, className }) => {
     const logoSize = parseInt(site.cover_logo_size) || 80;
     const logoRadius = parseInt(site.cover_logo_radius) || 0;
     const titleSize = parseInt(site.cover_title_size) || 24;
-    const fullCoverImage = cover_image 
-        ? (cover_image.startsWith('http') || cover_image.startsWith('data:') 
-            ? cover_image 
-            : `${BASE_URL}${cover_image}`) 
-        : null;
-
-    const fullLogoUrl = logo_url 
-        ? (logo_url.startsWith('http') || logo_url.startsWith('data:') 
-            ? logo_url 
-            : `${BASE_URL}${logo_url}`)
-        : null;
-
+    const fullCoverImage = resolveUrl(cover_image);
+    const fullLogoUrl = resolveUrl(logo_url);
     const accentColor = PRESET_COLORS[site_theme_accent] || site_theme_accent || '#ed8936';
     const isDark = site_theme_mode === 'dark';
     const wrapperBaseClass = `w-full h-full relative overflow-hidden flex items-center justify-center p-4 box-border transition-colors duration-300 ${isDark ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} ${className || ''}`;
+
     if (fullCoverImage) {
         return (
             <div className={`site-cover-display mode-image ${wrapperBaseClass}`} style={style}>

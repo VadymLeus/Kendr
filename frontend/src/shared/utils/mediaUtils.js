@@ -1,13 +1,23 @@
 // frontend/src/shared/lib/utils/mediaUtils.js
 import { BASE_URL } from '../config';
 import { File, FileText, Sheet, Presentation, Type, Image, Video, Music } from 'lucide-react';
-
-export const API_URL = BASE_URL;
+const CLEAN_ROOT_URL = (BASE_URL || '').replace(/\/api\/?$/, '').replace(/\/$/, '');
+export const API_URL = CLEAN_ROOT_URL;
 export const checkeredStyle = {
     backgroundImage: 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)',
     backgroundSize: '20px 20px',
     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
     backgroundColor: '#ffffff'
+};
+
+export const getMediaUrl = (file) => {
+    if (!file) return null;
+    const targetPath = file.path_full || file.file_path || '';
+    if (targetPath.startsWith('http') || targetPath.startsWith('data:')) {
+        return targetPath;
+    }
+    const cleanPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
+    return `${CLEAN_ROOT_URL}${cleanPath}`;
 };
 
 export const getFileExtension = (filename) => {

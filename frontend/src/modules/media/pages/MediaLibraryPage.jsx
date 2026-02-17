@@ -56,7 +56,6 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         fetchMedia();
     }, []);
-
     const fetchMedia = async () => {
         setLoading(true);
         try {
@@ -83,11 +82,9 @@ const MediaLibraryPage = () => {
                 (f.display_name || f.original_file_name || '').toLowerCase().includes(lowerQuery)
             );
         }
-
         if (onlyFavorites) {
             result = result.filter(f => f.is_favorite);
         }
-
         if (activeType) {
             result = result.filter(f => {
                 if (f.file_type === activeType) return true;
@@ -95,7 +92,6 @@ const MediaLibraryPage = () => {
                 return FORMATS_BY_TYPE[activeType]?.includes(ext);
             });
         }
-
         if (activeFormat) {
             result = result.filter(f => {
                 const ext = (f.original_file_name || '').split('.').pop().toLowerCase();
@@ -103,7 +99,6 @@ const MediaLibraryPage = () => {
                 return ext === activeFormat;
             });
         }
-
         const [key, dir] = sortOption.split(':');
         result.sort((a, b) => {
             let valA = a[key];
@@ -174,7 +169,6 @@ const MediaLibraryPage = () => {
             toast.error("Помилка оновлення");
         }
     }, [handleUpdateFile]);
-
     const handleDelete = async (file) => {
         if (await confirm({ title: "Видалити файл?", message: "Ця дія незворотна.", type: "danger", confirmLabel: "Видалити" })) {
             try {
@@ -275,6 +269,7 @@ const MediaLibraryPage = () => {
         });
         setCheckedFiles(new Set());
     };
+    
     const onDragEvent = (e, active) => {
         e.preventDefault(); e.stopPropagation();
         if (active !== undefined) {
@@ -284,6 +279,7 @@ const MediaLibraryPage = () => {
              else setIsDragging(false);
         }
     };
+    
     const onDrop = (e) => {
         e.preventDefault(); e.stopPropagation();
         setIsDragging(false);
@@ -291,42 +287,42 @@ const MediaLibraryPage = () => {
         const files = e.dataTransfer.files;
         if (files && files.length > 0) handleUpload({ target: { files } });
     };
+
     const styles = {
         pageWrapper: {
-            margin: '-2rem', 
-            width: 'calc(100% + 4rem)',
-            minHeight: 'calc(100vh - 64px + 4rem)',
+            flex: 1,
+            minHeight: 0,
             display: 'flex', 
             flexDirection: 'column', 
             backgroundColor: 'var(--platform-bg)', 
             position: 'relative',
         },
-        stickyHeader: {
-            position: 'sticky',
-            top: 0,
-            zIndex: 90,
+        headerBlock: {
+            flexShrink: 0,
             backgroundColor: 'var(--platform-bg)',
             borderBottom: '1px solid var(--platform-border-color)',
+            zIndex: 10,
         },
         headerContent: {
             padding: '12px 24px', 
             display: 'flex', 
-            justifyContent: 'center', 
+            justifyContent: 'space-between', 
             alignItems: 'center',
             height: '60px', 
-            position: 'relative',
             borderBottom: '1px solid var(--platform-border-color)',
             color: 'var(--platform-text-primary)'
         },
         mainContent: {
             display: 'flex',
-            flexGrow: 1, 
-            alignItems: 'flex-start',
+            flex: 1, 
+            minHeight: 0,
+            overflow: 'hidden',
             position: 'relative',
         },
         gridArea: { 
             flex: 1, 
             padding: '24px', 
+            overflowY: 'auto',
             minWidth: 0, 
         },
         grid: { 
@@ -338,18 +334,13 @@ const MediaLibraryPage = () => {
         inspectorPanel: {
             width: '360px',
             borderLeft: '1px solid var(--platform-border-color)',
-            position: 'sticky',
-            top: '60px',
-            height: 'calc(100vh - 60px - 48px)',
             overflowY: 'auto',
             flexShrink: 0,
             backgroundColor: 'var(--platform-bg)',
-            zIndex: 90
+            zIndex: 5
         },
         stickyFooter: {
-            position: 'sticky',
-            bottom: 0,
-            zIndex: 100,
+            flexShrink: 0,
             padding: '0 24px', 
             height: '48px', 
             borderTop: '1px solid var(--platform-border-color)',
@@ -359,6 +350,7 @@ const MediaLibraryPage = () => {
             alignItems: 'center',
             fontSize: '0.8rem', 
             color: 'var(--platform-text-secondary)', 
+            zIndex: 10
         },
         formatChip: (isActive) => ({
             padding: '0 12px', borderRadius: '20px', fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer',
@@ -372,7 +364,6 @@ const MediaLibraryPage = () => {
             fontWeight: 500
         })
     };
-
     const formatButtons = (activeType && FORMATS_BY_TYPE[activeType]?.length > 0) ? (
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             <button style={styles.formatChip(!activeFormat)} onClick={() => setActiveFormat(null)}>Всі формати</button>
@@ -383,7 +374,6 @@ const MediaLibraryPage = () => {
             ))}
         </div>
     ) : null;
-
     return (
         <div style={styles.pageWrapper} 
             onDragEnter={(e) => onDragEvent(e, true)} onDragLeave={(e) => onDragEvent(e, false)} 
@@ -391,7 +381,7 @@ const MediaLibraryPage = () => {
         >
             {isDragging && (
                 <div style={{
-                    position: 'fixed', inset: 0, zIndex: 200, 
+                    position: 'absolute', inset: 0, zIndex: 200, 
                     backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', 
                     border: '4px dashed var(--platform-accent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -401,11 +391,11 @@ const MediaLibraryPage = () => {
                     Перетягніть файли сюди
                 </div>
             )}
-            <div style={styles.stickyHeader}>
+            <div style={styles.headerBlock}>
                 <div style={styles.headerContent}>
                     <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Медіатека</h1>
                     
-                    <div style={{ display: 'flex', gap: '10px', position: 'absolute', right: '24px' }}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
                         <Button variant="primary" type="button" onClick={() => fileInputRef.current.click()}>
                             <Upload size={18} /> <span>Завантажити</span>
                         </Button>
@@ -436,7 +426,6 @@ const MediaLibraryPage = () => {
                             flexDirection: 'column', 
                             alignItems: 'center', 
                             justifyContent: 'center',
-                            minHeight: '400px'
                         } : {})
                     }} 
                     onClick={handleGridBackgroundClick}
@@ -496,7 +485,6 @@ const MediaLibraryPage = () => {
                     </div>
                 )}
             </div>
-
             <div style={styles.stickyFooter}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span>Всього: {files.length}</span>
@@ -520,7 +508,6 @@ const MediaLibraryPage = () => {
                         <Button variant="ghost" onClick={handleBulkDownload} style={{ fontSize: '0.8rem', padding: '4px 8px' }}>
                             <Download size={14} /> Завантажити
                         </Button>
-                        
                         <Button 
                             variant="ghost"
                             onClick={handleBulkDelete} 

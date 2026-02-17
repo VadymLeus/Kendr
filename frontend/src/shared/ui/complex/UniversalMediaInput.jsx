@@ -4,7 +4,7 @@ import MediaPickerModal from '../../../modules/media/components/MediaPickerModal
 import ImageCropperModal from './ImageCropperModal'; 
 import apiClient from '../../api/api';
 import { toast } from 'react-toastify';
-import { API_URL } from '../../config';
+import { getMediaUrl } from '../../utils/mediaUtils';
 import { Upload, X, Image as ImageIcon, Video, FileText, Music, Type, Play, FileSpreadsheet } from 'lucide-react';
 
 const UniversalMediaInput = ({ 
@@ -25,9 +25,7 @@ const UniversalMediaInput = ({
     const safeValue = typeof value === 'string' ? value : '';
     const getFullUrl = (path) => {
         if (!path) return '';
-        if (path.startsWith('http') || path.startsWith('blob:')) return path;
-        const cleanPath = path.startsWith('/') ? path : `/${path}`;
-        return `${API_URL}${cleanPath}`;
+        return getMediaUrl({ path_full: path });
     };
 
     const getFileName = (path) => {
@@ -48,9 +46,10 @@ const UniversalMediaInput = ({
 
     const handleSelectFromPicker = (file) => {
         if (!file) return;
-        const fullPath = getFullUrl(file.path_full);
+        const fullPath = getMediaUrl(file);
         const relativePath = file.path_full;
         setIsPickerOpen(false);
+        
         if (type === 'image' && aspect !== null) {
             setCropImageSrc(fullPath);
             setIsCropperOpen(true);
@@ -115,6 +114,7 @@ const UniversalMediaInput = ({
                 </div>
             );
         }
+        
         let Icon = FileText;
         if (['pdf'].includes(ext)) Icon = FileText;
         if (['xls', 'xlsx', 'csv'].includes(ext)) Icon = FileSpreadsheet;

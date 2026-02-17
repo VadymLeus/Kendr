@@ -7,17 +7,6 @@ const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 const { v4: uuidv4 } = require('uuid');
 
-const getDefaultLogoFiles = async () => {
-    try {
-        const defaultLogosDir = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'default');
-        const files = await fs.readdir(defaultLogosDir);
-        const validFiles = files.filter(f => !f.startsWith('.'));
-        return validFiles.map(file => `/uploads/shops/logos/default/${file}`);
-    } catch (e) {
-        return ['/uploads/shops/logos/default/default-logo.webp'];
-    }
-};
-
 const regenerateBlockIds = (blocks) => {
     if (!blocks) return [];
     const mapBlock = (block) => {
@@ -44,9 +33,7 @@ exports.getTemplates = async (req, res, next) => {
         }
         
         query += ' ORDER BY created_at DESC';
-
         const [rows] = await db.query(query);
-        
         const processedRows = rows.map(row => ({
             ...row,
             default_block_content: (typeof row.default_block_content === 'string') 
@@ -64,26 +51,18 @@ exports.createSite = async (req, res, next) => {
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
-        
         if (!templateId) throw new Error('ID шаблону не було надано.');
         const [templates] = await connection.query('SELECT * FROM templates WHERE id = ?', [templateId]);
         if (templates.length === 0) throw new Error('Шаблон не знайдено.');
         const template = templates[0];
-
         if (template.type === 'personal') {
             if (template.user_id !== userId) throw new Error('У вас немає доступу до цього приватного шаблону.');
         }
-
         const rawContent = template.default_block_content;
         const templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
         const [existing] = await connection.query('SELECT id FROM sites WHERE site_path = ?', [sitePath]);
         if (existing.length > 0) throw new Error('Ця адреса сайту вже зайнята.');
-        let logoUrl = selected_logo_url;
-        if (!logoUrl) {
-            const defaults = await getDefaultLogoFiles();
-            if (defaults.length > 0) logoUrl = defaults[Math.floor(Math.random() * defaults.length)];
-        }
-        if (!logoUrl) logoUrl = '/uploads/shops/logos/default/default-logo.webp';
+        let logoUrl = selected_logo_url || '/logos/logo1.png'; 
         const relativeLogoUrl = logoUrl.replace(/^http:\/\/localhost:5000/, '');
         const siteThemeConfig = {
             theme_settings: templateData.theme_settings || {},
@@ -91,7 +70,6 @@ exports.createSite = async (req, res, next) => {
             site_theme_mode: templateData.site_theme_mode || templateData.theme_settings?.mode || 'light',
             site_theme_accent: templateData.site_theme_accent || templateData.theme_settings?.accent || 'blue'
         };
-
         let pagesToCreate = templateData.pages || [];
         let footerToSave = regenerateBlockIds(templateData.footer_content || []);
         let headerToSave = regenerateBlockIds(templateData.header_content || []);
@@ -115,7 +93,6 @@ exports.createSite = async (req, res, next) => {
             [userId, sitePath, title, relativeLogoUrl]
         );
         const newSiteId = siteResult.insertId;
-
         await connection.query(
             `UPDATE sites SET header_content = ?, footer_content = ?, theme_settings = ?, site_theme_mode = ?, site_theme_accent = ? WHERE id = ?`,
             [JSON.stringify(headerToSave), JSON.stringify(footerToSave), JSON.stringify(siteThemeConfig.theme_settings), siteThemeConfig.site_theme_mode, siteThemeConfig.site_theme_accent, newSiteId]
@@ -151,16 +128,19 @@ exports.createSite = async (req, res, next) => {
 
 exports.getSites = async (req, res, next) => {
     try {
-        const { search, scope, tag, sort, onlyFavorites, userId } = req.query; 
+        const { search, scope, tag, sort, onlyFavorites, userId, username } = req.query; 
         let targetUserId = null;
         let includeAllStatuses = false;
         if (scope === 'my' && req.user) {
             targetUserId = req.user.id;
             includeAllStatuses = true;
-        }
-        else if (userId) {
+        } else if (userId) {
             targetUserId = userId;
-            includeAllStatuses = false; 
+        } else if (username) {
+            const [users] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
+            if (users.length > 0) {
+                targetUserId = users[0].id;
+            }
         }
 
         const sites = await Site.getPublic({ 
@@ -178,8 +158,7 @@ exports.getSites = async (req, res, next) => {
 
 exports.getDefaultLogos = async (req, res, next) => {
     try {
-        const logoUrls = await getDefaultLogoFiles();
-        res.json(logoUrls);
+        res.json(['/logos/logo1.png', '/logos/logo2.png', '/logos/logo3.png']);
     } catch (error) { next(error); }
 };
 
@@ -212,12 +191,10 @@ exports.getSiteByPath = async (req, res, next) => {
         let page;
         if (slug) page = await Page.findBySiteIdAndSlug(site.id, slug);
         else page = await Page.findHomepageBySiteId(site.id);
-
         if (!page) {
             if (slug) return res.status(404).json({ message: `Сторінку "${slug}" не знайдено.`, site: site });
             return res.status(500).json({ message: 'Головну сторінку не налаштовано.', site: site });
         }
-
         const [tags] = await db.query(`SELECT t.id, t.name FROM tags t JOIN site_tags st ON t.id = st.tag_id WHERE st.site_id = ?`, [site.id]);
         res.json({ ...site, page_content: page.block_content, page_id: page.id, page: page, tags: tags });
     } catch (error) {
@@ -361,7 +338,6 @@ exports.renameSite = async (req, res, next) => {
         if (!currentSite || currentSite.user_id !== userId) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
         const [result] = await db.query('UPDATE sites SET site_path = ? WHERE site_path = ? AND user_id = ?', [sanitizedNewPath, oldPath, userId]); 
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
-
         res.status(200).json({ message: 'Адресу сайту успішно змінено.', newPath: sanitizedNewPath }); 
     } catch (error) { 
         console.error('Помилка при перейменуванні сайту:', error); 
@@ -403,25 +379,20 @@ exports.resetSiteToTemplate = async (req, res, next) => {
     try { 
         const site = await Site.findByIdAndUserId(siteId, userId); 
         if (!site) return res.status(403).json({ message: 'Сайт не знайдено або у вас немає прав.' }); 
-        
         const [templates] = await connection.query('SELECT * FROM templates WHERE id = ?', [templateId]); 
         if (!templates[0]) throw new Error('Шаблон не знайдено.'); 
         const template = templates[0];
-        
         if (template.type === 'personal' && template.user_id !== userId) {
              throw new Error('У вас немає доступу до цього шаблону.');
         }
-
         const rawContent = template.default_block_content; 
         const templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent; 
         const headerToSave = regenerateBlockIds(templateData.header_content || []); 
         const footerToSave = regenerateBlockIds(templateData.footer_content || []); 
         let pagesToCreate = templateData.pages || []; 
         if (!templateData.pages && Array.isArray(templateData)) pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }]; 
-        
         await connection.beginTransaction(); 
         await connection.query('DELETE FROM pages WHERE site_id = ?', [siteId]); 
-        
         const updateQuery = `UPDATE sites SET header_content = ?, footer_content = ?, site_theme_mode = ?, site_theme_accent = ?, theme_settings = ? WHERE id = ?`; 
         const themeSettings = templateData.theme_settings || {}; 
         const siteThemeMode = templateData.site_theme_mode || templateData.theme_settings?.mode || 'light'; 
@@ -465,19 +436,15 @@ exports.checkSlug = async (req, res, next) => {
     try {
         const { slug } = req.query;
         if (!slug) return res.status(400).json({ message: 'Slug is required' });
-
         const sanitizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
         const reservedWords = ['admin', 'api', 'login', 'dashboard', 'settings', 'create'];
         if (reservedWords.includes(sanitizedSlug)) {
             return res.json({ isAvailable: false, message: 'Ця адреса зарезервована системою.' });
         }
-
         const existingSite = await Site.findByPath(sanitizedSlug);
-        
         if (existingSite) {
             return res.json({ isAvailable: false, message: 'Ця адреса вже зайнята.' });
         }
-
         res.json({ isAvailable: true });
     } catch (error) {
         next(error);

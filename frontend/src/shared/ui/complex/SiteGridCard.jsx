@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import SiteCoverDisplay from './SiteCoverDisplay';
 import ReportModal from './ReportModal';
 import { AuthContext } from '../../../app/providers/AuthContext';
+import { BASE_URL } from '../../config';
 import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock, AlertTriangle, Construction, Wrench } from 'lucide-react';
 
 const SiteStatusBadge = ({ status }) => {
@@ -37,7 +38,6 @@ const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) =
             <Icon size={14} /> {label}
         </>
     );
-
     if (href) {
         return (
             <a 
@@ -76,7 +76,6 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
         if (isOpen) document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen]);
-
     const isLocked = site.status === 'suspended' || site.status === 'probation';
     return (
         <div ref={menuRef}>
@@ -92,7 +91,6 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
             >
                 <MoreVertical size={16} color="white" />
             </button>
-            
             {isOpen && (
                 <div 
                     className="absolute top-11.5 right-2.5 bg-(--platform-card-bg) border border-(--platform-border-color) rounded-lg shadow-lg min-w-50 p-1 flex flex-col z-30 animate-in fade-in slide-in-from-top-1 duration-100"
@@ -104,7 +102,6 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                         href={`/site/${site.site_path}`}
                         onClick={() => setIsOpen(false)}
                     />
-
                     {!isOwner && !isAdmin && (
                         <MenuItem 
                             icon={Flag} 
@@ -112,7 +109,6 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                             onClick={() => { setIsOpen(false); onReport(); }}
                         />
                     )}
-                    
                     {isOwner && !isAdmin && (
                         <>
                             {!isLocked && (
@@ -125,7 +121,6 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                                             onToggleStatus(site, site.status === 'published' ? 'draft' : 'published'); 
                                         }}
                                     />
-
                                     {site.status !== 'private' ? (
                                         <MenuItem 
                                             icon={Lock} 
@@ -147,7 +142,6 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                                     )}
                                 </>
                             )}
-
                             {isLocked && (
                                 <div className="px-3 py-2 text-[11px] text-(--platform-danger) italic text-center">
                                     Зміна статусу заблокована
@@ -157,7 +151,6 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                             <div className="h-px bg-(--platform-border-color) my-1" />
                         </>
                     )}
-
                     {(isOwner || isAdmin) && (
                         <MenuItem 
                             icon={Trash} 
@@ -192,6 +185,17 @@ const SiteGridCard = ({
     const isPinnedOrFav = isOwner ? site.is_pinned : isFavorite;
     const isSuspended = site.status === 'suspended';
     const isDraft = site.status === 'draft';
+    const getImageUrl = (src) => {
+        if (!src) return '';
+        if (typeof src === 'string') {
+            if (src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('http')) return src;
+            if (src.startsWith('/logos/')) return src;
+            if (src.includes('/src/') || src.includes('/assets/') || src.includes('@fs')) return src;
+            const cleanSrc = src.startsWith('/') ? src : `/${src}`;
+            return `${BASE_URL}${cleanSrc}`;
+        }
+        return '';
+    };
 
     return (
         <>
@@ -214,7 +218,6 @@ const SiteGridCard = ({
                 >
                     <Star size={16} fill={isPinnedOrFav ? "currentColor" : "none"} />
                 </button>
-                
                 <CardMenu 
                     site={site} 
                     isOwner={isOwner} 
@@ -223,7 +226,6 @@ const SiteGridCard = ({
                     onDelete={onDelete} 
                     onReport={() => setIsReportOpen(true)}
                 />
-
                 <Link 
                     to={isSuspended ? '#' : mainLink} 
                     className={`
@@ -232,13 +234,16 @@ const SiteGridCard = ({
                     `}
                 >
                     <SiteCoverDisplay 
-                        site={site} 
+                        site={{
+                            ...site,
+                            logo_url: getImageUrl(site.logo_url),
+                            cover_image: getImageUrl(site.cover_image)
+                        }} 
                         className="w-full h-full object-cover"
                         style={{ 
                             filter: isSuspended ? 'grayscale(1)' : (isDraft ? 'blur(1px) grayscale(0.3)' : 'none') 
                         }} 
                     />
-
                     {isDraft && (
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-amber-400 backdrop-blur-[2px] text-center p-4 z-10 transition-opacity duration-200 group-hover:bg-black/75">
                             <Construction size={40} className="mb-2" />
@@ -251,7 +256,6 @@ const SiteGridCard = ({
                         </div>
                     )}
                 </Link>
-
                 <div className="p-4 flex-1 flex flex-col gap-3">
                     <div className="flex justify-between items-start gap-2">
                         <div className="overflow-hidden">
@@ -269,7 +273,6 @@ const SiteGridCard = ({
                                     {site.title}
                                 </h3>
                             </Link>
-
                             {!isOwner && (
                                 <div className="text-xs text-(--platform-text-secondary) mt-1">
                                     Автор: <span className="text-(--platform-text-primary) font-medium">{site.author}</span>
@@ -278,7 +281,6 @@ const SiteGridCard = ({
                         </div>
                         {isOwner && <SiteStatusBadge status={site.status} />}
                     </div>
-
                     <div className="grid grid-cols-2 gap-2.5 text-sm text-(--platform-text-secondary)">
                         <div className="flex items-center gap-1.5">
                             <Calendar size={14} /> {formatDate(site.created_at)}
@@ -287,7 +289,6 @@ const SiteGridCard = ({
                             <Eye size={14} /> {site.view_count || 0}
                         </div>
                     </div>
-
                     <div className="flex gap-1.5 flex-wrap min-h-6.5">
                         {site.tags && site.tags.length > 0 ? site.tags.slice(0, 4).map(tag => (
                             <span 
@@ -301,7 +302,6 @@ const SiteGridCard = ({
                             <span className="text-xs text-(--platform-text-secondary) opacity-50">Без тегів</span>
                         )}
                     </div>
-                    
                     <div className="mt-auto pt-3">
                         {isOwner ? (
                             isSuspended ? (
@@ -342,7 +342,6 @@ const SiteGridCard = ({
                     </div>
                 </div>
             </div>
-
             <ReportModal 
                 isOpen={isReportOpen} 
                 onClose={() => setIsReportOpen(false)} 

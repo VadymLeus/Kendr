@@ -70,11 +70,15 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         }
     );
 
-    const getImageUrl = (src) => {
+const getImageUrl = (src) => {
         if (!src) return '';
         if (src instanceof File) return URL.createObjectURL(src);
         if (typeof src === 'string') {
             if (src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('http')) return src;
+            if (src.startsWith('/logos/')) return src;
+            if (src.includes('/src/') || src.includes('/assets/') || src.includes('@fs')) {
+                return src;
+            }
             const cleanSrc = src.startsWith('/') ? src : `/${src}`;
             return `${BASE_URL}${cleanSrc}`;
         }
@@ -632,7 +636,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         </h3>
                     </div>
                 </div>
-
                 <div className="mb-6">
                     <div className="flex justify-between items-center mb-2.5">
                         <label className="font-medium text-(--platform-text-primary) text-sm m-0 flex items-center gap-1.5">
@@ -704,16 +707,16 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                                         onMouseEnter={() => setIsCoverHovered(true)} 
                                         onMouseLeave={() => setIsCoverHovered(false)}
                                     >
-                                        <SiteCoverDisplay site={{
-                                            ...siteData,
-                                            title: identityData.title,
-                                            logo_url: data.logo_url,
-                                            cover_image: data.cover_image,
-                                            cover_layout: data.cover_layout,
-                                            cover_logo_radius: data.cover_logo_radius,
-                                            cover_logo_size: data.cover_logo_size,
-                                            cover_title_size: data.cover_title_size
-                                        }} style={{ width: '100%', height: '100%' }} />
+                                    <SiteCoverDisplay site={{
+                                        ...siteData,
+                                        title: identityData.title,
+                                        logo_url: getImageUrl(data.logo_url),
+                                        cover_image: getImageUrl(data.cover_image),
+                                        cover_layout: data.cover_layout,
+                                        cover_logo_radius: data.cover_logo_radius,
+                                        cover_logo_size: data.cover_logo_size,
+                                        cover_title_size: data.cover_title_size
+                                    }} style={{ width: '100%', height: '100%' }} />
                                         <div className={`absolute inset-0 bg-black/40 flex items-center justify-center text-white transition-opacity duration-200 backdrop-blur-[2px] z-10 ${isCoverHovered ? 'opacity-100' : 'opacity-0'}`}>
                                             <div className="flex items-center gap-2 font-medium text-sm"><Upload size={16} /> Змінити фон</div>
                                         </div>

@@ -23,7 +23,7 @@ class Site {
     const params = [];
     const conditions = [];
     if (!includeAllStatuses) {
-        conditions.push("s.status IN ('published', 'draft')");
+        conditions.push("s.status IN ('published', 'public', 'draft')");
     }
 
     if (userId) {
@@ -172,7 +172,6 @@ class Site {
 
     let safeFaviconUrl = null;
     if (typeof favicon_url === 'string') safeFaviconUrl = favicon_url;
-
     const params = [
         title, 
         status, 
@@ -189,7 +188,6 @@ class Site {
         cover_logo_size !== undefined ? cover_logo_size : 80,
         cover_logo_radius !== undefined ? cover_logo_radius : 0,
         cover_title_size !== undefined ? cover_title_size : 24,
-
         siteId
     ];
 

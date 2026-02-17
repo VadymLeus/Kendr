@@ -53,7 +53,6 @@ const SiteDashboardPage = () => {
             localStorage.setItem(`editor_active_tab_${site_path}`, activeTab);
         }
     }, [activeTab, site_path]);
-
     const [blocks, setBlocks, undo, redo, { canUndo, canRedo }] = useHistory([]);
     const [currentPageId, setCurrentPageId] = useState(() => {
         const savedPage = localStorage.getItem(`last_edited_page_${site_path}`);
@@ -99,7 +98,6 @@ const SiteDashboardPage = () => {
     const setComponentSaving = useCallback((component, isSaving) => {
         setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
-    
     const handleBlockSaved = useCallback(() => {
         setSavedBlocksUpdateTrigger(prev => prev + 1);
     }, []);
@@ -405,9 +403,9 @@ const SiteDashboardPage = () => {
                                 onUpdateBlockData={handleUpdateBlockData}
                                 onSave={savePageContent}
                                 allPages={[
-                                    { id: 'header', name: 'Глобальний Хедер' },
+                                    { id: 'header', name: 'Хедер' },
                                     ...allPages, 
-                                    { id: 'footer', name: 'Глобальний Футер' }
+                                    { id: 'footer', name: 'Футер' }
                                 ]}
                                 currentPageId={currentPageId}
                                 onSelectPage={(id) => handleEditPage(id)}

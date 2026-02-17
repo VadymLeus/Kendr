@@ -34,12 +34,10 @@ const AnnouncementTimer = ({ targetTime }) => {
             }
             setTimeLeft(timeString);
         };
-
         update();
         const interval = setInterval(update, 1000);
         return () => clearInterval(interval);
     }, [targetTime]);
-
     if (!timeLeft) return null;
     return <span className="font-mono font-bold ml-1"> - {timeLeft}</span>;
 };
@@ -60,6 +58,7 @@ const Layout = () => {
             return newState;
         });
     };
+    
     useEffect(() => {
         if (!globalAnnouncement) {
             setAnnouncementText('');
@@ -81,6 +80,7 @@ const Layout = () => {
             setAnnouncementTargetTime(null);
         }
     }, [globalAnnouncement]);
+    
     useEffect(() => {
         const handleAnnouncementUpdate = (event) => {
             setGlobalAnnouncement(event.detail);
@@ -98,10 +98,12 @@ const Layout = () => {
             clearInterval(intervalId);
         };
     }, []);
+    
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
-    const isAppPage = !!(dashboardMatch || location.pathname === '/create-site' || location.pathname === '/admin/templates');
+    const isMediaMatch = location.pathname.startsWith('/media');
+    const isAppPage = !!(dashboardMatch || location.pathname === '/create-site' || location.pathname === '/admin/templates' || isMediaMatch);
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isHiddenStatus = siteData && ['draft', 'suspended', 'private'].includes(siteData.status);
     const isMaintenanceMode = isHiddenStatus && !isOwner && !isAdmin;
@@ -128,7 +130,6 @@ const Layout = () => {
                 setIsSiteLoading(false);
             }
         };
-
         if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
         else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
@@ -147,10 +148,10 @@ const Layout = () => {
         '--font-body': themeSettings.font_body || "'Inter', sans-serif",
         '--btn-radius': themeSettings.button_radius || '8px',
     } : {};
-
     const scrollClass = isAppPage ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden';
+    const innerWrapperClass = isAppPage ? 'h-full overflow-hidden' : 'min-h-full';
+    const mainFlexClass = isAppPage ? 'flex-1 min-h-0' : 'flex-1';
     const paddingClass = (isAppPage || isSiteThemeActive) ? 'p-0' : 'p-8';
-
     return (
         <div className="layout-wrapper flex flex-col h-screen relative overflow-hidden bg-(--platform-bg)">
             <TitleManager siteData={siteData} key={location.pathname} />
@@ -170,7 +171,6 @@ const Layout = () => {
                     </div>
                 </div>
             )}
-
             <div className="flex flex-1 overflow-hidden h-full w-full">
                 <PlatformSidebar 
                     isCollapsed={isCollapsed} 
@@ -178,32 +178,26 @@ const Layout = () => {
                     variant={isAdmin ? 'admin' : 'user'}
                 />
                 <div 
-                    className={`
-                        layout-content 
-                        flex-1 
-                        flex 
-                        flex-col 
-                        h-full 
-                        min-w-0
-                        ${isCollapsed ? 'collapsed' : ''} 
-                        ${isSiteThemeActive ? 'site-theme-context' : ''}
-                        ${scrollClass}
-                    `}
+                    className={`layout-content flex-1 min-w-0 ${isCollapsed ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''} ${scrollClass}`}
                     style={themeStyle}
                 >
-                    {siteData?.theme_settings && (
-                        <FontLoader fontHeading={siteData.theme_settings.font_heading} fontBody={siteData.theme_settings.font_body} />
-                    )}
-                    {shouldShowSiteHeader && (
-                        <SiteHeader siteData={siteData} loading={isSiteLoading} />
-                    )}
-                    <main 
-                        className={`flex-1 w-full ${paddingClass}`}
-                        style={isSiteThemeActive ? themeStyle : undefined} 
-                    >
-                        <Outlet context={{ siteData, setSiteData, isSiteLoading, isCollapsed, globalAnnouncement, setGlobalAnnouncement }} />
-                    </main>
-                    {shouldShowFooter && <Footer />}
+                    <div className={`flex flex-col w-full ${innerWrapperClass}`}>
+                        {siteData?.theme_settings && (
+                            <FontLoader fontHeading={siteData.theme_settings.font_heading} fontBody={siteData.theme_settings.font_body} />
+                        )}
+                        {shouldShowSiteHeader && (
+                            <SiteHeader siteData={siteData} loading={isSiteLoading} />
+                        )}
+                        <main 
+                            className={`flex flex-col w-full ${mainFlexClass} ${paddingClass}`}
+                            style={isSiteThemeActive ? themeStyle : undefined} 
+                        >
+                            <Outlet context={{ siteData, setSiteData, isSiteLoading, isCollapsed, globalAnnouncement, setGlobalAnnouncement }} />
+                        </main>
+                        
+                        {shouldShowFooter && <Footer />}
+                        
+                    </div>
                 </div>
             </div>
         </div>

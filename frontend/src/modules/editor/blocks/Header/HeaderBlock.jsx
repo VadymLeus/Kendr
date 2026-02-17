@@ -25,6 +25,18 @@ const formatRadius = (val) => {
     return str.endsWith('px') ? str : `${str}px`;
 };
 
+const resolveUrl = (src) => {
+    if (!src) return null;
+    if (typeof src === 'string') {
+        if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:')) return src;
+        if (src.startsWith('/logos/')) return src;
+        if (src.includes('/src/') || src.includes('/assets/') || src.includes('@fs')) return src;
+        const cleanSrc = src.startsWith('/') ? src : `/${src}`;
+        return `${BASE_URL}${cleanSrc}`;
+    }
+    return null;
+};
+
 const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => {
     const { 
         show_title, 
@@ -43,6 +55,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         navText: nav_fontFamily,
         btnFont: buttonSettings.fontFamily 
     }, siteData);
+    
     let effectiveLogoSrc = blockData.logo_src;
     let effectiveTitle = blockData.site_title;
     if (effectiveLogoSrc === undefined || effectiveLogoSrc === null) {
@@ -136,14 +149,13 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const [isMenuHovered, setIsMenuHovered] = useState(false);
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isFavorite = siteData && favoriteSiteIds.has(parseInt(siteData.id));
-    const logoUrl = (effectiveLogoSrc && typeof effectiveLogoSrc === 'string')
-        ? (effectiveLogoSrc.startsWith('http') ? effectiveLogoSrc : `${BASE_URL}${effectiveLogoSrc}`)
-        : null;
+    const logoUrl = resolveUrl(effectiveLogoSrc);
     const NavWrapper = isEditorPreview ? 'div' : Link;
     const ActionWrapper = isEditorPreview ? 'div' : Link;
     const siteRoot = resolveSiteLink('/', siteData?.site_path);
     const homeLink = isEditorPreview ? '#' : siteRoot;
     const iconBtnBaseClass = "flex items-center justify-center w-10 h-10 rounded-lg border cursor-pointer transition-all duration-200 shrink-0";
+    
     return (
         <header 
             ref={headerRef} 

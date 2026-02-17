@@ -54,8 +54,14 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
 
     const getLogoUrl = (src) => {
         if (!src) return '';
-        if (src.startsWith('http')) return src;
-        return `${BASE_URL}${src}`;
+        if (typeof src === 'string') {
+            if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:')) return src;
+            if (src.startsWith('/logos/')) return src;
+            if (src.includes('/src/') || src.includes('/assets/') || src.includes('@fs')) return src;
+            const cleanSrc = src.startsWith('/') ? src : `/${src}`;
+            return `${BASE_URL}${cleanSrc}`;
+        }
+        return '';
     };
 
     const currentLogoRadius = data.logo_radius !== undefined ? data.logo_radius : (data.borderRadius || 0);

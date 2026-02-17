@@ -1,6 +1,7 @@
 // frontend/src/shared/ui/complex/ConfirmModal.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../elements/Button';
+import { Input } from '../elements/Input';
 import { AlertCircle, HelpCircle, CheckCircle } from 'lucide-react';
 
 const ConfirmModal = ({ 
@@ -11,14 +12,17 @@ const ConfirmModal = ({
     cancelLabel = 'Скасувати',
     onConfirm, 
     onCancel, 
-    type = 'danger' 
+    type = 'danger',
+    requireInput = false,
+    expectedInput = 'DELETE'
 }) => {
     const overlayRef = useRef(null);
     const [isVisible, setIsVisible] = useState(false);
-
+    const [inputValue, setInputValue] = useState('');
     useEffect(() => {
         if (isOpen) {
             setIsVisible(true);
+            setInputValue('');
             document.body.style.overflow = 'hidden';
         } else {
             const timer = setTimeout(() => setIsVisible(false), 200);
@@ -27,7 +31,6 @@ const ConfirmModal = ({
         }
         return () => { document.body.style.overflow = 'unset'; };
     }, [isOpen]);
-
     useEffect(() => {
         const handleEsc = (e) => {
             if (e.key === 'Escape' && isOpen) onCancel();
@@ -35,7 +38,6 @@ const ConfirmModal = ({
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
     }, [isOpen, onCancel]);
-
     if (!isVisible && !isOpen) return null;
     const getTypeConfig = () => {
         switch (type) {
@@ -79,7 +81,7 @@ const ConfirmModal = ({
     };
 
     const config = getTypeConfig();
-
+    const isConfirmDisabled = requireInput && inputValue !== expectedInput;
     return (
         <div 
             ref={overlayRef} 
@@ -103,14 +105,23 @@ const ConfirmModal = ({
                         >
                             {config.icon}
                         </div>
-                        
-                        <div className="pt-0.5 flex flex-col gap-1.5">
+                        <div className="pt-0.5 flex flex-col gap-1.5 w-full">
                             <h3 className="text-lg font-semibold m-0 text-(--platform-text-primary) leading-tight">{title}</h3>
-                            <p className="m-0 text-[0.95rem] leading-relaxed text-(--platform-text-secondary)">{message}</p>
+                            <p className="m-0 mb-2 text-[0.95rem] leading-relaxed text-(--platform-text-secondary)">{message}</p>
+                            {requireInput && (
+                                <div className="mt-2 w-full">
+                                    <Input 
+                                        type="text"
+                                        placeholder={`Введіть ${expectedInput}`}
+                                        value={inputValue}
+                                        onChange={(e) => setInputValue(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-
                 <div className="px-6 py-4 flex justify-end items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color)">
                     <Button 
                         variant="outline" 
@@ -121,9 +132,10 @@ const ConfirmModal = ({
                     </Button>
                     <Button 
                         variant={config.confirmVariant} 
-                        onClick={onConfirm} 
-                        autoFocus
-                        className="min-w-22.5 shadow-sm text-white"
+                        onClick={() => onConfirm(requireInput ? inputValue : undefined)} 
+                        autoFocus={!requireInput}
+                        disabled={isConfirmDisabled}
+                        className={`min-w-22.5 shadow-sm text-white transition-all ${isConfirmDisabled ? 'opacity-50 cursor-not-allowed grayscale-30' : ''}`}
                         style={config.confirmStyle}
                     >
                         {confirmLabel}

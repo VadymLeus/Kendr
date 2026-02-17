@@ -8,7 +8,7 @@ import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import SiteGridCard from '../../../shared/ui/complex/SiteGridCard'; 
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';   
-import { Send, Instagram, Globe, Settings, Calendar, Grid, User, Loader, ExternalLink, EyeOff, Search, Layout, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { Send, Instagram, Globe, Settings, Calendar, Grid, User as UserIcon, Loader, ExternalLink, EyeOff, Search, Layout, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 const SORT_OPTIONS = [
     { value: 'created_at:desc', label: 'Нові' },
@@ -17,9 +17,21 @@ const SORT_OPTIONS = [
     { value: 'title:asc', label: 'Назва (А-Я)' },
 ];
 
+const getFormattedDate = (dateString) => {
+    if (!dateString) return 'Невідомо';
+    try {
+        const safeDateString = typeof dateString === 'string' ? dateString.replace(' ', 'T') : dateString;
+        const date = new Date(safeDateString);
+        if (isNaN(date.getTime())) return 'Невідомо';
+        return date.toLocaleDateString();
+    } catch (e) {
+        return 'Невідомо';
+    }
+};
+
 const ProfilePage = () => {
     const { username } = useParams();
-    const { user } = useContext(AuthContext);
+    const { user: authUser } = useContext(AuthContext);
     const [profileData, setProfileData] = useState(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [errorStatus, setErrorStatus] = useState(null);
@@ -27,6 +39,8 @@ const ProfilePage = () => {
     const [sitesLoading, setSitesLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState('created_at:desc');
+    const isOwner = authUser && authUser.username === username;
+
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -35,7 +49,8 @@ const ProfilePage = () => {
                 const response = await apiClient.get(`/users/${username}`, {
                     suppressToast: true
                 });
-                setProfileData(response.data);
+                const data = response.data?.user || response.data?.data || response.data;
+                setProfileData(data);
             } catch (err) {
                 if (err.response) {
                     setErrorStatus(err.response.status);
@@ -50,12 +65,13 @@ const ProfilePage = () => {
     }, [username]);
 
     const fetchUserSites = useCallback(async () => {
-        if (!profileData || !profileData.id) return;
+        if (!profileData) return;
 
         try {
             setSitesLoading(true);
             const params = {
                 userId: profileData.id,
+                username: username,
                 search: searchTerm,
                 sort: sortOption,
             };
@@ -66,7 +82,7 @@ const ProfilePage = () => {
         } finally {
             setSitesLoading(false);
         }
-    }, [profileData, searchTerm, sortOption]);
+    }, [profileData, username, searchTerm, sortOption]);
 
     useEffect(() => {
         if (profileData) {
@@ -76,8 +92,7 @@ const ProfilePage = () => {
             return () => clearTimeout(timer);
         }
     }, [fetchUserSites]);
-
-    const isOwner = user && user.username === username;
+    
     const containerStyle = {
         maxWidth: '1280px', 
         width: '100%',
@@ -129,7 +144,6 @@ const ProfilePage = () => {
         gap: '20px',
         padding: '24px'
     };
-
     const cardHeaderStyle = { padding: '1.5rem 1.5rem 1rem 1.5rem', borderBottom: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center', gap: '10px' };
     const cardTitleStyle = { fontSize: '1.25rem', fontWeight: '700', color: 'var(--platform-text-primary)', margin: 0 };
     const cardBodyStyle = { padding: '1.5rem' };
@@ -140,14 +154,14 @@ const ProfilePage = () => {
         background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', textDecoration: 'none', 
         fontSize: '0.95rem', fontWeight: '500', transition: 'all 0.2s ease', border: '1px solid transparent', marginBottom: '0.75rem' 
     };
-
+    
     if (loadingProfile) return (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
             <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
             <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
         </div>
     );
-
+    
     if (errorStatus === 403) {
         return (
             <div style={containerStyle}>
@@ -161,7 +175,7 @@ const ProfilePage = () => {
             </div>
         );
     }
-
+    
     if (errorStatus === 404) {
         return (
             <div style={containerStyle}>
@@ -177,6 +191,12 @@ const ProfilePage = () => {
     }
     
     if (errorStatus) return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-danger)' }}>Сталася помилка при завантаженні профілю.</div>;
+    
+    const displayUsername = (isOwner ? authUser?.username : profileData?.username) || username || 'Користувач';
+    const displayAvatarUrl = isOwner ? authUser?.avatar_url : profileData?.avatar_url;
+    const displayDate = profileData?.createdAt || profileData?.created_at || (isOwner ? authUser?.created_at : null);
+    const displaySiteCount = profileData?.siteCount !== undefined ? profileData.siteCount : (sitesLoading ? '-' : userSites.length);
+    const displayTotalViews = profileData?.totalViews !== undefined ? profileData.totalViews : (sitesLoading ? '-' : userSites.reduce((sum, site) => sum + (site.view_count || 0), 0));
     const userAccentColor = profileData?.accent_color || 'var(--platform-accent)';
     const coverStyle = {
         height: '240px', width: '100%', position: 'relative',
@@ -189,18 +209,23 @@ const ProfilePage = () => {
     return (
         <div style={containerStyle}>
             <Helmet>
-                <title>{profileData.username} | Профіль Kendr</title>
+                <title>{`${displayUsername} | Профіль Kendr`}</title>
             </Helmet>
             <div style={sectionStyle}>
                 <div style={coverStyle}></div>
                 <div style={topInfoStyle}>
                     <div style={avatarWrapperStyle}>
-                        <Avatar url={profileData.avatar_url} name={profileData.username} size={160} fontSize="64px" />
+                        <Avatar 
+                            url={displayAvatarUrl} 
+                            name={displayUsername} 
+                            size={160} 
+                            fontSize="64px" 
+                        />
                     </div>
                     <div style={headerContentStyle}>
                         <div>
                             <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--platform-text-primary)', margin: '0 0 0.5rem 0', lineHeight: '1' }}>{profileData.username}</h1>
+                                <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--platform-text-primary)', margin: '0 0 0.5rem 0', lineHeight: '1' }}>{displayUsername}</h1>
                                 {!profileData.is_profile_public && isOwner && (
                                     <div title="Приватний профіль (бачите тільки ви)" style={{paddingBottom: '8px'}}>
                                         <EyeOff size={24} color="var(--platform-text-secondary)" />
@@ -209,7 +234,7 @@ const ProfilePage = () => {
                             </div>
                             <p style={{ color: 'var(--platform-text-secondary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem' }}>
                                 <Calendar size={16} style={{ color: 'var(--platform-accent)' }}/> 
-                                На платформі з {new Date(profileData.createdAt).toLocaleDateString()}
+                                На платформі з {getFormattedDate(displayDate)}
                             </p>
                         </div>
                         {isOwner && (
@@ -220,7 +245,6 @@ const ProfilePage = () => {
                     </div>
                 </div>
             </div>
-
             {profileData.warnings && profileData.warnings.length > 0 && (
                 <div style={warningSectionStyle}>
                     <div style={{...cardHeaderStyle, borderBottomColor: 'color-mix(in srgb, var(--platform-danger), transparent 80%)'}}>
@@ -240,7 +264,6 @@ const ProfilePage = () => {
                                 }}></div>
                              ))}
                         </div>
-                        
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {profileData.warnings.map((warning, index) => (
                                 <div key={warning.id || index} style={{
@@ -263,7 +286,7 @@ const ProfilePage = () => {
                                             </div>
                                         )}
                                         <div style={{ fontSize: '0.85rem', color: 'var(--platform-text-secondary)' }}>
-                                            Отримано: {new Date(warning.created_at).toLocaleDateString()}
+                                            Отримано: {getFormattedDate(warning.created_at)}
                                         </div>
                                     </div>
                                 </div>
@@ -277,11 +300,10 @@ const ProfilePage = () => {
                     </div>
                 </div>
             )}
-
             {profileData.bio && (
                 <div style={sectionStyle}>
                     <div style={cardHeaderStyle}>
-                        <User size={24} style={{ color: 'var(--platform-accent)' }} />
+                        <UserIcon size={24} style={{ color: 'var(--platform-accent)' }} />
                         <h3 style={cardTitleStyle}>Про мене</h3>
                     </div>
                     <div style={cardBodyStyle}>
@@ -289,7 +311,6 @@ const ProfilePage = () => {
                     </div>
                 </div>
             )}
-
             <div style={infoGridStyle}>
                 <div style={{ ...sectionStyle, marginBottom: 0, height: '100%' }}>
                     <div style={cardHeaderStyle}>
@@ -299,17 +320,18 @@ const ProfilePage = () => {
                     <div style={cardBodyStyle}>
                         <div style={statItemStyle}>
                             <span>Опубліковано сайтів</span>
-                            <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--platform-text-primary)' }}>{profileData.siteCount || 0}</span>
+                            <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--platform-text-primary)' }}>
+                                {displaySiteCount}
+                            </span>
                         </div>
                         <div style={{ ...statItemStyle, borderBottom: 'none' }}>
                             <span>Всього переглядів</span>
                             <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--platform-accent)' }}>
-                                {profileData.totalViews || 0}
+                                {displayTotalViews}
                             </span>
                         </div>
                     </div>
                 </div>
-
                 {profileData.socials && Object.values(profileData.socials).some(v => v) ? (
                     <div style={{ ...sectionStyle, marginBottom: 0, height: '100%' }}>
                         <div style={cardHeaderStyle}>
@@ -342,13 +364,11 @@ const ProfilePage = () => {
                     </div>
                 )}
             </div>
-
             <div style={sectionStyle}>
                 <div style={cardHeaderStyle}>
                     <Layout size={24} style={{ color: 'var(--platform-accent)' }} />
                     <h3 style={cardTitleStyle}>Публічні сайти</h3>
                 </div>
-
                 <SiteFilters 
                     searchTerm={searchTerm} 
                     onSearchChange={setSearchTerm} 
@@ -358,7 +378,6 @@ const ProfilePage = () => {
                     tags={[]} 
                     showStarFilter={false}
                 />
-
                 <div style={gridStyle}>
                     {sitesLoading ? (
                         <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
@@ -370,7 +389,7 @@ const ProfilePage = () => {
                                 key={site.id} 
                                 site={site} 
                                 variant="public"
-                                formatDate={(d) => new Date(d).toLocaleDateString()}
+                                formatDate={(d) => getFormattedDate(d)}
                             />
                         ))
                     ) : (

@@ -20,14 +20,12 @@ const STATUS_OPTIONS = [
     { value: 'all', label: 'Всі', icon: Inbox }, { value: 'published', label: 'Активні', icon: CheckCircle },
     { value: 'probation', label: 'Модерація', icon: ShieldAlert }, { value: 'suspended', label: 'Бан', icon: Ban }, { value: 'draft', label: 'Чернетки', icon: Clock }
 ];
-
 const STATUS_CONFIG = {
     published: { bg: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)', label: 'Активний', icon: CheckCircle },
     suspended: { bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)', label: 'Заблоковано', icon: Ban },
     probation: { bg: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', color: 'var(--platform-warning)', label: 'Модерація', icon: ShieldAlert },
     draft: { bg: 'var(--platform-hover-bg)', color: 'var(--platform-text-secondary)', label: 'Чернетка', icon: Clock }
 };
-
 const AdminSitesPage = () => {
     const navigate = useNavigate();
     const [viewMode, setViewMode] = useState('list');
@@ -74,7 +72,7 @@ const AdminSitesPage = () => {
                             return (
                                 <AdminRow key={site.id} onClick={() => setSelectedSite(site)} isSelected={selectedSite?.id === site.id} style={{background: site.status === 'suspended' ? 'color-mix(in srgb, var(--platform-danger), transparent 98%)' : undefined}}>
                                     <AdminCell><div style={{fontWeight: '600', fontSize: '15px'}}>{site.title}</div><div style={{fontSize: '13px', color: 'var(--platform-accent)', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px'}}><Globe size={12}/> /{site.site_path}</div></AdminCell>
-                                    <AdminCell><div style={{display:'flex', alignItems:'center', gap:'12px'}}><div onClick={(e)=>{e.stopPropagation();navigate(`/profile/${site.author}`)}} className="hover:opacity-80 cursor-pointer"><Avatar url={site.author_avatar_url} name={site.author} size={36} /></div><div style={{minWidth: 0}}><div style={{fontWeight: '600'}}>{site.author}</div><div style={{fontSize: '12px', opacity: 0.6}}>{site.author_email}</div>{site.warning_count > 0 && <div style={{fontSize: '11px', color: 'var(--platform-danger)', fontWeight: '600'}}><AlertTriangle size={10} /> {site.warning_count} страйк(ів)</div>}</div></div></AdminCell>
+                                    <AdminCell><div style={{display:'flex', alignItems:'center', gap:'12px'}}><div onClick={(e)=>{e.stopPropagation();navigate(`/profile/${site.author}`)}} className="hover:opacity-80 cursor-pointer"><Avatar url={site.author_avatar_url} name={site.author} size={36} /></div><div style={{minWidth: 0}}><div style={{fontWeight: '600'}}>{site.author}</div><div style={{fontSize: '12px', opacity: 0.6}}>{site.author_email}</div>{site.warning_count > 0 && <div style={{display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--platform-danger)', fontWeight: '600'}}><AlertTriangle size={10} /> {site.warning_count} страйк(ів)</div>}</div></div></AdminCell>
                                     <AdminCell><div style={{display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.7}}><Eye size={14} /><span style={{fontWeight: 500}}>{site.view_count || 0}</span></div></AdminCell>
                                     <AdminCell><GenericBadge bg={st.bg} color={st.color} icon={st.icon}>{st.label}</GenericBadge></AdminCell>
                                     <AdminCell align="center">{site.appeal_status === 'pending' ? <GenericBadge bg="color-mix(in srgb, var(--platform-accent), transparent 90%)" color="var(--platform-accent)" icon={ShieldAlert}>Запит</GenericBadge> : <Minus size={16} style={{opacity:0.2}}/>}</AdminCell>

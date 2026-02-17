@@ -4,8 +4,9 @@ import ReactDOM from 'react-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
-import { API_URL } from '../../../shared/utils/mediaUtils';
+import { getMediaUrl } from '../../../shared/utils/mediaUtils'; 
 import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
+import { Button } from '../../../shared/ui/elements/Button';
 import { Search, X, Upload, Check, Image, Calendar, FileText, Clock } from 'lucide-react';
 
 const MediaPickerModal = ({ 
@@ -27,7 +28,6 @@ const MediaPickerModal = ({
     const [cropModalOpen, setCropModalOpen] = useState(false);
     const [imageToCrop, setImageToCrop] = useState(null);
     const [isUploadingCrop, setIsUploadingCrop] = useState(false);
-
     useEffect(() => {
         if (isOpen) {
             fetchMedia();
@@ -39,11 +39,9 @@ const MediaPickerModal = ({
         }
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
-
     useEffect(() => {
         setVideoDuration(null);
     }, [activeFile]);
-
     const fetchMedia = async () => {
         setLoading(true);
         try {
@@ -84,7 +82,6 @@ const MediaPickerModal = ({
                 return null;
             }
         });
-
         const newFiles = await Promise.all(uploadPromises);
         const validFiles = newFiles.filter(f => f !== null);
         if (validFiles.length > 0) {
@@ -110,7 +107,6 @@ const MediaPickerModal = ({
             }
         }
         setSelectedIds(newSelectedIds);
-
         if (!multiple) {
             setActiveFile(newSelectedIds.has(file.id) ? file : null);
         } else {
@@ -131,24 +127,17 @@ const MediaPickerModal = ({
         }
     };
 
-    const getFullImageUrl = (file) => {
-        if (!file || !file.file_path) return null;
-        if (file.file_path.startsWith('http') || file.file_path.startsWith('data:')) return file.file_path;
-        return `${API_URL}${file.file_path.startsWith('/') ? '' : '/'}${file.file_path}`;
-    };
-
     const handleSubmit = () => {
         const selectedFiles = files.filter(f => selectedIds.has(f.id));
-        
         if (selectedFiles.length === 0) {
             onClose();
             return;
         }
-
         if (aspect && !multiple && selectedFiles.length === 1) {
             const file = selectedFiles[0];
             if (file.file_type === 'image' || file.mime_type?.startsWith('image/')) {
-                const fullUrl = getFullImageUrl(file);
+                const fullUrl = getMediaUrl(file);
+                console.log('Clean Crop URL:', fullUrl);
                 setImageToCrop(fullUrl);
                 setCropModalOpen(true);
                 return;
@@ -189,9 +178,7 @@ const MediaPickerModal = ({
         const s = Math.floor(seconds % 60);
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
-
     if (!isOpen) return null;
-
     const filteredFiles = files.filter(f => 
         (f.original_file_name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -238,11 +225,16 @@ const MediaPickerModal = ({
                             <Image size={20} color="var(--platform-accent)" />
                             <h3 style={{ margin: 0, fontSize: '1.125rem' }}>{title}</h3>
                         </div>
-                        <button onClick={onClose} style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-secondary)', cursor: 'pointer', transition: 'all 0.2s' }}>
+                        <Button 
+                            variant="outline" 
+                            className="btn-icon-square"
+                            style={{ width: '36px', height: '36px' }}
+                            onClick={onClose}
+                            title="Закрити"
+                        >
                             <X size={20}/>
-                        </button>
+                        </Button>
                     </div>
-
                     <div style={searchBarStyle}>
                         <div style={{ position: 'relative', flex: 1 }}>
                             <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--platform-text-secondary)', pointerEvents: 'none' }}>
@@ -250,12 +242,16 @@ const MediaPickerModal = ({
                             </div>
                             <input type="text" placeholder="Пошук у медіатеці..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={searchInputStyle} onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'} onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'} />
                         </div>
-                        <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 20px', height: '40px', background: 'var(--platform-accent)', color: 'var(--platform-accent-text)', borderRadius: '8px', fontWeight: 500, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => fileInputRef.current?.click()}>
-                            <Upload size={16} /> Завантажити
-                        </button>
+                        <Button 
+                            variant="primary"
+                            icon={<Upload size={16} />}
+                            style={{ height: '40px', whiteSpace: 'nowrap' }}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            Завантажити
+                        </Button>
                         <input type="file" multiple ref={fileInputRef} style={{display: 'none'}} onChange={handleUpload} />
                     </div>
-
                     <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }} className="custom-scrollbar">
                             {loading ? (
@@ -271,7 +267,6 @@ const MediaPickerModal = ({
                                     {filteredFiles.map(file => {
                                         const isSelected = selectedIds.has(file.id);
                                         const isActive = activeFile?.id === file.id;
-                                        
                                         return (
                                             <div 
                                                 key={file.id} 
@@ -287,7 +282,6 @@ const MediaPickerModal = ({
                                                 onClick={() => handleFileClick(file)}
                                             >
                                                 <MediaFilePreview file={file} />
-                                                
                                                 {isSelected && (
                                                     <div style={{ 
                                                         position: 'absolute', top: '8px', right: '8px', width: '24px', height: '24px',
@@ -297,7 +291,6 @@ const MediaPickerModal = ({
                                                         <Check size={14} />
                                                     </div>
                                                 )}
-                                                
                                                 <div style={{ 
                                                     position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 10px',
                                                     background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
@@ -332,7 +325,6 @@ const MediaPickerModal = ({
                                         onVideoMetadata={(e) => setVideoDuration(e.target.duration)} 
                                     />
                                 </div>
-                                
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                     <p style={{ fontWeight: 600, margin: 0, wordBreak: 'break-all', color: 'var(--platform-text-primary)' }}>
                                         {activeFile.original_file_name}
@@ -354,27 +346,28 @@ const MediaPickerModal = ({
                             </div>
                         )}
                     </div>
-
                     <div style={footerStyle}>
-                       <div style={{ color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
+                        <div style={{ color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
                             Вибрано: <b style={{ color: 'var(--platform-accent)' }}>{selectedIds.size}</b> {multiple ? 'файлів' : 'файл'}
                         </div>
                         <div style={{ display: 'flex', gap: '12px' }}>
-                            <button onClick={onClose} style={{ padding: '10px 20px', backgroundColor: 'transparent', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-primary)', borderRadius: '8px', fontWeight: 500, cursor: 'pointer', transition: 'border-color 0.2s' }}>
+                            <Button variant="outline" onClick={onClose}>
                                 Скасувати
-                            </button>
-                            <button onClick={handleSubmit} style={{ padding: '10px 24px', backgroundColor: 'var(--platform-accent)', color: 'var(--platform-accent-text)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', opacity: selectedIds.size === 0 ? 0.5 : 1, pointerEvents: selectedIds.size === 0 ? 'none' : 'auto' }} disabled={selectedIds.size === 0}>
+                            </Button>
+                            <Button 
+                                variant="primary" 
+                                onClick={handleSubmit} 
+                                disabled={selectedIds.size === 0}
+                            >
                                 {isCropMode ? 'Далі' : 'Підтвердити'}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
-                
                 <style>{`
                     @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
                 `}</style>
             </div>
-
             <ImageCropperModal
                 isOpen={cropModalOpen}
                 imageSrc={imageToCrop}

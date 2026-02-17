@@ -11,7 +11,7 @@ import { Lock, Trash2, AlertCircle } from 'lucide-react';
 
 const ProfileSecurityTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
-    const confirm = useConfirm();
+    const { confirm } = useConfirm(); 
     const [isLoading, setIsLoading] = useState(false);
     const hasPassword = user.has_password === true;
     const [passwords, setPasswords] = useState({
@@ -19,9 +19,11 @@ const ProfileSecurityTab = () => {
         newPassword: '',
         confirmPassword: ''
     });
+
     useEffect(() => {
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     }, [hasPassword]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setPasswords(prev => ({ ...prev, [name]: value }));
@@ -51,10 +53,8 @@ const ProfileSecurityTab = () => {
                 ...(response.data.user || {}), 
                 has_password: true        
             };
-            
             updateUser(updatedUser); 
             setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
-
         } catch (error) {
             toast.error(error.response?.data?.message || "Помилка збереження пароля.");
         } finally {
@@ -143,7 +143,6 @@ const ProfileSecurityTab = () => {
                                 required 
                             />
                         )}
-
                         <div>
                             <Input 
                                 name="newPassword" 
@@ -178,7 +177,6 @@ const ProfileSecurityTab = () => {
                     </div>
                 </form>
             </div>
-
             <div style={dangerCardStyle}>
                 <div style={{ 
                     display: 'flex', 
@@ -196,7 +194,6 @@ const ProfileSecurityTab = () => {
                              Видалення акаунту призведе до <strong>незворотної</strong> втрати всіх ваших сайтів та даних.
                         </p>
                     </div>
-                    
                     <Button 
                         variant="danger"
                         onClick={handleDeleteAccount}

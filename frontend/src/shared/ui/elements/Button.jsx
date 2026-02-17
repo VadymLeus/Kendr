@@ -11,6 +11,7 @@ export const Button = ({
   icon,
   style,
   title,
+  active,
   ...props
 }) => {
   const variantMap = {
@@ -24,11 +25,11 @@ export const Button = ({
   };
 
   const variantClass = variantMap[variant] || `btn-${variant}`;
-
+  const activeClass = active ? 'active' : '';
   return (
     <button
       type={type}
-      className={`btn ${variantClass} ${className}`}
+      className={`btn ${variantClass} ${activeClass} ${className}`.trim()}
       onClick={onClick}
       disabled={disabled}
       title={title}

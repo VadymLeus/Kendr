@@ -13,11 +13,13 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
     if (!user) return null;
     return (
         <>
-            <div className={`w-full ${isCollapsed ? 'flex justify-center' : ''}`}>
-                <div className={`flex items-center gap-3 w-full ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+            <div className="w-full">
+                <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
                     <Link 
                         to={`/profile/${user.username}`} 
-                        className="flex items-center gap-3 flex-1 min-w-0 group rounded-lg hover:bg-(--platform-hover-bg) transition-colors p-1 -ml-1" 
+                        className={`flex items-center group rounded-lg hover:bg-(--platform-hover-bg) transition-colors ${
+                            isCollapsed ? 'justify-center p-1.5' : 'gap-3 flex-1 min-w-0 p-1 -ml-1'
+                        }`} 
                         title="Мій профіль"
                     >
                         <Avatar url={user.avatar_url} name={user.username} size={isCollapsed ? 36 : 38} />
@@ -32,6 +34,7 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
                             </div>
                         )}
                     </Link>
+                    
                     {!isCollapsed && (
                         <div className="flex flex-col gap-1 pl-2 border-l border-(--platform-border-color)">
                             <button 
@@ -52,6 +55,7 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
                     )}
                 </div>
             </div>
+            
             <ConfirmModal 
                 isOpen={showModal}
                 title="Вихід"

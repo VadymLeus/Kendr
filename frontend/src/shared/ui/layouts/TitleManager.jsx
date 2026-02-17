@@ -26,10 +26,9 @@ const TitleManager = ({ siteData }) => {
     else {
         finalTitle = 'Kendr - Платформа';
     }
-
     return (
         <Helmet>
-            <title>{finalTitle}</title>
+            <title>{`${finalTitle}`}</title>
         </Helmet>
     );
 };

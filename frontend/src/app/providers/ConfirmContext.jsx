@@ -1,50 +1,58 @@
 // frontend/src/app/providers/ConfirmContext.jsx
 import React, { createContext, useState, useCallback } from 'react';
 import ConfirmModal from '../../shared/ui/complex/ConfirmModal';
-export const ConfirmContext = createContext();
+
+export const ConfirmContext = createContext(null);
 export const ConfirmProvider = ({ children }) => {
     const [confirmState, setConfirmState] = useState({
         isOpen: false,
         title: '',
         message: '',
-        confirmLabel: 'Підтвердити',
-        cancelLabel: 'Скасувати',
+        confirmText: 'Підтвердити',
+        cancelText: 'Скасувати',
         type: 'danger',
-        resolve: null
+        requireInput: false,
+        onConfirm: () => {},
+        onCancel: () => {},
     });
-    const confirm = useCallback((options = {}) => {
-        const title = typeof options === 'string' ? 'Підтвердження' : (options.title || 'Ви впевнені?');
-        const message = typeof options === 'string' ? options : (options.message || '');
-        const confirmLabel = options.confirmLabel || 'Підтвердити';
-        const cancelLabel = options.cancelLabel || 'Скасувати';
-        const type = options.type || 'danger';
+
+    const confirm = useCallback((options) => {
         return new Promise((resolve) => {
             setConfirmState({
                 isOpen: true,
-                title,
-                message,
-                confirmLabel,
-                cancelLabel,
-                type,
-                resolve
+                title: options.title || 'Підтвердження',
+                message: options.message || 'Ви впевнені?',
+                confirmText: options.confirmText || 'Підтвердити',
+                cancelText: options.cancelText || 'Скасувати',
+                type: options.danger ? 'danger' : (options.type || 'primary'),
+                requireInput: options.requireInput || false,
+                onConfirm: (inputValue) => {
+                    setConfirmState((prev) => ({ ...prev, isOpen: false }));
+                    if (options.onConfirm) options.onConfirm(inputValue);
+                    resolve(true);
+                },
+                onCancel: () => {
+                    setConfirmState((prev) => ({ ...prev, isOpen: false }));
+                    if (options.onCancel) options.onCancel();
+                    resolve(false);
+                },
             });
         });
     }, []);
-    const handleConfirm = () => {
-        if (confirmState.resolve) confirmState.resolve(true);
-        setConfirmState({ ...confirmState, isOpen: false });
-    };
-    const handleCancel = () => {
-        if (confirmState.resolve) confirmState.resolve(false);
-        setConfirmState({ ...confirmState, isOpen: false });
-    };
+
     return (
         <ConfirmContext.Provider value={{ confirm }}>
             {children}
-            <ConfirmModal 
-                {...confirmState} 
-                onConfirm={handleConfirm} 
-                onCancel={handleCancel} 
+            <ConfirmModal
+                isOpen={confirmState.isOpen}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmLabel={confirmState.confirmText}
+                cancelLabel={confirmState.cancelText}
+                onConfirm={confirmState.onConfirm}
+                onCancel={confirmState.onCancel}
+                type={confirmState.type}
+                requireInput={confirmState.requireInput}
             />
         </ConfirmContext.Provider>
     );
