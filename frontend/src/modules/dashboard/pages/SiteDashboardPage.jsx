@@ -61,6 +61,7 @@ const SiteDashboardPage = () => {
         }
         return savedPage ? parseInt(savedPage, 10) : null;
     });
+    
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [selectedBlockPath, setSelectedBlockPath] = useState(null);
     const [allPages, setAllPages] = useState([]);
@@ -86,7 +87,6 @@ const SiteDashboardPage = () => {
             localStorage.setItem(key, JSON.stringify(collapsedBlocks));
         }
     }, [collapsedBlocks, site_path, currentPageId]);
-    
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
@@ -98,6 +98,7 @@ const SiteDashboardPage = () => {
     const setComponentSaving = useCallback((component, isSaving) => {
         setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
+    
     const handleBlockSaved = useCallback(() => {
         setSavedBlocksUpdateTrigger(prev => prev + 1);
     }, []);
@@ -320,7 +321,6 @@ const SiteDashboardPage = () => {
             })
             .catch(console.error);
     };
-
     const toggleBlockCollapse = (blockId) => {
         setCollapsedBlocks(prev => 
             prev.includes(blockId) 
@@ -328,7 +328,6 @@ const SiteDashboardPage = () => {
                 : [...prev, blockId]
         );
     };
-
     const handleSavingChange = useCallback((isSaving) => {
         const tabMap = { 
             pages: 'pages', 
@@ -339,7 +338,6 @@ const SiteDashboardPage = () => {
         };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
-    
     if (isSiteLoading || !siteData) {
         return <div className="p-8 text-center text-(--platform-text-secondary)">Завантаження...</div>;
     }
@@ -352,7 +350,6 @@ const SiteDashboardPage = () => {
                     <span>Редактор тимчасово заблоковано для оновлення платформи. Ви в режимі перегляду.</span>
                 </div>
             )}
-
             <DashboardHeader
                 siteData={siteData}
                 activeTab={activeTab}
@@ -445,7 +442,7 @@ const SiteDashboardPage = () => {
                                 <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />
                             )}
                             {activeTab === 'orders' && (
-                                <OrdersTab />
+                                <OrdersTab siteData={siteData} />
                             )}
                             {activeTab === 'theme' && (
                                 <ThemeSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />

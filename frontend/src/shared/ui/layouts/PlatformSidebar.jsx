@@ -4,7 +4,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import UserMenu from './UserMenu';
-import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders } from 'lucide-react';
+import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders, Package } from 'lucide-react';
 
 const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
     const { cartItems } = useContext(CartContext);
@@ -17,6 +17,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
             navigate('/login');
         }
     };
+    
     const SidebarLink = ({ to, icon: Icon, label, protectedLink, count, isCreateButton }) => {
         const baseClass = `sidebar-link ${isCreateButton ? 'create-btn' : ''}`;
         return (
@@ -73,6 +74,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
                         <SidebarLink to="/media-library" icon={FileText} label="Медіатека" protectedLink />
                         <div className="nav-separator" />
                         <SidebarLink to="/catalog" icon={Store} label="Каталог сайтів" />
+                        {user && <SidebarLink to="/my-orders" icon={Package} label="Мої замовлення" protectedLink />}
                         {user && <SidebarLink to="/cart" icon={ShoppingCart} label="Кошик" count={cartItems.length} />}
                         <div className="nav-separator" />
                         <SidebarLink to="/support" icon={HelpCircle} label="Підтримка" />

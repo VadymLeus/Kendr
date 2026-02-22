@@ -26,6 +26,7 @@ import MediaLibraryPage from '../modules/media/pages/MediaLibraryPage';
 import CatalogPage from '../modules/renderer/pages/CatalogPage';
 import SiteDisplayPage from '../modules/renderer/pages/SiteDisplayPage';
 import CartPage from '../modules/shop/CartPage';
+import MyOrdersPage from '../modules/shop/MyOrdersPage';
 import ProductDetailPage from '../modules/shop/ProductDetailPage';
 import SupportPage from '../modules/support/pages/SupportPage';
 import NewTicketPage from '../modules/support/pages/NewTicketPage';
@@ -81,6 +82,7 @@ function App() {
                             <Route path="/my-sites" element={<MySitesPage />} />
                             <Route path="/create-site" element={<CreateSitePage />} />
                             <Route path="/media-library" element={<MediaLibraryPage />} />
+                            <Route path="/my-orders" element={<MyOrdersPage />} />
                         </Route>
                         <Route element={<ProtectedRoute excludeAdmin={true} />}>
                             <Route path="/cart" element={<CartPage />} />

@@ -13,6 +13,7 @@ export const STATIC_TITLES = {
     '/support/my-tickets': 'Мої звернення',
     '/support/appeal': 'Оскарження',
     '/cart': 'Кошик',
+    '/my-orders': 'Мої замовлення',
     '/rules': 'Правила платформи',
     '/admin': 'Адмін-панель',
     '/admin/support': 'Підтримка (Адмін)'
@@ -20,7 +21,6 @@ export const STATIC_TITLES = {
 
 export const getTitleForPath = (pathname) => {
     const cleanPath = pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
-
     if (STATIC_TITLES[cleanPath]) {
         return STATIC_TITLES[cleanPath];
     }

@@ -1,6 +1,7 @@
-// frontend/src/modules/shop/pages/CartPage.jsx
-import React, { useContext, useMemo, useState } from 'react';
+// frontend/src/modules/shop/CartPage.jsx
+import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { CartContext } from '../../app/providers/CartContext';
+import { AuthContext } from '../../app/providers/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
@@ -10,11 +11,23 @@ import { Trash2, Minus, Plus, Store, ArrowLeft, CreditCard, Tag, AlertCircle, Pa
 
 const CartPage = () => {
     const { cartItems, isDigitalOnly, removeFromCart, clearCart, updateQuantity } = useContext(CartContext);
+    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [customerData, setCustomerData] = useState({
         name: '', email: '', phone: '', address: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            setCustomerData(prev => ({
+                ...prev,
+                name: prev.name || user.username || '',
+                email: user.email || ''
+            }));
+        }
+    }, [user]);
+
     const groupedItems = useMemo(() => {
         const groups = {};
         cartItems.forEach(item => {
@@ -239,11 +252,14 @@ const CartPage = () => {
                                 <Input 
                                     leftIcon={<Mail size={18}/>}
                                     type="email"
-                                    placeholder="Email (для відправки чеку/файлів)"
+                                    placeholder="Ваш Email"
                                     value={customerData.email}
-                                    onChange={(e) => setCustomerData({...customerData, email: e.target.value})}
+                                    disabled={true} 
                                     required
-                                    helperText={isDigitalOnly ? "На цей email буде надіслано доступ до файлів" : ""}
+                                    helperText={isDigitalOnly 
+                                        ? "На цей email буде надіслано доступ до файлів." 
+                                        : "Ваш реєстраційний email для відправки чеку."
+                                    }
                                 />
                                 <Input 
                                     leftIcon={<Phone size={18}/>}

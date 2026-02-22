@@ -1,17 +1,22 @@
 // frontend/src/modules/features/shop/OrdersTab.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../../shared/api/api';
-import { Package, MapPin, User, Mail, Phone, Calendar, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { Package, MapPin, User, Mail, Phone, Calendar, Clock, AlertCircle } from 'lucide-react';
 
-const OrdersTab = ({ siteData }) => {
+const OrdersTab = ({ site, siteData }) => {
+    const currentSite = site || siteData;
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
+        if (!currentSite?.id) {
+            setLoading(false);
+            return;
+        }
         const fetchOrders = async () => {
-            if (!siteData?.id) return;
+            setLoading(true);
             try {
-                const res = await apiClient.get(`/orders/site/${siteData.id}`);
+                const res = await apiClient.get(`/orders/site/${currentSite.id}`);
                 setOrders(res.data || []);
             } catch (err) {
                 console.error(err);
@@ -20,26 +25,38 @@ const OrdersTab = ({ siteData }) => {
                 setLoading(false);
             }
         };
+
         fetchOrders();
-    }, [siteData]);
+    }, [currentSite]);
 
     const formatDate = (dateString) => {
         const d = new Date(dateString);
-        return d.toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+        return d.toLocaleString('uk-UA', { 
+            day: '2-digit', month: '2-digit', year: 'numeric', 
+            hour: '2-digit', minute:'2-digit' 
+        });
     };
 
     const getStatusBadge = (status) => {
         const maps = {
-            'new': { label: 'Нове', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+            'pending': { label: 'Очікує оплати', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+            'paid': { label: 'Оплачено', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+            'shipped': { label: 'Відправлено', color: 'bg-purple-100 text-purple-700 border-purple-200' },
             'completed': { label: 'Виконано', color: 'bg-green-100 text-green-700 border-green-200' },
             'cancelled': { label: 'Скасовано', color: 'bg-red-100 text-red-700 border-red-200' }
         };
-        const config = maps[status] || maps['new'];
-        return <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${config.color}`}>{config.label}</span>;
+        const config = maps[status] || maps['pending'];
+        return (
+            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${config.color}`}>
+                {config.label}
+            </span>
+        );
     };
+
     if (loading) {
         return <div className="p-10 text-center text-(--platform-text-secondary)">Завантаження замовлень...</div>;
     }
+
     if (orders.length === 0) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center text-(--platform-text-primary)">
@@ -79,17 +96,17 @@ const OrdersTab = ({ siteData }) => {
                                 <div className="flex flex-col gap-2">
                                     <div className="flex gap-2"><span className="text-(--platform-text-secondary) w-20">Ім'я:</span> <span className="font-medium">{order.customer_name}</span></div>
                                     <div className="flex gap-2"><span className="text-(--platform-text-secondary) w-20">Email:</span> <a href={`mailto:${order.customer_email}`} className="text-(--platform-accent) hover:underline">{order.customer_email}</a></div>
-                                    <div className="flex gap-2"><span className="text-(--platform-text-secondary) w-20">Телефон:</span> <span>{order.customer_phone}</span></div>
+                                    <div className="flex gap-2"><span className="text-(--platform-text-secondary) w-20">Телефон:</span> <span>{order.customer_phone || '-'}</span></div>
                                     <div className="flex gap-2 mt-2 pt-2 border-t border-(--platform-border-color)/50">
                                         <MapPin size={16} className="text-(--platform-text-secondary) shrink-0 mt-0.5"/> 
                                         <span className={order.delivery_address === 'Цифрова доставка' ? 'text-blue-500 font-medium' : ''}>
-                                            {order.delivery_address}
+                                            {order.delivery_address || 'Не вказано'}
                                         </span>
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <h4 className="font-bold mb-3 text-sm text-(--platform-text-primary)">Товари ({order.items?.length})</h4>
+                                <h4 className="font-bold mb-3 text-sm text-(--platform-text-primary)">Товари ({order.items?.length || 0})</h4>
                                 <div className="flex flex-col gap-2">
                                     {order.items?.map(item => {
                                         const opts = item.options ? (typeof item.options === 'string' ? JSON.parse(item.options) : item.options) : {};
