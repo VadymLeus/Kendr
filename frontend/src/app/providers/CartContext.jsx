@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { AuthContext } from './AuthContext';
 import { toast } from 'react-toastify';
+
 export const CartContext = createContext(null);
 export const CartProvider = ({ children }) => {
     const { user } = useContext(AuthContext);
@@ -17,10 +18,13 @@ export const CartProvider = ({ children }) => {
             setCartItems([]);
         }
     }, [user]);
+
     useEffect(() => {
         const cartKey = getCartKey();
         localStorage.setItem(cartKey, JSON.stringify(cartItems));
     }, [cartItems, user]);
+
+    const isDigitalOnly = cartItems.length > 0 && cartItems.every(item => item.type === 'digital');
     const addToCart = (product, selectedOptions = {}, priceInfo = null) => {
         const optionsString = JSON.stringify(selectedOptions, Object.keys(selectedOptions).sort());
         const cartItemId = `${product.id}-${optionsString}`;
@@ -47,10 +51,12 @@ export const CartProvider = ({ children }) => {
         });
         toast.success(`"${product.name}" додано до кошика!`);
     };
+
     const removeFromCart = (cartItemId) => {
         setCartItems(prevItems => prevItems.filter(item => item.cartItemId !== cartItemId));
         toast.info("Товар видалено з кошика");
     };
+
     const updateQuantity = (cartItemId, newQuantity) => {
         if (newQuantity <= 0) {
             removeFromCart(cartItemId);
@@ -62,12 +68,15 @@ export const CartProvider = ({ children }) => {
             );
         }
     };
+
     const clearCart = () => {
         setCartItems([]);
     };
+
     return (
         <CartContext.Provider value={{ 
             cartItems, 
+            isDigitalOnly,
             addToCart, 
             removeFromCart, 
             clearCart, 

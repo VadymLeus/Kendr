@@ -6,7 +6,6 @@ const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 const { v4: uuidv4 } = require('uuid');
-
 const regenerateBlockIds = (blocks) => {
     if (!blocks) return [];
     const mapBlock = (block) => {
@@ -31,7 +30,6 @@ exports.getTemplates = async (req, res, next) => {
         } else {
             query += " AND access_level = 'public'";
         }
-        
         query += ' ORDER BY created_at DESC';
         const [rows] = await db.query(query);
         const processedRows = rows.map(row => ({
@@ -181,13 +179,11 @@ exports.getSiteByPath = async (req, res, next) => {
                 });
             }
         }
-        
         if (site.status === 'probation') {
             if (!isOwner && !isAdmin) {
                 return res.status(403).json({ message: 'Сайт знаходиться на модерації.' });
             }
         }
-
         let page;
         if (slug) page = await Page.findBySiteIdAndSlug(site.id, slug);
         else page = await Page.findHomepageBySiteId(site.id);
@@ -211,7 +207,6 @@ exports.updateSiteSettings = async (req, res, next) => {
         if (!site || site.user_id !== userId) {
             return res.status(403).json({ message: 'У вас немає прав.' });
         }
-
         const { status: requestedStatus } = req.body;
         if (requestedStatus && requestedStatus !== site.status) {
             if (site.status === 'suspended' || site.status === 'probation') {
@@ -220,14 +215,15 @@ exports.updateSiteSettings = async (req, res, next) => {
                 });
             }
         }
-
         const { 
             title, status, tags, site_theme_mode, site_theme_accent, theme_settings, 
             header_content, footer_content, favicon_url, site_title_seo, 
             cover_image, cover_layout, logo_url,
             cover_logo_size,
             cover_logo_radius,
-            cover_title_size
+            cover_title_size,
+            liqpay_public_key,
+            liqpay_private_key
         } = req.body;
 
         const safeParse = (data, fallback) => {
@@ -235,7 +231,6 @@ exports.updateSiteSettings = async (req, res, next) => {
             if (typeof data === 'object') return data;
             try { return JSON.parse(data); } catch (e) { return fallback; }
         };
-
         let processingHeaderContent = safeParse(header_content, null);
         let currentHeaderContent = processingHeaderContent || safeParse(site.header_content, []);
         let finalLogoUrl = logo_url !== undefined ? logo_url : site.logo_url;
@@ -247,7 +242,6 @@ exports.updateSiteSettings = async (req, res, next) => {
                 if (incomingHeaderBlock.data.site_title !== undefined) finalTitle = incomingHeaderBlock.data.site_title;
             }
         }
-
         if (Array.isArray(currentHeaderContent)) {
             let headerFound = false;
             currentHeaderContent = currentHeaderContent.map(block => {
@@ -264,7 +258,6 @@ exports.updateSiteSettings = async (req, res, next) => {
                 }
                 return block;
             });
-
             if (!headerFound) {
                 currentHeaderContent.push({
                     block_id: uuidv4(),
@@ -300,7 +293,9 @@ exports.updateSiteSettings = async (req, res, next) => {
             cover_layout: cover_layout !== undefined ? cover_layout : site.cover_layout,
             cover_logo_size: cover_logo_size !== undefined ? parseInt(cover_logo_size) : site.cover_logo_size,
             cover_logo_radius: cover_logo_radius !== undefined ? parseInt(cover_logo_radius) : site.cover_logo_radius,
-            cover_title_size: cover_title_size !== undefined ? parseInt(cover_title_size) : site.cover_title_size
+            cover_title_size: cover_title_size !== undefined ? parseInt(cover_title_size) : site.cover_title_size,
+            liqpay_public_key: liqpay_public_key !== undefined ? liqpay_public_key : site.liqpay_public_key,
+            liqpay_private_key: liqpay_private_key !== undefined ? liqpay_private_key : site.liqpay_private_key
         };
 
         await Site.updateSettings(site.id, updateData);

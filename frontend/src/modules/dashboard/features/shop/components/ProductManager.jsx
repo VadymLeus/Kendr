@@ -12,7 +12,7 @@ import MediaPickerModal from '../../../../media/components/MediaPickerModal';
 import { SplitViewLayout } from '../../../../../shared/ui/layouts/SplitViewLayout';
 import { TEXT_LIMITS } from '../../../../../shared/config/limits';
 import { BASE_URL } from '../../../../../shared/config';
-import { ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X } from 'lucide-react';
+import { ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X, Package, Download } from 'lucide-react';
 
 const SORT_FIELDS = [
     { value: 'name', label: 'За назвою', icon: Type },
@@ -24,7 +24,7 @@ const useProducts = (siteId) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ search: '', category: 'all' });
+    const [filters, setFilters] = useState({ search: '', category: 'all', sortBy: 'name' });
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -34,6 +34,7 @@ const useProducts = (siteId) => {
             ]);
             const productsData = (pRes.data || []).map(p => ({
                 ...p,
+                type: p.type || 'physical',
                 variants: Array.isArray(p.variants) ? p.variants : 
                          (typeof p.variants === 'string' ? JSON.parse(p.variants) : []),
                 image_gallery: Array.isArray(p.image_gallery) ? p.image_gallery : 
@@ -49,6 +50,7 @@ const useProducts = (siteId) => {
             setLoading(false);
         }
     }, [siteId]);
+
     useEffect(() => { fetchData(); }, [fetchData]);
     const handleDelete = useCallback(async (id, onSuccess) => {
         try {
@@ -60,6 +62,7 @@ const useProducts = (siteId) => {
             toast.error('Помилка видалення');
         }
     }, []);
+
     return { 
         products, categories, loading, filters, setFilters,
         fetchData, handleDelete
@@ -81,6 +84,7 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
             setInputState({ label: '', price: '', sale: '' });
         }
     }, [editingIndex, variant.values]);
+
     const handleSaveValue = () => {
         if (!inputState.label.trim()) return;
         const valueData = { 
@@ -186,6 +190,7 @@ const ProductTable = memo(({
         { value: 'all', label: 'Всі категорії' },
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
     ];
+
     if (loading) return <div className="p-10 text-center text-(--platform-text-secondary)">Завантаження...</div>;
     return (
         <div className="flex flex-col h-full bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) overflow-hidden">
@@ -260,21 +265,30 @@ const ProductTable = memo(({
                                          ) : (
                                             <Image size={32} className="opacity-20 text-slate-400" />
                                          )}
-                                         <div className={`
-                                            absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded text-[0.7rem] font-bold z-10 border border-slate-100
-                                            ${product.stock_quantity > 0 ? 'text-emerald-500' : 'text-red-500'}
-                                         `}>
-                                                 {product.stock_quantity} шт.
+                                         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                                            {product.type === 'digital' ? (
+                                                <div className="px-2 py-0.5 bg-(--platform-accent) text-(--platform-accent-text) backdrop-blur-sm rounded text-[0.7rem] font-bold shadow-sm flex items-center gap-1 border border-transparent">
+                                                    <Download size={10}/> Цифровий
+                                                </div>
+                                            ) : (
+                                                <div className={`
+                                                    px-2 py-0.5 bg-(--platform-card-bg)/90 backdrop-blur-sm rounded text-[0.7rem] font-bold border border-(--platform-border-color) shadow-sm
+                                                    ${product.stock_quantity > 0 ? 'text-(--platform-success)' : 'text-(--platform-danger)'}
+                                                `}>
+                                                    {product.stock_quantity || 0} шт.
+                                                </div>
+                                            )}
                                          </div>
                                          <button
-                                                 onClick={(e) => { e.stopPropagation(); onDelete(product); }}
-                                                 className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer z-20 text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:border-red-500 hover:scale-110"
-                                                 title="Видалити"
+                                            onClick={(e) => { e.stopPropagation(); onDelete(product); }}
+                                            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-(--platform-card-bg) border border-(--platform-border-color) flex items-center justify-center cursor-pointer z-20 text-(--platform-danger) shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                                            title="Видалити"
                                          >
-                                                 <X size={16} />
+                                            <X size={16} />
                                          </button>
+                                         
                                          {isSelected && (
-                                            <div className="absolute top-2 right-10 text-(--platform-accent) bg-white rounded-full p-0.5 shadow-sm z-10 animate-in fade-in zoom-in duration-200">
+                                            <div className="absolute top-2 right-10 text-(--platform-accent) bg-(--platform-card-bg) rounded-full p-0.5 shadow-sm z-10 animate-in fade-in zoom-in duration-200">
                                                 <CheckCircle size={20} />
                                             </div>
                                          )}
@@ -288,7 +302,7 @@ const ProductTable = memo(({
                                                 {product.price} ₴
                                             </div>
                                             {product.sale_percentage > 0 && (
-                                                <div className="text-xs text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded">
+                                                <div className="text-xs text-white font-bold bg-(--platform-danger) px-1.5 py-0.5 rounded">
                                                     -{product.sale_percentage}%
                                                 </div>
                                             )}
@@ -313,40 +327,63 @@ const ProductEditorPanel = ({
     const initialFormData = {
         id: null, name: '', description: '', price: 0,
         stock_quantity: 1, category_id: '', image_gallery: [],
-        variants: [], sale_percentage: 0
+        variants: [], sale_percentage: 0,
+        type: 'physical', digital_file_url: ''
     };
+    
     const [formData, setFormData] = useState(initialFormData);
     const DESCRIPTION_LIMIT = 2000;
     useEffect(() => {
         if (productToEdit) {
             setFormData({
                 ...productToEdit,
-                category_id: productToEdit.category_id ? productToEdit.category_id.toString() : ''
+                category_id: productToEdit.category_id ? productToEdit.category_id.toString() : '',
+                type: productToEdit.type || 'physical',
+                digital_file_url: productToEdit.digital_file_url || ''
             });
         } else {
             setFormData(initialFormData);
         }
     }, [productToEdit]);
+
     const handleClearForm = () => {
         setFormData(initialFormData);
         if (onCancel) onCancel();
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (formData.type === 'digital' && !formData.digital_file_url?.trim()) {
+            toast.warning("Для цифрового товару обов'язково вкажіть посилання або текст!");
+            return;
+        }
+
         onSavingChange(true);
         try {
             const payload = { ...formData, site_id: siteId };
+            if (payload.type === 'digital') {
+                payload.stock_quantity = null;
+            } else {
+                payload.digital_file_url = null;
+            }
+
             if (formData.id) await apiClient.put(`/products/${formData.id}`, payload);
             else await apiClient.post(`/products`, payload);
+            
             toast.success('Збережено');
             onSuccess();
-        } catch (e) { toast.error('Помилка'); }
-        finally { onSavingChange(false); }
+        } catch (e) { 
+            toast.error('Помилка збереження'); 
+        } finally { 
+            onSavingChange(false); 
+        }
     };
+
     const categoryOptions = [
         { value: '', label: 'Без категорії' },
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
     ];
+
     return (
         <div className={`
             flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) overflow-hidden
@@ -372,8 +409,32 @@ const ProductEditorPanel = ({
                     <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><X size={20}/></Button>
                 )}
             </div>
+            
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
+                    <div>
+                        <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">Тип товару</label>
+                        <div className="flex gap-2 p-1 bg-(--platform-input-bg) border border-(--platform-border-color) rounded-lg">
+                            <Button 
+                                type="button"
+                                variant={formData.type === 'physical' ? 'primary' : 'ghost'} 
+                                className="flex-1 justify-center transition-all duration-300" 
+                                onClick={() => setFormData({...formData, type: 'physical'})}
+                                icon={<Package size={16} />}
+                            >
+                                Фізичний
+                            </Button>
+                            <Button 
+                                type="button"
+                                variant={formData.type === 'digital' ? 'primary' : 'ghost'} 
+                                className="flex-1 justify-center transition-all duration-300" 
+                                onClick={() => setFormData({...formData, type: 'digital'})}
+                                icon={<Download size={16} />}
+                            >
+                                Цифровий
+                            </Button>
+                        </div>
+                    </div>
                     <InputWithCounter 
                         label="Назва" 
                         value={formData.name} 
@@ -381,10 +442,47 @@ const ProductEditorPanel = ({
                         required 
                         limitKey="PRODUCT_NAME"
                     />
+                    
                     <div className="flex gap-3">
-                        <Input label="Ціна (₴)" type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} wrapperStyle={{flex: 1}} />
-                        <Input label="Знижка (%)" type="number" value={formData.sale_percentage} onChange={e => setFormData({...formData, sale_percentage: e.target.value})} wrapperStyle={{flex: 1}} />
+                        <Input 
+                            label="Ціна (₴)" 
+                            type="number" 
+                            value={formData.price} 
+                            onChange={e => setFormData({...formData, price: e.target.value})} 
+                            wrapperStyle={{flex: 1}} 
+                            required
+                        />
+                        <Input 
+                            label="Знижка (%)" 
+                            type="number" 
+                            value={formData.sale_percentage} 
+                            onChange={e => setFormData({...formData, sale_percentage: e.target.value})} 
+                            wrapperStyle={{flex: 1}} 
+                        />
                     </div>
+
+                    {formData.type === 'physical' ? (
+                        <div className="animate-in fade-in slide-in-from-top-2">
+                            <Input 
+                                label="Залишок на складі (шт.)" 
+                                type="number" 
+                                value={formData.stock_quantity === null ? '' : formData.stock_quantity} 
+                                onChange={e => setFormData({...formData, stock_quantity: e.target.value})} 
+                                min="0"
+                            />
+                        </div>
+                    ) : (
+                        <div className="animate-in fade-in slide-in-from-top-2">
+                            <Input 
+                                label="Посилання на файл або секретний текст" 
+                                type="text" 
+                                value={formData.digital_file_url} 
+                                onChange={e => setFormData({...formData, digital_file_url: e.target.value})} 
+                                placeholder="https://drive.google.com/..." 
+                                helperText="Покупець автоматично отримає це на email після успішної оплати."
+                            />
+                        </div>
+                    )}
                     <div>
                         <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">Категорія</label>
                         <CustomSelect value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})} options={categoryOptions} />
@@ -477,6 +575,7 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             }
         }
     }, [loading, products, searchParams]);
+
     const processedProducts = useMemo(() => {
         let result = products.filter(product => {
             const matchesSearch = filters.search === '' || 
@@ -493,6 +592,7 @@ const ProductManager = ({ siteId, onSavingChange }) => {
         });
         return result;
     }, [products, filters, sortOrder]);
+
     const handleProductSelect = useCallback((product) => {
         if (activeProduct && activeProduct.id === product.id) {
             setActiveProduct(null);
@@ -503,6 +603,7 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setSearchParams(prev => { prev.set('productId', product.id); return prev; });
         }
     }, [activeProduct, setSearchParams]);
+
     const handleCreateNew = useCallback(() => {
         setActiveProduct(null);
         setIsPanelOpen(true);
@@ -537,6 +638,7 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setProductToDelete(null);
         }
     }, [productToDelete, handleDelete, activeProduct, handleClosePanel]);
+
     return (
         <>
             <SplitViewLayout

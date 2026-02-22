@@ -106,7 +106,8 @@ class Site {
             s.cover_image, s.cover_layout,
             s.cover_logo_size,
             s.cover_logo_radius,
-            s.cover_title_size
+            s.cover_title_size,
+            s.liqpay_public_key, s.liqpay_private_key
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -161,7 +162,8 @@ class Site {
       title, status, site_theme_mode, site_theme_accent, theme_settings, 
       header_content, footer_content, favicon_url, site_title_seo, 
       cover_image, cover_layout, logo_url,
-      cover_logo_size, cover_logo_radius, cover_title_size
+      cover_logo_size, cover_logo_radius, cover_title_size,
+      liqpay_public_key, liqpay_private_key
     } = data;
     
     const safeStringify = (obj) => {
@@ -188,6 +190,8 @@ class Site {
         cover_logo_size !== undefined ? cover_logo_size : 80,
         cover_logo_radius !== undefined ? cover_logo_radius : 0,
         cover_title_size !== undefined ? cover_title_size : 24,
+        liqpay_public_key || null,
+        liqpay_private_key || null,
         siteId
     ];
 
@@ -206,11 +210,11 @@ class Site {
             cover_image = ?, 
             cover_layout = ?,
             logo_url = ?,
-            
             cover_logo_size = ?,
             cover_logo_radius = ?,
-            cover_title_size = ?
-            
+            cover_title_size = ?,
+            liqpay_public_key = ?,
+            liqpay_private_key = ?
         WHERE id = ?
     `;
     

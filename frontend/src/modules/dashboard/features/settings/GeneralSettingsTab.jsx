@@ -15,7 +15,7 @@ import { TEXT_LIMITS } from '../../../../shared/config/limits';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { exportSiteToZip } from '../../../../shared/utils/siteExporter';
 import { BASE_URL } from '../../../../shared/config';
-import { Settings, Image, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown, Lock, Construction, ArrowUpCircle, Eye, Camera, Coffee, Music, Star, Heart, ShoppingBag } from 'lucide-react';
+import { Settings, Image, Globe, Palette, AlertCircle, Trash, Grid, List, Type, X, Check, Tag, Upload, Plus, ChevronDown, ShoppingCart, Briefcase, Edit, Layout, FileText, Download, Loader, FileDown, Lock, Construction, ArrowUpCircle, Eye, Camera, Coffee, Music, Star, Heart, ShoppingBag, CreditCard, Key } from 'lucide-react';
 
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const navigate = useNavigate();
@@ -66,6 +66,8 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             cover_logo_size: parseInt(siteData.cover_logo_size || 80),
             cover_title_size: parseInt(siteData.cover_title_size || 24),
             show_title: siteData.show_title !== undefined ? siteData.show_title : true,
+            liqpay_public_key: siteData.liqpay_public_key || '',
+            liqpay_private_key: siteData.liqpay_private_key || '',
             tags: []
         }
     );
@@ -103,6 +105,8 @@ const getImageUrl = (src) => {
                 logo_url: siteData.logo_url || '',
                 site_title_seo: siteData.site_title_seo || siteData.title,
                 show_title: siteData.show_title !== undefined ? siteData.show_title : true,
+                liqpay_public_key: siteData.liqpay_public_key || '',
+                liqpay_private_key: siteData.liqpay_private_key || '',
                 theme_settings: siteData.theme_settings || {}
             }));
             
@@ -606,7 +610,47 @@ const getImageUrl = (src) => {
                     </div>
                 </div>
             </div>
-
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                            <CreditCard size={22} className="text-(--platform-accent)" /> Налаштування оплати (LiqPay)
+                        </h3>
+                        <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
+                            Додайте ваші ключі LiqPay, щоб почати приймати платежі на сайті.
+                        </p>
+                    </div>
+                </div>
+                <div className="flex flex-col gap-4">
+                    <div>
+                        <InputWithCounter
+                            label="Public Key (Публічний ключ)"
+                            value={data.liqpay_public_key}
+                            onChange={(e) => handleChange('liqpay_public_key', e.target.value)}
+                            placeholder="sandbox_..."
+                            leftIcon={<Key size={16}/>}
+                            limitKey="LIQPAY_KEY"
+                        />
+                    </div>
+                    <div>
+                        <InputWithCounter
+                            label="Private Key (Приватний ключ)"
+                            value={data.liqpay_private_key}
+                            onChange={(e) => handleChange('liqpay_private_key', e.target.value)}
+                            placeholder="sandbox_..."
+                            leftIcon={<Lock size={16}/>}
+                            limitKey="LIQPAY_KEY"
+                            type="password"
+                        />
+                    </div>
+                    {(!data.liqpay_public_key || !data.liqpay_private_key) && (
+                         <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', fontSize: '0.85rem', color: '#ef4444', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <AlertCircle size={16} style={{flexShrink: 0}} />
+                            <span>Ключі не налаштовані. Клієнти не зможуть оплачувати замовлення.</span>
+                        </div>
+                    )}
+                </div>
+            </div>
             {!isAdmin && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                     <div className="mb-6">
@@ -627,7 +671,6 @@ const getImageUrl = (src) => {
                     </div>
                 </div>
             )}
-
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
@@ -770,7 +813,6 @@ const getImageUrl = (src) => {
                     </div>
                 )}
             </div>
-            
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="flex justify-between items-center flex-wrap gap-4">
                      <div>
