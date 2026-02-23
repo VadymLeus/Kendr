@@ -65,6 +65,7 @@ const MySitesPage = () => {
         searchTimeoutRef.current = setTimeout(() => { fetchMySites(); }, 500);
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm, selectedTag, sortOption, user]);
+    
     const handleSearchSubmit = () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); fetchMySites(); };
     const handleLoadMore = () => setVisibleCount(prev => prev + ITEMS_PER_PAGE);
     const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit' });
@@ -113,9 +114,6 @@ const MySitesPage = () => {
                 <div className="px-6 py-3 flex justify-center items-center border-b border-(--platform-border-color) h-15 shrink-0 relative bg-(--platform-bg)">
                     <div className="text-center">
                         <h1 className="text-xl font-bold m-0">Мої Сайти</h1>
-                        <span className="text-[0.85rem] text-(--platform-text-secondary)">
-                            Всього: {safeSites.length}
-                        </span>
                     </div>
                     
                     <Link to="/create-site" className="absolute right-6 no-underline">

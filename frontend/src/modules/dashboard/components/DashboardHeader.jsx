@@ -12,12 +12,11 @@ const DashboardHeader = ({
     canRedo,
     isSaving 
 }) => {
-    
     const tabs = [
         { key: 'editor', icon: <Edit />, text: 'Редактор' },
         { key: 'pages', icon: <FileText />, text: 'Сторінки' },
-        { key: 'theme', icon: <Palette />, text: 'Тема' },
-        { key: 'store', icon: <Store />, text: 'Магазин' },
+        { key: 'theme', icon: <Palette />, text: 'Стилі' },
+        { key: 'store', icon: <Store />, text: 'Товари' },
         { key: 'orders', icon: <ShoppingBag />, text: 'Замовлення' },
         { key: 'crm', icon: <Mail />, text: 'Заявки' },
         { key: 'settings', icon: <Settings />, text: 'Налаштування' }
@@ -30,7 +29,6 @@ const DashboardHeader = ({
                     <div className="site-title" title={siteData.title}>
                         {siteData.title || 'Мій сайт'}
                     </div>
-                    
                     <div className="save-indicator">
                         {isSaving ? (
                              <div className="saving-state">
@@ -64,7 +62,6 @@ const DashboardHeader = ({
             </div>
 
             <div className="header-right">
-                
                 {activeTab === 'editor' && (
                     <div className="undo-redo-container">
                         <button 
@@ -85,7 +82,6 @@ const DashboardHeader = ({
                         </button>
                     </div>
                 )}
-
                 <a 
                     href={`/site/${siteData.site_path}`} 
                     target="_blank" 
@@ -97,7 +93,6 @@ const DashboardHeader = ({
                     <span className="preview-text">Переглянути</span>
                 </a>
             </div>
-
             <style>{`
                 .editor-header {
                     display: flex;

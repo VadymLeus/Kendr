@@ -22,6 +22,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const { user } = useContext(AuthContext);
     const { confirm } = useConfirm();
     const isAdmin = user?.role === 'admin';
+    const isLocked = siteData?.status === 'suspended' || siteData?.status === 'probation';
     const [identityData, setIdentityData] = useState({ title: '', slug: '' });
     const [isSavingIdentity, setIsSavingIdentity] = useState(false);
     const [slugError, setSlugError] = useState('');
@@ -72,7 +73,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         }
     );
 
-const getImageUrl = (src) => {
+    const getImageUrl = (src) => {
         if (!src) return '';
         if (src instanceof File) return URL.createObjectURL(src);
         if (typeof src === 'string') {
@@ -115,6 +116,7 @@ const getImageUrl = (src) => {
             }
         }
     }, [siteData, setData]);
+
     useEffect(() => {
         const fetchTags = async () => {
             try {
@@ -132,6 +134,7 @@ const getImageUrl = (src) => {
     useEffect(() => {
         if (onSavingChange) onSavingChange(isSaving || isSavingIdentity);
     }, [isSaving, isSavingIdentity, onSavingChange]);
+
     const handleIdentityChange = (field, value) => {
         if (field === 'slug') {
             const val = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -386,6 +389,10 @@ const getImageUrl = (src) => {
     };
 
     const handleDeleteSite = async () => {
+        if (isLocked && !isAdmin) {
+            toast.error("Видалення заблоковано для цього сайту.");
+            return;
+        }
         if (await confirm({ title: "Видалити сайт?", message: `Ви впевнені? Це дію неможливо скасувати.`, type: "danger", confirmLabel: "Так, видалити сайт" })) {
             try {
                 await apiClient.delete(`/sites/${siteData.site_path}`);
@@ -426,6 +433,7 @@ const getImageUrl = (src) => {
         { value: 'draft', label: 'Чернетка (Тех. роботи)', icon: FileText, iconProps: { className: 'text-orange-500' } },
         { value: 'private', label: 'Приватний (Прихований)', icon: Lock, iconProps: { className: 'text-gray-500' } }
     ];
+    
     const hasIdentityChanges = identityData.title !== siteData.title || identityData.slug !== siteData.site_path;
     const renderTemplateList = (templates, emptyMsg, type) => (
         <>
@@ -498,15 +506,13 @@ const getImageUrl = (src) => {
 
     return (
         <div className="max-w-4xl mx-auto px-4 pb-20 relative">
-            <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
-                <div>
-                    <h2 className="text-2xl font-semibold mb-1 text-(--platform-text-primary) flex items-center gap-2.5">
-                        <Settings size={28} /> Глобальні налаштування
-                    </h2>
-                    <p className="text-(--platform-text-secondary) text-sm m-0 pl-10">
-                        Керування основними параметрами вашого сайту
-                    </p>
-                </div>
+            <div className="mb-8 shrink-0 flex flex-col items-center text-center">
+                <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
+                    <Settings size={28} /> Глобальні налаштування
+                </h2>
+                <p className="text-(--platform-text-secondary) m-0 text-sm">
+                    Керування основними параметрами вашого сайту
+                </p>
             </div>
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                 <div className="mb-6 flex items-center justify-between gap-3">
@@ -651,7 +657,7 @@ const getImageUrl = (src) => {
                     )}
                 </div>
             </div>
-            {!isAdmin && (
+            {!isAdmin && !isLocked && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                     <div className="mb-6">
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
@@ -671,6 +677,7 @@ const getImageUrl = (src) => {
                     </div>
                 </div>
             )}
+            
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
@@ -833,28 +840,30 @@ const getImageUrl = (src) => {
                     </Button>
                 </div>
             </div>
-            <div 
-                className="rounded-2xl border border-(--platform-danger) p-8 mb-6 shadow-sm"
-                style={{ background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)' }}
-            >
-                 <div className="flex justify-between items-center flex-wrap gap-4">
-                    <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-(--platform-danger) m-0 mb-1 flex items-center gap-2.5">
-                            <AlertCircle size={22} /> Небезпечна зона
-                        </h3>
-                        <p className="text-sm text-(--platform-danger) m-0 opacity-80">
-                            Видалення сайту є <strong>незворотним</strong>. Всі дані будуть втрачені.
-                        </p>
+            {(!isLocked || isAdmin) && (
+                <div 
+                    className="rounded-2xl border border-(--platform-danger) p-8 mb-6 shadow-sm"
+                    style={{ background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)' }}
+                >
+                     <div className="flex justify-between items-center flex-wrap gap-4">
+                        <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-(--platform-danger) m-0 mb-1 flex items-center gap-2.5">
+                                <AlertCircle size={22} /> Небезпечна зона
+                            </h3>
+                            <p className="text-sm text-(--platform-danger) m-0 opacity-80">
+                                Видалення сайту є <strong>незворотним</strong>. Всі дані будуть втрачені.
+                            </p>
+                        </div>
+                        <Button 
+                            variant="danger" 
+                            onClick={handleDeleteSite} 
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
+                        >
+                            <Trash size={18} /> Видалити сайт
+                        </Button>
                     </div>
-                    <Button 
-                        variant="danger" 
-                        onClick={handleDeleteSite} 
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
-                    >
-                        <Trash size={18} /> Видалити сайт
-                    </Button>
                 </div>
-            </div>
+            )}
             <TemplateModal
                 isOpen={isSaveTemplateModalOpen}
                 onClose={() => setIsSaveTemplateModalOpen(false)}

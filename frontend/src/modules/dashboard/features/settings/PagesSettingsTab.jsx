@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Button as UIButton } from '../../../../shared/ui/elements/Button'; 
 import { Input } from '../../../../shared/ui/elements/Input'; 
-import { FileText, Plus, Edit, Settings, Trash, Star, Search, X, PanelTop, PanelBottom } from 'lucide-react';
+import { FileText, Plus, Edit, Settings, Trash, Star, Search, X, PanelTop, PanelBottom, Layout } from 'lucide-react';
 
 const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavingChange }) => {
     const [name, setName] = useState('');
@@ -24,9 +24,11 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
             setShowSeo(false);
         }
     }, [page, isOpen]);
+    
     const handleSlugChange = (e) => {
         setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
     };
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!name || !slug) {
@@ -55,7 +57,6 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
     };
 
     if (!isOpen) return null;
-
     return (
         <div 
             ref={overlayRef}
@@ -173,6 +174,7 @@ const CustomActionButton = ({ onClick, title, children, variant = 'default', loa
         </button>
     );
 };
+
 const ListRow = ({ icon, title, subtitle, badges, actions, isGlobal = false }) => {
     return (
         <div className={`
@@ -238,6 +240,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
             setLoading(false);
         }
     }, [siteId]);
+    
     useEffect(() => { fetchPages(); }, [fetchPages]);
     const handleOpenCreate = () => { setEditingPage(null); setIsModalOpen(true); };
     const handleOpenEdit = (page) => { setEditingPage(page); setIsModalOpen(true); };
@@ -268,105 +271,115 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
     };
 
     return (
-        <div className="bg-(--platform-card-bg) p-8 rounded-[20px] border border-(--platform-border-color) shadow-sm">
+        <div className="flex flex-col gap-6 w-full">
             <PageModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveSuccess} page={editingPage} siteId={siteId} onPageUpdate={onPageUpdate} onSavingChange={onSavingChange} />
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h2 className="text-(--platform-text-primary) m-0 mb-1 text-2xl font-bold">Структура сайту</h2>
-                    <p className="m-0 text-(--platform-text-secondary) text-sm">Керуйте сторінками та глобальними блоками</p>
+            <div className="flex flex-col md:flex-row justify-between items-center px-1 shrink-0 gap-4">
+                <div className="hidden md:block flex-1"></div>
+                <div className="flex flex-col items-center text-center flex-1 shrink-0">
+                    <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
+                        <Layout size={28} />
+                        Структура сайту
+                    </h2>
+                    <p className="text-(--platform-text-secondary) m-0 text-sm">
+                        Керуйте сторінками та глобальними блоками
+                    </p>
                 </div>
-                <UIButton onClick={handleOpenCreate}><Plus size={18} /> Додати сторінку</UIButton>
+                <div className="flex items-center justify-end gap-4 flex-1 w-full md:w-auto">
+                    <UIButton onClick={handleOpenCreate}><Plus size={18} /> Додати сторінку</UIButton>
+                </div>
             </div>
-            {loading ? (
-                <div className="text-center p-10 text-(--platform-text-secondary)">Завантаження...</div>
-            ) : (
-                <div className="flex flex-col gap-8">
-                    <div>
-                        <h4 className="text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) mb-3 tracking-wider">
-                            Глобальні області
-                        </h4>
-                        <ListRow 
-                            isGlobal={true}
-                            icon={<PanelTop size={24} />}
-                            title="Хедер (Шапка)"
-                            subtitle="Верхній блок на всех сторінках"
-                            actions={
-                                <CustomActionButton variant="editor" onClick={onEditHeader}>
-                                    <Edit size={16} /> В редактор
-                                </CustomActionButton>
-                            }
-                        />
-                         <ListRow 
-                            isGlobal={true}
-                            icon={<PanelBottom size={24} />}
-                            title="Футер (Підвал)"
-                            subtitle="Нижній блок на всіх сторінках"
-                            actions={
-                                <CustomActionButton variant="editor" onClick={onEditFooter}>
-                                    <Edit size={16} /> В редактор
-                                </CustomActionButton>
-                            }
-                        />
-                    </div>
-                    <div>
-                        <div className="flex justify-between items-end mb-3">
-                            <h4 className="text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) m-0 tracking-wider">
-                                Сторінки ({pages.length})
+            <div className="bg-(--platform-card-bg) p-8 rounded-[20px] border border-(--platform-border-color) shadow-sm">
+                {loading ? (
+                    <div className="text-center p-10 text-(--platform-text-secondary)">Завантаження...</div>
+                ) : (
+                    <div className="flex flex-col gap-8">
+                        <div>
+                            <h4 className="text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) mb-3 tracking-wider">
+                                Глобальні області
                             </h4>
+                            <ListRow 
+                                isGlobal={true}
+                                icon={<PanelTop size={24} />}
+                                title="Хедер"
+                                subtitle="Верхній блок на всех сторінках"
+                                actions={
+                                    <CustomActionButton variant="editor" onClick={onEditHeader}>
+                                        <Edit size={16} /> В редактор
+                                    </CustomActionButton>
+                                }
+                            />
+                             <ListRow 
+                                isGlobal={true}
+                                icon={<PanelBottom size={24} />}
+                                title="Футер"
+                                subtitle="Нижній блок на всіх сторінках"
+                                actions={
+                                    <CustomActionButton variant="editor" onClick={onEditFooter}>
+                                        <Edit size={16} /> В редактор
+                                    </CustomActionButton>
+                                }
+                            />
                         </div>
-                        <HeaderRow />
-                        {pages.length === 0 ? (
-                             <div className="text-center p-10 border-2 dashed border-(--platform-border-color) rounded-xl">
-                                <div className="text-(--platform-text-secondary) mb-4">Немає сторінок</div>
-                                <UIButton onClick={handleOpenCreate} variant="outline">Створити першу</UIButton>
+                        <div>
+                            <div className="flex justify-between items-end mb-3">
+                                <h4 className="text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) m-0 tracking-wider">
+                                    Сторінки ({pages.length})
+                                </h4>
                             </div>
-                        ) : (
-                            <div className="flex flex-col">
-                                {pages.map(page => (
-                                    <ListRow 
-                                        key={page.id}
-                                        icon={<FileText size={20} />}
-                                        title={
-                                            <span className="flex items-center gap-2">
-                                                {page.name}
-                                                {!!page.is_homepage && <Star size={16} className="text-amber-500 fill-amber-500" />}
-                                            </span>
-                                        }
-                                        badges={{
-                                            slug: <span className="bg-black/5 px-2 py-1 rounded-md">/{page.slug}</span>,
-                                            status: !!page.is_homepage ? (
-                                                <span className="text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full text-xs font-bold">ГОЛОВНА</span>
-                                            ) : (
-                                                <span className="text-(--platform-text-secondary) text-sm">Звичайна</span>
-                                            )
-                                        }}
-                                        actions={
-                                            <>
-                                                <CustomActionButton variant="editor" onClick={() => onEditPage(page.id)} title="В редактор">
-                                                    <Edit size={16} />
-                                                </CustomActionButton>
-                                                <CustomActionButton variant="settings" onClick={() => handleOpenEdit(page)} title="Налаштування">
-                                                    <Settings size={16} />
-                                                </CustomActionButton>
-                                                {!page.is_homepage && (
-                                                    <>
-                                                        <CustomActionButton variant="home" onClick={() => handleSetHome(page.id, page.name)} title="Зробити головною">
-                                                            <Star size={16} />
-                                                        </CustomActionButton>
-                                                        <CustomActionButton variant="delete" onClick={() => handleDelete(page)} title="Видалити">
-                                                            <Trash size={16} />
-                                                        </CustomActionButton>
-                                                    </>
-                                                )}
-                                            </>
-                                        }
-                                    />
-                                ))}
-                            </div>
-                        )}
+                            <HeaderRow />
+                            {pages.length === 0 ? (
+                                 <div className="text-center p-10 border-2 dashed border-(--platform-border-color) rounded-xl">
+                                    <div className="text-(--platform-text-secondary) mb-4">Немає сторінок</div>
+                                    <UIButton onClick={handleOpenCreate} variant="outline">Створити першу</UIButton>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col">
+                                    {pages.map(page => (
+                                        <ListRow 
+                                            key={page.id}
+                                            icon={<FileText size={20} />}
+                                            title={
+                                                <span className="flex items-center gap-2">
+                                                    {page.name}
+                                                    {!!page.is_homepage && <Star size={16} className="text-amber-500 fill-amber-500" />}
+                                                </span>
+                                            }
+                                            badges={{
+                                                slug: <span className="bg-black/5 px-2 py-1 rounded-md">/{page.slug}</span>,
+                                                status: !!page.is_homepage ? (
+                                                    <span className="text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full text-xs font-bold">ГОЛОВНА</span>
+                                                ) : (
+                                                    <span className="text-(--platform-text-secondary) text-sm">Звичайна</span>
+                                                )
+                                            }}
+                                            actions={
+                                                <>
+                                                    <CustomActionButton variant="editor" onClick={() => onEditPage(page.id)} title="В редактор">
+                                                        <Edit size={16} />
+                                                    </CustomActionButton>
+                                                    <CustomActionButton variant="settings" onClick={() => handleOpenEdit(page)} title="Налаштування">
+                                                        <Settings size={16} />
+                                                    </CustomActionButton>
+                                                    {!page.is_homepage && (
+                                                        <>
+                                                            <CustomActionButton variant="home" onClick={() => handleSetHome(page.id, page.name)} title="Зробити головною">
+                                                                <Star size={16} />
+                                                            </CustomActionButton>
+                                                            <CustomActionButton variant="delete" onClick={() => handleDelete(page)} title="Видалити">
+                                                                <Trash size={16} />
+                                                            </CustomActionButton>
+                                                        </>
+                                                    )}
+                                                </>
+                                            }
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

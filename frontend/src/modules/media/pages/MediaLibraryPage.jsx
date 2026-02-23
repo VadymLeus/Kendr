@@ -72,7 +72,6 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         setActiveFormat(null);
     }, [activeType]);
-
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
@@ -108,7 +107,6 @@ const MediaLibraryPage = () => {
                 valB = (valB || '').toLowerCase();
                 return dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
             }
-            
             if (key === 'created_at') {
                 valA = new Date(valA || 0).getTime();
                 valB = new Date(valB || 0).getTime();
@@ -116,7 +114,6 @@ const MediaLibraryPage = () => {
                 valA = Number(valA || 0);
                 valB = Number(valB || 0);
             }
-
             if (valA < valB) return dir === 'asc' ? -1 : 1;
             if (valA > valB) return dir === 'asc' ? 1 : -1;
             return 0;
@@ -169,6 +166,7 @@ const MediaLibraryPage = () => {
             toast.error("Помилка оновлення");
         }
     }, [handleUpdateFile]);
+    
     const handleDelete = async (file) => {
         if (await confirm({ title: "Видалити файл?", message: "Ця дія незворотна.", type: "danger", confirmLabel: "Видалити" })) {
             try {
@@ -306,11 +304,12 @@ const MediaLibraryPage = () => {
         headerContent: {
             padding: '12px 24px', 
             display: 'flex', 
-            justifyContent: 'space-between', 
+            justifyContent: 'center', 
             alignItems: 'center',
             height: '60px', 
             borderBottom: '1px solid var(--platform-border-color)',
-            color: 'var(--platform-text-primary)'
+            color: 'var(--platform-text-primary)',
+            position: 'relative'
         },
         mainContent: {
             display: 'flex',
@@ -364,6 +363,7 @@ const MediaLibraryPage = () => {
             fontWeight: 500
         })
     };
+    
     const formatButtons = (activeType && FORMATS_BY_TYPE[activeType]?.length > 0) ? (
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             <button style={styles.formatChip(!activeFormat)} onClick={() => setActiveFormat(null)}>Всі формати</button>
@@ -374,6 +374,7 @@ const MediaLibraryPage = () => {
             ))}
         </div>
     ) : null;
+    
     return (
         <div style={styles.pageWrapper} 
             onDragEnter={(e) => onDragEvent(e, true)} onDragLeave={(e) => onDragEvent(e, false)} 
@@ -393,9 +394,9 @@ const MediaLibraryPage = () => {
             )}
             <div style={styles.headerBlock}>
                 <div style={styles.headerContent}>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Медіатека</h1>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>Медіатека</h1>
                     
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ position: 'absolute', right: '24px', display: 'flex', gap: '10px' }}>
                         <Button variant="primary" type="button" onClick={() => fileInputRef.current.click()}>
                             <Upload size={18} /> <span>Завантажити</span>
                         </Button>

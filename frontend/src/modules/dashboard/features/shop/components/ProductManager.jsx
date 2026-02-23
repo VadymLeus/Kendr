@@ -227,7 +227,7 @@ const ProductTable = memo(({
                         </Button>
                     </div>
                 </div>
-                <Button onClick={onCreate} icon={<Plus size={18}/>} className="h-10.5">Додати</Button>
+                <Button onClick={onCreate} className="h-10.5">Додати</Button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 {products.length === 0 ? (
@@ -236,12 +236,9 @@ const ProductTable = memo(({
                             <Store size={40} className="opacity-30"/>
                         </div>
                         <h3 className="text-lg font-semibold text-(--platform-text-primary) mb-1">Товарів не знайдено</h3>
-                        <p className="text-sm opacity-70 max-w-62.5 text-center mb-6">
+                        <p className="text-sm opacity-70 max-w-62.5 text-center mb-0">
                             Спробуйте змінити фільтри або додайте новий товар.
                         </p>
-                        <Button onClick={onCreate} variant="secondary">
-                            Додати перший товар
-                        </Button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 content-start">
@@ -345,7 +342,6 @@ const ProductEditorPanel = ({
             setFormData(initialFormData);
         }
     }, [productToEdit]);
-
     const handleClearForm = () => {
         setFormData(initialFormData);
         if (onCancel) onCancel();
@@ -357,7 +353,6 @@ const ProductEditorPanel = ({
             toast.warning("Для цифрового товару обов'язково вкажіть посилання або текст!");
             return;
         }
-
         onSavingChange(true);
         try {
             const payload = { ...formData, site_id: siteId };
@@ -672,7 +667,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
                     />
                 }
             />
-            
             <ConfirmModal
                 isOpen={!!productToDelete}
                 title="Видалення товару"

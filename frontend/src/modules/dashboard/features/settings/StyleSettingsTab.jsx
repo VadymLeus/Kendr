@@ -1,11 +1,11 @@
-// frontend/src/modules/dashboard/features/settings/ThemeSettingsTab.jsx
+// frontend/src/modules/dashboard/features/settings/StyleSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
 import FontPicker from '../../../renderer/components/FontPicker';
 import ThemeModeSelector from '../../../../shared/ui/complex/ThemeModeSelector';
 import AccentColorSelector from '../../../../shared/ui/complex/AccentColorSelector';
 import { Palette, Type } from 'lucide-react';
 
-const ThemeSettingsTab = ({ siteData, onUpdate }) => {
+const StyleSettingsTab = ({ siteData, onUpdate }) => {
     const [themeData, setThemeData] = useState({
         site_theme_mode: siteData.site_theme_mode || 'light',
         site_theme_accent: siteData.site_theme_accent || 'orange',
@@ -55,12 +55,12 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
 
     return (
         <div className="max-w-225 mx-auto px-4">
-            <div className="mb-8">
-                <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center gap-2.5">
+            <div className="mb-8 shrink-0 flex flex-col items-center text-center">
+                <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
                     <Palette size={28} />
                     Тема та Стиль
                 </h2>
-                <p className="text-(--platform-text-secondary) m-0 text-sm pl-9.5">
+                <p className="text-(--platform-text-secondary) m-0 text-sm">
                     Налаштування зовнішнього вигляду вашого сайту
                 </p>
             </div>
@@ -112,4 +112,4 @@ const ThemeSettingsTab = ({ siteData, onUpdate }) => {
     );
 };
 
-export default ThemeSettingsTab;
+export default StyleSettingsTab;

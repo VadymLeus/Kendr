@@ -8,7 +8,7 @@ import BlockEditor from '../../editor/core/BlockEditor';
 import EditorSidebar from '../../editor/ui/EditorSidebar';
 import GeneralSettingsTab from '../features/settings/GeneralSettingsTab';
 import PagesSettingsTab from '../features/settings/PagesSettingsTab';
-import ThemeSettingsTab from '../features/settings/ThemeSettingsTab';
+import StyleSettingsTab from '../features/settings/StyleSettingsTab';
 import ShopContentTab from '../features/shop/ShopContentTab';
 import OrdersTab from '../features/shop/OrdersTab';
 import SubmissionsTab from '../features/content/SubmissionsTab';
@@ -445,7 +445,7 @@ const SiteDashboardPage = () => {
                                 <OrdersTab siteData={siteData} />
                             )}
                             {activeTab === 'theme' && (
-                                <ThemeSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />
+                                <StyleSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />
                             )}
                             {activeTab === 'crm' && (
                                 <SubmissionsTab siteId={siteData.id} onSavingChange={handleSavingChange} />

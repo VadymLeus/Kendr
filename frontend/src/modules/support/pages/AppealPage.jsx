@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
 import { Helmet } from 'react-helmet-async';
-import { AlertTriangle, Gavel, ArrowRight, CheckCircle, Clock, XCircle, Check } from 'lucide-react';
+import { AlertTriangle, Gavel, CheckCircle, Clock, XCircle, Check } from 'lucide-react';
 
 const AppealPage = () => {
     const [suspendedSites, setSuspendedSites] = useState([]);
@@ -19,37 +19,6 @@ const AppealPage = () => {
             })
             .finally(() => setLoading(false));
     }, []);
-
-    const containerStyle = {
-        maxWidth: '800px',
-        margin: '0 auto',
-        padding: '2rem 1rem'
-    };
-
-    const siteCardStyle = {
-        border: '1px solid var(--platform-border-color)',
-        padding: '1.5rem',
-        borderRadius: '12px',
-        background: 'var(--platform-card-bg)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        marginBottom: '1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
-    };
-
-    const warningBoxStyle = {
-        background: 'color-mix(in srgb, var(--platform-warning), transparent 90%)',
-        color: 'var(--platform-warning)',
-        padding: '12px',
-        borderRadius: '8px',
-        fontSize: '0.9rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        border: '1px solid color-mix(in srgb, var(--platform-warning), transparent 80%)'
-    };
-
     const getAppealStatusBadge = (status) => {
         switch (status) {
             case 'pending':
@@ -101,109 +70,74 @@ const AppealPage = () => {
                     </Button>
                 );
             default:
-                return (
-                    <Link to="/support/new-ticket" state={{ site: site }} style={{ textDecoration: 'none' }}>
-                         <Button variant="primary">
-                            Подати апеляцію
-                        </Button>
-                    </Link>
-                );
+                return null;
         }
     };
-
     if (loading) return (
-        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--platform-text-secondary)' }}>
+        <div className="p-8 text-center text-(--platform-text-secondary)">
             Завантаження...
         </div>
     );
-
     return (
-        <div style={containerStyle}>
+        <div className="p-4 md:p-8 max-w-4xl mx-auto w-full h-full flex flex-col">
             <Helmet>
                 <title>Оскарження блокування | Kendr</title>
             </Helmet>
-
-            <div style={{ marginBottom: '2rem' }}>
-                <h2 style={{ 
-                    color: 'var(--platform-text-primary)', 
-                    marginBottom: '0.5rem',
-                    fontSize: '2rem',
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px'
-                }}>
-                    <Gavel size={32} style={{ color: 'var(--platform-danger)' }} />
+            <div className="mb-8 shrink-0">
+                <h1 className="text-2xl md:text-3xl font-bold mb-2 text-(--platform-text-primary) flex items-center gap-3 m-0">
+                    <Gavel size={32} className="text-(--platform-danger)" />
                     Оскарження блокування
-                </h2>
-                <p style={{ color: 'var(--platform-text-secondary)', fontSize: '1.1rem' }}>
+                </h1>
+                <p className="text-(--platform-text-secondary) text-base md:text-lg m-0">
                     Тут показані ваші сайти, які були призупинені адміністрацією через порушення правил.
                 </p>
             </div>
-
             {suspendedSites.length === 0 ? (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '4rem 2rem',
-                    background: 'var(--platform-card-bg)',
-                    borderRadius: '16px',
-                    border: '1px solid var(--platform-border-color)'
-                }}>
-                    <div style={{ 
-                        marginBottom: '1.5rem', 
-                        color: 'var(--platform-success)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}>
-                        <CheckCircle size={48} />
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] text-center">
+                    <div className="w-20 h-20 bg-(--platform-accent)/10 rounded-full flex items-center justify-center mb-4">
+                        <CheckCircle size={36} className="text-(--platform-accent)" />
                     </div>
-                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
+                    <h3 className="text-xl font-semibold text-(--platform-text-primary) mb-2 m-0">
                         У вас немає призупинених сайтів
                     </h3>
-                    <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '2rem' }}>
+                    <p className="text-(--platform-text-secondary) max-w-md m-0">
                         Це чудово! Ви дотримуєтесь правил платформи.
                     </p>
-                    <Link to="/my-sites" style={{ textDecoration: 'none' }}>
-                        <Button variant="primary" icon={<ArrowRight size={18}/>}>
-                            Перейти до моїх сайтів
-                        </Button>
-                    </Link>
                 </div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="flex flex-col gap-4">
                     {suspendedSites.map(site => (
-                        <div key={site.id} style={siteCardStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div key={site.id} className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-6 shadow-sm flex flex-col gap-4">
+                            <div className="flex justify-between items-start flex-wrap gap-4">
                                 <div>
-                                    <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--platform-text-primary)', fontSize: '1.25rem' }}>
+                                    <h4 className="m-0 mb-2 text-(--platform-text-primary) text-xl font-semibold">
                                         {site.title}
                                     </h4>
-                                    <p style={{ color: 'var(--platform-text-secondary)', margin: 0, fontSize: '0.95rem' }}>
+                                    <p className="text-(--platform-text-secondary) m-0 text-sm">
                                         Адреса: <strong>{site.site_path}</strong>
                                     </p>
                                 </div>
                                 <Button 
                                     variant="danger" 
                                     size="sm" 
-                                    style={{ cursor: 'default', opacity: 1 }}
+                                    className="cursor-default opacity-100 pointer-events-none"
                                 >
                                     Suspended
                                 </Button>
                             </div>
 
-                            <div style={warningBoxStyle}>
-                                <AlertTriangle size={20} />
+                            <div className="bg-orange-500/10 text-orange-600 dark:text-orange-500 p-3 rounded-lg text-sm flex items-center gap-2 border border-orange-500/20">
+                                <AlertTriangle size={20} className="shrink-0" />
                                 <span>
                                     Заплановане видалення: <strong>{new Date(site.deletion_scheduled_for).toLocaleDateString()}</strong>
                                 </span>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                            <div className="flex justify-end mt-2">
                                 {site.appeal_status ? (
                                     getAppealStatusBadge(site.appeal_status)
                                 ) : (
-                                    <Link to="/support/new-ticket" state={{ site: site }} style={{ textDecoration: 'none' }}>
+                                    <Link to="/support/new-ticket" state={{ site: site }} className="no-underline">
                                         <Button variant="primary">
                                             Подати апеляцію
                                         </Button>

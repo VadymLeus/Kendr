@@ -23,7 +23,6 @@ export const CartProvider = ({ children }) => {
         const cartKey = getCartKey();
         localStorage.setItem(cartKey, JSON.stringify(cartItems));
     }, [cartItems, user]);
-
     const isDigitalOnly = cartItems.length > 0 && cartItems.every(item => item.type === 'digital');
     const addToCart = (product, selectedOptions = {}, priceInfo = null) => {
         const optionsString = JSON.stringify(selectedOptions, Object.keys(selectedOptions).sort());
@@ -72,6 +71,9 @@ export const CartProvider = ({ children }) => {
     const clearCart = () => {
         setCartItems([]);
     };
+    const clearCartBySite = (siteId) => {
+        setCartItems(prevItems => prevItems.filter(item => item.site_id !== siteId));
+    };
 
     return (
         <CartContext.Provider value={{ 
@@ -80,6 +82,7 @@ export const CartProvider = ({ children }) => {
             addToCart, 
             removeFromCart, 
             clearCart, 
+            clearCartBySite,
             updateQuantity 
         }}>
             {children}

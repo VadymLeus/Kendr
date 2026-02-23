@@ -86,6 +86,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
             if (target) setSelectedSubmission(target);
         }
     }, [submissions, searchParams]);
+    
     const handleSelectSubmission = (submission) => {
         setSelectedSubmission(submission);
         setSearchParams(prev => { prev.set('submissionId', submission.id); return prev; });
@@ -131,6 +132,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text).then(() => toast.success('Скопійовано')).catch(() => toast.error('Помилка'));
     };
+    
     const filteredSubmissions = useMemo(() => {
         const filtered = submissions.filter(sub => {
             const matchesStatus = filterStatus === 'all' || sub.status === filterStatus;
@@ -147,16 +149,15 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
             return new Date(b.created_at) - new Date(a.created_at);
         });
     }, [submissions, filterStatus, searchTerm]);
-
     if (loading) return <div className="text-center p-10 text-(--platform-text-secondary)">Завантаження...</div>;
     return (
         <div className="w-full h-full flex flex-col px-6 box-border">
-            <div className="mb-6 shrink-0">
-                <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center gap-2.5">
+            <div className="mb-6 shrink-0 flex flex-col items-center text-center">
+                <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
                     <MessageCircle size={28} />
                     Обробка звернень
                 </h2>
-                <p className="text-(--platform-text-secondary) m-0 text-sm pl-9.5">
+                <p className="text-(--platform-text-secondary) m-0 text-sm">
                     Перегляд та управління повідомленнями з контактних форм
                 </p>
             </div>
@@ -253,7 +254,6 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                         )}
                     </div>
                 </div>
-
                 <div className="flex-1 flex flex-col overflow-hidden bg-[#1a202c]">
                     {selectedSubmission ? (
                         <>

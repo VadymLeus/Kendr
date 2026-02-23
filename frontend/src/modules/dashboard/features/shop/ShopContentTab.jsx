@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import CategoryManager from './components/CategoryManager';
 import ProductManager from './components/ProductManager'; 
 import { Button } from '../../../../shared/ui/elements/Button'; 
-import { Grid, Folder, Loader2 } from 'lucide-react';
+import { Grid, Folder, Loader2, Store } from 'lucide-react';
 
 const ShopContentTab = ({ siteData, onSavingChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -21,25 +21,28 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
             return prev;
         });
     };
+    
     return (
         <div className="h-full flex flex-col gap-6 overflow-hidden pb-5 box-border">
-            <div className="flex justify-between items-center px-1 shrink-0 flex-wrap gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-(--platform-text-primary) m-0">
+            <div className="flex flex-col md:flex-row justify-between items-center px-1 shrink-0 gap-4">
+                <div className="hidden md:block flex-1"></div>
+                <div className="flex flex-col items-center text-center flex-1 shrink-0">
+                    <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
+                        <Store size={28} />
                         Управління магазином
                     </h2>
-                    <p className="text-sm text-(--platform-text-secondary) mt-1 m-0">
+                    <p className="text-sm text-(--platform-text-secondary) m-0">
                         Управління товарами та категоріями
                     </p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-end gap-4 flex-1 w-full md:w-auto">
                     {isShopSaving && (
                         <div className="flex items-center gap-2 text-(--platform-accent) font-medium text-sm">
                             <Loader2 size={14} className="animate-spin" />
                             Збереження...
                         </div>
                     )}
-                    <div className="flex gap-1 bg-(--platform-card-bg) p-1 rounded-lg border border-(--platform-border-color) shrink-0">
+                    <div className="flex gap-1 bg-(--platform-card-bg) p-1 rounded-lg border border-(--platform-border-color) shrink-0 ml-auto md:ml-0">
                         <Button 
                             variant={activeSubTab === 'products' ? 'primary' : 'ghost'} 
                             onClick={() => handleTabChange('products')}

@@ -7,17 +7,19 @@ import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
 import { BASE_URL } from '../../shared/config';
 import { Input } from '../../shared/ui/elements/Input';
-import { Trash2, Minus, Plus, Store, ArrowLeft, CreditCard, Tag, AlertCircle, PackageOpen, User, Mail, Phone, MapPin, Loader2 } from 'lucide-react';
+import { Button } from '../../shared/ui/elements/Button';
+import EmptyState from '../../shared/ui/complex/EmptyState';
+import { Trash2, Minus, Plus, Store, CreditCard, AlertCircle, PackageOpen, User, Mail, Phone, MapPin, Loader2, ShoppingBag, CheckCircle2 } from 'lucide-react';
 
 const CartPage = () => {
-    const { cartItems, isDigitalOnly, removeFromCart, clearCart, updateQuantity } = useContext(CartContext);
+    const { cartItems, removeFromCart, clearCart, updateQuantity } = useContext(CartContext);
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [customerData, setCustomerData] = useState({
         name: '', email: '', phone: '', address: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-
+    const [activeSiteId, setActiveSiteId] = useState(null);
     useEffect(() => {
         if (user) {
             setCustomerData(prev => ({
@@ -36,42 +38,79 @@ const CartPage = () => {
                 groups[siteId] = {
                     siteName: item.site_name || `Магазин #${siteId}`,
                     siteId: siteId,
-                    items: []
+                    items: [],
+                    total: 0,
+                    totalOriginal: 0,
+                    isDigitalOnly: true
                 };
             }
             groups[siteId].items.push(item);
-        });
-        return Object.values(groups);
-    }, [cartItems]);
-
-    const { total, totalOriginal, totalDiscount } = useMemo(() => {
-        let currentSum = 0;
-        let originalSum = 0;
-        cartItems.forEach(item => {
             const quantity = item.quantity;
             const price = parseFloat(item.price);
             const origPrice = item.originalPrice ? parseFloat(item.originalPrice) : price;
-            currentSum += price * quantity;
-            originalSum += origPrice * quantity;
+            groups[siteId].total += price * quantity;
+            groups[siteId].totalOriginal += origPrice * quantity;
+            if (item.type !== 'digital') {
+                groups[siteId].isDigitalOnly = false;
+            }
         });
-        return { total: currentSum, totalOriginal: originalSum, totalDiscount: originalSum - currentSum };
+        
+        return Object.values(groups).map(group => ({
+            ...group,
+            totalDiscount: group.totalOriginal - group.total
+        }));
     }, [cartItems]);
 
-    const totalItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    useEffect(() => {
+        if (groupedItems.length > 0) {
+            const isCurrentValid = groupedItems.some(g => g.siteId === activeSiteId);
+            if (!isCurrentValid) {
+                setActiveSiteId(groupedItems[0].siteId);
+            }
+        } else {
+            setActiveSiteId(null);
+        }
+    }, [groupedItems, activeSiteId]);
+    const activeGroup = useMemo(() => {
+        return groupedItems.find(g => g.siteId === activeSiteId) || null;
+    }, [groupedItems, activeSiteId]);
+    const clearCartForSite = (siteId) => {
+        const itemsToRemove = cartItems.filter(item => item.site_id === siteId);
+        itemsToRemove.forEach(item => removeFromCart(item.cartItemId));
+    };
+
     const handleCheckout = async (e) => {
         e.preventDefault();
+        if (!activeGroup) return;
         if (!customerData.name.trim() || !customerData.email.trim() || !customerData.phone.trim()) {
             return toast.error('Будь ласка, заповніть всі обов\'язкові поля');
         }
-        if (!isDigitalOnly && !customerData.address.trim()) {
+        if (!activeGroup.isDigitalOnly && !customerData.address.trim()) {
             return toast.error('Адреса доставки обов\'язкова для фізичних товарів');
         }
+        const outOfStockItem = activeGroup.items.find(item => item.type !== 'digital' && item.stock_quantity != null && item.quantity > item.stock_quantity);
+        if (outOfStockItem) {
+            return toast.error(`Товару "${outOfStockItem.name}" недостатньо на складі.`);
+        }
+        
         setIsSubmitting(true);
         try {
-            const response = await apiClient.post('/orders/checkout', { cartItems, customerData });
+            const formattedItems = activeGroup.items.map(item => ({
+                id: item.id,
+                quantity: item.quantity,
+                options: item.selectedOptions
+            }));
+
+            const payload = {
+                siteId: activeGroup.siteId,
+                items: formattedItems,
+                customerData
+            };
+
+            const response = await apiClient.post('/orders/checkout', payload);
             if (response.data && response.data.data && response.data.signature) {
                 const { data, signature } = response.data;
-                clearCart();
+                clearCartForSite(activeGroup.siteId);
                 const form = document.createElement("form");
                 form.method = "POST";
                 form.action = "https://www.liqpay.ua/api/3/checkout";
@@ -89,11 +128,10 @@ const CartPage = () => {
                 form.submit();
             } else {
                 toast.success('Замовлення оформлено!');
-                clearCart();
-                navigate('/');
+                clearCartForSite(activeGroup.siteId);
+                navigate('/my-orders');
             }
         } catch (error) {
-            console.error(error);
             toast.error(error.response?.data?.message || 'Помилка оформлення замовлення');
             setIsSubmitting(false);
         }
@@ -102,217 +140,246 @@ const CartPage = () => {
     const getImageUrl = (item) => {
         let gallery = item.image_gallery || item.image_path || item.image;
         let targetPath = null;
-        if (Array.isArray(gallery) && gallery.length > 0) {
-            targetPath = gallery[0];
-        } 
+        if (Array.isArray(gallery) && gallery.length > 0) targetPath = gallery[0];
         else if (typeof gallery === 'string') {
             try {
-                if (gallery.startsWith('[')) { targetPath = JSON.parse(gallery)[0]; } 
-                else { targetPath = gallery; }
+                if (gallery.startsWith('[')) targetPath = JSON.parse(gallery)[0];
+                else targetPath = gallery;
             } catch (e) { targetPath = gallery; }
         }
         if (!targetPath) return 'https://placehold.co/120x120?text=No+Image';
         if (targetPath.startsWith('http')) return targetPath;
-        const cleanPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
-        return `${BASE_URL}${cleanPath}`;
-    };
-
-    const cssStyles = `
-        .cart-grid { display: grid; grid-template-columns: 1fr 400px; gap: 30px; align-items: start; width: 100%; }
-        .hover-btn { transition: all 0.2s ease-in-out; }
-        .qty-btn:hover:not(:disabled) { background-color: var(--platform-hover-bg) !important; color: var(--platform-accent) !important; border-color: var(--platform-accent) !important; }
-        .remove-btn:hover { background-color: color-mix(in srgb, var(--platform-danger), transparent 90%) !important; color: var(--platform-danger) !important; transform: scale(1.1); }
-        .checkout-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .checkout-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-        .clear-btn:hover { background-color: var(--platform-hover-bg) !important; color: var(--platform-text-primary) !important; border-color: var(--platform-text-primary) !important; }
-        .product-link:hover { color: var(--platform-accent) !important; text-decoration: underline; }
-        @media (max-width: 1100px) { .cart-grid { grid-template-columns: 1fr; } .summary-card { position: static !important; margin-top: 20px; } }
-    `;
-
-    const styles = {
-        pageContainer: { width: '95%', maxWidth: '1920px', margin: '0 auto', padding: '40px 10px', minHeight: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column', color: 'var(--platform-text-primary)' },
-        header: { marginBottom: '30px', paddingLeft: '10px' },
-        title: { fontSize: '2.2rem', fontWeight: '700', color: 'var(--platform-text-primary)', marginBottom: '5px' },
-        subtitle: { color: 'var(--platform-text-secondary)', fontSize: '1.1rem' },
-        tableContainer: { background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' },
-        storeHeader: { background: 'var(--platform-bg)', padding: '25px 30px', borderBottom: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center', gap: '15px', fontWeight: '800', color: 'var(--platform-text-primary)', fontSize: '1.5rem', textTransform: 'uppercase' },
-        itemRow: { display: 'flex', padding: '30px', borderBottom: '1px solid var(--platform-border-color)', gap: '30px', alignItems: 'center', background: 'var(--platform-card-bg)' },
-        imageWrapper: { width: '120px', height: '120px', borderRadius: '12px', border: '1px solid var(--platform-border-color)', overflow: 'hidden', flexShrink: 0, background: 'var(--platform-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-        image: { width: '100%', height: '100%', objectFit: 'contain', padding: '5px' },
-        infoCol: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' },
-        productName: { fontSize: '1.3rem', fontWeight: '600', color: 'var(--platform-text-primary)', textDecoration: 'none' },
-        metaInfo: { display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '0.95rem', color: 'var(--platform-text-secondary)' },
-        priceCol: { textAlign: 'right', minWidth: '140px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' },
-        price: { fontSize: '1.4rem', fontWeight: '700', color: 'var(--platform-text-primary)', display: 'block' },
-        salePrice: { fontSize: '1.4rem', fontWeight: '700', color: 'var(--platform-danger)', display: 'block' },
-        oldPrice: { fontSize: '1rem', textDecoration: 'line-through', color: 'var(--platform-text-secondary)', marginBottom: '4px', display: 'block' },
-        controls: { display: 'flex', alignItems: 'center', gap: '15px' },
-        qtyWrapper: { display: 'flex', alignItems: 'center', background: 'var(--platform-bg)', borderRadius: '8px', border: '1px solid var(--platform-border-color)', padding: '4px' },
-        qtyBtn: { width: '36px', height: '36px', border: '1px solid transparent', background: 'transparent', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--platform-text-primary)', transition: 'all 0.2s' },
-        qtyValue: { width: '40px', textAlign: 'center', fontWeight: '600', fontSize: '1.1rem', color: 'var(--platform-text-primary)' },
-        removeBtn: { background: 'transparent', border: 'none', color: 'var(--platform-text-secondary)', cursor: 'pointer', padding: '10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' },
-        summaryCard: { background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '16px', padding: '30px', position: 'sticky', top: '100px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' },
-        summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontSize: '1.05rem', color: 'var(--platform-text-secondary)' },
-        totalRow: { display: 'flex', justifyContent: 'space-between', marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed var(--platform-border-color)', fontSize: '1.6rem', fontWeight: '700', color: 'var(--platform-text-primary)', marginBottom: '30px' },
-        checkoutBtn: { width: '100%', padding: '18px', background: 'var(--platform-accent)', color: 'var(--platform-accent-text)', border: 'none', borderRadius: '10px', fontSize: '1.2rem', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '16px', transition: 'all 0.2s' },
-        clearBtn: { width: '100%', padding: '14px', background: 'transparent', border: '1px solid var(--platform-border-color)', color: 'var(--platform-text-secondary)', borderRadius: '10px', cursor: 'pointer', fontSize: '1rem', transition: 'all 0.2s' },
-        emptyState: { textAlign: 'center', padding: '80px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', flex: 1, justifyContent: 'center' }
+        return `${BASE_URL}${targetPath.startsWith('/') ? targetPath : `/${targetPath}`}`;
     };
 
     return (
-        <div style={styles.pageContainer}>
-            <style>{cssStyles}</style>
+        <div className="p-4 md:p-8 max-w-350 mx-auto w-full h-full flex flex-col gap-6">
+            <div className="shrink-0 mb-2">
+                <h1 className="text-2xl font-bold text-(--platform-text-primary) flex items-center gap-3">
+                    <ShoppingBag className="text-(--platform-accent)" /> Кошик
+                </h1>
+                <p className="text-(--platform-text-secondary) mt-1 text-sm">
+                    {groupedItems.length > 1 
+                        ? "Виберіть магазин ліворуч для оформлення відповідного замовлення." 
+                        : "Оформлення вашого замовлення"}
+                </p>
+            </div>
             {cartItems.length === 0 ? (
-                <div style={styles.emptyState}>
-                    <PackageOpen size={80} style={{ color: 'var(--platform-text-secondary)', opacity: 0.5 }} />
-                    <h3 style={{ fontSize: '1.8rem', color: 'var(--platform-text-primary)' }}>Кошик порожній</h3>
-                    <Link to="/" style={{textDecoration: 'none'}}>
-                        <button className="checkout-btn hover-btn" style={{...styles.checkoutBtn, width: 'auto', padding: '14px 40px', marginBottom: 0, cursor: 'pointer'}}>
-                            <ArrowLeft size={20} style={{marginRight: '8px'}}/> До каталогу
-                        </button>
-                    </Link>
+                <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+                    <EmptyState 
+                        icon={PackageOpen}
+                        title="Ваш кошик порожній"
+                        description="Знайдіть цікаві товари в нашому каталозі та додайте їх сюди."
+                        action={<Button as={Link} to="/catalog">Перейти до каталогу</Button>}
+                    />
                 </div>
             ) : (
-                <>
-                    <div style={styles.header}>
-                        <h2 style={styles.title}>Оформлення замовлення</h2>
-                        <div style={styles.subtitle}>
-                            {totalItemsCount} {totalItemsCount === 1 ? 'товар' : 'товарів'} на суму {total.toFixed(0)} ₴
-                        </div>
-                    </div>
-                    <div className="cart-grid">
-                        <div style={styles.tableContainer}>
-                            {groupedItems.map((group, groupIndex) => (
-                                <React.Fragment key={group.siteId}>
-                                    <div style={{ ...styles.storeHeader, borderTop: groupIndex > 0 ? '1px solid var(--platform-border-color)' : 'none' }}>
-                                        <Store size={24} /> <span>{group.siteName}</span>
+                <div className="grid lg:grid-cols-12 gap-8 items-start">
+                    <div className="lg:col-span-8 space-y-6">
+                        {groupedItems.map((group) => {
+                            const isActive = activeSiteId === group.siteId;
+                            return (
+                                <div 
+                                    key={group.siteId} 
+                                    onClick={() => setActiveSiteId(group.siteId)}
+                                    className={`bg-(--platform-card-bg) border rounded-xl overflow-hidden shadow-sm cursor-pointer transition-all duration-300 relative ${
+                                        isActive 
+                                            ? 'border-(--platform-accent) ring-1 ring-(--platform-accent)' 
+                                            : 'border-(--platform-border-color) hover:border-(--platform-accent)/50 hover:bg-(--platform-hover-bg)'
+                                    }`}
+                                >
+                                    {isActive && (
+                                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-(--platform-accent) z-10" />
+                                    )}
+                                    <div className="px-6 py-4 border-b border-(--platform-border-color) flex items-center justify-between bg-black/5">
+                                        <div className="flex items-center gap-3">
+                                            <Store size={20} className={isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'} />
+                                            <span className={`text-base font-bold uppercase tracking-wider ${isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-primary)'}`}>
+                                                {group.siteName}
+                                            </span>
+                                        </div>
+                                        {isActive && (
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-(--platform-accent) bg-(--platform-accent)/10 px-3 py-1 rounded-full">
+                                                <CheckCircle2 size={14} /> Вибрано для оплати
+                                            </div>
+                                        )}
                                     </div>
-                                    {group.items.map((item, idx) => {
-                                        const isLastInGroup = idx === group.items.length - 1;
-                                        const itemPrice = parseFloat(item.price);
-                                        const itemOriginalPrice = item.originalPrice ? parseFloat(item.originalPrice) : null;
-                                        const hasDiscount = itemOriginalPrice && itemOriginalPrice > itemPrice;
-                                        const totalItemPrice = itemPrice * item.quantity;
-                                        const totalItemOriginalPrice = hasDiscount ? itemOriginalPrice * item.quantity : 0;
-                                        return (
-                                            <div key={item.cartItemId} style={{...styles.itemRow, borderBottom: isLastInGroup ? 'none' : '1px solid var(--platform-border-color)'}}>
-                                                <Link to={`/product/${item.id}`} style={styles.imageWrapper}>
-                                                    <img src={getImageUrl(item)} alt={item.name} style={styles.image} onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/120x120?text=Error'; }} />
-                                                </Link>
-                                                <div style={styles.infoCol}>
-                                                    <Link to={`/product/${item.id}`} style={styles.productName} className="product-link hover-btn">
-                                                        {item.name} {item.type === 'digital' && <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded align-middle">Цифровий</span>}
+                                    <div className="divide-y divide-(--platform-border-color)">
+                                        {group.items.map((item) => (
+                                            <div key={item.cartItemId} className="p-6 flex flex-col sm:flex-row gap-5 items-center sm:items-start transition-colors">
+                                                <div className="w-24 h-24 bg-(--platform-bg) rounded-lg border border-(--platform-border-color) overflow-hidden shrink-0 flex items-center justify-center">
+                                                    <img src={getImageUrl(item)} alt={item.name} className="w-full h-full object-contain p-2" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <Link 
+                                                        to={`/product/${item.id}`} 
+                                                        onClick={(e) => e.stopPropagation()} 
+                                                        className="text-lg font-bold text-(--platform-text-primary) hover:text-(--platform-accent) transition-colors"
+                                                    >
+                                                        {item.name}
                                                     </Link>
-                                                    <div style={styles.metaInfo}>
+                                                    {item.type === 'digital' && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20 ml-2">
+                                                            Цифровий
+                                                        </span>
+                                                    )}
+                                                    <div className="mt-2 flex flex-wrap gap-2">
                                                         {item.selectedOptions && Object.entries(item.selectedOptions).map(([k, v]) => (
-                                                            <span key={k} style={{background: 'var(--platform-bg)', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--platform-border-color)'}}>
-                                                                {k}: <b>{v}</b>
+                                                            <span key={k} className="text-xs px-2 py-1 rounded bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary)">
+                                                                {k}: <span className="font-semibold text-(--platform-text-primary)">{v}</span>
                                                             </span>
                                                         ))}
                                                     </div>
-                                                </div>
-                                                <div style={styles.controls}>
-                                                    <div style={styles.qtyWrapper}>
-                                                        <button style={styles.qtyBtn} className="qty-btn hover-btn" onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)} disabled={item.quantity <= 1}><Minus size={16}/></button>
-                                                        <div style={styles.qtyValue}>{item.quantity}</div>
-                                                        <button style={styles.qtyBtn} className="qty-btn hover-btn" onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}><Plus size={16}/></button>
-                                                    </div>
-                                                </div>
-                                                <div style={styles.priceCol}>
-                                                    {hasDiscount ? (
-                                                        <>
-                                                            <span style={styles.oldPrice}>{totalItemOriginalPrice.toFixed(0)} ₴</span>
-                                                            <span style={styles.salePrice}>{totalItemPrice.toFixed(0)} ₴</span>
-                                                        </>
-                                                    ) : (
-                                                        <span style={styles.price}>{totalItemPrice.toFixed(0)} ₴</span>
-                                                    )}
-                                                    <div style={{marginTop: 'auto', paddingTop: '15px'}}>
-                                                        <button style={styles.removeBtn} className="remove-btn hover-btn" onClick={() => removeFromCart(item.cartItemId)} title="Видалити">
-                                                            <Trash2 size={20}/>
+                                                    <div className="mt-4 flex items-center justify-between">
+                                                        <div className="flex items-center bg-(--platform-bg) border border-(--platform-border-color) rounded-lg p-1" onClick={e => e.stopPropagation()}>
+                                                            <button 
+                                                                className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30"
+                                                                onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity - 1); }}
+                                                                disabled={item.quantity <= 1}
+                                                                type="button"
+                                                            >
+                                                                <Minus size={16} />
+                                                            </button>
+                                                            <span className="w-10 text-center font-bold text-(--platform-text-primary)">{item.quantity}</span>
+                                                            <button 
+                                                                className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30"
+                                                                onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity + 1); }}
+                                                                disabled={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity}
+                                                                type="button"
+                                                                title={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity ? "Досягнуто ліміту на складі" : ""}
+                                                            >
+                                                                <Plus size={16} />
+                                                            </button>
+                                                        </div>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); removeFromCart(item.cartItemId); }}
+                                                            className="p-2 text-(--platform-text-secondary) hover:text-red-500 transition-colors z-10 relative"
+                                                            title="Видалити"
+                                                            type="button"
+                                                        >
+                                                            <Trash2 size={20} />
                                                         </button>
                                                     </div>
                                                 </div>
+                                                <div className="text-right shrink-0 min-w-28 sm:text-right w-full sm:w-auto border-t sm:border-t-0 pt-4 sm:pt-0 border-(--platform-border-color)">
+                                                    {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
+                                                        <p className="text-xs text-(--platform-text-secondary) line-through m-0">
+                                                            {(item.originalPrice * item.quantity).toFixed(0)} ₴
+                                                        </p>
+                                                    )}
+                                                    <p className="text-xl font-bold text-(--platform-text-primary) m-0">
+                                                        {(item.price * item.quantity).toFixed(0)} ₴
+                                                    </p>
+                                                </div>
                                             </div>
-                                        );
-                                    })}
-                                </React.Fragment>
-                            ))}
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <div className="pt-4 flex justify-end">
+                            <Button variant="ghost" onClick={clearCart} className="text-red-500 hover:bg-red-500/10">
+                                Очистити весь кошик
+                            </Button>
                         </div>
-                        <form onSubmit={handleCheckout} style={styles.summaryCard} className="summary-card">
-                            <h3 style={{fontSize: '1.4rem', marginBottom: '20px', color: 'var(--platform-text-primary)'}}>Контактні дані</h3>
-                            <div className="flex flex-col gap-1 mb-6">
-                                <Input 
-                                    leftIcon={<User size={18}/>}
-                                    placeholder="Ваше ПІБ"
-                                    value={customerData.name}
-                                    onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
-                                    required
-                                />
-                                <Input 
-                                    leftIcon={<Mail size={18}/>}
-                                    type="email"
-                                    placeholder="Ваш Email"
-                                    value={customerData.email}
-                                    disabled={true} 
-                                    required
-                                    helperText={isDigitalOnly 
-                                        ? "На цей email буде надіслано доступ до файлів." 
-                                        : "Ваш реєстраційний email для відправки чеку."
-                                    }
-                                />
-                                <Input 
-                                    leftIcon={<Phone size={18}/>}
-                                    type="tel"
-                                    placeholder="Номер телефону"
-                                    value={customerData.phone}
-                                    onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
-                                    required
-                                />
-                                {!isDigitalOnly && (
+                    </div>
+                    <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+                        {activeGroup ? (
+                            <form onSubmit={handleCheckout} className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-6 shadow-lg relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-(--platform-accent)" />
+                                <h3 className="text-lg font-bold mb-1 text-(--platform-text-primary)">
+                                    Оформлення замовлення
+                                </h3>
+                                <p className="text-sm text-(--platform-text-secondary) mb-6 pb-4 border-b border-(--platform-border-color)">
+                                    Для магазину: <span className="font-semibold text-(--platform-text-primary)">{activeGroup.siteName}</span>
+                                </p>
+                                
+                                <div className="space-y-4 mb-6">
                                     <Input 
-                                        leftIcon={<MapPin size={18}/>}
-                                        placeholder="Місто та відділення пошти"
-                                        value={customerData.address}
-                                        onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
+                                        label="ПІБ отримувача"
+                                        leftIcon={<User size={18}/>}
+                                        placeholder="Прізвище та ім'я"
+                                        value={customerData.name}
+                                        onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
                                         required
                                     />
-                                )}
-                            </div>
-                            <div style={styles.summaryRow}>
-                                <span>Товари ({totalItemsCount} шт.)</span>
-                                <span>{totalOriginal.toFixed(2)} ₴</span>
-                            </div>
-                            {totalDiscount > 0 && (
-                                <div style={styles.summaryRow}>
-                                    <span>Знижка</span>
-                                    <span style={{color: 'var(--platform-danger)', fontWeight: '600'}}>-{totalDiscount.toFixed(2)} ₴</span>
+                                    <Input 
+                                        label="Email"
+                                        leftIcon={<Mail size={18}/>}
+                                        type="email"
+                                        value={customerData.email}
+                                        disabled={true} 
+                                        helperText={activeGroup.isDigitalOnly ? "Сюди ми надішлемо доступ" : "Для отримання чеку"}
+                                    />
+                                    <Input 
+                                        label="Телефон"
+                                        leftIcon={<Phone size={18}/>}
+                                        type="tel"
+                                        placeholder="+380..."
+                                        value={customerData.phone}
+                                        onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
+                                        required
+                                    />
+                                    {!activeGroup.isDigitalOnly && (
+                                        <Input 
+                                            label="Адреса доставки"
+                                            leftIcon={<MapPin size={18}/>}
+                                            placeholder="Місто, номер відділення НП"
+                                            value={customerData.address}
+                                            onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
+                                            required
+                                        />
+                                    )}
                                 </div>
-                            )}
-                            {isDigitalOnly ? (
-                                <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '8px', fontSize: '0.85rem', color: '#3b82f6', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                    <AlertCircle size={16} style={{flexShrink: 0}} />
-                                    <span>Доставка не потрібна (цифрові товари)</span>
+                                <div className="space-y-3 pt-4 border-t border-(--platform-border-color)">
+                                    <div className="flex justify-between text-sm text-(--platform-text-secondary)">
+                                        <span>Товари ({activeGroup.items.length}):</span>
+                                        <span>{activeGroup.totalOriginal.toFixed(0)} ₴</span>
+                                    </div>
+                                    {activeGroup.totalDiscount > 0 && (
+                                        <div className="flex justify-between text-sm text-green-500 font-medium">
+                                            <span>Знижка:</span>
+                                            <span>-{activeGroup.totalDiscount.toFixed(0)} ₴</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between text-2xl font-bold text-(--platform-text-primary) pt-2">
+                                        <span>До сплати:</span>
+                                        <span>{activeGroup.total.toFixed(0)} ₴</span>
+                                    </div>
                                 </div>
-                            ) : (
-                                <div style={{ marginTop: '10px', padding: '12px', background: 'var(--platform-bg)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--platform-text-secondary)', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                    <AlertCircle size={16} style={{flexShrink: 0}} />
-                                    <span>Доставка оплачується при отриманні.</span>
+                                <div className={`mt-5 p-3 rounded-lg flex gap-3 text-xs leading-relaxed ${activeGroup.isDigitalOnly ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>
+                                    <AlertCircle className="shrink-0 mt-0.5" size={16} />
+                                    <span>
+                                        {activeGroup.isDigitalOnly 
+                                            ? "Доставка не потрібна. Товар цифровий." 
+                                            : "Доставка здійснюється поштою. Оплата доставки при отриманні."}
+                                    </span>
                                 </div>
-                            )}
-                            <div style={styles.totalRow}>
-                                <span>До сплати</span>
-                                <span>{total.toFixed(2)} ₴</span>
+                                <Button 
+                                    type="submit" 
+                                    className="w-full mt-6 h-14 text-lg font-bold bg-orange-600 hover:bg-orange-700 text-white border-none shadow-md transition-all hover:-translate-y-0.5"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <><Loader2 className="animate-spin mr-2" /> Обробка...</>
+                                    ) : (
+                                        <><CreditCard className="mr-2" /> Оплатити {activeGroup.total.toFixed(0)} ₴</>
+                                    )}
+                                </Button>
+                            </form>
+                        ) : (
+                            <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-8 text-center shadow-sm">
+                                <Store size={48} className="mx-auto text-(--platform-text-secondary) opacity-30 mb-4" />
+                                <h3 className="text-lg font-bold text-(--platform-text-primary) mb-2">
+                                    Виберіть магазин
+                                </h3>
+                                <p className="text-(--platform-text-secondary) text-sm">
+                                    Клацніть на блок з товарами ліворуч, щоб розпочати оформлення замовлення
+                                </p>
                             </div>
-                            <button type="submit" style={styles.checkoutBtn} className="checkout-btn hover-btn" disabled={isSubmitting}>
-                                {isSubmitting ? <><Loader2 className="animate-spin" size={24} /> Перенаправляємо...</> : <><CreditCard size={24} /> Оплатити замовлення</>}
-                            </button>
-                            <button type="button" style={styles.clearBtn} className="clear-btn hover-btn" onClick={clearCart}>
-                                Очистити кошик
-                            </button>
-                        </form>
+                        )}
                     </div>
-                </>
+                </div>
             )}
         </div>
     );

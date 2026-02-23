@@ -147,11 +147,10 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                                     Зміна статусу заблокована
                                 </div>
                             )}
-                            
                             <div className="h-px bg-(--platform-border-color) my-1" />
                         </>
                     )}
-                    {(isOwner || isAdmin) && (
+                    {((isOwner && !isLocked) || isAdmin) && (
                         <MenuItem 
                             icon={Trash} 
                             label="Видалити" 
@@ -196,7 +195,6 @@ const SiteGridCard = ({
         }
         return '';
     };
-
     return (
         <>
             <div className={`

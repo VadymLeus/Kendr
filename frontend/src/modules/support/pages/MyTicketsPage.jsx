@@ -25,185 +25,101 @@ const MyTicketsPage = () => {
     }, []);
 
     const getStatusBadge = (status) => {
-        const baseStyle = {
-            padding: '4px 10px',
-            borderRadius: '20px',
-            fontSize: '0.8rem',
-            fontWeight: '600',
-            textTransform: 'uppercase'
-        };
+        const baseClass = "px-3 py-1 rounded-full text-xs font-bold uppercase border border-transparent";
         switch (status) {
             case 'open':
-                return <span style={{ ...baseStyle, background: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', color: 'var(--platform-warning)' }}>Відкрито</span>;
+                return <span className={baseClass} style={{ background: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', color: 'var(--platform-warning)' }}>Відкрито</span>;
             case 'answered':
-                return <span style={{ ...baseStyle, background: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)' }}>Є відповідь</span>;
+                return <span className={baseClass} style={{ background: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)' }}>Є відповідь</span>;
             case 'closed':
-                return <span style={{ ...baseStyle, background: 'var(--platform-bg)', color: 'var(--platform-text-secondary)', border: '1px solid var(--platform-border-color)' }}>Закрито</span>;
+                return <span className={`${baseClass} bg-(--platform-bg) text-(--platform-text-secondary) border-(--platform-border-color)!`}>Закрито</span>;
             default:
                 return null;
         }
     };
 
     const getTypeBadge = (type) => {
-        const baseStyle = {
-            padding: '4px 8px',
-            borderRadius: '6px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            marginRight: '8px'
-        };
-
+        const baseClass = "px-2 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5 mr-2";
         if (type === 'appeal') {
             return (
-                <span style={{ ...baseStyle, background: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)' }}>
+                <span className={baseClass} style={{ background: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)' }}>
                     <Gavel size={12} /> Апеляція
                 </span>
             );
         }
         return (
-            <span style={{ ...baseStyle, background: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', color: 'var(--platform-accent)' }}>
+            <span className={baseClass} style={{ background: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', color: 'var(--platform-accent)' }}>
                 <FileText size={12} /> Загальне
             </span>
         );
     };
-
-    const containerStyle = {
-        maxWidth: '900px',
-        margin: '0 auto',
-        padding: '2rem 1rem'
-    };
-
-    const headerStyle = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '2rem',
-        flexWrap: 'wrap',
-        gap: '1rem'
-    };
-
-    const ticketLinkStyle = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '1.5rem',
-        border: '1px solid var(--platform-border-color)',
-        borderRadius: '12px',
-        textDecoration: 'none',
-        color: 'inherit',
-        background: 'var(--platform-card-bg)',
-        transition: 'all 0.2s ease',
-        marginBottom: '1rem'
-    };
-
     if (loading) return (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-            <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
-            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+        <div className="flex justify-center items-center h-[50vh]">
+            <Loader size={32} className="animate-spin text-(--platform-accent)" />
         </div>
     );
-    
     if (error) return (
-        <div style={{ 
-            color: 'var(--platform-danger)', 
-            background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)',
-            padding: '1rem',
-            borderRadius: '8px',
-            textAlign: 'center',
-            margin: '2rem',
-            border: '1px solid color-mix(in srgb, var(--platform-danger), transparent 80%)'
-        }}>
+        <div className="m-8 p-4 text-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-500">
             {error}
         </div>
     );
-
     return (
-        <div style={containerStyle}>
+        <div className="p-4 md:p-8 max-w-4xl mx-auto w-full h-full flex flex-col">
             <Helmet>
                 <title>Мої звернення | Kendr</title>
             </Helmet>
-            <div style={headerStyle}>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-8 shrink-0">
                 <div>
-                    <h1 style={{ color: 'var(--platform-text-primary)', margin: '0 0 0.5rem 0', fontSize: '2rem' }}>
+                    <h1 className="text-2xl md:text-3xl font-bold mb-1 text-(--platform-text-primary) m-0">
                         Мої звернення
                     </h1>
-                    <p style={{ color: 'var(--platform-text-secondary)', margin: 0 }}>
+                    <p className="text-(--platform-text-secondary) text-base md:text-lg m-0">
                         Історія вашої комунікації з підтримкою
                     </p>
                 </div>
-                <Link to="/support/new-ticket" style={{ textDecoration: 'none' }}>
+                <Link to="/support/new-ticket" className="no-underline">
                     <Button variant="primary" icon={<Plus size={18}/>}>
                         Нове звернення
                     </Button>
                 </Link>
             </div>
-            
             {tickets.length === 0 ? (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '4rem 2rem',
-                    background: 'var(--platform-card-bg)',
-                    borderRadius: '16px',
-                    border: '1px solid var(--platform-border-color)'
-                }}>
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center', 
-                        color: 'var(--platform-text-secondary)', 
-                        marginBottom: '1.5rem' 
-                    }}>
-                        <MessageSquare size={48} />
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] text-center">
+                    <div className="w-20 h-20 bg-(--platform-accent)/10 rounded-full flex items-center justify-center mb-4">
+                        <MessageSquare size={36} className="text-(--platform-accent)" />
                     </div>
-                    <h3 style={{ color: 'var(--platform-text-primary)', marginBottom: '1rem' }}>
+                    <h3 className="text-xl font-semibold text-(--platform-text-primary) mb-2 m-0">
                         У вас ще немає звернень
                     </h3>
-                    <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '2rem' }}>
+                    <p className="text-(--platform-text-secondary) mb-6 max-w-md m-0">
                         Якщо у вас виникли питання або проблеми, створіть тікет.
                     </p>
-                    <Link to="/support/new-ticket" style={{ textDecoration: 'none' }}>
+                    <Link to="/support/new-ticket" className="no-underline">
                         <Button variant="primary">
                             Створити перше звернення
                         </Button>
                     </Link>
                 </div>
             ) : (
-                <div>
+                <div className="flex flex-col gap-4">
                     {tickets.map(ticket => (
                         <Link 
                             to={`/support/ticket/${ticket.id}`} 
                             key={ticket.id} 
-                            style={ticketLinkStyle}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
-                                e.currentTarget.style.borderColor = 'var(--platform-accent)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'none';
-                                e.currentTarget.style.boxShadow = 'none';
-                                e.currentTarget.style.borderColor = 'var(--platform-border-color)';
-                            }}
+                            className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 md:p-6 border border-(--platform-border-color) rounded-xl no-underline text-inherit bg-(--platform-card-bg) transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-(--platform-accent) gap-4"
                         >
                             <div>
-                                <div style={{ marginBottom: '0.5rem' }}>
+                                <div className="mb-2">
                                     {getTypeBadge(ticket.type)}
                                 </div>
-                                <h3 style={{ 
-                                    margin: '0 0 0.25rem 0', 
-                                    color: 'var(--platform-text-primary)',
-                                    fontSize: '1.1rem'
-                                }}>
+                                <h3 className="m-0 mb-1 text-(--platform-text-primary) text-lg font-semibold">
                                     {ticket.subject}
                                 </h3>
-                                <small style={{ color: 'var(--platform-text-secondary)' }}>
-                                    Створено: {new Date(ticket.created_at).toLocaleString()}
-                                </small>
+                                <p className="text-sm text-(--platform-text-secondary) m-0">
+                                    Створено: {new Date(ticket.created_at).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' })}
+                                </p>
                             </div>
-                            <div>
+                            <div className="shrink-0">
                                 {getStatusBadge(ticket.status)}
                             </div>
                         </Link>

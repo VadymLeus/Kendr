@@ -35,7 +35,6 @@ const CatalogPage = () => {
     const { user } = useContext(AuthContext);
     const { favoriteSiteIds, addFavorite, removeFavorite } = useContext(FavoritesContext);
     const searchTimeoutRef = useRef(null);
-
     useEffect(() => {
         apiClient.get('/tags').then(res => setTags(res.data)).catch(console.error);
         fetchSites();
@@ -57,7 +56,6 @@ const CatalogPage = () => {
         searchTimeoutRef.current = setTimeout(() => { fetchSites(); }, 500);
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm, selectedTag, sortOption, onlyFavorites]);
-
     const handleToggleFavorite = async (siteId) => {
         if (!user) { toast.info("Увійдіть для додавання в обране"); return; }
         if (favoriteSiteIds.has(siteId)) {
@@ -113,12 +111,8 @@ const CatalogPage = () => {
                 <div style={styles.header}>
                     <div style={{ textAlign: 'center' }}>
                         <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, color: 'var(--platform-text-primary)' }}>Каталог Сайтiв</h1>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--platform-text-secondary)' }}>
-                            Знайдено: {filteredSites.length}
-                        </span>
                     </div>
                 </div>
-
                 <SiteFilters 
                     searchTerm={searchTerm} 
                     onSearchChange={setSearchTerm} 
@@ -134,13 +128,21 @@ const CatalogPage = () => {
                     onStarClick={() => setOnlyFavorites(!onlyFavorites)}
                     starTitle={onlyFavorites ? "Показати всі" : "Тільки обрані"}
                     extraButtons={user && (
-                        <Button variant="toggle-danger" active={hideMySites} onClick={() => setHideMySites(!hideMySites)} title="Приховати мої" style={{ height: '38px', width: '38px' }}>
-                            <UserX size={16} />
-                        </Button>
+                        <button 
+                            type="button"
+                            onClick={() => setHideMySites(!hideMySites)} 
+                            title={hideMySites ? "Показати мої сайти" : "Приховати мої сайти"} 
+                            className={`h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border transition-all cursor-pointer ${
+                                hideMySites 
+                                    ? 'border-red-500 text-red-500 bg-red-500/10' 
+                                    : 'border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-red-500 hover:text-red-500'
+                            }`}
+                        >
+                            <UserX size={20} strokeWidth={2.5} />
+                        </button>
                     )}
                 />
             </div>
-
             <div style={styles.gridArea}>
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}><Loader2 size={32} className="animate-spin" /></div>

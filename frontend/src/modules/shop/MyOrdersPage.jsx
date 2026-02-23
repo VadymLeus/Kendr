@@ -27,7 +27,6 @@ const OrderCard = ({ order, onPay }) => {
         const year = date.getFullYear();
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
-        
         return `${day}.${month}.${year} о ${hours}:${minutes}`;
     };
     const handlePayClick = async (e) => {
@@ -94,7 +93,6 @@ const OrderCard = ({ order, onPay }) => {
                             </div>
                         </div>
                     )}
-
                     <div className="grid md:grid-cols-2 gap-8 mb-6">
                         <div>
                             <h4 className="font-semibold text-(--platform-text-primary) mb-3 text-sm uppercase tracking-wider opacity-80">Товари ({order.items.length})</h4>
@@ -211,6 +209,7 @@ const MyOrdersPage = () => {
             toast.error(error.response?.data?.message || 'Не вдалося створити платіж. Спробуйте пізніше.');
         }
     };
+    
     if (loading) {
         return (
             <div className="p-8 max-w-4xl mx-auto w-full">
@@ -225,17 +224,18 @@ const MyOrdersPage = () => {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-4xl mx-auto w-full">
-            <h1 className="text-2xl font-bold mb-6 text-(--platform-text-primary) flex items-center gap-3">
+        <div className="p-4 md:p-8 max-w-4xl mx-auto w-full h-full flex flex-col">
+            <h1 className="text-2xl font-bold mb-6 text-(--platform-text-primary) flex items-center gap-3 shrink-0">
                 <Package className="text-(--platform-accent)" /> Мої замовлення
             </h1>
             {orders.length === 0 ? (
-                <EmptyState 
-                    icon={Package}
-                    title="У вас ще немає замовлень"
-                    description="Зробіть свою першу покупку в каталозі сайтів, і вона з'явиться тут."
-                    action={<Button as={Link} to="/catalog">Перейти до каталогу</Button>}
-                />
+                <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+                    <EmptyState 
+                        icon={Package}
+                        title="У вас ще немає замовлень"
+                        description="Зробіть свою першу покупку в каталозі сайтів, і вона з'явиться тут."
+                    />
+                </div>
             ) : (
                 <div className="space-y-4">
                     {orders.map(order => (

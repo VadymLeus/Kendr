@@ -14,11 +14,11 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
     return (
         <>
             <div className="w-full">
-                <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+                <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between gap-1'}`}>
                     <Link 
                         to={`/profile/${user.username}`} 
                         className={`flex items-center group rounded-lg hover:bg-(--platform-hover-bg) transition-colors ${
-                            isCollapsed ? 'justify-center p-1.5' : 'gap-3 flex-1 min-w-0 p-1 -ml-1'
+                            isCollapsed ? 'justify-center p-2' : 'gap-3 flex-1 min-w-0 p-2'
                         }`} 
                         title="Мій профіль"
                     >
@@ -34,9 +34,8 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
                             </div>
                         )}
                     </Link>
-                    
                     {!isCollapsed && (
-                        <div className="flex flex-col gap-1 pl-2 border-l border-(--platform-border-color)">
+                        <div className="flex flex-col gap-1 pl-1 border-l border-(--platform-border-color)">
                             <button 
                                 onClick={() => navigate('/settings')}
                                 className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-(--platform-hover-bg) rounded-md transition-all"
@@ -55,7 +54,6 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
                     )}
                 </div>
             </div>
-            
             <ConfirmModal 
                 isOpen={showModal}
                 title="Вихід"

@@ -108,7 +108,7 @@ const CategoryList = memo(({
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button onClick={onCreate} icon={<Plus size={16}/>}>Додати</Button>
+                    <Button onClick={onCreate}>Додати</Button>
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto p-5 bg-(--platform-card-bg) custom-scrollbar">
@@ -121,9 +121,6 @@ const CategoryList = memo(({
                         <p className="text-sm opacity-70 max-w-62.5 text-center mb-6">
                             Створіть першу категорію для структурування ваших товарів.
                         </p>
-                        <Button onClick={onCreate} variant="secondary">
-                            Додати першу категорію
-                        </Button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
@@ -335,7 +332,6 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
             toast.error('Категорія з такою назвою вже існує!');
             return;
         }
-
         if (onSavingChange) onSavingChange(true);
         try {
             const payload = { siteId, name: trimmedName, icon: formData.icon };
