@@ -21,10 +21,16 @@ const SORT_OPTIONS = [
 const getFormattedDate = (dateString) => {
     if (!dateString) return 'Невідомо';
     try {
-        const safeDateString = typeof dateString === 'string' ? dateString.replace(' ', 'T') : dateString;
-        const date = new Date(safeDateString);
-        if (isNaN(date.getTime())) return 'Невідомо';
-        return date.toLocaleDateString();
+        let safeString = typeof dateString === 'string' ? dateString.trim() : dateString;
+        if (typeof safeString === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(safeString)) {
+            safeString = safeString.replace(' ', 'T');
+        }
+        const date = new Date(safeString);
+        if (isNaN(date.getTime())) {
+            console.error("Не вдалося розпарсити дату на хостингу:", dateString);
+            return 'Невідомо';
+        }
+        return date.toLocaleDateString('uk-UA');
     } catch (e) {
         return 'Невідомо';
     }
@@ -66,7 +72,6 @@ const ProfilePage = () => {
 
     const fetchUserSites = useCallback(async () => {
         if (!profileData) return;
-
         try {
             setSitesLoading(true);
             const params = {
@@ -154,6 +159,7 @@ const ProfilePage = () => {
         background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', textDecoration: 'none', 
         fontSize: '0.95rem', fontWeight: '500', transition: 'all 0.2s ease', border: '1px solid transparent', marginBottom: '0.75rem' 
     };
+
     if (loadingProfile) return <LoadingState />;
     if (errorStatus === 403) {
         return (
@@ -168,6 +174,7 @@ const ProfilePage = () => {
             </div>
         );
     }
+    
     if (errorStatus === 404) {
         return (
             <div style={containerStyle}>
@@ -181,6 +188,7 @@ const ProfilePage = () => {
             </div>
         );
     }
+    
     if (errorStatus) return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-danger)' }}>Сталася помилка при завантаженні профілю.</div>;
     const displayUsername = (isOwner ? authUser?.username : profileData?.username) || username || 'Користувач';
     const displayAvatarUrl = isOwner ? authUser?.avatar_url : profileData?.avatar_url;

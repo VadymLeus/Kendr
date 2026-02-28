@@ -13,24 +13,20 @@ exports.register = async (req, res, next) => {
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ message: 'Пароль занадто слабкий.' });
         }
-
         const existingUserByEmail = await User.findByEmail(email);
         if (existingUserByEmail) {
             return res.status(400).json({ message: 'Користувач з таким email вже існує.' });
         }
-        
         const existingUserByUsername = await User.findByUsername(username);
         if (existingUserByUsername) {
             return res.status(400).json({ message: "Це ім'я користувача вже зайняте." });
         }
-
         let avatar_url = null;
         if (req.file) {
             avatar_url = `/uploads/avatars/custom/${req.file.filename}`;
         } else if (selected_avatar_url) {
             avatar_url = selected_avatar_url;
         }
-
         const verificationToken = crypto.randomBytes(32).toString('hex');
         await User.create({ 
             username, 
@@ -40,17 +36,14 @@ exports.register = async (req, res, next) => {
             is_verified: 0, 
             verification_token: verificationToken 
         });
-
         try {
             await sendVerificationEmail(email, verificationToken);
         } catch (mailError) {
             console.error("Failed to send email:", mailError);
         }
-
         res.status(201).json({ 
             message: 'Акаунт створено! На вашу пошту надіслано лист для підтвердження.' 
         });
-
     } catch (error) {
         next(error);
     }
@@ -64,7 +57,6 @@ exports.verifyEmail = async (req, res, next) => {
         if (!user) {
             return res.status(400).json({ message: 'Недійсний або застарілий токен' });
         }
-
         await User.verifyUser(user.id);
         res.json({ message: 'Email успішно підтверджено! Тепер ви можете увійти.' });
     } catch (error) {
@@ -84,18 +76,15 @@ exports.login = async (req, res, next) => {
                 email: user.email
             });
         }
-
         if (!user.password_hash) {
              return res.status(400).json({ 
                  message: 'У цього акаунта ще не встановлено пароль. Увійдіть через Google або скористайтеся відновленням пароля.' 
              });
         }
-
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
              return res.status(401).json({ message: 'Невірний логін або пароль.' });
         }
-
         await User.updateLastLogin(user.id);
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
         const hasPassword = !!user.password_hash;
@@ -109,6 +98,7 @@ exports.login = async (req, res, next) => {
                 role: user.role,
                 platform_theme_mode: user.platform_theme_mode,
                 platform_theme_accent: user.platform_theme_accent,
+                created_at: user.created_at,
                 has_password: hasPassword
             }
         });
@@ -136,11 +126,9 @@ exports.forgotPassword = async (req, res, next) => {
     try {
         const { email } = req.body;
         const user = await User.findByEmail(email);
-
         if (!user) {
             return res.json({ message: 'Якщо цей email існує, ми надіслали інструкції.' });
         }
-
         const resetToken = crypto.randomBytes(32).toString('hex');
         const expires = new Date(Date.now() + 3600000);
         await db.query(
@@ -162,17 +150,14 @@ exports.resetPassword = async (req, res, next) => {
             'SELECT * FROM users WHERE reset_token = ? AND reset_token_expires > NOW()',
             [token]
         );
-
         if (users.length === 0) {
             return res.status(400).json({ message: 'Токен недійсний або його термін дії закінчився.' });
         }
-
         const user = users[0];
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
         if (!passwordRegex.test(newPassword)) {
             return res.status(400).json({ message: 'Пароль занадто слабкий (мін. 8 символів, цифра, велика літера).' });
         }
-
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(newPassword, salt);
         await db.query(
@@ -214,6 +199,7 @@ exports.getMe = async (req, res, next) => {
             social_website: user.social_website,
             is_profile_public: user.is_profile_public,
             phone_number: user.phone_number,
+            created_at: user.created_at,
             has_password: hasPassword
         });
     } catch (error) {

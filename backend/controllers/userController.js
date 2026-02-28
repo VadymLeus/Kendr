@@ -6,7 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 const db = require('../config/db');
-
 const sanitizeUser = (user) => {
     return {
         id: user.id,
@@ -25,14 +24,14 @@ const sanitizeUser = (user) => {
         social_instagram: user.social_instagram,
         social_website: user.social_website,
         is_profile_public: user.is_profile_public,
-        has_password: !!user.password_hash
+        has_password: !!user.password_hash,
+        created_at: user.created_at
     };
 };
 
 exports.getPublicProfile = async (req, res, next) => {
     try {
         const user = await User.findByUsername(req.params.username);
-        
         if (!user) {
             return res.status(404).json({ 
                 message: 'Користувача не знайдено',
@@ -95,7 +94,6 @@ exports.getPublicProfile = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        
         const allowedFields = [
             'username', 'email', 'phone_number', 
             'platform_theme_mode', 'platform_theme_accent', 
@@ -103,25 +101,21 @@ exports.updateProfile = async (req, res, next) => {
             'bio', 'social_telegram', 'social_instagram', 'social_website', 
             'is_profile_public'
         ];
-
         const updates = {};
         Object.keys(req.body).forEach(key => {
             if (allowedFields.includes(key)) {
                 updates[key] = req.body[key];
             }
         });
-
         if (updates.username) {
             const [rows] = await db.query('SELECT id FROM users WHERE username = ? AND id != ?', [updates.username, userId]);
             if (rows.length > 0) {
                 return res.status(400).json({ message: 'Це ім\'я користувача вже зайнято.' });
             }
         }
-
         if (Object.keys(updates).length === 0) {
             return res.status(400).json({ message: 'Немає даних для оновлення' });
         }
-
         const updatedUserRaw = await User.update(userId, updates);
         const hasPwd = await User.hasPassword(userId);
         res.json({ 
@@ -148,7 +142,6 @@ exports.changePassword = async (req, res, next) => {
                 return res.status(401).json({ message: 'Невірний поточний пароль.' });
             }
         }
-
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
         await User.update(userId, { password_hash: hashedPassword });
@@ -169,15 +162,12 @@ exports.deleteAccount = async (req, res, next) => {
         if (confirmation !== 'DELETE') {
             return res.status(400).json({ message: 'Невірне підтвердження.' });
         }
-
         const userId = req.user.id;
         const user = await User.findById(userId);
         if (user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
             await deleteFile(user.avatar_url);
         }
-
         await User.deleteById(userId);
-
         res.json({ message: 'Акаунт успішно видалено.' });
     } catch (error) {
         next(error);
@@ -190,14 +180,11 @@ exports.updateAvatarUrl = async (req, res, next) => {
     try {
         const currentUser = await User.findById(userId);
         const oldAvatarUrl = currentUser.avatar_url;
-        
         if (oldAvatarUrl && oldAvatarUrl.includes('/avatars/custom/') && oldAvatarUrl !== avatar_url) {
             await deleteFile(oldAvatarUrl);
         }
-
         const updatedUserRaw = await User.update(userId, { avatar_url });
         const hasPwd = await User.hasPassword(userId);
-        
         res.json({ 
             message: 'Аватар оновлено!', 
             user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }) 
@@ -212,7 +199,6 @@ exports.getDefaultAvatars = (req, res, next) => {
     if (!fs.existsSync(defaultAvatarsDir)) {
          return res.json([]); 
     }
-    
     const files = fs.readdirSync(defaultAvatarsDir);
     const avatarUrls = files.map(file => `/uploads/avatars/default/${file}`);
     res.json(avatarUrls);
@@ -222,18 +208,14 @@ exports.uploadAvatar = async (req, res, next) => {
     if (!req.file) {
         return res.status(400).json({ message: 'Файл не завантажено.' });
     }
-    
     const userId = req.user.id;
     const newAvatarUrl = `/uploads/avatars/custom/${req.file.filename}`;
-
     try {
         const currentUser = await User.findById(userId);
         const oldAvatarUrl = currentUser.avatar_url;
-
         if (oldAvatarUrl && oldAvatarUrl.includes('/avatars/custom/')) {
             await deleteFile(oldAvatarUrl);
         }
-
         const updatedUserRaw = await User.update(userId, { avatar_url: newAvatarUrl });
         const hasPwd = await User.hasPassword(userId);
         res.json({ 
@@ -249,9 +231,7 @@ exports.uploadAvatar = async (req, res, next) => {
 exports.deleteAvatar = async (req, res, next) => {
     try {
         await db.query('UPDATE users SET avatar_url = NULL WHERE id = ?', [req.user.id]);
-        
         const user = await User.findById(req.user.id);
-        
         res.json({ 
             message: 'Аватар видалено', 
             user: {
@@ -264,4 +244,4 @@ exports.deleteAvatar = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-};  
+};

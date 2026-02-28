@@ -13,8 +13,8 @@ const generateLiqPayData = (orderId, amount, publicKey, privateKey) => {
         currency: 'UAH',
         description: `Замовлення #${orderId} на суму ${amount} UAH`,
         order_id: `${orderId}_${Date.now()}`,
-        // server_url: `${BACKEND_URL}/api/orders/liqpay-callback`,
-        server_url: `https://townless-cruciferous-hildegarde.ngrok-free.dev/api/orders/liqpay-callback`,
+        server_url: `${BACKEND_URL}/api/orders/liqpay-callback`,
+        // server_url: `https://townless-cruciferous-hildegarde.ngrok-free.dev/api/orders/liqpay-callback`,
         result_url: `${FRONTEND_URL}/my-orders`,
     };
     const jsonString = JSON.stringify(liqpayParams);
