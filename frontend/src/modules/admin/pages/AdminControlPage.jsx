@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Switch, Input, Button } from '../../../shared/ui/elements';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Power, Lock, Megaphone, Save, AlertTriangle, Settings, Clock, MessageSquare, Eye, AlertOctagon } from 'lucide-react';
 
 const AdminControlPage = () => {
@@ -35,7 +36,6 @@ const AdminControlPage = () => {
                 messageText = parts[0];
                 existingTimer = parseInt(parts[1], 10);
             }
-
             setSettings({
                 ...res.data,
                 maintenance_message: messageText
@@ -99,12 +99,10 @@ const AdminControlPage = () => {
                     finalMessage = `${finalMessage}|||${activeTimerEnd}`;
                 }
             }
-
             const dataToSend = {
                 ...settings,
                 maintenance_message: finalMessage
             };
-
             await apiClient.put('/admin/control/settings', dataToSend);
             setOriginalValues(dataToSend);
             setTimerMinutes('');
@@ -158,13 +156,9 @@ const AdminControlPage = () => {
         if (!timeLeft) return null;
         return <span> - {timeLeft}</span>;
     };
-
     if (isLoading) {
-        return (
-            <div className="flex justify-center p-12 text-(--platform-text-secondary)">Завантаження налаштувань...</div>
-        );
+        return <LoadingState title="Завантаження налаштувань..." layout="page" />;
     }
-
     return (
         <div className="max-w-4xl mx-auto px-4 pb-20 relative">
             <div className="flex justify-between items-start mb-6 flex-wrap gap-4">
@@ -207,7 +201,6 @@ const AdminControlPage = () => {
                             </p>
                         </div>
                     </div>
-                    
                     <div className="p-6 space-y-6">
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex-1">
@@ -225,7 +218,6 @@ const AdminControlPage = () => {
                                 onChange={(checked) => handleChange('maintenance_mode', checked)} 
                             />
                         </div>
-                        
                         <div className="h-px bg-(--platform-border-color)" />
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex-1">
@@ -257,7 +249,6 @@ const AdminControlPage = () => {
                             </p>
                         </div>
                     </div>
-
                     <div className="p-6 space-y-6">
                         <div className="flex items-center justify-between">
                             <label className="flex items-center gap-2 text-sm font-medium text-(--platform-text-primary)">
@@ -279,7 +270,6 @@ const AdminControlPage = () => {
                                     placeholder="Наприклад: Технічні роботи розпочнуться через"
                                 />
                             </div>
-
                             <div className="w-full">
                                 <label className="flex text-sm font-medium text-(--platform-text-primary) mb-2 items-center gap-2 select-none">
                                     <Clock size={16} /> Додати таймер

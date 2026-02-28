@@ -21,6 +21,21 @@ const regenerateBlockIds = (blocks) => {
     return Array.isArray(blocks) ? blocks.map(mapBlock) : blocks;
 };
 
+exports.getSiteInfoById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const [sites] = await db.query('SELECT site_path, title FROM sites WHERE id = ?', [id]);
+        if (sites.length === 0) {
+            return res.status(404).json({ message: 'Сайт не знайдено' });
+        }
+        
+        res.json({ site_path: sites[0].site_path, title: sites[0].title });
+    } catch (error) {
+        console.error('Помилка в getSiteInfoById:', error);
+        next(error);
+    }
+};
+
 exports.getTemplates = async (req, res, next) => {
     try {
         const { include_drafts } = req.query;
@@ -164,12 +179,16 @@ exports.getSiteByPath = async (req, res, next) => {
     try {
         const { site_path, slug } = req.params;
         const site = await Site.findByPath(site_path);
-        if (!site) return res.status(404).json({ message: 'Сайт не знайдено.' });
+        if (!site) {
+            return res.status(200).json(null); 
+        }
+
         let isAdmin = false;
         if (req.user) {
             const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
             if (currentUser[0]?.role === 'admin') isAdmin = true;
         }
+
         const isOwner = req.user && req.user.id === site.user_id;
         if (site.status === 'suspended') {
             if (!isAdmin) {
@@ -179,20 +198,29 @@ exports.getSiteByPath = async (req, res, next) => {
                 });
             }
         }
+
         if (site.status === 'probation') {
             if (!isOwner && !isAdmin) {
                 return res.status(403).json({ message: 'Сайт знаходиться на модерації.' });
             }
         }
+
         let page;
         if (slug) page = await Page.findBySiteIdAndSlug(site.id, slug);
         else page = await Page.findHomepageBySiteId(site.id);
         if (!page) {
-            if (slug) return res.status(404).json({ message: `Сторінку "${slug}" не знайдено.`, site: site });
-            return res.status(500).json({ message: 'Головну сторінку не налаштовано.', site: site });
+            if (slug) return res.status(200).json(null); 
+            return res.status(200).json(null);
         }
+
         const [tags] = await db.query(`SELECT t.id, t.name FROM tags t JOIN site_tags st ON t.id = st.tag_id WHERE st.site_id = ?`, [site.id]);
-        res.json({ ...site, page_content: page.block_content, page_id: page.id, page: page, tags: tags });
+        res.json({ 
+            ...site, 
+            page_content: page.block_content, 
+            page_id: page.id, 
+            page: page, 
+            tags: tags 
+        });
     } catch (error) {
         console.error('Помилка в getSiteByPath:', error);
         next(error);
@@ -299,11 +327,9 @@ exports.updateSiteSettings = async (req, res, next) => {
         };
 
         await Site.updateSettings(site.id, updateData);
-        
         if (Array.isArray(tags)) {
             await Site.updateTags(site.id, tags);
         }
-
         res.json({ 
             message: 'Налаштування оновлено',
             updated: {

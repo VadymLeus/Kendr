@@ -7,8 +7,9 @@ import { AuthContext } from '../../../app/providers/AuthContext';
 import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import SiteGridCard from '../../../shared/ui/complex/SiteGridCard'; 
-import SiteFilters from '../../../shared/ui/complex/SiteFilters';   
-import { Send, Instagram, Globe, Settings, Calendar, Grid, User as UserIcon, Loader, ExternalLink, EyeOff, Search, Layout, ShieldAlert, AlertTriangle } from 'lucide-react';
+import SiteFilters from '../../../shared/ui/complex/SiteFilters';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
+import { Send, Instagram, Globe, Settings, Calendar, Grid, User as UserIcon, ExternalLink, EyeOff, Search, Layout, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 const SORT_OPTIONS = [
     { value: 'created_at:desc', label: 'Нові' },
@@ -40,7 +41,6 @@ const ProfilePage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState('created_at:desc');
     const isOwner = authUser && authUser.username === username;
-
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -154,14 +154,7 @@ const ProfilePage = () => {
         background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', textDecoration: 'none', 
         fontSize: '0.95rem', fontWeight: '500', transition: 'all 0.2s ease', border: '1px solid transparent', marginBottom: '0.75rem' 
     };
-    
-    if (loadingProfile) return (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-            <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)', animation: 'spin 1s linear infinite' }} />
-            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
-        </div>
-    );
-    
+    if (loadingProfile) return <LoadingState />;
     if (errorStatus === 403) {
         return (
             <div style={containerStyle}>
@@ -175,7 +168,6 @@ const ProfilePage = () => {
             </div>
         );
     }
-    
     if (errorStatus === 404) {
         return (
             <div style={containerStyle}>
@@ -189,9 +181,7 @@ const ProfilePage = () => {
             </div>
         );
     }
-    
     if (errorStatus) return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-danger)' }}>Сталася помилка при завантаженні профілю.</div>;
-    
     const displayUsername = (isOwner ? authUser?.username : profileData?.username) || username || 'Користувач';
     const displayAvatarUrl = isOwner ? authUser?.avatar_url : profileData?.avatar_url;
     const displayDate = profileData?.createdAt || profileData?.created_at || (isOwner ? authUser?.created_at : null);
@@ -378,31 +368,33 @@ const ProfilePage = () => {
                     tags={[]} 
                     showStarFilter={false}
                 />
-                <div style={gridStyle}>
-                    {sitesLoading ? (
-                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
-                            <Loader size={24} className="animate-spin" style={{ margin: '0 auto', color: 'var(--platform-text-secondary)' }} />
-                        </div>
-                    ) : userSites.length > 0 ? (
-                        userSites.map(site => (
-                            <SiteGridCard 
-                                key={site.id} 
-                                site={site} 
-                                variant="public"
-                                formatDate={(d) => getFormattedDate(d)}
-                            />
-                        ))
-                    ) : (
-                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: 'var(--platform-text-secondary)' }}>
-                             <div style={{ marginBottom: '1rem', opacity: 0.5 }}>
-                                <Globe size={48} style={{ margin: '0 auto' }} />
-                             </div>
-                             <p style={{ fontSize: '1.1rem' }}>
-                                 {searchTerm ? 'Нічого не знайдено за вашим запитом' : 'У користувача поки немає публічних сайтів'}
-                             </p>
-                        </div>
-                    )}
-                </div>
+                {sitesLoading ? (
+                    <div style={{ padding: '20px 0' }}>
+                        <LoadingState layout="component" iconSize={32} />
+                    </div>
+                ) : (
+                    <div style={gridStyle}>
+                        {userSites.length > 0 ? (
+                            userSites.map(site => (
+                                <SiteGridCard 
+                                    key={site.id} 
+                                    site={site} 
+                                    variant="public"
+                                    formatDate={(d) => getFormattedDate(d)}
+                                />
+                            ))
+                        ) : (
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: 'var(--platform-text-secondary)' }}>
+                                 <div style={{ marginBottom: '1rem', opacity: 0.5 }}>
+                                    <Globe size={48} style={{ margin: '0 auto' }} />
+                                 </div>
+                                 <p style={{ fontSize: '1.1rem' }}>
+                                     {searchTerm ? 'Нічого не знайдено за вашим запитом' : 'У користувача поки немає публічних сайтів'}
+                                 </p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

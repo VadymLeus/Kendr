@@ -43,7 +43,12 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
                     if (siteData?.id) params.siteId = siteData.id;
                 }
                 const res = await apiClient.get('/products', { params });
-                setProducts(res.data);
+                const enrichedProducts = res.data.map(p => ({
+                    ...p,
+                    site_path: siteData?.site_path,
+                    site_name: siteData?.title
+                }));
+                setProducts(enrichedProducts);
             } catch (error) {
                 console.error("Error loading products:", error);
             } finally {
@@ -51,9 +56,8 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
             }
         };
 
-        if (siteData?.id) fetchProducts();
-    }, [blockData.selected_product_ids, blockData.category_id, source_type, siteData?.id]);
-
+        if (siteData?.id || source_type === 'manual') fetchProducts();
+    }, [blockData.selected_product_ids, blockData.category_id, source_type, siteData?.id, siteData?.site_path, siteData?.title]);
     const heightClasses = {
         small: 'min-h-[300px]',
         medium: 'min-h-[500px]',

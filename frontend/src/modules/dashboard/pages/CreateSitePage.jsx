@@ -10,12 +10,13 @@ import TemplateModal from '../components/TemplateModal';
 import UniversalMediaInput from '../../../shared/ui/complex/UniversalMediaInput';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
 import SitePreviewer from '../../../shared/ui/complex/SitePreviewer';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { BASE_URL } from '../../../shared/config';
 import { ArrowLeft, Layout, Check, Loader, AlertCircle, Grid, User, Search, Edit, Trash, Info, Palette, Sparkles, Globe, Lock, Image, FileText, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Shield, EyeOff, Tag } from 'lucide-react';
 
-const logosModules = import.meta.glob('../../../shared/assets/logos/*.{png,jpg,jpeg,webp,svg}', { 
+const logosModules = import.meta.glob('../../../shared/assets/CreateLogos/*.{png,jpg,jpeg,webp,svg}', { 
     eager: true, 
     as: 'url' 
 });
@@ -82,7 +83,6 @@ const CreateSitePage = () => {
                     apiClient.get(templatesUrl),
                     apiClient.get('/user-templates'),
                 ]);
-
                 if (sysRes.status === 'fulfilled') {
                     setSystemTemplates(sysRes.value.data);
                     if (sysRes.value.data.length > 0) handleSelectTemplate(sysRes.value.data[0], 'system');
@@ -95,7 +95,6 @@ const CreateSitePage = () => {
                     const random = LOCAL_DEFAULT_LOGOS[Math.floor(Math.random() * LOCAL_DEFAULT_LOGOS.length)];
                     setDefaultRandomLogo(random);
                 } 
-
             } catch (err) {
                 console.error(err);
                 toast.error('Не вдалося завантажити дані');
@@ -105,7 +104,6 @@ const CreateSitePage = () => {
         };
         loadData();
     }, [isAdmin]);
-
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (!formData.slug || formData.slug.length < 3) {
@@ -120,7 +118,6 @@ const CreateSitePage = () => {
         }, 500);
         return () => clearTimeout(timer);
     }, [formData.slug]);
-
     const handleSelectTemplate = (template, type) => {
         if (!template) return;
         setSelectedTemplateId(template.id);
@@ -259,7 +256,8 @@ const CreateSitePage = () => {
         );
     };
 
-    if (isLoadingData) return <div className="flex h-full items-center justify-center bg-(--platform-bg)"><Loader size={48} className="text-(--platform-accent) animate-spin" /></div>;
+    if (isLoadingData) return <LoadingState />;
+
     return (
         <div className="flex h-full w-full overflow-hidden bg-(--platform-bg) min-h-0">
             <ConfirmModal 

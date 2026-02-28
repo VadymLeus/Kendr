@@ -36,7 +36,7 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const sitePath = siteData?.site_path || product.site_path;
     const productLink = sitePath 
         ? `/site/${sitePath}/product/${product.id}` 
-        : `/product/${product.id}`; 
+        : `/product/${product.id}`;
     const handleMouseEnter = () => {
         setIsHovered(true);
         if (isEditorPreview || images.length <= 1) return;
@@ -68,8 +68,14 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             }
             return;
         }
+        
         if (addToCart) {
-            addToCart(product, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
+            const productForCart = {
+                ...product,
+                site_path: siteData?.site_path || product.site_path,
+                site_name: siteData?.title || product.site_name
+            };
+            addToCart(productForCart, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
         }
     };
 
@@ -124,13 +130,11 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                             ))}
                         </div>
                     )}
-                    
                     {hasDiscount && !isSoldOut && (
                         <div className="absolute top-2 right-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-xs font-bold z-10">
                             -{product.sale_percentage}%
                         </div>
                     )}
-
                     {isSoldOut && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-gray-600 font-bold z-10 backdrop-blur-sm">
                             Закінчився

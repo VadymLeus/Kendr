@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Button as UIButton } from '../../../../shared/ui/elements/Button'; 
 import { Input } from '../../../../shared/ui/elements/Input'; 
+import LoadingState from '../../../../shared/ui/complex/LoadingState';
 import { FileText, Plus, Edit, Settings, Trash, Star, Search, X, PanelTop, PanelBottom, Layout } from 'lucide-react';
 
 const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavingChange }) => {
@@ -55,7 +56,6 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
             setTimeout(() => { if (onSavingChange) onSavingChange(false); }, 500);
         }
     };
-
     if (!isOpen) return null;
     return (
         <div 
@@ -258,7 +258,6 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
         } catch (err) { toast.error('Помилка видалення'); }
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
-
     const handleSetHome = async (pageId, pageName) => {
         if (onSavingChange) onSavingChange(true);
         try {
@@ -269,7 +268,6 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
         } catch (err) { toast.error('Помилка'); }
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
-
     return (
         <div className="flex flex-col gap-6 w-full">
             <PageModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveSuccess} page={editingPage} siteId={siteId} onPageUpdate={onPageUpdate} onSavingChange={onSavingChange} />
@@ -290,7 +288,9 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onEditFooter, onEd
             </div>
             <div className="bg-(--platform-card-bg) p-8 rounded-[20px] border border-(--platform-border-color) shadow-sm">
                 {loading ? (
-                    <div className="text-center p-10 text-(--platform-text-secondary)">Завантаження...</div>
+                    <div className="py-10">
+                        <LoadingState title="Завантаження сторінок..." />
+                    </div>
                 ) : (
                     <div className="flex flex-col gap-8">
                         <div>

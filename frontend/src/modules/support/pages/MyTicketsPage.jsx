@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Helmet } from 'react-helmet-async';
-import { Plus, MessageSquare, Loader, Gavel, FileText } from 'lucide-react';
+import { Plus, MessageSquare, Gavel, FileText } from 'lucide-react';
 
 const MyTicketsPage = () => {
     const [tickets, setTickets] = useState([]);
@@ -53,11 +54,7 @@ const MyTicketsPage = () => {
             </span>
         );
     };
-    if (loading) return (
-        <div className="flex justify-center items-center h-[50vh]">
-            <Loader size={32} className="animate-spin text-(--platform-accent)" />
-        </div>
-    );
+    if (loading) return <LoadingState />;
     if (error) return (
         <div className="m-8 p-4 text-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-500">
             {error}

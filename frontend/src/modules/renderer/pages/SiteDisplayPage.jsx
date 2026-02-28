@@ -12,12 +12,14 @@ import CookieBanner from '../components/CookieBanner';
 import FontLoader from '../components/FontLoader';
 import ReportModal from '../../../shared/ui/complex/ReportModal';
 import { BASE_URL } from '../../../shared/config';
+import { Loader2 } from 'lucide-react';
 
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
     const { site_path } = useParams();
     const { user } = useContext(AuthContext);
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const [show404, setShow404] = useState(false);
     useScrollToHash();
     useEffect(() => {
         if (!isSiteLoading && siteData && siteData.page && siteData.page.is_homepage) {
@@ -25,22 +27,33 @@ const SiteDisplayPage = () => {
                 .catch(err => console.warn("View counter error:", err));
         }
     }, [isSiteLoading, siteData, site_path]);
-    if (isSiteLoading) {
-        return <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh', color: 'var(--platform-text-secondary)' }}>Завантаження...</div>;
+    const isMissingData = !siteData || !siteData.page;
+    useEffect(() => {
+        let timer;
+        if (!isSiteLoading && isMissingData) {
+            timer = setTimeout(() => setShow404(true), 300);
+        } else {
+            setShow404(false);
+        }
+        return () => clearTimeout(timer);
+    }, [isSiteLoading, isMissingData]);
+    if (isSiteLoading || (isMissingData && !show404)) {
+        return (
+            <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh', color: 'var(--platform-text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Loader2 size={40} className="animate-spin mb-4" />
+                <p>Завантаження сторінки...</p>
+            </div>
+        );
     }
-
-    if (!siteData) return <NotFoundPage />;
+    if (isMissingData && show404) return <NotFoundPage />;
     const isOwner = user && user.id === siteData.user_id;
     const isAdmin = user && user.role === 'admin';
     if (siteData.status === 'private' && !isOwner && !isAdmin) {
         return <NotFoundPage />;
     }
-
     if ((siteData.status === 'draft' || siteData.status === 'suspended') && !isOwner && !isAdmin) {
         return <MaintenancePage logoUrl={siteData.logo_url} siteName={siteData.title} />;
     }
-
-    if (!siteData.page) return <NotFoundPage />;
     const page = siteData.page;
     const titlePart = page.seo_title || page.name;
     const sitePart = siteData.site_title_seo || siteData.title;
@@ -51,6 +64,7 @@ const SiteDisplayPage = () => {
             ? siteData.favicon_url
             : `${BASE_URL}${siteData.favicon_url.startsWith('/') ? '' : '/'}${siteData.favicon_url}`)
         : '/icon-light.webp';
+        
     let pageBlocks = [];
     try {
         pageBlocks = Array.isArray(siteData.page.block_content)
@@ -63,7 +77,6 @@ const SiteDisplayPage = () => {
             ? siteData.footer_content
             : JSON.parse(siteData.footer_content || '[]');
     } catch (e) {}
-
     const layoutStyle = {
         display: 'flex',
         flexDirection: 'column',
@@ -105,6 +118,7 @@ const SiteDisplayPage = () => {
         justifyContent: 'center',
         gap: '8px'
     };
+
     return (
         <div 
             className="site-root site-theme-context" 

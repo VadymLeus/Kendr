@@ -13,6 +13,8 @@ router.get('/templates', siteController.getTemplates);
 router.get('/catalog', verifyTokenOptional, siteController.getSites);
 router.get('/default-logos', siteController.getDefaultLogos);
 router.get('/my-suspended', verifyToken, siteController.getMySuspendedSites);
+router.get('/info/:id', siteController.getSiteInfoById); 
+
 router.post('/create', verifyToken, upload.single('logo'), processAndSaveLogo(64), siteController.createSite);
 router.put('/:siteId/reset-template', verifyToken, siteController.resetSiteToTemplate);
 router.patch('/:siteId/pin', verifyToken, siteController.toggleSitePin);

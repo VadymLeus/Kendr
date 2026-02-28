@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Helmet } from 'react-helmet-async';
 import { AlertTriangle, Gavel, CheckCircle, Clock, XCircle, Check } from 'lucide-react';
 
 const AppealPage = () => {
     const [suspendedSites, setSuspendedSites] = useState([]);
     const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         apiClient.get('/sites/my-suspended')
             .then(response => {
@@ -19,6 +21,7 @@ const AppealPage = () => {
             })
             .finally(() => setLoading(false));
     }, []);
+
     const getAppealStatusBadge = (status) => {
         switch (status) {
             case 'pending':
@@ -73,11 +76,9 @@ const AppealPage = () => {
                 return null;
         }
     };
-    if (loading) return (
-        <div className="p-8 text-center text-(--platform-text-secondary)">
-            Завантаження...
-        </div>
-    );
+
+    if (loading) return <LoadingState />;
+
     return (
         <div className="p-4 md:p-8 max-w-4xl mx-auto w-full h-full flex flex-col">
             <Helmet>
@@ -125,14 +126,12 @@ const AppealPage = () => {
                                     Suspended
                                 </Button>
                             </div>
-
                             <div className="bg-orange-500/10 text-orange-600 dark:text-orange-500 p-3 rounded-lg text-sm flex items-center gap-2 border border-orange-500/20">
                                 <AlertTriangle size={20} className="shrink-0" />
                                 <span>
                                     Заплановане видалення: <strong>{new Date(site.deletion_scheduled_for).toLocaleDateString()}</strong>
                                 </span>
                             </div>
-
                             <div className="flex justify-end mt-2">
                                 {site.appeal_status ? (
                                     getAppealStatusBadge(site.appeal_status)

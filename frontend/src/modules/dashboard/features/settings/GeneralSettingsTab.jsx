@@ -7,6 +7,7 @@ import { useAutoSave } from '../../../../shared/hooks/useAutoSave';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import SiteCoverDisplay from '../../../../shared/ui/complex/SiteCoverDisplay';
+import LoadingState from '../../../../shared/ui/complex/LoadingState';
 import TemplateModal from '../../components/TemplateModal';
 import { Button, Select, Switch } from '../../../../shared/ui/elements';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
@@ -433,7 +434,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         { value: 'draft', label: 'Чернетка (Тех. роботи)', icon: FileText, iconProps: { className: 'text-orange-500' } },
         { value: 'private', label: 'Приватний (Прихований)', icon: Lock, iconProps: { className: 'text-gray-500' } }
     ];
-    
     const hasIdentityChanges = identityData.title !== siteData.title || identityData.slug !== siteData.site_path;
     const renderTemplateList = (templates, emptyMsg, type) => (
         <>
@@ -503,7 +503,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             )}
         </>
     );
-
     return (
         <div className="max-w-4xl mx-auto px-4 pb-20 relative">
             <div className="mb-8 shrink-0 flex flex-col items-center text-center">
@@ -677,7 +676,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
             )}
-            
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                  <div className="mb-6">
                     <div>
@@ -802,7 +800,9 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 </div>
                  {loadingTemplates ? (
-                    <div className="text-center p-8 text-(--platform-text-secondary)">Завантаження шаблонів...</div>
+                    <div className="py-8">
+                        <LoadingState title="Завантаження шаблонів..." />
+                    </div>
                 ) : (
                     <div className="flex flex-col gap-4">
                         {isAdmin ? (

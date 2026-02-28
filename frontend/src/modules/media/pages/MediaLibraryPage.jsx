@@ -5,6 +5,7 @@ import MediaGridItem from '../components/MediaGridItem';
 import MediaInspector from '../components/MediaInspector';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements';
@@ -121,7 +122,6 @@ const MediaLibraryPage = () => {
 
         return result;
     }, [files, searchTerm, activeType, activeFormat, sortOption, onlyFavorites]);
-
     const visibleFiles = filteredFiles.slice(0, visibleCount);
     const remainingCount = filteredFiles.length - visibleFiles.length;
     const handleUpload = async (e) => {
@@ -138,7 +138,6 @@ const MediaLibraryPage = () => {
                 return null;
             }
         });
-
         const newFiles = await Promise.all(uploadPromises);
         const validFiles = newFiles.filter(f => f !== null);
         toast.dismiss(toastId);
@@ -150,12 +149,10 @@ const MediaLibraryPage = () => {
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
-
     const handleUpdateFile = useCallback((updatedFile) => {
         setFiles(prev => prev.map(f => f.id === updatedFile.id ? updatedFile : f));
         setSelectedFile(prev => prev?.id === updatedFile.id ? updatedFile : prev);
     }, []);
-
     const handleToggleFavorite = useCallback(async (file) => {
         const newStatus = !file.is_favorite;
         handleUpdateFile({ ...file, is_favorite: newStatus });
@@ -166,7 +163,6 @@ const MediaLibraryPage = () => {
             toast.error("Помилка оновлення");
         }
     }, [handleUpdateFile]);
-    
     const handleDelete = async (file) => {
         if (await confirm({ title: "Видалити файл?", message: "Ця дія незворотна.", type: "danger", confirmLabel: "Видалити" })) {
             try {
@@ -184,7 +180,6 @@ const MediaLibraryPage = () => {
             }
         }
     };
-
     const handleCheckFile = useCallback((file, index, e) => {
         if (e?.shiftKey && lastSelectedIndex.current !== null) {
             const start = Math.min(lastSelectedIndex.current, index);
@@ -432,7 +427,7 @@ const MediaLibraryPage = () => {
                     onClick={handleGridBackgroundClick}
                 >
                     {loading ? (
-                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}>Завантаження...</div>
+                        <LoadingState />
                     ) : filteredFiles.length === 0 ? (
                         <EmptyState 
                             title="Файлів не знайдено"

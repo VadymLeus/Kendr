@@ -9,7 +9,9 @@ import { InputWithCounter } from '../../../../../shared/ui/complex/InputWithCoun
 import { Button } from '../../../../../shared/ui/elements/Button';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import { SplitViewLayout } from '../../../../../shared/ui/layouts/SplitViewLayout';
-import { Search, Folder, Plus, Trash, Edit, ChevronLeft, Save, Star, Home, Heart, Package, Tag, ShoppingBag, Grid, X, Camera, Music, Smartphone, Coffee, Briefcase, Gift, Truck, Zap, MapPin, Image, Video, User, Type, List, Store } from 'lucide-react';
+import EmptyState from '../../../../../shared/ui/complex/EmptyState';
+import LoadingState from '../../../../../shared/ui/complex/LoadingState';
+import { Search, Folder, Plus, Trash, Edit, ChevronLeft, Save, Star, Home, Heart, Package, Tag, ShoppingBag, Grid, X, Camera, Music, Smartphone, Coffee, Briefcase, Gift, Truck, Zap, MapPin, Image, Video, User, Type, List, Store, CheckCircle } from 'lucide-react';
 
 const ICON_MAP = {
     folder: Folder, grid: Grid, tag: Tag, bag: ShoppingBag,
@@ -73,24 +75,23 @@ const CategoryList = memo(({
         });
         return result;
     }, [categories, search, sortBy, sortOrder, getProductCount]);
+
     const toggleSortOrder = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
     return (
         <div className="flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl overflow-hidden">
-            <div className="h-18 px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 bg-(--platform-bg) shrink-0">
-                <div className="flex gap-2 flex-[1_1_300px] items-center">
-                    <div className="flex-1 min-w-37.5">
-                        <Input
-                            leftIcon={<Search size={16}/>}
-                            placeholder="Пошук..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            wrapperStyle={{margin: 0}}
-                        />
-                    </div>
-                    <div className="w-50 flex gap-2 items-center shrink-0">
-                        <div className="flex-1">
+            <div className="min-h-18 p-3 sm:px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 flex-wrap bg-(--platform-bg) shrink-0">
+                <div className="flex gap-2 flex-1 items-center flex-wrap">
+                    <Input
+                        leftIcon={<Search size={16}/>}
+                        placeholder="Пошук..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        wrapperStyle={{margin: 0, flex: '1 1 180px'}}
+                    />
+                    <div className="flex gap-1 items-center">
+                        <div className="w-48">
                             <CustomSelect 
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
@@ -101,26 +102,33 @@ const CategoryList = memo(({
                         <Button 
                             variant="outline" 
                             onClick={toggleSortOrder} 
-                            className="p-0 h-9.5 w-9.5 min-w-9.5 bg-(--platform-card-bg) flex items-center justify-center border-(--platform-border-color)"
+                            className="w-10.5 h-10.5 p-0 flex items-center justify-center shrink-0"
                         >
-                            <span className="text-lg leading-none font-bold">{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                            <span className="text-lg leading-none">{sortOrder === 'desc' ? '↓' : '↑'}</span>
                         </Button>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Button onClick={onCreate}>Додати</Button>
-                </div>
+                <Button onClick={onCreate} className="h-10.5 shrink-0">Додати</Button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 bg-(--platform-card-bg) custom-scrollbar">
                 {processedCategories.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-(--platform-text-secondary) py-10">
-                        <div className="w-20 h-20 rounded-full bg-(--platform-bg) border border-(--platform-border-color) flex items-center justify-center mb-4">
-                            <Store size={40} className="opacity-30"/>
-                        </div>
-                        <h3 className="text-lg font-semibold text-(--platform-text-primary) mb-1">Категорій не знайдено</h3>
-                        <p className="text-sm opacity-70 max-w-62.5 text-center mb-6">
-                            Створіть першу категорію для структурування ваших товарів.
-                        </p>
+                    <div className="flex flex-col items-center justify-center h-full py-10">
+                        <EmptyState 
+                            title={categories.length === 0 ? "Категорій немає" : "Категорій не знайдено"}
+                            description={
+                                categories.length === 0 
+                                ? "Створіть першу категорію для структурування ваших товарів." 
+                                : "За вашим запитом нічого не знайдено. Спробуйте змінити критерії пошуку."
+                            }
+                            icon={categories.length === 0 ? Store : Search}
+                            action={
+                                categories.length > 0 && search.trim() !== '' && (
+                                    <Button variant="ghost" onClick={() => setSearch('')}>
+                                        Очистити пошук
+                                    </Button>
+                                )
+                            }
+                        />
                     </div>
                 ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
@@ -140,17 +148,20 @@ const CategoryList = memo(({
                                         }
                                     `}
                                 >
-                                    <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button 
-                                            variant="square-danger" 
-                                            onClick={(e) => onDelete(e, cat.id, cat.name)} 
-                                            className="w-7 h-7 opacity-80"
-                                            title="Видалити"
-                                        >
-                                            <Trash size={14}/>
-                                        </Button>
-                                    </div>
-                                    <div className={`mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary) group-hover:text-(--platform-accent)'}`}>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => onDelete(e, cat.id, cat.name)}
+                                        className="absolute top-3 right-3 h-8 w-8 flex items-center justify-center shrink-0 rounded-lg border border-(--platform-border-color) bg-(--platform-bg)/90 backdrop-blur-md text-(--platform-text-secondary) opacity-0 group-hover:opacity-100 hover:border-(--platform-danger) hover:text-(--platform-danger) transition-all shadow-sm z-20 cursor-pointer"
+                                        title="Видалити"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                    {isSelected && (
+                                        <div className="absolute top-3 right-3 h-8 w-8 flex items-center justify-center bg-(--platform-bg)/90 backdrop-blur-md border border-(--platform-border-color) text-(--platform-accent) rounded-lg shadow-sm z-10 animate-in fade-in zoom-in duration-200 group-hover:opacity-0 transition-opacity">
+                                            <CheckCircle size={18} />
+                                        </div>
+                                    )}
+                                    <div className={`mb-3 transition-transform duration-300 transform-gpu group-hover:scale-110 ${isSelected ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary) group-hover:text-(--platform-accent)'}`}>
                                         <CatIcon size={42} />
                                     </div>
                                     <div className="font-semibold text-(--platform-text-primary) mb-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full w-full" title={cat.name}>
@@ -186,7 +197,13 @@ const CategoryEditor = memo(({
                     {formData.id ? <><Edit size={20} /> Редагування</> : 'Нова категорія'}
                 </h3>
                 {!isMobile && (
-                    <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><X size={20} /></Button>
+                    <button 
+                        type="button" 
+                        onClick={onClose} 
+                        className="h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-accent) transition-all cursor-pointer"
+                    >
+                        <X size={20}/>
+                    </button>
                 )}
             </div>
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden bg-(--platform-card-bg)">
@@ -216,14 +233,16 @@ const CategoryEditor = memo(({
                                         onClick={() => setFormData(prev => ({...prev, icon: iconName}))} 
                                         title={iconName} 
                                         className={`
-                                            aspect-square rounded-xl border-2 flex items-center justify-center cursor-pointer transition-all duration-200
+                                            group aspect-square rounded-xl border-2 flex items-center justify-center cursor-pointer transition-all duration-200
                                             ${isActive 
                                                 ? 'border-(--platform-accent) bg-(--platform-accent)/10 text-(--platform-accent)' 
-                                                : 'border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-secondary) hover:border-(--platform-accent) hover:bg-(--platform-hover-bg) hover:scale-105'
+                                                : 'border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-secondary) hover:border-(--platform-accent) hover:bg-(--platform-hover-bg)'
                                             }
                                         `}
                                     >
-                                        <IconComponent size={24} />
+                                        <div className={`transition-transform duration-200 transform-gpu ${!isActive ? 'group-hover:scale-110' : ''}`}>
+                                            <IconComponent size={24} />
+                                        </div>
                                     </div>
                                 )
                             })}
@@ -233,9 +252,9 @@ const CategoryEditor = memo(({
                 <div className="p-6 border-t border-(--platform-border-color) grid grid-cols-2 gap-4 mt-auto bg-(--platform-bg) shrink-0">
                     <Button 
                         type="button" 
-                        variant="outline-danger" 
+                        variant="secondary" 
                         onClick={onClear} 
-                        title="Очистити форму" 
+                        title="Скасувати зміни" 
                         className="justify-center h-10.5"
                     >
                         <X size={18} /> Скасувати
@@ -351,21 +370,23 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
             if (onSavingChange) onSavingChange(false);
         }
     }, [formData, categories, onSavingChange, siteId, fetchData, handleClear]);
-
     const handleDelete = useCallback(async (e, id, name) => {
         e.stopPropagation();
-        if (await confirm({ title: 'Видалити категорію?', message: `Ви впевнені?`, type: 'danger', confirmLabel: 'Видалити' })) {
+        if (await confirm({ title: 'Видалити категорію?', message: `Ви впевнені, що хочете видалити категорію "${name}"?`, type: 'danger', confirmLabel: 'Видалити' })) {
             if (onSavingChange) onSavingChange(true);
             try {
                 await apiClient.delete(`/categories/${id}`);
                 if (activeCategory?.id === id) handleCreateNew();
                 fetchData();
                 toast.success('Категорію видалено');
-            } catch (err) { toast.error('Не вдалося видалити'); }
-            finally { if (onSavingChange) onSavingChange(false); }
+            } catch (err) { 
+                toast.error('Не вдалося видалити'); 
+            } finally { 
+                if (onSavingChange) onSavingChange(false); 
+            }
         }
     }, [confirm, onSavingChange, activeCategory, handleCreateNew, fetchData]);
-    if (loading) return <div className="p-10 text-center text-(--platform-text-secondary)">Завантаження...</div>;
+    if (loading) return <LoadingState title="Завантаження категорій..." />;
     return (
         <SplitViewLayout 
             isOpen={isPanelOpen}
@@ -394,6 +415,7 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
                     onClear={handleClear}
                     onClose={handleClosePanel}
                     onSavingChange={onSavingChange}
+                    isMobile={window.innerWidth < 1100}
                 />
             }
             sidebarWidth="380px"

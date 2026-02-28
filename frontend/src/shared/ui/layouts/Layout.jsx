@@ -10,6 +10,7 @@ import apiClient from '../../api/api';
 import { resolveAccentColor, isLightColor, adjustColor } from '../../utils/themeUtils';
 import FontLoader from '../../../modules/renderer/components/FontLoader';
 import PlatformBackground from './PlatformBackground';
+import LoadingState from '../complex/LoadingState';
 import { Megaphone } from 'lucide-react';
 
 const AnnouncementTimer = ({ targetTime }) => {
@@ -58,7 +59,6 @@ const Layout = () => {
             return newState;
         });
     };
-    
     useEffect(() => {
         if (!globalAnnouncement) {
             setAnnouncementText('');
@@ -80,7 +80,6 @@ const Layout = () => {
             setAnnouncementTargetTime(null);
         }
     }, [globalAnnouncement]);
-    
     useEffect(() => {
         const handleAnnouncementUpdate = (event) => {
             setGlobalAnnouncement(event.detail);
@@ -98,7 +97,6 @@ const Layout = () => {
             clearInterval(intervalId);
         };
     }, []);
-    
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
@@ -133,8 +131,7 @@ const Layout = () => {
         if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
         else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
-
-    if (isAuthLoading) return <div className="flex justify-center items-center h-screen">Завантаження...</div>;
+    if (isAuthLoading) return <div className="h-screen"><LoadingState title="Завантаження платформи..." layout="page" /></div>;
     const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
     const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');

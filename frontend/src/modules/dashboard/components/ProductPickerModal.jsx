@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { BASE_URL } from '../../../shared/config';
 import { Search, X, Check, ArrowUp, ArrowDown, ArrowUpDown, Trash, Filter, PackageOpen } from 'lucide-react';
 
@@ -126,7 +127,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
         return 0;
     });
-
     if (!isOpen) return null;
     const overlayStyle = {
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -321,7 +321,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         { value: 'all', label: 'Всі категорії' },
         ...categories.map(cat => ({ value: cat.id, label: cat.name }))
     ];
-
     return (
         <div style={overlayStyle} onClick={onClose}>
             <div style={modalStyle} onClick={e => e.stopPropagation()}>
@@ -399,9 +398,8 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                 </div>
                 <div style={listStyle} className="custom-scrollbar">
                     {loading ? (
-                        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--platform-text-secondary)'}}>
-                            <div className="animate-spin" style={{marginBottom: '10px'}}>⏳</div>
-                            Завантаження товарів...
+                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>
+                            <LoadingState title="Завантаження товарів..." layout="section" />
                         </div>
                     ) : sortedProducts.length === 0 ? (
                         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--platform-text-secondary)'}}>

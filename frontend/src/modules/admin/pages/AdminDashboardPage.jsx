@@ -5,6 +5,7 @@ import apiClient from '../../../shared/api/api';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect'; 
 import AdminPageLayout from '../components/AdminPageLayout';
 import AdminLogsPage from '../components/AdminLogsPage'; 
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Users, Globe, AlertTriangle, MessageSquare, LayoutDashboard, TrendingUp, BarChart2, ArrowUpRight, ArrowDownRight, Calendar, Activity, Zap, Check, Ban, Lock, EyeOff, Shield, Archive, CheckCircle } from 'lucide-react';
 
 const GRAPH_TYPE_OPTIONS = [
@@ -68,6 +69,7 @@ const StatusBadge = ({ label, icon: Icon, colorVar }) => {
         </span>
     );
 };
+
 const renderStatusBadge = (type, statusInfo) => {
     if (type === 'site_create') {
         const status = statusInfo || 'draft';
@@ -123,6 +125,7 @@ const renderStatusBadge = (type, statusInfo) => {
     }
     return null;
 };
+
 const StatCard = ({ title, value, type, trend, trendValue, loading }) => {
     const styleConfig = ENTITY_STYLES[type] || ENTITY_STYLES.default;
     const Icon = styleConfig.icon;
@@ -182,7 +185,6 @@ const StatCard = ({ title, value, type, trend, trendValue, loading }) => {
             <div style={styles.iconBox}><Icon size={22} /></div>
             <div style={styles.value}>{loading ? '...' : value}</div>
             <div style={styles.label}>{title}</div>
-            
             {trendValue && (
                 <div style={styles.trend}>
                     {trend === 'up' ? <ArrowUpRight size={12}/> : trend === 'down' ? <ArrowDownRight size={12}/> : null}
@@ -192,6 +194,7 @@ const StatCard = ({ title, value, type, trend, trendValue, loading }) => {
         </div>
     );
 };
+
 const ModernChart = ({ data, period, setPeriod, type, setType }) => {
     const getLabel = (shortDate) => shortDate;
     if (!data || data.length === 0) {
@@ -229,7 +232,6 @@ const ModernChart = ({ data, period, setPeriod, type, setType }) => {
                     </div>
                 </div>
             </div>
-
             <div style={{flex: 1, position: 'relative', minHeight: '250px', display: 'flex', alignItems: 'flex-end', gap: '8px', paddingBottom: '24px', borderBottom: '1px solid var(--platform-border-color)'}}>
                 {data.map((item, index) => {
                     const count = Number(item.count || 0);
@@ -338,9 +340,11 @@ const AdminDashboardPage = () => {
             setLoading(false);
         }
     }, [period, graphType, activeTab]);
+
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
     const stats = data?.stats || { users: 0, usersGrowth: 0, sites: 0, reports: 0, tickets: 0 };
     const processedLogs = useMemo(() => {
         if (!data?.activityLog) return [];
@@ -361,7 +365,6 @@ const AdminDashboardPage = () => {
         });
         return logs;
     }, [data, logTypeFilter, logSortOrder]);
-
     const tabStyle = (id) => ({
         padding: '8px 24px',
         borderRadius: '20px',
@@ -373,7 +376,6 @@ const AdminDashboardPage = () => {
         color: activeTab === id ? 'var(--platform-bg)' : 'var(--platform-text-secondary)',
         transition: 'all 0.2s'
     });
-
     return (
         <AdminPageLayout 
             title="Дашборд" 
@@ -425,7 +427,7 @@ const AdminDashboardPage = () => {
                                 border: '1px solid var(--platform-border-color)', display: 'flex', flexDirection: 'column', overflow: 'hidden'
                             }}>
                                 {loading ? (
-                                    <div className="flex flex-1 items-center justify-center text-(--platform-text-secondary)">Завантаження графіка...</div>
+                                    <LoadingState title="Завантаження графіка..." layout="section" iconSize={40} />
                                 ) : (
                                     <ModernChart 
                                         data={data?.chartData} 
@@ -464,7 +466,7 @@ const AdminDashboardPage = () => {
                                 </div>
                                 <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
                                     {loading ? (
-                                        <div style={{textAlign: 'center', padding: '20px', opacity: 0.5}}>Завантаження...</div>
+                                        <LoadingState title="Завантаження подій..." layout="section" iconSize={32} />
                                     ) : processedLogs.length > 0 ? (
                                         processedLogs.map((log, index) => <LogItem key={index} log={log} />)
                                     ) : (

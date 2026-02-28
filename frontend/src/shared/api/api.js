@@ -33,7 +33,6 @@ apiClient.interceptors.response.use(
     } else if (isLockedHeader === 'false') {
         window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: false }));
     }
-    
     const announcementHeader = response.headers['x-global-announcement'];
     if (announcementHeader !== undefined) {
         const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
@@ -45,6 +44,9 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status, data, headers } = error.response;
+      if (status === 404) {
+          return Promise.reject(error);
+      }
       const announcementHeader = headers['x-global-announcement'];
       if (announcementHeader !== undefined) {
           const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
@@ -56,22 +58,21 @@ apiClient.interceptors.response.use(
           if (!window.location.pathname.includes('/login')) {
               window.location.href = '/login';
           }
-          
           return Promise.reject(error);
       }
       if (status === 503) {
-        if (data.editor_locked) {
+        if (data && data.editor_locked) {
             window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: true }));
             toast.warning(`Режим читання: ${data.message}`, { autoClose: 5000 });
             return Promise.reject(error);
         }
-        if (data.maintenance_mode) {
+        if (data && data.maintenance_mode) {
            window.dispatchEvent(new CustomEvent('maintenance_mode_active', { detail: { message: data.message } }));
            return Promise.reject(error); 
         }
       }
-      if (!error.config?.suppressToast && status !== 503 && status !== 401) {
-         toast.error(data.message || 'Помилка');
+      if (!error.config?.suppressToast && status !== 503 && status !== 401 && status !== 404) {
+         toast.error(data?.message || 'Помилка');
       }
     }
     return Promise.reject(error);

@@ -6,12 +6,12 @@ import apiClient from '../../shared/api/api';
 import { CartContext } from '../../app/providers/CartContext';
 import { AuthContext } from '../../app/providers/AuthContext';
 import BlockRenderer from '../editor/core/BlockRenderer';
-import { Folder } from 'lucide-react';
 import ProductCard from '../editor/ui/components/ProductCard'; 
 import MaintenancePage from '../../pages/MaintenancePage'; 
 import NotFoundPage from '../../pages/NotFoundPage';
 import styles from './ProductDetailPage.module.css';
 import { BASE_URL } from '../../shared/config';
+import { Folder } from 'lucide-react';
 
 const safeParseFloat = (val) => {
     if (val === null || val === undefined || val === '') return 0;
@@ -46,13 +46,11 @@ const ProductDetailPage = () => {
     const isOwner = user && siteData && user.id === siteData.user_id; 
     const isSiteHidden = siteData && siteData.status === 'draft' && !isOwner;
     const isSoldOut = product ? product.stock_quantity === 0 : false;
-
     useEffect(() => {
         if (isSiteHidden) {
             setLoading(false);
             return;
         }
-
         const fetchProduct = async () => {
             try {
                 setLoading(true);
@@ -168,12 +166,18 @@ const ProductDetailPage = () => {
             });
         }
     }, [isDragging, dragStart, imageScale]);
+
     const handleAddToCart = () => {
         if (!user) {
             if (window.confirm("Щоб додати товар до кошика, необхідно увійти. Перейти на сторінку входу?")) navigate('/login');
             return;
         }
-        addToCart(product, selectedOptions, {
+        const productForCart = {
+            ...product,
+            site_path: siteData?.site_path,
+            site_name: siteData?.title
+        };
+        addToCart(productForCart, selectedOptions, {
             finalPrice: priceData.finalPrice, originalPrice: priceData.originalPrice, discount: priceData.activeDiscount
         });
     };

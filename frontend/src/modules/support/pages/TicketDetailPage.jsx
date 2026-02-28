@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { Button } from '../../../shared/ui/elements/Button';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Helmet } from 'react-helmet-async';
 import { Send, Loader, User, Shield, Lock, ArrowLeft, CheckCircle, Clock, XCircle } from 'lucide-react';
 
@@ -21,6 +22,7 @@ const TicketDetailPage = () => {
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
     const fetchTicket = async () => {
         try {
             const response = await apiClient.get(`/support/${ticketId}`);
@@ -37,7 +39,6 @@ const TicketDetailPage = () => {
         setLoading(true);
         fetchTicket();
     }, [ticketId]);
-
     const isSpamBlocked = useMemo(() => {
         if (!ticket || !user) return false;
         if (user.role === 'admin') return false;
@@ -242,16 +243,10 @@ const TicketDetailPage = () => {
         }
     };
 
-    if (loading) return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--platform-bg)' }}>
-            <Loader size={32} className="animate-spin" style={{ color: 'var(--platform-accent)' }} />
-        </div>
-    );
-    
+    if (loading) return <LoadingState />;
     if (error) return (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--platform-danger)' }}>{error}</div>
     );
-    
     if (!ticket) return null;
     const allMessages = [
         {
@@ -338,7 +333,6 @@ const TicketDetailPage = () => {
                     </div>
                 )}
             </div>
-
             <div style={styles.inputArea}>
                 <form 
                     onSubmit={handleReplySubmit} 

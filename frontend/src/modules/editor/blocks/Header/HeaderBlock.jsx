@@ -49,13 +49,11 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         logo_radius,
         borderRadius 
     } = blockData;
-
     const effectiveLogoRadius = logo_radius !== undefined ? logo_radius : (borderRadius || 0);
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         navText: nav_fontFamily,
         btnFont: buttonSettings.fontFamily 
     }, siteData);
-    
     let effectiveLogoSrc = blockData.logo_src;
     let effectiveTitle = blockData.site_title;
     if (effectiveLogoSrc === undefined || effectiveLogoSrc === null) {
@@ -64,9 +62,11 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     if (effectiveTitle === undefined || effectiveTitle === null) {
         if (siteData?.title) effectiveTitle = siteData.title || 'Site Title';
     }
-
-    const { user } = useContext(AuthContext);
-    const { favoriteSiteIds, addFavorite, removeFavorite } = useContext(FavoritesContext);
+    const { user } = useContext(AuthContext) || {};
+    const favContext = useContext(FavoritesContext) || {};
+    const favoriteSiteIds = favContext.favoriteSiteIds || new Set();
+    const addFavorite = favContext.addFavorite || (() => console.warn('FavoritesProvider missing'));
+    const removeFavorite = favContext.removeFavorite || (() => console.warn('FavoritesProvider missing'));
     const headerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(1200);
     useLayoutEffect(() => {
@@ -120,7 +120,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
             }
             border = '2px solid transparent';
         }
-
         const safeRadius = btnRadius !== undefined ? parseInt(btnRadius) : 4;
         return {
             display: 'flex',
@@ -155,7 +154,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const siteRoot = resolveSiteLink('/', siteData?.site_path);
     const homeLink = isEditorPreview ? '#' : siteRoot;
     const iconBtnBaseClass = "flex items-center justify-center w-10 h-10 rounded-lg border cursor-pointer transition-all duration-200 shrink-0";
-    
     return (
         <header 
             ref={headerRef} 
@@ -237,9 +235,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                                 {nav_style === 'button' && IconComp && iconPos === 'left' && (
                                     <IconComp size={16} style={{ transform: isFlipped ? 'scaleX(-1)' : 'none' }} />
                                 )}
-                                
                                 <span>{item.label}</span>
-
                                 {nav_style === 'button' && IconComp && iconPos === 'right' && (
                                     <IconComp size={16} style={{ transform: isFlipped ? 'scaleX(-1)' : 'none' }} />
                                 )}
@@ -248,7 +244,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                     })}
                 </nav>
             )}
-
             <div className="flex items-center gap-2 shrink-0">
                 {IS_COMPACT_NAV && (
                     <div 

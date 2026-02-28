@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Input } from '../../../../shared/ui/elements/Input';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect'; 
+import LoadingState from '../../../../shared/ui/complex/LoadingState';
 import { Search, Trash, Check, Star, User, Mail, MessageCircle, Clock, MessageSquare } from 'lucide-react';
 
 const statusConfig = {
@@ -86,12 +87,10 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
             if (target) setSelectedSubmission(target);
         }
     }, [submissions, searchParams]);
-    
     const handleSelectSubmission = (submission) => {
         setSelectedSubmission(submission);
         setSearchParams(prev => { prev.set('submissionId', submission.id); return prev; });
     };
-
     const handleTogglePin = async (id, e) => {
         e.stopPropagation();
         if (onSavingChange) onSavingChange(true);
@@ -102,7 +101,6 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
         } catch (error) { toast.error('Помилка'); } 
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
-
     const handleStatusChange = async (id, newStatus) => {
         if (onSavingChange) onSavingChange(true);
         try {
@@ -113,7 +111,6 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
         } catch (error) { toast.error('Помилка'); } 
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
-
     const handleDelete = async (id) => {
         if (!await confirm({ title: "Видалити?", message: "Це незворотно.", type: "danger", confirmLabel: "Видалити" })) return;
         if (onSavingChange) onSavingChange(true);
@@ -128,11 +125,9 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
         } catch (error) { toast.error('Помилка'); } 
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
-
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text).then(() => toast.success('Скопійовано')).catch(() => toast.error('Помилка'));
     };
-    
     const filteredSubmissions = useMemo(() => {
         const filtered = submissions.filter(sub => {
             const matchesStatus = filterStatus === 'all' || sub.status === filterStatus;
@@ -149,7 +144,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
             return new Date(b.created_at) - new Date(a.created_at);
         });
     }, [submissions, filterStatus, searchTerm]);
-    if (loading) return <div className="text-center p-10 text-(--platform-text-secondary)">Завантаження...</div>;
+    if (loading) return <LoadingState title="Завантаження звернень..." />;
     return (
         <div className="w-full h-full flex flex-col px-6 box-border">
             <div className="mb-6 shrink-0 flex flex-col items-center text-center">
@@ -161,7 +156,6 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                     Перегляд та управління повідомленнями з контактних форм
                 </p>
             </div>
-
             <div className="bg-(--platform-card-bg) rounded-xl border border-(--platform-border-color) shadow-sm h-[calc(100vh-120px)] flex overflow-hidden">
                 <div className="w-85 min-w-75 border-r border-(--platform-border-color) flex flex-col bg-(--platform-card-bg)">
                     <div className="h-17.5 px-4 border-b border-[#2d3748] bg-[#1a202c] flex items-center gap-3 text-white shrink-0">
@@ -196,10 +190,19 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                             />
                         </div>
                     </div>
-
                     <div className="flex-1 overflow-y-auto p-2.5 bg-(--platform-card-bg) custom-scrollbar">
                         {filteredSubmissions.length === 0 ? (
-                            <div className="text-center py-8 text-(--platform-text-secondary) text-sm">Порожньо</div>
+                            <div className="flex flex-col items-center justify-center h-full min-h-40 p-5 text-center text-(--platform-text-secondary)">
+                                <div className="w-14 h-14 rounded-full bg-(--platform-bg) flex items-center justify-center mb-4 border border-(--platform-border-color) shadow-sm">
+                                    <MessageSquare size={24} className="text-(--platform-accent) opacity-90" />
+                                </div>
+                                <h3 className="text-[0.95rem] font-semibold text-(--platform-text-primary) mb-1.5">
+                                    Звернень не знайдено
+                               </h3>
+                                <p className="text-[0.8rem] max-w-50 leading-relaxed m-0 opacity-80">
+                                    Змініть критерії пошуку або зачекайте на нові повідомлення.
+                                </p>
+                            </div>
                         ) : (
                             filteredSubmissions.map(sub => {
                                 const isSelected = selectedSubmission?.id === sub.id;

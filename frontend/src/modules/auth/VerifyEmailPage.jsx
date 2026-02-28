@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import apiClient from '../../shared/api/api';
-import { Loader, AlertCircle, CheckCircle } from 'lucide-react';
+import LoadingState from '../../shared/ui/complex/LoadingState';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 
 const VerifyEmailPage = () => {
     const [searchParams] = useSearchParams();
@@ -36,15 +37,12 @@ const VerifyEmailPage = () => {
         <div className="min-h-screen w-full flex items-center justify-center bg-(--platform-bg) p-5">
             <div className="w-full max-w-112.5 bg-(--platform-card-bg) p-12 px-8 rounded-2xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] text-center flex flex-col items-center gap-6">
                 {status === 'verifying' && (
-                    <>
-                        <div className="text-(--platform-accent) animate-spin">
-                            <Loader size={64} />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2">Верифікація...</h2>
-                            <p className="text-(--platform-text-secondary)]">{message}</p>
-                        </div>
-                    </>
+                    <LoadingState 
+                        title="Верифікація..." 
+                        description={message} 
+                        layout="section" 
+                        iconSize={64} 
+                    />
                 )}
                 {status === 'success' && (
                     <>

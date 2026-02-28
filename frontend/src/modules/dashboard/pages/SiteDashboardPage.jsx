@@ -13,6 +13,7 @@ import ShopContentTab from '../features/shop/ShopContentTab';
 import OrdersTab from '../features/shop/OrdersTab';
 import SubmissionsTab from '../features/content/SubmissionsTab';
 import DashboardHeader from '../components/DashboardHeader';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
 import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, handleDrop } from '../../editor/core/blockUtils';
@@ -339,7 +340,7 @@ const SiteDashboardPage = () => {
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
     if (isSiteLoading || !siteData) {
-        return <div className="p-8 text-center text-(--platform-text-secondary)">Завантаження...</div>;
+        return <LoadingState title="Завантаження редактора..." />;
     }
     const isFullHeightTab = ['store', 'crm', 'orders'].includes(activeTab);
     return (
@@ -366,9 +367,7 @@ const SiteDashboardPage = () => {
                         <div className="flex-1 overflow-y-auto bg-(--platform-bg)">
                             <div className="pb-25">
                                 {isPageLoading ? (
-                                    <div className="flex justify-center items-center h-75">
-                                        <div>Завантаження сторінки...</div>
-                                    </div>
+                                    <LoadingState layout="component" title="Завантаження сторінки..." className="h-75" />
                                 ) : (
                                     <div className={isReadOnly ? 'pointer-events-none opacity-80' : ''}>
                                         <BlockEditor 
@@ -412,7 +411,6 @@ const SiteDashboardPage = () => {
                         </div>
                     </>
                 )}
-
                 {activeTab !== 'editor' && (
                     <div 
                         className={`flex-1 bg-(--platform-bg) ${

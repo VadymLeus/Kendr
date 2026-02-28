@@ -1,5 +1,5 @@
 // frontend/src/shared/ui/elements/Input.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Eye, EyeOff, X } from 'lucide-react';
 
 export const Input = ({ 
@@ -22,18 +22,44 @@ export const Input = ({
     step = 1,
     wrapperStyle,
     style,
+    debounceTime,
     ...props 
 }) => {
+    const isSearchInput = type === 'search' || 
+                          name === 'search' || 
+                          (placeholder && placeholder.toLowerCase().includes('пошук'));
+    const effectiveDebounce = debounceTime !== undefined ? debounceTime : (isSearchInput ? 500 : 0);
+    const [localValue, setLocalValue] = useState(value || '');
     const [showPassword, setShowPassword] = useState(false);
     const inputRef = useRef(null);
+    useEffect(() => {
+        setLocalValue(value || '');
+    }, [value]);
+
+    useEffect(() => {
+        if (!effectiveDebounce || localValue === (value || '')) return;
+        const handler = setTimeout(() => {
+            if (onChange) {
+                onChange({ target: { name, value: localValue } });
+            }
+        }, effectiveDebounce);
+        return () => clearTimeout(handler);
+    }, [localValue, effectiveDebounce, onChange, name, value]);
+    const handleChange = (e) => {
+        setLocalValue(e.target.value);
+        if (!effectiveDebounce && onChange) {
+            onChange(e);
+        }
+    };
     const isPassword = type === 'password';
     const isNumber = type === 'number';
     const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
-    const safeValue = isNumber && (value === null || value === undefined) ? '' : value;
+    const safeValue = isNumber && (localValue === null || localValue === undefined) ? '' : localValue;
     const currentLen = safeValue ? String(safeValue).length : 0;
     const showClear = !disabled && currentLen > 0 && !rightIcon && !isNumber;
     const handleClear = (e) => {
         e.preventDefault(); e.stopPropagation();
+        setLocalValue('');
         onChange({ target: { name, value: '' } });
         inputRef.current?.focus();
     };
@@ -43,7 +69,6 @@ export const Input = ({
     if (hasRightElement) {
         paddingRight = '40px'; 
     }
-
     return (
         <div className={`form-group mb-4 ${className}`} style={wrapperStyle}>
             <style>{`
@@ -68,13 +93,12 @@ export const Input = ({
                         {leftIcon}
                     </div>
                 )}
-
                 <input
                     ref={inputRef}
                     name={name}
                     type={inputType}
                     value={safeValue}
-                    onChange={onChange}
+                    onChange={handleChange}
                     placeholder={placeholder}
                     disabled={disabled}
                     maxLength={maxLength}

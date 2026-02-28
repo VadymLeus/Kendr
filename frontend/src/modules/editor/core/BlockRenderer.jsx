@@ -2,8 +2,8 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AnimationWrapper from '../../renderer/components/AnimationWrapper';
-import { AlertTriangle, Construction, Loader } from 'lucide-react';
 import { resolveSiteLink } from '../../../shared/utils/linkUtils';
+import { AlertTriangle, Construction, Loader2 } from 'lucide-react';
 
 const HeroBlock = lazy(() => import('../blocks/Hero/HeroBlock'));
 const TextBlock = lazy(() => import('../blocks/Text/TextBlock'));
@@ -68,13 +68,11 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
             </div>
         );
     }
-
     return (
         <div className="relative w-full">
             {blocks.map((block, index) => {
                 const Component = blockMap[block.type];
                 const elementId = block.data?.anchorId || undefined;
-
                 if (!Component) {
                     console.warn(`Невідомий тип блоку: ${block.type}`);
                     return (
@@ -96,13 +94,11 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                         </div>
                     );
                 }
-
                 const styles = block.data?.styles || {};
                 const dynamicStyle = {
                     paddingTop: styles.paddingTop ? `${styles.paddingTop}px` : '60px',
                     paddingBottom: styles.paddingBottom ? `${styles.paddingBottom}px` : '60px'
                 };
-
                 return (
                     <div 
                         key={block.block_id || index}
@@ -112,13 +108,12 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                         <AnimationWrapper animationConfig={block.data?.animation}>
                             <Suspense
                                 fallback={
-                                    <div 
-                                        className="py-8 px-4 text-center bg-transparent rounded-lg my-2 border-none flex flex-col items-center justify-center min-h-25"
-                                        style={{ color: textSecondary }}
-                                    >
-                                        <div className="mb-2 opacity-50">
-                                            <Loader size={24} className="animate-spin" />
-                                        </div>
+                                    <div className="w-full flex items-center justify-center py-10">
+                                        <Loader2 
+                                            size={32} 
+                                            className="animate-spin text-(--platform-accent)" 
+                                            style={{ color: 'var(--site-accent, var(--platform-accent))' }}
+                                        />
                                     </div>
                                 }
                             >
@@ -136,7 +131,6 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                     </div>
                 );
             })}
-            
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 z-10000 flex justify-end">
                     <div 

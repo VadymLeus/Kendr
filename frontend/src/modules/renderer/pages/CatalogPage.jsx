@@ -8,8 +8,9 @@ import { toast } from 'react-toastify';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import SiteGridCard from '../../../shared/ui/complex/SiteGridCard';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Button } from '../../../shared/ui/elements/Button';
-import { Loader2, Search, UserX } from 'lucide-react';
+import { Search, UserX } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 20;
 const SORT_OPTIONS = [
@@ -39,7 +40,6 @@ const CatalogPage = () => {
         apiClient.get('/tags').then(res => setTags(res.data)).catch(console.error);
         fetchSites();
     }, []);
-
     const fetchSites = async () => {
         setLoading(true);
         try {
@@ -50,7 +50,6 @@ const CatalogPage = () => {
         } catch (err) { console.error(err); } 
         finally { setLoading(false); }
     };
-
     useEffect(() => {
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
         searchTimeoutRef.current = setTimeout(() => { fetchSites(); }, 500);
@@ -104,7 +103,6 @@ const CatalogPage = () => {
         },
         grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }
     };
-
     return (
         <div style={styles.pageWrapper}>
             <div style={styles.stickyContainer}>
@@ -145,7 +143,7 @@ const CatalogPage = () => {
             </div>
             <div style={styles.gridArea}>
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--platform-text-secondary)' }}><Loader2 size={32} className="animate-spin" /></div>
+                    <LoadingState /> 
                 ) : filteredSites.length === 0 ? (
                     <EmptyState 
                         title="Нічого не знайдено"

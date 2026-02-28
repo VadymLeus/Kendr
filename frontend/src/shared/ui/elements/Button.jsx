@@ -5,6 +5,7 @@ export const Button = ({
   children,
   variant = 'primary',
   disabled = false,
+  isLoading = false,
   type = 'button',
   onClick,
   className = '',
@@ -26,18 +27,28 @@ export const Button = ({
 
   const variantClass = variantMap[variant] || `btn-${variant}`;
   const activeClass = active ? 'active' : '';
+  const isDisabled = disabled || isLoading;
   return (
     <button
       type={type}
       className={`btn ${variantClass} ${activeClass} ${className}`.trim()}
       onClick={onClick}
-      disabled={disabled}
+      disabled={isDisabled}
       title={title}
       style={style}
       {...props}
     >
-      {icon}
-      {children}
+      {isLoading ? (
+          <span className="flex items-center gap-2 justify-center">
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              {children}
+          </span>
+      ) : (
+          <>
+            {icon}
+            {children}
+          </>
+      )}
     </button>
   );
 };

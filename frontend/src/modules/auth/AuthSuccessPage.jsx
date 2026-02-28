@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../app/providers/AuthContext';
 import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Loader } from 'lucide-react';
+import LoadingState from '../../shared/ui/complex/LoadingState';
 
 const AuthSuccessPage = () => {
     const [searchParams] = useSearchParams();
@@ -36,9 +36,12 @@ const AuthSuccessPage = () => {
         fetchUserData();
     }, [searchParams, navigate, login]);
     return (
-        <div className="h-screen flex flex-col justify-center items-center gap-4 text-(--platform-text-secondary) bg-(--platform-bg)">
-            <Loader size={48} className="animate-spin text-(--platform-accent)" />
-            <h2 className="text-xl font-medium">Вхід у систему...</h2>
+        <div className="h-screen flex flex-col justify-center items-center bg-(--platform-bg)">
+            <LoadingState 
+                title="Вхід у систему..." 
+                layout="page" 
+                iconSize={48} 
+            />
         </div>
     );
 };

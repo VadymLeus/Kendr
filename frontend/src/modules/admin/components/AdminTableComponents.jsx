@@ -1,6 +1,7 @@
 // frontend/src/modules/admin/components/AdminTableComponents.jsx
 import React from 'react';
 import { Button } from '../../../shared/ui/elements/Button';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { ArrowUp, ArrowDown, Inbox, Download } from 'lucide-react';
 
 const styles = {
@@ -59,7 +60,15 @@ export const AdminCell = ({ children, style = {}, align = 'left', colSpan }) => 
     <td colSpan={colSpan} style={{...styles.td, textAlign: align, ...style}}>{children}</td>
 );
 export const LoadingRow = ({ cols = 5 }) => (
-    <>{[...Array(5)].map((_, i) => <tr key={i}><td colSpan={cols} style={{padding:'24px', textAlign:'center', opacity:0.5, color: 'var(--platform-text-secondary)'}}>Завантаження...</td></tr>)}</>
+    <tr>
+        <td colSpan={cols} style={{ padding: 0 }}>
+            <LoadingState 
+                title="Завантаження даних..." 
+                layout="section" 
+                iconSize={32} 
+            />
+        </td>
+    </tr>
 );
 export const EmptyRow = ({ cols = 5, message = "Даних не знайдено", icon: Icon = Inbox }) => (
     <tr><td colSpan={cols} style={{ padding: 0, border: 'none' }}><div style={styles.emptyState}><Icon size={48} strokeWidth={1.5} opacity={0.5} /><span>{message}</span></div></td></tr>

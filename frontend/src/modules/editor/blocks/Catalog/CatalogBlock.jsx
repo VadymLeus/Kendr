@@ -52,7 +52,12 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     params.category = root_category_id;
                 }
                 const prodRes = await apiClient.get('/products', { params });
-                setProducts(prodRes.data);
+                const enrichedProducts = prodRes.data.map(p => ({
+                    ...p,
+                    site_path: siteData?.site_path,
+                    site_name: siteData?.title
+                }));
+                setProducts(enrichedProducts);
             } catch (error) {
                 console.error("Error loading catalog data:", error);
             } finally {
@@ -60,7 +65,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             }
         };
         fetchData();
-    }, [siteData?.id, source_type, root_category_id]);
+    }, [siteData?.id, siteData?.site_path, siteData?.title, source_type, root_category_id]);
 
     const toggleSortOrder = () => {
         setFilters(prev => ({ ...prev, sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' }));
@@ -90,11 +95,9 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 p.name.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q))
             );
         }
-
         if (filters.selectedCategoryId !== 'all') {
             result = result.filter(p => String(p.category_id) === String(filters.selectedCategoryId));
         }
-
         result.sort((a, b) => {
             let aValue, bValue;
             if (filters.sortBy === 'name') {
@@ -121,7 +124,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             if(blockEl && !isEditorPreview) blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
-
     const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
     const showFilters = show_search || show_category_filter || show_sorting;
     const filterBtnClass = "h-9.5 min-w-9.5 px-3 bg-(--site-card-bg) border border-(--site-border-color) rounded-lg text-(--site-text-primary) cursor-pointer flex items-center justify-center gap-2 text-sm transition-all duration-200 hover:border-(--site-accent)";
@@ -141,7 +143,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         >
             <RenderFonts />
             <style>{`.${uniqueClass} { ${Object.entries(cssVariables).map(([k,v]) => `${k}:${v}`).join(';')} }`}</style>
-            
             <style>{`
                 .${uniqueClass} .catalog-grid {
                     display: grid;
@@ -187,7 +188,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                 />
                             </div>
                         )}
-
                         <div className="flex items-center gap-2 flex-wrap shrink-0 ml-auto">
                             {show_category_filter && availableCategories.length > 0 && (
                                 <div className="relative w-45">
@@ -207,7 +207,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.6rem] text-(--site-text-secondary) pointer-events-none">▼</div>
                                 </div>
                             )}
-
                             {show_sorting && (
                                 <>
                                     <div className="relative w-37.5">
@@ -221,7 +220,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                         </select>
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.6rem] text-(--site-text-secondary) pointer-events-none">▼</div>
                                     </div>
-
                                     <button 
                                         onClick={toggleSortOrder}
                                         className={`${filterBtnClass} p-0! w-9.5!`}
@@ -231,7 +229,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                     </button>
                                 </>
                             )}
-
                             <button 
                                 onClick={handleClearAll}
                                 className={`${filterBtnClass} p-0! w-9.5! border-[#e53e3e] text-[#e53e3e] hover:bg-[#e53e3e10] hover:border-[#e53e3e]`}
@@ -291,7 +288,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
                         const isActive = currentPage === page;
                         const showEllipsis = totalPages > 7 && ((page > 2 && page < currentPage - 1) || (page > currentPage + 1 && page < totalPages - 1));
-                        
                         if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
                             return (
                                 <button
@@ -315,7 +311,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                         }
                         return null;
                     })}
-
                     <button 
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}

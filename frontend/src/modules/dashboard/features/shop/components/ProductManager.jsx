@@ -10,6 +10,8 @@ import { Button } from '../../../../../shared/ui/elements/Button';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import MediaPickerModal from '../../../../media/components/MediaPickerModal';
 import { SplitViewLayout } from '../../../../../shared/ui/layouts/SplitViewLayout';
+import EmptyState from '../../../../../shared/ui/complex/EmptyState';
+import LoadingState from '../../../../../shared/ui/complex/LoadingState';
 import { TEXT_LIMITS } from '../../../../../shared/config/limits';
 import { BASE_URL } from '../../../../../shared/config';
 import { ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X, Package, Download } from 'lucide-react';
@@ -24,7 +26,7 @@ const useProducts = (siteId) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ search: '', category: 'all', sortBy: 'name' });
+    const [filters, setFilters] = useState({ search: '', category: 'all', sortBy: 'name', type: 'all' });
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -62,7 +64,6 @@ const useProducts = (siteId) => {
             toast.error('Помилка видалення');
         }
     }, []);
-
     return { 
         products, categories, loading, filters, setFilters,
         fetchData, handleDelete
@@ -72,6 +73,8 @@ const useProducts = (siteId) => {
 const VariantEditor = memo(({ variant, onChange, onRemove }) => {
     const [inputState, setInputState] = useState({ label: '', price: '', sale: '' });
     const [editingIndex, setEditingIndex] = useState(null);
+    const [isVariantDeleteModalOpen, setIsVariantDeleteModalOpen] = useState(false);
+    const [valueToDelete, setValueToDelete] = useState(null);
     useEffect(() => {
         if (editingIndex !== null && variant.values[editingIndex]) {
             const val = variant.values[editingIndex];
@@ -104,18 +107,23 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
     };
 
     return (
-        <div className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 mb-3">
+        <div className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 mb-3 relative">
             <div className="flex justify-between gap-2 mb-4">
                 <Input 
                     value={variant.name} 
                     onChange={(e) => onChange({...variant, name: e.target.value})}
-                    placeholder="Назва опції (напр. Розмір)"
+                    placeholder="Назва варіанту (напр. Розмір)"
                     className="m-0 font-semibold text-[0.95rem]"
                     wrapperStyle={{margin: 0, flex: 1}}
                 />
-                <Button variant="square-danger" onClick={onRemove} title="Видалити опцію">
-                    <Trash size={18}/>
-                </Button>
+                <button 
+                    type="button"
+                    onClick={() => setIsVariantDeleteModalOpen(true)} 
+                    title="Видалити варіант"
+                    className="h-10.5 w-10.5 flex items-center justify-center shrink-0 rounded-lg border border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-(--platform-danger) hover:text-(--platform-danger) transition-all cursor-pointer"
+                >
+                    <X size={18}/>
+                </button>
             </div>
             <div className="flex flex-wrap gap-2 mb-4">
                 {variant.values && variant.values.map((val, idx) => {
@@ -139,17 +147,17 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                                     {val.salePercentage > 0 && ` (-${val.salePercentage}%)`}
                                 </span>
                             )}
-                            <span 
+                            <button 
+                                type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    const newValues = variant.values.filter((_, i) => i !== idx);
-                                    onChange({ ...variant, values: newValues });
-                                    if (editingIndex === idx) setEditingIndex(null);
+                                    setValueToDelete(idx);
                                 }} 
-                                className="opacity-50 hover:opacity-100 hover:text-red-500 ml-1 flex items-center"
+                                title="Видалити значення"
+                                className="h-6 w-6 ml-1 flex items-center justify-center shrink-0 rounded-lg border border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-(--platform-danger) hover:text-(--platform-danger) transition-all cursor-pointer"
                             >
                                 <X size={14} />
-                            </span>
+                            </button>
                         </div>
                     );
                 })}
@@ -167,16 +175,44 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
                     <Input placeholder="Зниж. %" type="number" value={inputState.sale} onChange={e => setInputState({...inputState, sale: e.target.value})} className="m-0" wrapperStyle={{margin:0}} />
                 </div>
                 <div className="flex gap-2.5 mt-2.5">
-                    <Button onClick={handleSaveValue} className="flex-1 justify-center">
-                        {editingIndex !== null ? <><Save size={18}/> Зберегти зміни</> : <><Plus size={18}/> Додати</>}
-                    </Button>
                     {editingIndex !== null && (
-                        <Button variant="secondary" onClick={() => {setEditingIndex(null); setInputState({label:'', price:'', sale:''});}} className="flex-1 justify-center" title="Скасувати">
-                            <Undo size={18}/> Скасувати
+                        <Button variant="secondary" onClick={() => {setEditingIndex(null); setInputState({label:'', price:'', sale:''});}} className="flex-1 justify-center h-10 text-sm" title="Скасувати">
+                            <X size={16}/> Скасувати
                         </Button>
                     )}
+                    <Button onClick={handleSaveValue} className="flex-1 justify-center h-10 text-sm">
+                        {editingIndex !== null ? <><Save size={16}/> Зберегти</> : <><Plus size={16}/> Додати</>}
+                    </Button>
                 </div>
             </div>
+            <ConfirmModal
+                isOpen={isVariantDeleteModalOpen}
+                title="Видалення варіанту"
+                message={`Ви впевнені, що хочете видалити варіант "${variant.name || 'Без назви'}" та всі його значення?`}
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                onConfirm={() => {
+                    setIsVariantDeleteModalOpen(false);
+                    onRemove();
+                }}
+                onCancel={() => setIsVariantDeleteModalOpen(false)}
+                type="danger"
+            />
+            <ConfirmModal
+                isOpen={valueToDelete !== null}
+                title="Видалення значення"
+                message={`Ви впевнені, що хочете видалити значення "${valueToDelete !== null ? variant.values[valueToDelete]?.label : ''}"?`}
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                onConfirm={() => {
+                    const newValues = variant.values.filter((_, i) => i !== valueToDelete);
+                    onChange({ ...variant, values: newValues });
+                    if (editingIndex === valueToDelete) setEditingIndex(null);
+                    setValueToDelete(null);
+                }}
+                onCancel={() => setValueToDelete(null)}
+                type="danger"
+            />
         </div>
     );
 });
@@ -191,7 +227,13 @@ const ProductTable = memo(({
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
     ];
 
-    if (loading) return <div className="p-10 text-center text-(--platform-text-secondary)">Завантаження...</div>;
+    const typeOptions = [
+        { value: 'all', label: 'Всі типи' },
+        { value: 'physical', label: 'Фізичні' },
+        { value: 'digital', label: 'Цифрові' }
+    ];
+    const hasActiveFilters = filters.search.trim() !== '' || filters.category !== 'all' || filters.type !== 'all';
+    if (loading) return <LoadingState title="Завантаження товарів..." />;
     return (
         <div className="flex flex-col h-full bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) overflow-hidden">
             <div className="min-h-18 p-3 sm:px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 flex-wrap bg-(--platform-bg)">
@@ -201,9 +243,16 @@ const ProductTable = memo(({
                         placeholder="Пошук..." 
                         value={filters.search}
                         onChange={(e) => setFilters(prev => ({...prev, search: e.target.value}))}
-                        wrapperStyle={{margin: 0, flex: '1 1 200px'}}
+                        wrapperStyle={{margin: 0, flex: '1 1 180px'}}
                     />
-                    <div className="w-45">
+                    <div className="w-36">
+                        <CustomSelect 
+                            value={filters.type}
+                            onChange={(e) => setFilters(prev => ({...prev, type: e.target.value}))}
+                            options={typeOptions}
+                        />
+                    </div>
+                    <div className="w-40">
                         <CustomSelect 
                             value={filters.category}
                             onChange={(e) => setFilters(prev => ({...prev, category: e.target.value}))}
@@ -211,7 +260,7 @@ const ProductTable = memo(({
                         />
                     </div>
                     <div className="flex gap-1 items-center">
-                        <div className="w-40">
+                        <div className="w-36">
                             <CustomSelect 
                                 value={filters.sortBy}
                                 onChange={(e) => setFilters(prev => ({...prev, sortBy: e.target.value}))}
@@ -221,85 +270,105 @@ const ProductTable = memo(({
                         <Button 
                             variant="outline" 
                             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                            className="w-10.5 h-10.5 p-0 flex items-center justify-center"
+                            className="w-10.5 h-10.5 p-0 flex items-center justify-center shrink-0"
                         >
                             <span className="text-lg leading-none">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                         </Button>
                     </div>
                 </div>
-                <Button onClick={onCreate} className="h-10.5">Додати</Button>
+                <Button onClick={onCreate} className="h-10.5 shrink-0">Додати</Button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 {products.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-(--platform-text-secondary) py-10">
-                        <div className="w-20 h-20 rounded-full bg-(--platform-bg) border border-(--platform-border-color) flex items-center justify-center mb-4">
-                            <Store size={40} className="opacity-30"/>
-                        </div>
-                        <h3 className="text-lg font-semibold text-(--platform-text-primary) mb-1">Товарів не знайдено</h3>
-                        <p className="text-sm opacity-70 max-w-62.5 text-center mb-0">
-                            Спробуйте змінити фільтри або додайте новий товар.
-                        </p>
+                    <div className="flex flex-col items-center justify-center h-full py-10">
+                        <EmptyState 
+                            title={hasActiveFilters ? "Товарів не знайдено" : "Товарів немає"}
+                            description={
+                                hasActiveFilters 
+                                ? "За вашим запитом або фільтрами нічого не знайдено. Спробуйте змінити критерії пошуку." 
+                                : "Додайте свій перший товар, щоб почати продавати."
+                            }
+                            icon={hasActiveFilters ? Search : Store}
+                            action={
+                                hasActiveFilters && (
+                                    <Button 
+                                        variant="ghost" 
+                                        onClick={() => setFilters({ search: '', category: 'all', sortBy: 'name', type: 'all' })}
+                                    >
+                                        Очистити фільтри
+                                    </Button>
+                                )
+                            }
+                        />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 content-start">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5 content-start">
                         {products.map(product => {
                             const isSelected = selectedId === product.id;
+                            const categoryName = categories.find(c => String(c.id) === String(product.category_id))?.name;
                             return (
                                 <div 
                                     key={product.id} 
                                     onClick={() => onSelect(product)} 
                                     className={`
-                                        group relative flex flex-col h-full bg-(--platform-bg) rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden
+                                        group relative flex flex-col h-full bg-(--platform-bg) rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden
                                         ${isSelected 
-                                            ? 'border-(--platform-accent) ring-2 ring-(--platform-accent)/20 shadow-lg -translate-y-1' 
-                                            : 'border-(--platform-border-color) hover:border-(--platform-accent) hover:-translate-y-1 hover:shadow-md'
+                                            ? 'border-(--platform-accent) ring-1 ring-(--platform-accent) shadow-md -translate-y-1' 
+                                            : 'border-(--platform-border-color) hover:border-(--platform-text-secondary)/30 hover:-translate-y-1 hover:shadow-md'
                                         }
                                     `}
                                 >
-                                    <div className="h-35 bg-slate-50 relative border-b border-(--platform-border-color) flex items-center justify-center overflow-hidden">
+                                    <div className="aspect-4/3 w-full bg-(--platform-hover-bg) relative border-b border-(--platform-border-color) flex items-center justify-center overflow-hidden shrink-0">
                                          {product.image_gallery?.[0] ? (
-                                            <img src={`${BASE_URL}${product.image_gallery[0]}`} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                            <img src={`${BASE_URL}${product.image_gallery[0]}`} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                          ) : (
-                                            <Image size={32} className="opacity-20 text-slate-400" />
+                                            <Image size={40} className="opacity-20 text-(--platform-text-secondary)" />
                                          )}
-                                         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                                         <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
                                             {product.type === 'digital' ? (
-                                                <div className="px-2 py-0.5 bg-(--platform-accent) text-(--platform-accent-text) backdrop-blur-sm rounded text-[0.7rem] font-bold shadow-sm flex items-center gap-1 border border-transparent">
-                                                    <Download size={10}/> Цифровий
+                                                <div className="px-2.5 py-1 bg-(--platform-bg)/90 backdrop-blur-md rounded-lg text-[0.7rem] uppercase tracking-wider font-bold shadow-sm flex items-center gap-1.5 border border-(--platform-border-color) text-(--platform-accent)">
+                                                    <Download size={12}/> Цифровий
                                                 </div>
                                             ) : (
                                                 <div className={`
-                                                    px-2 py-0.5 bg-(--platform-card-bg)/90 backdrop-blur-sm rounded text-[0.7rem] font-bold border border-(--platform-border-color) shadow-sm
-                                                    ${product.stock_quantity > 0 ? 'text-(--platform-success)' : 'text-(--platform-danger)'}
+                                                    px-2.5 py-1 bg-(--platform-bg)/90 backdrop-blur-md rounded-lg text-[0.7rem] uppercase tracking-wider font-bold shadow-sm flex items-center gap-1.5 border border-(--platform-border-color)
+                                                    ${product.stock_quantity > 0 ? 'text-(--platform-success, #10b981)' : 'text-(--platform-danger)'}
                                                 `}>
-                                                    {product.stock_quantity || 0} шт.
+                                                    <Package size={12}/> {product.stock_quantity || 0} шт.
                                                 </div>
                                             )}
                                          </div>
+                                         {categoryName && (
+                                            <div className="absolute bottom-3 left-3 max-w-[calc(100%-24px)] z-10">
+                                                <div className="px-2.5 py-1 bg-(--platform-bg)/90 backdrop-blur-md rounded-lg text-[0.7rem] uppercase tracking-wider font-bold shadow-sm border border-(--platform-border-color) text-(--platform-text-secondary) truncate">
+                                                    {categoryName}
+                                                </div>
+                                            </div>
+                                         )}
                                          <button
+                                            type="button"
                                             onClick={(e) => { e.stopPropagation(); onDelete(product); }}
-                                            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-(--platform-card-bg) border border-(--platform-border-color) flex items-center justify-center cursor-pointer z-20 text-(--platform-danger) shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                                            className="absolute top-3 right-3 h-8 w-8 flex items-center justify-center shrink-0 rounded-lg border border-(--platform-border-color) bg-(--platform-bg)/90 backdrop-blur-md text-(--platform-text-secondary) opacity-0 group-hover:opacity-100 hover:border-(--platform-danger) hover:text-(--platform-danger) transition-all shadow-sm z-20 cursor-pointer"
                                             title="Видалити"
                                          >
                                             <X size={16} />
                                          </button>
-                                         
                                          {isSelected && (
-                                            <div className="absolute top-2 right-10 text-(--platform-accent) bg-(--platform-card-bg) rounded-full p-0.5 shadow-sm z-10 animate-in fade-in zoom-in duration-200">
-                                                <CheckCircle size={20} />
+                                            <div className="absolute top-3 right-3 h-8 w-8 flex items-center justify-center bg-(--platform-bg)/90 backdrop-blur-md border border-(--platform-border-color) text-(--platform-accent) rounded-lg shadow-sm z-10 animate-in fade-in zoom-in duration-200 group-hover:opacity-0 transition-opacity">
+                                                <CheckCircle size={18} />
                                             </div>
                                          )}
                                     </div>
-                                    <div className="p-3 flex flex-1 flex-col justify-between gap-2">
-                                        <div className="font-medium text-sm leading-tight line-clamp-2 text-(--platform-text-primary)">
+                                    <div className="p-4 flex flex-1 flex-col gap-3">
+                                        <div className="font-semibold text-[0.95rem] leading-snug line-clamp-2 text-(--platform-text-primary)" title={product.name}>
                                             {product.name}
                                         </div>
-                                        <div className="flex justify-between items-center">
-                                            <div className="font-bold text-(--platform-text-primary) text-base">
+                                        <div className="mt-auto flex items-center gap-2 pt-1">
+                                            <div className="font-bold text-(--platform-text-primary) text-lg">
                                                 {product.price} ₴
                                             </div>
                                             {product.sale_percentage > 0 && (
-                                                <div className="text-xs text-white font-bold bg-(--platform-danger) px-1.5 py-0.5 rounded">
+                                                <div className="text-[0.7rem] font-bold text-(--platform-danger) bg-(--platform-danger)/10 px-2 py-1 rounded-md">
                                                     -{product.sale_percentage}%
                                                 </div>
                                             )}
@@ -327,7 +396,6 @@ const ProductEditorPanel = ({
         variants: [], sale_percentage: 0,
         type: 'physical', digital_file_url: ''
     };
-    
     const [formData, setFormData] = useState(initialFormData);
     const DESCRIPTION_LIMIT = 2000;
     useEffect(() => {
@@ -342,6 +410,7 @@ const ProductEditorPanel = ({
             setFormData(initialFormData);
         }
     }, [productToEdit]);
+    
     const handleClearForm = () => {
         setFormData(initialFormData);
         if (onCancel) onCancel();
@@ -361,10 +430,8 @@ const ProductEditorPanel = ({
             } else {
                 payload.digital_file_url = null;
             }
-
             if (formData.id) await apiClient.put(`/products/${formData.id}`, payload);
             else await apiClient.post(`/products`, payload);
-            
             toast.success('Збережено');
             onSuccess();
         } catch (e) { 
@@ -401,10 +468,15 @@ const ProductEditorPanel = ({
                     {formData.id ? <><Edit size={20}/> Редагування</> : 'Новий товар'}
                 </h3>
                 {!isMobile && (
-                    <Button variant="ghost" onClick={onClose} className="hover:bg-(--platform-hover-bg)"><X size={20}/></Button>
+                    <button 
+                        type="button" 
+                        onClick={onClose} 
+                        className="h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-accent) transition-all cursor-pointer"
+                    >
+                        <X size={20}/>
+                    </button>
                 )}
             </div>
-            
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
                     <div>
@@ -437,7 +509,6 @@ const ProductEditorPanel = ({
                         required 
                         limitKey="PRODUCT_NAME"
                     />
-                    
                     <div className="flex gap-3">
                         <Input 
                             label="Ціна (₴)" 
@@ -455,7 +526,6 @@ const ProductEditorPanel = ({
                             wrapperStyle={{flex: 1}} 
                         />
                     </div>
-
                     {formData.type === 'physical' ? (
                         <div className="animate-in fade-in slide-in-from-top-2">
                             <Input 
@@ -488,9 +558,13 @@ const ProductEditorPanel = ({
                             {formData.image_gallery.map((img, i) => (
                                 <div key={i} className="aspect-square rounded-lg overflow-hidden border border-(--platform-border-color) relative group">
                                     <img src={`${BASE_URL}${img}`} alt="" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-start justify-end p-1">
-                                        <button type="button" onClick={() => setFormData(p => ({...p, image_gallery: p.image_gallery.filter((_, idx) => idx !== i)}))} className="bg-red-500 text-white rounded cursor-pointer w-5 h-5 flex items-center justify-center border-none">
-                                            <X size={14}/>
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-start justify-end p-2">
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setFormData(p => ({...p, image_gallery: p.image_gallery.filter((_, idx) => idx !== i)}))} 
+                                            className="h-8 w-8 flex items-center justify-center shrink-0 rounded-lg border border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary) hover:border-(--platform-danger) hover:text-(--platform-danger) transition-all cursor-pointer shadow-sm"
+                                        >
+                                            <X size={16}/>
                                         </button>
                                     </div>
                                 </div>
@@ -506,7 +580,7 @@ const ProductEditorPanel = ({
                     </div>
                     <div className="border-t border-(--platform-border-color) pt-5">
                          <div className="flex justify-between items-center mb-3">
-                            <span className="font-bold text-sm text-(--platform-text-primary)">Опції (варіанти)</span>
+                            <span className="font-bold text-sm text-(--platform-text-primary)">Варіанти товару</span>
                             <Button type="button" variant="outline" onClick={() => setFormData(p => ({...p, variants: [...p.variants, {id: Date.now(), name: '', values: []}]}))} className="h-7.5 text-[0.8rem]"><Plus size={14}/> Додати</Button>
                          </div>
                          {formData.variants.map((v, i) => (
@@ -531,7 +605,7 @@ const ProductEditorPanel = ({
                 <div className="p-6 border-t border-(--platform-border-color) grid grid-cols-2 gap-4 mt-auto bg-(--platform-bg) shrink-0">
                     <Button 
                         type="button" 
-                        variant="outline-danger" 
+                        variant="secondary" 
                         onClick={handleClearForm} 
                         className="justify-center h-10.5"
                     >
@@ -570,13 +644,14 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             }
         }
     }, [loading, products, searchParams]);
-
     const processedProducts = useMemo(() => {
         let result = products.filter(product => {
             const matchesSearch = filters.search === '' || 
                 product.name.toLowerCase().includes(filters.search.toLowerCase());
             const matchesCategory = filters.category === 'all' || product.category_id === parseInt(filters.category);
-            return matchesSearch && matchesCategory;
+            const matchesType = filters.type === 'all' || product.type === filters.type;
+            
+            return matchesSearch && matchesCategory && matchesType;
         });
         result.sort((a, b) => {
             let comp = 0;
@@ -587,7 +662,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
         });
         return result;
     }, [products, filters, sortOrder]);
-
     const handleProductSelect = useCallback((product) => {
         if (activeProduct && activeProduct.id === product.id) {
             setActiveProduct(null);
@@ -598,18 +672,15 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setSearchParams(prev => { prev.set('productId', product.id); return prev; });
         }
     }, [activeProduct, setSearchParams]);
-
     const handleCreateNew = useCallback(() => {
         setActiveProduct(null);
         setIsPanelOpen(true);
         setSearchParams(prev => { prev.set('productId', 'new'); return prev; });
     }, [setSearchParams]);
-
     const handleClosePanel = useCallback(() => {
         setIsPanelOpen(false);
         setSearchParams(prev => { prev.delete('productId'); return prev; });
     }, [setSearchParams]);
-
     const handleCancelForm = useCallback(() => {
         setActiveProduct(null);
         setSearchParams(prev => { prev.delete('productId'); return prev; });
@@ -617,11 +688,9 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setIsPanelOpen(false);
         }
     }, [setSearchParams]);
-
     const handleRequestDelete = useCallback((product) => {
         setProductToDelete(product);
     }, []);
-
     const handleConfirmDelete = useCallback(() => {
         if (productToDelete) {
             handleDelete(productToDelete.id, () => {
@@ -633,7 +702,6 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setProductToDelete(null);
         }
     }, [productToDelete, handleDelete, activeProduct, handleClosePanel]);
-
     return (
         <>
             <SplitViewLayout

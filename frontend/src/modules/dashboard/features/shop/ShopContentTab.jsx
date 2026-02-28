@@ -29,11 +29,8 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                 <div className="flex flex-col items-center text-center flex-1 shrink-0">
                     <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
                         <Store size={28} />
-                        Управління магазином
-                    </h2>
-                    <p className="text-sm text-(--platform-text-secondary) m-0">
                         Управління товарами та категоріями
-                    </p>
+                    </h2>
                 </div>
                 <div className="flex items-center justify-end gap-4 flex-1 w-full md:w-auto">
                     {isShopSaving && (

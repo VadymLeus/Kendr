@@ -6,6 +6,7 @@ import { Input } from '../../../shared/ui/elements/Input';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
 import SitePreviewer from '../../../shared/ui/complex/SitePreviewer';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Layout, Search, Globe, Lock, Loader, FileText, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Eye } from 'lucide-react';
 
 const ICON_MAP = {
@@ -31,7 +32,6 @@ const getCategoryLabel = (catId) => {
     const found = TEMPLATE_CATEGORIES.find(c => c.id.toLowerCase() === catId.toLowerCase());
     return found ? found.label : catId;
 };
-
 const AdminTemplatesPage = () => {
     const [templates, setTemplates] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -117,7 +117,7 @@ const AdminTemplatesPage = () => {
     };
     if (isLoading) return (
         <div style={{...containerStyle, alignItems: 'center', justifyContent: 'center'}}>
-            <Loader size={48} style={{ color: 'var(--platform-accent)' }} className="animate-spin" />
+            <LoadingState title="Завантаження шаблонів..." layout="page" />
         </div>
     );
     return (
