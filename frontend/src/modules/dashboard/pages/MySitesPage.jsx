@@ -10,7 +10,7 @@ import SiteGridCard from '../../../shared/ui/complex/SiteGridCard';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Button } from '../../../shared/ui/elements/Button';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Globe } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 20;
 const SORT_OPTIONS = [
@@ -24,6 +24,7 @@ const SORT_OPTIONS = [
 
 const MySitesPage = () => {
     const [sites, setSites] = useState([]);
+    const [totalSiteCount, setTotalSiteCount] = useState(0);
     const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,14 +32,21 @@ const MySitesPage = () => {
     const [sortOption, setSortOption] = useState('created_at:desc');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
     const [onlyPinned, setOnlyPinned] = useState(false);
-    const { user } = useContext(AuthContext);
+    const { user, isAdmin, plan } = useContext(AuthContext);
     const navigate = useNavigate();
     const { confirm } = useConfirm();
     const searchTimeoutRef = useRef(null);
+    const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 2);
+    const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 2);
+    const isLimitReached = !isAdmin && totalSiteCount >= numericMaxSites;
     useEffect(() => {
         if (!user) { navigate('/login'); return; }
         apiClient.get('/tags').then(res => setTags(res.data)).catch(console.error);
+        apiClient.get('/sites/catalog', { params: { scope: 'my' } })
+            .then(res => setTotalSiteCount(Array.isArray(res.data) ? res.data.length : 0))
+            .catch(console.error);
     }, [user, navigate]);
+
     const fetchMySites = async () => {
         try {
             setLoading(true);
@@ -59,6 +67,7 @@ const MySitesPage = () => {
             setLoading(false); 
         }
     };
+
     useEffect(() => {
         if (!user) return;
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
@@ -73,10 +82,12 @@ const MySitesPage = () => {
             try {
                 await apiClient.delete(`/sites/${sitePath}`);
                 setSites(prev => prev.filter(s => s.site_path !== sitePath));
+                setTotalSiteCount(prev => Math.max(0, prev - 1));
                 toast.success('Видалено!');
             } catch (err) { toast.error('Помилка'); }
         }
     };
+
     const handleStatusChange = async (site, requestedStatus) => {
         try {
             const newStatus = requestedStatus || (site.status === 'published' ? 'draft' : 'published');
@@ -94,12 +105,14 @@ const MySitesPage = () => {
             }
         }
     };
+
     const handleTogglePin = async (siteId) => {
         try {
             const res = await apiClient.patch(`/sites/${siteId}/pin`);
             setSites(prev => prev.map(s => s.id === siteId ? { ...s, is_pinned: res.data.is_pinned } : s));
         } catch (error) { toast.error('Помилка'); }
     };
+
     const safeSites = Array.isArray(sites) ? sites : [];
     const filteredSites = safeSites.filter(s => onlyPinned ? s.is_pinned : true)
         .sort((a, b) => (a.is_pinned === b.is_pinned ? 0 : a.is_pinned ? -1 : 1));
@@ -108,12 +121,23 @@ const MySitesPage = () => {
         <div className="-m-8 w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)">
             <div className="sticky top-0 z-50 bg-(--platform-bg)">
                 <div className="px-6 py-3 flex justify-center items-center border-b border-(--platform-border-color) h-15 shrink-0 relative bg-(--platform-bg)">
-                    <div className="text-center">
-                        <h1 className="text-xl font-bold m-0">Мої Сайти</h1>
+                    <div className="text-center flex items-center gap-3">
+                        <h1 className="text-xl font-bold m-0 text-(--platform-text-primary)">Мої Сайти</h1>
+                        <div 
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition-colors
+                                ${isLimitReached 
+                                    ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/10 dark:text-red-400 dark:border-red-800/30' 
+                                    : 'bg-(--platform-card-bg) text-(--platform-text-secondary) border-(--platform-border-color)'}`}
+                            title={isLimitReached ? "Ліміт сайтів вичерпано" : "Створені сайти"}
+                        >
+                            <Globe size={12} />
+                            {totalSiteCount} / {maxSites}
+                        </div>
                     </div>
-                    
-                    <Link to="/create-site" className="absolute right-6 no-underline">
-                        <Button variant="primary"><Plus size={18} /> Створити новий</Button>
+                    <Link to="/create-site" className="absolute right-6 no-underline" onClick={(e) => isLimitReached && e.preventDefault()}>
+                        <Button variant="primary" disabled={isLimitReached} title={isLimitReached ? "Ліміт сайтів вичерпано" : ""}>
+                            <Plus size={18} /> Створити новий
+                        </Button>
                     </Link>
                 </div>
                 <SiteFilters 
@@ -146,8 +170,8 @@ const MySitesPage = () => {
                                     Очистити фільтри
                                 </Button>
                             ) : (
-                                <Link to="/create-site" className="no-underline">
-                                    <Button variant="outline"><Plus size={16} /> Створити сайт</Button>
+                                <Link to="/create-site" className="no-underline" onClick={(e) => isLimitReached && e.preventDefault()}>
+                                    <Button variant="outline" disabled={isLimitReached}><Plus size={16} /> Створити сайт</Button>
                                 </Link>
                             )
                         }

@@ -22,7 +22,6 @@ const AuthPage = () => {
         searchParams.delete('error');
         setSearchParams(searchParams);
     }
-
     const setView = (newView) => {
         setSearchParams({ view: newView });
     };
@@ -359,9 +358,14 @@ const AuthPage = () => {
                         )}
                     </div>
                 </form>
-                <button onClick={() => setView(view === 'login' ? 'register' : 'login')} className="bg-transparent border-none cursor-pointer text-(--platform-accent) font-semibold text-sm mt-6 w-full hover:underline">
+                <Button 
+                    type="button"
+                    variant="outline" 
+                    onClick={() => setView(view === 'login' ? 'register' : 'login')} 
+                    className="mt-6 w-full py-3 rounded-xl"
+                >
                     {view === 'login' ? 'Немає акаунту? Реєстрація' : 'Вже є акаунт? Увійти'}
-                </button>
+                </Button>
             </div>
         </div>
     );

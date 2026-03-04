@@ -95,7 +95,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             link.download = file.original_file_name || 'download';
             document.body.appendChild(link);
             link.click();
-            
             window.URL.revokeObjectURL(url);
             document.body.removeChild(link);
             toast.success('Завантаження почалось');
@@ -207,7 +206,9 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         if (isFont) {
             return (
                 <div style={{ textAlign: 'center', width: '100%' }}>
-                    <div style={{ marginBottom: '10px' }}><Type size={48} color="var(--platform-accent)" /></div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                        <Type size={48} color="var(--platform-accent)" />
+                    </div>
                     <div 
                         id={`font-preview-${file.id}`} 
                         style={{
@@ -224,7 +225,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                 </div>
             );
         }
-        
         return (
             <div style={{ width: '100%', height: '220px' }}>
                 <MediaFilePreview 
@@ -235,7 +235,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             </div>
         );
     };
-
+    
     return (
         <div style={styles.container}>
             <div style={styles.header}>
@@ -249,11 +249,9 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                     <X size={20} />
                 </Button>
             </div>
-
             <div style={styles.previewArea}>
                 {renderPreview()}
             </div>
-
             <div style={styles.content}>
                 <div style={styles.metaGrid}>
                     <div style={styles.metaItem}>
@@ -275,7 +273,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         <span style={styles.metaValue}>{file.width ? `${file.width}x${file.height}` : '-'}</span>
                     </div>
                 </div>
-
                 <div>
                     <label style={styles.label}>Ім'я файлу</label>
                     <input 
@@ -288,7 +285,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         onBlurCapture={(e) => { e.target.style.borderColor = 'var(--platform-border-color)'; handleBlur(); }}
                     />
                 </div>
-
                 {!isFont && (
                     <div>
                         <label style={styles.label}>Alt текст (SEO)</label>
@@ -304,7 +300,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         />
                     </div>
                 )}
-
                 <div>
                     <label style={styles.label}>Нотатки</label>
                     <textarea 
@@ -317,7 +312,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         onBlurCapture={(e) => { e.target.style.borderColor = 'var(--platform-border-color)'; handleBlur(); }}
                     />
                 </div>
-
                 <Button 
                     variant="primary" 
                     onClick={handleSaveClick}
@@ -326,7 +320,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                 >
                     <Save size={16} /> Зберегти зміни
                 </Button>
-
                 <div style={styles.actionsGrid}>
                     <Button 
                         variant="outline"
@@ -334,18 +327,16 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                         title="Копіювати посилання"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        {Copy ? <Copy size={16}/> : '🔗'} Копіювати
+                        <Copy size={16} /> Копіювати
                     </Button>
-                    
                     <Button 
                         variant="outline"
                         onClick={openInNewWindow} 
                         title="Відкрити в новій вкладці"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
-                        {ExternalLink ? <ExternalLink size={16}/> : '↗'} Відкрити
+                        <ExternalLink size={16} /> Відкрити
                     </Button>
-
                     <Button 
                         variant="outline"
                         onClick={handleForceDownload} 
@@ -354,7 +345,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                     >
                         <Download size={16} /> Завантажити
                     </Button>
-
                     <Button 
                         variant="danger"
                         onClick={() => onDelete(file)} 

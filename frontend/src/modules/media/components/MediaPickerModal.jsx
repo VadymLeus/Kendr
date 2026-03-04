@@ -7,7 +7,7 @@ import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
 import { getMediaUrl } from '../../../shared/utils/mediaUtils'; 
 import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
 import { Button } from '../../../shared/ui/elements/Button';
-import { Search, X, Upload, Check, Image, Calendar, FileText, Clock } from 'lucide-react';
+import { Search, X, Upload, Check, Image, Calendar, FileText, Clock, HardDrive } from 'lucide-react';
 
 const MediaPickerModal = ({ 
     isOpen, 
@@ -20,6 +20,7 @@ const MediaPickerModal = ({
 }) => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [limits, setLimits] = useState(null);
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFile, setActiveFile] = useState(null);
@@ -39,14 +40,19 @@ const MediaPickerModal = ({
         }
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
+
     useEffect(() => {
         setVideoDuration(null);
     }, [activeFile]);
+
     const fetchMedia = async () => {
         setLoading(true);
         try {
-            const res = await apiClient.get('/media');
-            const data = Array.isArray(res.data) ? res.data : [];
+            const [mediaRes, limitsRes] = await Promise.all([
+                apiClient.get('/media'),
+                apiClient.get('/media/limits')
+            ]);
+            const data = Array.isArray(mediaRes.data) ? mediaRes.data : [];
             const filtered = data.filter(f => {
                 if (allowedTypes.includes('all')) return true;
                 return allowedTypes.some(type => {
@@ -60,6 +66,7 @@ const MediaPickerModal = ({
             });
             
             setFiles(filtered);
+            setLimits(limitsRes.data);
         } catch (error) {
             console.error(error);
             toast.error('Помилка завантаження медіатеки');
@@ -71,22 +78,58 @@ const MediaPickerModal = ({
     const handleUpload = async (e) => {
         const fileList = e.target.files;
         if (!fileList || fileList.length === 0) return;
-        const uploadPromises = Array.from(fileList).map(async (file) => {
+        const toastId = toast.loading("Завантаження...");
+        let successCount = 0;
+        let failedFiles = [];
+        for (let i = 0; i < fileList.length; i++) {
+            const file = fileList[i];
             const formData = new FormData();
             formData.append('mediaFile', file);
             try {
                 const res = await apiClient.post('/media/upload', formData);
-                return res.data;
+                if (res.data && res.data.error) {
+                    failedFiles.push({ name: file.name, reason: res.data.message });
+                    
+                    if (res.data.code === 'MAX_FILES_REACHED') {
+                        break;
+                    }
+                    continue; 
+                }
+                
+                if (res && res.data && res.data.id) {
+                    successCount++;
+                }
             } catch (err) {
-                toast.error(`Помилка: ${file.name}`);
-                return null;
+                console.error("Помилка завантаження:", err);
+                failedFiles.push({ 
+                    name: file.name, 
+                    reason: err.response?.data?.message || "Непередбачена помилка сервера" 
+                });
             }
-        });
-        const newFiles = await Promise.all(uploadPromises);
-        const validFiles = newFiles.filter(f => f !== null);
-        if (validFiles.length > 0) {
+        }
+
+        toast.dismiss(toastId);
+
+        if (successCount > 0) {
+            toast.success(`Успішно завантажено: ${successCount} файлів`);
             await fetchMedia(); 
-            toast.success(`Завантажено ${validFiles.length} файлів`);
+        }
+        if (failedFiles.length > 0) {
+            const limit = 3; 
+            const errorList = failedFiles.slice(0, limit)
+                .map(f => `• ${f.name} (${f.reason})`)
+                .join('\n');
+            
+            const moreCount = failedFiles.length - limit;
+            const finalMessage = moreCount > 0 
+                ? `Не завантажено ${failedFiles.length} файлів:\n${errorList}\n...та ще ${moreCount}`
+                : `Не завантажено:\n${errorList}`;
+            toast.error(
+                <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem', lineHeight: '1.4' }}>
+                    {finalMessage}
+                </div>, 
+                { autoClose: 7000 } 
+            );
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -137,7 +180,6 @@ const MediaPickerModal = ({
             const file = selectedFiles[0];
             if (file.file_type === 'image' || file.mime_type?.startsWith('image/')) {
                 const fullUrl = getMediaUrl(file);
-                console.log('Clean Crop URL:', fullUrl);
                 setImageToCrop(fullUrl);
                 setCropModalOpen(true);
                 return;
@@ -158,15 +200,19 @@ const MediaPickerModal = ({
             const newName = `${nameParts.join('.')}_crop.${ext}`;
             formData.append('mediaFile', croppedFileBlob, newName);
             const res = await apiClient.post('/media/upload', formData);
+            if (res.data && res.data.error) {
+                toast.error(res.data.message);
+                return;
+            }
             const uploadedFile = res.data;
             setFiles(prev => [uploadedFile, ...prev]);
             onSelect(uploadedFile);
             setCropModalOpen(false);
             onClose(); 
-            toast.success('Зображення обрізано');
+            toast.success('Зображення обрізано та збережено');
         } catch (error) {
             console.error('Upload crop error:', error);
-            toast.error('Не вдалося зберегти обрізане зображення');
+            toast.error(error.response?.data?.message || 'Не вдалося зберегти обрізане зображення');
         } finally {
             setIsUploadingCrop(false);
         }
@@ -178,11 +224,14 @@ const MediaPickerModal = ({
         const s = Math.floor(seconds % 60);
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
+
     if (!isOpen) return null;
+
     const filteredFiles = files.filter(f => 
         (f.original_file_name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const isLimitReached = limits && !limits.isUnlimited && limits.currentFiles >= limits.maxFiles;
     const isCropMode = aspect && !multiple && selectedIds.size === 1 && activeFile?.file_type === 'image';
     const overlayStyle = {
         position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
@@ -202,7 +251,7 @@ const MediaPickerModal = ({
 
     const searchBarStyle = {
         padding: '12px 24px', display: 'flex', gap: '16px', backgroundColor: 'var(--platform-bg)', 
-        borderBottom: '1px solid var(--platform-border-color)', flexShrink: 0
+        borderBottom: '1px solid var(--platform-border-color)', flexShrink: 0, alignItems: 'center'
     };
 
     const searchInputStyle = {
@@ -216,6 +265,18 @@ const MediaPickerModal = ({
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0
     };
 
+    const limitBadgeStyle = {
+        display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 12px',
+        backgroundColor: 'var(--platform-hover-bg)', borderRadius: '16px', fontSize: '0.8rem',
+        color: 'var(--platform-text-secondary)', border: '1px solid var(--platform-border-color)',
+        transition: 'all 0.3s'
+    };
+
+    const limitWarningStyle = {
+        color: 'var(--platform-danger)', borderColor: 'color-mix(in srgb, var(--platform-danger), transparent 70%)',
+        backgroundColor: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' 
+    };
+
     return ReactDOM.createPortal(
         <>
             <div style={overlayStyle}>
@@ -225,6 +286,12 @@ const MediaPickerModal = ({
                             <Image size={20} color="var(--platform-accent)" />
                             <h3 style={{ margin: 0, fontSize: '1.125rem' }}>{title}</h3>
                         </div>
+                        {limits && (
+                            <div style={{ ...limitBadgeStyle, ...((!limits.isUnlimited && limits.percentageUsed >= 90) ? limitWarningStyle : {}) }}>
+                                <HardDrive size={14} />
+                                <span>Сховище: {limits.isUnlimited ? `${limits.currentFiles} / ∞` : `${limits.currentFiles} / ${limits.maxFiles}`}</span>
+                            </div>
+                        )}
                         <Button 
                             variant="outline" 
                             className="btn-icon-square"
@@ -247,10 +314,19 @@ const MediaPickerModal = ({
                             icon={<Upload size={16} />}
                             style={{ height: '40px', whiteSpace: 'nowrap' }}
                             onClick={() => fileInputRef.current?.click()}
+                            disabled={isLimitReached}
+                            title={isLimitReached ? "Ліміт файлів вичерпано" : ""}
                         >
-                            Завантажити
+                            {isLimitReached ? 'Ліміт вичерпано' : 'Завантажити'}
                         </Button>
-                        <input type="file" multiple ref={fileInputRef} style={{display: 'none'}} onChange={handleUpload} />
+                        <input 
+                            type="file" 
+                            multiple 
+                            ref={fileInputRef} 
+                            style={{display: 'none'}} 
+                            onChange={handleUpload} 
+                            accept={limits ? limits.allowedExtensions.join(',') : undefined} 
+                        />
                     </div>
                     <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }} className="custom-scrollbar">

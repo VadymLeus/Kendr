@@ -22,7 +22,6 @@ const ProfileAppearanceTab = () => {
         margin: '0 0 8px 0' 
     };
     const section = { marginBottom: '28px' };
-    
     return (
         <div style={container}>
             <div style={card}>
@@ -37,12 +36,7 @@ const ProfileAppearanceTab = () => {
                         onChange={setPlatformMode}
                     />
                 </div>
-
                 <div style={{ marginBottom: 0 }}>
-                    <h3 style={cardTitle}>Акцентний колір</h3>
-                    <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '16px', fontSize: '0.9rem' }}>
-                        Оберіть основний колір для кнопок та активних елементів.
-                    </p>
                      <AccentColorSelector 
                         value={platformAccent}
                         onChange={setPlatformAccent}

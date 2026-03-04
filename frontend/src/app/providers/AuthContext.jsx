@@ -57,6 +57,7 @@ export const AuthProvider = ({ children }) => {
         console.error("Помилка при збереженні даних користувача", e);
     }
   };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -65,6 +66,7 @@ export const AuthProvider = ({ children }) => {
       logout, 
       updateUser, 
       isAdmin: user?.role === 'admin',
+      plan: user?.plan || 'FREE',
       isAuthenticated: !!user 
     }}>
       {children}

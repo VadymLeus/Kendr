@@ -1,18 +1,25 @@
 // frontend/src/modules/features/shop/ShopContentTab.jsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import CategoryManager from './components/CategoryManager';
 import ProductManager from './components/ProductManager'; 
 import { Button } from '../../../../shared/ui/elements/Button'; 
+import { AuthContext } from '../../../../app/providers/AuthContext';
 import { Grid, Folder, Loader2, Store } from 'lucide-react';
 
 const ShopContentTab = ({ siteData, onSavingChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [isShopSaving, setIsShopSaving] = React.useState(false);
     const activeSubTab = searchParams.get('shopTab') || 'products';
+    const { user, plan } = useContext(AuthContext);
+    const isAdmin = user?.role === 'admin';
+    const userPlan = plan ? plan.toUpperCase() : 'FREE';
+    const maxProducts = isAdmin ? Infinity : (userPlan === 'PLUS' ? 200 : 50);
+    const maxCategories = isAdmin ? Infinity : (userPlan === 'PLUS' ? 100 : 20);
     React.useEffect(() => {
         if (onSavingChange) onSavingChange(isShopSaving);
     }, [isShopSaving, onSavingChange]);
+
     const handleTabChange = (tabName) => {
         setSearchParams(prev => {
             prev.set('shopTab', tabName);
@@ -64,12 +71,14 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                     <ProductManager 
                         siteId={siteData.id} 
                         onSavingChange={setIsShopSaving}
+                        maxProducts={maxProducts}
                     />
                 )}
                 {activeSubTab === 'categories' && (
                     <CategoryManager 
                         siteId={siteData.id} 
                         onSavingChange={setIsShopSaving}
+                        maxCategories={maxCategories}
                     />
                 )}
             </div>

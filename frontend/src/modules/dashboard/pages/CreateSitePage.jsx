@@ -11,7 +11,6 @@ import UniversalMediaInput from '../../../shared/ui/complex/UniversalMediaInput'
 import EmptyState from '../../../shared/ui/complex/EmptyState';
 import SitePreviewer from '../../../shared/ui/complex/SitePreviewer';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
-import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { BASE_URL } from '../../../shared/config';
 import { ArrowLeft, Layout, Check, Loader, AlertCircle, Grid, User, Search, Edit, Trash, Info, Palette, Sparkles, Globe, Lock, Image, FileText, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Shield, EyeOff, Tag } from 'lucide-react';
@@ -45,11 +44,18 @@ const getCategoryLabel = (catId) => {
     return found ? found.label : catId;
 };
 
+const RESERVED_SLUGS = [
+    'admin', 'api', 'login', 'register', 'support', 'test', 'www', 
+    'billing', 'orders', 'dashboard', 'sites', 'media', 'settings', 
+    'auth', 'user', 'users', 'system', 'root', 'static', 'assets', 'create'
+];
+
 const CreateSitePage = () => {
     const navigate = useNavigate();
-    const { isAdmin } = useContext(AuthContext);
+    const { isAdmin, plan } = useContext(AuthContext);
     const [systemTemplates, setSystemTemplates] = useState([]);
     const [personalTemplates, setPersonalTemplates] = useState([]);
+    const [currentSiteCount, setCurrentSiteCount] = useState(0);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [panelTab, setPanelTab] = useState('info'); 
     const [templateSourceTab, setTemplateSourceTab] = useState('system'); 
@@ -58,45 +64,42 @@ const CreateSitePage = () => {
     const [selectedTemplateId, setSelectedTemplateId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [formData, setFormData] = useState({ title: '', slug: '' });
+    const [titleError, setTitleError] = useState(null);
+    const [slugError, setSlugError] = useState(null);
+    const [slugStatus, setSlugStatus] = useState('idle');
     const [customLogo, setCustomLogo] = useState(null);
     const [defaultRandomLogo, setDefaultRandomLogo] = useState(null);
-    const [slugStatus, setSlugStatus] = useState('idle'); 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [templateToDeleteId, setTemplateToDeleteId] = useState(null);
     const [previewData, setPreviewData] = useState({ 
-        pages: [], 
-        theme: { mode: 'light', accent: 'blue' },
-        header: [], 
-        footer: [], 
-        siteData: {} 
+        pages: [], theme: { mode: 'light', accent: 'blue' }, header: [], footer: [], siteData: {} 
     });
-    
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
+    const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 2);
+    const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 2);
+    const isLimitReached = !isAdmin && currentSiteCount >= numericMaxSites;
     useEffect(() => {
         const loadData = async () => {
             try {
                 const templatesUrl = isAdmin ? '/sites/templates?include_drafts=true' : '/sites/templates';
-                const [sysRes, persRes] = await Promise.allSettled([
+                const [sysRes, persRes, sitesRes] = await Promise.allSettled([
                     apiClient.get(templatesUrl),
                     apiClient.get('/user-templates'),
+                    apiClient.get('/sites/catalog', { params: { scope: 'my' } }) 
                 ]);
                 if (sysRes.status === 'fulfilled') {
                     setSystemTemplates(sysRes.value.data);
                     if (sysRes.value.data.length > 0) handleSelectTemplate(sysRes.value.data[0], 'system');
                 }
-                if (persRes.status === 'fulfilled') {
-                    setPersonalTemplates(persRes.value.data);
-                }
-
+                if (persRes.status === 'fulfilled') setPersonalTemplates(persRes.value.data);
+                if (sitesRes.status === 'fulfilled') setCurrentSiteCount(Array.isArray(sitesRes.value.data) ? sitesRes.value.data.length : 0);
                 if (LOCAL_DEFAULT_LOGOS.length > 0) {
-                    const random = LOCAL_DEFAULT_LOGOS[Math.floor(Math.random() * LOCAL_DEFAULT_LOGOS.length)];
-                    setDefaultRandomLogo(random);
+                    setDefaultRandomLogo(LOCAL_DEFAULT_LOGOS[Math.floor(Math.random() * LOCAL_DEFAULT_LOGOS.length)]);
                 } 
             } catch (err) {
-                console.error(err);
                 toast.error('Не вдалося завантажити дані');
             } finally {
                 setIsLoadingData(false);
@@ -104,20 +107,63 @@ const CreateSitePage = () => {
         };
         loadData();
     }, [isAdmin]);
+
     useEffect(() => {
-        const timer = setTimeout(async () => {
-            if (!formData.slug || formData.slug.length < 3) {
+        const checkSlug = async () => {
+            const currentSlug = formData.slug;
+            if (!currentSlug) {
                 setSlugStatus('idle');
+                setSlugError(null);
                 return;
             }
+
+            if (currentSlug.length < 3) {
+                setSlugStatus('invalid');
+                setSlugError('Мінімум 3 символи');
+                return;
+            }
+            if (currentSlug.length > 40) {
+                setSlugStatus('invalid');
+                setSlugError('Максимум 40 символів');
+                return;
+            }
+            if (currentSlug.startsWith('-') || currentSlug.endsWith('-')) {
+                setSlugStatus('invalid');
+                setSlugError('Не може починатися або закінчуватися дефісом');
+                return;
+            }
+            if (currentSlug.includes('--')) {
+                setSlugStatus('invalid');
+                setSlugError('Не може містити два дефіси підряд');
+                return;
+            }
+            if (RESERVED_SLUGS.includes(currentSlug)) {
+                setSlugStatus('invalid');
+                setSlugError('Це ім\'я зарезервовано системою. Будь ласка, оберіть інше.');
+                return;
+            }
+
             setSlugStatus('checking');
+            setSlugError(null);
+            
             try {
-                const res = await apiClient.get(`/sites/check-slug?slug=${formData.slug}`);
-                setSlugStatus(res.data.isAvailable ? 'available' : 'taken');
-            } catch (err) { setSlugStatus('idle'); }
-        }, 500);
+                const res = await apiClient.get(`/sites/check-slug?slug=${currentSlug}`);
+                if (res.data.isAvailable) {
+                    setSlugStatus('available');
+                } else {
+                    setSlugStatus('taken');
+                    setSlugError(res.data.message || 'Ця адреса вже зайнята');
+                }
+            } catch (err) { 
+                setSlugStatus('idle'); 
+                setSlugError('Помилка перевірки адреси');
+            }
+        };
+
+        const timer = setTimeout(checkSlug, 500);
         return () => clearTimeout(timer);
     }, [formData.slug]);
+
     const handleSelectTemplate = (template, type) => {
         if (!template) return;
         setSelectedTemplateId(template.id);
@@ -136,11 +182,7 @@ const CreateSitePage = () => {
         const accent = content.site_theme_accent || themeSettings.accent || 'orange';
         setPreviewData({ 
             pages, 
-            theme: { 
-                ...themeSettings,
-                mode: mode,
-                accent: accent
-            }, 
+            theme: { ...themeSettings, mode, accent }, 
             header: content.header_content || [], 
             footer: content.footer_content || [],
             siteData: { title: template.name, ...content.site_settings } 
@@ -157,18 +199,46 @@ const CreateSitePage = () => {
     }, [previewData.pages, currentPreviewSlug]);
 
     const handleTitleChange = (e) => {
-        const val = e.target.value;
+        let val = e.target.value;
+        if (/[<>]/.test(val)) {
+            val = val.replace(/[<>]/g, '');
+            setTitleError('Символи < та > заборонені');
+        } else {
+            setTitleError(null);
+        }
+        if (val.length > 60) {
+            val = val.substring(0, 60);
+            setTitleError('Максимум 60 символів');
+        }
         setFormData(prev => ({ ...prev, title: val }));
+        const trimmed = val.trim();
+        if (val.length > 0 && trimmed.length < 2) {
+            setTitleError('Мінімум 2 символи (без урахування пробілів)');
+        } else if (!/[<>]/.test(val) && val.length <= 60) {
+             setTitleError(null);
+        }
+    };
+
+    const handleSlugChange = (e) => {
+        const inputVal = e.target.value;
+        const sanitizedVal = inputVal.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        if (inputVal !== sanitizedVal && inputVal.length > 0) {
+            setSlugError('Дозволені лише малі латинські літери, цифри та дефіс (-)');
+        } else {
+            setSlugError(null);
+        }
+        setFormData(prev => ({ ...prev, slug: sanitizedVal }));
     };
 
     const handleSubmit = async () => {
-        if (!formData.title || !formData.slug || !selectedTemplateId || slugStatus === 'taken') return;
+        const trimmedTitle = formData.title.trim();
+        if (isLimitReached || !trimmedTitle || !formData.slug || !selectedTemplateId || slugStatus !== 'available' || titleError || slugError) return;
         setIsSubmitting(true);
         try {
             const payload = { 
                 templateId: selectedTemplateId, 
                 sitePath: formData.slug, 
-                title: formData.title, 
+                title: trimmedTitle, 
                 selected_logo_url: effectiveLogo 
             };
             const res = await apiClient.post('/sites/create', payload);
@@ -184,12 +254,8 @@ const CreateSitePage = () => {
     const getFullUrl = (path) => {
         if (!path) return '';
         if (path.startsWith('http') || path.startsWith('data:')) return path;
-        
         if (path.startsWith('/logos/')) return path; 
-        
-        if (path.includes('/assets/') || path.includes('/src/') || path.includes('@fs')) {
-            return path;
-        }
+        if (path.includes('/assets/') || path.includes('/src/') || path.includes('@fs')) return path;
         const cleanPath = path.startsWith('/') ? path : `/${path}`;
         return `${BASE_URL}${cleanPath}`;
     };
@@ -201,7 +267,7 @@ const CreateSitePage = () => {
             await apiClient.put(`/user-templates/${editingTemplate.id}`, { templateName: name, description, icon, category });
             setPersonalTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { ...t, name, description, icon, category } : t));
             toast.success('Шаблон оновлено'); setIsEditModalOpen(false); setEditingTemplate(null);
-        } catch (error) { console.error(error); toast.error('Помилка при збереженні'); }
+        } catch (error) { toast.error('Помилка при збереженні'); }
     };
 
     const handleConfirmDelete = async () => {
@@ -255,9 +321,8 @@ const CreateSitePage = () => {
             </div>
         );
     };
-
     if (isLoadingData) return <LoadingState />;
-
+    const isFormReady = !isLimitReached && formData.title.trim().length >= 2 && !titleError && formData.slug && slugStatus === 'available' && !slugError;
     return (
         <div className="flex h-full w-full overflow-hidden bg-(--platform-bg) min-h-0">
             <ConfirmModal 
@@ -307,11 +372,55 @@ const CreateSitePage = () => {
                 <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6 pt-0 bg-(--platform-bg) min-h-0 [scrollbar-gutter:stable]">
                     {panelTab === 'info' ? (
                          <div className="flex flex-col gap-6 pt-6">
-                            <div className="p-5 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm">
-                                <Input label="Назва сайту" value={formData.title} onChange={handleTitleChange} maxLength={TEXT_LIMITS.SITE_NAME} autoFocus />
-                                <Input label="Веб-адреса (Slug)" value={formData.slug} onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})} rightIcon={slugStatus === 'checking' ? <Loader size={16} className="animate-spin" /> : slugStatus === 'available' ? <Check size={18} className="text-emerald-500" /> : slugStatus === 'taken' ? <AlertCircle size={18} className="text-red-500" /> : <Globe size={16} />} error={slugStatus === 'taken' ? 'Адреса зайнята' : null} helperText={`kendr.site/${formData.slug || '...'}`} />
+                            <div className={`p-4 rounded-xl border flex items-center justify-between ${isLimitReached ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400' : 'bg-(--platform-card-bg) border-(--platform-border-color)'}`}>
+                                <div className="flex items-center gap-2">
+                                    <Globe size={18} />
+                                    <span className="font-medium text-sm">Створено сайтів:</span>
+                                </div>
+                                <span className="font-bold text-lg">{currentSiteCount} / {maxSites}</span>
                             </div>
-                            <div className="p-5 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm">
+                            {isLimitReached && (
+                                <div className="p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 rounded-lg text-sm text-red-600 dark:text-red-400 flex items-start gap-2 -mt-3">
+                                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                    <span>Ви досягли ліміту створення сайтів для вашого тарифу (<b>{plan}</b>). Щоб створити новий, видаліть один із існуючих.</span>
+                                </div>
+                            )}
+
+                            <div className="p-5 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm space-y-4">
+                                <div>
+                                    <Input 
+                                        label="Назва сайту" 
+                                        value={formData.title} 
+                                        onChange={handleTitleChange} 
+                                        placeholder="Наприклад: Мій Крутий Магазин"
+                                        autoFocus 
+                                        disabled={isLimitReached}
+                                        error={titleError}
+                                        wrapperStyle={{ marginBottom: titleError ? 0 : '0.5rem' }}
+                                    />
+                                    {!titleError && <p className="text-xs text-(--platform-text-secondary) mt-1 px-1">Ця назва відображатиметься в шапці сайту та на вкладці браузера.</p>}
+                                </div>
+
+                                <div>
+                                    <Input 
+                                        label="Веб-адреса (Slug)" 
+                                        value={formData.slug} 
+                                        onChange={handleSlugChange} 
+                                        placeholder="my-cool-shop"
+                                        rightIcon={
+                                            slugStatus === 'checking' ? <Loader size={16} className="animate-spin" /> : 
+                                            slugStatus === 'available' ? <Check size={18} className="text-emerald-500" /> : 
+                                            (slugStatus === 'taken' || slugStatus === 'invalid') ? <AlertCircle size={18} className="text-red-500" /> : 
+                                            <Globe size={16} />
+                                        } 
+                                        error={slugError} 
+                                        helperText={`kendr.site/${formData.slug || '...'}`} 
+                                        disabled={isLimitReached}
+                                        wrapperStyle={{ marginBottom: slugError ? 0 : '0.5rem' }}
+                                    />
+                                </div>
+                            </div>
+                            <div className={`p-5 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm ${isLimitReached ? 'opacity-60 pointer-events-none' : ''}`}>
                                 <label className="mb-3 font-semibold text-(--platform-text-primary) text-sm flex items-center gap-2">
                                     <Sparkles size={18} className="text-(--platform-accent)" />
                                     Логотип
@@ -403,12 +512,6 @@ const CreateSitePage = () => {
                                                     <Check size={14} strokeWidth={3} />
                                                 </div>
                                             )}
-                                            {(templateSourceTab === 'personal') && (
-                                                <div className="absolute top-2 right-2 flex gap-1 z-10">
-                                                    <button onClick={(e) => handleOpenEditModal(e, tpl)} className="p-1.5 rounded-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors" title="Редагувати"> <Edit size={14} /> </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); setTemplateToDeleteId(tpl.id); setIsDeleteModalOpen(true); }} className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Видалити"> <Trash size={14} /> </button>
-                                                </div>
-                                            )}
                                         </div>
                                     );
                                 }) : <div className="h-60"><EmptyState title="Не знайдено" description="Спробуйте змінити фільтри" icon={Layout}/></div>}
@@ -418,7 +521,14 @@ const CreateSitePage = () => {
                 </div>
                 <div className="p-6 bg-(--platform-card-bg) border-t border-(--platform-border-color) shrink-0">
                     {panelTab === 'info' ? 
-                        <Button variant="primary" className="w-full py-3 justify-center" onClick={handleSubmit} disabled={!formData.title || !formData.slug || slugStatus !== 'available' || isSubmitting}>{isSubmitting ? <Loader size={18} className="animate-spin" /> : <>Створити сайт <ArrowLeft size={18} className="rotate-180" /></>}</Button> 
+                        <Button 
+                            variant="primary" 
+                            className="w-full py-3 justify-center" 
+                            onClick={handleSubmit} 
+                            disabled={!isFormReady || isSubmitting}
+                        >
+                            {isSubmitting ? <Loader size={18} className="animate-spin" /> : <>Створити сайт <ArrowLeft size={18} className="rotate-180" /></>}
+                        </Button> 
                         : <Button variant="outline" className="w-full justify-center" onClick={() => setPanelTab('info')}>Далі: Введіть назву <ArrowLeft size={16} className="rotate-180 ml-2" /></Button>
                     }
                 </div>

@@ -18,7 +18,6 @@ class Media {
         } = mediaData;
         const finalDisplayName = display_name || original_file_name.split('.').slice(0, -1).join('.') || 'image';
         const finalIsSystem = is_system === true || is_system === 'true' ? 1 : 0;
-
         const [result] = await db.query(
             `INSERT INTO user_media 
              (user_id, path_full, path_thumb, original_file_name, display_name, mime_type, file_size_kb, file_type, width, height, is_system) 
@@ -65,13 +64,11 @@ class Media {
         const { alt_text, display_name, description, is_favorite } = data;
         const updates = [];
         const values = [];
-
         if (alt_text !== undefined) { updates.push('alt_text = ?'); values.push(alt_text); }
         if (display_name !== undefined) { updates.push('display_name = ?'); values.push(display_name); }
         if (description !== undefined) { updates.push('description = ?'); values.push(description); }
         if (is_favorite !== undefined) { updates.push('is_favorite = ?'); values.push(is_favorite); }
         if (updates.length === 0) return null;
-
         values.push(mediaId);
         const [result] = await db.query(
             `UPDATE user_media SET ${updates.join(', ')} WHERE id = ?`,

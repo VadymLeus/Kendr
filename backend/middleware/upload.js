@@ -9,16 +9,13 @@ const mediaUploadPath = path.join(__dirname, '..', 'uploads', 'media');
 ensureDirExists(tempUploadPath);
 ensureDirExists(mediaUploadPath);
 const FONT_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
-const DOC_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'];
 const mediaFileFilter = (req, file, cb) => {
     file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
     const ext = path.extname(file.originalname).toLowerCase();
     const isImage = /jpeg|jpg|png|webp|gif/.test(file.mimetype) || /jpeg|jpg|png|webp|gif/.test(ext);
     const isVideo = /mp4|webm|ogg/.test(file.mimetype) || /mp4|webm|ogg/.test(ext);
-    const isFont = FONT_EXTENSIONS.includes(ext);
-    const isDoc = DOC_EXTENSIONS.includes(ext);
-
-    if (isImage || isVideo || isFont || isDoc) {
+    const isFont = FONT_EXTENSIONS.includes(ext) || file.mimetype.includes('font');
+    if (isImage || isVideo || isFont) {
         return cb(null, true);
     }
     
@@ -31,7 +28,7 @@ const tempStorage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname).toLowerCase();
-        const safeName = `file-${req.user.id}-${Date.now()}${ext}`;
+        const safeName = `file-${req.user ? req.user.id : 'temp'}-${Date.now()}${ext}`;
         cb(null, safeName);
     }
 });
@@ -40,7 +37,7 @@ const mediaUpload = multer({
     storage: tempStorage,
     fileFilter: mediaFileFilter,
     limits: { 
-        fileSize: 1024 * 1024 * 50,
+        fileSize: 1024 * 1024 * 16,
         files: 10
     }
 });
@@ -94,7 +91,6 @@ const processAndSaveLogo = (size = 64) => {
         if (!req.file) {
             return next();
         }
-
         try {
             const uploadPath = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'custom');
             await ensureDirExists(uploadPath);
@@ -138,7 +134,6 @@ const processAndSaveGeneric = (subfolder, filenamePrefix, maxWidth = 1200) => {
                 .toFormat('webp')
                 .webp({ quality: 80 })
                 .toFile(fullPath);
-            
             req.file.path = `/uploads/${subfolder}/${filename}`;
             req.file.filename = filename;
             next();

@@ -10,21 +10,19 @@ import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements';
 import { BASE_URL } from '../../../shared/config';
-import { Upload, Search, Download, Trash2, Check, X as XIcon } from 'lucide-react';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { Upload, Search, Download, Trash2, Check, X as XIcon, HardDrive } from 'lucide-react';
 
 const FILE_TYPES = [
     { id: 'image', name: 'Фото' },
     { id: 'video', name: 'Відео' },
-    { id: 'audio', name: 'Аудіо' },
-    { id: 'document', name: 'Документи' },
     { id: 'font', name: 'Шрифти' }
 ];
 
 const FORMATS_BY_TYPE = {
     image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico', 'bmp'],
     video: ['mp4', 'webm', 'mov', 'avi', 'mkv'],
-    audio: ['mp3', 'wav', 'ogg', 'm4a', 'flac'],
-    document: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'],
     font: ['ttf', 'otf', 'woff', 'woff2'],
     all: []
 };
@@ -41,6 +39,7 @@ const SORT_OPTIONS = [
 const MediaLibraryPage = () => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [limits, setLimits] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeType, setActiveType] = useState(null);
     const [activeFormat, setActiveFormat] = useState(null);
@@ -55,13 +54,18 @@ const MediaLibraryPage = () => {
     const fileInputRef = useRef(null);
     const { confirm } = useConfirm();
     useEffect(() => {
-        fetchMedia();
+        fetchData();
     }, []);
-    const fetchMedia = async () => {
+
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await apiClient.get('/media');
-            setFiles(Array.isArray(res.data) ? res.data : []);
+            const [mediaRes, limitsRes] = await Promise.all([
+                apiClient.get('/media'),
+                apiClient.get('/media/limits')
+            ]);
+            setFiles(Array.isArray(mediaRes.data) ? mediaRes.data : []);
+            setLimits(limitsRes.data);
         } catch (error) {
             console.error(error);
             toast.error('Помилка завантаження медіатеки');
@@ -70,9 +74,19 @@ const MediaLibraryPage = () => {
         }
     };
 
+    const fetchLimits = async () => {
+        try {
+            const res = await apiClient.get('/media/limits');
+            setLimits(res.data);
+        } catch (error) {
+            console.error("Помилка оновлення лімітів", error);
+        }
+    };
+
     useEffect(() => {
         setActiveFormat(null);
     }, [activeType]);
+
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
@@ -128,31 +142,65 @@ const MediaLibraryPage = () => {
         const fileList = e.target.files;
         if (!fileList || fileList.length === 0) return;
         const toastId = toast.loading("Завантаження...");
-        const uploadPromises = Array.from(fileList).map(async (file) => {
+        let successCount = 0;
+        let failedFiles = [];
+        for (let i = 0; i < fileList.length; i++) {
+            const file = fileList[i];
             const formData = new FormData();
             formData.append('mediaFile', file);
             try {
                 const res = await apiClient.post('/media/upload', formData);
-                return res.data;
+                
+                if (res.data && res.data.error) {
+                    failedFiles.push({ name: file.name, reason: res.data.message });
+                    if (res.data.code === 'MAX_FILES_REACHED') {
+                        break;
+                    }
+                    continue; 
+                }
+                if (res && res.data && res.data.id) {
+                    setFiles(prev => [res.data, ...prev]);
+                    successCount++;
+                }
             } catch (err) {
-                return null;
+                console.error("Справжня помилка завантаження:", err);
+                failedFiles.push({ 
+                    name: file.name, 
+                    reason: err.response?.data?.message || "Непередбачена помилка сервера" 
+                });
             }
-        });
-        const newFiles = await Promise.all(uploadPromises);
-        const validFiles = newFiles.filter(f => f !== null);
+        }
+
         toast.dismiss(toastId);
-        if (validFiles.length > 0) {
-            setFiles(prev => [...validFiles, ...prev]);
-            toast.success(`Завантажено ${validFiles.length} файлів`);
-        } else {
-            toast.error("Помилка завантаження");
+        if (successCount > 0) {
+            toast.success(`Успішно завантажено: ${successCount} файлів`);
+            fetchLimits(); 
+        }
+
+        if (failedFiles.length > 0) {
+            const limit = 3; 
+            const errorList = failedFiles.slice(0, limit)
+                .map(f => `• ${f.name} (${f.reason})`)
+                .join('\n');
+            const moreCount = failedFiles.length - limit;
+            const finalMessage = moreCount > 0 
+                ? `Не завантажено ${failedFiles.length} файлів:\n${errorList}\n...та ще ${moreCount}`
+                : `Не завантажено:\n${errorList}`;
+            toast.error(
+                <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem', lineHeight: '1.4' }}>
+                    {finalMessage}
+                </div>, 
+                { autoClose: 7000 } 
+            );
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
+
     const handleUpdateFile = useCallback((updatedFile) => {
         setFiles(prev => prev.map(f => f.id === updatedFile.id ? updatedFile : f));
         setSelectedFile(prev => prev?.id === updatedFile.id ? updatedFile : prev);
     }, []);
+
     const handleToggleFavorite = useCallback(async (file) => {
         const newStatus = !file.is_favorite;
         handleUpdateFile({ ...file, is_favorite: newStatus });
@@ -160,9 +208,9 @@ const MediaLibraryPage = () => {
             await apiClient.put(`/media/${file.id}`, { is_favorite: newStatus });
         } catch (error) {
             handleUpdateFile({ ...file, is_favorite: !newStatus });
-            toast.error("Помилка оновлення");
         }
     }, [handleUpdateFile]);
+
     const handleDelete = async (file) => {
         if (await confirm({ title: "Видалити файл?", message: "Ця дія незворотна.", type: "danger", confirmLabel: "Видалити" })) {
             try {
@@ -175,11 +223,12 @@ const MediaLibraryPage = () => {
                     return next;
                 });
                 toast.success('Файл видалено');
+                fetchLimits();
             } catch (error) {
-                toast.error('Помилка видалення');
             }
         }
     };
+
     const handleCheckFile = useCallback((file, index, e) => {
         if (e?.shiftKey && lastSelectedIndex.current !== null) {
             const start = Math.min(lastSelectedIndex.current, index);
@@ -226,41 +275,65 @@ const MediaLibraryPage = () => {
     const handleBulkDelete = async () => {
         if (checkedFiles.size === 0) return;
         if (await confirm({ title: `Видалити ${checkedFiles.size} файлів?`, type: "danger", confirmLabel: "Видалити все" })) {
+            const toastId = toast.loading("Видалення...");
             try {
                 await Promise.all(Array.from(checkedFiles).map(id => apiClient.delete(`/media/${id}`)));
                 setFiles(prev => prev.filter(f => !checkedFiles.has(f.id)));
                 setCheckedFiles(new Set());
                 setSelectedFile(null);
                 toast.success('Файли видалено');
-            } catch (err) { toast.error('Помилка'); }
+                fetchLimits();
+            } catch (err) { 
+            } finally {
+                toast.dismiss(toastId);
+            }
         }
     };
 
     const handleBulkDownload = async () => {
         const filesToDownload = files.filter(f => checkedFiles.has(f.id));
         if (filesToDownload.length === 0) return;
-        toast.info(`Завантаження ${filesToDownload.length} файлів...`);
-        filesToDownload.forEach((file, i) => {
-            setTimeout(async () => {
-                try {
-                    const response = await fetch(`${BASE_URL}${file.path_full}`);
-                    if (!response.ok) throw new Error('Network error');
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = file.original_file_name || `download-${Date.now()}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                } catch (error) {
-                    console.error("Download failed:", error);
-                }
-            }, i * 500);
-        });
-        setCheckedFiles(new Set());
+        if (filesToDownload.length === 1) {
+            const file = filesToDownload[0];
+            try {
+                const response = await fetch(`${BASE_URL}${file.path_full}`);
+                if (!response.ok) throw new Error('Network error');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = file.original_file_name || `download-${Date.now()}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error("Download failed:", error);
+                toast.error("Помилка при завантаженні файлу");
+            }
+            setCheckedFiles(new Set());
+            return;
+        }
+        const toastId = toast.loading(`Збираємо архів з ${filesToDownload.length} файлів...`);
+        try {
+            const zip = new JSZip();
+            const fetchPromises = filesToDownload.map(async (file) => {
+                const response = await fetch(`${BASE_URL}${file.path_full}`);
+                if (!response.ok) throw new Error(`Failed to fetch ${file.original_file_name}`);
+                const blob = await response.blob();
+                const fileName = file.original_file_name || `file_${file.id}`;
+                zip.file(fileName, blob);
+            });
+            await Promise.all(fetchPromises);
+            const zipContent = await zip.generateAsync({ type: 'blob' });
+            saveAs(zipContent, `media_export_${Date.now()}.zip`);
+            toast.update(toastId, { render: "Архів успішно завантажено!", type: "success", isLoading: false, autoClose: 3000 });
+            setCheckedFiles(new Set());
+        } catch (error) {
+            console.error("ZIP Generation failed:", error);
+            toast.update(toastId, { render: "Помилка при створенні архіву", type: "error", isLoading: false, autoClose: 3000 });
+        }
     };
     
     const onDragEvent = (e, active) => {
@@ -356,7 +429,24 @@ const MediaLibraryPage = () => {
             display: 'flex',
             alignItems: 'center',
             fontWeight: 500
-        })
+        }),
+        limitBadge: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 12px',
+            backgroundColor: 'var(--platform-hover-bg)',
+            borderRadius: '16px',
+            fontSize: '0.8rem',
+            color: 'var(--platform-text-secondary)',
+            border: '1px solid var(--platform-border-color)',
+            transition: 'all 0.3s'
+        },
+        limitWarning: {
+            color: 'var(--platform-danger)',
+            borderColor: 'color-mix(in srgb, var(--platform-danger), transparent 70%)',
+            backgroundColor: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' 
+        }
     };
     
     const formatButtons = (activeType && FORMATS_BY_TYPE[activeType]?.length > 0) ? (
@@ -370,12 +460,13 @@ const MediaLibraryPage = () => {
         </div>
     ) : null;
     
+    const isLimitReached = limits && !limits.isUnlimited && limits.currentFiles >= limits.maxFiles;
     return (
         <div style={styles.pageWrapper} 
             onDragEnter={(e) => onDragEvent(e, true)} onDragLeave={(e) => onDragEvent(e, false)} 
             onDragOver={(e) => e.preventDefault()} onDrop={onDrop}
         >
-            {isDragging && (
+            {isDragging && !isLimitReached && (
                 <div style={{
                     position: 'absolute', inset: 0, zIndex: 200, 
                     backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', 
@@ -387,15 +478,49 @@ const MediaLibraryPage = () => {
                     Перетягніть файли сюди
                 </div>
             )}
+            
+            {isDragging && isLimitReached && (
+                <div style={{
+                    position: 'absolute', inset: 0, zIndex: 200, 
+                    backgroundColor: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', 
+                    border: '4px dashed var(--platform-danger)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--platform-danger)', fontSize: '1.5rem', fontWeight: 'bold', pointerEvents: 'none',
+                    margin: '2rem' 
+                }}>
+                    Ліміт файлів вичерпано!
+                </div>
+            )}
+
             <div style={styles.headerBlock}>
                 <div style={styles.headerContent}>
+                    {limits && (
+                        <div style={{ position: 'absolute', left: '24px', display: 'flex', alignItems: 'center' }}>
+                            <div style={{ ...styles.limitBadge, ...((!limits.isUnlimited && limits.percentageUsed >= 90) ? styles.limitWarning : {}) }}>
+                                <HardDrive size={14} />
+                                <span>Сховище: {limits.isUnlimited ? `${limits.currentFiles} / ∞` : `${limits.currentFiles} / ${limits.maxFiles}`}</span>
+                            </div>
+                        </div>
+                    )}
                     <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>Медіатека</h1>
-                    
                     <div style={{ position: 'absolute', right: '24px', display: 'flex', gap: '10px' }}>
-                        <Button variant="primary" type="button" onClick={() => fileInputRef.current.click()}>
-                            <Upload size={18} /> <span>Завантажити</span>
+                        <Button 
+                            variant="primary" 
+                            type="button" 
+                            onClick={() => fileInputRef.current.click()}
+                            disabled={isLimitReached}
+                        >
+                            <Upload size={18} /> 
+                            <span>{isLimitReached ? 'Ліміт вичерпано' : 'Завантажити'}</span>
                         </Button>
-                        <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleUpload} />
+                        <input 
+                            type="file" 
+                            multiple 
+                            ref={fileInputRef} 
+                            style={{ display: 'none' }} 
+                            onChange={handleUpload}
+                            accept={limits ? limits.allowedExtensions.join(',') : undefined} 
+                        />
                     </div>
                 </div>
                 <SiteFilters 
@@ -483,7 +608,7 @@ const MediaLibraryPage = () => {
             </div>
             <div style={styles.stickyFooter}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span>Всього: {files.length}</span>
+                    <span>Виділено: {checkedFiles.size} з {files.length}</span>
                     <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }} />
                     <Button variant="ghost" onClick={handleSelectAll} style={{ fontSize: '0.8rem', padding: '4px' }}>
                         <Check size={14} /> Вибрати все
@@ -507,7 +632,7 @@ const MediaLibraryPage = () => {
                         <Button 
                             variant="ghost"
                             onClick={handleBulkDelete} 
-                            style={{ fontSize: '0.8rem', padding: '4px 8px', color: '#e53e3e' }}
+                            style={{ fontSize: '0.8rem', padding: '4px 8px', color: 'var(--platform-danger)' }}
                         >
                             <Trash2 size={14} /> Видалити
                         </Button>

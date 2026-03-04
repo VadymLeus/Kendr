@@ -14,7 +14,7 @@ import EmptyState from '../../../../../shared/ui/complex/EmptyState';
 import LoadingState from '../../../../../shared/ui/complex/LoadingState';
 import { TEXT_LIMITS } from '../../../../../shared/config/limits';
 import { BASE_URL } from '../../../../../shared/config';
-import { ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X, Package, Download } from 'lucide-react';
+import { ChevronLeft, Type, List, Search, Plus, Store, CheckCircle, Image, Trash, Edit, Save, Undo, X, Package, Download, AlertCircle } from 'lucide-react';
 
 const SORT_FIELDS = [
     { value: 'name', label: 'За назвою', icon: Type },
@@ -64,6 +64,7 @@ const useProducts = (siteId) => {
             toast.error('Помилка видалення');
         }
     }, []);
+    
     return { 
         products, categories, loading, filters, setFilters,
         fetchData, handleDelete
@@ -75,6 +76,7 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
     const [editingIndex, setEditingIndex] = useState(null);
     const [isVariantDeleteModalOpen, setIsVariantDeleteModalOpen] = useState(false);
     const [valueToDelete, setValueToDelete] = useState(null);
+    
     useEffect(() => {
         if (editingIndex !== null && variant.values[editingIndex]) {
             const val = variant.values[editingIndex];
@@ -220,7 +222,7 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
 const ProductTable = memo(({ 
     products, categories, loading, filters, setFilters, 
     sortOrder, setSortOrder, sortFields, onSelect, 
-    onCreate, onDelete, selectedId 
+    onCreate, onDelete, selectedId, maxProducts 
 }) => {
     const categoryOptions = [
         { value: 'all', label: 'Всі категорії' },
@@ -232,7 +234,9 @@ const ProductTable = memo(({
         { value: 'physical', label: 'Фізичні' },
         { value: 'digital', label: 'Цифрові' }
     ];
+    
     const hasActiveFilters = filters.search.trim() !== '' || filters.category !== 'all' || filters.type !== 'all';
+    const isLimitReached = maxProducts !== Infinity && products.length >= maxProducts;
     if (loading) return <LoadingState title="Завантаження товарів..." />;
     return (
         <div className="flex flex-col h-full bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) overflow-hidden">
@@ -276,8 +280,26 @@ const ProductTable = memo(({
                         </Button>
                     </div>
                 </div>
-                <Button onClick={onCreate} className="h-10.5 shrink-0">Додати</Button>
+                <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-sm font-semibold text-(--platform-text-secondary) flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--platform-card-bg) border border-(--platform-border-color)">
+                        <Package size={16} />
+                        {products.length} / {maxProducts === Infinity ? '∞' : maxProducts}
+                    </div>
+                    <Button 
+                        onClick={onCreate} 
+                        className="h-10.5 shrink-0"
+                        disabled={isLimitReached}
+                        title={isLimitReached ? "Досягнуто ліміт товарів" : "Додати товар"}
+                    >
+                        Додати
+                    </Button>
+                </div>
             </div>
+            {isLimitReached && (
+                <div className="px-5 py-2 bg-orange-50 dark:bg-orange-900/10 border-b border-orange-200 dark:border-orange-800/30 text-xs text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1.5 shrink-0">
+                    <AlertCircle size={14} /> Ви досягли ліміту товарів ({maxProducts}) для вашого тарифу.
+                </div>
+            )}
             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 {products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full py-10">
@@ -620,7 +642,7 @@ const ProductEditorPanel = ({
     );
 };
 
-const ProductManager = ({ siteId, onSavingChange }) => {
+const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { 
         products, categories, loading, filters, setFilters, fetchData, handleDelete
@@ -644,13 +666,13 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             }
         }
     }, [loading, products, searchParams]);
+    
     const processedProducts = useMemo(() => {
         let result = products.filter(product => {
             const matchesSearch = filters.search === '' || 
                 product.name.toLowerCase().includes(filters.search.toLowerCase());
             const matchesCategory = filters.category === 'all' || product.category_id === parseInt(filters.category);
             const matchesType = filters.type === 'all' || product.type === filters.type;
-            
             return matchesSearch && matchesCategory && matchesType;
         });
         result.sort((a, b) => {
@@ -662,6 +684,7 @@ const ProductManager = ({ siteId, onSavingChange }) => {
         });
         return result;
     }, [products, filters, sortOrder]);
+    
     const handleProductSelect = useCallback((product) => {
         if (activeProduct && activeProduct.id === product.id) {
             setActiveProduct(null);
@@ -672,15 +695,22 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setSearchParams(prev => { prev.set('productId', product.id); return prev; });
         }
     }, [activeProduct, setSearchParams]);
+    
     const handleCreateNew = useCallback(() => {
+        if (maxProducts !== Infinity && products.length >= maxProducts) {
+            toast.warning(`Досягнуто ліміт товарів (${maxProducts}) для вашого тарифу.`);
+            return;
+        }
         setActiveProduct(null);
         setIsPanelOpen(true);
         setSearchParams(prev => { prev.set('productId', 'new'); return prev; });
-    }, [setSearchParams]);
+    }, [maxProducts, products.length, setSearchParams]);
+    
     const handleClosePanel = useCallback(() => {
         setIsPanelOpen(false);
         setSearchParams(prev => { prev.delete('productId'); return prev; });
     }, [setSearchParams]);
+    
     const handleCancelForm = useCallback(() => {
         setActiveProduct(null);
         setSearchParams(prev => { prev.delete('productId'); return prev; });
@@ -688,9 +718,11 @@ const ProductManager = ({ siteId, onSavingChange }) => {
             setIsPanelOpen(false);
         }
     }, [setSearchParams]);
+    
     const handleRequestDelete = useCallback((product) => {
         setProductToDelete(product);
     }, []);
+    
     const handleConfirmDelete = useCallback(() => {
         if (productToDelete) {
             handleDelete(productToDelete.id, () => {
@@ -721,6 +753,7 @@ const ProductManager = ({ siteId, onSavingChange }) => {
                         onCreate={handleCreateNew}
                         onDelete={handleRequestDelete}
                         selectedId={activeProduct?.id}
+                        maxProducts={maxProducts}
                     />
                 }
                 content={

@@ -11,7 +11,7 @@ import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import { SplitViewLayout } from '../../../../../shared/ui/layouts/SplitViewLayout';
 import EmptyState from '../../../../../shared/ui/complex/EmptyState';
 import LoadingState from '../../../../../shared/ui/complex/LoadingState';
-import { Search, Folder, Plus, Trash, Edit, ChevronLeft, Save, Star, Home, Heart, Package, Tag, ShoppingBag, Grid, X, Camera, Music, Smartphone, Coffee, Briefcase, Gift, Truck, Zap, MapPin, Image, Video, User, Type, List, Store, CheckCircle } from 'lucide-react';
+import { Search, Folder, Plus, Trash, Edit, ChevronLeft, Save, Star, Home, Heart, Package, Tag, ShoppingBag, Grid, X, Camera, Music, Smartphone, Coffee, Briefcase, Gift, Truck, Zap, MapPin, Image, Video, User, Type, List, Store, CheckCircle, AlertCircle } from 'lucide-react';
 
 const ICON_MAP = {
     folder: Folder, grid: Grid, tag: Tag, bag: ShoppingBag,
@@ -54,11 +54,12 @@ const useCategories = (siteId) => {
 const CategoryList = memo(({ 
     categories, products, search, setSearch, 
     sortBy, setSortBy, sortOrder, setSortOrder, 
-    activeCategoryId, onSelect, onCreate, onDelete 
+    activeCategoryId, onSelect, onCreate, onDelete, maxCategories 
 }) => {
     const getProductCount = useCallback((categoryId) => {
         return products.filter(p => p.category_id === categoryId).length;
     }, [products]);
+    
     const processedCategories = useMemo(() => {
         let result = [...categories];
         if (search.trim()) {
@@ -79,6 +80,8 @@ const CategoryList = memo(({
     const toggleSortOrder = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
+    
+    const isLimitReached = maxCategories !== Infinity && categories.length >= maxCategories;
     return (
         <div className="flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl overflow-hidden">
             <div className="min-h-18 p-3 sm:px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 flex-wrap bg-(--platform-bg) shrink-0">
@@ -108,8 +111,26 @@ const CategoryList = memo(({
                         </Button>
                     </div>
                 </div>
-                <Button onClick={onCreate} className="h-10.5 shrink-0">Додати</Button>
+                <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-sm font-semibold text-(--platform-text-secondary) flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--platform-card-bg) border border-(--platform-border-color)">
+                        <Folder size={16} />
+                        {categories.length} / {maxCategories === Infinity ? '∞' : maxCategories}
+                    </div>
+                    <Button 
+                        onClick={onCreate} 
+                        className="h-10.5 shrink-0"
+                        disabled={isLimitReached}
+                        title={isLimitReached ? "Досягнуто ліміт категорій" : "Додати категорію"}
+                    >
+                        Додати
+                    </Button>
+                </div>
             </div>
+            {isLimitReached && (
+                <div className="px-5 py-2 bg-orange-50 dark:bg-orange-900/10 border-b border-orange-200 dark:border-orange-800/30 text-xs text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1.5 shrink-0">
+                    <AlertCircle size={14} /> Ви досягли ліміту категорій ({maxCategories}) для вашого тарифу.
+                </div>
+            )}
             <div className="flex-1 overflow-y-auto p-5 bg-(--platform-card-bg) custom-scrollbar">
                 {processedCategories.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full py-10">
@@ -268,7 +289,7 @@ const CategoryEditor = memo(({
     );
 });
 
-const CategoryManager = ({ siteId, onSavingChange }) => {
+const CategoryManager = ({ siteId, onSavingChange, maxCategories }) => {
     const [search, setSearch] = useState('');
     const [sortBy, setSortBy] = useState('name');
     const [sortOrder, setSortOrder] = useState('asc');
@@ -318,11 +339,15 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
     }, [activeCategory, setSearchParams]);
 
     const handleCreateNew = useCallback(() => {
+        if (maxCategories !== Infinity && categories.length >= maxCategories) {
+            toast.warning(`Досягнуто ліміт категорій (${maxCategories}) для вашого тарифу.`);
+            return;
+        }
         setActiveCategory(null);
         setFormData({ id: null, name: '', icon: 'folder' });
         setIsPanelOpen(true);
         setSearchParams(prev => { prev.set('categoryId', 'new'); return prev; });
-    }, [setSearchParams]);
+    }, [categories.length, maxCategories, setSearchParams]);
 
     const handleClear = useCallback(() => {
         setActiveCategory(null);
@@ -341,6 +366,10 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
         const trimmedName = formData.name.trim();
         if (!trimmedName) {
             toast.warning("Введіть назву категорії");
+            return;
+        }
+        if (!formData.id && maxCategories !== Infinity && categories.length >= maxCategories) {
+            toast.error(`Досягнуто ліміт категорій (${maxCategories}) для вашого тарифу.`);
             return;
         }
         const isDuplicate = categories.some(cat =>
@@ -369,7 +398,8 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
         } finally {
             if (onSavingChange) onSavingChange(false);
         }
-    }, [formData, categories, onSavingChange, siteId, fetchData, handleClear]);
+    }, [formData, categories, maxCategories, onSavingChange, siteId, fetchData, handleClear]);
+
     const handleDelete = useCallback(async (e, id, name) => {
         e.stopPropagation();
         if (await confirm({ title: 'Видалити категорію?', message: `Ви впевнені, що хочете видалити категорію "${name}"?`, type: 'danger', confirmLabel: 'Видалити' })) {
@@ -386,6 +416,7 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
             }
         }
     }, [confirm, onSavingChange, activeCategory, handleCreateNew, fetchData]);
+    
     if (loading) return <LoadingState title="Завантаження категорій..." />;
     return (
         <SplitViewLayout 
@@ -405,6 +436,7 @@ const CategoryManager = ({ siteId, onSavingChange }) => {
                     onSelect={handleSelectCategory}
                     onCreate={handleCreateNew}
                     onDelete={handleDelete}
+                    maxCategories={maxCategories}
                 />
             }
             content={

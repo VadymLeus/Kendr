@@ -7,13 +7,11 @@ const trackVisit = async (req, res, next) => {
     try {
         const { site_path } = req.params;
         const [sites] = await db.query('SELECT id, user_id FROM sites WHERE site_path = ?', [site_path]);
-        
         if (!sites.length) {
             return next();
         }
 
         const site = sites[0];
-
         const authHeader = req.headers['authorization'];
         if (authHeader) {
             const token = authHeader.split(' ')[1];
@@ -31,7 +29,6 @@ const trackVisit = async (req, res, next) => {
         const ip = req.ip || req.connection.remoteAddress;
         const ua = req.headers['user-agent'] || '';
         const visitorHash = crypto.createHash('sha256').update(ip + ua).digest('hex');
-
         const [existing] = await db.query(
             `SELECT id FROM site_visits 
              WHERE site_id = ? AND visitor_hash = ? 
@@ -50,7 +47,6 @@ const trackVisit = async (req, res, next) => {
                 [site.id]
             );
         }
-
         next();
     } catch (error) {
         console.error("Analytics Error:", error);

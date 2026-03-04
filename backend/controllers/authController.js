@@ -86,7 +86,11 @@ exports.login = async (req, res, next) => {
              return res.status(401).json({ message: 'Невірний логін або пароль.' });
         }
         await User.updateLastLogin(user.id);
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+        const token = jwt.sign({ 
+            id: user.id, 
+            role: user.role, 
+            plan: user.plan || 'FREE' 
+        }, process.env.JWT_SECRET, { expiresIn: '24h' });
         const hasPassword = !!user.password_hash;
         res.json({
             token,
@@ -96,6 +100,7 @@ exports.login = async (req, res, next) => {
                 email: user.email, 
                 avatar_url: user.avatar_url,
                 role: user.role,
+                plan: user.plan || 'FREE',
                 platform_theme_mode: user.platform_theme_mode,
                 platform_theme_accent: user.platform_theme_accent,
                 created_at: user.created_at,
@@ -172,7 +177,11 @@ exports.resetPassword = async (req, res, next) => {
 };
 
 exports.googleCallback = async (req, res) => {
-    const token = jwt.sign({ id: req.user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ 
+        id: req.user.id, 
+        role: req.user.role, 
+        plan: req.user.plan || 'FREE' 
+    }, process.env.JWT_SECRET, { expiresIn: '24h' });
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     res.redirect(`${clientUrl}/auth/success?token=${token}`);
 };
@@ -188,6 +197,7 @@ exports.getMe = async (req, res, next) => {
             email: user.email, 
             avatar_url: user.avatar_url,
             role: user.role,
+            plan: user.plan || 'FREE',
             platform_theme_mode: user.platform_theme_mode,
             platform_theme_accent: user.platform_theme_accent,
             platform_bg_url: user.platform_bg_url,

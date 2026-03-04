@@ -21,6 +21,32 @@ const regenerateBlockIds = (blocks) => {
     return Array.isArray(blocks) ? blocks.map(mapBlock) : blocks;
 };
 
+const RESERVED_SLUGS = [
+    'admin', 'api', 'login', 'register', 'support', 'test', 'www', 
+    'billing', 'orders', 'dashboard', 'sites', 'media', 'settings', 
+    'auth', 'user', 'users', 'system', 'root', 'static', 'assets', 'create'
+];
+
+const validateSlugOnly = (slug) => {
+    if (!slug || typeof slug !== 'string') return 'URL сайту обов\'язковий';
+    const trimmedSlug = slug.toLowerCase().trim();
+    if (trimmedSlug.length < 3 || trimmedSlug.length > 40) return 'URL сайту має бути від 3 до 40 символів';
+    if (!/^[a-z0-9-]+$/.test(trimmedSlug)) return 'URL може містити лише малі латинські літери, цифри та дефіс';
+    if (trimmedSlug.startsWith('-') || trimmedSlug.endsWith('-')) return 'URL не може починатися або закінчуватися дефісом';
+    if (trimmedSlug.includes('--')) return 'URL не може містити два дефіси підряд';
+    if (RESERVED_SLUGS.includes(trimmedSlug)) return 'Цей URL зарезервовано системою';
+    return null;
+};
+
+const validateSiteCreation = (title, slug) => {
+    if (!title || typeof title !== 'string') return 'Назва сайту обов\'язкова';
+    const trimmedTitle = title.trim();
+    if (trimmedTitle.length < 2 || trimmedTitle.length > 60) return 'Назва сайту має бути від 2 до 60 символів';
+    if (/[<>]/.test(trimmedTitle)) return 'Назва сайту містить недопустимі символи (<, >)';
+    return validateSlugOnly(slug);
+};
+
+
 exports.getSiteInfoById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -60,6 +86,12 @@ exports.getTemplates = async (req, res, next) => {
 
 exports.createSite = async (req, res, next) => {
     const { templateId, sitePath, title, selected_logo_url } = req.body;
+    const validationError = validateSiteCreation(title, sitePath);
+    if (validationError) {
+        return res.status(400).json({ message: validationError });
+    }
+    const cleanTitle = title.trim();
+    const cleanSitePath = sitePath.toLowerCase().trim();
     const userId = req.user.id;
     const connection = await db.getConnection();
     try {
@@ -73,7 +105,7 @@ exports.createSite = async (req, res, next) => {
         }
         const rawContent = template.default_block_content;
         const templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
-        const [existing] = await connection.query('SELECT id FROM sites WHERE site_path = ?', [sitePath]);
+        const [existing] = await connection.query('SELECT id FROM sites WHERE site_path = ?', [cleanSitePath]);
         if (existing.length > 0) throw new Error('Ця адреса сайту вже зайнята.');
         let logoUrl = selected_logo_url || '/logos/logo1.png'; 
         const relativeLogoUrl = logoUrl.replace(/^http:\/\/localhost:5000/, '');
@@ -83,34 +115,33 @@ exports.createSite = async (req, res, next) => {
             site_theme_mode: templateData.site_theme_mode || templateData.theme_settings?.mode || 'light',
             site_theme_accent: templateData.site_theme_accent || templateData.theme_settings?.accent || 'blue'
         };
+        
         let pagesToCreate = templateData.pages || [];
         let footerToSave = regenerateBlockIds(templateData.footer_content || []);
         let headerToSave = regenerateBlockIds(templateData.header_content || []);
         if (!templateData.pages && Array.isArray(templateData)) {
             pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }];
         }
-
         if (headerToSave.length > 0) {
             headerToSave = headerToSave.map(b => b.type === 'header' ? ({
-                ...b, data: { ...b.data, site_title: title, logo_src: relativeLogoUrl, show_title: true }
+                ...b, data: { ...b.data, site_title: cleanTitle, logo_src: relativeLogoUrl, show_title: true }
             }) : b);
         } else {
              headerToSave = [{
                 block_id: uuidv4(), type: 'header',
-                data: { site_title: title, logo_src: relativeLogoUrl, show_title: true, nav_items: [{ id: uuidv4(), label: 'Головна', link: '/' }], show_profile_icon: true, show_cart_icon: true, block_theme: 'auto' }
+                data: { site_title: cleanTitle, logo_src: relativeLogoUrl, show_title: true, nav_items: [{ id: uuidv4(), label: 'Головна', link: '/' }], show_profile_icon: true, show_cart_icon: true, block_theme: 'auto' }
             }];
         }
 
         const [siteResult] = await connection.query(
             `INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, 'private')`,
-            [userId, sitePath, title, relativeLogoUrl]
+            [userId, cleanSitePath, cleanTitle, relativeLogoUrl]
         );
         const newSiteId = siteResult.insertId;
         await connection.query(
             `UPDATE sites SET header_content = ?, footer_content = ?, theme_settings = ?, site_theme_mode = ?, site_theme_accent = ? WHERE id = ?`,
             [JSON.stringify(headerToSave), JSON.stringify(footerToSave), JSON.stringify(siteThemeConfig.theme_settings), siteThemeConfig.site_theme_mode, siteThemeConfig.site_theme_accent, newSiteId]
         );
-
         if (pagesToCreate.length > 0) {
             for (const pageData of pagesToCreate) {
                 const pageBlocks = regenerateBlockIds(pageData.blocks || []);
@@ -129,11 +160,12 @@ exports.createSite = async (req, res, next) => {
         }
 
         await connection.commit();
-        res.status(201).json({ message: 'Сайт успішно створено!', site: { id: newSiteId, site_path: sitePath } });
+        res.status(201).json({ message: 'Сайт успішно створено!', site: { id: newSiteId, site_path: cleanSitePath } });
     } catch (error) {
         await connection.rollback();
         if (req.file) await deleteFile(req.file.path);
-        res.status(500).json({ message: error.message || 'Не вдалося створити сайт.' });
+        const status = (error.message.includes('не знайдено') || error.message.includes('вже зайнята') || error.message.includes('доступу')) ? 400 : 500;
+        res.status(status).json({ message: error.message || 'Не вдалося створити сайт.' });
     } finally {
         connection.release();
     }
@@ -262,14 +294,29 @@ exports.updateSiteSettings = async (req, res, next) => {
         let processingHeaderContent = safeParse(header_content, null);
         let currentHeaderContent = processingHeaderContent || safeParse(site.header_content, []);
         let finalLogoUrl = logo_url !== undefined ? logo_url : site.logo_url;
-        let finalTitle = title !== undefined ? title : site.title;
+        let finalTitle = site.title;
+        if (title !== undefined) {
+            const trimmedTitle = title.trim();
+            if (trimmedTitle.length < 2 || trimmedTitle.length > 60) {
+                return res.status(400).json({ message: 'Назва сайту має бути від 2 до 60 символів' });
+            }
+            if (/[<>]/.test(trimmedTitle)) {
+                return res.status(400).json({ message: 'Назва сайту містить недопустимі символи (<, >)' });
+            }
+            finalTitle = trimmedTitle;
+        }
         if (processingHeaderContent && Array.isArray(processingHeaderContent)) {
             const incomingHeaderBlock = processingHeaderContent.find(b => b.type === 'header');
             if (incomingHeaderBlock && incomingHeaderBlock.data) {
                 if (incomingHeaderBlock.data.logo_src !== undefined) finalLogoUrl = incomingHeaderBlock.data.logo_src;
-                if (incomingHeaderBlock.data.site_title !== undefined) finalTitle = incomingHeaderBlock.data.site_title;
+                if (incomingHeaderBlock.data.site_title !== undefined) {
+                    const blockTitle = incomingHeaderBlock.data.site_title.trim();
+                    if (/[<>]/.test(blockTitle)) return res.status(400).json({ message: 'Назва сайту містить недопустимі символи' });
+                    finalTitle = blockTitle;
+                }
             }
         }
+        
         if (Array.isArray(currentHeaderContent)) {
             let headerFound = false;
             currentHeaderContent = currentHeaderContent.map(block => {
@@ -305,7 +352,6 @@ exports.updateSiteSettings = async (req, res, next) => {
         if (site.status === 'suspended' || site.status === 'probation') {
             finalStatus = site.status;
         }
-
         const updateData = { 
             title: finalTitle,
             status: finalStatus,
@@ -325,7 +371,6 @@ exports.updateSiteSettings = async (req, res, next) => {
             liqpay_public_key: liqpay_public_key !== undefined ? liqpay_public_key : site.liqpay_public_key,
             liqpay_private_key: liqpay_private_key !== undefined ? liqpay_private_key : site.liqpay_private_key
         };
-
         await Site.updateSettings(site.id, updateData);
         if (Array.isArray(tags)) {
             await Site.updateTags(site.id, tags);
@@ -349,16 +394,21 @@ exports.renameSite = async (req, res, next) => {
     try { 
         const { site_path: oldPath } = req.params; 
         const { newPath } = req.body; 
-        const userId = req.user.id; 
-        if (!newPath) return res.status(400).json({ message: 'Новий шлях (newPath) є обов\'язковим.' }); 
-        const sanitizedNewPath = newPath.toLowerCase().replace(/[^a-z0-9-]/g, ''); 
-        if (sanitizedNewPath.length < 3) return res.status(400).json({ message: 'Мінімум 3 символи для адреси.' }); 
+        const userId = req.user.id;
+        const slugError = validateSlugOnly(newPath);
+        if (slugError) {
+            return res.status(400).json({ message: slugError });
+        }
+        
+        const sanitizedNewPath = newPath.toLowerCase().trim();
         const existingSite = await Site.findByPath(sanitizedNewPath); 
         if (existingSite) return res.status(409).json({ message: 'Ця адреса вже зайнята. Спробуйте іншу.' }); 
+        
         const currentSite = await Site.findByPath(oldPath); 
         if (!currentSite || currentSite.user_id !== userId) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
         const [result] = await db.query('UPDATE sites SET site_path = ? WHERE site_path = ? AND user_id = ?', [sanitizedNewPath, oldPath, userId]); 
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
+        
         res.status(200).json({ message: 'Адресу сайту успішно змінено.', newPath: sanitizedNewPath }); 
     } catch (error) { 
         console.error('Помилка при перейменуванні сайту:', error); 
@@ -456,12 +506,11 @@ exports.toggleSitePin = async (req, res, next) => {
 exports.checkSlug = async (req, res, next) => {
     try {
         const { slug } = req.query;
-        if (!slug) return res.status(400).json({ message: 'Slug is required' });
-        const sanitizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
-        const reservedWords = ['admin', 'api', 'login', 'dashboard', 'settings', 'create'];
-        if (reservedWords.includes(sanitizedSlug)) {
-            return res.json({ isAvailable: false, message: 'Ця адреса зарезервована системою.' });
+        const slugError = validateSlugOnly(slug);
+        if (slugError) {
+            return res.json({ isAvailable: false, message: slugError });
         }
+        const sanitizedSlug = slug.toLowerCase().trim();
         const existingSite = await Site.findByPath(sanitizedSlug);
         if (existingSite) {
             return res.json({ isAvailable: false, message: 'Ця адреса вже зайнята.' });
