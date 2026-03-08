@@ -27,6 +27,7 @@ const RESERVED_SLUGS = [
     'auth', 'user', 'users', 'system', 'root', 'static', 'assets', 'create'
 ];
 
+const BAD_SEQUENCES = ['12345', 'qwerty', 'asdfgh', 'zxcvbn', 'password', '123123', 'qweqwe', 'йцукен'];
 const validateSlugOnly = (slug) => {
     if (!slug || typeof slug !== 'string') return 'URL сайту обов\'язковий';
     const trimmedSlug = slug.toLowerCase().trim();
@@ -35,6 +36,11 @@ const validateSlugOnly = (slug) => {
     if (trimmedSlug.startsWith('-') || trimmedSlug.endsWith('-')) return 'URL не може починатися або закінчуватися дефісом';
     if (trimmedSlug.includes('--')) return 'URL не може містити два дефіси підряд';
     if (RESERVED_SLUGS.includes(trimmedSlug)) return 'Цей URL зарезервовано системою';
+    const isRepetitive = /(.)\1{4,}/.test(trimmedSlug);
+    if (isRepetitive || BAD_SEQUENCES.some(seq => trimmedSlug.includes(seq))) {
+        return 'Адреса містить занадто просту/сміттєву послідовність';
+    }
+
     return null;
 };
 
@@ -45,7 +51,6 @@ const validateSiteCreation = (title, slug) => {
     if (/[<>]/.test(trimmedTitle)) return 'Назва сайту містить недопустимі символи (<, >)';
     return validateSlugOnly(slug);
 };
-
 
 exports.getSiteInfoById = async (req, res, next) => {
     try {
@@ -115,7 +120,6 @@ exports.createSite = async (req, res, next) => {
             site_theme_mode: templateData.site_theme_mode || templateData.theme_settings?.mode || 'light',
             site_theme_accent: templateData.site_theme_accent || templateData.theme_settings?.accent || 'blue'
         };
-        
         let pagesToCreate = templateData.pages || [];
         let footerToSave = regenerateBlockIds(templateData.footer_content || []);
         let headerToSave = regenerateBlockIds(templateData.header_content || []);
@@ -132,7 +136,6 @@ exports.createSite = async (req, res, next) => {
                 data: { site_title: cleanTitle, logo_src: relativeLogoUrl, show_title: true, nav_items: [{ id: uuidv4(), label: 'Головна', link: '/' }], show_profile_icon: true, show_cart_icon: true, block_theme: 'auto' }
             }];
         }
-
         const [siteResult] = await connection.query(
             `INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, 'private')`,
             [userId, cleanSitePath, cleanTitle, relativeLogoUrl]
@@ -158,7 +161,6 @@ exports.createSite = async (req, res, next) => {
                 [newSiteId, 'Головна', 'home', JSON.stringify([]), 1]
             );
         }
-
         await connection.commit();
         res.status(201).json({ message: 'Сайт успішно створено!', site: { id: newSiteId, site_path: cleanSitePath } });
     } catch (error) {
@@ -187,7 +189,6 @@ exports.getSites = async (req, res, next) => {
                 targetUserId = users[0].id;
             }
         }
-
         const sites = await Site.getPublic({ 
             searchTerm: search, 
             userId: targetUserId, 
@@ -214,13 +215,11 @@ exports.getSiteByPath = async (req, res, next) => {
         if (!site) {
             return res.status(200).json(null); 
         }
-
         let isAdmin = false;
         if (req.user) {
             const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
             if (currentUser[0]?.role === 'admin') isAdmin = true;
         }
-
         const isOwner = req.user && req.user.id === site.user_id;
         if (site.status === 'suspended') {
             if (!isAdmin) {
@@ -230,13 +229,11 @@ exports.getSiteByPath = async (req, res, next) => {
                 });
             }
         }
-
         if (site.status === 'probation') {
             if (!isOwner && !isAdmin) {
                 return res.status(403).json({ message: 'Сайт знаходиться на модерації.' });
             }
         }
-
         let page;
         if (slug) page = await Page.findBySiteIdAndSlug(site.id, slug);
         else page = await Page.findHomepageBySiteId(site.id);
@@ -244,7 +241,6 @@ exports.getSiteByPath = async (req, res, next) => {
             if (slug) return res.status(200).json(null); 
             return res.status(200).json(null);
         }
-
         const [tags] = await db.query(`SELECT t.id, t.name FROM tags t JOIN site_tags st ON t.id = st.tag_id WHERE st.site_id = ?`, [site.id]);
         res.json({ 
             ...site, 
@@ -285,7 +281,6 @@ exports.updateSiteSettings = async (req, res, next) => {
             liqpay_public_key,
             liqpay_private_key
         } = req.body;
-
         const safeParse = (data, fallback) => {
             if (!data) return fallback;
             if (typeof data === 'object') return data;
@@ -316,7 +311,6 @@ exports.updateSiteSettings = async (req, res, next) => {
                 }
             }
         }
-        
         if (Array.isArray(currentHeaderContent)) {
             let headerFound = false;
             currentHeaderContent = currentHeaderContent.map(block => {
@@ -347,7 +341,6 @@ exports.updateSiteSettings = async (req, res, next) => {
                 });
             }
         }
-
         let finalStatus = (status !== undefined) ? status : site.status;
         if (site.status === 'suspended' || site.status === 'probation') {
             finalStatus = site.status;
@@ -399,16 +392,13 @@ exports.renameSite = async (req, res, next) => {
         if (slugError) {
             return res.status(400).json({ message: slugError });
         }
-        
         const sanitizedNewPath = newPath.toLowerCase().trim();
         const existingSite = await Site.findByPath(sanitizedNewPath); 
         if (existingSite) return res.status(409).json({ message: 'Ця адреса вже зайнята. Спробуйте іншу.' }); 
-        
         const currentSite = await Site.findByPath(oldPath); 
         if (!currentSite || currentSite.user_id !== userId) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
         const [result] = await db.query('UPDATE sites SET site_path = ? WHERE site_path = ? AND user_id = ?', [sanitizedNewPath, oldPath, userId]); 
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
-        
         res.status(200).json({ message: 'Адресу сайту успішно змінено.', newPath: sanitizedNewPath }); 
     } catch (error) { 
         console.error('Помилка при перейменуванні сайту:', error); 

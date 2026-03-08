@@ -8,7 +8,8 @@ const db = require('../config/db');
 
 exports.register = async (req, res, next) => {
     try {
-        const { username, email, password, avatar_url: selected_avatar_url } = req.body;
+        const { email, password, avatar_url: selected_avatar_url } = req.body;
+        const username = req.body.username.replace(/_/g, ' ').trim().replace(/\s+/g, ' ');
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ message: 'Пароль занадто слабкий.' });
@@ -27,9 +28,11 @@ exports.register = async (req, res, next) => {
         } else if (selected_avatar_url) {
             avatar_url = selected_avatar_url;
         }
+        const slug = await User.generateSlug(username);
         const verificationToken = crypto.randomBytes(32).toString('hex');
         await User.create({ 
             username, 
+            slug,
             email, 
             password, 
             avatar_url,
@@ -97,6 +100,7 @@ exports.login = async (req, res, next) => {
             user: { 
                 id: user.id, 
                 username: user.username, 
+                slug: user.slug,
                 email: user.email, 
                 avatar_url: user.avatar_url,
                 role: user.role,
@@ -194,6 +198,7 @@ exports.getMe = async (req, res, next) => {
         res.json({
             id: user.id, 
             username: user.username, 
+            slug: user.slug,
             email: user.email, 
             avatar_url: user.avatar_url,
             role: user.role,

@@ -37,7 +37,7 @@ const getFormattedDate = (dateString) => {
 };
 
 const ProfilePage = () => {
-    const { username } = useParams();
+    const { slug } = useParams();
     const { user: authUser } = useContext(AuthContext);
     const [profileData, setProfileData] = useState(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
@@ -46,13 +46,13 @@ const ProfilePage = () => {
     const [sitesLoading, setSitesLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState('created_at:desc');
-    const isOwner = authUser && authUser.username === username;
+    const isOwner = authUser && authUser.slug === slug;
     useEffect(() => {
         const fetchProfile = async () => {
             try {
                 setLoadingProfile(true);
                 setErrorStatus(null);
-                const response = await apiClient.get(`/users/${username}`, {
+                const response = await apiClient.get(`/users/${slug}`, {
                     suppressToast: true
                 });
                 const data = response.data?.user || response.data?.data || response.data;
@@ -68,7 +68,7 @@ const ProfilePage = () => {
             }
         };
         fetchProfile();
-    }, [username]);
+    }, [slug]);
 
     const fetchUserSites = useCallback(async () => {
         if (!profileData) return;
@@ -76,7 +76,6 @@ const ProfilePage = () => {
             setSitesLoading(true);
             const params = {
                 userId: profileData.id,
-                username: username,
                 search: searchTerm,
                 sort: sortOption,
             };
@@ -87,7 +86,7 @@ const ProfilePage = () => {
         } finally {
             setSitesLoading(false);
         }
-    }, [profileData, username, searchTerm, sortOption]);
+    }, [profileData, searchTerm, sortOption]);
 
     useEffect(() => {
         if (profileData) {
@@ -168,7 +167,7 @@ const ProfilePage = () => {
                 <div style={errorContainerStyle}>
                     <div style={errorIconCircleStyle}><EyeOff size={40} /></div>
                     <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Цей профіль закритий</h2>
-                    <p style={{ maxWidth: '400px', lineHeight: '1.6' }}>Користувач <strong>@{username}</strong> обмежив доступ до своєї сторінки.</p>
+                    <p style={{ maxWidth: '400px', lineHeight: '1.6' }}>Користувач обмежив доступ до своєї сторінки.</p>
                     <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
                 </div>
             </div>
@@ -182,7 +181,7 @@ const ProfilePage = () => {
                 <div style={errorContainerStyle}>
                     <div style={errorIconCircleStyle}><Search size={40} /></div>
                     <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Користувача не знайдено</h2>
-                    <p>Ми не змогли знайти профіль з іменем <strong>@{username}</strong>.</p>
+                    <p>Ми не змогли знайти такий профіль.</p>
                     <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
                 </div>
             </div>
@@ -190,7 +189,7 @@ const ProfilePage = () => {
     }
     
     if (errorStatus) return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-danger)' }}>Сталася помилка при завантаженні профілю.</div>;
-    const displayUsername = (isOwner ? authUser?.username : profileData?.username) || username || 'Користувач';
+    const displayUsername = profileData?.username || 'Користувач';
     const displayAvatarUrl = isOwner ? authUser?.avatar_url : profileData?.avatar_url;
     const displayDate = profileData?.createdAt || profileData?.created_at || (isOwner ? authUser?.created_at : null);
     const displaySiteCount = profileData?.siteCount !== undefined ? profileData.siteCount : (sitesLoading ? '-' : userSites.length);

@@ -4,6 +4,16 @@ const crypto = require('crypto');
 const emailService = require('../utils/emailService');
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const generateOrderNumber = (size = 12) => {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let id = '';
+    const bytes = crypto.randomBytes(size);
+    for (let i = 0; i < size; i++) {
+        id += chars[bytes[i] % chars.length];
+    }
+    return id;
+};
+
 const generateLiqPayData = (orderId, amount, publicKey, privateKey) => {
     const liqpayParams = {
         public_key: publicKey,
@@ -75,18 +85,15 @@ exports.processCheckout = async (req, res, next) => {
                 options: reqItem.options || {}
             });
         }
-
         if (!isDigitalOnly && (!customerData || !customerData.address || !customerData.address.trim())) {
             throw new Error('Адреса доставки обов\'язкова для фізичних товарів.');
         }
-
-        const [orderRes] = await connection.query(
-            `INSERT INTO orders (site_id, customer_id, customer_name, customer_email, customer_phone, delivery_address, total_amount, status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-            [siteId, userId, deliveryName, realUserEmail, deliveryPhone, isDigitalOnly ? 'Цифрова доставка' : customerData.address, total]
+        const orderId = generateOrderNumber();
+        await connection.query(
+            `INSERT INTO orders (id, site_id, customer_id, customer_name, customer_email, customer_phone, delivery_address, total_amount, status) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+            [orderId, siteId, userId, deliveryName, realUserEmail, deliveryPhone, isDigitalOnly ? 'Цифрова доставка' : customerData.address, total]
         );
-        
-        const orderId = orderRes.insertId;
         for (const item of validatedItems) {
             await connection.query(
                 `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, type, digital_file_url, options) 
@@ -96,7 +103,7 @@ exports.processCheckout = async (req, res, next) => {
         }
         await connection.commit();
         const paymentData = generateLiqPayData(orderId, total, sitePublicKey, sitePrivateKey);
-        res.status(200).json(paymentData);
+        res.status(200).json({ ...paymentData, orderId });
     } catch (error) {
         await connection.rollback();
         console.error("Помилка при створенні замовлення:", error);
@@ -125,7 +132,6 @@ exports.generatePaymentForOrder = async (req, res) => {
                 }
             }
         }
-
         const [sites] = await db.query('SELECT liqpay_public_key, liqpay_private_key FROM sites WHERE id = ?', [order.site_id]);
         if (!sites[0] || !sites[0].liqpay_public_key || !sites[0].liqpay_private_key) {
             return res.status(400).json({ message: 'Магазин тимчасово не може приймати оплату.' });
@@ -159,7 +165,6 @@ exports.liqpayCallback = async (req, res) => {
             console.error('Невірний підпис LiqPay для замовлення', realOrderId);
             return res.status(403).send('Invalid signature');
         }
-        
         if (status === 'success' || status === 'wait_accept') {
             if (order.status === 'pending') {
                 await db.query(`UPDATE orders SET status = 'paid' WHERE id = ?`, [realOrderId]);
@@ -172,7 +177,6 @@ exports.liqpayCallback = async (req, res) => {
                         );
                     }
                 }
-
                 const digitalItems = items.filter(item => item.type === 'digital' && item.digital_file_url);
                 if (digitalItems.length > 0) {
                     await emailService.sendDigitalGoodsEmail(order.customer_email, order.customer_name, digitalItems, siteAccentColor);

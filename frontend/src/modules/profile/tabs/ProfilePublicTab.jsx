@@ -4,7 +4,8 @@ import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Input, Button } from '../../../shared/ui/elements'; 
-import { Globe, Send, Instagram, Copy, ExternalLink, Eye, EyeOff, Check } from 'lucide-react';
+import { useCooldown } from '../../../shared/hooks/useCooldown';
+import { Globe, Send, Instagram, Copy, ExternalLink, Eye, EyeOff, Check, Timer } from 'lucide-react';
 
 const PublicProfileTab = () => {
     const { user, updateUser } = useContext(AuthContext);
@@ -16,7 +17,7 @@ const PublicProfileTab = () => {
         social_website: user.social_website || '',
         is_profile_public: user.is_profile_public
     });
-
+    const [publicCooldown, startPublicCooldown] = useCooldown('kendr_public_update_cooldown');
     const handleChange = (e) => {
         const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
         setFormData({ ...formData, [e.target.name]: value });
@@ -24,25 +25,47 @@ const PublicProfileTab = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (publicCooldown > 0) {
+            toast.warning(`Зачекайте ${publicCooldown}с перед наступним оновленням.`);
+            return;
+        }
+
+        const cleanBio = formData.bio.trim().replace(/[<>]/g, '').slice(0, 300);
+        const cleanTelegram = formData.social_telegram.trim().replace(/[<>]/g, '');
+        const cleanInstagram = formData.social_instagram.trim().replace(/[<>]/g, '');
+        let website = formData.social_website.trim();
+        if (website && !/^https?:\/\//i.test(website)) {
+            toast.error('Сайт повинен починатися з http:// або https://');
+            return;
+        }
+        
         setIsLoading(true);
         try {
-            const response = await apiClient.put('/users/profile', formData);
+            const payload = {
+                ...formData,
+                bio: cleanBio,
+                social_telegram: cleanTelegram,
+                social_instagram: cleanInstagram,
+                social_website: website
+            };
+            const response = await apiClient.put('/users/profile', payload);
             updateUser(response.data.user);
+            setFormData(payload);
             toast.success('Публічний профіль оновлено!');
+            startPublicCooldown(30);
         } catch (e) {
             console.error(e);
-            toast.error('Помилка збереження');
+            toast.error(e.response?.data?.message || 'Помилка збереження');
         } finally { 
             setIsLoading(false); 
         }
     };
 
-    const profileUrl = `${window.location.origin}/profile/${user.username}`;
+    const profileUrl = `${window.location.origin}/profile/${user.slug}`;
     const copyLink = () => {
         navigator.clipboard.writeText(profileUrl);
         toast.info('Посилання скопійовано');
     };
-
     const openLink = () => {
         window.open(profileUrl, '_blank');
     };
@@ -63,7 +86,6 @@ const PublicProfileTab = () => {
                                 : 'Ваш профіль прихований. Його бачите лише ви.'}
                         </p>
                     </div>
-
                     <label className="toggle-switch">
                         <input 
                             type="checkbox" 
@@ -74,7 +96,6 @@ const PublicProfileTab = () => {
                         <span className="slider"></span>
                     </label>
                 </div>
-
                 {formData.is_profile_public && (
                     <div className="link-box">
                         <a href={profileUrl} target="_blank" rel="noreferrer" className="profile-link">
@@ -97,7 +118,6 @@ const PublicProfileTab = () => {
                     </div>
                 )}
             </div>
-
             <div className="profile-card">
                 <h3 className="section-title">
                     <Globe size={20} className="accent-icon" />
@@ -106,19 +126,23 @@ const PublicProfileTab = () => {
                 <p className="section-desc">
                     Ця інформація буде відображена на вашій публічній сторінці.
                 </p>
-
                 <form onSubmit={handleSubmit} className="profile-form">
                     <div className="input-group">
-                        <label className="input-label">Про себе (Bio)</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '4px' }}>
+                            <label className="input-label">Про себе (Bio)</label>
+                            <span style={{ fontSize: '0.8rem', color: formData.bio.length >= 300 ? 'var(--platform-danger)' : 'var(--platform-text-secondary)', fontWeight: formData.bio.length >= 300 ? 'bold' : 'normal' }}>
+                                {formData.bio.length}/300
+                            </span>
+                        </div>
                         <textarea 
                             name="bio" 
                             value={formData.bio} 
                             onChange={handleChange}
+                            maxLength={300}
                             className="bio-textarea"
                             placeholder="Розкажіть трохи про себе, ваші навички та інтереси..."
                         />
                     </div>
-                    
                     <div className="social-grid">
                         <Input 
                             name="social_telegram" 
@@ -137,7 +161,6 @@ const PublicProfileTab = () => {
                             placeholder="@username"
                         />
                     </div>
-
                     <Input 
                         name="social_website" 
                         label="Особистий сайт" 
@@ -145,11 +168,15 @@ const PublicProfileTab = () => {
                         onChange={handleChange}
                         icon={<Globe size={18} />}
                         placeholder="https://mysite.com"
+                        helperText="Обов'язково має починатися з http:// або https://"
                     />
-
                     <div className="form-footer">
-                        <Button type="submit" disabled={isLoading} icon={isLoading ? null : <Check size={18} />}>
-                            {isLoading ? 'Збереження...' : 'Зберегти зміни'}
+                        <Button 
+                            type="submit" 
+                            disabled={isLoading || publicCooldown > 0} 
+                            icon={isLoading ? null : (publicCooldown > 0 ? <Timer size={18} /> : <Check size={18} />)}
+                        >
+                            {isLoading ? 'Збереження...' : (publicCooldown > 0 ? `Зачекайте ${publicCooldown}с` : 'Зберегти зміни')}
                         </Button>
                     </div>
                 </form>
@@ -258,7 +285,7 @@ const STYLES = `
         padding-top: 24px;
         border-top: 1px solid var(--platform-border-color);
         display: flex;
-        justify-content: flex-end;
+        justify-content: center;
         align-items: center;
     }
 
@@ -293,7 +320,6 @@ const STYLES = `
         border: 2px solid var(--platform-sidebar-bg);
     }
     .bio-textarea::-webkit-scrollbar-thumb:hover { background-color: var(--platform-accent); }
-
     .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .slider {

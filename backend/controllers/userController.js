@@ -6,14 +6,33 @@ const fs = require('fs');
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
 const db = require('../config/db');
-const sanitizeUser = (user) => {
-    return {
+const getUserStats = async (userId, plan) => {
+    try {
+        const [siteRows] = await db.query('SELECT COUNT(id) as count FROM sites WHERE user_id = ?', [userId]);
+        const [mediaRows] = await db.query('SELECT COUNT(id) as count FROM user_media WHERE user_id = ?', [userId]);
+        const isPlus = plan === 'PLUS';
+        return {
+            siteCount: siteRows[0].count || 0,
+            siteLimit: isPlus ? Infinity : 2,
+            mediaCount: mediaRows[0].count || 0,
+            mediaLimit: isPlus ? Infinity : 50
+        };
+    } catch (err) {
+        console.error("Помилка отримання статистики:", err);
+        return { siteCount: 0, siteLimit: 2, mediaCount: 0, mediaLimit: 50 };
+    }
+};
+
+const sanitizeUser = (user, stats = null) => {
+    const sanitized = {
         id: user.id,
         username: user.username,
+        slug: user.slug,
         email: user.email,
         phone_number: user.phone_number,
         avatar_url: user.avatar_url,
         role: user.role,
+        plan: user.plan || 'FREE',
         platform_theme_mode: user.platform_theme_mode,
         platform_theme_accent: user.platform_theme_accent,
         platform_bg_url: user.platform_bg_url,
@@ -27,18 +46,24 @@ const sanitizeUser = (user) => {
         has_password: !!user.password_hash,
         created_at: user.created_at
     };
+    
+    if (stats) {
+        sanitized.stats = stats;
+    }
+    
+    return sanitized;
 };
 
 exports.getPublicProfile = async (req, res, next) => {
     try {
-        const user = await User.findByUsername(req.params.username);
+        const targetSlug = req.params.slug || req.params.username;
+        const user = await User.findBySlug(targetSlug);
         if (!user) {
             return res.status(404).json({ 
                 message: 'Користувача не знайдено',
                 code: 'USER_NOT_FOUND' 
             });
         }
-        
         if (user.role === 'admin') {
             const isOwner = req.user && req.user.id === user.id;
             const isRequesterAdmin = req.user && req.user.role === 'admin';
@@ -49,7 +74,6 @@ exports.getPublicProfile = async (req, res, next) => {
                 });
             }
         }
-
         if (!user.is_profile_public) {
             const isOwner = req.user && req.user.id === user.id;
             const isAdmin = req.user && req.user.role === 'admin';
@@ -61,16 +85,15 @@ exports.getPublicProfile = async (req, res, next) => {
                 });
             }
         }
-
         const [siteCount, totalViews, warnings] = await Promise.all([
             User.getSiteCount(user.id),
             User.getTotalSiteViews(user.id),
             Warning.findForUser(user.id)
         ]);
-        
         const publicData = {
             id: user.id,
             username: user.username,
+            slug: user.slug,
             createdAt: user.created_at,
             siteCount: siteCount,
             totalViews: totalViews,
@@ -95,7 +118,7 @@ exports.updateProfile = async (req, res, next) => {
     try {
         const userId = req.user.id;
         const allowedFields = [
-            'username', 'email', 'phone_number', 
+            'username', 'phone_number', 
             'platform_theme_mode', 'platform_theme_accent', 
             'platform_bg_url', 'platform_bg_blur', 'platform_bg_brightness',
             'bio', 'social_telegram', 'social_instagram', 'social_website', 
@@ -107,20 +130,43 @@ exports.updateProfile = async (req, res, next) => {
                 updates[key] = req.body[key];
             }
         });
+        if (updates.phone_number) {
+            const phoneRegex = /^[0-9+\-\(\)\s]*$/;
+            if (!phoneRegex.test(updates.phone_number)) {
+                return res.status(400).json({ message: 'Некоректний формат телефону. Використовуйте лише цифри та символи + ( ) -' });
+            }
+        }
+        if (updates.bio !== undefined) {
+            updates.bio = updates.bio.replace(/[<>]/g, '').trim().substring(0, 300);
+        }
+        if (updates.social_website !== undefined) {
+            updates.social_website = updates.social_website.trim();
+            if (updates.social_website && !/^https?:\/\//i.test(updates.social_website)) {
+                return res.status(400).json({ message: "Посилання на сайт має починатися з http:// або https://" });
+            }
+        }
+        if (updates.social_telegram !== undefined) {
+            updates.social_telegram = updates.social_telegram.replace(/[<>]/g, '').trim();
+        }
+        if (updates.social_instagram !== undefined) {
+            updates.social_instagram = updates.social_instagram.replace(/[<>]/g, '').trim();
+        }
         if (updates.username) {
             const [rows] = await db.query('SELECT id FROM users WHERE username = ? AND id != ?', [updates.username, userId]);
             if (rows.length > 0) {
                 return res.status(400).json({ message: 'Це ім\'я користувача вже зайнято.' });
             }
+            updates.slug = await User.generateSlug(updates.username);
         }
         if (Object.keys(updates).length === 0) {
             return res.status(400).json({ message: 'Немає даних для оновлення' });
         }
         const updatedUserRaw = await User.update(userId, updates);
         const hasPwd = await User.hasPassword(userId);
+        const stats = await getUserStats(userId, updatedUserRaw.plan);
         res.json({ 
             message: 'Профіль успішно оновлено!', 
-            user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd })
+            user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }, stats)
         });
     } catch (error) {
         next(error);
@@ -135,7 +181,7 @@ exports.changePassword = async (req, res, next) => {
         const user = userRows[0];
         if (user.password_hash) {
             if (!currentPassword) {
-                return res.status(400).json({ message: 'Введіть поточний пароль.' });
+                return res.status(400).json({ message: 'Введіть поточний пароль для підтвердження.' });
             }
             const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
             if (!isMatch) {
@@ -146,9 +192,10 @@ exports.changePassword = async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(newPassword, salt);
         await User.update(userId, { password_hash: hashedPassword });
         const updatedUserRaw = await User.findById(userId);
+        const stats = await getUserStats(userId, updatedUserRaw.plan);
         res.json({ 
             message: user.password_hash ? 'Пароль успішно змінено.' : 'Пароль успішно встановлено.',
-            user: sanitizeUser({ ...updatedUserRaw, has_password: true }) 
+            user: sanitizeUser({ ...updatedUserRaw, has_password: true }, stats) 
         });
 
     } catch (error) {
@@ -185,9 +232,10 @@ exports.updateAvatarUrl = async (req, res, next) => {
         }
         const updatedUserRaw = await User.update(userId, { avatar_url });
         const hasPwd = await User.hasPassword(userId);
+        const stats = await getUserStats(userId, updatedUserRaw.plan);
         res.json({ 
             message: 'Аватар оновлено!', 
-            user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }) 
+            user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }, stats) 
         });
     } catch (error) {
         next(error);
@@ -218,9 +266,10 @@ exports.uploadAvatar = async (req, res, next) => {
         }
         const updatedUserRaw = await User.update(userId, { avatar_url: newAvatarUrl });
         const hasPwd = await User.hasPassword(userId);
+        const stats = await getUserStats(userId, updatedUserRaw.plan);
         res.json({ 
             message: 'Аватар завантажено!', 
-            user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }) 
+            user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }, stats) 
         });
     } catch (error) {
         await deleteFile(req.file.path); 
@@ -232,14 +281,11 @@ exports.deleteAvatar = async (req, res, next) => {
     try {
         await db.query('UPDATE users SET avatar_url = NULL WHERE id = ?', [req.user.id]);
         const user = await User.findById(req.user.id);
+        const stats = await getUserStats(req.user.id, user.plan);
+
         res.json({ 
             message: 'Аватар видалено', 
-            user: {
-                ...user,
-                password_hash: undefined,
-                verification_token: undefined,
-                reset_token: undefined
-            }
+            user: sanitizeUser({ ...user, has_password: await User.hasPassword(req.user.id) }, stats)
         });
     } catch (error) {
         next(error);

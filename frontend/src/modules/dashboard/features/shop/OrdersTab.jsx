@@ -103,7 +103,6 @@ const OrdersTab = ({ site, siteData }) => {
                 </span>
             );
         }
-        
         return (
             <div className="w-50">
                 <CustomSelect
@@ -120,8 +119,8 @@ const OrdersTab = ({ site, siteData }) => {
         let result = [...orders];
         if (search.trim()) {
             const query = search.toLowerCase();
-            result = result.filter(o => 
-                o.id.toString().includes(query) ||
+            result = result.filter(o =>
+                o.id.toString().toLowerCase().includes(query) ||
                 (o.customer_name || '').toLowerCase().includes(query) ||
                 (o.customer_email || '').toLowerCase().includes(query) ||
                 (o.customer_phone || '').includes(query)
@@ -137,7 +136,7 @@ const OrdersTab = ({ site, siteData }) => {
             } else if (sortBy === 'amount') {
                 comparison = parseFloat(a.total_amount) - parseFloat(b.total_amount);
             } else if (sortBy === 'id') {
-                comparison = a.id - b.id;
+                comparison = a.id.toString().localeCompare(b.id.toString());
             }
             return sortOrder === 'asc' ? comparison : comparison * -1;
         });

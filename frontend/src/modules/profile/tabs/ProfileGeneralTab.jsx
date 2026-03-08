@@ -7,8 +7,10 @@ import { toast } from 'react-toastify';
 import { Input, Button } from '../../../shared/ui/elements';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import ImageUploadTrigger from '../../../shared/ui/complex/ImageUploadTrigger';
+import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
-import { User, Mail, Phone, Trash2, Camera, LogOut, Check, Upload } from 'lucide-react';
+import { useCooldown } from '../../../shared/hooks/useCooldown';
+import { User, Mail, Phone, Trash2, Camera, LogOut, Check, Upload, BarChart2, Zap, LayoutTemplate, HardDrive, Timer } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
@@ -19,6 +21,8 @@ const ProfileGeneralTab = () => {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [updateCooldown, startUpdateCooldown] = useCooldown('kendr_profile_update_cooldown');
     useEffect(() => {
         if (user) {
             setFormData({
@@ -31,8 +35,18 @@ const ProfileGeneralTab = () => {
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (updateCooldown > 0) {
+            toast.warning(`Зачекайте ${updateCooldown}с перед наступним оновленням.`);
+            return;
+        }
+
         if (!formData.username || formData.username.trim().length < 3) {
             toast.warn('Нікнейм повинен містити мінімум 3 символи');
+            return;
+        }
+        const phoneRegex = /^[0-9+\-\(\)\s]*$/;
+        if (formData.phone_number && !phoneRegex.test(formData.phone_number)) {
+            toast.error('Некоректний формат телефону. Використовуйте лише цифри та символи + ( ) -');
             return;
         }
 
@@ -41,6 +55,7 @@ const ProfileGeneralTab = () => {
             const response = await apiClient.put('/users/profile', formData);
             updateUser(response.data.user);
             toast.success('Профіль оновлено!');
+            startUpdateCooldown(30);
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.message || 'Помилка оновлення');
@@ -50,6 +65,17 @@ const ProfileGeneralTab = () => {
     };
 
     const handleAvatarUpload = async (file) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('Дозволені лише формати JPG, PNG та WEBP.');
+            return;
+        }
+        
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('Файл занадто великий. Максимальний розмір — 2 МБ.');
+            return;
+        }
+
         setIsAvatarUploading(true);
         try {
             const data = new FormData();
@@ -76,6 +102,7 @@ const ProfileGeneralTab = () => {
     };
 
     const handleLogout = () => {
+        setIsLogoutModalOpen(false);
         logout();
         navigate('/auth');
         toast.info("Ви вийшли з системи");
@@ -124,6 +151,8 @@ const ProfileGeneralTab = () => {
         margin: 0 
     };
 
+    const stats = user.stats || { siteCount: 0, siteLimit: 2, mediaCount: 0, mediaLimit: 50 };
+    const isPlus = user.plan === 'PLUS';
     return (
         <div style={containerStyle}>
             <style>{`
@@ -189,6 +218,41 @@ const ProfileGeneralTab = () => {
                 .trash-btn:hover {
                     background: var(--platform-danger) !important;
                 }
+                
+                .stat-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 12px 16px;
+                    background: var(--platform-bg);
+                    border-radius: 12px;
+                    border: 1px solid var(--platform-border-color);
+                    margin-bottom: 12px;
+                }
+                
+                .stat-label {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-size: 0.95rem;
+                    color: var(--platform-text-primary);
+                    font-weight: 500;
+                }
+                
+                .stat-value {
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                }
+                
+                .tariff-badge {
+                    background: ${isPlus ? 'var(--platform-accent)' : 'var(--platform-border-color)'};
+                    color: ${isPlus ? '#fff' : 'var(--platform-text-primary)'};
+                    padding: 4px 10px;
+                    border-radius: 8px;
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                }
             `}</style>
 
             <div style={gridLayout}>
@@ -199,10 +263,9 @@ const ProfileGeneralTab = () => {
                             Фото профілю
                         </h3>
                         <p style={{ ...sectionDescStyle, marginTop: '4px' }}>
-                            Натисніть на фото, щоб змінити.
+                            Формати: JPG, PNG, WEBP. Макс: 2 МБ.
                         </p>
                     </div>
-
                     <div style={{ 
                         flex: 1, 
                         display: 'flex', 
@@ -248,7 +311,6 @@ const ProfileGeneralTab = () => {
                                 </button>
                             )}
                         </div>
-
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--platform-text-primary)' }}>
                                 {user.username}
@@ -269,8 +331,7 @@ const ProfileGeneralTab = () => {
                             Керуйте своїм публічним іменем та контактами.
                         </p>
                     </div>
-
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
                         <Input 
                             name="username" 
                             label="Нікнейм" 
@@ -281,7 +342,6 @@ const ProfileGeneralTab = () => {
                             showCounter={true}
                             helperText="Мінімум 3 символи"
                         />
-
                         <Input 
                             name="email" 
                             label="Email" 
@@ -289,8 +349,8 @@ const ProfileGeneralTab = () => {
                             disabled 
                             leftIcon={<Mail size={18} />}
                             style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                            helperText="Email змінити неможливо з міркувань безпеки"
                         />
-
                         <Input 
                             name="phone_number" 
                             label="Телефон" 
@@ -300,19 +360,55 @@ const ProfileGeneralTab = () => {
                             placeholder="+380..."
                             maxLength={20}
                         />
-
-                        <div style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <div style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', justifyContent: 'center' }}>
                             <Button 
                                 type="submit" 
-                                disabled={isLoading} 
-                                icon={isLoading ? null : <Check size={18} />}
+                                disabled={isLoading || updateCooldown > 0} 
+                                icon={isLoading ? null : (updateCooldown > 0 ? <Timer size={18} /> : <Check size={18} />)}
                             >
-                                {isLoading ? 'Збереження...' : 'Зберегти зміни'}
+                                {isLoading ? 'Збереження...' : (updateCooldown > 0 ? `Зачекайте ${updateCooldown}с` : 'Зберегти зміни')}
                             </Button>
                         </div>
                     </form>
                 </div>
-
+                <div style={{ ...cardStyle, gridColumn: '1 / -1' }}>
+                    <div style={{ marginBottom: '20px' }}>
+                        <h3 style={sectionTitleStyle}>
+                            <BarChart2 size={22} style={{ color: 'var(--platform-accent)' }} />
+                            Статистика та Ліміти
+                        </h3>
+                        <p style={{ ...sectionDescStyle, marginTop: '4px' }}>
+                            Поточний стан вашого акаунту та використання ресурсів.
+                        </p>
+                    </div>
+                    <div className="stat-row">
+                        <div className="stat-label">
+                            <Zap size={18} style={{ color: isPlus ? 'var(--platform-accent)' : 'var(--platform-text-secondary)' }} />
+                            Поточний тариф
+                        </div>
+                        <div className="stat-value">
+                            <span className="tariff-badge">{user.plan || 'FREE'}</span>
+                        </div>
+                    </div>
+                    <div className="stat-row">
+                        <div className="stat-label">
+                            <LayoutTemplate size={18} style={{ color: 'var(--platform-text-secondary)' }} />
+                            Створено сайтів
+                        </div>
+                        <div className="stat-value" style={{ color: stats.siteCount >= stats.siteLimit ? 'var(--platform-danger)' : 'inherit' }}>
+                            {stats.siteCount} / {stats.siteLimit === Infinity ? '∞' : stats.siteLimit}
+                        </div>
+                    </div>
+                    <div className="stat-row" style={{ marginBottom: 0 }}>
+                        <div className="stat-label">
+                            <HardDrive size={18} style={{ color: 'var(--platform-text-secondary)' }} />
+                            Завантажено файлів
+                        </div>
+                        <div className="stat-value" style={{ color: stats.mediaCount >= stats.mediaLimit ? 'var(--platform-danger)' : 'inherit' }}>
+                            {stats.mediaCount} / {stats.mediaLimit === Infinity ? '∞' : stats.mediaLimit}
+                        </div>
+                    </div>
+                </div>
                 <div style={{ 
                     ...cardStyle, 
                     borderColor: 'var(--platform-border-color)', 
@@ -320,33 +416,19 @@ const ProfileGeneralTab = () => {
                     gridColumn: '1 / -1',
                     padding: '32px'
                 }}>
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        flexWrap: 'wrap', 
-                        gap: '16px' 
-                    }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                         <div style={{ flex: 1 }}>
-                            <h3 style={{ 
-                                ...sectionTitleStyle, 
-                                marginBottom: '4px' 
-                            }}>
+                            <h3 style={{ ...sectionTitleStyle, marginBottom: '4px' }}>
                                 <LogOut size={22} style={{ color: 'var(--platform-text-secondary)' }} />
                                 Вихід з акаунту
                             </h3>
-                            <p style={{ 
-                                margin: 0, 
-                                color: 'var(--platform-text-secondary)', 
-                                fontSize: '0.9rem', 
-                                opacity: 0.8 
-                            }}>
+                            <p style={{ margin: 0, color: 'var(--platform-text-secondary)', fontSize: '0.9rem', opacity: 0.8 }}>
                                 Це завершить вашу поточну сесію в цьому браузері.
                             </p>
                         </div>
                         <Button 
                             variant="secondary" 
-                            onClick={handleLogout} 
+                            onClick={() => setIsLogoutModalOpen(true)} 
                             icon={<LogOut size={16} />}
                             style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
                         >
@@ -355,6 +437,16 @@ const ProfileGeneralTab = () => {
                     </div>
                 </div>
             </div>
+            <ConfirmModal 
+                isOpen={isLogoutModalOpen}
+                title="Вихід"
+                message="Ви впевнені, що хочете вийти з акаунту?"
+                confirmLabel="Вийти"
+                cancelLabel="Скасувати"
+                onConfirm={handleLogout}
+                onCancel={() => setIsLogoutModalOpen(false)}
+                type="danger"
+            />
         </div>
     );
 };

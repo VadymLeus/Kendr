@@ -1,8 +1,12 @@
 // backend/config/mediaLimits.js
-const COMMON_EXTENSIONS_FREE = ['.jpg', '.jpeg', '.png', '.webp'];
-const COMMON_MIME_TYPES_FREE = ['image/jpeg', 'image/png', 'image/webp'];
-const COMMON_EXTENSIONS_PLUS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.mp4', '.webm', '.ogg', '.ttf', '.otf', '.woff', '.woff2'];
-const COMMON_MIME_TYPES_PLUS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif','video/mp4', 'video/webm', 'video/ogg','font/ttf', 'font/otf', 'font/woff', 'font/woff2','application/x-font-ttf', 'application/x-font-opentype', 'application/font-woff', 'application/font-woff2'];
+const COMMON_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.mp4', '.webm', '.ogg', '.ttf', '.otf', '.woff', '.woff2'];
+const COMMON_MIME_TYPES = [
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    'video/mp4', 'video/webm', 'video/ogg',
+    'font/ttf', 'font/otf', 'font/woff', 'font/woff2',
+    'application/x-font-ttf', 'application/x-font-opentype', 'application/font-woff', 'application/font-woff2'
+];
+
 const PLAN_LIMITS = {
     FREE: {
         maxFiles: 50,
@@ -10,8 +14,8 @@ const PLAN_LIMITS = {
         maxSites: 2,
         maxProducts: 50,
         maxCategories: 20,
-        allowedExtensions: COMMON_EXTENSIONS_FREE,
-        allowedMimeTypes: COMMON_MIME_TYPES_FREE,
+        allowedExtensions: COMMON_EXTENSIONS,
+        allowedMimeTypes: COMMON_MIME_TYPES,
         isUnlimited: false
     },
     PLUS: {
@@ -20,8 +24,8 @@ const PLAN_LIMITS = {
         maxSites: 8,
         maxProducts: 200,
         maxCategories: 100,
-        allowedExtensions: COMMON_EXTENSIONS_PLUS,
-        allowedMimeTypes: COMMON_MIME_TYPES_PLUS,
+        allowedExtensions: COMMON_EXTENSIONS,
+        allowedMimeTypes: COMMON_MIME_TYPES,
         isUnlimited: false
     }
 };
@@ -34,8 +38,8 @@ const getLimitsForUser = (role, plan) => {
             maxSites: 9999999,
             maxProducts: 9999999,
             maxCategories: 9999999,
-            allowedExtensions: COMMON_EXTENSIONS_PLUS,
-            allowedMimeTypes: COMMON_MIME_TYPES_PLUS,
+            allowedExtensions: COMMON_EXTENSIONS,
+            allowedMimeTypes: COMMON_MIME_TYPES,
             isUnlimited: true
         };
     }

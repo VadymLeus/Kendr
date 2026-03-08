@@ -11,6 +11,10 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    if (!token && config.url?.includes('/auth/me')) {
+        return Promise.reject(new axios.Cancel('Відміна запиту: немає токена авторизації'));
+    }
+
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
@@ -38,28 +42,33 @@ apiClient.interceptors.response.use(
         const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
         window.dispatchEvent(new CustomEvent('global_announcement_update', { detail: message }));
     }
-
     return response;
   },
   (error) => {
+    if (axios.isCancel(error)) {
+        return Promise.reject(error);
+    }
+
     if (error.response) {
       const { status, data, headers } = error.response;
+      
       if (status === 404) {
           return Promise.reject(error);
       }
+      
       const announcementHeader = headers['x-global-announcement'];
       if (announcementHeader !== undefined) {
           const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
           window.dispatchEvent(new CustomEvent('global_announcement_update', { detail: message }));
       }
+      
       if (status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          if (!window.location.pathname.includes('/login')) {
-              window.location.href = '/login';
-          }
+          window.dispatchEvent(new Event('auth_unauthorized'));
           return Promise.reject(error);
       }
+      
       if (status === 503) {
         if (data && data.editor_locked) {
             window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: true }));
@@ -71,6 +80,7 @@ apiClient.interceptors.response.use(
            return Promise.reject(error); 
         }
       }
+      
       if (!error.config?.suppressToast && status !== 503 && status !== 401 && status !== 404) {
          toast.error(data?.message || 'Помилка');
       }

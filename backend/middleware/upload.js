@@ -51,7 +51,7 @@ const imageFileFilter = (req, file, cb) => {
     if (mimetype && extname) {
         return cb(null, true);
     }
-    cb(new Error('Помилка: Дозволені лише файли зображень (JPEG, PNG, GIF, WebP)!'));
+    cb(new Error('Помилка: Дозволені лише файли зображень!'));
 };
 
 const upload = multer({

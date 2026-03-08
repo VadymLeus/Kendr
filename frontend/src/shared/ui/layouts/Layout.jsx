@@ -42,7 +42,6 @@ const AnnouncementTimer = ({ targetTime }) => {
     if (!timeLeft) return null;
     return <span className="font-mono font-bold ml-1"> - {timeLeft}</span>;
 };
-
 const Layout = () => {
     const { user, isAdmin, isLoading: isAuthLoading } = useContext(AuthContext);
     const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
@@ -65,7 +64,6 @@ const Layout = () => {
             setAnnouncementTargetTime(null);
             return;
         }
-
         if (globalAnnouncement.includes('|||')) {
             const [text, timeStr] = globalAnnouncement.split('|||');
             setAnnouncementText(text);
@@ -85,18 +83,21 @@ const Layout = () => {
             setGlobalAnnouncement(event.detail);
         };
         window.addEventListener('global_announcement_update', handleAnnouncementUpdate);
-        if (!globalAnnouncement) {
+        if (user && !globalAnnouncement) {
              apiClient.get('/auth/me').catch(() => {});
         }
+        
         const intervalId = setInterval(() => {
-            apiClient.get('/auth/me', { suppressToast: true }).catch(() => {});
+            if (user) {
+                apiClient.get('/auth/me', { suppressToast: true }).catch(() => {});
+            }
         }, 30000);
 
         return () => {
             window.removeEventListener('global_announcement_update', handleAnnouncementUpdate);
             clearInterval(intervalId);
         };
-    }, []);
+    }, [user]);
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
@@ -131,6 +132,7 @@ const Layout = () => {
         if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
         else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
+
     if (isAuthLoading) return <div className="h-screen"><LoadingState title="Завантаження платформи..." layout="page" /></div>;
     const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
@@ -191,9 +193,7 @@ const Layout = () => {
                         >
                             <Outlet context={{ siteData, setSiteData, isSiteLoading, isCollapsed, globalAnnouncement, setGlobalAnnouncement }} />
                         </main>
-                        
                         {shouldShowFooter && <Footer />}
-                        
                     </div>
                 </div>
             </div>

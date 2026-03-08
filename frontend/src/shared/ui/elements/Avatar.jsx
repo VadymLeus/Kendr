@@ -22,14 +22,12 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
     useEffect(() => {
         setImgError(false);
     }, [url]);
-
     const getFullUrl = (src) => {
         if (!src) return null;
         if (src.startsWith('blob:')) return src;
         if (src.startsWith('http')) return src;
         return `${BASE_URL}${src}`;
     };
-
     const finalUrl = getFullUrl(url);
     const sizeStyle = {
         width: `${size}px`,
@@ -37,6 +35,7 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
         fontSize: fontSize || `${Math.round(size * 0.45)}px`,
         ...style
     };
+
     if (finalUrl && !imgError) {
         return (
             <div className={`avatar-container ${className}`} style={sizeStyle}>
@@ -45,6 +44,7 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
                     alt={name || 'User'} 
                     className="w-full h-full object-cover"
                     onError={() => setImgError(true)}
+                    referrerPolicy="no-referrer"
                 />
             </div>
         );

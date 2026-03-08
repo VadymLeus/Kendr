@@ -1,10 +1,12 @@
 // frontend/src/shared/ui/complex/SiteGridCard.jsx
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import SiteCoverDisplay from './SiteCoverDisplay';
 import ReportModal from './ReportModal';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { BASE_URL } from '../../config';
+import { useCooldown } from '../../hooks/useCooldown';
 import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock, AlertTriangle, Construction, Wrench } from 'lucide-react';
 
 const SiteStatusBadge = ({ status }) => {
@@ -31,8 +33,8 @@ const SiteStatusBadge = ({ status }) => {
     );
 };
 
-const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) => {
-    const baseClass = "text-left px-3 py-2 bg-transparent border-none cursor-pointer text-(--platform-text-primary) text-sm flex items-center gap-2 w-full no-underline box-border rounded hover:bg-(--platform-bg) transition-colors";
+const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {}, disabled }) => {
+    const baseClass = "text-left px-3 py-2 bg-transparent border-none text-(--platform-text-primary) text-sm flex items-center gap-2 w-full no-underline box-border rounded hover:bg-(--platform-bg) transition-colors";
     const content = (
         <>
             <Icon size={14} /> {label}
@@ -41,24 +43,24 @@ const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) =
     if (href) {
         return (
             <a 
-                href={href} 
+                href={disabled ? undefined : href} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className={`${baseClass} ${className || ''}`}
+                className={`${baseClass} ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'} ${className || ''}`}
                 style={style}
                 onClick={(e) => {
-                   if (onClick) onClick(e);
+                    if (!disabled && onClick) onClick(e);
                 }}
             >
                 {content}
             </a>
         );
     }
-
     return (
         <button 
-            onClick={onClick}
-            className={`${baseClass} ${className || ''}`}
+            onClick={(e) => { if (!disabled && onClick) onClick(e); }}
+            disabled={disabled}
+            className={`${baseClass} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className || ''}`}
             style={style}
         >
             {content}
@@ -66,7 +68,7 @@ const MenuItem = ({ icon: Icon, label, onClick, href, className, style = {} }) =
     );
 };
 
-const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }) => {
+const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport, statusCooldown }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
     useEffect(() => {
@@ -77,6 +79,7 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen]);
     const isLocked = site.status === 'suspended' || site.status === 'probation';
+    const isStatusDisabled = statusCooldown > 0;
     return (
         <div ref={menuRef}>
             <button 
@@ -115,7 +118,8 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                                 <>
                                     <MenuItem 
                                         icon={site.status === 'published' ? GlobeLock : Globe} 
-                                        label={site.status === 'published' ? 'Зняти з публікації' : 'Опублікувати'}
+                                        label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : (site.status === 'published' ? 'Зняти з публікації' : 'Опублікувати')}
+                                        disabled={isStatusDisabled}
                                         onClick={(e) => { 
                                             setIsOpen(false); 
                                             onToggleStatus(site, site.status === 'published' ? 'draft' : 'published'); 
@@ -124,7 +128,8 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                                     {site.status !== 'private' ? (
                                         <MenuItem 
                                             icon={Lock} 
-                                            label="Приховати (Приватний)"
+                                            label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : "Приховати (Приватний)"}
+                                            disabled={isStatusDisabled}
                                             onClick={(e) => { 
                                                 setIsOpen(false); 
                                                 onToggleStatus(site, 'private'); 
@@ -133,7 +138,8 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport }
                                     ) : (
                                         <MenuItem 
                                             icon={FileText} 
-                                            label="Зробити чернеткою"
+                                            label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : "Зробити чернеткою"}
+                                            disabled={isStatusDisabled}
                                             onClick={(e) => { 
                                                 setIsOpen(false); 
                                                 onToggleStatus(site, 'draft'); 
@@ -176,6 +182,7 @@ const SiteGridCard = ({
     formatDate 
 }) => {
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const [statusCooldown, startStatusCooldown] = useCooldown('kendr_status_cooldown');
     const { user } = useContext(AuthContext);
     const isUserAdmin = user?.role === 'admin';
     const isOwner = variant === 'owner';
@@ -195,6 +202,16 @@ const SiteGridCard = ({
         }
         return '';
     };
+
+    const handleToggleStatusWithCooldown = (siteObj, newStatus) => {
+        if (statusCooldown > 0) {
+            toast.warning(`Зачекайте ${statusCooldown}с перед наступною зміною статусу.`);
+            return;
+        }
+        onToggleStatus(siteObj, newStatus);
+        startStatusCooldown(30);
+    };
+
     return (
         <>
             <div className={`
@@ -220,9 +237,10 @@ const SiteGridCard = ({
                     site={site} 
                     isOwner={isOwner} 
                     isAdmin={isEffectiveAdmin} 
-                    onToggleStatus={onToggleStatus} 
+                    onToggleStatus={handleToggleStatusWithCooldown} 
                     onDelete={onDelete} 
                     onReport={() => setIsReportOpen(true)}
+                    statusCooldown={statusCooldown}
                 />
                 <Link 
                     to={isSuspended ? '#' : mainLink} 
@@ -272,8 +290,15 @@ const SiteGridCard = ({
                                 </h3>
                             </Link>
                             {!isOwner && (
-                                <div className="text-xs text-(--platform-text-secondary) mt-1">
-                                    Автор: <span className="text-(--platform-text-primary) font-medium">{site.author}</span>
+                                <div className="text-xs text-(--platform-text-secondary) mt-1.5 flex items-center gap-1.5">
+                                    Автор:{' '}
+                                    <Link 
+                                        to={`/profile/${site.author_slug || site.author}`} 
+                                        className="text-(--platform-text-primary) hover:text-(--platform-accent)! text-sm font-bold transition-colors duration-200 no-underline cursor-pointer"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {site.author}
+                                    </Link>
                                 </div>
                             )}
                         </div>

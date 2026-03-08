@@ -16,17 +16,19 @@ const ResetPasswordPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const { isValid } = analyzePassword(password);
-        if (!isValid) {
-            toast.warning("Пароль занадто слабкий.");
+        const validation = analyzePassword(password);
+        if (validation.isSimple) {
+            toast.warning("Пароль містить занадто просту послідовність (наприклад, 123456 або qwerty). Придумайте складніший пароль.");
             return;
         }
-
+        if (!validation.isValid) {
+            toast.warning("Пароль має містити мінімум 8 символів, велику літеру, малу літеру та цифру.");
+            return;
+        }
         if (password !== confirmPassword) {
-            toast.warning('Паролі не співпадають');
+            toast.error('Паролі не співпадають');
             return;
         }
-        
         setIsLoading(true);
         try {
             await apiClient.post('/auth/reset-password', { token, newPassword: password });
@@ -38,7 +40,6 @@ const ResetPasswordPage = () => {
             setIsLoading(false);
         }
     };
-
     if (!token) return <div className="p-8 text-center text-(--platform-danger)">Невірне посилання</div>;
     return (
         <div className="min-h-screen flex items-center justify-center bg-(--platform-bg) p-4">

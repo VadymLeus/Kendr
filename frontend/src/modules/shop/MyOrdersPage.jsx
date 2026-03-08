@@ -9,7 +9,7 @@ import CustomSelect from '../../shared/ui/elements/CustomSelect';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { BASE_URL } from '../../shared/config';
-import { Package, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, AlertCircle, ExternalLink, Loader2, Download, Store, Search } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, AlertCircle, ExternalLink, Loader2, Store, Search } from 'lucide-react';
 
 const STATUS_MAP = {
     pending: { label: 'Очікує оплати', color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: Clock },
@@ -64,7 +64,6 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
         const minutes = String(date.getMinutes()).padStart(2, '0');
         return `${day}.${month}.${year} о ${hours}:${minutes}`;
     };
-    
     const handlePayClick = async (e) => {
         e.stopPropagation();
         setIsPaying(true);
@@ -174,10 +173,9 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                                                             {item.product_name}
                                                         </span>
                                                     )}
-                                                    
                                                     {item.type === 'digital' && (
                                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-(--platform-bg)/90 backdrop-blur-md rounded-lg text-[0.7rem] uppercase tracking-wider font-bold shadow-sm border border-(--platform-border-color) text-(--platform-accent) align-middle">
-                                                            <Download size={12}/> Цифровий
+                                                            Цифровий
                                                         </span>
                                                     )}
                                                 </div>
@@ -316,7 +314,7 @@ const MyOrdersPage = () => {
             const query = search.toLowerCase();
             result = result.filter(o => {
                 const siteName = (o.site_name || o.site_title || resolvedPaths[o.site_id] || '').toLowerCase();
-                const idMatch = o.id.toString().includes(query);
+                const idMatch = o.id.toString().toLowerCase().includes(query);
                 const siteMatch = siteName.includes(query);
                 const itemMatch = o.items && o.items.some(item => (item.product_name || '').toLowerCase().includes(query));
                 return idMatch || siteMatch || itemMatch;
@@ -332,16 +330,17 @@ const MyOrdersPage = () => {
             } else if (sortBy === 'amount') {
                 comparison = parseFloat(a.total_amount) - parseFloat(b.total_amount);
             } else if (sortBy === 'id') {
-                comparison = a.id - b.id;
+                comparison = a.id.toString().localeCompare(b.id.toString());
             }
             return sortOrder === 'asc' ? comparison : comparison * -1;
         });
-
         return result;
     }, [orders, search, statusFilter, sortBy, sortOrder, resolvedPaths]);
+
     const toggleSortOrder = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
+
     const handlePayExistingOrder = async (orderId) => {
         try {
             const response = await apiClient.post(`/orders/${orderId}/pay`);
@@ -368,15 +367,17 @@ const MyOrdersPage = () => {
             toast.error(error.response?.data?.message || 'Не вдалося створити платіж. Спробуйте пізніше.');
         }
     };
+
     if (loading) {
         return <LoadingState layout="page" />;
     }
-
     return (
         <div className="p-4 md:p-8 max-w-5xl mx-auto w-full h-full flex flex-col">
-            <h1 className="text-2xl font-bold mb-6 text-(--platform-text-primary) flex items-center gap-3 shrink-0">
-                <Package className="text-(--platform-accent)" /> Мої замовлення
-            </h1>
+            <div className="shrink-0 mb-6">
+                <h1 className="text-2xl font-bold text-(--platform-text-primary) flex items-center gap-3">
+                    <Package className="text-(--platform-accent)" /> Мої замовлення
+                </h1>
+            </div>
             {orders.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center min-h-[60vh]">
                     <EmptyState 

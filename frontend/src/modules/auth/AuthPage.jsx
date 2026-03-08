@@ -11,7 +11,8 @@ import ImageUploadTrigger from '../../shared/ui/complex/ImageUploadTrigger';
 import PasswordStrengthMeter from '../../shared/ui/complex/PasswordStrengthMeter';
 import { analyzePassword } from '../../shared/utils/validationUtils';
 import { API_URL, GOOGLE_AUTH_URL } from '../../shared/config';
-import { ArrowLeft, MailOpen, Trash, Camera, Upload } from 'lucide-react';
+import { useCooldown } from '../../shared/hooks/useCooldown';
+import { ArrowLeft, MailOpen, Trash, Camera, Upload, Timer } from 'lucide-react';
 
 const AuthPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -29,6 +30,7 @@ const AuthPage = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+    const [resendCooldown, startResendCooldown] = useCooldown('kendr_resend_cooldown');
     const [formData, setFormData] = useState({
         loginInput: '',
         email: '',
@@ -57,6 +59,7 @@ const AuthPage = () => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+
     const handleGoogleAuth = () => {
         window.location.href = GOOGLE_AUTH_URL; 
     };
@@ -102,15 +105,20 @@ const AuthPage = () => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        const passwordChecks = analyzePassword(formData.password);
-        if (!passwordChecks.isValid) {
-            toast.warning("Пароль недостатньо надійний.");
+        const validation = analyzePassword(formData.password);
+        if (validation.isSimple) {
+            toast.warning("Пароль містить занадто просту послідовність (наприклад, 123456 або qwerty). Придумайте складніший пароль.");
+            return;
+        }
+        if (!validation.isValid) {
+            toast.warning("Пароль має містити мінімум 8 символів, велику літеру, малу літеру та цифру.");
             return;
         }
         if (formData.password !== formData.confirmPassword) {
             toast.error("Паролі не співпадають.");
             return;
         }
+        
         setIsLoading(true);
         try {
             const regData = new FormData();
@@ -146,11 +154,18 @@ const AuthPage = () => {
     };
 
     const handleResendVerification = async () => {
+        if (resendCooldown > 0) {
+            toast.warning(`Зачекайте ${resendCooldown}с перед наступною відправкою.`);
+            return;
+        }
         setIsLoading(true);
         try {
             await apiClient.post('/auth/resend-verification', { email: pendingEmail });
             toast.success('Лист надіслано повторно!');
-        } catch (error) { } finally {
+            startResendCooldown(30);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Помилка відправки листа');
+        } finally {
             setIsLoading(false);
         }
     };
@@ -168,17 +183,22 @@ const AuthPage = () => {
                     <p className="text-(--platform-text-secondary) text-sm mb-8 text-center">
                         Лист для підтвердження надіслано на <strong>{pendingEmail}</strong>.
                     </p>
-                    <Button onClick={handleResendVerification} disabled={isLoading} className="w-full mb-4">
-                        {isLoading ? 'Відправка...' : 'Надіслати повторно'}
+                    <Button 
+                        onClick={handleResendVerification} 
+                        disabled={isLoading || resendCooldown > 0} 
+                        className="w-full mb-4 flex items-center justify-center gap-2"
+                    >
+                        {resendCooldown > 0 && <Timer size={18} />}
+                        {isLoading ? 'Відправка...' : (resendCooldown > 0 ? `Зачекайте ${resendCooldown}с` : 'Надіслати повторно')}
                     </Button>
-                    <button onClick={() => setView('login')} className="bg-none border-none cursor-pointer text-(--platform-accent) font-semibold text-sm hover:underline">
+                    <button onClick={() => setView('login')} className="bg-transparent border-none p-0 m-0 cursor-pointer text-(--platform-text-primary) hover:text-(--platform-accent)! text-sm font-medium transition-colors duration-200 no-underline">
                         Повернутися до входу
                     </button>
                 </div>
             </div>
         );
     }
-    
+
     if (view === 'forgot') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -342,7 +362,7 @@ const AuthPage = () => {
                             <Input name="loginInput" label="Email або Логін" placeholder="Введіть дані" value={formData.loginInput} onChange={handleChange} required />
                             <Input name="password" label="Пароль" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
                             <div className="text-right -mt-1 mb-2">
-                                <button type="button" onClick={() => setView('forgot')} className="bg-transparent border-none cursor-pointer text-(--platform-accent) text-sm font-medium hover:underline">Забули пароль?</button>
+                                <button type="button" onClick={() => setView('forgot')} className="bg-transparent border-none p-0 m-0 cursor-pointer text-(--platform-text-primary) hover:text-(--platform-accent)! text-sm font-medium transition-colors duration-200 no-underline">Забули пароль?</button>
                             </div>
                         </div>
                     )}
@@ -353,7 +373,7 @@ const AuthPage = () => {
                         
                         {isRegister && (
                             <p className="text-xs text-(--platform-text-secondary) mt-5 text-center leading-relaxed">
-                                Натискаючи кнопку "Створити акаунт", ви погоджуєтесь з <Link to="/rules?from=register" target="_blank" className="text-(--platform-accent) no-underline font-medium hover:underline">Умовами використання</Link> та <Link to="/rules?from=register" target="_blank" className="text-(--platform-accent) no-underline font-medium hover:underline">Політикою конфіденційності</Link>.
+                                Натискаючи кнопку "Створити акаунт", ви погоджуєтесь з <Link to="/rules" target="_blank" className="text-(--platform-text-primary) hover:text-(--platform-accent)! font-semibold transition-colors duration-200 no-underline cursor-pointer">Умовами використання</Link> та <Link to="/rules" target="_blank" className="text-(--platform-text-primary) hover:text-(--platform-accent)! font-semibold transition-colors duration-200 no-underline cursor-pointer">Політикою конфіденційності</Link>.
                             </p>
                         )}
                     </div>

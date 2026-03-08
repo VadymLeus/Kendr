@@ -14,18 +14,15 @@ const ImageUploadTrigger = ({
     const [selectedImage, setSelectedImage] = useState(null);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
     const fileInputRef = useRef(null);
-    
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         if (!file.type.startsWith('image/')) {
-            toast.error('Будь ласка, виберіть зображення (JPG, PNG, WebP)');
+            toast.error('Будь ласка, виберіть зображення');
             return;
         }
-
         if (file.size > 10 * 1024 * 1024) {
-            toast.error('Файл занадто великий (макс. 10MB)');
+            toast.error('Файл занадто великий');
             return;
         }
 
@@ -76,7 +73,6 @@ const ImageUploadTrigger = ({
                 />
                 {children}
             </div>
-            
             {isCropperOpen && (
                 <ImageCropperModal
                     isOpen={isCropperOpen}

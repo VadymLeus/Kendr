@@ -96,12 +96,12 @@ const CartPage = () => {
                 groups[siteId].isDigitalOnly = false;
             }
         });
-        
         return Object.values(groups).map(group => ({
             ...group,
             totalDiscount: group.totalOriginal - group.total
         }));
     }, [cartItems, resolvedPaths]);
+
     useEffect(() => {
         if (groupedItems.length > 0) {
             const isCurrentValid = groupedItems.some(g => g.siteId === activeSiteId);
@@ -112,9 +112,11 @@ const CartPage = () => {
             setActiveSiteId(null);
         }
     }, [groupedItems, activeSiteId]);
+
     const activeGroup = useMemo(() => {
         return groupedItems.find(g => g.siteId === activeSiteId) || null;
     }, [groupedItems, activeSiteId]);
+
     const clearCartForSite = (siteId) => {
         const itemsToRemove = cartItems.filter(item => item.site_id === siteId);
         itemsToRemove.forEach(item => removeFromCart(item.cartItemId));
@@ -148,6 +150,7 @@ const CartPage = () => {
         }
         setConfirmModal({ ...confirmModal, isOpen: false });
     };
+
     const handleCheckout = async (e) => {
         e.preventDefault();
         if (!activeGroup) return;
@@ -176,7 +179,8 @@ const CartPage = () => {
             const response = await apiClient.post('/orders/checkout', payload);
             if (response.data && response.data.data && response.data.signature) {
                 setIsRedirecting(true);
-                const { data, signature } = response.data;
+                const { data, signature, orderId } = response.data;
+                toast.success(`Перенаправлення на оплату замовлення #${orderId || ''}`);
                 clearCartForSite(activeGroup.siteId);
                 const form = document.createElement("form");
                 form.method = "POST";
@@ -194,7 +198,7 @@ const CartPage = () => {
                 document.body.appendChild(form);
                 form.submit();
             } else {
-                toast.success('Замовлення оформлено!');
+                toast.success(`Замовлення #${response.data.orderId || ''} оформлено!`);
                 clearCartForSite(activeGroup.siteId);
                 navigate('/my-orders');
             }
@@ -203,6 +207,7 @@ const CartPage = () => {
             setIsSubmitting(false);
         }
     };
+
     const getImageUrl = (item) => {
         let gallery = item.image_gallery || item.image_path || item.image;
         let targetPath = null;
@@ -222,17 +227,20 @@ const CartPage = () => {
     }
     return (
         <>
-            <div className="p-4 md:p-8 max-w-350 mx-auto w-full h-full flex flex-col gap-6">
-                <div className="shrink-0 mb-2">
+            <div className="p-4 md:p-8 max-w-5xl mx-auto w-full h-full flex flex-col">
+                <div className="shrink-0 mb-6">
                     <h1 className="text-2xl font-bold text-(--platform-text-primary) flex items-center gap-3">
                         <ShoppingBag className="text-(--platform-accent)" /> Кошик
                     </h1>
-                    <p className="text-(--platform-text-secondary) mt-1 text-sm">
-                        {groupedItems.length > 1 
-                            ? "Виберіть магазин ліворуч для оформлення відповідного замовлення." 
-                            : "Оформлення ваших замовлень"}
-                    </p>
+                    {cartItems.length > 0 && (
+                        <p className="text-(--platform-text-secondary) mt-1 text-sm">
+                            {groupedItems.length > 1 
+                                ? "Виберіть магазин ліворуч для оформлення відповідного замовлення." 
+                                : "Оформлення ваших замовлень"}
+                        </p>
+                    )}
                 </div>
+
                 {cartItems.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center min-h-[60vh]">
                         <EmptyState 

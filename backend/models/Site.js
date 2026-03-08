@@ -10,7 +10,7 @@ class Site {
             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
             s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
             s.is_pinned, 
-            u.username AS author, u.avatar_url AS author_avatar
+            u.username AS author, u.slug AS author_slug, u.avatar_url AS author_avatar
         FROM sites s
         JOIN users u ON s.user_id = u.id
         LEFT JOIN site_tags st ON s.id = st.site_id 
@@ -88,7 +88,7 @@ class Site {
     const [rows] = await db.query(`
         SELECT
              s.id, s.site_path, s.title, s.logo_url, s.status, s.deletion_scheduled_for,
-             u.username AS author
+             u.username AS author, u.slug AS author_slug
         FROM sites s
         JOIN users u ON s.user_id = u.id
         ORDER BY s.updated_at DESC

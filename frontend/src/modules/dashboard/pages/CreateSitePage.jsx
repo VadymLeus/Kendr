@@ -13,6 +13,7 @@ import SitePreviewer from '../../../shared/ui/complex/SitePreviewer';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { BASE_URL } from '../../../shared/config';
+import { validateSiteSlug, validateSiteTitle } from '../../../shared/utils/validationUtils';
 import { ArrowLeft, Layout, Check, Loader, AlertCircle, Grid, User, Search, Edit, Trash, Info, Palette, Sparkles, Globe, Lock, Image, FileText, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Shield, EyeOff, Tag } from 'lucide-react';
 
 const logosModules = import.meta.glob('../../../shared/assets/CreateLogos/*.{png,jpg,jpeg,webp,svg}', { 
@@ -44,12 +45,6 @@ const getCategoryLabel = (catId) => {
     return found ? found.label : catId;
 };
 
-const RESERVED_SLUGS = [
-    'admin', 'api', 'login', 'register', 'support', 'test', 'www', 
-    'billing', 'orders', 'dashboard', 'sites', 'media', 'settings', 
-    'auth', 'user', 'users', 'system', 'root', 'static', 'assets', 'create'
-];
-
 const CreateSitePage = () => {
     const navigate = useNavigate();
     const { isAdmin, plan } = useContext(AuthContext);
@@ -78,9 +73,11 @@ const CreateSitePage = () => {
         pages: [], theme: { mode: 'light', accent: 'blue' }, header: [], footer: [], siteData: {} 
     });
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
+    
     const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 2);
     const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 2);
     const isLimitReached = !isAdmin && currentSiteCount >= numericMaxSites;
+
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -117,29 +114,12 @@ const CreateSitePage = () => {
                 return;
             }
 
-            if (currentSlug.length < 3) {
-                setSlugStatus('invalid');
-                setSlugError('Мінімум 3 символи');
-                return;
-            }
-            if (currentSlug.length > 40) {
-                setSlugStatus('invalid');
-                setSlugError('Максимум 40 символів');
-                return;
-            }
-            if (currentSlug.startsWith('-') || currentSlug.endsWith('-')) {
-                setSlugStatus('invalid');
-                setSlugError('Не може починатися або закінчуватися дефісом');
-                return;
-            }
-            if (currentSlug.includes('--')) {
-                setSlugStatus('invalid');
-                setSlugError('Не може містити два дефіси підряд');
-                return;
-            }
-            if (RESERVED_SLUGS.includes(currentSlug)) {
-                setSlugStatus('invalid');
-                setSlugError('Це ім\'я зарезервовано системою. Будь ласка, оберіть інше.');
+            // Перевірка через нашу утиліту (винесли логіку)
+            const validation = validateSiteSlug(currentSlug);
+            
+            if (!validation.isValid) {
+                setSlugStatus(validation.status);
+                setSlugError(validation.error);
                 return;
             }
 
@@ -199,34 +179,14 @@ const CreateSitePage = () => {
     }, [previewData.pages, currentPreviewSlug]);
 
     const handleTitleChange = (e) => {
-        let val = e.target.value;
-        if (/[<>]/.test(val)) {
-            val = val.replace(/[<>]/g, '');
-            setTitleError('Символи < та > заборонені');
-        } else {
-            setTitleError(null);
-        }
-        if (val.length > 60) {
-            val = val.substring(0, 60);
-            setTitleError('Максимум 60 символів');
-        }
+        const { val, error } = validateSiteTitle(e.target.value);
+        setTitleError(error);
         setFormData(prev => ({ ...prev, title: val }));
-        const trimmed = val.trim();
-        if (val.length > 0 && trimmed.length < 2) {
-            setTitleError('Мінімум 2 символи (без урахування пробілів)');
-        } else if (!/[<>]/.test(val) && val.length <= 60) {
-             setTitleError(null);
-        }
     };
 
     const handleSlugChange = (e) => {
         const inputVal = e.target.value;
         const sanitizedVal = inputVal.toLowerCase().replace(/[^a-z0-9-]/g, '');
-        if (inputVal !== sanitizedVal && inputVal.length > 0) {
-            setSlugError('Дозволені лише малі латинські літери, цифри та дефіс (-)');
-        } else {
-            setSlugError(null);
-        }
         setFormData(prev => ({ ...prev, slug: sanitizedVal }));
     };
 
@@ -321,8 +281,11 @@ const CreateSitePage = () => {
             </div>
         );
     };
+
     if (isLoadingData) return <LoadingState />;
+    
     const isFormReady = !isLimitReached && formData.title.trim().length >= 2 && !titleError && formData.slug && slugStatus === 'available' && !slugError;
+    
     return (
         <div className="flex h-full w-full overflow-hidden bg-(--platform-bg) min-h-0">
             <ConfirmModal 
@@ -385,25 +348,22 @@ const CreateSitePage = () => {
                                     <span>Ви досягли ліміту створення сайтів для вашого тарифу (<b>{plan}</b>). Щоб створити новий, видаліть один із існуючих.</span>
                                 </div>
                             )}
-
                             <div className="p-5 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm space-y-4">
                                 <div>
                                     <Input 
                                         label="Назва сайту" 
                                         value={formData.title} 
                                         onChange={handleTitleChange} 
-                                        placeholder="Наприклад: Мій Крутий Магазин"
+                                        placeholder="Мій Сайт"
                                         autoFocus 
                                         disabled={isLimitReached}
                                         error={titleError}
                                         wrapperStyle={{ marginBottom: titleError ? 0 : '0.5rem' }}
                                     />
-                                    {!titleError && <p className="text-xs text-(--platform-text-secondary) mt-1 px-1">Ця назва відображатиметься в шапці сайту та на вкладці браузера.</p>}
                                 </div>
-
                                 <div>
                                     <Input 
-                                        label="Веб-адреса (Slug)" 
+                                        label="Веб-адреса" 
                                         value={formData.slug} 
                                         onChange={handleSlugChange} 
                                         placeholder="my-cool-shop"

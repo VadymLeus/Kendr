@@ -7,7 +7,8 @@ import apiClient from '../../../shared/api/api';
 import { Input, Button } from '../../../shared/ui/elements';
 import PasswordStrengthMeter from '../../../shared/ui/complex/PasswordStrengthMeter';
 import { analyzePassword } from '../../../shared/utils/validationUtils';
-import { Lock, Trash2, AlertCircle } from 'lucide-react';
+import { useCooldown } from '../../../shared/hooks/useCooldown';
+import { Lock, Trash2, AlertCircle, Timer } from 'lucide-react';
 
 const ProfileSecurityTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
@@ -19,7 +20,7 @@ const ProfileSecurityTab = () => {
         newPassword: '',
         confirmPassword: ''
     });
-
+    const [securityCooldown, startSecurityCooldown] = useCooldown('kendr_security_update_cooldown');
     useEffect(() => {
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     }, [hasPassword]);
@@ -31,13 +32,29 @@ const ProfileSecurityTab = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (passwords.newPassword !== passwords.confirmPassword) {
-            toast.error("Нові паролі не співпадають");
+        if (securityCooldown > 0) {
+            toast.warning(`Зачекайте ${securityCooldown}с перед наступною зміною.`);
+            return;
+        }
+        if (hasPassword && !passwords.currentPassword) {
+            toast.error("Введіть поточний пароль для підтвердження.");
+            return;
+        }
+        if (hasPassword && passwords.currentPassword === passwords.newPassword) {
+            toast.warning("Новий пароль не може бути таким самим, як поточний.");
             return;
         }
         const validation = analyzePassword(passwords.newPassword);
+        if (validation.isSimple) {
+            toast.warning("Пароль містить занадто просту послідовність (наприклад, 123456 або qwerty). Придумайте складніший пароль.");
+            return;
+        }
         if (!validation.isValid) {
             toast.warning("Пароль має містити мінімум 8 символів, велику літеру, малу літеру та цифру.");
+            return;
+        }
+        if (passwords.newPassword !== passwords.confirmPassword) {
+            toast.error("Нові паролі не співпадають");
             return;
         }
         setIsLoading(true);
@@ -55,13 +72,17 @@ const ProfileSecurityTab = () => {
             };
             updateUser(updatedUser); 
             setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            startSecurityCooldown(30);
         } catch (error) {
-            toast.error(error.response?.data?.message || "Помилка збереження пароля.");
+            if (error.response?.status === 429) {
+                toast.error("Забагато спроб зміни пароля. Спробуйте пізніше через годину.");
+            } else {
+                toast.error(error.response?.data?.message || "Помилка збереження пароля.");
+            }
         } finally {
             setIsLoading(false);
         }
     };
-
     const handleDeleteAccount = () => {
         confirm({
             title: 'Видалити акаунт?',
@@ -82,7 +103,6 @@ const ProfileSecurityTab = () => {
             }
         });
     };
-
     const container = { maxWidth: '800px', margin: '0 auto', width: '100%' };
     const card = { 
         background: 'var(--platform-card-bg)', 
@@ -114,7 +134,6 @@ const ProfileSecurityTab = () => {
         marginBottom: 0,
         padding: '32px'
     };
-
     return (
         <div style={container}>
             <div style={card}>
@@ -159,7 +178,7 @@ const ProfileSecurityTab = () => {
                             name="confirmPassword" 
                             label="Підтвердження" 
                             type="password" 
-                            placeholder="••••••••" 
+                             placeholder="••••••••" 
                             value={passwords.confirmPassword} 
                             onChange={handleChange} 
                             required
@@ -168,10 +187,16 @@ const ProfileSecurityTab = () => {
                         <div style={{ marginTop: '8px' }}>
                             <Button 
                                 type="submit" 
-                                disabled={isLoading} 
-                                style={{ width: '100%' }}
+                                disabled={isLoading || securityCooldown > 0} 
+                                style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
                             >
-                                {isLoading ? 'Збереження...' : (hasPassword ? 'Оновити пароль' : 'Встановити пароль')}
+                                {isLoading 
+                                    ? 'Збереження...' 
+                                    : (securityCooldown > 0 
+                                        ? <><Timer size={18} /> Зачекайте {securityCooldown}с</>
+                                        : (hasPassword ? 'Оновити пароль' : 'Встановити пароль')
+                                    )
+                                }
                             </Button>
                         </div>
                     </div>
@@ -188,7 +213,7 @@ const ProfileSecurityTab = () => {
                     <div style={{ flex: 1 }}>
                         <h3 style={{ ...cardTitle, color: 'var(--platform-danger)', marginBottom: '4px' }}>
                             <AlertCircle size={22} />
-                            Небезпечна зона
+                            ВИДАЛЕННЯ АКАУНТУ
                         </h3>
                         <p style={{ margin: 0, color: 'var(--platform-danger)', fontSize: '0.9rem', opacity: 0.8 }}>
                              Видалення акаунту призведе до <strong>незворотної</strong> втрати всіх ваших сайтів та даних.
@@ -204,7 +229,6 @@ const ProfileSecurityTab = () => {
                     </Button>
                 </div>
             </div>
-
         </div>
     );
 };

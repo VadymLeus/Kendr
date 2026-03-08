@@ -1,19 +1,38 @@
 // backend/models/User.js
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
+
 class User {
-    static async create({ username, email, password, avatar_url, is_verified, verification_token, google_id }) {
+    static async generateSlug(text) {
+        const cyrillicToLatin = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ie', 'ж': 'zh', 'з': 'z',
+            'и': 'y', 'і': 'i', 'ї': 'i', 'й': 'i', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p',
+            'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+            'ь': '', 'ю': 'iu', 'я': 'ia', 'ы': 'y', 'э': 'e', 'ъ': '', 'ё': 'io'
+        };
+        let baseSlug = text.toLowerCase().split('').map(char => cyrillicToLatin[char] || char).join('');
+        baseSlug = baseSlug.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        if (!baseSlug) baseSlug = 'user';
+        let slug = baseSlug;
+        let counter = 1;
+        while (await this.findBySlug(slug)) {
+            slug = `${baseSlug}-${counter}`;
+            counter++;
+        }
+        return slug;
+    }
+
+    static async create({ username, slug, email, password, avatar_url, is_verified, verification_token, google_id }) {
         let password_hash = null;
         if (password) {
             const salt = await bcrypt.genSalt(10);
             password_hash = await bcrypt.hash(password, salt);
         }
-
         const [result] = await db.query(
-            'INSERT INTO users (username, email, password_hash, avatar_url, is_verified, verification_token, google_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [username, email, password_hash, avatar_url, is_verified || 0, verification_token || null, google_id || null]
+            'INSERT INTO users (username, slug, email, password_hash, avatar_url, is_verified, verification_token, google_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, slug, email, password_hash, avatar_url, is_verified || 0, verification_token || null, google_id || null]
         );
-        return { id: result.insertId, username, email, avatar_url };
+        return { id: result.insertId, username, slug, email, avatar_url };
     }
 
     static async findByEmail(email) {
@@ -23,7 +42,7 @@ class User {
 
     static async findById(id) {
         const [rows] = await db.query(
-            `SELECT id, username, email, phone_number, role, status, 
+            `SELECT id, username, slug, email, phone_number, role, status, 
             platform_theme_mode, platform_theme_accent, 
             platform_bg_url, platform_bg_blur, platform_bg_brightness,
             bio, social_telegram, social_instagram, social_website, is_profile_public,
@@ -36,7 +55,7 @@ class User {
     
     static async findByUsername(username) {
         const [rows] = await db.query(
-            `SELECT id, username, email, role, status, 
+            `SELECT id, username, slug, email, role, status, 
             platform_theme_mode, platform_theme_accent, 
             bio, social_telegram, social_instagram, social_website, is_profile_public,
             created_at, avatar_url 
@@ -46,7 +65,19 @@ class User {
         return rows[0];
     }
 
-static async getSiteCount(userId) {
+    static async findBySlug(slug) {
+        const [rows] = await db.query(
+            `SELECT id, username, slug, email, role, status, 
+            platform_theme_mode, platform_theme_accent, 
+            bio, social_telegram, social_instagram, social_website, is_profile_public,
+            created_at, avatar_url 
+            FROM users WHERE slug = ?`,
+            [slug]
+        );
+        return rows[0];
+    }
+
+    static async getSiteCount(userId) {
         const [rows] = await db.query('SELECT COUNT(id) as siteCount FROM sites WHERE user_id = ? AND status = "published"', [userId]);
         return rows[0].siteCount;
     }
@@ -61,17 +92,16 @@ static async getSiteCount(userId) {
 
     static async update(userId, data) {
         const { 
-            username, password, password_hash,
+            username, slug, password, password_hash,
             avatar_url, phone_number,
             platform_theme_mode, platform_theme_accent,
             platform_bg_url, platform_bg_blur, platform_bg_brightness,
             bio, social_telegram, social_instagram, social_website, is_profile_public
         } = data;
-
         let queryParts = [];
         const params = [];
         if (username !== undefined) { queryParts.push('username = ?'); params.push(username); }
-        
+        if (slug !== undefined) { queryParts.push('slug = ?'); params.push(slug); }
         if (password) {
             const salt = await bcrypt.genSalt(10);
             const hashed = await bcrypt.hash(password, salt);
@@ -80,7 +110,6 @@ static async getSiteCount(userId) {
         else if (password_hash !== undefined) {
             queryParts.push('password_hash = ?'); params.push(password_hash);
         }
-
         if (avatar_url !== undefined) { queryParts.push('avatar_url = ?'); params.push(avatar_url); }
         if (phone_number !== undefined) { queryParts.push('phone_number = ?'); params.push(phone_number); }
         if (platform_theme_mode !== undefined) { queryParts.push('platform_theme_mode = ?'); params.push(platform_theme_mode); }
@@ -96,7 +125,6 @@ static async getSiteCount(userId) {
         if (queryParts.length === 0) {
             return this.findById(userId);
         }
-
         let query = `UPDATE users SET ${queryParts.join(', ')} WHERE id = ?`;
         params.push(userId);
         await db.query(query, params);
@@ -113,7 +141,7 @@ static async getSiteCount(userId) {
     }
     
     static async findByLoginInput(loginInput) {
-        const [rows] = await db.query('SELECT * FROM users WHERE email = ? OR username = ?', [loginInput, loginInput]);
+        const [rows] = await db.query('SELECT * FROM users WHERE email = ? OR username = ? OR slug = ?', [loginInput, loginInput, loginInput]);
         return rows[0];
     }
 

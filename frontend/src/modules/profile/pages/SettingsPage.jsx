@@ -14,7 +14,6 @@ const SettingsPage = () => {
         const savedTab = localStorage.getItem('settings_active_tab');
         return ['general', 'security', 'public', 'appearance'].includes(savedTab) ? savedTab : 'general';
     });
-
     useEffect(() => {
         localStorage.setItem('settings_active_tab', activeTab);
     }, [activeTab]);
@@ -70,11 +69,10 @@ const SettingsPage = () => {
                         })}
                     </nav>
                 </div>
-
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: '150px', gap: '12px' }}>
                     {user && (
                         <Link 
-                            to={`/profile/${user.username}`} 
+                            to={`/profile/${user.slug}`} 
                             target="_blank"
                             className="btn btn-primary"
                             style={{ 
@@ -138,7 +136,7 @@ const SettingsPage = () => {
                 .profile-btn-text {
                     display: inline;
                 }
-                @media (max-width: 1000px) {
+                @media (max-width: 1200px) {
                     .settings-tab-text {
                         display: none;
                     }

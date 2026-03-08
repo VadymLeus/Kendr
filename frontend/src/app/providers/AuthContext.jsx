@@ -1,10 +1,18 @@
 // frontend/src/app/providers/AuthContext.jsx
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 
 export const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('themeMode');
+    localStorage.removeItem('themeAccent');
+    setUser(null);
+  }, []);
+
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -31,21 +39,22 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
+    const handleUnauthorized = () => {
+      logout();
+    };
+    
+    window.addEventListener('auth_unauthorized', handleUnauthorized);
+    
+    return () => {
+      window.removeEventListener('auth_unauthorized', handleUnauthorized);
+    };
+  }, [logout]);
 
   const login = (userData, token) => {
     if (!userData || !token) return;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('themeMode');
-    localStorage.removeItem('themeAccent');
-    setUser(null);
   };
 
   const updateUser = (userData) => {

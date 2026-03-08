@@ -16,7 +16,7 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
             <div className="w-full">
                 <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between gap-1'}`}>
                     <Link 
-                        to={`/profile/${user.username}`} 
+                        to={`/profile/${user.slug}`} 
                         className={`flex items-center group rounded-lg hover:bg-(--platform-hover-bg) transition-colors ${
                             isCollapsed ? 'justify-center p-2' : 'gap-3 flex-1 min-w-0 p-2'
                         }`} 

@@ -64,7 +64,6 @@ const MediaPickerModal = ({
                     return false;
                 });
             });
-            
             setFiles(filtered);
             setLimits(limitsRes.data);
         } catch (error) {
@@ -89,7 +88,6 @@ const MediaPickerModal = ({
                 const res = await apiClient.post('/media/upload', formData);
                 if (res.data && res.data.error) {
                     failedFiles.push({ name: file.name, reason: res.data.message });
-                    
                     if (res.data.code === 'MAX_FILES_REACHED') {
                         break;
                     }
@@ -109,7 +107,6 @@ const MediaPickerModal = ({
         }
 
         toast.dismiss(toastId);
-
         if (successCount > 0) {
             toast.success(`Успішно завантажено: ${successCount} файлів`);
             await fetchMedia(); 
@@ -119,7 +116,6 @@ const MediaPickerModal = ({
             const errorList = failedFiles.slice(0, limit)
                 .map(f => `• ${f.name} (${f.reason})`)
                 .join('\n');
-            
             const moreCount = failedFiles.length - limit;
             const finalMessage = moreCount > 0 
                 ? `Не завантажено ${failedFiles.length} файлів:\n${errorList}\n...та ще ${moreCount}`
@@ -149,6 +145,7 @@ const MediaPickerModal = ({
                 newSelectedIds.add(file.id); 
             }
         }
+        
         setSelectedIds(newSelectedIds);
         if (!multiple) {
             setActiveFile(newSelectedIds.has(file.id) ? file : null);
@@ -176,6 +173,7 @@ const MediaPickerModal = ({
             onClose();
             return;
         }
+        
         if (aspect && !multiple && selectedFiles.length === 1) {
             const file = selectedFiles[0];
             if (file.file_type === 'image' || file.mime_type?.startsWith('image/')) {
@@ -226,7 +224,6 @@ const MediaPickerModal = ({
     };
 
     if (!isOpen) return null;
-
     const filteredFiles = files.filter(f => 
         (f.original_file_name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -331,9 +328,11 @@ const MediaPickerModal = ({
                     <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }} className="custom-scrollbar">
                             {loading ? (
-                                <div style={{ padding: '48px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>Завантаження...</div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px', color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
+                                    Завантаження...
+                                </div>
                             ) : filteredFiles.length === 0 ? (
-                                <div style={{ padding: '48px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontStyle: 'italic', padding: '24px' }}>
                                     {files.length === 0 
                                         ? `Немає файлів типу: ${allowedTypes.join(', ')}` 
                                         : 'Нічого не знайдено за запитом'}
