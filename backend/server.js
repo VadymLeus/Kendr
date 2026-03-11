@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
 require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const siteRoutes = require('./routes/siteRoutes');
@@ -29,6 +30,7 @@ const verifyTokenOptional = require('./middleware/verifyTokenOptional');
 const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
+app.use(helmet()); 
 const allowedOrigins = [
     'http://localhost:5173',
     'https://kendr.vercel.app',

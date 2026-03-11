@@ -7,18 +7,19 @@ const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true
 });
+
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (!token && config.url?.includes('/auth/me')) {
         return Promise.reject(new axios.Cancel('Відміна запиту: немає токена авторизації'));
     }
-
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
 );
+
 const safeB64Decode = (str) => {
     try {
         return decodeURIComponent(escape(atob(str)));
@@ -73,8 +74,9 @@ apiClient.interceptors.response.use(
            return Promise.reject(error); 
         }
       }
-      if (!error.config?.suppressToast && status !== 503 && status !== 401 && status !== 404) {
-         toast.error(data?.message || 'Помилка');
+      if (!error.config?.suppressToast && status !== 503 && status !== 401 && status !== 404 && status !== 429) {
+          const msg = data?.message || 'Помилка';
+          toast.error(msg, { toastId: msg }); 
       }
     }
     return Promise.reject(error);

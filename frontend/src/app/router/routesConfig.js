@@ -15,8 +15,15 @@ export const STATIC_TITLES = {
     '/cart': 'Кошик',
     '/my-orders': 'Мої замовлення',
     '/rules': 'Правила платформи',
+    '/admin-gate': 'Доступ адміністратора',
     '/admin': 'Адмін-панель',
-    '/admin/support': 'Підтримка (Адмін)'
+    '/admin/dashboard': 'Дашборд',
+    '/admin/sites': 'Усі сайти',
+    '/admin/users': 'Користувачі',
+    '/admin/reports': 'Скарги',
+    '/admin/tickets': 'Тікети',
+    '/admin/templates': 'Шаблони',
+    '/admin/control': 'Управління'
 };
 
 export const getTitleForPath = (pathname) => {
@@ -24,11 +31,9 @@ export const getTitleForPath = (pathname) => {
     if (STATIC_TITLES[cleanPath]) {
         return STATIC_TITLES[cleanPath];
     }
-    
     if (cleanPath.startsWith('/profile/')) {
         return 'Профіль користувача';
     }
-
     if (cleanPath.startsWith('/site/')) {
         if (cleanPath.includes('/product/')) {
             return 'Товар';

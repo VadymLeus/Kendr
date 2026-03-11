@@ -1,5 +1,5 @@
 // frontend/src/modules/auth/AuthPage.jsx
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { AuthContext } from '../../app/providers/AuthContext';
@@ -9,210 +9,304 @@ import { Input, Button } from '../../shared/ui/elements';
 import Avatar from '../../shared/ui/elements/Avatar';
 import ImageUploadTrigger from '../../shared/ui/complex/ImageUploadTrigger';
 import PasswordStrengthMeter from '../../shared/ui/complex/PasswordStrengthMeter';
+import OtpInput from '../../shared/ui/complex/OtpInput';
 import { analyzePassword } from '../../shared/utils/validationUtils';
-import { API_URL, GOOGLE_AUTH_URL } from '../../shared/config';
+import { GOOGLE_AUTH_URL } from '../../shared/config';
 import { useCooldown } from '../../shared/hooks/useCooldown';
-import { ArrowLeft, MailOpen, Trash, Camera, Upload, Timer } from 'lucide-react';
+import { ArrowLeft, MailOpen, Trash, Camera, Upload, KeyRound } from 'lucide-react';
 
 const AuthPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const view = searchParams.get('view') || 'login';
+    const initialView = searchParams.get('view') || 'login';
+    const [view, setViewInternal] = useState(initialView);
+    const setView = (newView) => {
+        setSearchParams({ view: newView });
+        setViewInternal(newView);
+    };
     const googleError = searchParams.get('error');
-    if (googleError === 'google_auth_failed') {
-        toast.error('Не вдалося увійти через Google', { toastId: 'google-err' });
+    if (googleError) {
+        if (googleError === 'google_auth_failed') {
+            toast.error('Не вдалося увійти через Google', { toastId: 'google-err' });
+        } else if (googleError === 'auth_failed') {
+            toast.error('Помилка авторизації. Будь ласка, перевірте свої дані або спробуйте інший спосіб.', { toastId: 'auth-failed-err' });
+        }
         searchParams.delete('error');
         setSearchParams(searchParams);
     }
-    const setView = (newView) => {
-        setSearchParams({ view: newView });
-    };
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
     const [resendCooldown, startResendCooldown] = useCooldown('kendr_resend_cooldown');
+    const [targetEmail, setTargetEmail] = useState('');
+    const [otpPurpose, setOtpPurpose] = useState('');
+    const [otpCode, setOtpCode] = useState('');
+    const [isResetCodeVerified, setIsResetCodeVerified] = useState(false);
+    useEffect(() => {
+        if ((view === 'otp' || view === 'reset_pass') && !targetEmail) {
+            setView('login');
+        }
+    }, [view, targetEmail]);
     const [formData, setFormData] = useState({
-        loginInput: '',
-        email: '',
-        username: '',
-        password: '',
-        confirmPassword: ''
+        loginInput: '', email: '', username: '', password: '', confirmPassword: '', newPassword: ''
     });
     const [forgotEmail, setForgotEmail] = useState('');
-    const [pendingEmail, setPendingEmail] = useState('');
-    const [avatarData, setAvatarData] = useState({
-        file: null,
-        url: null,
-        preview: null
-    });
+    const [avatarData, setAvatarData] = useState({ file: null, url: null, preview: null });
     const getPageTitle = () => {
-        switch(view) {
-            case 'register': return 'Реєстрація акаунту | Kendr';
-            case 'forgot': return 'Відновлення пароля | Kendr';
-            case 'pending_verification': return 'Підтвердження пошти | Kendr';
-            default: return 'Вхід до системи | Kendr';
-        }
+        if (view === 'otp') return 'Перевірка пошти | Kendr';
+        if (view === 'reset_pass') return 'Створення пароля | Kendr';
+        if (view === 'forgot') return 'Відновлення пароля | Kendr';
+        if (view === 'register') return 'Реєстрація акаунту | Kendr';
+        return 'Вхід до системи | Kendr';
     };
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleGoogleAuth = () => {
-        window.location.href = GOOGLE_AUTH_URL; 
-    };
-
+    const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const handleGoogleAuth = () => { window.location.href = GOOGLE_AUTH_URL; };
     const handleAvatarUpload = (file) => {
         setIsAvatarUploading(true);
-        const previewUrl = URL.createObjectURL(file);
-        setAvatarData({ 
-            file: file, 
-            url: null, 
-            preview: previewUrl 
-        });
+        setAvatarData({ file: file, url: null, preview: URL.createObjectURL(file) });
         setIsAvatarUploading(false);
     };
-
     const handleRemoveAvatar = (e) => {
         if(e) e.stopPropagation();
         setAvatarData({ file: null, url: null, preview: null });
     };
-
+    const handleError = (error, fallback) => {
+        const message = error.response?.data?.message || fallback;
+        toast.error(message, { toastId: message });
+    };
     const handleLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const res = await apiClient.post('/auth/login', {
-                loginInput: formData.loginInput,
-                password: formData.password
-            });
+            const res = await apiClient.post('/auth/login', { loginInput: formData.loginInput, password: formData.password });
+
             login(res.data.user, res.data.token, res.data.require_restore);
+            
             if (res.data.require_restore) {
-                toast.warning(res.data.message || 'Акаунт знаходиться в процесі видалення.');
+                toast.warning(res.data.message || 'Акаунт знаходиться в процесі видалення.', { toastId: 'restore-warn' });
             } else {
-                toast.success(`З поверненням, ${res.data.user.username}!`);
-                res.data.user.role === 'admin' ? navigate('/admin') : navigate('/');
+                toast.success(`З поверненням, ${res.data.user.username}!`, { toastId: 'login-success' });
+                navigate('/');
             }
         } catch (error) {
-            const status = error.response?.status;
-            if (status === 403 && error.response?.data?.isNotVerified) {
-                setPendingEmail(error.response.data.email);
-                setView('pending_verification');
-            } else if (status === 401 || status === 404) {
-                toast.error(error.response?.data?.message || 'Помилка входу');
+            if (error.response?.status === 403 && error.response?.data?.isNotVerified) {
+                setTargetEmail(error.response.data.email);
+                setOtpPurpose('VERIFY_EMAIL');
+                setOtpCode('');
+                setView('otp');
+            } else {
+                handleError(error, 'Помилка входу');
             }
-        } finally {
-            setIsLoading(false);
-        }
+        } finally { setIsLoading(false); }
     };
 
     const handleRegister = async (e) => {
         e.preventDefault();
         const validation = analyzePassword(formData.password);
-        if (validation.isSimple) {
-            toast.warning("Пароль містить занадто просту послідовність (наприклад, 123456 або qwerty). Придумайте складніший пароль.");
-            return;
-        }
-        if (!validation.isValid) {
-            toast.warning("Пароль має містити мінімум 8 символів, велику літеру, малу літеру та цифру.");
-            return;
-        }
-        if (formData.password !== formData.confirmPassword) {
-            toast.error("Паролі не співпадають.");
-            return;
-        }
+        if (validation.isSimple) return toast.warning("Пароль містить надто просту послідовність (123456 або qwerty).", { toastId: 'pass-simple' });
+        if (!validation.isValid) return toast.warning("Пароль має містити мінімум 8 символів, велику, малу літеру та цифру.", { toastId: 'pass-invalid' });
+        if (formData.password !== formData.confirmPassword) return toast.error("Паролі не співпадають.", { toastId: 'pass-mismatch' });
         setIsLoading(true);
         try {
             const regData = new FormData();
             regData.append('username', formData.username);
             regData.append('email', formData.email);
             regData.append('password', formData.password);
-            if (avatarData.file) {
-                regData.append('avatar', avatarData.file);
-            } else if (avatarData.url) {
-                regData.append('avatar_url', avatarData.url);
-            }
+            if (avatarData.file) regData.append('avatar', avatarData.file);
+            else if (avatarData.url) regData.append('avatar_url', avatarData.url);
+            
             await apiClient.post('/auth/register', regData);
-            setPendingEmail(formData.email);
-            setView('pending_verification');
-        } catch (error) {
-            const status = error.response?.status;
-            if (status === 401 || status === 404 || !error.response) {
-                toast.error(error.response?.data?.message || 'Помилка реєстрації');
-            }
-        } finally {
-            setIsLoading(false);
-        }
+            setTargetEmail(formData.email);
+            setOtpPurpose('VERIFY_EMAIL');
+            setOtpCode('');
+            setView('otp');
+        } catch (error) { handleError(error, 'Помилка реєстрації'); } 
+        finally { setIsLoading(false); }
     };
+
     const handleForgotPassword = async (e) => {
         e.preventDefault();
         if (!forgotEmail) return;
         setIsLoading(true);
         try {
             await apiClient.post('/auth/forgot-password', { email: forgotEmail });
-            toast.success('Інструкції надіслано на вашу пошту!');
-            setView('login');
-        } catch (error) { } finally {
-            setIsLoading(false);
-        }
+            setTargetEmail(forgotEmail);
+            setOtpPurpose('RESET_PASSWORD');
+            setOtpCode('');
+            setIsResetCodeVerified(false);
+            setView('reset_pass');
+            toast.success('Код надіслано на вашу пошту!', { toastId: 'forgot-sent' });
+        } catch (error) { handleError(error, 'Помилка'); } 
+        finally { setIsLoading(false); }
     };
-    const handleResendVerification = async () => {
-        if (resendCooldown > 0) {
-            toast.warning(`Зачекайте ${resendCooldown}с перед наступною відправкою.`);
-            return;
-        }
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
         setIsLoading(true);
         try {
-            await apiClient.post('/auth/resend-verification', { email: pendingEmail });
-            toast.success('Лист надіслано повторно!');
-            startResendCooldown(30);
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Помилка відправки листа');
-        } finally {
-            setIsLoading(false);
+            if (otpPurpose === 'VERIFY_EMAIL') {
+                await apiClient.post('/auth/verify-email', { email: targetEmail, code: otpCode });
+                toast.success('Email успішно підтверджено! Тепер увійдіть.', { toastId: 'verify-success' });
+                setView('login');
+            }
+        } catch (error) { handleError(error, 'Невірний код'); } 
+        finally { setIsLoading(false); }
+    };
+
+    const handleVerifyResetCodeOnly = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        try {
+            await apiClient.post('/auth/verify-reset-code', { email: targetEmail, code: otpCode });
+            setIsResetCodeVerified(true);
+        } catch (error) { 
+            handleError(error, 'Невірний код підтвердження'); 
+        } finally { 
+            setIsLoading(false); 
         }
     };
-    const isRegister = view === 'register';
-    if (view === 'pending_verification') {
+
+    const handleResetPassword = async (e) => {
+        e.preventDefault();
+        const validation = analyzePassword(formData.newPassword);
+        if (!validation.isValid) return toast.warning("Пароль має містити мінімум 8 символів, велику літеру та цифру.", { toastId: 'reset-weak' });
+        if (formData.newPassword !== formData.confirmPassword) return toast.error("Паролі не співпадають", { toastId: 'reset-mismatch' });
+        setIsLoading(true);
+        try {
+            await apiClient.post('/auth/reset-password', { 
+                email: targetEmail, 
+                code: otpCode, 
+                newPassword: formData.newPassword 
+            });
+            toast.success('Пароль успішно змінено! Увійдіть.', { toastId: 'reset-success' });
+            setFormData(prev => ({ ...prev, newPassword: '', confirmPassword: '' }));
+            setView('login');
+        } catch (error) { handleError(error, 'Невірний код або пароль'); } 
+        finally { setIsLoading(false); }
+    };
+
+    const handleResendOtp = async (e) => {
+        if (e) e.preventDefault();
+        if (resendCooldown > 0) return toast.warning(`Зачекайте ${resendCooldown}с.`, { toastId: 'cooldown-warn' });
+        setIsLoading(true);
+        try {
+            await apiClient.post('/auth/resend-otp', { email: targetEmail, purpose: otpPurpose });
+            toast.success('Код надіслано повторно!', { toastId: 'resend-success' });
+            startResendCooldown(30);
+        } catch (error) { handleError(error, 'Помилка відправки'); } 
+        finally { setIsLoading(false); }
+    };
+
+    if (view === 'otp') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
                 <Helmet><title>{getPageTitle()}</title></Helmet>
-                <div className="w-full max-w-105 bg-(--platform-card-bg) p-10 rounded-3xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] flex flex-col items-center">
-                    <div className="mb-6 text-(--platform-accent)">
-                        <MailOpen size={64} />
-                    </div>
-                    <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2 text-center">Перевірте пошту</h2>
-                    <p className="text-(--platform-text-secondary) text-sm mb-8 text-center">
-                        Лист для підтвердження надіслано на <strong>{pendingEmail}</strong>.
-                    </p>
-                    <Button 
-                        onClick={handleResendVerification} 
-                        disabled={isLoading || resendCooldown > 0} 
-                        className="w-full mb-4 flex items-center justify-center gap-2"
-                    >
-                        {resendCooldown > 0 && <Timer size={18} />}
-                        {isLoading ? 'Відправка...' : (resendCooldown > 0 ? `Зачекайте ${resendCooldown}с` : 'Надіслати повторно')}
-                    </Button>
-                    <button onClick={() => setView('login')} className="bg-transparent border-none p-0 m-0 cursor-pointer text-(--platform-text-primary) hover:text-(--platform-accent)! text-sm font-medium transition-colors duration-200 no-underline">
-                        Повернутися до входу
+                <div className="w-full max-w-105 bg-(--platform-card-bg) p-10 rounded-3xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] flex flex-col relative">
+                    <button onClick={() => setView('login')} className="absolute top-6 left-6 bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors">
+                        <ArrowLeft size={24} />
                     </button>
+                    <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-blue-100/20 text-(--platform-accent) mt-2">
+                        <MailOpen size={28} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2 text-center">
+                        Перевірте пошту
+                    </h2>
+                    <p className="text-(--platform-text-secondary) text-sm mb-6 text-center">
+                        Ми відправили 6-значний код на <strong>{targetEmail}</strong>. Введіть його нижче.
+                    </p>
+                    <form onSubmit={handleVerifyOtp} className="flex flex-col gap-2">
+                        <OtpInput length={6} value={otpCode} onChange={setOtpCode} disabled={isLoading} />
+                        <Button type="submit" disabled={isLoading || otpCode.length !== 6} className="w-full py-3.5 mt-4">
+                            {isLoading ? 'Перевірка...' : 'Підтвердити'}
+                        </Button>
+                    </form>
+                    <div className="mt-6 text-center">
+                        <button onClick={handleResendOtp} disabled={resendCooldown > 0 || isLoading} className="bg-transparent border-none p-0 cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-accent) text-sm font-medium transition-colors disabled:opacity-50">
+                            {resendCooldown > 0 ? `Надіслати повторно через ${resendCooldown}с` : 'Надіслати код повторно'}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
+
+    if (view === 'reset_pass') {
+        return (
+            <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
+                <Helmet><title>{getPageTitle()}</title></Helmet>
+                <div className="w-full max-w-105 bg-(--platform-card-bg) p-10 rounded-3xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] flex flex-col relative">
+                    <button onClick={() => setView('login')} className="absolute top-6 left-6 bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors">
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-yellow-100/30 text-yellow-600 mt-2">
+                        <KeyRound size={28} />
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2 text-center">
+                        {isResetCodeVerified ? 'Новий пароль' : 'Відновлення пароля'}
+                    </h2>
+                    <p className="text-(--platform-text-secondary) text-sm mb-6 text-center">
+                        {isResetCodeVerified 
+                            ? 'Створіть новий надійний пароль для вашого акаунту.' 
+                            : <>Код відправлено на <strong>{targetEmail}</strong>. Введіть його нижче.</>}
+                    </p>
+
+                    {!isResetCodeVerified ? (
+                        <form onSubmit={handleVerifyResetCodeOnly} className="flex flex-col gap-5">
+                            <OtpInput length={6} value={otpCode} onChange={setOtpCode} disabled={isLoading} />
+                            <Button type="submit" disabled={isLoading || otpCode.length !== 6} className="w-full py-3.5">
+                                {isLoading ? 'Перевірка...' : 'Продовжити'}
+                            </Button>
+                            <div className="mt-2 text-center">
+                                <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0 || isLoading} className="bg-transparent border-none p-0 cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-accent) text-sm font-medium transition-colors disabled:opacity-50">
+                                    {resendCooldown > 0 ? `Надіслати код через ${resendCooldown}с` : 'Надіслати код повторно'}
+                                </button>
+                            </div>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleResetPassword} className="flex flex-col gap-5">
+                            <Input 
+                                name="newPassword" 
+                                label="Новий пароль" 
+                                type="password" 
+                                placeholder="••••••••" 
+                                value={formData.newPassword} 
+                                onChange={handleChange} 
+                                required 
+                            />
+                            <Input 
+                                name="confirmPassword" 
+                                label="Підтвердження пароля" 
+                                type="password" 
+                                placeholder="••••••••" 
+                                value={formData.confirmPassword} 
+                                onChange={handleChange} 
+                                required 
+                                error={formData.confirmPassword && formData.newPassword !== formData.confirmPassword ? "Паролі не співпадають" : ""}
+                            />
+                            <div className="-mt-2.5 mb-2">
+                                 <PasswordStrengthMeter password={formData.newPassword} />
+                            </div>
+                            <Button type="submit" disabled={isLoading || !formData.newPassword || !formData.confirmPassword} className="w-full py-3.5">
+                                {isLoading ? 'Збереження...' : 'Змінити пароль'}
+                            </Button>
+                        </form>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
     if (view === 'forgot') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
                 <Helmet><title>{getPageTitle()}</title></Helmet>
                 <div className="w-full max-w-105 bg-(--platform-card-bg) p-10 rounded-3xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] flex flex-col relative">
-                    <button 
-                        onClick={() => setView('login')} 
-                        className="absolute top-6 left-6 bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors"
-                    >
+                    <button onClick={() => setView('login')} className="absolute top-6 left-6 bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors">
                         <ArrowLeft size={24} />
                     </button>
                     <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2 text-center mt-4">Відновлення</h2>
-                    <p className="text-(--platform-text-secondary) text-sm mb-8 text-center">Введіть email для скидання пароля</p>
+                    <p className="text-(--platform-text-secondary) text-sm mb-8 text-center">Введіть email для отримання коду</p>
                     <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
                         <Input 
                             name="forgotEmail" 
@@ -223,13 +317,15 @@ const AuthPage = () => {
                             required 
                         />
                         <Button type="submit" disabled={isLoading} className="w-full py-3">
-                            {isLoading ? 'Відправка...' : 'Надіслати'}
+                            {isLoading ? 'Відправка...' : 'Отримати код'}
                         </Button>
                     </form>
                 </div>
             </div>
         );
     }
+
+    const isRegister = view === 'register';
     return (
         <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
             <Helmet>
@@ -309,47 +405,15 @@ const AuthPage = () => {
                                 <div>
                                     <h4 className="m-0 mb-5 text-(--platform-text-primary) text-base font-semibold pb-2 border-b border-(--platform-border-color)">Особисті дані</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <Input 
-                                            name="username" 
-                                            label="Ім'я користувача" 
-                                            placeholder="Логін" 
-                                            value={formData.username} 
-                                            onChange={handleChange} 
-                                            required 
-                                        />
-                                        <Input 
-                                            name="email" 
-                                            label="Email адреса" 
-                                            type="email" 
-                                            placeholder="example@mail.com" 
-                                            value={formData.email} 
-                                            onChange={handleChange} 
-                                            required 
-                                        />
+                                        <Input name="username" label="Ім'я користувача" placeholder="Логін" value={formData.username} onChange={handleChange} required />
+                                        <Input name="email" label="Email адреса" type="email" placeholder="example@mail.com" value={formData.email} onChange={handleChange} required />
                                     </div>
                                 </div>
                                 <div>
                                     <h4 className="m-0 mb-5 text-(--platform-text-primary) text-base font-semibold pb-2 border-b border-(--platform-border-color)">Безпека</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-                                        <Input 
-                                            name="password" 
-                                            label="Пароль" 
-                                            type="password" 
-                                            placeholder="••••••••" 
-                                            value={formData.password} 
-                                            onChange={handleChange} 
-                                            required 
-                                        />
-                                        <Input 
-                                            name="confirmPassword" 
-                                            label="Підтвердження" 
-                                            type="password" 
-                                            placeholder="••••••••" 
-                                            value={formData.confirmPassword} 
-                                            onChange={handleChange} 
-                                            required 
-                                            error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Паролі не співпадають" : ""} 
-                                        />
+                                        <Input name="password" label="Пароль" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
+                                        <Input name="confirmPassword" label="Підтвердження" type="password" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} required error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Паролі не співпадають" : ""} />
                                     </div>
                                     <div className="mt-4">
                                          <PasswordStrengthMeter password={formData.password} />

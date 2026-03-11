@@ -16,9 +16,8 @@ import RulesPage from '../pages/RulesPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import AuthPage from '../modules/auth/AuthPage';
 import AuthSuccessPage from '../modules/auth/AuthSuccessPage';
-import VerifyEmailPage from '../modules/auth/VerifyEmailPage';
-import ResetPasswordPage from '../modules/auth/ResetPasswordPage';
 import RestoreAccountPage from '../modules/auth/RestoreAccountPage';
+import AdminLoginPage from '../modules/auth/AdminLoginPage';
 import ProfilePage from '../modules/profile/pages/ProfilePage';
 import SettingsPage from '../modules/profile/pages/SettingsPage';
 import SiteDashboardPage from '../modules/dashboard/pages/SiteDashboardPage';
@@ -54,9 +53,11 @@ function App() {
         window.addEventListener('maintenance_mode_active', handleMaintenance);
         return () => window.removeEventListener('maintenance_mode_active', handleMaintenance);
     }, []);
+
     if (maintenanceInfo.active && !isAdmin && !isLoading) {
         return <MaintenanceScreen message={maintenanceInfo.message} />;
     }
+
     return (
         <DndProvider backend={HTML5Backend}>
             <FavoritesProvider>
@@ -65,11 +66,15 @@ function App() {
                         <RestoreAccountPage />
                     ) : (
                         <Routes>
+                            <Route element={<ProtectedRoute onlyPublic={true} />}>
+                                <Route path="/admin-gate" element={<AdminLoginPage />} />
+                            </Route>
                             <Route element={<Layout />}>
                                 <Route element={<ProtectedRoute onlyPublic={true} />}>
                                     <Route path="/login" element={<AuthPage />} />
                                     <Route path="/register" element={<AuthPage />} />
-                                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                                    <Route path="/reset-password" element={<Navigate to="/login?view=forgot" replace />} />
+                                    <Route path="/verify-email" element={<Navigate to="/login" replace />} />
                                 </Route>
                                 <Route path="/" element={<HomePage />} />
                                 <Route path="/catalog" element={<CatalogPage />} />
@@ -79,7 +84,6 @@ function App() {
                                 <Route path="/site/:site_path/:slug" element={<SiteDisplayPage />} />
                                 <Route path="/rules" element={<RulesPage />} />
                                 <Route path="/auth/success" element={<AuthSuccessPage />} />
-                                <Route path="/verify-email" element={<VerifyEmailPage />} />
                                 <Route element={<ProtectedRoute />}>
                                     <Route path="/settings" element={<SettingsPage />} />
                                     <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />

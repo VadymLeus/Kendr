@@ -22,15 +22,15 @@ class User {
         return slug;
     }
 
-    static async create({ username, slug, email, password, avatar_url, is_verified, verification_token, google_id }) {
+    static async create({ username, slug, email, password, avatar_url, is_verified, google_id }) {
         let password_hash = null;
         if (password) {
             const salt = await bcrypt.genSalt(10);
             password_hash = await bcrypt.hash(password, salt);
         }
         const [result] = await db.query(
-            'INSERT INTO users (username, slug, email, password_hash, avatar_url, is_verified, verification_token, google_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [username, slug, email, password_hash, avatar_url, is_verified || 0, verification_token || null, google_id || null]
+            'INSERT INTO users (username, slug, email, password_hash, avatar_url, is_verified, google_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [username, slug, email, password_hash, avatar_url, is_verified || 0, google_id || null]
         );
         return { id: result.insertId, username, slug, email, avatar_url };
     }
@@ -161,8 +161,9 @@ class User {
                 social_instagram = NULL,
                 social_website = NULL,
                 is_verified = 0,
-                verification_token = NULL,
-                reset_token = NULL,
+                otp_code = NULL,
+                otp_expires = NULL,
+                otp_purpose = NULL,
                 google_id = NULL
             WHERE id = ?
         `;
@@ -179,15 +180,6 @@ class User {
     static async findByLoginInput(loginInput) {
         const [rows] = await db.query('SELECT * FROM users WHERE email = ? OR username = ? OR slug = ?', [loginInput, loginInput, loginInput]);
         return rows[0];
-    }
-
-    static async findByVerificationToken(token) {
-        const [rows] = await db.query('SELECT * FROM users WHERE verification_token = ?', [token]);
-        return rows[0];
-    }
-
-    static async verifyUser(userId) {
-        await db.query('UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?', [userId]);
     }
 
     static async hasPassword(id) {
