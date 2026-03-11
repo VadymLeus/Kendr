@@ -2,17 +2,17 @@
 const Site = require('../models/Site');
 const User = require('../models/User');
 const Warning = require('../models/Warning');
+const Media = require('../models/Media');
 const db = require('../config/db');
 const { deleteFile } = require('../utils/fileUtils');
 const logAdminAction = require('../utils/adminLogger');
 const { clearSettingsCache } = require('../middleware/platformGuards');
-
+const { sendAccountBannedEmail, sendSiteBannedEmail } = require('../utils/emailService');
 const deleteFullUserAccount = async (userId) => {
     const user = await User.findById(userId);
     if (user && user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
         await deleteFile(user.avatar_url);
     }
-
     const [sites] = await db.query('SELECT * FROM sites WHERE user_id = ?', [userId]);
     for (const site of sites) {
         if (site.logo_url && !site.logo_url.includes('/default/')) {
@@ -22,8 +22,27 @@ const deleteFullUserAccount = async (userId) => {
             await deleteFile(site.cover_image);
         }
     }
-
     await User.deleteById(userId);
+};
+const suspendFullUserAccount = async (userId) => {
+    const user = await User.findById(userId);
+    if (!user) return;
+    if (user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
+        await deleteFile(user.avatar_url);
+    }
+    const sites = await Site.findAllByUserId(userId);
+    for (const site of sites) {
+        if (site.logo_url && !site.logo_url.includes('/default/')) await deleteFile(site.logo_url);
+        if (site.cover_image && !site.cover_image.includes('/default/')) await deleteFile(site.cover_image);
+    }
+    await Site.deleteAllByUserId(userId);
+    const mediaFiles = await Media.findAllByUserId(userId);
+    for (const media of mediaFiles) {
+        if (media.path_full) await deleteFile(media.path_full);
+        if (media.path_thumb) await deleteFile(media.path_thumb);
+    }
+    await Media.deleteAllByUserId(userId);
+    await User.suspendUser(userId);
 };
 
 exports.getDashboardStats = async (req, res, next) => {
@@ -55,7 +74,6 @@ exports.getDashboardStats = async (req, res, next) => {
                 whereCondition = 'role != "admin"';
                 break;
         }
-
         const chartQuery = `
             SELECT DATE_FORMAT(${dateColumn}, '%Y-%m-%d') as date, COUNT(*) as count
             FROM ${tableName}
@@ -64,7 +82,6 @@ exports.getDashboardStats = async (req, res, next) => {
             GROUP BY DATE_FORMAT(${dateColumn}, '%Y-%m-%d')
             ORDER BY date ASC
         `;
-        
         const [chartRows] = await db.query(chartQuery, [days]);
         const chartData = [];
         const today = new Date();
@@ -91,23 +108,19 @@ exports.getDashboardStats = async (req, res, next) => {
             WHERE u.role != "admin" 
             ORDER BY u.created_at DESC LIMIT 10
         `);
-
         const [lastSites] = await db.query(`
             SELECT s.id, s.title, s.created_at, s.status as status_info, 'site_create' as type
             FROM sites s ORDER BY created_at DESC LIMIT 10
         `);
-
         const [lastReports] = await db.query(`
             SELECT r.id, s.title as title, r.created_at, r.status as status_info, 'report' as type
             FROM site_reports r JOIN sites s ON r.site_id = s.id 
             ORDER BY r.created_at DESC LIMIT 10
         `);
-
         const [lastTickets] = await db.query(`
             SELECT id, subject as title, created_at, status as status_info, 'ticket' as type
             FROM support_tickets ORDER BY created_at DESC LIMIT 10
         `);
-
         const activityLog = [...lastUsers, ...lastSites, ...lastReports, ...lastTickets]
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .slice(0, 20);
@@ -182,13 +195,55 @@ exports.deleteUser = async (req, res, next) => {
             return res.status(400).json({ message: 'Ви не можете видалити свій власний акаунт з адмінки.' });
         }
         const [users] = await db.query('SELECT username, email FROM users WHERE id = ?', [id]);
-        const userDetails = users[0] || {};
+        const userDetails = users[0];
         await deleteFullUserAccount(id);
-        await logAdminAction(req, 'user_delete', 'user', id, { 
+        if (userDetails) {
+            await logAdminAction(req, 'user_delete', 'user', id, { 
+                username: userDetails.username, 
+                email: userDetails.email 
+            });
+            sendAccountBannedEmail(userDetails.email, userDetails.username, true).catch(console.error);
+        }
+        res.json({ message: 'Користувача та всі його дані успішно видалено.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.suspendUserAccount = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        if (parseInt(id) === req.user.id) {
+            return res.status(400).json({ message: 'Ви не можете заблокувати свій власний акаунт.' });
+        }
+        const userDetails = await User.findById(id);
+        if (!userDetails) return res.status(404).json({ message: 'Користувача не знайдено.' });
+        await suspendFullUserAccount(id);
+        await logAdminAction(req, 'user_suspend', 'user', id, { 
             username: userDetails.username, 
             email: userDetails.email 
         });
-        res.json({ message: 'Користувача та всі його дані успішно видалено.' });
+        sendAccountBannedEmail(userDetails.email, userDetails.username, false).catch(console.error);
+        res.json({ message: 'Акаунт користувача заблоковано назавжди. Дані знеособлено, сайти та файли видалено.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.restoreUserAccount = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const userDetails = await User.findById(id);
+        if (!userDetails) return res.status(404).json({ message: 'Користувача не знайдено.' });
+        
+        await User.restoreUser(id);
+        
+        await logAdminAction(req, 'user_restore', 'user', id, { 
+            username: userDetails.username, 
+            email: userDetails.email 
+        });
+        
+        res.json({ message: 'Акаунт користувача успішно розблоковано. Тепер він може відновити доступ.' });
     } catch (error) {
         next(error);
     }
@@ -225,33 +280,34 @@ exports.suspendSite = async (req, res, next) => {
         const deletionDate = new Date();
         deletionDate.setDate(deletionDate.getDate() + 7);
         await Site.updateStatus(site.id, 'suspended', deletionDate);
+        const [users] = await db.query('SELECT email, username FROM users WHERE id = ?', [site.user_id]);
+        const siteOwner = users[0];
         const [existingWarning] = await db.query(
             'SELECT id FROM user_warnings WHERE user_id = ? AND site_id = ?', 
             [site.user_id, site.id]
         );
-
         let strikeMessage = '';
+        const reason = `Сайт заблоковано адміністратором. У вас є 7 днів на оскарження.`;
         if (existingWarning.length === 0) {
-            await Warning.create(site.user_id, site.id, `Сайт "${site.title}" заблоковано адміністратором. У вас є 7 днів на оскарження.`);
+            await Warning.create(site.user_id, site.id, reason);
             strikeMessage = ' (Видано страйк).';
         } else {
             strikeMessage = ' (Страйк за цей сайт вже існує).';
         }
-
         await logAdminAction(req, 'site_suspend', 'site', site.id, { 
             title: site.title, 
             path: site.site_path 
         });
-
         const warningCount = await Warning.countForUser(site.user_id);
         if (warningCount >= 3) {
-            await deleteFullUserAccount(site.user_id);
+            await suspendFullUserAccount(site.user_id);
+            if (siteOwner) sendAccountBannedEmail(siteOwner.email, siteOwner.username).catch(console.error);
             return res.json({ 
-                message: `Користувач отримав ${warningCount}-й страйк. Акаунт та всі сайти видалено автоматично.`,
+                message: `Користувач отримав ${warningCount}-й страйк. Акаунт заблоковано назавжди, сайти видалено.`,
                 action: 'USER_DELETED' 
             });
         }
-
+        if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, reason).catch(console.error);
         res.json({ message: `Сайт призупинено.${strikeMessage} Включено таймер 7 днів.` });
     } catch (error) {
         next(error);
@@ -298,6 +354,8 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
         const [sites] = await db.query('SELECT * FROM sites WHERE site_path = ?', [site_path]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено.' });
         const site = sites[0];
+        const [users] = await db.query('SELECT email, username FROM users WHERE id = ?', [site.user_id]);
+        const siteOwner = users[0];
         await db.query('UPDATE site_appeals SET status = "rejected", resolved_at = NOW() WHERE site_id = ? AND status = "pending"', [site.id]);
         if (site.logo_url && !site.logo_url.includes('/default/')) {
             await deleteFile(site.logo_url);
@@ -305,27 +363,27 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
         if (site.cover_image && !site.cover_image.includes('/default/')) {
             await deleteFile(site.cover_image);
         }
-
         const [existingWarning] = await db.query(
             'SELECT id FROM user_warnings WHERE user_id = ? AND site_id = ?', 
             [site.user_id, site.id]
         );
-        
+        const reason = `Сайт було видалено адміністратором через грубі порушення.`;
         if (existingWarning.length === 0) {
-            await Warning.create(site.user_id, site.id, `Сайт "${site.title}" был удален администратором из-за нарушений.`);
+            await Warning.create(site.user_id, site.id, reason);
         }
-
         await Site.delete(site.id);
         await logAdminAction(req, 'site_delete', 'site', site.id, { 
             title: site.title, 
             path: site.site_path 
         });
-
         const warningCount = await Warning.countForUser(site.user_id);
         let userActionMessage = '';
         if (warningCount >= 3) {
-            await deleteFullUserAccount(site.user_id);
-            userActionMessage = ' Користувач отримав 3-й страйк і був ПОВНІСТЮ видалений.';
+            await suspendFullUserAccount(site.user_id);
+            if (siteOwner) sendAccountBannedEmail(siteOwner.email, siteOwner.username).catch(console.error);
+            userActionMessage = ' Користувач отримав 3-й страйк і був ЗАБЛОКОВАНИЙ назавжди.';
+        } else {
+            if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, reason).catch(console.error);
         }
 
         res.json({ message: `Сайт "${site.title}" остаточно видалено.${userActionMessage}` });
@@ -343,7 +401,6 @@ exports.getReports = async (req, res, next) => {
             LEFT JOIN sites s ON r.site_id = s.id
             LEFT JOIN users u ON r.reporter_id = u.id
         `;
-        
         const params = [];
         if (status && status !== 'all') {
             query += ` WHERE r.status = ?`;
@@ -390,6 +447,8 @@ exports.banSiteFromReport = async (req, res, next) => {
         const [sites] = await db.query('SELECT * FROM sites WHERE id = ?', [report.site_id]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
         const site = sites[0];
+        const [users] = await db.query('SELECT email, username FROM users WHERE id = ?', [site.user_id]);
+        const siteOwner = users[0];
         await db.query('UPDATE site_reports SET status = "banned" WHERE id = ?', [id]);
         const deletionDate = new Date();
         deletionDate.setDate(deletionDate.getDate() + 7); 
@@ -398,10 +457,10 @@ exports.banSiteFromReport = async (req, res, next) => {
             'SELECT id FROM user_warnings WHERE user_id = ? AND site_id = ?', 
             [site.user_id, site.id]
         );
-
         let strikeMessage = '';
+        const reason = `Блокування за скаргою #${id}. Причина: ${report.reason}.`;
         if (existingWarning.length === 0) {
-            await Warning.create(site.user_id, site.id, `Сайт заблоковано через скаргу #${id}. Причина: ${report.reason}.`);
+            await Warning.create(site.user_id, site.id, reason);
             strikeMessage = ' (Видано страйк).';
         } else {
             strikeMessage = ' (Страйк вже існував).';
@@ -412,16 +471,16 @@ exports.banSiteFromReport = async (req, res, next) => {
             site_title: site.title,
             reason: report.reason 
         });
-
         const warningCount = await Warning.countForUser(site.user_id);
         if (warningCount >= 3) {
-            await deleteFullUserAccount(site.user_id);
+            await suspendFullUserAccount(site.user_id);
+            if (siteOwner) sendAccountBannedEmail(siteOwner.email, siteOwner.username).catch(console.error);
             return res.json({ 
-                message: `Користувач отримав 3-й страйк. Акаунт та сайти видалено.`,
+                message: `Користувач отримав 3-й страйк. Акаунт заблоковано назавжди.`,
                 action: 'USER_DELETED'
             });
         }
-
+        if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, reason).catch(console.error);
         res.json({ message: `Сайт заблоковано на 7 днів.${strikeMessage}` });
     } catch (error) {
         next(error);
@@ -474,7 +533,6 @@ exports.createSystemTemplate = async (req, res, next) => {
             icon || 'Layout',
             category || 'General'
         ]);
-        
         await logAdminAction(req, 'template_create', 'template', result.insertId || null, { name: templateName });
         res.status(201).json({ message: 'Системний шаблон створено (Статус: В розробці).' });
     } catch (error) {
@@ -544,7 +602,6 @@ exports.getSystemSettings = async (req, res, next) => {
                 registration_enabled: true
             });
         }
-
         const dbSettings = rows[0];
         res.json({
             maintenance_mode: !!dbSettings.is_platform_maintenance,
@@ -571,7 +628,6 @@ exports.updateSystemSettings = async (req, res, next) => {
             editor_locked ? 1 : 0,
             maintenance_message || null
         ]);
-
         clearSettingsCache();
         await logAdminAction(req, 'settings_update', 'system', null, {
             maintenance: maintenance_mode,
@@ -583,7 +639,6 @@ exports.updateSystemSettings = async (req, res, next) => {
         } else {
             res.set('X-Global-Announcement', '');
         }
-
         res.json({ 
             message: 'Налаштування платформи оновлено',
             settings: { 

@@ -1,9 +1,11 @@
 // backend/controllers/userController.js
 const User = require('../models/User');
+const Site = require('../models/Site');
 const Warning = require('../models/Warning');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const { deleteFile } = require('../utils/fileUtils');
 const db = require('../config/db');
 const getUserStats = async (userId, plan) => {
@@ -43,7 +45,7 @@ const sanitizeUser = (user, stats = null) => {
         social_instagram: user.social_instagram,
         social_website: user.social_website,
         is_profile_public: user.is_profile_public,
-        has_password: !!user.password_hash,
+        has_password: user.has_password !== undefined ? user.has_password : !!user.password_hash,
         created_at: user.created_at
     };
     
@@ -210,12 +212,33 @@ exports.deleteAccount = async (req, res, next) => {
             return res.status(400).json({ message: 'Невірне підтвердження.' });
         }
         const userId = req.user.id;
+        await User.softDeleteUser(userId);
+        await Site.setAllUserSitesToDraft(userId);
+        res.json({ message: 'Акаунт заплановано на видалення. Ви можете відновити його протягом 14 днів.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.restoreAccount = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
         const user = await User.findById(userId);
-        if (user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
-            await deleteFile(user.avatar_url);
+        if (!user || user.status !== 'deleted') {
+            return res.status(400).json({ message: 'Акаунт не потребує відновлення або не знайдено.' });
         }
-        await User.deleteById(userId);
-        res.json({ message: 'Акаунт успішно видалено.' });
+        await User.restoreFromSoftDelete(userId);
+        const token = jwt.sign({ 
+            id: user.id, 
+            role: user.role, 
+            plan: user.plan || 'FREE' 
+        }, process.env.JWT_SECRET, { expiresIn: '24h' });
+        const stats = await getUserStats(userId, user.plan);
+        res.json({ 
+            message: 'Акаунт успішно відновлено!',
+            token,
+            user: sanitizeUser({ ...user, has_password: await User.hasPassword(userId) }, stats)
+        });
     } catch (error) {
         next(error);
     }

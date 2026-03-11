@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailService');
+const { deleteFile } = require('../utils/fileUtils');
 const db = require('../config/db');
 
 exports.register = async (req, res, next) => {
@@ -72,6 +73,39 @@ exports.login = async (req, res, next) => {
         const { loginInput, password } = req.body;
         const user = await User.findByLoginInput(loginInput);
         if (!user) return res.status(401).json({ message: 'Невірний логін або пароль.' });
+        if (user.status === 'suspended') {
+            return res.status(403).json({ 
+                message: 'Ваш акаунт заблоковано назавжди за порушення правил платформи.' 
+            });
+        }
+        if (user.status === 'deleted') {
+            const deletedAt = new Date(user.deleted_at).getTime();
+            const now = Date.now();
+            const diffDays = (now - deletedAt) / (1000 * 3600 * 24);
+            if (diffDays > 14) {
+                if (user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
+                    await deleteFile(user.avatar_url).catch(() => {});
+                }
+                await User.deleteById(user.id);
+                return res.status(403).json({ message: 'Акаунт видалено безповоротно, оскільки минуло 14 днів.' });
+            } else {
+                const isMatch = await bcrypt.compare(password, user.password_hash);
+                if (!isMatch) return res.status(401).json({ message: 'Невірний логін або пароль.' });
+                const token = jwt.sign({ 
+                    id: user.id, 
+                    role: 'RESTORE_ONLY', 
+                    plan: user.plan || 'FREE' 
+                }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+                return res.json({
+                    require_restore: true,
+                    message: 'Акаунт знаходиться в процесі видалення. Бажаєте відновити?',
+                    token,
+                    user: { id: user.id, username: user.username, email: user.email }
+                });
+            }
+        }
+
         if (user.is_verified === 0) {
             return res.status(403).json({ 
                 message: 'Ваша пошта не підтверджена.',
@@ -135,6 +169,11 @@ exports.forgotPassword = async (req, res, next) => {
     try {
         const { email } = req.body;
         const user = await User.findByEmail(email);
+        
+        if (user && user.status === 'suspended') {
+             return res.json({ message: 'Якщо цей email існує, ми надіслали інструкції.' }); 
+        }
+
         if (!user) {
             return res.json({ message: 'Якщо цей email існує, ми надіслали інструкції.' });
         }
@@ -194,6 +233,30 @@ exports.getMe = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
+        if (user.status === 'suspended') {
+            return res.status(403).json({ message: 'Ваш акаунт заблоковано.' });
+        }
+        if (user.status === 'deleted') {
+            const deletedAt = new Date(user.deleted_at).getTime();
+            const now = Date.now();
+            const diffDays = (now - deletedAt) / (1000 * 3600 * 24);
+            if (diffDays > 14) {
+                if (user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
+                    await deleteFile(user.avatar_url).catch(() => {});
+                }
+                await User.deleteById(user.id);
+                return res.status(403).json({ message: 'Акаунт видалено безповоротно.' });
+            }
+            return res.json({ 
+                require_restore: true,
+                message: 'Акаунт знаходиться в процесі видалення. Бажаєте відновити?',
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    status: user.status
+                }
+            });
+        }
         const hasPassword = await User.hasPassword(req.user.id);
         res.json({
             id: user.id, 

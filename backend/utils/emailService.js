@@ -12,12 +12,11 @@ const siteColors = {
     lime: '#8cc152',
     gray: '#718096'
 };
-
 const getAccentHex = (colorName) => {
     return siteColors[colorName] || siteColors.blue;
 };
-
 const platformAccent = '#4299e1';
+const platformDanger = '#ef4444';
 const FROM_EMAIL = 'Kendr <info@kendr.online>';
 exports.sendSubmissionNotification = async (toEmail, siteTitle, formData) => {
     const { name, email, subject, message } = formData;
@@ -29,7 +28,7 @@ exports.sendSubmissionNotification = async (toEmail, siteTitle, formData) => {
                 </div>
                 <div style="background-color: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
                     <p style="margin: 0 0 12px 0; font-size: 15px;"><strong>👤 Від:</strong> ${name} (<a href="mailto:${email}" style="color: ${platformAccent};">${email}</a>)</p>
-                    <p style="margin: 0; font-size: 15px;"><strong>📝 Тема:</strong> ${subject || 'Без теми'}</p>
+                    <p style="margin: 0; font-size: 15px;"><strong> Тема:</strong> ${subject || 'Без теми'}</p>
                 </div>
                 <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; font-size: 16px; line-height: 1.6; color: #1e293b;">
                     ${message.replace(/\n/g, '<br>')}
@@ -41,7 +40,6 @@ exports.sendSubmissionNotification = async (toEmail, siteTitle, formData) => {
             </div>
         </div>
     `;
-
     try {
         const { error } = await resend.emails.send({
             from: FROM_EMAIL,
@@ -82,7 +80,6 @@ exports.sendVerificationEmail = async (toEmail, token) => {
             </div>
         </div>
     `;
-
     try {
         const { error } = await resend.emails.send({
             from: FROM_EMAIL,
@@ -128,7 +125,6 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
             </div>
         </div>
     `;
-
     try {
         const { error } = await resend.emails.send({
             from: FROM_EMAIL,
@@ -152,7 +148,6 @@ exports.sendDigitalGoodsEmail = async (toEmail, customerName, digitalItems, site
                 <h3 style="margin-top: 0; margin-bottom: 16px; color: #0f172a; font-size: 18px; text-align: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px;">
                     ${item.product_name}
                 </h3>
-                
                 ${isUrl 
                     ? `<div style="text-align: center; margin-top: 24px; margin-bottom: 8px;">
                            <a href="${item.digital_file_url}" style="display: inline-block; background-color: ${accentHex}; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 15px;">
@@ -174,7 +169,7 @@ exports.sendDigitalGoodsEmail = async (toEmail, customerName, digitalItems, site
         <div style="font-family: 'Inter', -apple-system, sans-serif; background-color: #f1f5f9; padding: 40px 20px; color: #334155;">
             <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 <div style="text-align: center; margin-bottom: 32px;">
-                    <h2 style="color: ${accentHex}; font-size: 24px; margin: 0 0 12px 0;">Дякуємо за покупку, ${customerName}! 🛍️</h2>
+                    <h2 style="color: ${accentHex}; font-size: 24px; margin: 0 0 12px 0;">Дякуємо за покупку, ${customerName}!</h2>
                     <p style="font-size: 16px; color: #475569; margin: 0; line-height: 1.5;">Оплата успішно підтверджена. Ваші матеріали готові до використання.</p>
                 </div>
                 <div>
@@ -187,7 +182,6 @@ exports.sendDigitalGoodsEmail = async (toEmail, customerName, digitalItems, site
             </div>
         </div>
     `;
-
     try {
         const { error } = await resend.emails.send({
             from: FROM_EMAIL,
@@ -195,7 +189,6 @@ exports.sendDigitalGoodsEmail = async (toEmail, customerName, digitalItems, site
             subject: 'Ваші цифрові товари готові!',
             html: html,
         });
-        
         if (error) {
             console.error('Помилка Resend API (Digital Goods):', error);
         } else {
@@ -203,5 +196,83 @@ exports.sendDigitalGoodsEmail = async (toEmail, customerName, digitalItems, site
         }
     } catch (error) {
         console.error('Помилка надсилання цифрових товарів на email:', error);
+    }
+};
+
+exports.sendAccountBannedEmail = async (toEmail, username, isDeleted = false) => {
+    const title = isDeleted ? 'Акаунт видалено' : 'Акаунт заблоковано';
+    const actionText = isDeleted ? 'було остаточно видалено' : 'було назавжди заблоковано';
+    const html = `
+        <div style="font-family: 'Inter', -apple-system, sans-serif; background-color: #f1f5f9; padding: 40px 20px; color: #334155;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; padding: 32px; border-top: 6px solid ${platformDanger}; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h1 style="color: #0f172a; font-size: 24px; margin: 0;">Увага, ${username}</h1>
+                </div>
+                <div style="background-color: #fef2f2; border-radius: 12px; padding: 20px; border: 1px solid #fecaca; margin-bottom: 24px; text-align: center;">
+                    <p style="font-size: 16px; line-height: 1.6; margin: 0; color: #991b1b; font-weight: 500;">
+                        Ваш акаунт на платформі Kendr ${actionText}.
+                    </p>
+                </div>
+                <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
+                    Цей захід був вжитий адміністрацією платформи через порушення Умов використання або систематичні скарги.
+                    Всі ваші сайти, завантажені медіафайли та персональні дані ${isDeleted ? 'видалені без можливості відновлення' : 'більше не доступні в мережі'}.
+                </p>
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
+            </div>
+        </div>
+    `;
+    try {
+        const { error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: toEmail,
+            subject: `Важливе сповіщення: ${title} | Kendr`,
+            html: html,
+        });
+        if (error) console.error('Помилка Resend API (Account Ban):', error);
+    } catch (error) {
+        console.error('Помилка надсилання листа про бан акаунту:', error);
+    }
+};
+
+exports.sendSiteBannedEmail = async (toEmail, siteTitle, reason) => {
+    const html = `
+        <div style="font-family: 'Inter', -apple-system, sans-serif; background-color: #f1f5f9; padding: 40px 20px; color: #334155;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; padding: 32px; border-top: 6px solid #f59e0b; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h1 style="color: #0f172a; font-size: 22px; margin: 0;">Ваш сайт призупинено</h1>
+                </div>
+                <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 16px;">
+                    Повідомляємо, що ваш сайт <strong>"${siteTitle}"</strong> був заблокований або видалений адміністратором платформи.
+                </p>
+                <div style="background-color: #fffbeb; border-radius: 12px; padding: 20px; border: 1px solid #fde68a; margin-bottom: 24px;">
+                    <p style="margin: 0; font-size: 15px; color: #92400e;">
+                        <strong>Причина:</strong> ${reason || 'Порушення правил платформи'}
+                    </p>
+                </div>
+                <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
+                    Якщо ви отримаєте 3 страйки (блокування сайтів), ваш обліковий запис буде назавжди заблоковано. Будь ласка, перегляньте правила нашої платформи.
+                </p>
+                <div style="text-align: center; margin: 32px 0;">
+                    <a href="${clientUrl}/admin/support" style="display: inline-block; background-color: #475569; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 14px;">
+                        Оскаржити в Підтримці
+                    </a>
+                </div>
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
+                <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0;">
+                    Kendr Administration Team
+                </p>
+            </div>
+        </div>
+    `;
+    try {
+        const { error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: toEmail,
+            subject: `Увага: Ваш сайт "${siteTitle}" призупинено | Kendr`,
+            html: html,
+        });
+        if (error) console.error('Помилка Resend API (Site Ban):', error);
+    } catch (error) {
+        console.error('Помилка надсилання листа про бан сайту:', error);
     }
 };

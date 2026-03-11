@@ -7,7 +7,6 @@ const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true
 });
-
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -20,7 +19,6 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
 const safeB64Decode = (str) => {
     try {
         return decodeURIComponent(escape(atob(str)));
@@ -48,27 +46,22 @@ apiClient.interceptors.response.use(
     if (axios.isCancel(error)) {
         return Promise.reject(error);
     }
-
     if (error.response) {
       const { status, data, headers } = error.response;
-      
       if (status === 404) {
           return Promise.reject(error);
       }
-      
       const announcementHeader = headers['x-global-announcement'];
       if (announcementHeader !== undefined) {
           const message = announcementHeader ? safeB64Decode(announcementHeader) : null;
           window.dispatchEvent(new CustomEvent('global_announcement_update', { detail: message }));
       }
-      
       if (status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           window.dispatchEvent(new Event('auth_unauthorized'));
           return Promise.reject(error);
       }
-      
       if (status === 503) {
         if (data && data.editor_locked) {
             window.dispatchEvent(new CustomEvent('editor_locked_status', { detail: true }));
@@ -80,7 +73,6 @@ apiClient.interceptors.response.use(
            return Promise.reject(error); 
         }
       }
-      
       if (!error.config?.suppressToast && status !== 503 && status !== 401 && status !== 404) {
          toast.error(data?.message || 'Помилка');
       }
@@ -90,3 +82,5 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+export const suspendUser = (id) => apiClient.post(`/admin/users/${id}/suspend`);
+export const restoreUser = (id) => apiClient.post(`/admin/users/${id}/restore`);

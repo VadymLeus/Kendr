@@ -1,22 +1,52 @@
 // backend/routes/authRoutes.js
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const authController = require('../controllers/authController');
 const { upload, processAndSaveImage } = require('../middleware/upload');
 const passport = require('passport');
 const verifyToken = require('../middleware/verifyToken');
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const loginWindowMs = (parseInt(process.env.RATE_LIMIT_LOGIN_MINUTES) || 15) * 60 * 1000;
+const loginMax = parseInt(process.env.RATE_LIMIT_LOGIN_MAX) || 5;
+const registerWindowMs = (parseInt(process.env.RATE_LIMIT_REGISTER_MINUTES) || 60) * 60 * 1000;
+const registerMax = parseInt(process.env.RATE_LIMIT_REGISTER_MAX) || 5;
+const forgotWindowMs = (parseInt(process.env.RATE_LIMIT_FORGOT_MINUTES) || 60) * 60 * 1000;
+const forgotMax = parseInt(process.env.RATE_LIMIT_FORGOT_MAX) || 3;
+const loginLimiter = rateLimit({
+    windowMs: loginWindowMs,
+    max: loginMax,
+    message: { message: `Забагато спроб входу. Спробуйте пізніше через ${loginWindowMs / 60000} хвилин.` },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+const registerLimiter = rateLimit({
+    windowMs: registerWindowMs,
+    max: registerMax,
+    message: { message: 'Забагато спроб реєстрації з вашого IP. Спробуйте пізніше.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const forgotPasswordLimiter = rateLimit({
+    windowMs: forgotWindowMs,
+    max: forgotMax,
+    message: { message: 'Забагато запитів на відновлення пароля. Спробуйте пізніше.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 router.post(
     '/register',
+    registerLimiter,
     upload.single('avatar'),
     processAndSaveImage('avatars/custom', 'avatar', 128),
     authController.register
 );
-router.post('/login', authController.login);
+router.post('/login', loginLimiter, authController.login);
 router.post('/verify-email', authController.verifyEmail);
 router.post('/resend-verification', authController.resendVerification);
-router.post('/forgot-password', authController.forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiter, authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 router.get('/google', passport.authenticate('google', { 
     scope: ['profile', 'email'] 
@@ -30,4 +60,5 @@ router.get(
     authController.googleCallback
 );
 router.get('/me', verifyToken, authController.getMe);
+
 module.exports = router;

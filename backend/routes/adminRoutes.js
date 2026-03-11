@@ -11,6 +11,8 @@ router.get('/logs', adminController.getAdminLogs);
 router.get('/control/settings', adminController.getSystemSettings);
 router.put('/control/settings', adminController.updateSystemSettings);
 router.get('/users', adminController.getAllUsers);
+router.post('/users/:id/suspend', adminController.suspendUserAccount);
+router.post('/users/:id/restore', adminController.restoreUserAccount);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/sites', adminController.getAllSites);
 router.delete('/sites/:site_path', adminController.deleteSiteByAdmin);

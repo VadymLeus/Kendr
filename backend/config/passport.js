@@ -27,7 +27,7 @@ passport.use(new GoogleStrategy({
         const [existingUser] = await db.query('SELECT * FROM users WHERE google_id = ?', [profile.id]);
         if (existingUser.length > 0) {
             const user = existingUser[0];
-            if (!user.avatar_url && avatar_url) {
+            if (user.status !== 'suspended' && !user.avatar_url && avatar_url) {
                 await db.query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatar_url, user.id]);
                 user.avatar_url = avatar_url;
             }
@@ -38,14 +38,16 @@ passport.use(new GoogleStrategy({
         if (userByEmail.length > 0) {
             const user = userByEmail[0];
             const newAvatar = user.avatar_url ? user.avatar_url : avatar_url;
-            
-            await db.query(
-                'UPDATE users SET google_id = ?, is_verified = 1, avatar_url = ? WHERE id = ?', 
-                [profile.id, newAvatar, user.id]
-            );
+            if (user.status !== 'suspended') {
+                await db.query(
+                    'UPDATE users SET google_id = ?, is_verified = 1, avatar_url = ? WHERE id = ?', 
+                    [profile.id, newAvatar, user.id]
+                );
+            }
             
             return done(null, { ...user, google_id: profile.id, is_verified: 1, avatar_url: newAvatar });
         }
+        
         const baseUsername = profile.displayName.trim().replace(/\s+/g, ' ');
         let uniqueUsername = baseUsername;
         while (true) {
@@ -53,13 +55,11 @@ passport.use(new GoogleStrategy({
              if (check.length === 0) break;
              uniqueUsername = `${baseUsername} ${Math.floor(Math.random() * 1000)}`;
         }
-        
         const slug = await User.generateSlug(uniqueUsername);
         const [result] = await db.query(
             'INSERT INTO users (username, slug, email, google_id, avatar_url, is_verified, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [uniqueUsername, slug, email, profile.id, avatar_url, 1, null]
         );
-        
         const newUser = {
             id: result.insertId,
             username: uniqueUsername,

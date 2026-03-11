@@ -45,7 +45,6 @@ const AuthPage = () => {
         url: null,
         preview: null
     });
-
     const getPageTitle = () => {
         switch(view) {
             case 'register': return 'Реєстрація акаунту | Kendr';
@@ -54,7 +53,6 @@ const AuthPage = () => {
             default: return 'Вхід до системи | Kendr';
         }
     };
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -88,14 +86,19 @@ const AuthPage = () => {
                 loginInput: formData.loginInput,
                 password: formData.password
             });
-            login(res.data.user, res.data.token);
-            toast.success(`З поверненням, ${res.data.user.username}!`);
-            res.data.user.role === 'admin' ? navigate('/admin') : navigate('/');
+            login(res.data.user, res.data.token, res.data.require_restore);
+            if (res.data.require_restore) {
+                toast.warning(res.data.message || 'Акаунт знаходиться в процесі видалення.');
+            } else {
+                toast.success(`З поверненням, ${res.data.user.username}!`);
+                res.data.user.role === 'admin' ? navigate('/admin') : navigate('/');
+            }
         } catch (error) {
-            if (error.response && error.response.status === 403 && error.response.data.isNotVerified) {
+            const status = error.response?.status;
+            if (status === 403 && error.response?.data?.isNotVerified) {
                 setPendingEmail(error.response.data.email);
                 setView('pending_verification');
-            } else {
+            } else if (status === 401 || status === 404) {
                 toast.error(error.response?.data?.message || 'Помилка входу');
             }
         } finally {
@@ -118,7 +121,6 @@ const AuthPage = () => {
             toast.error("Паролі не співпадають.");
             return;
         }
-        
         setIsLoading(true);
         try {
             const regData = new FormData();
@@ -134,12 +136,14 @@ const AuthPage = () => {
             setPendingEmail(formData.email);
             setView('pending_verification');
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Помилка реєстрації');
+            const status = error.response?.status;
+            if (status === 401 || status === 404 || !error.response) {
+                toast.error(error.response?.data?.message || 'Помилка реєстрації');
+            }
         } finally {
             setIsLoading(false);
         }
     };
-
     const handleForgotPassword = async (e) => {
         e.preventDefault();
         if (!forgotEmail) return;
@@ -152,7 +156,6 @@ const AuthPage = () => {
             setIsLoading(false);
         }
     };
-
     const handleResendVerification = async () => {
         if (resendCooldown > 0) {
             toast.warning(`Зачекайте ${resendCooldown}с перед наступною відправкою.`);
@@ -169,7 +172,6 @@ const AuthPage = () => {
             setIsLoading(false);
         }
     };
-
     const isRegister = view === 'register';
     if (view === 'pending_verification') {
         return (
@@ -198,7 +200,6 @@ const AuthPage = () => {
             </div>
         );
     }
-
     if (view === 'forgot') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -229,7 +230,6 @@ const AuthPage = () => {
             </div>
         );
     }
-
     return (
         <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
             <Helmet>

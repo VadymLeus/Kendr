@@ -12,6 +12,7 @@ export const ConfirmProvider = ({ children }) => {
         cancelText: 'Скасувати',
         type: 'danger',
         requireInput: false,
+        expectedInput: 'DELETE',
         onConfirm: () => {},
         onCancel: () => {},
     });
@@ -26,6 +27,7 @@ export const ConfirmProvider = ({ children }) => {
                 cancelText: options.cancelText || 'Скасувати',
                 type: options.danger ? 'danger' : (options.type || 'primary'),
                 requireInput: options.requireInput || false,
+                expectedInput: options.expectedInput || 'DELETE',
                 onConfirm: (inputValue) => {
                     setConfirmState((prev) => ({ ...prev, isOpen: false }));
                     if (options.onConfirm) options.onConfirm(inputValue);
@@ -53,6 +55,7 @@ export const ConfirmProvider = ({ children }) => {
                 onCancel={confirmState.onCancel}
                 type={confirmState.type}
                 requireInput={confirmState.requireInput}
+                expectedInput={confirmState.expectedInput}
             />
         </ConfirmContext.Provider>
     );

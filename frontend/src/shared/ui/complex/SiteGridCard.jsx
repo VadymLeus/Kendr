@@ -7,6 +7,7 @@ import ReportModal from './ReportModal';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import { BASE_URL } from '../../config';
 import { useCooldown } from '../../hooks/useCooldown';
+import { useConfirm } from '../../hooks/useConfirm';
 import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock, AlertTriangle, Construction, Wrench } from 'lucide-react';
 
 const SiteStatusBadge = ({ status }) => {
@@ -184,6 +185,7 @@ const SiteGridCard = ({
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [statusCooldown, startStatusCooldown] = useCooldown('kendr_status_cooldown');
     const { user } = useContext(AuthContext);
+    const { confirm } = useConfirm();
     const isUserAdmin = user?.role === 'admin';
     const isOwner = variant === 'owner';
     const isEffectiveAdmin = variant === 'admin' || isUserAdmin;
@@ -202,7 +204,6 @@ const SiteGridCard = ({
         }
         return '';
     };
-
     const handleToggleStatusWithCooldown = (siteObj, newStatus) => {
         if (statusCooldown > 0) {
             toast.warning(`Зачекайте ${statusCooldown}с перед наступною зміною статусу.`);
@@ -210,6 +211,28 @@ const SiteGridCard = ({
         }
         onToggleStatus(siteObj, newStatus);
         startStatusCooldown(30);
+    };
+    const handleDeleteWithConfirm = (e, sitePath, title) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        confirm({
+            title: 'Видалити сайт?',
+            message: `Ви збираєтесь назавжди видалити сайт "${title}". Цю дію неможливо скасувати. Введіть "DELETE" для підтвердження.`,
+            requireInput: true,
+            expectedInput: 'DELETE',
+            confirmText: 'Видалити сайт',
+            type: 'danger',
+            onConfirm: (inputValue) => {
+                if (inputValue !== 'DELETE') {
+                    return toast.error('Невірне підтвердження.');
+                }
+                if (onDelete) {
+                    onDelete(e, sitePath, title);
+                }
+            }
+        });
     };
 
     return (
@@ -238,7 +261,7 @@ const SiteGridCard = ({
                     isOwner={isOwner} 
                     isAdmin={isEffectiveAdmin} 
                     onToggleStatus={handleToggleStatusWithCooldown} 
-                    onDelete={onDelete} 
+                    onDelete={handleDeleteWithConfirm}
                     onReport={() => setIsReportOpen(true)}
                     statusCooldown={statusCooldown}
                 />

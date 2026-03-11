@@ -38,7 +38,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             });
         }
     }, [file, isFont]);
-
     useEffect(() => {
         if (file) {
             setFormData({
@@ -48,7 +47,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             });
         }
     }, [file]);
-
     if (!file) return null;
     const saveChanges = async () => {
         if (!hasChanges) return;
@@ -348,7 +346,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                     <Button 
                         variant="danger"
                         onClick={() => onDelete(file)} 
-                        title="Видалити назавжди"
+                        title="Видалити"
                         style={{ width: '100%', justifyContent: 'center' }}
                     >
                         <Trash2 size={16} /> Видалити

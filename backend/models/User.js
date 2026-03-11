@@ -42,7 +42,7 @@ class User {
 
     static async findById(id) {
         const [rows] = await db.query(
-            `SELECT id, username, slug, email, phone_number, role, status, 
+            `SELECT id, username, slug, email, phone_number, role, status, deleted_at,
             platform_theme_mode, platform_theme_accent, 
             platform_bg_url, platform_bg_blur, platform_bg_brightness,
             bio, social_telegram, social_instagram, social_website, is_profile_public,
@@ -55,7 +55,7 @@ class User {
     
     static async findByUsername(username) {
         const [rows] = await db.query(
-            `SELECT id, username, slug, email, role, status, 
+            `SELECT id, username, slug, email, role, status, deleted_at,
             platform_theme_mode, platform_theme_accent, 
             bio, social_telegram, social_instagram, social_website, is_profile_public,
             created_at, avatar_url 
@@ -67,7 +67,7 @@ class User {
 
     static async findBySlug(slug) {
         const [rows] = await db.query(
-            `SELECT id, username, slug, email, role, status, 
+            `SELECT id, username, slug, email, role, status, deleted_at,
             platform_theme_mode, platform_theme_accent, 
             bio, social_telegram, social_instagram, social_website, is_profile_public,
             created_at, avatar_url 
@@ -134,9 +134,45 @@ class User {
     static async updateLastLogin(userId) {
         await db.query('UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', [userId]);
     }
-
+    
     static async deleteById(userId) {
         const [result] = await db.query('DELETE FROM users WHERE id = ?', [userId]);
+        return result;
+    }
+
+    static async softDeleteUser(userId) {
+        const [result] = await db.query(`UPDATE users SET status = 'deleted', deleted_at = NOW() WHERE id = ?`, [userId]);
+        return result;
+    }
+
+    static async restoreFromSoftDelete(userId) {
+        const [result] = await db.query(`UPDATE users SET status = 'active', deleted_at = NULL WHERE id = ?`, [userId]);
+        return result;
+    }
+
+    static async suspendUser(userId) {
+        const query = `
+            UPDATE users 
+            SET status = 'suspended',
+                password_hash = NULL,
+                avatar_url = NULL,
+                bio = NULL,
+                social_telegram = NULL,
+                social_instagram = NULL,
+                social_website = NULL,
+                is_verified = 0,
+                verification_token = NULL,
+                reset_token = NULL,
+                google_id = NULL
+            WHERE id = ?
+        `;
+        const [result] = await db.query(query, [userId]);
+        return result;
+    }
+
+    static async restoreUser(userId) {
+        const query = `UPDATE users SET status = 'active' WHERE id = ?`;
+        const [result] = await db.query(query, [userId]);
         return result;
     }
     

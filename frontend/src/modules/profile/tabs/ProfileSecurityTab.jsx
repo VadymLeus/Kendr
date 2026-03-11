@@ -24,12 +24,10 @@ const ProfileSecurityTab = () => {
     useEffect(() => {
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     }, [hasPassword]);
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setPasswords(prev => ({ ...prev, [name]: value }));
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (securityCooldown > 0) {
@@ -88,13 +86,13 @@ const ProfileSecurityTab = () => {
             title: 'Видалити акаунт?',
             message: 'Ця дія незворотна. Всі ваші сайти будуть видалені. Напишіть "DELETE" для підтвердження.',
             requireInput: true,
-            confirmText: 'Видалити назавжди',
+            confirmText: 'Видалити акаунт',
             danger: true,
             onConfirm: async (inputValue) => {
                 if (inputValue !== 'DELETE') return toast.error('Невірне підтвердження.');
                 try {
                     await apiClient.delete('/users/me', { data: { confirmation: 'DELETE' } });
-                    toast.success('Акаунт видалено.');
+                    toast.success('Акаунт видалено, у вас є 14 днів на відновлення.');
                     logout();
                 } catch (err) {
                     console.error(err);

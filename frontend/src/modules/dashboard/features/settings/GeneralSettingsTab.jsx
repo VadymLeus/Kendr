@@ -48,7 +48,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             tags: []
         }
     );
-
     const getImageUrl = (src) => {
         if (!src) return '';
         if (src instanceof File) return URL.createObjectURL(src);
@@ -61,7 +60,6 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         }
         return '';
     };
-
     useEffect(() => {
         if (siteData) {
             setIdentityData({
@@ -220,7 +218,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             title: 'Видалити сайт?',
             message: 'Ця дія незворотна. Всі дані будуть видалені. Напишіть "DELETE" для підтвердження.',
             requireInput: true,
-            confirmText: 'Видалити назавжди',
+            confirmText: 'Видалити сайт',
             danger: true,
             onConfirm: async (inputValue) => {if (inputValue !== 'DELETE') 
                 return toast.error('Невірне підтвердження.');

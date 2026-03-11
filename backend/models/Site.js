@@ -114,7 +114,6 @@ class Site {
     
     if (!sites[0]) return null;
     const site = sites[0];
-    
     try {
         if (typeof site.theme_settings === 'string') site.theme_settings = JSON.parse(site.theme_settings);
         if (typeof site.header_content === 'string') site.header_content = JSON.parse(site.header_content);
@@ -140,6 +139,11 @@ class Site {
   static async findByIdAndUserId(siteId, userId) {
     const [rows] = await db.query('SELECT * FROM sites WHERE id = ? AND user_id = ?', [siteId, userId]);
     return rows[0] || null;
+  }
+
+  static async findAllByUserId(userId) {
+    const [rows] = await db.query('SELECT * FROM sites WHERE user_id = ?', [userId]);
+    return rows;
   }
 
   static async create(userId, sitePath, title, logoUrl) {
@@ -239,7 +243,6 @@ class Site {
     try {
         await connection.beginTransaction();
         await connection.query('DELETE FROM site_tags WHERE site_id = ?', [siteId]);
-        
         if (tagIds.length > 0) {
             const values = tagIds.map(tagId => [siteId, tagId]);
             await connection.query('INSERT INTO site_tags (site_id, tag_id) VALUES ?', [values]);
@@ -255,6 +258,11 @@ class Site {
 
   static async delete(siteId) {
     const [result] = await db.query('DELETE FROM sites WHERE id = ?', [siteId]);
+    return result;
+  }
+
+  static async deleteAllByUserId(userId) {
+    const [result] = await db.query('DELETE FROM sites WHERE user_id = ?', [userId]);
     return result;
   }
 
@@ -283,7 +291,6 @@ class Site {
       WHERE s.user_id = ? 
       ORDER BY s.is_pinned DESC, s.updated_at DESC
     `, [userId]);
-    
     for (let site of rows) {
         const [tags] = await db.query(`
             SELECT t.id, t.name 
@@ -295,7 +302,6 @@ class Site {
     }
     return rows;
   }
-
   static async findSuspendedForUser(userId) {
     const [rows] = await db.query(
       "SELECT id, site_path, title, deletion_scheduled_for FROM sites WHERE user_id = ? AND status = 'suspended'",
@@ -303,11 +309,14 @@ class Site {
     );
     return rows;
   }
-
   static async togglePin(siteId) {
     await db.query('UPDATE sites SET is_pinned = NOT is_pinned WHERE id = ?', [siteId]);
     const [rows] = await db.query('SELECT is_pinned FROM sites WHERE id = ?', [siteId]);
     return rows[0] ? !!rows[0].is_pinned : false;
+  }
+  static async setAllUserSitesToDraft(userId) {
+      const [result] = await db.query("UPDATE sites SET status = 'private' WHERE user_id = ?", [userId]);
+      return result;
   }
 }
 

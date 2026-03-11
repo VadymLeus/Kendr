@@ -39,7 +39,6 @@ class Media {
         
         return this.findById(result.insertId);
     }
-
     static async findByUserId(userId) {
         const [rows] = await db.query(
             `SELECT * FROM user_media 
@@ -49,17 +48,25 @@ class Media {
         );
         return rows;
     }
-
+    static async findAllByUserId(userId) {
+        const [rows] = await db.query(
+            'SELECT * FROM user_media WHERE user_id = ?',
+            [userId]
+        );
+        return rows;
+    }
     static async findById(mediaId) {
         const [rows] = await db.query('SELECT * FROM user_media WHERE id = ?', [mediaId]);
         return rows[0];
     }
-
     static async delete(mediaId) {
         const [result] = await db.query('DELETE FROM user_media WHERE id = ?', [mediaId]);
         return result;
     }
-
+    static async deleteAllByUserId(userId) {
+        const [result] = await db.query('DELETE FROM user_media WHERE user_id = ?', [userId]);
+        return result;
+    }
     static async updateDetails(mediaId, data) {
         const { alt_text, display_name, description, is_favorite } = data;
         const updates = [];

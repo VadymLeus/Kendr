@@ -27,6 +27,7 @@ const passport = require('./config/passport');
 const { checkMaintenance } = require('./middleware/platformGuards');
 const verifyTokenOptional = require('./middleware/verifyTokenOptional');
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
     'http://localhost:5173',
@@ -34,7 +35,6 @@ const allowedOrigins = [
     'https://kendr-backend.onrender.com',
     process.env.CLIENT_URL
 ].filter(Boolean);
-
 app.use(cors({
     origin: allowedOrigins,
     credentials: true
@@ -68,5 +68,5 @@ app.get('/', (req, res) => {
 });
 app.use(errorHandler);
 app.listen(PORT, async () => {
-    console.log(`Сервер запущено на порті ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

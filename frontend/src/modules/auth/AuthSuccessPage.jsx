@@ -19,6 +19,7 @@ const AuthSuccessPage = () => {
         }
         if (processing.current) return;
         processing.current = true;
+        
         const fetchUserData = async () => {
             try {
                 localStorage.setItem('token', token);
@@ -28,7 +29,9 @@ const AuthSuccessPage = () => {
                 navigate('/');
             } catch (error) {
                 console.error("Помилка отримання даних профілю:", error);
-                toast.error('Помилка авторизації через Google');
+                if (error.response?.status !== 403) {
+                    toast.error('Помилка авторизації через Google');
+                }
                 localStorage.removeItem('token');
                 navigate('/login');
             }
