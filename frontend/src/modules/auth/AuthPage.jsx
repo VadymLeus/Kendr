@@ -1,5 +1,5 @@
 // frontend/src/modules/auth/AuthPage.jsx
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { AuthContext } from '../../app/providers/AuthContext';
@@ -13,15 +13,24 @@ import OtpInput from '../../shared/ui/complex/OtpInput';
 import { analyzePassword } from '../../shared/utils/validationUtils';
 import { GOOGLE_AUTH_URL } from '../../shared/config';
 import { useCooldown } from '../../shared/hooks/useCooldown';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { ArrowLeft, MailOpen, Trash, Camera, Upload, KeyRound } from 'lucide-react';
 
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 const AuthPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const initialView = searchParams.get('view') || 'login';
     const [view, setViewInternal] = useState(initialView);
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const turnstileRef = useRef(null);
+    const resetTurnstile = () => {
+        setTurnstileToken('');
+        turnstileRef.current?.reset();
+    };
     const setView = (newView) => {
         setSearchParams({ view: newView });
         setViewInternal(newView);
+        resetTurnstile();
     };
     const googleError = searchParams.get('error');
     if (googleError) {
@@ -76,12 +85,15 @@ const AuthPage = () => {
     };
     const handleLogin = async (e) => {
         e.preventDefault();
+        if (!turnstileToken) return toast.warning('Будь ласка, пройдіть перевірку безпеки.', { toastId: 'captcha-warn' });
         setIsLoading(true);
         try {
-            const res = await apiClient.post('/auth/login', { loginInput: formData.loginInput, password: formData.password });
-
+            const res = await apiClient.post('/auth/login', { 
+                loginInput: formData.loginInput, 
+                password: formData.password,
+                turnstileToken
+            });
             login(res.data.user, res.data.token, res.data.require_restore);
-            
             if (res.data.require_restore) {
                 toast.warning(res.data.message || 'Акаунт знаходиться в процесі видалення.', { toastId: 'restore-warn' });
             } else {
@@ -89,6 +101,7 @@ const AuthPage = () => {
                 navigate('/');
             }
         } catch (error) {
+            resetTurnstile();
             if (error.response?.status === 403 && error.response?.data?.isNotVerified) {
                 setTargetEmail(error.response.data.email);
                 setOtpPurpose('VERIFY_EMAIL');
@@ -102,6 +115,7 @@ const AuthPage = () => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
+        if (!turnstileToken) return toast.warning('Будь ласка, пройдіть перевірку безпеки.', { toastId: 'captcha-warn' });
         const validation = analyzePassword(formData.password);
         if (validation.isSimple) return toast.warning("Пароль містить надто просту послідовність (123456 або qwerty).", { toastId: 'pass-simple' });
         if (!validation.isValid) return toast.warning("Пароль має містити мінімум 8 символів, велику, малу літеру та цифру.", { toastId: 'pass-invalid' });
@@ -112,6 +126,7 @@ const AuthPage = () => {
             regData.append('username', formData.username);
             regData.append('email', formData.email);
             regData.append('password', formData.password);
+            regData.append('turnstileToken', turnstileToken);
             if (avatarData.file) regData.append('avatar', avatarData.file);
             else if (avatarData.url) regData.append('avatar_url', avatarData.url);
             
@@ -120,24 +135,29 @@ const AuthPage = () => {
             setOtpPurpose('VERIFY_EMAIL');
             setOtpCode('');
             setView('otp');
-        } catch (error) { handleError(error, 'Помилка реєстрації'); } 
-        finally { setIsLoading(false); }
+        } catch (error) { 
+            resetTurnstile();
+            handleError(error, 'Помилка реєстрації'); 
+        } finally { setIsLoading(false); }
     };
 
     const handleForgotPassword = async (e) => {
         e.preventDefault();
         if (!forgotEmail) return;
+        if (!turnstileToken) return toast.warning('Будь ласка, пройдіть перевірку безпеки.', { toastId: 'captcha-warn' });
         setIsLoading(true);
         try {
-            await apiClient.post('/auth/forgot-password', { email: forgotEmail });
+            await apiClient.post('/auth/forgot-password', { email: forgotEmail, turnstileToken });
             setTargetEmail(forgotEmail);
             setOtpPurpose('RESET_PASSWORD');
             setOtpCode('');
             setIsResetCodeVerified(false);
             setView('reset_pass');
             toast.success('Код надіслано на вашу пошту!', { toastId: 'forgot-sent' });
-        } catch (error) { handleError(error, 'Помилка'); } 
-        finally { setIsLoading(false); }
+        } catch (error) { 
+            resetTurnstile();
+            handleError(error, 'Помилка'); 
+        } finally { setIsLoading(false); }
     };
 
     const handleVerifyOtp = async (e) => {
@@ -184,7 +204,6 @@ const AuthPage = () => {
         } catch (error) { handleError(error, 'Невірний код або пароль'); } 
         finally { setIsLoading(false); }
     };
-
     const handleResendOtp = async (e) => {
         if (e) e.preventDefault();
         if (resendCooldown > 0) return toast.warning(`Зачекайте ${resendCooldown}с.`, { toastId: 'cooldown-warn' });
@@ -196,7 +215,6 @@ const AuthPage = () => {
         } catch (error) { handleError(error, 'Помилка відправки'); } 
         finally { setIsLoading(false); }
     };
-
     if (view === 'otp') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -229,7 +247,6 @@ const AuthPage = () => {
             </div>
         );
     }
-
     if (view === 'reset_pass') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -241,7 +258,6 @@ const AuthPage = () => {
                     <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-yellow-100/30 text-yellow-600 mt-2">
                         <KeyRound size={28} />
                     </div>
-                    
                     <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2 text-center">
                         {isResetCodeVerified ? 'Новий пароль' : 'Відновлення пароля'}
                     </h2>
@@ -250,7 +266,6 @@ const AuthPage = () => {
                             ? 'Створіть новий надійний пароль для вашого акаунту.' 
                             : <>Код відправлено на <strong>{targetEmail}</strong>. Введіть його нижче.</>}
                     </p>
-
                     {!isResetCodeVerified ? (
                         <form onSubmit={handleVerifyResetCodeOnly} className="flex flex-col gap-5">
                             <OtpInput length={6} value={otpCode} onChange={setOtpCode} disabled={isLoading} />
@@ -296,7 +311,6 @@ const AuthPage = () => {
             </div>
         );
     }
-
     if (view === 'forgot') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -316,7 +330,10 @@ const AuthPage = () => {
                             onChange={(e) => setForgotEmail(e.target.value)} 
                             required 
                         />
-                        <Button type="submit" disabled={isLoading} className="w-full py-3">
+                        <div className="flex justify-center mt-2">
+                            <Turnstile siteKey={SITE_KEY} onSuccess={setTurnstileToken} ref={turnstileRef} />
+                        </div>
+                        <Button type="submit" disabled={isLoading || !turnstileToken} className="w-full py-3">
                             {isLoading ? 'Відправка...' : 'Отримати код'}
                         </Button>
                     </form>
@@ -324,7 +341,6 @@ const AuthPage = () => {
             </div>
         );
     }
-
     const isRegister = view === 'register';
     return (
         <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -430,11 +446,13 @@ const AuthPage = () => {
                             </div>
                         </div>
                     )}
-                    <div className={isRegister ? 'mt-10' : 'mt-0'}>
-                        <Button type="submit" disabled={isLoading} className="w-full py-3.5 text-base rounded-xl">
+                    <div className="flex justify-center mt-6">
+                        <Turnstile siteKey={SITE_KEY} onSuccess={setTurnstileToken} ref={turnstileRef} />
+                    </div>
+                    <div className={isRegister ? 'mt-6' : 'mt-4'}>
+                        <Button type="submit" disabled={isLoading || !turnstileToken} className="w-full py-3.5 text-base rounded-xl">
                             {isLoading ? 'Обробка...' : (isRegister ? 'Створити акаунт' : 'Увійти')}
                         </Button>
-                        
                         {isRegister && (
                             <p className="text-xs text-(--platform-text-secondary) mt-5 text-center leading-relaxed">
                                 Натискаючи кнопку "Створити акаунт", ви погоджуєтесь з <Link to="/rules" target="_blank" className="text-(--platform-text-primary) hover:text-(--platform-accent)! font-semibold transition-colors duration-200 no-underline cursor-pointer">Умовами використання</Link> та <Link to="/rules" target="_blank" className="text-(--platform-text-primary) hover:text-(--platform-accent)! font-semibold transition-colors duration-200 no-underline cursor-pointer">Політикою конфіденційності</Link>.

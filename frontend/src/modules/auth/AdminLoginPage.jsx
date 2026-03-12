@@ -1,5 +1,5 @@
 // frontend/src/modules/auth/AdminLoginPage.jsx
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { AuthContext } from '../../app/providers/AuthContext';
@@ -7,8 +7,10 @@ import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
 import { Input, Button } from '../../shared/ui/elements';
 import OtpInput from '../../shared/ui/complex/OtpInput';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { ShieldAlert, ArrowLeft, ShieldCheck } from 'lucide-react';
 
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 const AdminLoginPage = () => {
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -17,15 +19,25 @@ const AdminLoginPage = () => {
     const [formData, setFormData] = useState({ loginInput: '', password: '' });
     const [targetEmail, setTargetEmail] = useState('');
     const [otpCode, setOtpCode] = useState('');
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const turnstileRef = useRef(null);
+    const resetTurnstile = () => {
+        setTurnstileToken('');
+        turnstileRef.current?.reset();
+    };
     const handleError = (error, fallback) => {
         const message = error.response?.data?.message || fallback;
         toast.error(message, { toastId: message });
     };
     const handleLogin = async (e) => {
         e.preventDefault();
+        if (!turnstileToken) return toast.warning('Security clearance required.', { toastId: 'admin-captcha-warn' });
         setIsLoading(true);
         try {
-            const res = await apiClient.post('/auth/admin/login', formData);
+            const res = await apiClient.post('/auth/admin/login', {
+                ...formData,
+                turnstileToken
+            });
             if (res.data.require2FA) {
                 setTargetEmail(res.data.email);
                 setOtpCode('');
@@ -33,11 +45,13 @@ const AdminLoginPage = () => {
                 toast.info('Код 2FA надіслано адміністратору.', { toastId: 'admin-2fa-sent' });
             }
         } catch (error) {
+            resetTurnstile();
             handleError(error, 'Помилка авторизації');
         } finally {
             setIsLoading(false);
         }
     };
+
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -90,11 +104,17 @@ const AdminLoginPage = () => {
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
                             required 
                         />
-                        
+                        <div className="flex justify-center mt-2">
+                            <Turnstile 
+                                siteKey={SITE_KEY} 
+                                onSuccess={setTurnstileToken} 
+                                ref={turnstileRef}
+                            />
+                        </div>
                         <Button 
                             type="submit" 
-                            disabled={isLoading}
-                            className="w-full py-3.5 mt-4 text-base rounded-xl font-semibold transition-all"
+                            disabled={isLoading || !turnstileToken}
+                            className="w-full py-3.5 mt-2 text-base rounded-xl font-semibold transition-all"
                         >
                             {isLoading ? 'Автентифікація...' : 'Увійти в панель'}
                         </Button>
@@ -102,7 +122,7 @@ const AdminLoginPage = () => {
                 ) : (
                     <div className="flex flex-col items-center relative">
                         <button 
-                            onClick={() => setView('login')} 
+                            onClick={() => { setView('login'); resetTurnstile(); }} 
                             className="absolute -top-16 left-0 bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors p-2 -ml-2 rounded-lg hover:bg-(--platform-hover-bg)"
                             title="Повернутися"
                         >

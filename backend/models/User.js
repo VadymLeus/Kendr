@@ -1,7 +1,6 @@
 // backend/models/User.js
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
-
 class User {
     static async generateSlug(text) {
         const cyrillicToLatin = {
@@ -76,15 +75,15 @@ class User {
         );
         return rows[0];
     }
-
+    
     static async getSiteCount(userId) {
-        const [rows] = await db.query('SELECT COUNT(id) as siteCount FROM sites WHERE user_id = ? AND status = "published"', [userId]);
+        const [rows] = await db.query("SELECT COUNT(id) as siteCount FROM sites WHERE user_id = ? AND status = 'published'", [userId]);
         return rows[0].siteCount;
     }
 
     static async getTotalSiteViews(userId) {
         const [rows] = await db.query(
-            'SELECT COALESCE(SUM(view_count), 0) as totalViews FROM sites WHERE user_id = ? AND status = "published"', 
+            "SELECT COALESCE(SUM(view_count), 0) as totalViews FROM sites WHERE user_id = ? AND status = 'published'", 
             [userId]
         );
         return rows[0].totalViews; 

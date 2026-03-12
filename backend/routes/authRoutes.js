@@ -4,6 +4,7 @@ const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const authController = require('../controllers/authController');
 const { upload, processAndSaveImage } = require('../middleware/upload');
+const verifyTurnstile = require('../middleware/verifyTurnstile'); 
 const passport = require('passport');
 const verifyToken = require('../middleware/verifyToken');
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -54,16 +55,16 @@ router.post(
     '/register',
     registerLimiter,
     upload.single('avatar'),
+    verifyTurnstile,
     processAndSaveImage('avatars/custom', 'avatar', 128),
     authController.register
 );
-
-router.post('/login', loginLimiter, authController.login);
-router.post('/admin/login', adminLoginLimiter, authController.adminLogin);
+router.post('/login', loginLimiter, verifyTurnstile, authController.login);
+router.post('/admin/login', adminLoginLimiter, verifyTurnstile, authController.adminLogin);
 router.post('/verify-2fa', verify2FALimiter, authController.verify2FA);
 router.post('/verify-email', verify2FALimiter, authController.verifyEmail);
 router.post('/resend-otp', otpResendLimiter, authController.resendOtp);
-router.post('/forgot-password', forgotPasswordLimiter, authController.forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiter, verifyTurnstile, authController.forgotPassword);
 router.post('/verify-reset-code', verify2FALimiter, authController.verifyResetCode);
 router.post('/reset-password', forgotPasswordLimiter, authController.resetPassword);
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
