@@ -6,6 +6,7 @@ import MediaInspector from '../components/MediaInspector';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
+import DragDropWrapper from '../../../shared/ui/complex/DragDropWrapper';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements';
@@ -48,9 +49,7 @@ const MediaLibraryPage = () => {
     const [visibleCount, setVisibleCount] = useState(48);
     const [selectedFile, setSelectedFile] = useState(null);
     const [checkedFiles, setCheckedFiles] = useState(new Set());
-    const [isDragging, setIsDragging] = useState(false);
     const lastSelectedIndex = useRef(null);
-    const dragCounter = useRef(0);
     const fileInputRef = useRef(null);
     const { confirm } = useConfirm();
     useEffect(() => {
@@ -86,7 +85,6 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         setActiveFormat(null);
     }, [activeType]);
-
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
@@ -138,8 +136,8 @@ const MediaLibraryPage = () => {
     }, [files, searchTerm, activeType, activeFormat, sortOption, onlyFavorites]);
     const visibleFiles = filteredFiles.slice(0, visibleCount);
     const remainingCount = filteredFiles.length - visibleFiles.length;
-    const handleUpload = async (e) => {
-        const fileList = e.target.files;
+    const handleUpload = async (eOrFiles) => {
+        const fileList = eOrFiles.target ? eOrFiles.target.files : eOrFiles;
         if (!fileList || fileList.length === 0) return;
         const toastId = toast.loading("Завантаження...");
         let successCount = 0;
@@ -150,7 +148,6 @@ const MediaLibraryPage = () => {
             formData.append('mediaFile', file);
             try {
                 const res = await apiClient.post('/media/upload', formData);
-                
                 if (res.data && res.data.error) {
                     failedFiles.push({ name: file.name, reason: res.data.message });
                     if (res.data.code === 'MAX_FILES_REACHED') {
@@ -170,13 +167,11 @@ const MediaLibraryPage = () => {
                 });
             }
         }
-
         toast.dismiss(toastId);
         if (successCount > 0) {
             toast.success(`Успішно завантажено: ${successCount} файлів`);
             fetchLimits(); 
         }
-
         if (failedFiles.length > 0) {
             const limit = 3; 
             const errorList = failedFiles.slice(0, limit)
@@ -195,7 +190,6 @@ const MediaLibraryPage = () => {
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
-
     const handleUpdateFile = useCallback((updatedFile) => {
         setFiles(prev => prev.map(f => f.id === updatedFile.id ? updatedFile : f));
         setSelectedFile(prev => prev?.id === updatedFile.id ? updatedFile : prev);
@@ -210,7 +204,6 @@ const MediaLibraryPage = () => {
             handleUpdateFile({ ...file, is_favorite: !newStatus });
         }
     }, [handleUpdateFile]);
-
     const handleDelete = async (file) => {
         if (await confirm({ title: "Видалити файл?", message: "Ця дія незворотна.", type: "danger", confirmLabel: "Видалити" })) {
             try {
@@ -272,22 +265,9 @@ const MediaLibraryPage = () => {
         setCheckedFiles(new Set());
     };
 
-    const handleBulkDelete = async () => {
-        if (checkedFiles.size === 0) return;
-        if (await confirm({ title: `Видалити ${checkedFiles.size} файлів?`, type: "danger", confirmLabel: "Видалити все" })) {
-            const toastId = toast.loading("Видалення...");
-            try {
-                await Promise.all(Array.from(checkedFiles).map(id => apiClient.delete(`/media/${id}`)));
-                setFiles(prev => prev.filter(f => !checkedFiles.has(f.id)));
-                setCheckedFiles(new Set());
-                setSelectedFile(null);
-                toast.success('Файли видалено');
-                fetchLimits();
-            } catch (err) { 
-            } finally {
-                toast.dismiss(toastId);
-            }
-        }
+    const getDownloadUrl = (path) => {
+        if (!path) return '';
+        return path.startsWith('http') ? path : `${BASE_URL}${path}`;
     };
 
     const handleBulkDownload = async () => {
@@ -296,7 +276,7 @@ const MediaLibraryPage = () => {
         if (filesToDownload.length === 1) {
             const file = filesToDownload[0];
             try {
-                const response = await fetch(`${BASE_URL}${file.path_full}`);
+                const response = await fetch(getDownloadUrl(file.path_full));
                 if (!response.ok) throw new Error('Network error');
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -315,11 +295,12 @@ const MediaLibraryPage = () => {
             setCheckedFiles(new Set());
             return;
         }
+
         const toastId = toast.loading(`Збираємо архів з ${filesToDownload.length} файлів...`);
         try {
             const zip = new JSZip();
             const fetchPromises = filesToDownload.map(async (file) => {
-                const response = await fetch(`${BASE_URL}${file.path_full}`);
+                const response = await fetch(getDownloadUrl(file.path_full));
                 if (!response.ok) throw new Error(`Failed to fetch ${file.original_file_name}`);
                 const blob = await response.blob();
                 const fileName = file.original_file_name || `file_${file.id}`;
@@ -334,24 +315,6 @@ const MediaLibraryPage = () => {
             console.error("ZIP Generation failed:", error);
             toast.update(toastId, { render: "Помилка при створенні архіву", type: "error", isLoading: false, autoClose: 3000 });
         }
-    };
-    
-    const onDragEvent = (e, active) => {
-        e.preventDefault(); e.stopPropagation();
-        if (active !== undefined) {
-             if (active) dragCounter.current += 1;
-             else dragCounter.current -= 1;
-             if (dragCounter.current > 0) setIsDragging(true);
-             else setIsDragging(false);
-        }
-    };
-    
-    const onDrop = (e) => {
-        e.preventDefault(); e.stopPropagation();
-        setIsDragging(false);
-        dragCounter.current = 0;
-        const files = e.dataTransfer.files;
-        if (files && files.length > 0) handleUpload({ target: { files } });
     };
 
     const styles = {
@@ -459,39 +422,14 @@ const MediaLibraryPage = () => {
             ))}
         </div>
     ) : null;
-    
     const isLimitReached = limits && !limits.isUnlimited && limits.currentFiles >= limits.maxFiles;
     return (
-        <div style={styles.pageWrapper} 
-            onDragEnter={(e) => onDragEvent(e, true)} onDragLeave={(e) => onDragEvent(e, false)} 
-            onDragOver={(e) => e.preventDefault()} onDrop={onDrop}
+        <DragDropWrapper 
+            onDropFiles={handleUpload}
+            isError={isLimitReached}
+            errorText="Ліміт файлів вичерпано!"
+            style={styles.pageWrapper}
         >
-            {isDragging && !isLimitReached && (
-                <div style={{
-                    position: 'absolute', inset: 0, zIndex: 200, 
-                    backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', 
-                    border: '4px dashed var(--platform-accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--platform-accent)', fontSize: '1.5rem', fontWeight: 'bold', pointerEvents: 'none',
-                    margin: '2rem' 
-                }}>
-                    Перетягніть файли сюди
-                </div>
-            )}
-            
-            {isDragging && isLimitReached && (
-                <div style={{
-                    position: 'absolute', inset: 0, zIndex: 200, 
-                    backgroundColor: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', 
-                    border: '4px dashed var(--platform-danger)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--platform-danger)', fontSize: '1.5rem', fontWeight: 'bold', pointerEvents: 'none',
-                    margin: '2rem' 
-                }}>
-                    Ліміт файлів вичерпано!
-                </div>
-            )}
-
             <div style={styles.headerBlock}>
                 <div style={styles.headerContent}>
                     {limits && (
@@ -643,7 +581,7 @@ const MediaLibraryPage = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </DragDropWrapper>
     );
 };
 

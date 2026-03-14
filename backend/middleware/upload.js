@@ -1,153 +1,97 @@
 // backend/middleware/upload.js
 const multer = require('multer');
-const sharp = require('sharp');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
 const path = require('path');
-const fs = require('fs').promises;
-const { ensureDirExists } = require('../utils/fileUtils');
-const tempUploadPath = path.join(__dirname, '..', 'uploads', 'temp');
-const mediaUploadPath = path.join(__dirname, '..', 'uploads', 'media');
-ensureDirExists(tempUploadPath);
-ensureDirExists(mediaUploadPath);
-const FONT_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
-const mediaFileFilter = (req, file, cb) => {
+const fixEncodingFilter = (req, file, cb) => {
     file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    const ext = path.extname(file.originalname).toLowerCase();
-    const isImage = /jpeg|jpg|png|webp|gif/.test(file.mimetype) || /jpeg|jpg|png|webp|gif/.test(ext);
-    const isVideo = /mp4|webm|ogg/.test(file.mimetype) || /mp4|webm|ogg/.test(ext);
-    const isFont = FONT_EXTENSIONS.includes(ext) || file.mimetype.includes('font');
-    if (isImage || isVideo || isFont) {
-        return cb(null, true);
-    }
-    
-    cb(new Error(`Помилка: Непідтримуваний тип файлу!`));
+    cb(null, true);
 };
-
-const tempStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, tempUploadPath);
-    },
-    filename: (req, file, cb) => {
+const mediaStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req, file) => {
         const ext = path.extname(file.originalname).toLowerCase();
-        const safeName = `file-${req.user ? req.user.id : 'temp'}-${Date.now()}${ext}`;
-        cb(null, safeName);
+        const FONT_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
+        const isFont = FONT_EXTENSIONS.includes(ext) || file.mimetype.includes('font');
+        let resource_type = 'image';
+        let format = 'webp';
+        if (file.mimetype.startsWith('video/')) {
+            resource_type = 'video';
+            format = undefined; 
+        } else if (isFont || !file.mimetype.startsWith('image/')) {
+            resource_type = 'raw';
+            format = undefined;
+        }
+        return {
+            folder: 'kendr/media',
+            resource_type: resource_type,
+            format: format,
+            allowed_formats: isFont || resource_type !== 'image' ? undefined : ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+            transformation: resource_type === 'image' ? [{ quality: 'auto', fetch_format: 'auto' }] : []
+        };
     }
 });
 
 const mediaUpload = multer({
-    storage: tempStorage,
-    fileFilter: mediaFileFilter,
-    limits: { 
-        fileSize: 1024 * 1024 * 16,
-        files: 10
+    storage: mediaStorage,
+    fileFilter: fixEncodingFilter,
+    limits: { fileSize: 1024 * 1024 * 16, files: 10 }
+});
+
+const imageStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'kendr/general',
+        format: async (req, file) => 'webp',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+        transformation: [{ quality: 'auto', fetch_format: 'auto' }]
     }
 });
 
-const memoryStorage = multer.memoryStorage();
-const imageFileFilter = (req, file, cb) => {
-    file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const mimetype = allowedTypes.test(file.mimetype);
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    if (mimetype && extname) {
-        return cb(null, true);
-    }
-    cb(new Error('Помилка: Дозволені лише файли зображень!'));
-};
-
 const upload = multer({
-    storage: memoryStorage,
-    fileFilter: imageFileFilter,
+    storage: imageStorage,
+    fileFilter: fixEncodingFilter,
     limits: { fileSize: 1024 * 1024 * 15 }
 });
 
+const ticketStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'kendr/tickets',
+        format: async (req, file) => 'webp',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        transformation: [{ width: 1920, crop: 'limit', quality: '85' }]
+    }
+});
+
+const ticketUpload = multer({
+    storage: ticketStorage,
+    fileFilter: fixEncodingFilter,
+    limits: { fileSize: 5 * 1024 * 1024, files: 5 }
+});
 const processAndSaveImage = (subfolder, filenamePrefix, size = 128) => {
-    return async (req, res, next) => {
-        if (!req.file) { return next(); }
-        try {
-            const uploadPath = path.join(__dirname, '..', 'uploads', subfolder);
-            await ensureDirExists(uploadPath);
-            const userId = req.user ? req.user.id : 'new-user';
-            const finalPrefix = filenamePrefix === 'user' ? `user-${userId}` : filenamePrefix;
-            const filename = `${finalPrefix}-${Date.now()}.webp`;
-            const fullPath = path.join(uploadPath, filename);
-            await sharp(req.file.buffer)
-                .resize(size, size, { fit: sharp.fit.cover, position: sharp.strategy.entropy })
-                .toFormat('webp')
-                .webp({ quality: 80 })
-                .toFile(fullPath);
-            
-            req.file.path = `/uploads/${subfolder}/${filename}`;
-            req.file.filename = filename;
-            next();
-        } catch (error) {
-            console.error('Помилка обробки зображення:', error);
-            res.status(500).json({ message: 'Не вдалося обробити зображення.' });
-        }
-    };
+    return (req, res, next) => next();
 };
-
 const processAndSaveLogo = (size = 64) => {
-    return async (req, res, next) => {
-        if (!req.file) {
-            return next();
-        }
-        try {
-            const uploadPath = path.join(__dirname, '..', 'uploads', 'shops', 'logos', 'custom');
-            await ensureDirExists(uploadPath);
-            const filename = `logo-${req.user.id}-${Date.now()}.webp`;
-            const fullPath = path.join(uploadPath, filename);
-            await sharp(req.file.buffer)
-                .resize(size, size, {
-                    fit: sharp.fit.inside,
-                    background: { r: 0, g: 0, b: 0, alpha: 0 }
-                })
-                .toFormat('webp')
-                .webp({ quality: 85 })
-                .toFile(fullPath);
-            req.file.path = `/uploads/shops/logos/custom/${filename}`;
-            req.file.filename = filename;
-
-            next();
-        } catch (error) {
-            console.error('Помилка обробки логотипу:', error);
-            res.status(500).json({ message: 'Не вдалося обробити логотип.' });
-        }
-    };
+    return (req, res, next) => next();
 };
-
 const processAndSaveGeneric = (subfolder, filenamePrefix, maxWidth = 1200) => {
-    return async (req, res, next) => {
-        if (!req.file) { return next(); }
-        try {
-            const uploadPath = path.join(__dirname, '..', 'uploads', subfolder);
-            await ensureDirExists(uploadPath);
-            const userId = req.user ? req.user.id : 'guest';
-            const finalPrefix = `${filenamePrefix}-${userId}`;
-            const filename = `${finalPrefix}-${Date.now()}.webp`;
-            const fullPath = path.join(uploadPath, filename);
-            await sharp(req.file.buffer)
-                .resize({ 
-                    width: maxWidth, 
-                    fit: sharp.fit.inside,
-                    withoutEnlargement: true
-                })
-                .toFormat('webp')
-                .webp({ quality: 80 })
-                .toFile(fullPath);
-            req.file.path = `/uploads/${subfolder}/${filename}`;
-            req.file.filename = filename;
-            next();
-        } catch (error) {
-            console.error('Помилка обробки загального зображення:', error);
-            res.status(500).json({ message: 'Не вдалося обробити зображення.' });
-        }
-    };
+    return (req, res, next) => next();
 };
-
+const processAndSaveTicketImages = async (req, res, next) => {
+    if (!req.files || req.files.length === 0) {
+        req.attachmentUrls = [];
+        return next();
+    }
+    req.attachmentUrls = req.files.map(file => file.path);
+    next();
+};
 module.exports = {
     upload,
     processAndSaveImage,
     processAndSaveLogo,
     processAndSaveGeneric,
-    mediaUpload
+    mediaUpload,
+    ticketUpload,
+    processAndSaveTicketImages
 };

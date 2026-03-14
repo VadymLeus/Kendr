@@ -31,7 +31,6 @@ const ProfileGeneralTab = () => {
             });
         }
     }, [user]);
-
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -65,17 +64,6 @@ const ProfileGeneralTab = () => {
     };
 
     const handleAvatarUpload = async (file) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-            toast.error('Дозволені лише формати JPG, PNG та WEBP.');
-            return;
-        }
-        
-        if (file.size > 2 * 1024 * 1024) {
-            toast.error('Файл занадто великий. Максимальний розмір — 2 МБ.');
-            return;
-        }
-
         setIsAvatarUploading(true);
         try {
             const data = new FormData();
@@ -109,152 +97,28 @@ const ProfileGeneralTab = () => {
     };
 
     if (!user) return null;
-    const containerStyle = {
-        maxWidth: '900px',
-        margin: '0 auto',
-        width: '100%'
-    };
-
-    const gridLayout = {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-        gap: '24px',
-        alignItems: 'start'
-    };
-
-    const cardStyle = {
-        background: 'var(--platform-card-bg)',
-        border: '1px solid var(--platform-border-color)',
-        borderRadius: '16px',
-        padding: '24px',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
-    };
-    
-    const sectionTitleStyle = {
-        fontSize: '1.25rem',
-        fontWeight: '600',
-        color: 'var(--platform-text-primary)',
-        margin: '0 0 4px 0',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px'
-    };
-
-    const sectionDescStyle = {
-        fontSize: '0.9rem',
-        color: 'var(--platform-text-secondary)',
-        marginBottom: '1.5rem',
-        lineHeight: '1.5',
-        margin: 0 
-    };
-
+    const containerStyle = { maxWidth: '900px', margin: '0 auto', width: '100%' };
+    const gridLayout = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' };
+    const cardStyle = { background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '16px', padding: '24px', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' };
+    const sectionTitleStyle = { fontSize: '1.25rem', fontWeight: '600', color: 'var(--platform-text-primary)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' };
+    const sectionDescStyle = { fontSize: '0.9rem', color: 'var(--platform-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5', margin: 0 };
     const stats = user.stats || { siteCount: 0, siteLimit: 2, mediaCount: 0, mediaLimit: 50 };
     const isPlus = user.plan === 'PLUS';
     return (
         <div style={containerStyle}>
             <style>{`
-                .avatar-wrapper {
-                    position: relative;
-                    width: 160px;
-                    height: 160px;
-                    margin: 0 auto;
-                }
-
-                .avatar-circle {
-                    width: 100%;
-                    height: 100%;
-                    border-radius: 50%;
-                    overflow: hidden; 
-                    position: relative;
-                    border: 1px solid var(--platform-border-color);
-                }
-                
-                .avatar-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background: rgba(0, 0, 0, 0.5);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    opacity: 0;
-                    transition: opacity 0.2s ease;
-                    backdrop-filter: blur(2px);
-                    cursor: pointer;
-                }
-
-                .avatar-wrapper:hover .avatar-overlay {
-                    opacity: 1;
-                }
-
-                .trash-btn {
-                    position: absolute;
-                    top: 0;
-                    right: 0;
-                    background: rgba(0, 0, 0, 0.6);
-                    color: white;
-                    border: none;
-                    border-radius: 50%;
-                    width: 32px;
-                    height: 32px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    z-index: 20;
-                    transition: background 0.2s, opacity 0.2s;
-                    opacity: 0;
-                    transform: translate(10%, -10%);
-                }
-
-                .avatar-wrapper:hover .trash-btn {
-                    opacity: 1;
-                }
-
-                .trash-btn:hover {
-                    background: var(--platform-danger) !important;
-                }
-                
-                .stat-row {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 12px 16px;
-                    background: var(--platform-bg);
-                    border-radius: 12px;
-                    border: 1px solid var(--platform-border-color);
-                    margin-bottom: 12px;
-                }
-                
-                .stat-label {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-size: 0.95rem;
-                    color: var(--platform-text-primary);
-                    font-weight: 500;
-                }
-                
-                .stat-value {
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                }
-                
-                .tariff-badge {
-                    background: ${isPlus ? 'var(--platform-accent)' : 'var(--platform-border-color)'};
-                    color: ${isPlus ? '#fff' : 'var(--platform-text-primary)'};
-                    padding: 4px 10px;
-                    border-radius: 8px;
-                    font-size: 0.8rem;
-                    font-weight: 700;
-                    letter-spacing: 0.5px;
-                }
+                .avatar-wrapper { position: relative; width: 160px; height: 160px; margin: 0 auto; }
+                .avatar-circle { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; position: relative; border: 1px solid var(--platform-border-color); }
+                .avatar-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; opacity: 0; transition: opacity 0.2s ease; backdrop-filter: blur(2px); cursor: pointer; }
+                .avatar-wrapper:hover .avatar-overlay { opacity: 1; }
+                .trash-btn { position: absolute; top: 0; right: 0; background: rgba(0, 0, 0, 0.6); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; transition: background 0.2s, opacity 0.2s; opacity: 0; transform: translate(10%, -10%); }
+                .avatar-wrapper:hover .trash-btn { opacity: 1; }
+                .trash-btn:hover { background: var(--platform-danger) !important; }
+                .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--platform-bg); border-radius: 12px; border: 1px solid var(--platform-border-color); margin-bottom: 12px; }
+                .stat-label { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--platform-text-primary); font-weight: 500; }
+                .stat-value { font-weight: 600; font-size: 0.95rem; }
+                .tariff-badge { background: ${isPlus ? 'var(--platform-accent)' : 'var(--platform-border-color)'}; color: ${isPlus ? '#fff' : 'var(--platform-text-primary)'}; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; }
             `}</style>
-
             <div style={gridLayout}>
                 <div style={cardStyle}>
                     <div style={{ marginBottom: '24px' }}>
@@ -266,15 +130,7 @@ const ProfileGeneralTab = () => {
                             Формати: JPG, PNG, WEBP. Макс: 2 МБ.
                         </p>
                     </div>
-                    <div style={{ 
-                        flex: 1, 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        gap: '20px',
-                        padding: '10px 0'
-                    }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', padding: '10px 0' }}>
                         <div className="avatar-wrapper">
                             <div className="avatar-circle">
                                 <ImageUploadTrigger 
@@ -283,6 +139,7 @@ const ProfileGeneralTab = () => {
                                     circularCrop={true}
                                     uploading={isAvatarUploading}
                                     triggerStyle={{ width: '100%', height: '100%', display: 'block' }}
+                                    maxSizeMB={2}
                                 >
                                     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
                                         <Avatar 
@@ -349,7 +206,6 @@ const ProfileGeneralTab = () => {
                             disabled 
                             leftIcon={<Mail size={18} />}
                             style={{ opacity: 0.7, cursor: 'not-allowed' }}
-                            helperText="Email змінити неможливо з міркувань безпеки"
                         />
                         <Input 
                             name="phone_number" 

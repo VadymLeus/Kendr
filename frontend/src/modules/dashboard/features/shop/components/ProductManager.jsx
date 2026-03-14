@@ -21,6 +21,10 @@ const SORT_FIELDS = [
     { value: 'price', label: 'За ціною', icon: List },
     { value: 'stock', label: 'За залишком', icon: List }
 ];
+const getValidImageUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('http') ? url : `${BASE_URL}${url}`;
+};
 
 const useProducts = (siteId) => {
     const [products, setProducts] = useState([]);
@@ -38,10 +42,10 @@ const useProducts = (siteId) => {
                 ...p,
                 type: p.type || 'physical',
                 variants: Array.isArray(p.variants) ? p.variants : 
-                         (typeof p.variants === 'string' ? JSON.parse(p.variants) : []),
+                          (typeof p.variants === 'string' ? JSON.parse(p.variants) : []),
                 image_gallery: Array.isArray(p.image_gallery) ? p.image_gallery : 
-                             (typeof p.image_gallery === 'string' ? JSON.parse(p.image_gallery) : 
-                             (p.image_url ? [p.image_url] : []))
+                               (typeof p.image_gallery === 'string' ? JSON.parse(p.image_gallery) : 
+                               (p.image_url ? [p.image_url] : []))
             }));
             setProducts(productsData);
             setCategories(cRes.data || []);
@@ -76,7 +80,6 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
     const [editingIndex, setEditingIndex] = useState(null);
     const [isVariantDeleteModalOpen, setIsVariantDeleteModalOpen] = useState(false);
     const [valueToDelete, setValueToDelete] = useState(null);
-    
     useEffect(() => {
         if (editingIndex !== null && variant.values[editingIndex]) {
             const val = variant.values[editingIndex];
@@ -228,13 +231,11 @@ const ProductTable = memo(({
         { value: 'all', label: 'Всі категорії' },
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
     ];
-
     const typeOptions = [
         { value: 'all', label: 'Всі типи' },
         { value: 'physical', label: 'Фізичні' },
         { value: 'digital', label: 'Цифрові' }
     ];
-    
     const hasActiveFilters = filters.search.trim() !== '' || filters.category !== 'all' || filters.type !== 'all';
     const isLimitReached = maxProducts !== Infinity && products.length >= maxProducts;
     if (loading) return <LoadingState title="Завантаження товарів..." />;
@@ -342,7 +343,7 @@ const ProductTable = memo(({
                                 >
                                     <div className="aspect-4/3 w-full bg-(--platform-hover-bg) relative border-b border-(--platform-border-color) flex items-center justify-center overflow-hidden shrink-0">
                                          {product.image_gallery?.[0] ? (
-                                            <img src={`${BASE_URL}${product.image_gallery[0]}`} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                            <img src={getValidImageUrl(product.image_gallery[0])} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                          ) : (
                                             <Image size={40} className="opacity-20 text-(--platform-text-secondary)" />
                                          )}
@@ -579,7 +580,7 @@ const ProductEditorPanel = ({
                         <div className="grid grid-cols-4 gap-2">
                             {formData.image_gallery.map((img, i) => (
                                 <div key={i} className="aspect-square rounded-lg overflow-hidden border border-(--platform-border-color) relative group">
-                                    <img src={`${BASE_URL}${img}`} alt="" className="w-full h-full object-cover" />
+                                    <img src={getValidImageUrl(img)} alt="" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-start justify-end p-2">
                                         <button 
                                             type="button" 
@@ -666,7 +667,6 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
             }
         }
     }, [loading, products, searchParams]);
-    
     const processedProducts = useMemo(() => {
         let result = products.filter(product => {
             const matchesSearch = filters.search === '' || 
@@ -684,7 +684,6 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
         });
         return result;
     }, [products, filters, sortOrder]);
-    
     const handleProductSelect = useCallback((product) => {
         if (activeProduct && activeProduct.id === product.id) {
             setActiveProduct(null);
@@ -695,7 +694,6 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
             setSearchParams(prev => { prev.set('productId', product.id); return prev; });
         }
     }, [activeProduct, setSearchParams]);
-    
     const handleCreateNew = useCallback(() => {
         if (maxProducts !== Infinity && products.length >= maxProducts) {
             toast.warning(`Досягнуто ліміт товарів (${maxProducts}) для вашого тарифу.`);
@@ -705,12 +703,10 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
         setIsPanelOpen(true);
         setSearchParams(prev => { prev.set('productId', 'new'); return prev; });
     }, [maxProducts, products.length, setSearchParams]);
-    
     const handleClosePanel = useCallback(() => {
         setIsPanelOpen(false);
         setSearchParams(prev => { prev.delete('productId'); return prev; });
     }, [setSearchParams]);
-    
     const handleCancelForm = useCallback(() => {
         setActiveProduct(null);
         setSearchParams(prev => { prev.delete('productId'); return prev; });
@@ -718,11 +714,9 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
             setIsPanelOpen(false);
         }
     }, [setSearchParams]);
-    
     const handleRequestDelete = useCallback((product) => {
         setProductToDelete(product);
     }, []);
-    
     const handleConfirmDelete = useCallback(() => {
         if (productToDelete) {
             handleDelete(productToDelete.id, () => {

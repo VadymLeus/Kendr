@@ -2,12 +2,20 @@
 const db = require('../config/db');
 
 class SupportTicket {
-    static async create(userId, subject, body, type = 'general') {
+    static async create(userId, subject, body, type = 'general', attachments = null) {
         const [result] = await db.query(
-            'INSERT INTO support_tickets (user_id, subject, body, type, status) VALUES (?, ?, ?, ?, "open")',
-            [userId, subject, body, type]
+            'INSERT INTO support_tickets (user_id, subject, body, type, status, attachments) VALUES (?, ?, ?, ?, "open", ?)',
+            [userId, subject, body, type, attachments]
         );
         return { id: result.insertId, subject, body, type, status: 'open' };
+    }
+    
+    static async getLastTicketTime(userId) {
+        const [rows] = await db.query(
+            'SELECT created_at FROM support_tickets WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+            [userId]
+        );
+        return rows[0] ? rows[0].created_at : null;
     }
 
     static async findAllForUser(userId) {
@@ -24,22 +32,24 @@ class SupportTicket {
             FROM support_tickets st
             JOIN users u ON st.user_id = u.id
         `;
-        
         const params = [];
         if (statusFilter === 'active') {
             query += " WHERE st.status != 'closed'";
         } else if (statusFilter === 'closed') {
             query += " WHERE st.status = 'closed'";
         }
-
         query += " ORDER BY st.updated_at DESC";
-
         const [rows] = await db.query(query, params);
         return rows;
     }
 
     static async findById(ticketId) {
-        const [rows] = await db.query('SELECT * FROM support_tickets WHERE id = ?', [ticketId]);
+        const [rows] = await db.query(`
+            SELECT st.*, u.username, u.avatar_url 
+            FROM support_tickets st
+            JOIN users u ON st.user_id = u.id 
+            WHERE st.id = ?
+        `, [ticketId]);
         return rows[0];
     }
 
@@ -51,21 +61,18 @@ class SupportTicket {
         return rows;
     }
 
-    static async addReply(ticketId, userId, body) {
+    static async addReply(ticketId, userId, body, attachments) {
         const [result] = await db.query(
-            'INSERT INTO ticket_replies (ticket_id, user_id, body) VALUES (?, ?, ?)',
-            [ticketId, userId, body]
+            'INSERT INTO ticket_replies (ticket_id, user_id, body, attachments) VALUES (?, ?, ?, ?)',
+            [ticketId, userId, body, attachments || '[]']
         );
-
         const [userRows] = await db.query('SELECT role FROM users WHERE id = ?', [userId]);
         const userRole = userRows[0]?.role;
         const newStatus = userRole === 'admin' ? 'answered' : 'open';
-
         await db.query(
-            'UPDATE support_tickets SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+            'UPDATE support_tickets SET status = ?, closed_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
             [newStatus, ticketId]
         );
-        
         return { id: result.insertId };
     }
 
@@ -80,10 +87,10 @@ class SupportTicket {
         return rows;
     }
 
-    static async updateStatus(ticketId, status) {
+    static async updateStatus(ticketId, status, closedBy = null) {
         await db.query(
-            'UPDATE support_tickets SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
-            [status, ticketId]
+            'UPDATE support_tickets SET status = ?, closed_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+            [status, closedBy, ticketId]
         );
     }
 }

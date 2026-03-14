@@ -10,15 +10,15 @@ export const checkeredStyle = {
     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
     backgroundColor: '#ffffff'
 };
-
-export const getMediaUrl = (file) => {
-    if (!file) return null;
-    const targetPath = file.path_full || file.file_path || '';
+export const getMediaUrl = (file, useThumb = false) => {
+    if (!file) return '';
+    const targetPath = useThumb && file.path_thumb ? file.path_thumb : (file.path_full || file.file_path);
+    if (!targetPath) return '';
     if (targetPath.startsWith('http') || targetPath.startsWith('data:')) {
         return targetPath;
     }
     const cleanPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
-    return `${CLEAN_ROOT_URL}${cleanPath}`;
+    return `${API_URL}${cleanPath}`;
 };
 
 export const getFileExtension = (filename) => {
@@ -34,11 +34,9 @@ export const getFileConfig = (file) => {
         badgeBg: 'rgba(113, 128, 150, 0.15)',
         type: 'other'
     };
-
     if (!file) {
         return config;
     }
-
     const mimeType = file.mime_type || '';
     const ext = getFileExtension(file.original_file_name || '');
     if (mimeType.startsWith('image/')) {
@@ -46,13 +44,11 @@ export const getFileConfig = (file) => {
         config.IconComponent = Image;
         return config;
     }
-    
     if (mimeType.startsWith('video/')) {
         config.type = 'video';
         config.IconComponent = Video;
         return config;
     }
-
     switch (ext) {
         case 'TTF': case 'OTF': case 'WOFF': case 'WOFF2':
             config.IconComponent = Type;
@@ -64,6 +60,5 @@ export const getFileConfig = (file) => {
         default:
             break;
     }
-
     return config;
 };

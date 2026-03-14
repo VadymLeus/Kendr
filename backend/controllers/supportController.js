@@ -8,11 +8,23 @@ exports.createTicket = async (req, res, next) => {
     try {
         const { subject, body, siteId } = req.body; 
         const userId = req.user.id;
-
+        const attachmentUrls = req.attachmentUrls || [];
         if (!subject || !body) {
             return res.status(400).json({ message: 'Тема та текст звернення є обов\'язковими.' });
         }
+        const lastTicketTime = await SupportTicket.getLastTicketTime(userId);
+        if (lastTicketTime) {
+            const now = new Date();
+            const lastTime = new Date(lastTicketTime);
+            const timeDiffMinutes = (now - lastTime) / (1000 * 60);
 
+            if (timeDiffMinutes < 20) {
+                const remainingMinutes = Math.ceil(20 - timeDiffMinutes);
+                return res.status(429).json({ 
+                    message: `Ви занадто часто створюєте звернення. Зачекайте ще ${remainingMinutes} хв.` 
+                });
+            }
+        }
         let ticketType = 'general';
         if (siteId) {
             ticketType = 'appeal';
@@ -26,12 +38,11 @@ exports.createTicket = async (req, res, next) => {
                 });
             }
         }
-
+        const attachmentsJSON = JSON.stringify(attachmentUrls);
         await connection.beginTransaction();
-
         const [ticketResult] = await connection.query(
-            'INSERT INTO support_tickets (user_id, subject, body, type, status) VALUES (?, ?, ?, ?, "open")',
-            [userId, subject, body, ticketType]
+            'INSERT INTO support_tickets (user_id, subject, body, type, status, attachments) VALUES (?, ?, ?, ?, "open", ?)',
+            [userId, subject, body, ticketType, attachmentsJSON]
         );
         const ticketId = ticketResult.insertId;
         if (siteId) {
@@ -40,9 +51,7 @@ exports.createTicket = async (req, res, next) => {
                 [siteId, userId, ticketId]
             );
         }
-
         await connection.commit();
-
         res.status(201).json({ 
             id: ticketId, 
             subject, 
@@ -51,7 +60,6 @@ exports.createTicket = async (req, res, next) => {
             type: ticketType,
             message: siteId ? 'Апеляцію подано успішно.' : 'Звернення створено.'
         });
-
     } catch (error) {
         await connection.rollback();
         next(error);
@@ -88,9 +96,12 @@ exports.getTicketById = async (req, res, next) => {
 exports.addReply = async (req, res, next) => {
     try {
         const { ticketId } = req.params;
-        const { body } = req.body;
+        const body = req.body.body || ''; 
+        const attachmentUrls = req.attachmentUrls || []; 
         const currentUserId = req.user.id;
-        if (!body) return res.status(400).json({ message: 'Введіть текст відповіді.' });
+        if (!body.trim() && attachmentUrls.length === 0) {
+            return res.status(400).json({ message: 'Введіть текст або прикріпіть файл.' });
+        }
         const ticket = await SupportTicket.findById(ticketId);
         if (!ticket) return res.status(404).json({ message: 'Звернення не знайдено.' });
         const currentUser = await User.findById(currentUserId);
@@ -98,12 +109,10 @@ exports.addReply = async (req, res, next) => {
         if (ticket.user_id !== currentUserId && currentUser.role !== 'admin') {
             return res.status(403).json({ message: 'Ви не можете відповідати тут.' });
         }
-
         if (currentUser.role !== 'admin') {
             const lastReplies = await SupportTicket.getLastReplies(ticketId, 2);
             if (lastReplies.length >= 2) {
                 const isSpamming = lastReplies.every(reply => reply.user_id === currentUserId);
-                
                 if (isSpamming) {
                     return res.status(429).json({ 
                         message: 'Ви вже відправили два повідомлення поспіль. Будь ласка, дочекайтеся відповіді адміністратора.' 
@@ -111,8 +120,8 @@ exports.addReply = async (req, res, next) => {
                 }
             }
         }
-
-        await SupportTicket.addReply(ticketId, currentUserId, body);
+        const attachmentsJSON = JSON.stringify(attachmentUrls);
+        await SupportTicket.addReply(ticketId, currentUserId, body, attachmentsJSON);
         res.status(201).json({ message: 'Відповідь додано.' });
     } catch (error) {
         next(error);
@@ -133,11 +142,27 @@ exports.updateTicketStatus = async (req, res, next) => {
     try {
         const { ticketId } = req.params;
         const { status } = req.body;
+        const currentUserId = req.user.id;
         if (!['open', 'answered', 'closed'].includes(status)) {
             return res.status(400).json({ message: 'Невірний статус.' });
         }
-        await SupportTicket.updateStatus(ticketId, status);
-        res.json({ message: `Статус оновлено на ${status}.` });
+        const ticket = await SupportTicket.findById(ticketId);
+        if (!ticket) return res.status(404).json({ message: 'Звернення не знайдено.' });
+        const currentUser = await User.findById(currentUserId);
+        const isAdmin = currentUser.role === 'admin';
+        const isOwner = ticket.user_id === currentUserId;
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({ message: 'Доступ заборонено.' });
+        }
+        if (!isAdmin && status !== 'closed') {
+            return res.status(403).json({ message: 'Користувач може лише закривати звернення.' });
+        }
+        let closedBy = null;
+        if (status === 'closed') {
+            closedBy = isAdmin ? 'admin' : 'user';
+        }
+        await SupportTicket.updateStatus(ticketId, status, closedBy);
+        res.json({ message: `Статус оновлено.` });
     } catch (error) { 
         next(error); 
     }

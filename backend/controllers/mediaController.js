@@ -1,10 +1,9 @@
 // backend/controllers/mediaController.js
-const sharp = require('sharp');
 const path = require('path');
-const fs = require('fs').promises;
 const db = require('../config/db');
-const { deleteFile } = require('../utils/fileUtils');
+const cloudinary = require('../config/cloudinary');
 const { getLimitsForUser } = require('../config/mediaLimits');
+
 const normalizeWebPath = (filePath) => {
     if (!filePath) return null;
     let cleanPath = filePath.replace(/\\/g, '/');
@@ -22,21 +21,17 @@ exports.getAll = async (req, res, next) => {
             query += ' AND (display_name LIKE ? OR original_file_name LIKE ?)';
             params.push(`%${search}%`, `%${search}%`);
         }
-
         if (type && type !== 'all') {
             query += " AND file_type = ?";
             params.push(type);
         }
-
         if (extension && extension !== 'all') {
             query += " AND original_file_name LIKE ?";
             params.push(`%.${extension}`);
         }
-
         if (favorite === 'true') {
             query += ' AND is_favorite = 1';
         }
-
         let orderBy = 'ORDER BY is_favorite DESC, created_at DESC';
         if (sort === 'oldest') orderBy = 'ORDER BY is_favorite DESC, created_at ASC';
         if (sort === 'az') orderBy = 'ORDER BY is_favorite DESC, display_name ASC';
@@ -72,7 +67,6 @@ exports.getMediaLimitsStatus = async (req, res, next) => {
 
 exports.upload = async (req, res, next) => {
     if (!req.file) return res.status(400).json({ message: 'Файл не завантажено.' });
-    const tempPath = req.file.path;
     const userId = req.user.id;
     const userRole = req.user.role || 'user';
     const userPlan = req.user.plan || 'FREE';
@@ -81,32 +75,37 @@ exports.upload = async (req, res, next) => {
     const isSystem = req.query.isSystem === 'true' ? 1 : 0;
     const ext = path.extname(originalName).toLowerCase();
     const displayName = originalName.replace(ext, '');
+    let fileType = 'other';
+    const FONT_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
+    if (mimeType.startsWith('image/')) fileType = 'image';
+    else if (mimeType.startsWith('video/')) fileType = 'video';
+    else if (FONT_EXTENSIONS.includes(ext) || mimeType.includes('font')) fileType = 'font';
+    const cloudPublicId = req.file.filename; 
+    const resourceType = fileType === 'video' ? 'video' : (fileType === 'image' ? 'image' : 'raw');
     try {
         const limits = getLimitsForUser(userRole, userPlan);
         if (!limits.allowedMimeTypes.includes(mimeType) && !limits.allowedExtensions.includes(ext)) {
-            await fs.unlink(tempPath);
+            await cloudinary.uploader.destroy(cloudPublicId, { resource_type: resourceType });
             return res.status(200).json({ 
                 error: true,
                 message: `Ваш тариф не підтримує завантаження цього файлу. Доступні: ${limits.allowedExtensions.join(', ')}`,
                 code: 'UNSUPPORTED_TYPE_FOR_TIER'
             });
         }
-
         const fileSizeMB = req.file.size / (1024 * 1024);
         if (fileSizeMB > limits.maxFileSizeMB) {
-            await fs.unlink(tempPath);
+            await cloudinary.uploader.destroy(cloudPublicId, { resource_type: resourceType });
             return res.status(200).json({ 
                 error: true,
                 message: `Розмір файлу перевищує ліміт вашого тарифу (${limits.maxFileSizeMB} МБ). Цей файл: ${fileSizeMB.toFixed(2)} МБ.`,
                 code: 'FILE_TOO_LARGE_FOR_TIER'
             });
         }
-
         if (isSystem === 0 && !limits.isUnlimited) {
             const [rows] = await db.query('SELECT COUNT(*) as totalFiles FROM user_media WHERE user_id = ? AND is_system = 0', [userId]);
             const currentFilesCount = rows[0].totalFiles;
             if (currentFilesCount >= limits.maxFiles) {
-                await fs.unlink(tempPath);
+                await cloudinary.uploader.destroy(cloudPublicId, { resource_type: resourceType });
                 return res.status(200).json({ 
                     error: true,
                     message: `Ви досягли ліміту вашого тарифу (${limits.maxFiles} файлів).`,
@@ -115,67 +114,28 @@ exports.upload = async (req, res, next) => {
                 });
             }
         }
-
-        let fileType = 'other';
-        const FONT_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
-        if (mimeType.startsWith('image/')) fileType = 'image';
-        else if (mimeType.startsWith('video/')) fileType = 'video';
-        else if (FONT_EXTENSIONS.includes(ext) || mimeType.includes('font')) fileType = 'font';
-        const baseFileName = `user-${userId}-${Date.now()}`;
-        let finalFileName = `${baseFileName}${ext}`;
-        let finalPath = path.join(__dirname, '..', 'uploads', 'media', finalFileName);
-        let publicPath = `uploads/media/${finalFileName}`;
+        const fileUrl = req.file.path;
         let thumbPath = null;
-        let width = null;
-        let height = null;
         if (fileType === 'image') {
-            const metadata = await sharp(tempPath).metadata();
-            width = metadata.width;
-            height = metadata.height;
-            if (width > 1920) {
-                finalFileName = `${baseFileName}.webp`;
-                finalPath = path.join(__dirname, '..', 'uploads', 'media', finalFileName);
-                publicPath = `uploads/media/${finalFileName}`;
-                
-                await sharp(tempPath)
-                    .resize({ width: 1920, fit: 'inside' })
-                    .webp({ quality: 80 })
-                    .toFile(finalPath);
-                
-                const thumbName = `${baseFileName}-thumb.webp`;
-                const thumbDiskPath = path.join(__dirname, '..', 'uploads', 'media', thumbName);
-                await sharp(tempPath)
-                    .resize(300, 300, { fit: 'cover' })
-                    .webp({ quality: 70 })
-                    .toFile(thumbDiskPath);
-                
-                thumbPath = `uploads/media/${thumbName}`;
-                await fs.unlink(tempPath); 
-            } else {
-                await fs.rename(tempPath, finalPath);
-            }
-        } else {
-            await fs.rename(tempPath, finalPath);
+            const uploadIndex = fileUrl.indexOf('/upload/') + 8;
+            thumbPath = fileUrl.slice(0, uploadIndex) + 'c_fill,w_300,h_300/' + fileUrl.slice(uploadIndex);
         }
-
-        const stats = await fs.stat(finalPath);
-        const fileSizeKb = Math.round(stats.size / 1024);
-        const dbPathFull = normalizeWebPath(publicPath);
-        const dbPathThumb = normalizeWebPath(thumbPath);
+        const fileSizeKb = Math.round(req.file.size / 1024);
+        const width = req.file.width || null;
+        const height = req.file.height || null;
         const [result] = await db.query(
             `INSERT INTO user_media 
             (user_id, path_full, path_thumb, original_file_name, display_name, mime_type, file_size_kb, file_type, width, height, is_system) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [userId, dbPathFull, dbPathThumb, originalName, displayName, mimeType, fileSizeKb, fileType, width, height, isSystem]
+            [userId, fileUrl, thumbPath, originalName, displayName, mimeType, fileSizeKb, fileType, width, height, isSystem]
         );
         const [newMedia] = await db.query('SELECT * FROM user_media WHERE id = ?', [result.insertId]);
-        const responseData = {
+        res.status(201).json({
             ...newMedia[0],
-            filePath: dbPathFull
-        };
-        res.status(201).json(responseData);
+            filePath: fileUrl
+        });
     } catch (error) {
-        try { await fs.unlink(tempPath); } catch (e) {} 
+        try { await cloudinary.uploader.destroy(cloudPublicId, { resource_type: resourceType }); } catch (e) {} 
         console.error('Upload Error:', error);
         next(error);
     }
@@ -213,12 +173,28 @@ exports.deleteMedia = async (req, res, next) => {
         const [media] = await db.query('SELECT * FROM user_media WHERE id = ? AND user_id = ?', [id, userId]);
         if (media.length === 0) return res.status(404).json({ message: 'Файл не знайдено' });
         const file = media[0];
-        const absolutePathFull = path.join(__dirname, '..', file.path_full);
-        await deleteFile(absolutePathFull).catch(err => console.log('File missing:', err.message));
-        if (file.path_thumb) {
-            const absolutePathThumb = path.join(__dirname, '..', file.path_thumb);
-            await deleteFile(absolutePathThumb).catch(err => console.log('Thumb missing:', err.message));
+        if (file.path_full && file.path_full.includes('cloudinary.com')) {
+            try {
+                const uploadRegex = /\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/;
+                const match = file.path_full.match(uploadRegex);
+                if (match && match[1]) {
+                    const publicId = match[1];
+                    const resourceType = file.file_type === 'video' ? 'video' : (file.file_type === 'image' ? 'image' : 'raw');
+                    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+                }
+            } catch (err) {
+                console.error('Cloudinary delete error:', err);
+            }
+        } else {
+            const { deleteFile } = require('../utils/fileUtils');
+            const absolutePathFull = path.join(__dirname, '..', file.path_full);
+            await deleteFile(absolutePathFull).catch(err => console.log('File missing:', err.message));
+            if (file.path_thumb && !file.path_thumb.includes('cloudinary.com')) {
+                const absolutePathThumb = path.join(__dirname, '..', file.path_thumb);
+                await deleteFile(absolutePathThumb).catch(err => console.log('Thumb missing:', err.message));
+            }
         }
+
         await db.query('DELETE FROM user_media WHERE id = ?', [id]);
         res.json({ message: 'Файл успішно видалено', id });
     } catch (error) {

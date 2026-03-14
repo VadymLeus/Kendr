@@ -4,12 +4,25 @@ const router = express.Router();
 const supportController = require('../controllers/supportController');
 const verifyToken = require('../middleware/verifyToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
+const { ticketUpload, processAndSaveTicketImages } = require('../middleware/upload');
 
-router.post('/', verifyToken, supportController.createTicket);
+router.post(
+    '/', 
+    verifyToken, 
+    ticketUpload.array('attachments', 5), 
+    processAndSaveTicketImages,
+    supportController.createTicket
+);
 router.get('/my-tickets', verifyToken, supportController.getUserTickets);
 router.get('/:ticketId', verifyToken, supportController.getTicketById);
-router.post('/:ticketId/reply', verifyToken, supportController.addReply);
+router.post(
+    '/:ticketId/reply', 
+    verifyToken, 
+    ticketUpload.array('attachments', 5), 
+    processAndSaveTicketImages,
+    supportController.addReply
+);
 router.get('/admin/tickets', verifyToken, verifyAdmin, supportController.getAdminTickets);
-router.put('/admin/:ticketId/status', verifyToken, verifyAdmin, supportController.updateTicketStatus);
+router.put('/:ticketId/status', verifyToken, supportController.updateTicketStatus);
 
 module.exports = router;

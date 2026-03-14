@@ -19,7 +19,6 @@ passport.use(new GoogleStrategy({
         if (!email) {
             return done(new Error('Google не предоставил Email'), null);
         }
-
         let avatar_url = null;
         if (profile.photos && profile.photos.length > 0) {
             avatar_url = profile.photos[0].value;
@@ -27,27 +26,19 @@ passport.use(new GoogleStrategy({
         const [existingUser] = await db.query('SELECT * FROM users WHERE google_id = ?', [profile.id]);
         if (existingUser.length > 0) {
             const user = existingUser[0];
-            if (user.status !== 'suspended' && !user.avatar_url && avatar_url) {
-                await db.query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatar_url, user.id]);
-                user.avatar_url = avatar_url;
-            }
             return done(null, user);
         }
-
         const [userByEmail] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (userByEmail.length > 0) {
             const user = userByEmail[0];
-            const newAvatar = user.avatar_url ? user.avatar_url : avatar_url;
             if (user.status !== 'suspended') {
                 await db.query(
-                    'UPDATE users SET google_id = ?, is_verified = 1, avatar_url = ? WHERE id = ?', 
-                    [profile.id, newAvatar, user.id]
+                    'UPDATE users SET google_id = ?, is_verified = 1 WHERE id = ?', 
+                    [profile.id, user.id]
                 );
             }
-            
-            return done(null, { ...user, google_id: profile.id, is_verified: 1, avatar_url: newAvatar });
+            return done(null, { ...user, google_id: profile.id, is_verified: 1 });
         }
-        
         const baseUsername = profile.displayName.trim().replace(/\s+/g, ' ');
         let uniqueUsername = baseUsername;
         while (true) {
@@ -68,7 +59,6 @@ passport.use(new GoogleStrategy({
             role: 'user',
             avatar_url: avatar_url
         };
-        
         return done(null, newUser);
     } catch (err) {
         console.error('Passport Strategy Error:', err);

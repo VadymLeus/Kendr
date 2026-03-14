@@ -36,8 +36,8 @@ const MySitesPage = () => {
     const navigate = useNavigate();
     const { confirm } = useConfirm();
     const searchTimeoutRef = useRef(null);
-    const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 2);
-    const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 2);
+    const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 3);
+    const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 3);
     const isLimitReached = !isAdmin && totalSiteCount >= numericMaxSites;
     useEffect(() => {
         if (!user) { navigate('/login'); return; }
@@ -46,7 +46,6 @@ const MySitesPage = () => {
             .then(res => setTotalSiteCount(Array.isArray(res.data) ? res.data.length : 0))
             .catch(console.error);
     }, [user, navigate]);
-
     const fetchMySites = async () => {
         try {
             setLoading(true);
@@ -67,7 +66,6 @@ const MySitesPage = () => {
             setLoading(false); 
         }
     };
-
     useEffect(() => {
         if (!user) return;
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
@@ -87,7 +85,6 @@ const MySitesPage = () => {
             } catch (err) { toast.error('Помилка'); }
         }
     };
-
     const handleStatusChange = async (site, requestedStatus) => {
         try {
             const newStatus = requestedStatus || (site.status === 'published' ? 'draft' : 'published');
@@ -112,7 +109,6 @@ const MySitesPage = () => {
             setSites(prev => prev.map(s => s.id === siteId ? { ...s, is_pinned: res.data.is_pinned } : s));
         } catch (error) { toast.error('Помилка'); }
     };
-
     const safeSites = Array.isArray(sites) ? sites : [];
     const filteredSites = safeSites.filter(s => onlyPinned ? s.is_pinned : true)
         .sort((a, b) => (a.is_pinned === b.is_pinned ? 0 : a.is_pinned ? -1 : 1));

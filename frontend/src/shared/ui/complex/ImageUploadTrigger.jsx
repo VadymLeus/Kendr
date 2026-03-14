@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import ImageCropperModal from './ImageCropperModal';
 import { toast } from 'react-toastify';
+import { FILE_LIMITS } from '../../../shared/config/limits';
 
 const ImageUploadTrigger = ({ 
     children, 
@@ -9,7 +10,8 @@ const ImageUploadTrigger = ({
     aspect = 1, 
     circularCrop = false, 
     uploading = false,
-    triggerStyle = {}
+    triggerStyle = {},
+    maxSizeMB = FILE_LIMITS.GENERAL_IMAGE.MAX_SIZE / (1024 * 1024)
 }) => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
@@ -19,18 +21,20 @@ const ImageUploadTrigger = ({
         if (!file) return;
         if (!file.type.startsWith('image/')) {
             toast.error('Будь ласка, виберіть зображення');
+            e.target.value = '';
             return;
         }
-        if (file.size > 10 * 1024 * 1024) {
-            toast.error('Файл занадто великий');
+        const maxSizeBytes = maxSizeMB * 1024 * 1024;
+        if (file.size > maxSizeBytes) {
+            toast.error(`Файл занадто великий. Максимальний розмір — ${maxSizeMB} МБ.`);
+            e.target.value = '';
             return;
         }
-
         const reader = new FileReader();
         reader.addEventListener('load', () => {
             setSelectedImage(reader.result);
             setIsCropperOpen(true);
-            e.target.value = '';
+            e.target.value = ''; 
         });
         reader.readAsDataURL(file);
     };
@@ -50,7 +54,6 @@ const ImageUploadTrigger = ({
 
     const handleClick = (e) => {
         e.stopPropagation();
-        
         if (!uploading && fileInputRef.current) {
             fileInputRef.current.click();
         }
