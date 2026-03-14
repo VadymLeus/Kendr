@@ -24,7 +24,6 @@ const BlockEditor = ({
     onBlockSaved,
     isHeaderMode
 }) => {
-    
     const { confirm } = useConfirm();
     const [contextMenu, setContextMenu] = useState({
         visible: false,
@@ -33,7 +32,6 @@ const BlockEditor = ({
         path: null,
         blockId: null
     });
-
     const [{ isOverBottom }, bottomDropRef] = useDrop(() => ({
         accept: [DND_TYPE_NEW_BLOCK, DND_TYPE_EXISTING],
         collect: (monitor) => ({
@@ -44,8 +42,7 @@ const BlockEditor = ({
             const dragType = monitor.getItemType();
             if (dragType === DND_TYPE_NEW_BLOCK) {
                 onAddBlock([blocks.length], item.blockType, item.presetData);
-            } 
-
+            }
             else if (dragType === DND_TYPE_EXISTING) {
                 const dragPath = item.path;
                 const targetPath = [blocks.length]; 
@@ -56,7 +53,6 @@ const BlockEditor = ({
             }
         },
     }), [blocks.length, onAddBlock, onMoveBlock]);
-
     const emptyDropRef = useDrop(() => ({
         accept: [DND_TYPE_NEW_BLOCK],
         drop: (item, monitor) => {
@@ -64,7 +60,6 @@ const BlockEditor = ({
             onAddBlock([blocks.length], item.blockType, item.presetData); 
         },
     }), [blocks.length, onAddBlock])[1];
-
     const handleContextMenu = (e, path, blockId) => {
         e.preventDefault();
         e.stopPropagation();
@@ -76,11 +71,9 @@ const BlockEditor = ({
             blockId: blockId
         });
     };
-
     const handleCloseContextMenu = () => {
         setContextMenu(prev => ({ ...prev, visible: false }));
     };
-
     const handleContextMenuAction = async (action) => {
         const { path } = contextMenu;
         if (!path) return;
@@ -136,7 +129,6 @@ const BlockEditor = ({
                 break;
         }
     };
-
     const themeSettings = siteData?.theme_settings || {};
     const isSiteDark = siteData?.site_theme_mode === 'dark';
     const siteBg = isSiteDark ? '#1a202c' : '#f7fafc';
@@ -161,7 +153,6 @@ const BlockEditor = ({
         '--site-font-headings': themeSettings.font_heading || "'Inter', sans-serif",
         '--site-btn-radius': themeSettings.button_radius || '8px',
     };
-
     return (
         <div className="px-8 pb-8">
             {blocks.length === 0 && (
@@ -181,7 +172,7 @@ const BlockEditor = ({
                         Початок роботи
                     </h3>
                     <p className="m-0 text-[0.95rem] opacity-80">
-                        Перетягніть блок з бібліотеки або натисніть "+" у панелі додавання блоків
+                        Перетягніть блок з бібліотеки блоків
                     </p>
                 </div>
             )}
@@ -214,7 +205,6 @@ const BlockEditor = ({
                         </React.Fragment>
                     ))}
                 </div>
-
                 {blocks.length > 0 && !isHeaderMode && (
                     <div 
                         ref={bottomDropRef}
@@ -226,7 +216,6 @@ const BlockEditor = ({
                     </div>
                 )}
             </div>
-
             <ContextMenu 
                 visible={contextMenu.visible}
                 x={contextMenu.x}
@@ -240,22 +229,18 @@ const BlockEditor = ({
                 .site-theme-preview {
                     font-family: var(--site-font-main);
                 }
-                
                 .site-theme-preview * {
                     box-sizing: border-box;
                 }
-                
                 .site-theme-preview .site-block {
                     background: var(--site-bg);
                     color: var(--site-text-primary);
                     font-family: var(--site-font-main);
                 }
-                
                 .site-theme-preview .site-heading {
                     font-family: var(--site-font-headings);
                     color: var(--site-text-primary);
                 }
-                
                 .site-theme-preview .site-button {
                     background: var(--site-accent);
                     color: var(--site-accent-text);
@@ -265,11 +250,9 @@ const BlockEditor = ({
                     font-family: var(--site-font-main);
                     transition: background-color 0.2s ease;
                 }
-                
                 .site-theme-preview .site-button:hover {
                     background: var(--site-accent-hover);
                 }
-                
                 .site-theme-preview .site-card {
                     background: var(--site-card-bg);
                     border: 1px solid var(--site-border-color);

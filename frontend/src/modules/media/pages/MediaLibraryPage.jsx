@@ -6,6 +6,7 @@ import MediaInspector from '../components/MediaInspector';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
+import DragDropWrapper from '../../../shared/ui/complex/DragDropWrapper';
 import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements';
@@ -48,15 +49,12 @@ const MediaLibraryPage = () => {
     const [visibleCount, setVisibleCount] = useState(48);
     const [selectedFile, setSelectedFile] = useState(null);
     const [checkedFiles, setCheckedFiles] = useState(new Set());
-    const [isDragging, setIsDragging] = useState(false);
     const lastSelectedIndex = useRef(null);
-    const dragCounter = useRef(0);
     const fileInputRef = useRef(null);
     const { confirm } = useConfirm();
     useEffect(() => {
         fetchData();
     }, []);
-
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -138,8 +136,8 @@ const MediaLibraryPage = () => {
     }, [files, searchTerm, activeType, activeFormat, sortOption, onlyFavorites]);
     const visibleFiles = filteredFiles.slice(0, visibleCount);
     const remainingCount = filteredFiles.length - visibleFiles.length;
-    const handleUpload = async (e) => {
-        const fileList = e.target.files;
+    const handleUpload = async (eOrFiles) => {
+        const fileList = eOrFiles.target ? eOrFiles.target.files : eOrFiles;
         if (!fileList || fileList.length === 0) return;
         const toastId = toast.loading("Завантаження...");
         let successCount = 0;
@@ -150,7 +148,6 @@ const MediaLibraryPage = () => {
             formData.append('mediaFile', file);
             try {
                 const res = await apiClient.post('/media/upload', formData);
-                
                 if (res.data && res.data.error) {
                     failedFiles.push({ name: file.name, reason: res.data.message });
                     if (res.data.code === 'MAX_FILES_REACHED') {
@@ -170,13 +167,11 @@ const MediaLibraryPage = () => {
                 });
             }
         }
-
         toast.dismiss(toastId);
         if (successCount > 0) {
             toast.success(`Успішно завантажено: ${successCount} файлів`);
             fetchLimits(); 
         }
-
         if (failedFiles.length > 0) {
             const limit = 3; 
             const errorList = failedFiles.slice(0, limit)
@@ -335,24 +330,6 @@ const MediaLibraryPage = () => {
             toast.update(toastId, { render: "Помилка при створенні архіву", type: "error", isLoading: false, autoClose: 3000 });
         }
     };
-    
-    const onDragEvent = (e, active) => {
-        e.preventDefault(); e.stopPropagation();
-        if (active !== undefined) {
-             if (active) dragCounter.current += 1;
-             else dragCounter.current -= 1;
-             if (dragCounter.current > 0) setIsDragging(true);
-             else setIsDragging(false);
-        }
-    };
-    
-    const onDrop = (e) => {
-        e.preventDefault(); e.stopPropagation();
-        setIsDragging(false);
-        dragCounter.current = 0;
-        const files = e.dataTransfer.files;
-        if (files && files.length > 0) handleUpload({ target: { files } });
-    };
 
     const styles = {
         pageWrapper: {
@@ -462,36 +439,12 @@ const MediaLibraryPage = () => {
     
     const isLimitReached = limits && !limits.isUnlimited && limits.currentFiles >= limits.maxFiles;
     return (
-        <div style={styles.pageWrapper} 
-            onDragEnter={(e) => onDragEvent(e, true)} onDragLeave={(e) => onDragEvent(e, false)} 
-            onDragOver={(e) => e.preventDefault()} onDrop={onDrop}
+        <DragDropWrapper 
+            onDropFiles={handleUpload}
+            isError={isLimitReached}
+            errorText="Ліміт файлів вичерпано!"
+            style={styles.pageWrapper}
         >
-            {isDragging && !isLimitReached && (
-                <div style={{
-                    position: 'absolute', inset: 0, zIndex: 200, 
-                    backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', 
-                    border: '4px dashed var(--platform-accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--platform-accent)', fontSize: '1.5rem', fontWeight: 'bold', pointerEvents: 'none',
-                    margin: '2rem' 
-                }}>
-                    Перетягніть файли сюди
-                </div>
-            )}
-            
-            {isDragging && isLimitReached && (
-                <div style={{
-                    position: 'absolute', inset: 0, zIndex: 200, 
-                    backgroundColor: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', 
-                    border: '4px dashed var(--platform-danger)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--platform-danger)', fontSize: '1.5rem', fontWeight: 'bold', pointerEvents: 'none',
-                    margin: '2rem' 
-                }}>
-                    Ліміт файлів вичерпано!
-                </div>
-            )}
-
             <div style={styles.headerBlock}>
                 <div style={styles.headerContent}>
                     {limits && (
@@ -643,7 +596,7 @@ const MediaLibraryPage = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </DragDropWrapper>
     );
 };
 

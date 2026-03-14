@@ -23,7 +23,6 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
     mediaHeight,
   )
 }
-
 const ImageCropperModal = ({ 
     isOpen,
     imageSrc, 
@@ -36,27 +35,23 @@ const ImageCropperModal = ({
     const [completedCrop, setCompletedCrop] = useState();
     const [isProcessing, setIsProcessing] = useState(false);
     const imgRef = useRef(null);
-    
     useEffect(() => {
         if (!isOpen) {
             setCrop(undefined);
             setCompletedCrop(undefined);
         }
     }, [isOpen]);
-
     const onImageLoad = (e) => {
         const { width, height } = e.currentTarget;
         const initCrop = centerAspectCrop(width, height, aspect);
         setCrop(initCrop);
         setCompletedCrop(initCrop);
     };
-
     const handleConfirm = async () => {
         if (!completedCrop || !imgRef.current) {
             toast.warning('Виділіть область для обрізки.');
             return;
         }
-
         setIsProcessing(true);
         try {
             const blob = await getCroppedImg(imgRef.current, completedCrop);
@@ -70,9 +65,7 @@ const ImageCropperModal = ({
             setIsProcessing(false);
         }
     };
-
     if (!isOpen || !imageSrc) return null;
-    
     return ReactDOM.createPortal(
         <div className="fixed inset-0 bg-black/85 backdrop-blur-[5px] z-9999 flex items-center justify-center p-5 animate-in fade-in duration-200">
             <div className="bg-(--platform-card-bg) rounded-2xl w-full max-w-150 max-h-[90vh] flex flex-col border border-(--platform-border-color) shadow-2xl overflow-hidden">
@@ -88,15 +81,14 @@ const ImageCropperModal = ({
                         <X size={20}/>
                     </button>
                 </div>
-                
-                <div className="p-5 overflow-auto flex justify-center items-center bg-(--platform-bg) bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat flex-1 min-h-75">
+                <div className="p-5 overflow-auto flex bg-(--platform-bg) bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat flex-1 min-h-75">
                     <ReactCrop
                         crop={crop}
                         onChange={(_, percentCrop) => setCrop(percentCrop)}
                         onComplete={(c) => setCompletedCrop(c)}
                         aspect={aspect}
                         circularCrop={circularCrop}
-                        className="shadow-xl"
+                        className="m-auto shadow-xl"
                     >
                         <img
                             ref={imgRef}
@@ -108,7 +100,6 @@ const ImageCropperModal = ({
                         />
                     </ReactCrop>
                 </div>
-
                 <div className="px-5 py-4 border-t border-(--platform-border-color) flex justify-end gap-2.5 bg-(--platform-card-bg) shrink-0">
                     <Button variant="secondary" onClick={onClose} disabled={isProcessing}>
                         Скасувати

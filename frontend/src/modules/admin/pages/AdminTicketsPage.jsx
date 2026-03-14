@@ -44,8 +44,8 @@ const AdminTicketsPage = () => {
     const handleSort = (key) => setSortConfig(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const handleAction = async (fn, msg) => { try { await fn(); toast.success(msg); close(); refresh(); } catch { toast.error('Помилка'); } };
     const actions = {
-        closeTicket: (id) => requestConfirm({ title: 'Закрити?', message: `Тікет #${id} в архів.`, type: 'warning', confirmLabel: 'Закрити', onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'closed' }), 'Закрито') }),
-        restoreTicket: (id) => requestConfirm({ title: 'Відновити?', message: `Тікет #${id} активний.`, type: 'info', confirmLabel: 'Відновити', onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'open' }), 'Відновлено') })
+        closeTicket: (id) => requestConfirm({ title: 'Закрити?', message: `Тікет #${id} в архів.`, type: 'warning', confirmLabel: 'Закрити', onConfirm: () => handleAction(() => apiClient.put(`/support/${id}/status`, { status: 'closed' }), 'Закрито') }),
+        restoreTicket: (id) => requestConfirm({ title: 'Відновити?', message: `Тікет #${id} активний.`, type: 'info', confirmLabel: 'Відновити', onConfirm: () => handleAction(() => apiClient.put(`/support/${id}/status`, { status: 'open' }), 'Відновлено') })
     };
     const handleExport = () => {
         if (!processedTickets?.length) return toast.info('Немає даних');

@@ -4,8 +4,9 @@ import ReactDOM from 'react-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
 import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
-import { getMediaUrl } from '../../../shared/utils/mediaUtils'; 
+import { getMediaUrl } from '../../../shared/utils/mediaUtils';
 import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
+import DragDropWrapper from '../../../shared/ui/complex/DragDropWrapper';
 import { Button } from '../../../shared/ui/elements/Button';
 import { Search, X, Upload, Check, Image, Calendar, FileText, Clock, HardDrive } from 'lucide-react';
 
@@ -74,12 +75,13 @@ const MediaPickerModal = ({
         }
     };
 
-    const handleUpload = async (e) => {
-        const fileList = e.target.files;
+    const handleUpload = async (eOrFiles) => {
+        const fileList = eOrFiles.target ? eOrFiles.target.files : eOrFiles;
         if (!fileList || fileList.length === 0) return;
         const toastId = toast.loading("Завантаження...");
         let successCount = 0;
         let failedFiles = [];
+        
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i];
             const formData = new FormData();
@@ -145,7 +147,6 @@ const MediaPickerModal = ({
                 newSelectedIds.add(file.id); 
             }
         }
-        
         setSelectedIds(newSelectedIds);
         if (!multiple) {
             setActiveFile(newSelectedIds.has(file.id) ? file : null);
@@ -236,6 +237,7 @@ const MediaPickerModal = ({
     };
 
     const modalStyle = {
+        position: 'relative',
         backgroundColor: 'var(--platform-bg)', width: '100%', maxWidth: '1024px', height: '85vh',
         borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
         border: '1px solid var(--platform-border-color)', overflow: 'hidden', animation: 'popIn 0.2s ease-out'
@@ -277,7 +279,12 @@ const MediaPickerModal = ({
     return ReactDOM.createPortal(
         <>
             <div style={overlayStyle}>
-                <div style={modalStyle}>
+                <DragDropWrapper 
+                    onDropFiles={handleUpload}
+                    isError={isLimitReached}
+                    errorText="Ліміт файлів вичерпано!"
+                    style={modalStyle}
+                >
                     <div style={headerStyle}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, color: 'var(--platform-text-primary)' }}>
                             <Image size={20} color="var(--platform-accent)" />
@@ -304,7 +311,15 @@ const MediaPickerModal = ({
                             <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--platform-text-secondary)', pointerEvents: 'none' }}>
                                 <Search size={18} />
                             </div>
-                            <input type="text" placeholder="Пошук у медіатеці..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={searchInputStyle} onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'} onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'} />
+                            <input 
+                                type="text" 
+                                placeholder="Пошук у медіатеці..." 
+                                value={searchQuery} 
+                                onChange={e => setSearchQuery(e.target.value)} 
+                                style={searchInputStyle} 
+                                onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'} 
+                                onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'} 
+                            />
                         </div>
                         <Button 
                             variant="primary"
@@ -438,7 +453,7 @@ const MediaPickerModal = ({
                             </Button>
                         </div>
                     </div>
-                </div>
+                </DragDropWrapper>
                 <style>{`
                     @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
                 `}</style>

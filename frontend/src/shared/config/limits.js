@@ -1,4 +1,5 @@
 // frontend/src/shared/config/limits.js
+
 export const TEXT_LIMITS = {
     SITE_NAME: 60,
     SITE_SLUG: 30,
@@ -15,4 +16,18 @@ export const TEXT_LIMITS = {
     
     TICKET_SUBJECT: 100,
     TICKET_MESSAGE: 1000
+};
+
+export const FILE_LIMITS = {
+    TICKET_ATTACHMENT: {
+        MAX_SIZE: 5 * 1024 * 1024,
+        MAX_FILES: 5
+    },
+    MEDIA_LIBRARY: {
+        MAX_SIZE: 16 * 1024 * 1024,
+        MAX_FILES: 10
+    },
+    GENERAL_IMAGE: {
+        MAX_SIZE: 15 * 1024 * 1024
+    }
 };

@@ -11,7 +11,7 @@ const PLAN_LIMITS = {
     FREE: {
         maxFiles: 50,
         maxFileSizeMB: 5,
-        maxSites: 2,
+        maxSites: 3,
         maxProducts: 50,
         maxCategories: 20,
         allowedExtensions: COMMON_EXTENSIONS,

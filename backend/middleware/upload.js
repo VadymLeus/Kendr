@@ -3,11 +3,14 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
+const crypto = require('crypto');
 const { ensureDirExists } = require('../utils/fileUtils');
 const tempUploadPath = path.join(__dirname, '..', 'uploads', 'temp');
 const mediaUploadPath = path.join(__dirname, '..', 'uploads', 'media');
+const ticketUploadPath = path.join(__dirname, '..', 'uploads', 'tickets');
 ensureDirExists(tempUploadPath);
 ensureDirExists(mediaUploadPath);
+ensureDirExists(ticketUploadPath);
 const FONT_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
 const mediaFileFilter = (req, file, cb) => {
     file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
@@ -18,7 +21,6 @@ const mediaFileFilter = (req, file, cb) => {
     if (isImage || isVideo || isFont) {
         return cb(null, true);
     }
-    
     cb(new Error(`Помилка: Непідтримуваний тип файлу!`));
 };
 
@@ -144,10 +146,58 @@ const processAndSaveGeneric = (subfolder, filenamePrefix, maxWidth = 1200) => {
     };
 };
 
+const ticketFileFilter = (req, file, cb) => {
+    file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    const allowedTypes = /jpeg|jpg|png|webp/;
+    const mimetype = allowedTypes.test(file.mimetype);
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) {
+        return cb(null, true);
+    }
+    cb(new Error('Помилка: Непідтримуваний тип файлу! Дозволені лише JPG, PNG, WEBP.'));
+};
+const ticketUpload = multer({
+    storage: memoryStorage,
+    fileFilter: ticketFileFilter,
+    limits: { fileSize: 5 * 1024 * 1024, files: 5 }
+});
+
+const processAndSaveTicketImages = async (req, res, next) => {
+    if (!req.files || req.files.length === 0) {
+        req.attachmentUrls = [];
+        return next();
+    }
+
+    try {
+        const urls = [];
+        for (const file of req.files) {
+            const uuid = crypto.randomUUID();
+            const filename = `${uuid}.webp`;
+            const fullPath = path.join(ticketUploadPath, filename);
+
+            await sharp(file.buffer)
+                .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
+                .toFormat('webp')
+                .webp({ quality: 85 })
+                .toFile(fullPath);
+
+            urls.push(`/uploads/tickets/${filename}`);
+        }
+        
+        req.attachmentUrls = urls;
+        next();
+    } catch (error) {
+        console.error('Помилка обробки скріншотів тикета:', error);
+        res.status(500).json({ message: 'Не вдалося обробити прикріплені зображення.' });
+    }
+};
+
 module.exports = {
     upload,
     processAndSaveImage,
     processAndSaveLogo,
     processAndSaveGeneric,
-    mediaUpload
+    mediaUpload,
+    ticketUpload,
+    processAndSaveTicketImages
 };

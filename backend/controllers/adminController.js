@@ -24,6 +24,7 @@ const deleteFullUserAccount = async (userId) => {
     }
     await User.deleteById(userId);
 };
+
 const suspendFullUserAccount = async (userId) => {
     const user = await User.findById(userId);
     if (!user) return;
@@ -49,11 +50,11 @@ exports.getDashboardStats = async (req, res, next) => {
     try {
         const { period = 30, type = 'users' } = req.query;
         const days = parseInt(period) || 30;
-        const [usersResult] = await db.query('SELECT COUNT(*) as count FROM users WHERE role != "admin"');
-        const [usersGrowthResult] = await db.query('SELECT COUNT(*) as count FROM users WHERE role != "admin" AND created_at >= NOW() - INTERVAL 30 DAY');
-        const [sitesResult] = await db.query('SELECT COUNT(*) as count FROM sites WHERE status = "published"');
-        const [reportsResult] = await db.query('SELECT COUNT(*) as count FROM site_reports WHERE status = "new"');
-        const [ticketsResult] = await db.query('SELECT COUNT(*) as count FROM support_tickets WHERE status = "open"');
+        const [usersResult] = await db.query("SELECT COUNT(*) as count FROM users WHERE role != 'admin'");
+        const [usersGrowthResult] = await db.query("SELECT COUNT(*) as count FROM users WHERE role != 'admin' AND created_at >= NOW() - INTERVAL 30 DAY");
+        const [sitesResult] = await db.query("SELECT COUNT(*) as count FROM sites WHERE status = 'published'");
+        const [reportsResult] = await db.query("SELECT COUNT(*) as count FROM site_reports WHERE status = 'new'");
+        const [ticketsResult] = await db.query("SELECT COUNT(*) as count FROM support_tickets WHERE status = 'open'");
         let tableName = 'users';
         let dateColumn = 'created_at';
         let whereCondition = '1=1'; 
@@ -71,7 +72,7 @@ exports.getDashboardStats = async (req, res, next) => {
             case 'users':
             default:
                 tableName = 'users';
-                whereCondition = 'role != "admin"';
+                whereCondition = "role != 'admin'";
                 break;
         }
         const chartQuery = `
@@ -105,18 +106,21 @@ exports.getDashboardStats = async (req, res, next) => {
                 'user_register' as type,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = u.id) as status_info
             FROM users u
-            WHERE u.role != "admin" 
+            WHERE u.role != 'admin' 
             ORDER BY u.created_at DESC LIMIT 10
         `);
+        
         const [lastSites] = await db.query(`
             SELECT s.id, s.title, s.created_at, s.status as status_info, 'site_create' as type
             FROM sites s ORDER BY created_at DESC LIMIT 10
         `);
+        
         const [lastReports] = await db.query(`
             SELECT r.id, s.title as title, r.created_at, r.status as status_info, 'report' as type
             FROM site_reports r JOIN sites s ON r.site_id = s.id 
             ORDER BY r.created_at DESC LIMIT 10
         `);
+        
         const [lastTickets] = await db.query(`
             SELECT id, subject as title, created_at, status as status_info, 'ticket' as type
             FROM support_tickets ORDER BY created_at DESC LIMIT 10
@@ -135,7 +139,6 @@ exports.getDashboardStats = async (req, res, next) => {
             chartData,
             activityLog
         });
-
     } catch (error) {
         next(error);
     }
@@ -325,7 +328,6 @@ exports.setProbation = async (req, res, next) => {
             title: site.title,
             path: site.site_path
         });
-
         res.json({ message: 'Сайт переведено на випробувальний термін. Таймер видалення зупинено.' });
     } catch (error) {
         next(error);
@@ -339,7 +341,7 @@ exports.restoreSite = async (req, res, next) => {
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
         const site = sites[0];
         await Site.updateStatus(site.id, 'published', null);
-        await db.query('UPDATE site_appeals SET status = "approved", resolved_at = NOW() WHERE site_id = ? AND status = "pending"', [site.id]);
+        await db.query("UPDATE site_appeals SET status = 'approved', resolved_at = NOW() WHERE site_id = ? AND status = 'pending'", [site.id]);
         await db.query('DELETE FROM user_warnings WHERE site_id = ?', [site.id]);
         await logAdminAction(req, 'site_restore', 'site', site.id, { title: site.title });
         res.json({ message: 'Сайт успішно відновлено. Страйк анульовано.' });
@@ -356,7 +358,7 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
         const site = sites[0];
         const [users] = await db.query('SELECT email, username FROM users WHERE id = ?', [site.user_id]);
         const siteOwner = users[0];
-        await db.query('UPDATE site_appeals SET status = "rejected", resolved_at = NOW() WHERE site_id = ? AND status = "pending"', [site.id]);
+        await db.query("UPDATE site_appeals SET status = 'rejected', resolved_at = NOW() WHERE site_id = ? AND status = 'pending'", [site.id]);
         if (site.logo_url && !site.logo_url.includes('/default/')) {
             await deleteFile(site.logo_url);
         }
@@ -406,9 +408,7 @@ exports.getReports = async (req, res, next) => {
             query += ` WHERE r.status = ?`;
             params.push(status);
         }
-
         query += ` ORDER BY r.created_at DESC`;
-
         const [reports] = await db.query(query, params);
         res.json(reports);
     } catch (error) {
@@ -419,7 +419,7 @@ exports.getReports = async (req, res, next) => {
 exports.dismissReport = async (req, res, next) => {
     try {
         const { id } = req.params;
-        await db.query('UPDATE site_reports SET status = "dismissed" WHERE id = ?', [id]);
+        await db.query("UPDATE site_reports SET status = 'dismissed' WHERE id = ?", [id]);
         await logAdminAction(req, 'report_dismiss', 'report', id, { status: 'dismissed' });
         res.json({ message: 'Скаргу відхилено.' });
     } catch (error) {
@@ -430,7 +430,7 @@ exports.dismissReport = async (req, res, next) => {
 exports.reopenReport = async (req, res, next) => {
     try {
         const { id } = req.params;
-        await db.query('UPDATE site_reports SET status = "new" WHERE id = ?', [id]);
+        await db.query("UPDATE site_reports SET status = 'new' WHERE id = ?", [id]);
         await logAdminAction(req, 'report_reopen', 'report', id, { status: 'new' });
         res.json({ message: 'Скаргу повернуто до розгляду (статус New).' });
     } catch (error) {
@@ -449,7 +449,7 @@ exports.banSiteFromReport = async (req, res, next) => {
         const site = sites[0];
         const [users] = await db.query('SELECT email, username FROM users WHERE id = ?', [site.user_id]);
         const siteOwner = users[0];
-        await db.query('UPDATE site_reports SET status = "banned" WHERE id = ?', [id]);
+        await db.query("UPDATE site_reports SET status = 'banned' WHERE id = ?", [id]);
         const deletionDate = new Date();
         deletionDate.setDate(deletionDate.getDate() + 7); 
         await Site.updateStatus(site.id, 'suspended', deletionDate);

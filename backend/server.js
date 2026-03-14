@@ -30,7 +30,9 @@ const verifyTokenOptional = require('./middleware/verifyTokenOptional');
 const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
-app.use(helmet()); 
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 const allowedOrigins = [
     'http://localhost:5173',
     'https://kendr.vercel.app',
@@ -66,7 +68,7 @@ app.use('/api/saved-blocks', savedBlockRoutes);
 app.use('/api/user-templates', userTemplateRoutes);
 app.use('/api/reports', reportRoutes);
 app.get('/', (req, res) => {
-    res.send('Welcome to Kendr API!');
+    res.send('Welcome to Kendr API');
 });
 app.use(errorHandler);
 app.listen(PORT, async () => {
