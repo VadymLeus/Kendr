@@ -8,20 +8,27 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const { deleteFile } = require('../utils/fileUtils');
 const db = require('../config/db');
-const getUserStats = async (userId, plan) => {
+const { getLimitsForUser } = require('../config/mediaLimits');
+const getUserStats = async (userId, plan, role) => {
     try {
         const [siteRows] = await db.query('SELECT COUNT(id) as count FROM sites WHERE user_id = ?', [userId]);
         const [mediaRows] = await db.query('SELECT COUNT(id) as count FROM user_media WHERE user_id = ?', [userId]);
-        const isPlus = plan === 'PLUS';
+        const limits = getLimitsForUser(role, plan);
         return {
             siteCount: siteRows[0].count || 0,
-            siteLimit: isPlus ? Infinity : 2,
+            siteLimit: limits.maxSites,
             mediaCount: mediaRows[0].count || 0,
-            mediaLimit: isPlus ? Infinity : 50
+            mediaLimit: limits.maxFiles
         };
     } catch (err) {
         console.error("Помилка отримання статистики:", err);
-        return { siteCount: 0, siteLimit: 2, mediaCount: 0, mediaLimit: 50 };
+        const fallbackLimits = getLimitsForUser('user', 'FREE');
+        return { 
+            siteCount: 0, 
+            siteLimit: fallbackLimits.maxSites, 
+            mediaCount: 0, 
+            mediaLimit: fallbackLimits.maxFiles 
+        };
     }
 };
 
@@ -48,11 +55,9 @@ const sanitizeUser = (user, stats = null) => {
         has_password: user.has_password !== undefined ? user.has_password : !!user.password_hash,
         created_at: user.created_at
     };
-    
     if (stats) {
         sanitized.stats = stats;
     }
-    
     return sanitized;
 };
 
@@ -79,7 +84,6 @@ exports.getPublicProfile = async (req, res, next) => {
         if (!user.is_profile_public) {
             const isOwner = req.user && req.user.id === user.id;
             const isAdmin = req.user && req.user.role === 'admin';
-
             if (!isOwner && !isAdmin) {
                 return res.status(403).json({ 
                     message: 'Цей профіль є приватним.',
@@ -165,7 +169,7 @@ exports.updateProfile = async (req, res, next) => {
         }
         const updatedUserRaw = await User.update(userId, updates);
         const hasPwd = await User.hasPassword(userId);
-        const stats = await getUserStats(userId, updatedUserRaw.plan);
+        const stats = await getUserStats(userId, updatedUserRaw.plan, updatedUserRaw.role);
         res.json({ 
             message: 'Профіль успішно оновлено!', 
             user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }, stats)
@@ -194,12 +198,11 @@ exports.changePassword = async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(newPassword, salt);
         await User.update(userId, { password_hash: hashedPassword });
         const updatedUserRaw = await User.findById(userId);
-        const stats = await getUserStats(userId, updatedUserRaw.plan);
+        const stats = await getUserStats(userId, updatedUserRaw.plan, updatedUserRaw.role);
         res.json({ 
             message: user.password_hash ? 'Пароль успішно змінено.' : 'Пароль успішно встановлено.',
             user: sanitizeUser({ ...updatedUserRaw, has_password: true }, stats) 
         });
-
     } catch (error) {
         next(error);
     }
@@ -233,7 +236,7 @@ exports.restoreAccount = async (req, res, next) => {
             role: user.role, 
             plan: user.plan || 'FREE' 
         }, process.env.JWT_SECRET, { expiresIn: '24h' });
-        const stats = await getUserStats(userId, user.plan);
+        const stats = await getUserStats(userId, user.plan, user.role);
         res.json({ 
             message: 'Акаунт успішно відновлено!',
             token,
@@ -255,7 +258,7 @@ exports.updateAvatarUrl = async (req, res, next) => {
         }
         const updatedUserRaw = await User.update(userId, { avatar_url });
         const hasPwd = await User.hasPassword(userId);
-        const stats = await getUserStats(userId, updatedUserRaw.plan);
+        const stats = await getUserStats(userId, updatedUserRaw.plan, updatedUserRaw.role);
         res.json({ 
             message: 'Аватар оновлено!', 
             user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }, stats) 
@@ -280,22 +283,25 @@ exports.uploadAvatar = async (req, res, next) => {
         return res.status(400).json({ message: 'Файл не завантажено.' });
     }
     const userId = req.user.id;
-    const newAvatarUrl = `/uploads/avatars/custom/${req.file.filename}`;
+    const newAvatarUrl = req.file.path; 
     try {
         const currentUser = await User.findById(userId);
         const oldAvatarUrl = currentUser.avatar_url;
         if (oldAvatarUrl && oldAvatarUrl.includes('/avatars/custom/')) {
-            await deleteFile(oldAvatarUrl);
+            try {
+                await deleteFile(oldAvatarUrl);
+            } catch(e) {
+                console.warn('Не вдалося видалити старий локальний файл аватара', e);
+            }
         }
         const updatedUserRaw = await User.update(userId, { avatar_url: newAvatarUrl });
         const hasPwd = await User.hasPassword(userId);
-        const stats = await getUserStats(userId, updatedUserRaw.plan);
+        const stats = await getUserStats(userId, updatedUserRaw.plan, updatedUserRaw.role);
         res.json({ 
             message: 'Аватар завантажено!', 
             user: sanitizeUser({ ...updatedUserRaw, has_password: hasPwd }, stats) 
         });
     } catch (error) {
-        await deleteFile(req.file.path); 
         next(error);
     }
 };
@@ -304,8 +310,7 @@ exports.deleteAvatar = async (req, res, next) => {
     try {
         await db.query('UPDATE users SET avatar_url = NULL WHERE id = ?', [req.user.id]);
         const user = await User.findById(req.user.id);
-        const stats = await getUserStats(req.user.id, user.plan);
-
+        const stats = await getUserStats(req.user.id, user.plan, user.role);
         res.json({ 
             message: 'Аватар видалено', 
             user: sanitizeUser({ ...user, has_password: await User.hasPassword(req.user.id) }, stats)

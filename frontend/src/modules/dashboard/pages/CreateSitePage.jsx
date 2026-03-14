@@ -26,7 +26,6 @@ const ICON_MAP = {
     'Briefcase': Briefcase, 'Camera': Camera, 'Coffee': Coffee,
     'Music': Music, 'Star': Star, 'Heart': Heart, 'Globe': Globe,
 };
-
 const TEMPLATE_CATEGORIES = [
     { id: 'All', label: 'Всі' },
     { id: 'General', label: 'Загальне' },
@@ -44,7 +43,6 @@ const getCategoryLabel = (catId) => {
     const found = TEMPLATE_CATEGORIES.find(c => c.id.toLowerCase() === catId.toLowerCase());
     return found ? found.label : catId;
 };
-
 const CreateSitePage = () => {
     const navigate = useNavigate();
     const { isAdmin, plan } = useContext(AuthContext);
@@ -73,11 +71,9 @@ const CreateSitePage = () => {
         pages: [], theme: { mode: 'light', accent: 'blue' }, header: [], footer: [], siteData: {} 
     });
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
-    
-    const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 2);
-    const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 2);
+    const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 3);
+    const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 3);
     const isLimitReached = !isAdmin && currentSiteCount >= numericMaxSites;
-
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -113,16 +109,12 @@ const CreateSitePage = () => {
                 setSlugError(null);
                 return;
             }
-
-            // Перевірка через нашу утиліту (винесли логіку)
             const validation = validateSiteSlug(currentSlug);
-            
             if (!validation.isValid) {
                 setSlugStatus(validation.status);
                 setSlugError(validation.error);
                 return;
             }
-
             setSlugStatus('checking');
             setSlugError(null);
             
@@ -283,9 +275,7 @@ const CreateSitePage = () => {
     };
 
     if (isLoadingData) return <LoadingState />;
-    
     const isFormReady = !isLimitReached && formData.title.trim().length >= 2 && !titleError && formData.slug && slugStatus === 'available' && !slugError;
-    
     return (
         <div className="flex h-full w-full overflow-hidden bg-(--platform-bg) min-h-0">
             <ConfirmModal 

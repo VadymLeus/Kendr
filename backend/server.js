@@ -46,7 +46,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 app.use(passport.initialize());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(verifyTokenOptional);
 app.use(checkMaintenance);
 app.use('/api/auth', authRoutes);

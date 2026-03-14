@@ -1,6 +1,6 @@
 // frontend/src/shared/ui/complex/MediaFilePreview.jsx
 import React from 'react';
-import { API_URL, getFileConfig, getFileExtension } from '../../../shared/utils/mediaUtils';
+import { getFileConfig, getFileExtension, getMediaUrl } from '../../../shared/utils/mediaUtils';
 import { Play, Video } from 'lucide-react';
 
 const MediaFilePreview = ({ file, className = '', style = {}, showVideoControls = false, onVideoMetadata }) => {
@@ -13,8 +13,8 @@ const MediaFilePreview = ({ file, className = '', style = {}, showVideoControls 
                 className={containerClasses}
                 style={style} 
             >
-                <img 
-                    src={`${API_URL}${file.path_full}`} 
+                <img
+                    src={getMediaUrl(file, true)} 
                     alt={file.display_name} 
                     className="w-full h-full object-contain"
                 />
@@ -30,7 +30,7 @@ const MediaFilePreview = ({ file, className = '', style = {}, showVideoControls 
                     style={style}
                 >
                     <video 
-                        src={`${API_URL}${file.path_full}`} 
+                        src={getMediaUrl(file)} 
                         controls 
                         autoPlay 
                         muted
@@ -61,7 +61,6 @@ const MediaFilePreview = ({ file, className = '', style = {}, showVideoControls 
     }
 
     const { IconComponent, themeColor, bgColor, badgeBg } = config;
-
     return (
         <div 
             className={`${containerClasses} flex-col gap-2`}
@@ -77,7 +76,6 @@ const MediaFilePreview = ({ file, className = '', style = {}, showVideoControls 
             <div className="bg-(--platform-card-bg) rounded-xl p-2 shadow-sm flex items-center justify-center relative z-2">
                 <IconComponent size={24} color={themeColor} />
             </div>
-
             <span 
                 className="text-[0.65rem] font-bold uppercase tracking-wider z-2 px-2 py-0.5 rounded-lg min-w-9 text-center"
                 style={{ color: themeColor, background: badgeBg }}

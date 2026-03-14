@@ -55,6 +55,7 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -84,7 +85,6 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         setActiveFormat(null);
     }, [activeType]);
-
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
@@ -190,7 +190,6 @@ const MediaLibraryPage = () => {
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
-
     const handleUpdateFile = useCallback((updatedFile) => {
         setFiles(prev => prev.map(f => f.id === updatedFile.id ? updatedFile : f));
         setSelectedFile(prev => prev?.id === updatedFile.id ? updatedFile : prev);
@@ -205,7 +204,6 @@ const MediaLibraryPage = () => {
             handleUpdateFile({ ...file, is_favorite: !newStatus });
         }
     }, [handleUpdateFile]);
-
     const handleDelete = async (file) => {
         if (await confirm({ title: "Видалити файл?", message: "Ця дія незворотна.", type: "danger", confirmLabel: "Видалити" })) {
             try {
@@ -267,22 +265,9 @@ const MediaLibraryPage = () => {
         setCheckedFiles(new Set());
     };
 
-    const handleBulkDelete = async () => {
-        if (checkedFiles.size === 0) return;
-        if (await confirm({ title: `Видалити ${checkedFiles.size} файлів?`, type: "danger", confirmLabel: "Видалити все" })) {
-            const toastId = toast.loading("Видалення...");
-            try {
-                await Promise.all(Array.from(checkedFiles).map(id => apiClient.delete(`/media/${id}`)));
-                setFiles(prev => prev.filter(f => !checkedFiles.has(f.id)));
-                setCheckedFiles(new Set());
-                setSelectedFile(null);
-                toast.success('Файли видалено');
-                fetchLimits();
-            } catch (err) { 
-            } finally {
-                toast.dismiss(toastId);
-            }
-        }
+    const getDownloadUrl = (path) => {
+        if (!path) return '';
+        return path.startsWith('http') ? path : `${BASE_URL}${path}`;
     };
 
     const handleBulkDownload = async () => {
@@ -291,7 +276,7 @@ const MediaLibraryPage = () => {
         if (filesToDownload.length === 1) {
             const file = filesToDownload[0];
             try {
-                const response = await fetch(`${BASE_URL}${file.path_full}`);
+                const response = await fetch(getDownloadUrl(file.path_full));
                 if (!response.ok) throw new Error('Network error');
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -310,11 +295,12 @@ const MediaLibraryPage = () => {
             setCheckedFiles(new Set());
             return;
         }
+
         const toastId = toast.loading(`Збираємо архів з ${filesToDownload.length} файлів...`);
         try {
             const zip = new JSZip();
             const fetchPromises = filesToDownload.map(async (file) => {
-                const response = await fetch(`${BASE_URL}${file.path_full}`);
+                const response = await fetch(getDownloadUrl(file.path_full));
                 if (!response.ok) throw new Error(`Failed to fetch ${file.original_file_name}`);
                 const blob = await response.blob();
                 const fileName = file.original_file_name || `file_${file.id}`;
@@ -436,7 +422,6 @@ const MediaLibraryPage = () => {
             ))}
         </div>
     ) : null;
-    
     const isLimitReached = limits && !limits.isUnlimited && limits.currentFiles >= limits.maxFiles;
     return (
         <DragDropWrapper 

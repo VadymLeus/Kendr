@@ -13,17 +13,19 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         alt_text: '',
         description: ''
     });
-
+    const getValidUrl = (path) => {
+        if (!path) return '';
+        return path.startsWith('http') ? path : `${API_URL}${path}`;
+    };
     const hasChanges = file && (
         formData.display_name !== (file.display_name || '') ||
         formData.alt_text !== (file.alt_text || '') ||
         formData.description !== (file.description || '')
     );
-
     const isFont = file && (file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name));
     useEffect(() => {
         if (isFont && file) {
-            const fontUrl = `${API_URL}${file.path_full}`;
+            const fontUrl = getValidUrl(file.path_full);
             const fontName = `PreviewFont-${file.id}`;
             const fontFace = new FontFace(fontName, `url(${fontUrl})`);
             
@@ -47,10 +49,10 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             });
         }
     }, [file]);
+
     if (!file) return null;
     const saveChanges = async () => {
         if (!hasChanges) return;
-
         try {
             const res = await apiClient.put(`/media/${file.id}`, formData);
             onUpdate(res.data);
@@ -60,11 +62,8 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             toast.error('Помилка збереження');
         }
     };
-
     const handleBlur = () => {
-        if (hasChanges) {
-            saveChanges();
-        }
+        if (hasChanges) saveChanges();
     };
 
     const handleSaveClick = (e) => {
@@ -73,19 +72,19 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
     };
 
     const copyUrl = () => {
-        const url = `${API_URL}${file.path_full}`;
+        const url = getValidUrl(file.path_full);
         navigator.clipboard.writeText(url);
         toast.info('URL скопійовано');
     };
 
     const openInNewWindow = () => {
-        window.open(`${API_URL}${file.path_full}`, '_blank');
+        window.open(getValidUrl(file.path_full), '_blank');
     };
 
     const handleForceDownload = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(`${API_URL}${file.path_full}`);
+            const response = await fetch(getValidUrl(file.path_full));
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -126,7 +125,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             background: 'var(--platform-bg)',
             backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')",
             backgroundRepeat: 'repeat',
-            
             borderBottom: '1px solid var(--platform-border-color)',
             display: 'flex',
             justifyContent: 'center',
@@ -233,7 +231,6 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             </div>
         );
     };
-    
     return (
         <div style={styles.container}>
             <div style={styles.header}>

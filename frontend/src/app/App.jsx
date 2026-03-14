@@ -53,11 +53,9 @@ function App() {
         window.addEventListener('maintenance_mode_active', handleMaintenance);
         return () => window.removeEventListener('maintenance_mode_active', handleMaintenance);
     }, []);
-
     if (maintenanceInfo.active && !isAdmin && !isLoading) {
         return <MaintenanceScreen message={maintenanceInfo.message} />;
     }
-
     return (
         <DndProvider backend={HTML5Backend}>
             <FavoritesProvider>
@@ -132,5 +130,4 @@ function App() {
         </DndProvider>
     );
 }
-
 export default App;
