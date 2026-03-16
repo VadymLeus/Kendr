@@ -36,7 +36,6 @@ const TEMPLATE_CATEGORIES = [
     { id: 'Blog', label: 'Блог' },
     { id: 'Creative', label: 'Креатив' },
 ];
-
 const getTemplateIcon = (iconName) => ICON_MAP[iconName] || Layout; 
 const getCategoryLabel = (catId) => {
     if (!catId) return null;
@@ -71,17 +70,16 @@ const CreateSitePage = () => {
         pages: [], theme: { mode: 'light', accent: 'blue' }, header: [], footer: [], siteData: {} 
     });
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
-    const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 3);
-    const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 3);
-    const isLimitReached = !isAdmin && currentSiteCount >= numericMaxSites;
+    const [limits, setLimits] = useState(null);
     useEffect(() => {
         const loadData = async () => {
             try {
                 const templatesUrl = isAdmin ? '/sites/templates?include_drafts=true' : '/sites/templates';
-                const [sysRes, persRes, sitesRes] = await Promise.allSettled([
+                const [sysRes, persRes, sitesRes, limitsRes] = await Promise.allSettled([
                     apiClient.get(templatesUrl),
                     apiClient.get('/user-templates'),
-                    apiClient.get('/sites/catalog', { params: { scope: 'my' } }) 
+                    apiClient.get('/sites/catalog', { params: { scope: 'my' } }),
+                    apiClient.get('/media/limits')
                 ]);
                 if (sysRes.status === 'fulfilled') {
                     setSystemTemplates(sysRes.value.data);
@@ -89,6 +87,7 @@ const CreateSitePage = () => {
                 }
                 if (persRes.status === 'fulfilled') setPersonalTemplates(persRes.value.data);
                 if (sitesRes.status === 'fulfilled') setCurrentSiteCount(Array.isArray(sitesRes.value.data) ? sitesRes.value.data.length : 0);
+                if (limitsRes.status === 'fulfilled') setLimits(limitsRes.value.data);
                 if (LOCAL_DEFAULT_LOGOS.length > 0) {
                     setDefaultRandomLogo(LOCAL_DEFAULT_LOGOS[Math.floor(Math.random() * LOCAL_DEFAULT_LOGOS.length)]);
                 } 
@@ -100,7 +99,9 @@ const CreateSitePage = () => {
         };
         loadData();
     }, [isAdmin]);
-
+    const isPlanAdmin = plan && String(plan).trim().toUpperCase() === 'ADMIN';
+    const maxSitesDisplay = isPlanAdmin ? '∞' : (limits ? limits.maxSites : '...');
+    const isLimitReached = !isPlanAdmin && limits && currentSiteCount >= limits.maxSites;
     useEffect(() => {
         const checkSlug = async () => {
             const currentSlug = formData.slug;
@@ -117,7 +118,6 @@ const CreateSitePage = () => {
             }
             setSlugStatus('checking');
             setSlugError(null);
-            
             try {
                 const res = await apiClient.get(`/sites/check-slug?slug=${currentSlug}`);
                 if (res.data.isAvailable) {
@@ -131,7 +131,6 @@ const CreateSitePage = () => {
                 setSlugError('Помилка перевірки адреси');
             }
         };
-
         const timer = setTimeout(checkSlug, 500);
         return () => clearTimeout(timer);
     }, [formData.slug]);
@@ -159,17 +158,14 @@ const CreateSitePage = () => {
             footer: content.footer_content || [],
             siteData: { title: template.name, ...content.site_settings } 
         });
-        
         const hasHomePage = pages.find(p => p.slug === 'home');
         setCurrentPreviewSlug(hasHomePage ? 'home' : (pages[0]?.slug || 'home'));
     };
-
     const effectiveLogo = customLogo || defaultRandomLogo;
     const currentBlocks = useMemo(() => {
         const page = previewData.pages.find(p => p.slug === currentPreviewSlug);
         return page ? (page.blocks || []) : [];
     }, [previewData.pages, currentPreviewSlug]);
-
     const handleTitleChange = (e) => {
         const { val, error } = validateSiteTitle(e.target.value);
         setTitleError(error);
@@ -330,7 +326,7 @@ const CreateSitePage = () => {
                                     <Globe size={18} />
                                     <span className="font-medium text-sm">Створено сайтів:</span>
                                 </div>
-                                <span className="font-bold text-lg">{currentSiteCount} / {maxSites}</span>
+                                <span className="font-bold text-lg">{currentSiteCount} / {maxSitesDisplay}</span>
                             </div>
                             {isLimitReached && (
                                 <div className="p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 rounded-lg text-sm text-red-600 dark:text-red-400 flex items-start gap-2 -mt-3">

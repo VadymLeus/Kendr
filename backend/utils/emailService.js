@@ -2,10 +2,7 @@
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-const siteColors = {
-    blue: '#3182ce', green: '#38a169', orange: '#dd6b20', red: '#e53e3e',
-    purple: '#805ad5', yellow: '#d69e2e', lime: '#8cc152', gray: '#718096'
-};
+const siteColors = { blue: '#3182ce', green: '#38a169', orange: '#dd6b20', red: '#e53e3e', purple: '#805ad5', yellow: '#d69e2e', lime: '#8cc152', gray: '#718096' };
 const getAccentHex = (colorName) => siteColors[colorName] || siteColors.blue;
 const platformAccent = '#4299e1';
 const platformDanger = '#ef4444';
@@ -54,16 +51,16 @@ exports.sendDigitalGoodsEmail = async (toEmail, customerName, digitalItems, site
                 </h3>
                 ${isUrl 
                     ? `<div style="text-align: center; margin-top: 24px; margin-bottom: 8px;">
-                           <a href="${item.digital_file_url}" style="display: inline-block; background-color: ${accentHex}; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 15px;">
-                               Отримати доступ
-                           </a>
-                       </div>`
+                            <a href="${item.digital_file_url}" style="display: inline-block; background-color: ${accentHex}; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 15px;">
+                                Отримати доступ
+                            </a>
+                        </div>`
                     : `<div style="margin-top: 16px;">
-                           <p style="color: #64748b; font-size: 14px; margin-bottom: 12px; text-align: center;">Ваш секретний текст або код:</p>
-                           <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px dashed #cbd5e0; font-family: monospace; word-break: break-all; color: #0f172a; text-align: center; font-size: 16px; font-weight: 600;">
-                               ${item.digital_file_url}
-                           </div>
-                       </div>`
+                            <p style="color: #64748b; font-size: 14px; margin-bottom: 12px; text-align: center;">Ваш секретний текст або код:</p>
+                            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px dashed #cbd5e0; font-family: monospace; word-break: break-all; color: #0f172a; text-align: center; font-size: 16px; font-weight: 600;">
+                                ${item.digital_file_url}
+                            </div>
+                        </div>`
                 }
             </div>
         `;
@@ -118,7 +115,7 @@ exports.sendAccountBannedEmail = async (toEmail, username, isDeleted = false) =>
     `;
     try {
         await resend.emails.send({ from: FROM_EMAIL, to: toEmail, subject: `Важливе сповіщення: ${title} | Kendr`, html: html });
-    } catch (error) { console.error('Помилка надсилання листа про бан акаунту:', error); }
+    } catch (error) { console.error('Помилка надсилання листа про блокування акаунту:', error); }
 };
 
 exports.sendSiteBannedEmail = async (toEmail, siteTitle, reason) => {
@@ -149,14 +146,13 @@ exports.sendSiteBannedEmail = async (toEmail, siteTitle, reason) => {
     `;
     try {
         await resend.emails.send({ from: FROM_EMAIL, to: toEmail, subject: `Увага: Ваш сайт "${siteTitle}" призупинено | Kendr`, html: html });
-    } catch (error) { console.error('Помилка надсилання листа про бан сайту:', error); }
+    } catch (error) { console.error('Помилка надсилання листа про блокування сайту:', error); }
 };
 
 exports.sendOtpEmail = async (toEmail, code, purpose) => {
     let title = '';
     let message = '';
     let highlightColor = platformAccent;
-
     if (purpose === 'VERIFY_EMAIL') {
         title = 'Підтвердження пошти';
         message = 'Ваш код для завершення реєстрації на платформі Kendr:';

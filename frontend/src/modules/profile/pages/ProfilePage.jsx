@@ -48,6 +48,12 @@ const ProfilePage = () => {
     const [sortOption, setSortOption] = useState('created_at:desc');
     const isOwner = authUser && authUser.slug === slug;
     useEffect(() => {
+        if (isOwner && authUser?.role === 'admin') {
+            setErrorStatus(404);
+            setLoadingProfile(false);
+            return;
+        }
+
         const fetchProfile = async () => {
             try {
                 setLoadingProfile(true);
@@ -68,7 +74,7 @@ const ProfilePage = () => {
             }
         };
         fetchProfile();
-    }, [slug]);
+    }, [slug, isOwner, authUser]);
 
     const fetchUserSites = useCallback(async () => {
         if (!profileData) return;
@@ -96,7 +102,6 @@ const ProfilePage = () => {
             return () => clearTimeout(timer);
         }
     }, [fetchUserSites]);
-    
     const containerStyle = {
         maxWidth: '1280px', 
         width: '100%',
@@ -119,15 +124,16 @@ const ProfilePage = () => {
         borderColor: 'var(--platform-danger)',
         background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)'
     };
-
     const errorContainerStyle = {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '60vh',
+        minHeight: 'calc(100vh - 150px)',
+        width: '100%',
         textAlign: 'center',
-        color: 'var(--platform-text-secondary)'
+        color: 'var(--platform-text-secondary)',
+        padding: '2rem'
     };
 
     const errorIconCircleStyle = {
@@ -148,6 +154,7 @@ const ProfilePage = () => {
         gap: '20px',
         padding: '24px'
     };
+    
     const cardHeaderStyle = { padding: '1.5rem 1.5rem 1rem 1.5rem', borderBottom: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center', gap: '10px' };
     const cardTitleStyle = { fontSize: '1.25rem', fontWeight: '700', color: 'var(--platform-text-primary)', margin: 0 };
     const cardBodyStyle = { padding: '1.5rem' };
@@ -158,32 +165,26 @@ const ProfilePage = () => {
         background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', textDecoration: 'none', 
         fontSize: '0.95rem', fontWeight: '500', transition: 'all 0.2s ease', border: '1px solid transparent', marginBottom: '0.75rem' 
     };
-
     if (loadingProfile) return <LoadingState />;
     if (errorStatus === 403) {
         return (
-            <div style={containerStyle}>
+            <div style={errorContainerStyle}>
                 <Helmet><title>Приватний профіль | Kendr</title></Helmet>
-                <div style={errorContainerStyle}>
-                    <div style={errorIconCircleStyle}><EyeOff size={40} /></div>
-                    <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Цей профіль закритий</h2>
-                    <p style={{ maxWidth: '400px', lineHeight: '1.6' }}>Користувач обмежив доступ до своєї сторінки.</p>
-                    <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
-                </div>
+                <div style={errorIconCircleStyle}><EyeOff size={40} /></div>
+                <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Цей профіль закритий</h2>
+                <p style={{ maxWidth: '400px', lineHeight: '1.6' }}>Користувач обмежив доступ до своєї сторінки.</p>
+                <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
             </div>
         );
     }
-    
     if (errorStatus === 404) {
         return (
-            <div style={containerStyle}>
+            <div style={errorContainerStyle}>
                 <Helmet><title>Користувача не знайдено | Kendr</title></Helmet>
-                <div style={errorContainerStyle}>
-                    <div style={errorIconCircleStyle}><Search size={40} /></div>
-                    <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Користувача не знайдено</h2>
-                    <p>Ми не змогли знайти такий профіль.</p>
-                    <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
-                </div>
+                <div style={errorIconCircleStyle}><Search size={40} /></div>
+                <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Користувача не знайдено</h2>
+                <p>Ми не змогли знайти такий профіль.</p>
+                <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
             </div>
         );
     }

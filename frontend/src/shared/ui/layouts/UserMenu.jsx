@@ -11,16 +11,19 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
     const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
     if (!user) return null;
+    const isAdmin = user.role === 'admin';
+    const profileLink = isAdmin ? '/settings' : `/profile/${user.slug}`;
+    const profileTitle = isAdmin ? 'Налаштування' : 'Мій профіль';
     return (
         <>
             <div className="w-full">
                 <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between gap-1'}`}>
                     <Link 
-                        to={`/profile/${user.slug}`} 
+                        to={profileLink} 
                         className={`flex items-center group rounded-lg hover:bg-(--platform-hover-bg) transition-colors ${
                             isCollapsed ? 'justify-center p-2' : 'gap-3 flex-1 min-w-0 p-2'
                         }`} 
-                        title="Мій профіль"
+                        title={profileTitle}
                     >
                         <Avatar url={user.avatar_url} name={user.username} size={isCollapsed ? 36 : 38} />
                         {!isCollapsed && (

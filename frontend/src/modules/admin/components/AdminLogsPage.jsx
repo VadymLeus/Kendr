@@ -11,13 +11,13 @@ import { UserX, ShieldAlert, Globe, Layout, Trash2, CheckCircle, Ban, AlertTrian
 
 const ACTION_CONFIG = {
     'user_delete': { label: 'Видалення користувача', icon: UserX, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
-    'site_suspend': { label: 'Бан сайту', icon: Ban, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
+    'site_suspend': { label: 'Блокування сайту', icon: Ban, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
     'site_restore': { label: 'Відновлення сайту', icon: CheckCircle, color: 'var(--platform-success)', bg: 'color-mix(in srgb, var(--platform-success), transparent 90%)' },
     'site_delete': { label: 'Видалення сайту', icon: Trash2, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
     'site_probation': { label: 'Випробувальний термін', icon: Clock, color: 'var(--platform-warning)', bg: 'color-mix(in srgb, var(--platform-warning), transparent 90%)' },
     'report_dismiss': { label: 'Відхилення скарги', icon: ShieldAlert, color: 'var(--platform-text-secondary)', bg: 'var(--platform-hover-bg)' },
     'report_reopen': { label: 'Повернення скарги', icon: ShieldAlert, color: 'var(--platform-accent)', bg: 'color-mix(in srgb, var(--platform-accent), transparent 90%)' },
-    'report_ban': { label: 'Бан по скарзі', icon: AlertTriangle, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
+    'report_ban': { label: 'Блокування по скарзі', icon: AlertTriangle, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
     'template_create': { label: 'Створено шаблон', icon: Layout, color: 'var(--platform-accent)', bg: 'color-mix(in srgb, var(--platform-accent), transparent 90%)' },
     'template_update': { label: 'Оновлено шаблон', icon: Layout, color: 'var(--platform-accent)', bg: 'color-mix(in srgb, var(--platform-accent), transparent 90%)' },
     'template_delete': { label: 'Видалено шаблон', icon: Trash2, color: 'var(--platform-danger)', bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' },
@@ -28,7 +28,6 @@ const ACTION_CONFIG = {
 const ACTION_OPTIONS = [{ value: 'all', label: 'Всі дії', icon: Inbox }, ...Object.entries(ACTION_CONFIG).filter(([k]) => k !== 'default').map(([k, v]) => ({ value: k, label: v.label, icon: v.icon }))];
 const ActionBadge = ({ type }) => { const s = ACTION_CONFIG[type] || ACTION_CONFIG['default']; return <GenericBadge bg={s.bg} color={s.color} icon={s.icon}>{s.label}</GenericBadge>; };
 const DetailItem = ({ label, value }) => value ? <div style={{ display: 'flex', gap: '4px', fontSize: '12px', color: 'var(--platform-text-secondary)' }}><span>{label}:</span><span style={{ fontWeight: '500', color: 'var(--platform-text-primary)' }}>{value}</span></div> : null;
-
 const AdminLogsPage = () => {
     const [actionFilter, setActionFilter] = useState(() => {
         return sessionStorage.getItem('admin_logs_action_filter') || 'all';

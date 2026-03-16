@@ -30,8 +30,9 @@ const PLAN_LIMITS = {
     }
 };
 
-const getLimitsForUser = (role, plan) => {
-    if (role === 'admin') {
+const getLimitsForUser = (plan) => {
+    const userPlan = plan ? String(plan).trim().toUpperCase() : 'FREE';
+    if (userPlan === 'ADMIN') {
         return {
             maxFiles: 9999999,
             maxFileSizeMB: 1024,
@@ -44,7 +45,6 @@ const getLimitsForUser = (role, plan) => {
         };
     }
     
-    const userPlan = plan ? plan.toUpperCase() : 'FREE';
     return PLAN_LIMITS[userPlan] || PLAN_LIMITS['FREE'];
 };
 

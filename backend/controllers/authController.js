@@ -65,7 +65,6 @@ exports.login = async (req, res, next) => {
         const user = await User.findByLoginInput(loginInput);
         if (!user) return res.status(401).json({ message: 'Невірний логін або пароль.' });
         if (user.status === 'suspended') return res.status(403).json({ message: 'Ваш акаунт заблоковано назавжди за порушення правил платформи.' });
-        
         if (user.role === 'admin') {
             return res.status(401).json({ message: 'Невірний логін або пароль.' });
         }
@@ -121,7 +120,6 @@ exports.adminLogin = async (req, res, next) => {
         const { loginInput, password } = req.body;
         const user = await User.findByLoginInput(loginInput);
         if (!user) return res.status(401).json({ message: 'Невірні облікові дані.' });
-        
         if (user.role !== 'admin') {
             return res.status(403).json({ message: 'Відмовлено у доступі. Зона лише для адміністраторів.' });
         }
@@ -217,7 +215,6 @@ exports.verifyResetCode = async (req, res, next) => {
         const { email, code } = req.body;
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         const user = users[0];
-
         if (!user || user.otp_code !== code || user.otp_purpose !== 'RESET_PASSWORD') {
             return res.status(400).json({ message: 'Недійсний код підтвердження.' });
         }
@@ -259,11 +256,12 @@ exports.resetPassword = async (req, res, next) => {
 
 exports.googleCallback = async (req, res) => {
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    
     if (req.user && req.user.role === 'admin') {
         return res.redirect(`${clientUrl}/login?error=auth_failed`);
     }
-
+    if (req.user && req.user.id) {
+        await User.updateLastLogin(req.user.id);
+    }
     const token = jwt.sign(
         { id: req.user.id, role: req.user.role, plan: req.user.plan || 'FREE', token_version: req.user.token_version }, 
         process.env.JWT_SECRET || 'secret_key', 
@@ -292,7 +290,8 @@ exports.getMe = async (req, res, next) => {
             plan: user.plan || 'FREE', platform_theme_mode: user.platform_theme_mode, platform_theme_accent: user.platform_theme_accent,
             platform_bg_url: user.platform_bg_url, platform_bg_blur: user.platform_bg_blur, platform_bg_brightness: user.platform_bg_brightness,
             bio: user.bio, social_telegram: user.social_telegram, social_instagram: user.social_instagram, social_website: user.social_website,
-            is_profile_public: user.is_profile_public, phone_number: user.phone_number, created_at: user.created_at, has_password: hasPassword
+            is_profile_public: user.is_profile_public, phone_number: user.phone_number, created_at: user.created_at, 
+            last_login_at: user.last_login_at, has_password: hasPassword
         });
     } catch (error) {
         next(error);

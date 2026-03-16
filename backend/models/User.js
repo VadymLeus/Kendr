@@ -39,9 +39,9 @@ class User {
         return rows[0];
     }
 
-    static async findById(id) {
+static async findById(id) {
         const [rows] = await db.query(
-            `SELECT id, username, slug, email, phone_number, role, status, deleted_at,
+            `SELECT id, username, slug, email, phone_number, role, status, plan, deleted_at,
             platform_theme_mode, platform_theme_accent, 
             platform_bg_url, platform_bg_blur, platform_bg_brightness,
             bio, social_telegram, social_instagram, social_website, is_profile_public,
@@ -54,7 +54,7 @@ class User {
     
     static async findByUsername(username) {
         const [rows] = await db.query(
-            `SELECT id, username, slug, email, role, status, deleted_at,
+            `SELECT id, username, slug, email, role, status, plan, deleted_at,
             platform_theme_mode, platform_theme_accent, 
             bio, social_telegram, social_instagram, social_website, is_profile_public,
             created_at, avatar_url 
@@ -66,7 +66,7 @@ class User {
 
     static async findBySlug(slug) {
         const [rows] = await db.query(
-            `SELECT id, username, slug, email, role, status, deleted_at,
+            `SELECT id, username, slug, email, role, status, plan, deleted_at,
             platform_theme_mode, platform_theme_accent, 
             bio, social_telegram, social_instagram, social_website, is_profile_public,
             created_at, avatar_url 

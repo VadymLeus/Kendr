@@ -37,14 +37,13 @@ const SiteDashboardPage = () => {
                 setIsReadOnly(false);
             }
         };
-
         window.addEventListener('editor_locked_status', handleLockStatus);
         return () => window.removeEventListener('editor_locked_status', handleLockStatus);
     }, [isAdmin]);
 
     useEffect(() => {
         if (siteData && siteData.status === 'suspended') {
-            toast.error('Доступ до редагування заблоковано. Сайт забанено.');
+            toast.error('Доступ до редагування заблоковано. Сайт заблоковано.');
             navigate('/dashboard');
         }
     }, [siteData, navigate]);
@@ -62,7 +61,6 @@ const SiteDashboardPage = () => {
         }
         return savedPage ? parseInt(savedPage, 10) : null;
     });
-    
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [selectedBlockPath, setSelectedBlockPath] = useState(null);
     const [allPages, setAllPages] = useState([]);
@@ -81,7 +79,6 @@ const SiteDashboardPage = () => {
         }
         return [];
     });
-
     useEffect(() => {
         if (site_path && currentPageId) {
             const key = `collapsed_blocks_${site_path}_${currentPageId}`;
@@ -99,11 +96,9 @@ const SiteDashboardPage = () => {
     const setComponentSaving = useCallback((component, isSaving) => {
         setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
-    
     const handleBlockSaved = useCallback(() => {
         setSavedBlocksUpdateTrigger(prev => prev + 1);
     }, []);
-
     useEffect(() => {
         const anyComponentSaving = Object.values(componentsSaving).some(saving => saving);
         setIsSaving(anyComponentSaving);
@@ -164,7 +159,6 @@ const SiteDashboardPage = () => {
             setIsPageLoading(false);
         }
     };
-
     const handleEditPage = (pageId) => {
         if (pageId === currentPageId && !isPageLoading && blocks.length > 0) return;
         setCurrentPageId(pageId);
@@ -177,7 +171,6 @@ const SiteDashboardPage = () => {
         fetchPageContent(pageId);
         setSelectedBlockPath(null);
     };
-
     useEffect(() => {
         if (siteData && !allPages.length) {
             apiClient.get(`/sites/${siteData.id}/pages`)
@@ -289,7 +282,6 @@ const SiteDashboardPage = () => {
             setTimeout(() => setIsThemeSaving(false), 500);
         }
     };
-
     const handleSiteDataUpdate = (newData) => {
         setSiteData(prev => ({ ...prev, ...newData }));
         if (newData.logo_url !== undefined || newData.title !== undefined) {
@@ -310,7 +302,6 @@ const SiteDashboardPage = () => {
 
         saveThemeSettings(newData);
     };
-
     const refreshPageList = () => {
         apiClient.get(`/sites/${siteData.id}/pages`)
             .then(response => {

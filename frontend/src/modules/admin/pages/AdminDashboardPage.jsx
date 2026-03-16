@@ -1,5 +1,6 @@
 // frontend/src/modules/admin/pages/AdminDashboardPage.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../../../shared/api/api';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect'; 
@@ -11,7 +12,8 @@ import { Users, Globe, AlertTriangle, MessageSquare, LayoutDashboard, TrendingUp
 const GRAPH_TYPE_OPTIONS = [
     { label: 'Користувачі', value: 'users', icon: Users },
     { label: 'Сайти', value: 'sites', icon: Globe },
-    { label: 'Тікети', value: 'tickets', icon: MessageSquare }
+    { label: 'Тікети', value: 'tickets', icon: MessageSquare },
+    { label: 'Скарги', value: 'reports', icon: AlertTriangle } 
 ];
 
 const PERIOD_OPTIONS = [
@@ -312,8 +314,11 @@ const LogItem = ({ log }) => {
 };
 
 const AdminDashboardPage = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState(() => {
-        return localStorage.getItem('admin_dashboard_tab') || 'overview';
+        const params = new URLSearchParams(location.search);
+        return params.get('tab') === 'admins' ? 'admins' : 'overview';
     });
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -322,8 +327,11 @@ const AdminDashboardPage = () => {
     const [logTypeFilter, setLogTypeFilter] = useState('all');
     const [logSortOrder, setLogSortOrder] = useState('newest');
     useEffect(() => {
-        localStorage.setItem('admin_dashboard_tab', activeTab);
-    }, [activeTab]);
+        const params = new URLSearchParams(location.search);
+        if (params.get('tab') !== activeTab) {
+            navigate({ search: `?tab=${activeTab}` }, { replace: true });
+        }
+    }, [activeTab, navigate, location.search]);
     const fetchData = useCallback(async (isRefresh = false) => {
         if (activeTab !== 'overview') return;
         setLoading(true);
@@ -344,7 +352,6 @@ const AdminDashboardPage = () => {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
-
     const stats = data?.stats || { users: 0, usersGrowth: 0, sites: 0, reports: 0, tickets: 0 };
     const processedLogs = useMemo(() => {
         if (!data?.activityLog) return [];
@@ -365,17 +372,6 @@ const AdminDashboardPage = () => {
         });
         return logs;
     }, [data, logTypeFilter, logSortOrder]);
-    const tabStyle = (id) => ({
-        padding: '8px 24px',
-        borderRadius: '20px',
-        fontSize: '13px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        border: 'none',
-        background: activeTab === id ? 'var(--platform-text-primary)' : 'transparent',
-        color: activeTab === id ? 'var(--platform-bg)' : 'var(--platform-text-secondary)',
-        transition: 'all 0.2s'
-    });
     return (
         <AdminPageLayout 
             title="Дашборд" 
@@ -385,9 +381,19 @@ const AdminDashboardPage = () => {
             }} 
             loading={loading && activeTab === 'overview'}
         >
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--platform-border-color)', paddingBottom: '8px', flexShrink: 0 }}>
-                <button onClick={() => setActiveTab('overview')} style={tabStyle('overview')}>Огляд</button>
-                <button onClick={() => setActiveTab('admins')} style={tabStyle('admins')}>Адміністратори</button>
+            <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-fit mb-6">
+                <button
+                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'overview' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                    onClick={() => setActiveTab('overview')}
+                >
+                    <LayoutDashboard size={16} /> Огляд
+                </button>
+                <button
+                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'admins' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                    onClick={() => setActiveTab('admins')}
+                >
+                    <Shield size={16} /> Адміністратори
+                </button>
             </div>
             <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
                 {activeTab === 'overview' ? (
@@ -413,11 +419,11 @@ const AdminDashboardPage = () => {
                                 loading={loading}
                             />
                             <StatCard 
-                                title="Скарги (на контент)" value={stats.reports} type="reports"
+                                title="Скарги" value={stats.reports} type="reports"
                                 trend={stats.reports > 0 ? "down" : "up"} trendValue={stats.reports > 0 ? "Потребують уваги" : "Все чисто"} loading={loading}
                             />
                             <StatCard 
-                                title="Тікети (Підтримка)" value={stats.tickets} type="tickets"
+                                title="Тікети" value={stats.tickets} type="tickets"
                                 trendValue="В черзі" loading={loading}
                             />
                         </div>

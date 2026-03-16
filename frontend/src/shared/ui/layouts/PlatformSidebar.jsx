@@ -36,7 +36,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
             </NavLink>
         );
     };
-
     return (
         <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} custom-scrollbar`}>
             <div className="sidebar-header">
@@ -53,17 +52,14 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
                         <SidebarLink to="/create-site" icon={FileText} label="Створити сайт" isCreateButton />
                         <div className="nav-separator" />
                         <SidebarLink to="/my-sites" icon={Layout} label="Мої сайти" />
-                        <SidebarLink to="/media-library" icon={FileText} label="Медіатека" />
                         <SidebarLink to="/admin/templates" icon={Palette} label="Шаблони" />
+                        <SidebarLink to="/media-library" icon={FileText} label="Медіатека" />
                         <div className="nav-separator" />
-                        <SidebarLink to="/admin/sites" icon={Globe} label="Всі сайти" />
-                        <SidebarLink to="/admin/users" icon={Users} label="Користувачі" />
-                        <div className="nav-separator" />
-                        <SidebarLink to="/admin/tickets" icon={MessageSquare} label="Тікети" />
-                        <SidebarLink to="/admin/reports" icon={AlertTriangle} label="Скарги" />
+                        <SidebarLink to="/admin/users-sites" icon={Users} label="Користувачі / Сайти" />
+                        <SidebarLink to="/admin/support-hub" icon={MessageSquare} label="Тікети / Скарги" />
+                        <SidebarLink to="/admin/dashboard" icon={LayoutDashboard} label="Дашборд" />
                         <div className="nav-separator" />
                         <SidebarLink to="/admin/control" icon={Sliders} label="Управління" />
-                        <SidebarLink to="/admin/dashboard" icon={LayoutDashboard} label="Дашборд" />
                     </>
                 ) : (
                     <>

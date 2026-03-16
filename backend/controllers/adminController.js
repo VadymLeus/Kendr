@@ -109,18 +109,15 @@ exports.getDashboardStats = async (req, res, next) => {
             WHERE u.role != 'admin' 
             ORDER BY u.created_at DESC LIMIT 10
         `);
-        
         const [lastSites] = await db.query(`
             SELECT s.id, s.title, s.created_at, s.status as status_info, 'site_create' as type
             FROM sites s ORDER BY created_at DESC LIMIT 10
         `);
-        
         const [lastReports] = await db.query(`
             SELECT r.id, s.title as title, r.created_at, r.status as status_info, 'report' as type
             FROM site_reports r JOIN sites s ON r.site_id = s.id 
             ORDER BY r.created_at DESC LIMIT 10
         `);
-        
         const [lastTickets] = await db.query(`
             SELECT id, subject as title, created_at, status as status_info, 'ticket' as type
             FROM support_tickets ORDER BY created_at DESC LIMIT 10
@@ -177,7 +174,7 @@ exports.getAllUsers = async (req, res, next) => {
     try {
         const query = `
             SELECT 
-                u.id, u.username, u.email, u.role, u.status, u.created_at, u.avatar_url,
+                u.id, u.username, u.slug, u.phone_number, u.email, u.role, u.status, u.created_at, u.avatar_url, u.last_login_at, u.plan,
                 (SELECT COUNT(*) FROM sites WHERE user_id = u.id) as site_count,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = u.id) as warning_count
             FROM users u
@@ -238,9 +235,7 @@ exports.restoreUserAccount = async (req, res, next) => {
         const { id } = req.params;
         const userDetails = await User.findById(id);
         if (!userDetails) return res.status(404).json({ message: 'Користувача не знайдено.' });
-        
         await User.restoreUser(id);
-        
         await logAdminAction(req, 'user_restore', 'user', id, { 
             username: userDetails.username, 
             email: userDetails.email 
@@ -257,8 +252,8 @@ exports.getAllSites = async (req, res, next) => {
         const query = `
             SELECT 
                 s.id, s.site_path, s.title, s.status, s.user_id, s.created_at, s.deletion_scheduled_for,
-                s.view_count,
-                u.username as author, u.email as author_email,
+                s.view_count, s.logo_url,
+                u.username as author, u.slug as author_slug, u.email as author_email, u.avatar_url as author_avatar_url,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = s.user_id) as warning_count,
                 (SELECT status FROM site_appeals WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as appeal_status,
                 (SELECT created_at FROM site_appeals WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as appeal_date
@@ -465,7 +460,6 @@ exports.banSiteFromReport = async (req, res, next) => {
         } else {
             strikeMessage = ' (Страйк вже існував).';
         }
-
         await logAdminAction(req, 'report_ban', 'report', id, { 
             site_id: site.id,
             site_title: site.title,
@@ -573,7 +567,6 @@ exports.updateSystemTemplate = async (req, res, next) => {
             access_level: finalAccessLevel,
             category
         });
-
         res.json({ message: 'Шаблон оновлено.' });
     } catch (error) { next(error); }
 };
@@ -586,7 +579,6 @@ exports.deleteSystemTemplate = async (req, res, next) => {
         await logAdminAction(req, 'template_delete', 'template', id, { 
             name: tpl[0]?.name 
         });
-
         res.json({ message: 'Системний шаблон видалено.' });
     } catch (error) { next(error); }
 };

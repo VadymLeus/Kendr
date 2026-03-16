@@ -13,7 +13,7 @@ const getUserStats = async (userId, plan, role) => {
     try {
         const [siteRows] = await db.query('SELECT COUNT(id) as count FROM sites WHERE user_id = ?', [userId]);
         const [mediaRows] = await db.query('SELECT COUNT(id) as count FROM user_media WHERE user_id = ?', [userId]);
-        const limits = getLimitsForUser(role, plan);
+        const limits = getLimitsForUser(plan);
         return {
             siteCount: siteRows[0].count || 0,
             siteLimit: limits.maxSites,
@@ -22,7 +22,7 @@ const getUserStats = async (userId, plan, role) => {
         };
     } catch (err) {
         console.error("Помилка отримання статистики:", err);
-        const fallbackLimits = getLimitsForUser('user', 'FREE');
+        const fallbackLimits = getLimitsForUser('FREE');
         return { 
             siteCount: 0, 
             siteLimit: fallbackLimits.maxSites, 
@@ -72,15 +72,12 @@ exports.getPublicProfile = async (req, res, next) => {
             });
         }
         if (user.role === 'admin') {
-            const isOwner = req.user && req.user.id === user.id;
-            const isRequesterAdmin = req.user && req.user.role === 'admin';
-            if (!isOwner && !isRequesterAdmin) {
-                return res.status(404).json({ 
-                    message: 'Користувача не знайдено',
-                    code: 'USER_NOT_FOUND' 
-                });
-            }
+            return res.status(404).json({ 
+                message: 'Користувача не знайдено',
+                code: 'USER_NOT_FOUND' 
+            });
         }
+        
         if (!user.is_profile_public) {
             const isOwner = req.user && req.user.id === user.id;
             const isAdmin = req.user && req.user.role === 'admin';
@@ -91,11 +88,13 @@ exports.getPublicProfile = async (req, res, next) => {
                 });
             }
         }
+        
         const [siteCount, totalViews, warnings] = await Promise.all([
             User.getSiteCount(user.id),
             User.getTotalSiteViews(user.id),
             Warning.findForUser(user.id)
         ]);
+        
         const publicData = {
             id: user.id,
             username: user.username,

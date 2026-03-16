@@ -28,7 +28,7 @@ class SupportTicket {
 
     static async findAll(statusFilter = 'active') {
         let query = `
-            SELECT st.*, u.username, u.email as user_email
+            SELECT st.*, u.username, u.email as user_email, u.avatar_url as user_avatar_url
             FROM support_tickets st
             JOIN users u ON st.user_id = u.id
         `;

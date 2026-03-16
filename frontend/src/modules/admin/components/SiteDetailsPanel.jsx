@@ -1,7 +1,8 @@
 // frontend/src/modules/admin/components/SiteDetailsPanel.jsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../shared/ui/elements/Button';
+import Avatar from '../../../shared/ui/elements/Avatar';
 import BaseDetailsPanel from './BaseDetailsPanel';
 import { ExternalLink, Clock, ShieldCheck, RefreshCw, Ban, FileEdit, Eye, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
 
@@ -16,9 +17,12 @@ const calculateTimeLeft = (dateString) => {
 
 const SiteDetailsPanel = ({ site, onClose, actions }) => {
     const navigate = useNavigate();
+    const [isSuspendHovered, setIsSuspendHovered] = useState(false);
+    const [isRestoreHovered, setIsRestoreHovered] = useState(false);
+    const [isProbationHovered, setIsProbationHovered] = useState(false);
     const statusConfig = {
         published: { bg: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)', label: 'Активний', icon: CheckCircle },
-        suspended: { bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)', label: 'Бан', icon: Ban },
+        suspended: { bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)', label: 'Заблоковано', icon: Ban },
         probation: { bg: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', color: 'var(--platform-warning)', label: 'Модерація', icon: ShieldAlert },
         draft: { bg: 'var(--platform-hover-bg)', color: 'var(--platform-text-secondary)', label: 'Чернетка', icon: Clock },
         private: { bg: 'var(--platform-hover-bg)', color: 'var(--platform-text-secondary)', label: 'Приват', icon: Clock }
@@ -51,13 +55,16 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
             gap: '6px'
         }
     }), [currentStatus]);
+
     if (!site) return null;
     const isSuspended = site.status === 'suspended';
     const isProbation = site.status === 'probation';
     const { expired: isExpired, text: timeLeftString } = calculateTimeLeft(site.deletion_scheduled_for);
     const handleVisitProfile = () => {
-        navigate(`/profile/${site.author}`);
+        const targetIdentifier = site.author_slug || site.author;
+        navigate(`/profile/${targetIdentifier}`);
     };
+
     return (
         <BaseDetailsPanel 
             title="Керування сайтом" 
@@ -69,7 +76,13 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
         >
             <div style={styles.section}>
                 <div style={styles.label}>Сайт</div>
-                <div style={{...styles.value, fontSize: '18px', marginBottom: '8px', fontWeight: 'bold'}}>{site.title}</div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px', marginBottom: '16px'}}>
+                    <Avatar url={site.logo_url} name={site.title} size={42} />
+                    <div>
+                        <div style={{...styles.value, fontSize: '18px', fontWeight: 'bold'}}>{site.title}</div>
+                        <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', fontFamily: 'monospace'}}>/{site.site_path}</div>
+                    </div>
+                </div>
                 <a href={`/site/${site.site_path}`} target="_blank" rel="noreferrer" style={{textDecoration: 'none'}}>
                     <Button 
                         variant="outline" 
@@ -82,24 +95,37 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
             </div>
             <div style={styles.section}>
                 <div style={styles.label}>Власник</div>
-                <div 
-                    onClick={handleVisitProfile}
-                    style={{
-                        ...styles.value, 
-                        cursor: 'pointer', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '6px',
-                        transition: 'color 0.2s'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.color = 'var(--platform-accent)'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'var(--platform-text-primary)'}
-                    title="Відкрити профіль користувача"
-                >
-                    {site.author}
-                    <ExternalLink size={14} style={{ opacity: 0.5 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                    <div 
+                        onClick={handleVisitProfile} 
+                        style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                        <Avatar url={site.author_avatar_url} name={site.author} size={42} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div 
+                            onClick={handleVisitProfile}
+                            style={{
+                                ...styles.value, 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '6px',
+                                transition: 'color 0.2s',
+                                fontWeight: 'bold'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = 'var(--platform-accent)'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--platform-text-primary)'}
+                            title="Відкрити профіль користувача"
+                        >
+                            {site.author}
+                            <ExternalLink size={14} style={{ opacity: 0.5 }} />
+                        </div>
+                        <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', opacity: 0.8}}>{site.author_email}</div>
+                    </div>
                 </div>
-                <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', opacity: 0.8}}>{site.author_email}</div>
             </div>
             <div style={styles.section}>
                 <div style={styles.label}>Статус</div>
@@ -148,12 +174,88 @@ const SiteDetailsPanel = ({ site, onClose, actions }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', borderTop: '1px solid var(--platform-border-color)', paddingTop: '24px' }}>
                  {(isSuspended || isProbation) ? (
                     <>
-                        <Button variant="success" onClick={() => actions.restore(site.site_path)} icon={<RefreshCw size={18} />} style={{ width: '100%' }}>Відновити</Button>
-                        {isSuspended && <Button variant="outline-warning" onClick={() => actions.probation(site.site_path)} icon={<FileEdit size={18} />} style={{ width: '100%' }}>Надати доступ до редагування</Button>}
-                        {isProbation && <Button variant="outline-danger" onClick={() => actions.suspend(site.site_path)} icon={<Ban size={18} />} style={{ width: '100%' }}>Повернути в бан</Button>}
+                        <Button 
+                            variant="outline" 
+                            onClick={() => actions.restore(site.site_path)} 
+                            onMouseEnter={() => setIsRestoreHovered(true)}
+                            onMouseLeave={() => setIsRestoreHovered(false)}
+                            style={{ 
+                                width: '100%', 
+                                display: 'flex', 
+                                justifyContent: 'center', 
+                                gap: '8px', 
+                                background: 'transparent', 
+                                color: isRestoreHovered ? 'var(--platform-success)' : 'var(--platform-text-primary)', 
+                                border: `1px solid ${isRestoreHovered ? 'var(--platform-success)' : 'var(--platform-border-color)'}`,
+                                transition: 'all 0.2s ease-in-out'
+                            }}
+                        >
+                            <RefreshCw size={18} />
+                            Відновити
+                        </Button>
+                        {isSuspended && (
+                            <Button 
+                                variant="outline" 
+                                onClick={() => actions.probation(site.site_path)} 
+                                onMouseEnter={() => setIsProbationHovered(true)}
+                                onMouseLeave={() => setIsProbationHovered(false)}
+                                style={{ 
+                                    width: '100%', 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    gap: '8px', 
+                                    background: 'transparent', 
+                                    color: isProbationHovered ? 'var(--platform-warning)' : 'var(--platform-text-primary)', 
+                                    border: `1px solid ${isProbationHovered ? 'var(--platform-warning)' : 'var(--platform-border-color)'}`,
+                                    transition: 'all 0.2s ease-in-out'
+                                }}
+                            >
+                                <FileEdit size={18} />
+                                Надати доступ до редагування
+                            </Button>
+                        )}
+                        {isProbation && (
+                            <Button 
+                                variant="outline" 
+                                onClick={() => actions.suspend(site.site_path)} 
+                                onMouseEnter={() => setIsSuspendHovered(true)}
+                                onMouseLeave={() => setIsSuspendHovered(false)}
+                                style={{ 
+                                    width: '100%', 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    gap: '8px', 
+                                    background: 'transparent', 
+                                    color: isSuspendHovered ? 'var(--platform-danger)' : 'var(--platform-text-primary)', 
+                                    border: `1px solid ${isSuspendHovered ? 'var(--platform-danger)' : 'var(--platform-border-color)'}`,
+                                    transition: 'all 0.2s ease-in-out'
+                                }}
+                            >
+                                <Ban size={18} />
+                                Заблокувати
+                            </Button>
+                        )}
                     </>
                 ) : (
-                    <Button variant="warning" onClick={() => actions.suspend(site.site_path)} icon={<Ban size={18} />} style={{ width: '100%' }}>Призупинити (+1 страйк)</Button>
+                    <Button 
+                        variant="outline" 
+                        onClick={() => actions.suspend(site.site_path)} 
+                        onMouseEnter={() => setIsSuspendHovered(true)}
+                        onMouseLeave={() => setIsSuspendHovered(false)}
+                        style={{ 
+                            width: '100%', 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            gap: '8px', 
+                            background: 'transparent', 
+                            color: isSuspendHovered ? 'var(--platform-danger)' : 'var(--platform-text-primary)', 
+                            border: `1px solid ${isSuspendHovered ? 'var(--platform-danger)' : 'var(--platform-border-color)'}`,
+                            transition: 'all 0.2s ease-in-out'
+                        }}
+                    >
+                        <Ban size={18} />
+                        Заблокувати (+1 страйк)
+                    </Button>
                 )}
             </div>
         </BaseDetailsPanel>

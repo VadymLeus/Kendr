@@ -3,7 +3,6 @@ const path = require('path');
 const db = require('../config/db');
 const cloudinary = require('../config/cloudinary');
 const { getLimitsForUser } = require('../config/mediaLimits');
-
 const normalizeWebPath = (filePath) => {
     if (!filePath) return null;
     let cleanPath = filePath.replace(/\\/g, '/');
@@ -47,15 +46,17 @@ exports.getAll = async (req, res, next) => {
 exports.getMediaLimitsStatus = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const userRole = req.user.role || 'user';
         const userPlan = req.user.plan || 'FREE';
-        const limits = getLimitsForUser(userRole, userPlan);
+        const limits = getLimitsForUser(userPlan);
         const [rows] = await db.query('SELECT COUNT(*) as totalFiles FROM user_media WHERE user_id = ? AND is_system = 0', [userId]);
         const currentFiles = rows[0].totalFiles;
         res.json({
             currentFiles: currentFiles,
             maxFiles: limits.maxFiles,
             maxFileSizeMB: limits.maxFileSizeMB,
+            maxSites: limits.maxSites,
+            maxProducts: limits.maxProducts,
+            maxCategories: limits.maxCategories,
             allowedExtensions: limits.allowedExtensions,
             percentageUsed: limits.isUnlimited ? 0 : Math.round((currentFiles / limits.maxFiles) * 100),
             isUnlimited: limits.isUnlimited
@@ -68,7 +69,6 @@ exports.getMediaLimitsStatus = async (req, res, next) => {
 exports.upload = async (req, res, next) => {
     if (!req.file) return res.status(400).json({ message: 'Файл не завантажено.' });
     const userId = req.user.id;
-    const userRole = req.user.role || 'user';
     const userPlan = req.user.plan || 'FREE';
     const originalName = req.file.originalname; 
     const mimeType = req.file.mimetype;
@@ -83,7 +83,7 @@ exports.upload = async (req, res, next) => {
     const cloudPublicId = req.file.filename; 
     const resourceType = fileType === 'video' ? 'video' : (fileType === 'image' ? 'image' : 'raw');
     try {
-        const limits = getLimitsForUser(userRole, userPlan);
+        const limits = getLimitsForUser(userPlan);
         if (!limits.allowedMimeTypes.includes(mimeType) && !limits.allowedExtensions.includes(ext)) {
             await cloudinary.uploader.destroy(cloudPublicId, { resource_type: resourceType });
             return res.status(200).json({ 
@@ -194,7 +194,6 @@ exports.deleteMedia = async (req, res, next) => {
                 await deleteFile(absolutePathThumb).catch(err => console.log('Thumb missing:', err.message));
             }
         }
-
         await db.query('DELETE FROM user_media WHERE id = ?', [id]);
         res.json({ message: 'Файл успішно видалено', id });
     } catch (error) {

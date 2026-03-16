@@ -32,18 +32,19 @@ const MySitesPage = () => {
     const [sortOption, setSortOption] = useState('created_at:desc');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
     const [onlyPinned, setOnlyPinned] = useState(false);
-    const { user, isAdmin, plan } = useContext(AuthContext);
+    const [limits, setLimits] = useState(null);
+    const { user, plan } = useContext(AuthContext);
     const navigate = useNavigate();
     const { confirm } = useConfirm();
     const searchTimeoutRef = useRef(null);
-    const maxSites = isAdmin ? '∞' : (plan === 'PLUS' ? 8 : 3);
-    const numericMaxSites = isAdmin ? Infinity : (plan === 'PLUS' ? 8 : 3);
-    const isLimitReached = !isAdmin && totalSiteCount >= numericMaxSites;
     useEffect(() => {
         if (!user) { navigate('/login'); return; }
         apiClient.get('/tags').then(res => setTags(res.data)).catch(console.error);
         apiClient.get('/sites/catalog', { params: { scope: 'my' } })
             .then(res => setTotalSiteCount(Array.isArray(res.data) ? res.data.length : 0))
+            .catch(console.error);
+        apiClient.get('/media/limits')
+            .then(res => setLimits(res.data))
             .catch(console.error);
     }, [user, navigate]);
     const fetchMySites = async () => {
@@ -85,6 +86,7 @@ const MySitesPage = () => {
             } catch (err) { toast.error('Помилка'); }
         }
     };
+
     const handleStatusChange = async (site, requestedStatus) => {
         try {
             const newStatus = requestedStatus || (site.status === 'published' ? 'draft' : 'published');
@@ -113,6 +115,9 @@ const MySitesPage = () => {
     const filteredSites = safeSites.filter(s => onlyPinned ? s.is_pinned : true)
         .sort((a, b) => (a.is_pinned === b.is_pinned ? 0 : a.is_pinned ? -1 : 1));
     const visibleSites = filteredSites.slice(0, visibleCount);
+    const isPlanAdmin = plan && String(plan).trim().toUpperCase() === 'ADMIN';
+    const maxSites = isPlanAdmin ? '∞' : (limits ? limits.maxSites : '...');
+    const isLimitReached = !isPlanAdmin && limits && totalSiteCount >= limits.maxSites;
     return (
         <div className="-m-8 w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)">
             <div className="sticky top-0 z-50 bg-(--platform-bg)">

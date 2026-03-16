@@ -9,6 +9,7 @@ import { Mail, Calendar, Layout, AlertTriangle, Smartphone, Hash, Globe, CheckCi
 const UserDetailsPanel = ({ user, onClose, onDelete, onSuspend, onRestore }) => {
     const navigate = useNavigate();
     const [isRestoreHovered, setIsRestoreHovered] = useState(false);
+    const [isSuspendHovered, setIsSuspendHovered] = useState(false);
     const styles = useMemo(() => ({
         hero: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', position: 'relative' },
         section: { marginBottom: '28px' },
@@ -21,11 +22,11 @@ const UserDetailsPanel = ({ user, onClose, onDelete, onSuspend, onRestore }) => 
         avatarWrapper: { position: 'relative', cursor: user?.status === 'suspended' ? 'default' : 'pointer', transition: 'transform 0.2s' },
         bannedBanner: { background: 'var(--platform-danger-light, #fee2e2)', color: 'var(--platform-danger, #ef4444)', padding: '12px 16px', borderRadius: '8px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600', border: '1px solid #fca5a5' }
     }), [user]);
-
     if (!user) return null;
     const handleVisitProfile = () => {
-        if (user.status !== 'suspended') navigate(`/profile/${user.username}`);
+        if (user.status !== 'suspended') navigate(`/profile/${user.slug}`);
     };
+
     return (
         <BaseDetailsPanel title="Деталі користувача" onClose={onClose} onDelete={() => onDelete(user.id)} deleteLabel="Видалити повністю">
             {user.status === 'suspended' && (
@@ -34,7 +35,6 @@ const UserDetailsPanel = ({ user, onClose, onDelete, onSuspend, onRestore }) => 
                     Акаунт заблоковано
                 </div>
             )}
-
             <div style={styles.hero}>
                 <div style={styles.avatarWrapper} onClick={handleVisitProfile} 
                      onMouseEnter={e => { if(user.status !== 'suspended') e.currentTarget.style.transform = 'scale(1.05)' }}
@@ -74,15 +74,26 @@ const UserDetailsPanel = ({ user, onClose, onDelete, onSuspend, onRestore }) => 
             </div>
             <div style={styles.section}>
                 <div style={styles.sectionTitle}>Метадані</div>
-                <div style={styles.row}><div style={styles.rowLabel}><Calendar size={16}/> Реєстрація</div><div style={styles.rowValue}>{new Date(user.created_at).toLocaleString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })}</div></div>
+                <div style={styles.row}><div style={styles.rowLabel}><Calendar size={16}/> Реєстрація</div><div style={styles.rowValue}>{new Date(user.created_at).toLocaleString('uk-UA')}</div></div>
                 {user.last_login_at && <div style={styles.row}><div style={styles.rowLabel}><Globe size={16}/> Останній вхід</div><div style={styles.rowValue}>{new Date(user.last_login_at).toLocaleString('uk-UA')}</div></div>}
             </div>
             {user.status !== 'suspended' ? (
                 <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--platform-border-color)' }}>
                     <Button 
-                        variant="danger" 
+                        variant="outline" 
                         onClick={() => onSuspend(user.id)} 
-                        style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', background: 'transparent', color: 'var(--platform-danger)', border: '1px solid var(--platform-danger)' }}
+                        onMouseEnter={() => setIsSuspendHovered(true)}
+                        onMouseLeave={() => setIsSuspendHovered(false)}
+                        style={{ 
+                            width: '100%', 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            gap: '8px', 
+                            background: 'transparent', 
+                            color: isSuspendHovered ? 'var(--platform-danger)' : 'var(--platform-text-primary)', 
+                            border: `1px solid ${isSuspendHovered ? 'var(--platform-danger)' : 'var(--platform-border-color)'}`,
+                            transition: 'all 0.2s ease-in-out'
+                        }}
                     >
                         <Ban size={18} />
                         Заблокувати акаунт

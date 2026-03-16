@@ -15,6 +15,7 @@ const ProfileSecurityTab = () => {
     const { confirm } = useConfirm(); 
     const [isLoading, setIsLoading] = useState(false);
     const hasPassword = user.has_password === true;
+    const isAdmin = user?.role === 'admin';
     const [passwords, setPasswords] = useState({
         currentPassword: '',
         newPassword: '',
@@ -24,10 +25,12 @@ const ProfileSecurityTab = () => {
     useEffect(() => {
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     }, [hasPassword]);
+    
     const handleChange = (e) => {
         const { name, value } = e.target;
         setPasswords(prev => ({ ...prev, [name]: value }));
     };
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (securityCooldown > 0) {
@@ -81,6 +84,7 @@ const ProfileSecurityTab = () => {
             setIsLoading(false);
         }
     };
+    
     const handleDeleteAccount = () => {
         confirm({
             title: 'Видалити акаунт?',
@@ -132,6 +136,7 @@ const ProfileSecurityTab = () => {
         marginBottom: 0,
         padding: '32px'
     };
+    
     return (
         <div style={container}>
             <div style={card}>
@@ -200,33 +205,35 @@ const ProfileSecurityTab = () => {
                     </div>
                 </form>
             </div>
-            <div style={dangerCardStyle}>
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    flexWrap: 'wrap', 
-                    gap: '16px' 
-                }}>
-                    <div style={{ flex: 1 }}>
-                        <h3 style={{ ...cardTitle, color: 'var(--platform-danger)', marginBottom: '4px' }}>
-                            <AlertCircle size={22} />
-                            ВИДАЛЕННЯ АКАУНТУ
-                        </h3>
-                        <p style={{ margin: 0, color: 'var(--platform-danger)', fontSize: '0.9rem', opacity: 0.8 }}>
-                             Видалення акаунту призведе до <strong>незворотної</strong> втрати всіх ваших сайтів та даних.
-                        </p>
+            {!isAdmin && (
+                <div style={dangerCardStyle}>
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        flexWrap: 'wrap', 
+                        gap: '16px' 
+                    }}>
+                        <div style={{ flex: 1 }}>
+                            <h3 style={{ ...cardTitle, color: 'var(--platform-danger)', marginBottom: '4px' }}>
+                                <AlertCircle size={22} />
+                                ВИДАЛЕННЯ АКАУНТУ
+                            </h3>
+                            <p style={{ margin: 0, color: 'var(--platform-danger)', fontSize: '0.9rem', opacity: 0.8 }}>
+                                 Видалення акаунту призведе до <strong>незворотної</strong> втрати всіх ваших сайтів та даних.
+                            </p>
+                        </div>
+                        <Button 
+                            variant="danger"
+                            onClick={handleDeleteAccount}
+                            icon={<Trash2 size={18} />}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
+                        >
+                            Видалити акаунт
+                        </Button>
                     </div>
-                    <Button 
-                        variant="danger"
-                        onClick={handleDeleteAccount}
-                        icon={<Trash2 size={18} />}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
-                    >
-                        Видалити акаунт
-                    </Button>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
