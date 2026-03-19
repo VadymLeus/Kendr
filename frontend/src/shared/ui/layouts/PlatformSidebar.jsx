@@ -4,7 +4,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import UserMenu from './UserMenu';
-import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders, Package, Shield } from 'lucide-react';
+import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders, Package, Shield, CreditCard } from 'lucide-react';
 
 const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
     const { cartItems } = useContext(CartContext);
@@ -17,6 +17,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
             navigate('/login');
         }
     };
+
     const SidebarLink = ({ to, icon: Icon, label, protectedLink, count, isCreateButton }) => {
         const baseClass = `sidebar-link ${isCreateButton ? 'create-btn' : ''}`;
         return (
@@ -36,6 +37,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
             </NavLink>
         );
     };
+
     return (
         <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} custom-scrollbar`}>
             <div className="sidebar-header">
@@ -57,6 +59,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
                         <div className="nav-separator" />
                         <SidebarLink to="/admin/users-sites" icon={Users} label="Користувачі / Сайти" />
                         <SidebarLink to="/admin/support-hub" icon={MessageSquare} label="Тікети / Скарги" />
+                        <SidebarLink to="/admin/billing" icon={CreditCard} label="Білінг" />
                         <SidebarLink to="/admin/dashboard" icon={LayoutDashboard} label="Дашборд" />
                         <div className="nav-separator" />
                         <SidebarLink to="/admin/control" icon={Sliders} label="Управління" />

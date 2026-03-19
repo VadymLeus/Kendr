@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+const transactionController = require('../controllers/transactionController');
 const verifyToken = require('../middleware/verifyToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
 
@@ -27,6 +28,9 @@ router.get('/templates', adminController.getSystemTemplates);
 router.post('/templates', adminController.createSystemTemplate);
 router.put('/templates/:id', adminController.updateSystemTemplate);
 router.delete('/templates/:id', adminController.deleteSystemTemplate);
-router.post('/templates/:id/copy', verifyToken, verifyAdmin, adminController.copyTemplate);
+router.post('/templates/:id/copy', adminController.copyTemplate);
+router.get('/transactions', transactionController.getAdminTransactions);
+router.get('/transactions', transactionController.getAdminTransactions);
+router.get('/orders', transactionController.getAdminOrders);
 
 module.exports = router;

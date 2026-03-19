@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const emailService = require('../utils/emailService');
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 const generateOrderNumber = (size = 12) => {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     let id = '';
@@ -167,8 +168,10 @@ exports.liqpayCallback = async (req, res) => {
         }
         if (status === 'success' || status === 'wait_accept') {
             if (order.status === 'pending') {
-                await db.query(`UPDATE orders SET status = 'paid' WHERE id = ?`, [realOrderId]);
                 const [items] = await db.query(`SELECT * FROM order_items WHERE order_id = ?`, [realOrderId]);
+                const isDigitalOnly = items.length > 0 && items.every(item => item.type === 'digital');
+                const newStatus = isDigitalOnly ? 'completed' : 'paid';
+                await db.query(`UPDATE orders SET status = ? WHERE id = ?`, [newStatus, realOrderId]);
                 for (const item of items) {
                     if (item.type !== 'digital' && item.product_id) {
                         await db.query(
@@ -195,7 +198,12 @@ exports.getSiteOrders = async (req, res) => {
     try {
         const [orders] = await db.query('SELECT * FROM orders WHERE site_id = ? ORDER BY created_at DESC', [siteId]);
         for (let order of orders) {
-            const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+            const [items] = await db.query(`
+                SELECT oi.*, p.image_gallery 
+                FROM order_items oi
+                LEFT JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = ?
+            `, [order.id]);
             order.items = items;
         }
         res.status(200).json(orders);
@@ -221,7 +229,13 @@ exports.getMyOrders = async (req, res) => {
     try {
         const [orders] = await db.query('SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC', [userId]);
         for (let order of orders) {
-            const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+            const [items] = await db.query(`
+                SELECT oi.*, p.image_gallery 
+                FROM order_items oi
+                LEFT JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = ?
+            `, [order.id]);
+            
             if (order.status !== 'paid' && order.status !== 'completed') {
                 items.forEach(item => { item.digital_file_url = null; });
             }

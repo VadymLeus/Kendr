@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
+import DateRangePicker from '../../../shared/ui/elements/DateRangePicker';
 import AdminPageLayout from '../components/AdminPageLayout';
 import UserDetailsPanel from '../components/UserDetailsPanel';
 import SiteDetailsPanel from '../components/SiteDetailsPanel';
@@ -48,6 +49,8 @@ const AdminUsersSitesPage = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [userSort, setUserSort] = useState({ key: 'created_at', direction: 'desc' });
     const [hideSuspendedUsers, setHideSuspendedUsers] = useState(true);
+    const [userStartDate, setUserStartDate] = useState('');
+    const [userEndDate, setUserEndDate] = useState('');
     const usersData = useDataList('/admin/users', ['username', 'email', 'id', 'phone_number', 'slug', 'plan']);
     const { confirm } = useConfirm();
     const processedUsers = useMemo(() => {
@@ -55,12 +58,20 @@ const AdminUsersSitesPage = () => {
         if (hideSuspendedUsers) {
             res = res.filter(u => u.status !== 'suspended');
         }
+        if (userStartDate) {
+            const start = new Date(`${userStartDate}T00:00:00`);
+            res = res.filter(u => new Date(u.created_at) >= start);
+        }
+        if (userEndDate) {
+            const end = new Date(`${userEndDate}T23:59:59`);
+            res = res.filter(u => new Date(u.created_at) <= end);
+        }
         return res.sort((a, b) => {
             const valA = a[userSort.key] || '';
             const valB = b[userSort.key] || '';
             return (valA < valB ? -1 : 1) * (userSort.direction === 'asc' ? 1 : -1);
         });
-    }, [usersData.filteredData, userSort, hideSuspendedUsers]);
+    }, [usersData.filteredData, userSort, hideSuspendedUsers, userStartDate, userEndDate]);
     const handleUserSort = (key) => setUserSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const handleDeleteUser = (userId) => {
         confirm({ 
@@ -136,12 +147,22 @@ const AdminUsersSitesPage = () => {
     };
     const [selectedSite, setSelectedSite] = useState(null);
     const [siteStatusFilter, setSiteStatusFilter] = useState('all');
+    const [siteStartDate, setSiteStartDate] = useState('');
+    const [siteEndDate, setSiteEndDate] = useState('');
     const [siteSort, setSiteSort] = useState({ key: 'created_at', direction: 'desc' });
     const sitesData = useDataList('/admin/sites', ['title', 'site_path', 'author', 'author_email']);
     const processedSites = useMemo(() => {
         let res = siteStatusFilter !== 'all' ? sitesData.filteredData.filter(s => s.status === siteStatusFilter) : [...sitesData.filteredData];
+        if (siteStartDate) {
+            const start = new Date(`${siteStartDate}T00:00:00`);
+            res = res.filter(s => new Date(s.created_at) >= start);
+        }
+        if (siteEndDate) {
+            const end = new Date(`${siteEndDate}T23:59:59`);
+            res = res.filter(s => new Date(s.created_at) <= end);
+        }
         return res.sort((a, b) => (a[siteSort.key] < b[siteSort.key] ? -1 : 1) * (siteSort.direction === 'asc' ? 1 : -1));
-    }, [sitesData.filteredData, siteStatusFilter, siteSort]);
+    }, [sitesData.filteredData, siteStatusFilter, siteSort, siteStartDate, siteEndDate]);
     const handleSiteSort = (key) => setSiteSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const handleSiteAction = async (fn) => { 
         try { 
@@ -238,7 +259,15 @@ const AdminUsersSitesPage = () => {
             {activeTab === 'users' && (
                 <>
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                        <FilterBar />
+                        <FilterBar>
+                            <DateRangePicker 
+                                startDate={userStartDate}
+                                endDate={userEndDate}
+                                onStartDateChange={setUserStartDate}
+                                onEndDateChange={setUserEndDate}
+                                onClear={() => { setUserStartDate(''); setUserEndDate(''); }}
+                            />
+                        </FilterBar>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                             <button 
                                 type="button"
@@ -252,7 +281,7 @@ const AdminUsersSitesPage = () => {
                             >
                                 <UserX size={20} strokeWidth={2.5} />
                             </button>
-                            <div style={{ width: '300px' }}><Input placeholder="Пошук користувачів..." leftIcon={<Search size={16}/>} value={usersData.searchQuery || ''} onChange={(e) => usersData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                            <div style={{ width: '260px' }}><Input placeholder="Пошук користувачів..." leftIcon={<Search size={16}/>} value={usersData.searchQuery || ''} onChange={(e) => usersData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
                             <CsvExportButton onClick={handleExportUsers} disabled={usersData.loading || !processedUsers.length} />
                         </div>
                     </div>
@@ -377,12 +406,19 @@ const AdminUsersSitesPage = () => {
                 <>
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                         <FilterBar>
-                            <div style={{ width: '220px' }}>
+                            <div style={{ width: '180px' }}>
                                 <CustomSelect value={siteStatusFilter} onChange={(e) => setSiteStatusFilter(e.target.value)} options={STATUS_OPTIONS} variant="minimal" placeholder="Статус" style={{ height: '36px', background: 'var(--platform-card-bg)' }} />
                             </div>
+                            <DateRangePicker 
+                                startDate={siteStartDate}
+                                endDate={siteEndDate}
+                                onStartDateChange={setSiteStartDate}
+                                onEndDateChange={setSiteEndDate}
+                                onClear={() => { setSiteStartDate(''); setSiteEndDate(''); }}
+                            />
                         </FilterBar>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{ width: '300px' }}><Input placeholder="Пошук сайтів..." leftIcon={<Search size={16}/>} value={sitesData.searchQuery || ''} onChange={(e) => sitesData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                            <div style={{ width: '260px' }}><Input placeholder="Пошук сайтів..." leftIcon={<Search size={16}/>} value={sitesData.searchQuery || ''} onChange={(e) => sitesData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
                             <CsvExportButton onClick={handleExportSites} disabled={sitesData.loading || !processedSites.length} />
                         </div>
                     </div>

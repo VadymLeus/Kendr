@@ -23,6 +23,7 @@ export const STATIC_TITLES = {
     '/admin/reports': 'Скарги',
     '/admin/tickets': 'Тікети',
     '/admin/templates': 'Шаблони',
+    '/admin/billing': 'Білінг та Транзакції',
     '/admin/control': 'Управління'
 };
 
@@ -40,6 +41,5 @@ export const getTitleForPath = (pathname) => {
         }
         return 'Сайт'; 
     }
-
     return null;
 };

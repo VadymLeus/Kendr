@@ -39,6 +39,7 @@ import AdminUsersSitesPage from '../modules/admin/pages/AdminUsersSitesPage';
 import AdminTicketsReportsPage from '../modules/admin/pages/AdminTicketsReportsPage';
 import AdminTemplatesPage from '../modules/admin/pages/AdminTemplatesPage';
 import AdminControlPage from '../modules/admin/pages/AdminControlPage';
+import AdminBillingPage from '../modules/admin/pages/AdminBillingPage';
 
 function App() {
     const { isAdmin, isLoading, isRestorePending } = useContext(AuthContext);
@@ -107,8 +108,10 @@ function App() {
                                     <Route path="/admin/reports" element={<Navigate to="/admin/support-hub?tab=reports" replace />} />
                                     <Route path="/admin/support" element={<Navigate to="/admin/support-hub?tab=tickets" replace />} />
                                     <Route path="/admin/templates" element={<AdminTemplatesPage />} />
+                                    <Route path="/admin/billing" element={<AdminBillingPage />} />
                                     <Route path="/admin/control" element={<AdminControlPage />} />
                                 </Route>
+                                
                                 <Route path="*" element={<NotFoundPage />} />
                             </Route>
                         </Routes>

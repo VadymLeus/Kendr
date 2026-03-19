@@ -6,6 +6,7 @@ import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { Input } from '../../../shared/ui/elements/Input';
+import DateRangePicker from '../../../shared/ui/elements/DateRangePicker';
 import AdminPageLayout from '../components/AdminPageLayout';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { AdminTable, AdminTh, AdminRow, AdminCell, LoadingRow, EmptyRow, FilterBar, GenericBadge, CsvExportButton } from '../components/AdminTableComponents';
@@ -62,12 +63,22 @@ const AdminTicketsReportsPage = () => {
     };
     const [ticketStatus, setTicketStatus] = useState('active');
     const [ticketCategory, setTicketCategory] = useState('all');
+    const [ticketStartDate, setTicketStartDate] = useState('');
+    const [ticketEndDate, setTicketEndDate] = useState('');
     const [ticketSort, setTicketSort] = useState({ key: 'updated_at', direction: 'desc' });
     const ticketsData = useDataList(`/support/admin/tickets?status=${ticketStatus}`, ['subject', 'username', 'user_email', 'id']);
     const processedTickets = useMemo(() => {
         let res = ticketCategory !== 'all' ? ticketsData.filteredData.filter(t => t.type === ticketCategory) : [...ticketsData.filteredData];
+        if (ticketStartDate) {
+            const start = new Date(`${ticketStartDate}T00:00:00`);
+            res = res.filter(t => new Date(t.updated_at || t.created_at) >= start);
+        }
+        if (ticketEndDate) {
+            const end = new Date(`${ticketEndDate}T23:59:59`);
+            res = res.filter(t => new Date(t.updated_at || t.created_at) <= end);
+        }
         return res.sort((a, b) => (a[ticketSort.key] < b[ticketSort.key] ? -1 : 1) * (ticketSort.direction === 'asc' ? 1 : -1));
-    }, [ticketsData.filteredData, ticketCategory, ticketSort]);
+    }, [ticketsData.filteredData, ticketCategory, ticketSort, ticketStartDate, ticketEndDate]);
     const handleTicketSort = (key) => setTicketSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const ticketActions = {
         closeTicket: (id) => confirmDialog.requestConfirm({ title: 'Закрити?', message: `Тікет #${id} в архів.`, type: 'warning', confirmLabel: 'Закрити', onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'closed' }), 'Закрито', ticketsData.refresh) }),
@@ -83,16 +94,26 @@ const AdminTicketsReportsPage = () => {
     };
     const [reportStatus, setReportStatus] = useState('new');
     const [reportReason, setReportReason] = useState('all');
+    const [reportStartDate, setReportStartDate] = useState('');
+    const [reportEndDate, setReportEndDate] = useState('');
     const [reportSort, setReportSort] = useState({ key: 'created_at', direction: 'desc' });
     const reportsData = useDataList(`/admin/reports?status=${reportStatus}`, ['site_title', 'reporter_email', 'reason', 'description', 'id']);
     const processedReports = useMemo(() => {
         let res = reportReason !== 'all' ? reportsData.filteredData.filter(i => i.reason === reportReason) : [...reportsData.filteredData];
+        if (reportStartDate) {
+            const start = new Date(`${reportStartDate}T00:00:00`);
+            res = res.filter(r => new Date(r.created_at) >= start);
+        }
+        if (reportEndDate) {
+            const end = new Date(`${reportEndDate}T23:59:59`);
+            res = res.filter(r => new Date(r.created_at) <= end);
+        }
         return res.sort((a, b) => (a[reportSort.key] < b[reportSort.key] ? -1 : 1) * (reportSort.direction === 'asc' ? 1 : -1));
-    }, [reportsData.filteredData, reportReason, reportSort]);
+    }, [reportsData.filteredData, reportReason, reportSort, reportStartDate, reportEndDate]);
     const handleReportSort = (key) => setReportSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const filterByUser = (email, e) => { e.stopPropagation(); reportsData.setSearchQuery(email); toast.info(`Фільтр: ${email}`); };
     const reportActions = {
-        dismiss: (id) => confirmDialog.requestConfirm({ title: 'Відхилити?', message: 'В архів без санкцій.', type: 'warning', confirmLabel: 'Відхилити', onConfirm: () => handleAction(() => apiClient.put(`/admin/reports/${id}/dismiss`), 'Відхилено', reportsData.refresh) }),
+        dismiss: (id) => confirmDialog.requestConfirm({ title: 'Відхилити?', message: 'Скаргу буде відхилено', type: 'warning', confirmLabel: 'Відхилити', onConfirm: () => handleAction(() => apiClient.put(`/admin/reports/${id}/dismiss`), 'Відхилено', reportsData.refresh) }),
         ban: (id) => confirmDialog.requestConfirm({ title: 'Заблокувати?', message: 'Сайт буде заблоковано.', type: 'danger', confirmLabel: 'Заблокувати', onConfirm: () => handleAction(() => apiClient.post(`/admin/reports/${id}/ban`), 'Заблоковано', reportsData.refresh) }),
         reopen: (id) => confirmDialog.requestConfirm({ title: 'Відновити?', message: 'Повернути на розгляд.', type: 'info', confirmLabel: 'Відновити', onConfirm: () => handleAction(() => apiClient.put(`/admin/reports/${id}/reopen`), 'Відновлено', reportsData.refresh) })
     };
@@ -128,6 +149,7 @@ const AdminTicketsReportsPage = () => {
                     <ShieldAlert size={16} /> Скарги
                 </button>
             </div>
+            
             {activeTab === 'tickets' && (
                 <>
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -135,16 +157,43 @@ const AdminTicketsReportsPage = () => {
                             <div style={{ display: 'flex', background: 'var(--platform-card-bg)', padding: '2px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
                                 {['active', 'closed'].map(s => <Button key={s} variant="ghost" onClick={() => setTicketStatus(s)} style={{ padding: '4px 12px', height: '30px', fontSize: '13px', borderRadius: '6px', background: ticketStatus === s ? 'var(--platform-bg)' : 'transparent', color: ticketStatus === s ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)' }}>{s === 'active' ? 'Активні' : 'Архів'}</Button>)}
                             </div>
-                            <div style={{ width: '220px' }}><CustomSelect value={ticketCategory} onChange={(e) => setTicketCategory(e.target.value)} options={CATEGORY_OPTIONS} variant="minimal" style={{ height: '36px', background: 'var(--platform-card-bg)' }} /></div>
+                            <div style={{ width: '180px' }}>
+                                <CustomSelect value={ticketCategory} onChange={(e) => setTicketCategory(e.target.value)} options={CATEGORY_OPTIONS} variant="minimal" style={{ height: '36px', background: 'var(--platform-card-bg)' }} />
+                            </div>
+                            <DateRangePicker 
+                                startDate={ticketStartDate}
+                                endDate={ticketEndDate}
+                                onStartDateChange={setTicketStartDate}
+                                onEndDateChange={setTicketEndDate}
+                                onClear={() => { setTicketStartDate(''); setTicketEndDate(''); }}
+                            />
                         </FilterBar>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{ width: '300px' }}><Input placeholder="Пошук тікетів..." leftIcon={<Search size={16}/>} value={ticketsData.searchQuery || ''} onChange={(e) => ticketsData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                            <div style={{ width: '260px' }}><Input placeholder="Пошук тікетів..." leftIcon={<Search size={16}/>} value={ticketsData.searchQuery || ''} onChange={(e) => ticketsData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
                             <CsvExportButton onClick={handleExportTickets} disabled={ticketsData.loading || !processedTickets.length} />
                         </div>
                     </div>
                     <AdminTable>
-                        <colgroup><col style={{width: '80px'}} /><col style={{width: '30%'}} /><col style={{width: '140px'}} /><col style={{width: '25%'}} /><col style={{width: '140px'}} /><col style={{width: '160px'}} /><col style={{width: '100px'}} /></colgroup>
-                        <thead><tr><AdminTh label="ID" sortKey="id" currentSort={ticketSort} onSort={handleTicketSort} /><AdminTh label="Тема" sortKey="subject" currentSort={ticketSort} onSort={handleTicketSort} /><AdminTh label="Категорія" sortKey="type" currentSort={ticketSort} onSort={handleTicketSort} /><AdminTh label="Користувач" sortKey="username" currentSort={ticketSort} onSort={handleTicketSort} /><AdminTh label="Статус" sortKey="status" currentSort={ticketSort} onSort={handleTicketSort} /><AdminTh label="Оновлено" sortKey="updated_at" currentSort={ticketSort} onSort={handleTicketSort} align="right" /><AdminTh label="Дії" align="right" /></tr></thead>
+                        <colgroup>
+                            <col style={{width: '80px'}} />
+                            <col style={{width: '28%'}} />
+                            <col style={{width: '140px'}} />
+                            <col style={{width: '18%'}} />
+                            <col style={{width: '160px'}} />
+                            <col style={{width: '140px'}} />
+                            <col style={{width: '90px'}} />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <AdminTh label="ID" sortKey="id" currentSort={ticketSort} onSort={handleTicketSort} />
+                                <AdminTh label="Тема" sortKey="subject" currentSort={ticketSort} onSort={handleTicketSort} />
+                                <AdminTh label="Категорія" sortKey="type" currentSort={ticketSort} onSort={handleTicketSort} />
+                                <AdminTh label="Користувач" sortKey="username" currentSort={ticketSort} onSort={handleTicketSort} />
+                                <AdminTh label="Статус" sortKey="status" currentSort={ticketSort} onSort={handleTicketSort} />
+                                <AdminTh label="Оновлено" sortKey="updated_at" currentSort={ticketSort} onSort={handleTicketSort} />
+                                <AdminTh label="Дії" align="right" />
+                            </tr>
+                        </thead>
                         <tbody>
                             {ticketsData.loading ? <LoadingRow cols={7} /> : !processedTickets.length ? <EmptyRow cols={7} /> : processedTickets.map(t => {
                                 const catOpt = CATEGORY_OPTIONS.find(o => o.value === t.type) || CATEGORY_OPTIONS[1];
@@ -161,7 +210,10 @@ const AdminTicketsReportsPage = () => {
                                         <AdminCell><GenericBadge color={categoryColor} bg={`color-mix(in srgb, ${categoryColor}, transparent 90%)`} icon={catOpt.icon}>{catOpt.label}</GenericBadge></AdminCell>
                                         <AdminCell><div style={{display:'flex', alignItems:'center', gap:'10px'}}><Avatar url={t.user_avatar_url || t.avatar_url} name={t.username} size={32} /><div><div style={{fontWeight: '500'}}>{t.username}</div><div style={{fontSize: '12px', opacity: 0.6}}>{t.user_email}</div></div></div></AdminCell>
                                         <AdminCell><GenericBadge color={sProps.c} bg={sProps.bg} icon={sProps.i}>{sProps.l}</GenericBadge></AdminCell>
-                                        <AdminCell align="right" style={{fontFamily: 'monospace', opacity: 0.7}}>{new Date(t.updated_at).toLocaleString('uk-UA')}</AdminCell>
+                                        <AdminCell>
+                                            <div style={{fontSize: '13px'}}>{new Date(t.updated_at).toLocaleDateString()}</div>
+                                            <div style={{fontSize: '11px', opacity: 0.6}}>{new Date(t.updated_at).toLocaleTimeString()}</div>
+                                        </AdminCell>
                                         <AdminCell align="right"><div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}><Button variant="ghost" style={{ color: 'var(--platform-accent)', padding: '6px' }} icon={<ExternalLink size={18} />} onClick={(e) => {e.stopPropagation();navigate(`/support/ticket/${t.id}`)}} /><Button variant="ghost" title={t.status==='closed'?"Відновити":"Закрити"} onClick={() => t.status==='closed' ? ticketActions.restoreTicket(t.id) : ticketActions.closeTicket(t.id)} style={{ color: t.status==='closed'?'var(--platform-success)':'var(--platform-danger)', padding: '6px' }} icon={t.status==='closed' ? <RotateCcw size={18} /> : <XCircle size={18} />} /></div></AdminCell>
                                     </AdminRow>
                                 );
@@ -170,6 +222,7 @@ const AdminTicketsReportsPage = () => {
                     </AdminTable>
                 </>
             )}
+            
             {activeTab === 'reports' && (
                 <>
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -179,10 +232,19 @@ const AdminTicketsReportsPage = () => {
                                     <Button key={f.id} variant="ghost" onClick={() => setReportStatus(f.id)} style={{ padding: '4px 12px', height: '30px', fontSize: '13px', borderRadius: '6px', background: reportStatus === f.id ? 'var(--platform-bg)' : 'transparent', color: reportStatus === f.id ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)', boxShadow: reportStatus === f.id ? '0 1px 2px rgba(0,0,0,0.1)' : 'none' }}>{f.l}</Button>
                                 ))}
                             </div>
-                            <div style={{ width: '220px' }}><CustomSelect value={reportReason} onChange={(e) => setReportReason(e.target.value)} options={REASON_OPTIONS} variant="minimal" style={{ height: '36px', background: 'var(--platform-card-bg)' }} /></div>
+                            <div style={{ width: '180px' }}>
+                                <CustomSelect value={reportReason} onChange={(e) => setReportReason(e.target.value)} options={REASON_OPTIONS} variant="minimal" style={{ height: '36px', background: 'var(--platform-card-bg)' }} />
+                            </div>
+                            <DateRangePicker 
+                                startDate={reportStartDate}
+                                endDate={reportEndDate}
+                                onStartDateChange={setReportStartDate}
+                                onEndDateChange={setReportEndDate}
+                                onClear={() => { setReportStartDate(''); setReportEndDate(''); }}
+                            />
                         </FilterBar>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{ width: '300px' }}><Input placeholder="Пошук скарг..." leftIcon={<Search size={16}/>} value={reportsData.searchQuery || ''} onChange={(e) => reportsData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                            <div style={{ width: '260px' }}><Input placeholder="Пошук скарг..." leftIcon={<Search size={16}/>} value={reportsData.searchQuery || ''} onChange={(e) => reportsData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
                             <CsvExportButton onClick={handleExportReports} disabled={reportsData.loading || !processedReports.length} />
                         </div>
                     </div>
