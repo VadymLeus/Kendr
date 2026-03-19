@@ -41,7 +41,6 @@ const MediaPickerModal = ({
         }
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
-
     useEffect(() => {
         setVideoDuration(null);
     }, [activeFile]);
@@ -81,7 +80,6 @@ const MediaPickerModal = ({
         const toastId = toast.loading("Завантаження...");
         let successCount = 0;
         let failedFiles = [];
-        
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i];
             const formData = new FormData();
@@ -107,7 +105,6 @@ const MediaPickerModal = ({
                 });
             }
         }
-
         toast.dismiss(toastId);
         if (successCount > 0) {
             toast.success(`Успішно завантажено: ${successCount} файлів`);
@@ -174,7 +171,6 @@ const MediaPickerModal = ({
             onClose();
             return;
         }
-        
         if (aspect && !multiple && selectedFiles.length === 1) {
             const file = selectedFiles[0];
             if (file.file_type === 'image' || file.mime_type?.startsWith('image/')) {
@@ -184,7 +180,6 @@ const MediaPickerModal = ({
                 return;
             }
         }
-
         onSelect(multiple ? selectedFiles : selectedFiles[0]);
         onClose();
     };
@@ -233,7 +228,7 @@ const MediaPickerModal = ({
     const isCropMode = aspect && !multiple && selectedIds.size === 1 && activeFile?.file_type === 'image';
     const overlayStyle = {
         position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px'
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '20px'
     };
 
     const modalStyle = {

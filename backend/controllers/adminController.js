@@ -240,7 +240,6 @@ exports.restoreUserAccount = async (req, res, next) => {
             username: userDetails.username, 
             email: userDetails.email 
         });
-        
         res.json({ message: 'Акаунт користувача успішно розблоковано. Тепер він може відновити доступ.' });
     } catch (error) {
         next(error);
@@ -483,19 +482,27 @@ exports.banSiteFromReport = async (req, res, next) => {
 
 exports.getSystemTemplates = async (req, res, next) => {
     try {
-        const query = "SELECT * FROM templates WHERE type = 'system' ORDER BY is_ready DESC, created_at DESC";
-        const [templates] = await db.query(query);
+        const adminId = req.user.id;
+        const query = `
+            SELECT * FROM templates 
+            WHERE type = 'system' 
+            AND (is_ready = 1 OR user_id = ?)
+            ORDER BY is_ready DESC, created_at DESC
+        `;
+        const [templates] = await db.query(query, [adminId]);
         const processed = templates.map(t => ({
             ...t,
             default_block_content: (typeof t.default_block_content === 'string') ? JSON.parse(t.default_block_content) : t.default_block_content
         }));
         res.json(processed);
-    } catch (error) { next(error); }
+    } catch (error) { 
+        next(error); 
+    }
 };
 
 exports.createSystemTemplate = async (req, res, next) => {
     try {
-        const { siteId, templateName, description, icon, category } = req.body;
+        const { siteId, templateName, description, icon, category, thumbnail_url } = req.body;
         const adminId = req.user ? req.user.id : null;
         const [sites] = await db.query('SELECT * FROM sites WHERE id = ?', [siteId]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт-джерело не знайдено' });
@@ -517,7 +524,7 @@ exports.createSystemTemplate = async (req, res, next) => {
             }))
         };
         const query = `INSERT INTO templates (user_id, name, description, thumbnail_url, default_block_content, type, is_ready, access_level, icon, category) VALUES (?, ?, ?, ?, ?, 'system', 0, 'admin_only', ?, ?)`;
-        const thumbnail = site.cover_image || '/previews/empty.png';
+        const thumbnail = thumbnail_url || site.cover_image || '/previews/empty.png';
         const [result] = await db.query(query, [
             adminId, 
             templateName, 
@@ -538,7 +545,7 @@ exports.createSystemTemplate = async (req, res, next) => {
 exports.updateSystemTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { name, description, is_ready, access_level, icon, category } = req.body;
+        const { name, description, is_ready, access_level, icon, category, thumbnail_url } = req.body;
         if (access_level === 'public') {
             if (is_ready === false || is_ready === 0) return res.status(400).json({ message: 'Не можна опублікувати шаблон, який має статус "В розробці".' });
             if (is_ready === undefined) {
@@ -557,6 +564,7 @@ exports.updateSystemTemplate = async (req, res, next) => {
         if (category) { updates.push('category = ?'); params.push(category); }
         if (is_ready !== undefined) { updates.push('is_ready = ?'); params.push(is_ready ? 1 : 0); }
         if (finalAccessLevel !== undefined) { updates.push('access_level = ?'); params.push(finalAccessLevel); }
+        if (thumbnail_url !== undefined) { updates.push('thumbnail_url = ?'); params.push(thumbnail_url); }
         if (updates.length === 0) return res.json({ message: 'Немає даних для оновлення' });
         query += updates.join(', ') + ' WHERE id = ?';
         params.push(id);
@@ -567,8 +575,11 @@ exports.updateSystemTemplate = async (req, res, next) => {
             access_level: finalAccessLevel,
             category
         });
+        
         res.json({ message: 'Шаблон оновлено.' });
-    } catch (error) { next(error); }
+    } catch (error) { 
+        next(error); 
+    }
 };
 
 exports.deleteSystemTemplate = async (req, res, next) => {
@@ -642,5 +653,38 @@ exports.updateSystemSettings = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    }
+};
+exports.copyTemplate = async (req, res) => {
+    try {
+        const templateId = req.params.id;
+        const adminId = req.user.id;
+        const [templates] = await db.query('SELECT * FROM templates WHERE id = ? AND type = "system"', [templateId]);
+        if (templates.length === 0) {
+            return res.status(404).json({ message: 'Шаблон не знайдено' });
+        }
+        const original = templates[0];
+        const newName = `${original.name} (Копія)`;
+        const insertQuery = `
+            INSERT INTO templates 
+            (user_id, name, description, icon, thumbnail_url, default_block_content, type, category, is_ready, access_level) 
+            VALUES (?, ?, ?, ?, ?, ?, 'system', ?, 0, 'private')
+        `;
+        const blockContentStr = typeof original.default_block_content === 'string' 
+            ? original.default_block_content 
+            : JSON.stringify(original.default_block_content);
+        const [result] = await db.query(insertQuery, [
+            adminId,
+            newName,
+            original.description,
+            original.icon,
+            original.thumbnail_url,
+            blockContentStr,
+            original.category
+        ]);
+        res.status(201).json({ message: 'Шаблон успішно скопійовано', templateId: result.insertId });
+    } catch (error) {
+        console.error("Помилка при копіюванні шаблону:", error);
+        res.status(500).json({ message: 'Помилка сервера при копіюванні' });
     }
 };

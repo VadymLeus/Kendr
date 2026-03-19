@@ -159,6 +159,7 @@ const SiteDashboardPage = () => {
             setIsPageLoading(false);
         }
     };
+    
     const handleEditPage = (pageId) => {
         if (pageId === currentPageId && !isPageLoading && blocks.length > 0) return;
         setCurrentPageId(pageId);
@@ -171,6 +172,7 @@ const SiteDashboardPage = () => {
         fetchPageContent(pageId);
         setSelectedBlockPath(null);
     };
+    
     useEffect(() => {
         if (siteData && !allPages.length) {
             apiClient.get(`/sites/${siteData.id}/pages`)
@@ -196,20 +198,14 @@ const SiteDashboardPage = () => {
     const handleDropBlock = (item, path) => !isReadOnly && setBlocks(prev => handleDrop(prev, item, path));
     const handleAddBlock = (path, type, preset) => {
         if (isReadOnly) return;
-        const newBlock = { 
-            block_id: generateBlockId(), 
-            type, 
-            data: getDefaultBlockData(type, preset) 
-        };
+        const newBlock = { block_id: generateBlockId(), type, data: getDefaultBlockData(type, preset) };
         setBlocks(prev => addBlockByPath(prev, newBlock, path));
     };
-    
     const handleDeleteBlock = (path) => {
         if (isReadOnly) return;
         setBlocks(prev => removeBlockByPath(prev, path));
         setSelectedBlockPath(null);
     };
-    
     const handleUpdateBlockData = (path, data, addToHistory = true) => {
         if (isReadOnly) return;
         setBlocks(prev => updateBlockDataByPath(prev, path, data), addToHistory);
@@ -230,9 +226,7 @@ const SiteDashboardPage = () => {
         setIsSaving(true);
         try {
             if (currentPageId === 'header') {
-                const response = await apiClient.put(`/sites/${siteData.site_path}/settings`, {
-                    header_content: JSON.stringify(blocksToSave)
-                });
+                await apiClient.put(`/sites/${siteData.site_path}/settings`, { header_content: JSON.stringify(blocksToSave) });
                 const headerBlock = blocksToSave.find(b => b.type === 'header');
                 if (headerBlock && headerBlock.data) {
                     setSiteData(prev => ({
@@ -243,17 +237,10 @@ const SiteDashboardPage = () => {
                     }));
                 }
             } else if (currentPageId === 'footer') {
-                await apiClient.put(`/sites/${siteData.site_path}/settings`, {
-                    footer_content: JSON.stringify(blocksToSave)
-                });
-                setSiteData(prev => ({
-                    ...prev,
-                    footer_content: blocksToSave
-                }));
+                await apiClient.put(`/sites/${siteData.site_path}/settings`, { footer_content: JSON.stringify(blocksToSave) });
+                setSiteData(prev => ({ ...prev, footer_content: blocksToSave }));
             } else {
-                await apiClient.put(`/pages/${currentPageId}/content`, {
-                    block_content: blocksToSave
-                });
+                await apiClient.put(`/pages/${currentPageId}/content`, { block_content: blocksToSave });
             }
         } catch (error) {
             handleSaveError(error);
@@ -268,9 +255,7 @@ const SiteDashboardPage = () => {
         try {
             const updateData = {};
             Object.keys(updatedData).forEach(key => {
-                if (updatedData[key] !== siteData[key]) {
-                    updateData[key] = updatedData[key];
-                }
+                if (updatedData[key] !== siteData[key]) updateData[key] = updatedData[key];
             });
             if (Object.keys(updateData).length > 0) {
                 await apiClient.put(`/sites/${siteData.site_path}/settings`, updateData);
@@ -289,17 +274,12 @@ const SiteDashboardPage = () => {
                 if (block.type === 'header') {
                     return {
                         ...block,
-                        data: {
-                            ...block.data,
-                            logo_src: newData.logo_url !== undefined ? newData.logo_url : block.data.logo_src,
-                            site_title: newData.title !== undefined ? newData.title : block.data.site_title
-                        }
+                        data: { ...block.data, logo_src: newData.logo_url !== undefined ? newData.logo_url : block.data.logo_src, site_title: newData.title !== undefined ? newData.title : block.data.site_title }
                     };
                 }
                 return block;
             }), false);
         }
-
         saveThemeSettings(newData);
     };
     const refreshPageList = () => {
@@ -314,20 +294,10 @@ const SiteDashboardPage = () => {
             .catch(console.error);
     };
     const toggleBlockCollapse = (blockId) => {
-        setCollapsedBlocks(prev => 
-            prev.includes(blockId) 
-                ? prev.filter(id => id !== blockId) 
-                : [...prev, blockId]
-        );
+        setCollapsedBlocks(prev => prev.includes(blockId) ? prev.filter(id => id !== blockId) : [...prev, blockId]);
     };
     const handleSavingChange = useCallback((isSaving) => {
-        const tabMap = { 
-            pages: 'pages', 
-            store: 'store', 
-            crm: 'crm', 
-            settings: 'settings',
-            orders: 'orders' 
-        };
+        const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings', orders: 'orders' };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
     if (isSiteLoading || !siteData) {
@@ -389,11 +359,7 @@ const SiteDashboardPage = () => {
                                 onSelectBlock={setSelectedBlockPath}
                                 onUpdateBlockData={handleUpdateBlockData}
                                 onSave={savePageContent}
-                                allPages={[
-                                    { id: 'header', name: 'Хедер' },
-                                    ...allPages, 
-                                    { id: 'footer', name: 'Футер' }
-                                ]}
+                                allPages={[{ id: 'header', name: 'Хедер' }, ...allPages, { id: 'footer', name: 'Футер' }]}
                                 currentPageId={currentPageId}
                                 onSelectPage={(id) => handleEditPage(id)}
                                 savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
@@ -412,9 +378,7 @@ const SiteDashboardPage = () => {
                     >
                         <div 
                             className={`mx-auto ${
-                                isFullHeightTab 
-                                    ? 'w-full h-full' 
-                                    : 'max-w-250'
+                                isFullHeightTab ? 'w-full h-full' : (activeTab === 'settings' ? 'w-full' : 'max-w-250')
                             } ${isReadOnly ? 'pointer-events-none opacity-70' : ''}`}
                         >
                             {activeTab === 'pages' && (
@@ -427,21 +391,11 @@ const SiteDashboardPage = () => {
                                     onSavingChange={handleSavingChange}
                                 />
                             )}
-                            {activeTab === 'store' && (
-                                <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />
-                            )}
-                            {activeTab === 'orders' && (
-                                <OrdersTab siteData={siteData} />
-                            )}
-                            {activeTab === 'theme' && (
-                                <StyleSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />
-                            )}
-                            {activeTab === 'crm' && (
-                                <SubmissionsTab siteId={siteData.id} onSavingChange={handleSavingChange} />
-                            )}
-                            {activeTab === 'settings' && (
-                                <GeneralSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} onSavingChange={handleSavingChange} />
-                            )}
+                            {activeTab === 'store' && <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />}
+                            {activeTab === 'orders' && <OrdersTab siteData={siteData} />}
+                            {activeTab === 'theme' && <StyleSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />}
+                            {activeTab === 'crm' && <SubmissionsTab siteId={siteData.id} onSavingChange={handleSavingChange} />}
+                            {activeTab === 'settings' && <GeneralSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} onSavingChange={handleSavingChange} />}
                         </div>
                     </div>
                 )}

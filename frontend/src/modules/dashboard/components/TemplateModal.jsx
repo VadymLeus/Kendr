@@ -5,20 +5,9 @@ import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Input, Button } from '../../../shared/ui/elements';
 import { InputWithCounter } from '../../../shared/ui/complex/InputWithCounter';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import { Layout, FileText, Loader2, Check, ShoppingBag, Briefcase, Camera, Coffee, Music, Star, Heart, Globe, Palette } from 'lucide-react';
-
-const ICON_OPTIONS = [
-    { id: 'Layout', component: Layout },
-    { id: 'ShoppingBag', component: ShoppingBag },
-    { id: 'Briefcase', component: Briefcase },
-    { id: 'FileText', component: FileText },
-    { id: 'Camera', component: Camera },
-    { id: 'Coffee', component: Coffee },
-    { id: 'Music', component: Music },
-    { id: 'Star', component: Star },
-    { id: 'Heart', component: Heart },
-    { id: 'Globe', component: Globe },
-];
+import UniversalMediaInput from '../../../shared/ui/complex/UniversalMediaInput';
+import { getMediaUrl } from '../../../shared/utils/mediaUtils';
+import { Layout, FileText, Loader2, Check, ShoppingBag, Briefcase, Camera, Globe, Palette, Image, X } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
     { value: 'General', label: 'Загальне', icon: Layout },
@@ -35,7 +24,7 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('General'); 
-    const [selectedIcon, setSelectedIcon] = useState('Layout');
+    const [thumbnailUrl, setThumbnailUrl] = useState('');
     const [existingTemplates, setExistingTemplates] = useState([]);
     const [loading, setLoading] = useState(false);
     const { confirm } = useConfirm();
@@ -45,13 +34,13 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
             if (isEditMode) {
                 setName(initialData.name || '');
                 setDescription(initialData.description || '');
-                setSelectedIcon(initialData.icon || 'Layout');
+                setThumbnailUrl(initialData.thumbnail_url || '');
                 setCategory(initialData.category || 'General'); 
                 setLoading(false);
             } else {
                 setName('');
                 setDescription('');
-                setSelectedIcon('Layout');
+                setThumbnailUrl('');
                 setCategory('General');
                 setLoading(true);
                 apiClient.get('/user-templates')
@@ -74,7 +63,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!name.trim()) return;
-        console.log("Saving template with category:", category);
         if (isEditMode) {
             const isConfirmed = await confirm({
                 title: "Зберегти зміни?",
@@ -82,9 +70,8 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                 confirmLabel: "Зберегти",
                 type: "info"
             });
-
             if (isConfirmed) {
-                onSave(name, description, selectedIcon, category);
+                onSave(name, description, thumbnailUrl, category);
                 onClose();
             }
             return;
@@ -99,11 +86,11 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                 type: "warning"
             });
             if (isConfirmed) {
-                onSave(name, description, selectedIcon, category, duplicate.id);
+                onSave(name, description, thumbnailUrl, category, duplicate.id);
                 onClose();
             }
         } else {
-            onSave(name, description, selectedIcon, category, null);
+            onSave(name, description, thumbnailUrl, category, null);
             onClose();
         }
     };
@@ -130,7 +117,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
     };
 
     const contentStyle = { padding: '24px 24px 8px 24px', overflowY: 'auto' };
-    const CurrentIconComponent = ICON_OPTIONS.find(i => i.id === selectedIcon)?.component || Layout;
     const headerStyle = { display: 'flex', gap: '16px', alignItems: 'flex-start' };
     const iconBoxStyle = {
         width: '48px', height: '48px', borderRadius: '12px',
@@ -147,15 +133,8 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
         borderTop: '1px solid var(--platform-border-color)',
         marginTop: '16px'
     };
-
-    const iconGridStyle = {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: '10px',
-        marginTop: '8px',
-        padding: '4px'
-    };
-
+    const displayThumbnailUrl = thumbnailUrl ? getMediaUrl({ path_full: thumbnailUrl }) : '';
+    const isValidThumbnail = thumbnailUrl && typeof thumbnailUrl === 'string' && thumbnailUrl !== 'null' && !thumbnailUrl.includes('empty');
     return (
         <div 
             ref={overlayRef}
@@ -166,33 +145,12 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes slideUp { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-                .icon-btn {
-                    width: 100%;
-                    aspect-ratio: 1;
-                    border-radius: 8px;
-                    border: 1px solid var(--platform-border-color);
-                    background: var(--platform-input-bg);
-                    color: var(--platform-text-secondary);
-                    display: flex; align-items: center; justify-content: center;
-                    cursor: pointer; transition: all 0.2s;
-                }
-                .icon-btn:hover {
-                    background: var(--platform-hover-bg);
-                    color: var(--platform-text-primary);
-                    border-color: var(--platform-border-color);
-                }
-                .icon-btn.active {
-                    background: var(--platform-accent);
-                    border-color: var(--platform-accent);
-                    color: var(--platform-accent-text);
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                }
             `}</style>
             <div style={modalStyle}>
                 <div style={contentStyle}>
                     <div style={headerStyle}>
                         <div style={iconBoxStyle}>
-                            <CurrentIconComponent size={24} />
+                            <Layout size={24} />
                         </div>
                         <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px'}}>
                             <h3 style={{fontSize: '1.15rem', fontWeight: '600', margin: 0}}>
@@ -200,7 +158,7 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                             </h3>
                             <p style={{margin: 0, fontSize: '0.95rem', color: 'var(--platform-text-secondary)', lineHeight: '1.5'}}>
                                 {isEditMode 
-                                    ? 'Змініть назву, категорію або іконку.' 
+                                    ? 'Змініть назву, категорію або банер.' 
                                     : 'Збережіть поточний дизайн як шаблон.'}
                             </p>
                         </div>
@@ -216,7 +174,7 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                                     required
                                     autoFocus
                                     disabled={loading}
-                                    leftIcon={<CurrentIconComponent size={18} />}
+                                    leftIcon={<Layout size={18} />}
                                     customLimit={50}
                                 />
                             </div>
@@ -235,21 +193,56 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                             </div>
                             <div style={{marginBottom: '16px'}}>
                                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500', color: 'var(--platform-text-secondary)' }}>
-                                    Іконка прев'ю
+                                    Банер
                                 </label>
-                                <div style={iconGridStyle}>
-                                    {ICON_OPTIONS.map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            type="button"
-                                            className={`icon-btn ${selectedIcon === opt.id ? 'active' : ''}`}
-                                            onClick={() => setSelectedIcon(opt.id)}
-                                            title={opt.id}
-                                        >
-                                            <opt.component size={20} />
-                                        </button>
-                                    ))}
-                                </div>
+                                <UniversalMediaInput 
+                                    type="image"
+                                    value={thumbnailUrl}
+                                    aspect={1.6} 
+                                    onChange={(val) => {
+                                        const newVal = val && val.target ? val.target.value : val;
+                                        setThumbnailUrl(newVal);
+                                    }}
+                                    triggerStyle={{ 
+                                        display: 'block', 
+                                        width: '100%', 
+                                        height: '140px', 
+                                        borderRadius: '12px', 
+                                        overflow: 'hidden', 
+                                        border: '1px dashed var(--platform-border-color)', 
+                                        background: 'var(--platform-bg)', 
+                                        cursor: 'pointer',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {isValidThumbnail ? (
+                                            <>
+                                                <img src={displayThumbnailUrl} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); setThumbnailUrl(''); }}
+                                                    style={{ 
+                                                        position: 'absolute', top: '8px', right: '8px', 
+                                                        background: 'rgba(0,0,0,0.6)', color: 'white', 
+                                                        border: 'none', borderRadius: '50%', width: '28px', height: '28px', 
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                                                        transition: 'background 0.2s'
+                                                    }}
+                                                    onMouseOver={(e) => e.currentTarget.style.background = 'var(--platform-danger)'}
+                                                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--platform-text-secondary)' }}>
+                                                <Image size={28} />
+                                                <span style={{ fontSize: '14px', fontWeight: '500' }}>Завантажити банер</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </UniversalMediaInput>
                             </div>
                             <div>
                                 <Input 

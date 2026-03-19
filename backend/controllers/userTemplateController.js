@@ -5,18 +5,16 @@ const db = require('../config/db');
 
 exports.saveAsTemplate = async (req, res, next) => {
     try {
-        const { siteId, templateName, description, icon, category } = req.body;
+        const { siteId, templateName, description, icon, category, thumbnail_url } = req.body;
         const userId = req.user.id;
-        console.log("Saving template:", { siteId, templateName, category });
+        console.log("Saving template:", { siteId, templateName, category, thumbnail_url });
         if (!siteId || !templateName) {
             return res.status(400).json({ message: 'Необхідно вказати ID сайту та назву шаблону.' });
         }
-
         const site = await Site.findByIdAndUserId(siteId, userId);
         if (!site) {
             return res.status(403).json({ message: 'Сайт не знайдено або у вас немає прав.' });
         }
-
         const siteDetails = await Site.findByPath(site.site_path);
         if (!siteDetails) return res.status(404).json({ message: 'Деталі сайту не знайдено.' });
         const pages = await Page.findBySiteId(siteId);
@@ -32,7 +30,6 @@ exports.saveAsTemplate = async (req, res, next) => {
                 seo_description: pageData.seo_description
             };
         }));
-
         const validPages = pagesWithContent.filter(p => p !== null);
         const snapshot = {
             theme_settings: {
@@ -44,14 +41,12 @@ exports.saveAsTemplate = async (req, res, next) => {
             footer_content: siteDetails.footer_content || [],
             pages: validPages
         };
-
         const jsonSnapshot = JSON.stringify(snapshot);
         await db.query(
-            `INSERT INTO templates (user_id, name, description, icon, category, default_block_content, type, access_level, is_ready) 
-             VALUES (?, ?, ?, ?, ?, ?, 'personal', 'private', 0)`,
-            [userId, templateName, description || '', icon || 'Layout', category || 'General', jsonSnapshot]
+            `INSERT INTO templates (user_id, name, description, icon, category, thumbnail_url, default_block_content, type, access_level, is_ready) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'personal', 'private', 0)`,
+            [userId, templateName, description || '', icon || 'Layout', category || 'General', thumbnail_url || null, jsonSnapshot]
         );
-
         res.status(201).json({ message: 'Шаблон успішно створено!' });
     } catch (error) {
         console.error('Error in saveAsTemplate:', error);
@@ -72,7 +67,6 @@ exports.getMyTemplates = async (req, res, next) => {
             )
             ORDER BY created_at DESC
         `;
-        
         const [rows] = await db.query(query, [userId]);
         const processedTemplates = rows.map(t => {
             const rawContent = t.default_block_content;
@@ -82,7 +76,6 @@ exports.getMyTemplates = async (req, res, next) => {
             } catch (e) {
                 console.error(`Error parsing template content for id ${t.id}`, e);
             }
-
             return {
                 ...t,
                 icon: t.icon || 'Layout',
@@ -91,7 +84,6 @@ exports.getMyTemplates = async (req, res, next) => {
                 default_block_content: parsedContent
             };
         });
-
         res.json(processedTemplates);
     } catch (error) {
         next(error);
@@ -106,11 +98,9 @@ exports.deleteTemplate = async (req, res, next) => {
             `DELETE FROM templates WHERE id = ? AND user_id = ?`,
             [id, userId]
         );
-        
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Шаблон не знайдено або у вас немає прав на його видалення.' });
         }
-        
         res.json({ message: 'Шаблон успішно видалено.' });
     } catch (error) {
         next(error);
@@ -120,21 +110,19 @@ exports.deleteTemplate = async (req, res, next) => {
 exports.updateTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { siteId, templateName, description, icon, category } = req.body;
+        const { siteId, templateName, description, icon, category, thumbnail_url } = req.body;
         const userId = req.user.id;
-        console.log("Updating template:", { id, templateName, category });
+        console.log("Updating template:", { id, templateName, category, thumbnail_url });
         if (!siteId) {
             const [result] = await db.query(
-                `UPDATE templates SET name = ?, description = ?, icon = ?, category = ? WHERE id = ? AND user_id = ?`,
-                [templateName, description, icon || 'Layout', category || 'General', id, userId]
+                `UPDATE templates SET name = ?, description = ?, icon = ?, category = ?, thumbnail_url = ? WHERE id = ? AND user_id = ?`,
+                [templateName, description, icon || 'Layout', category || 'General', thumbnail_url || null, id, userId]
             );
-
             if (result.affectedRows === 0) {
                 return res.status(404).json({ message: 'Шаблон не знайдено або у вас немає прав.' });
             }
             return res.json({ message: 'Інформацію про шаблон оновлено!' });
         }
-
         const site = await Site.findByIdAndUserId(siteId, userId);
         if (!site) return res.status(403).json({ message: 'Сайт для оновлення шаблону не знайдено.' });
         const siteDetails = await Site.findByPath(site.site_path);
@@ -152,7 +140,6 @@ exports.updateTemplate = async (req, res, next) => {
                 seo_description: pageData.seo_description
             };
         }));
-
         const validPages = pagesWithContent.filter(p => p !== null);
         const snapshot = {
             theme_settings: {
@@ -166,14 +153,12 @@ exports.updateTemplate = async (req, res, next) => {
         };
         const jsonSnapshot = JSON.stringify(snapshot);
         const [result] = await db.query(
-            `UPDATE templates SET name = ?, description = ?, icon = ?, category = ?, default_block_content = ? WHERE id = ? AND user_id = ?`,
-            [templateName, description || '', icon || 'Layout', category || 'General', jsonSnapshot, id, userId]
+            `UPDATE templates SET name = ?, description = ?, icon = ?, category = ?, thumbnail_url = ?, default_block_content = ? WHERE id = ? AND user_id = ?`,
+            [templateName, description || '', icon || 'Layout', category || 'General', thumbnail_url || null, jsonSnapshot, id, userId]
         );
-        
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Шаблон не знайдено або у вас немає прав.' });
         }
-
         res.json({ message: 'Шаблон та його структуру успішно оновлено!' });
     } catch (error) {
         console.error('Error in updateTemplate:', error);
