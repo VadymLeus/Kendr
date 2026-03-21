@@ -35,6 +35,9 @@ export const getTitleForPath = (pathname) => {
     if (cleanPath.startsWith('/profile/')) {
         return 'Профіль користувача';
     }
+    if (cleanPath.startsWith('/support/ticket/')) {
+        return 'Звернення';
+    }
     if (cleanPath.startsWith('/site/')) {
         if (cleanPath.includes('/product/')) {
             return 'Товар';

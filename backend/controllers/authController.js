@@ -65,7 +65,7 @@ exports.login = async (req, res, next) => {
         const user = await User.findByLoginInput(loginInput);
         if (!user) return res.status(401).json({ message: 'Невірний логін або пароль.' });
         if (user.status === 'suspended') return res.status(403).json({ message: 'Ваш акаунт заблоковано назавжди за порушення правил платформи.' });
-        if (user.role === 'admin') {
+        if (['admin', 'moderator'].includes(user.role)) {
             return res.status(401).json({ message: 'Невірний логін або пароль.' });
         }
         if (user.status === 'deleted') {
@@ -84,7 +84,12 @@ exports.login = async (req, res, next) => {
                     process.env.JWT_SECRET || 'secret_key', 
                     { expiresIn: '1h' }
                 );
-                return res.json({ require_restore: true, message: 'Акаунт в процесі видалення. Відновити?', token, user: { id: user.id, username: user.username, email: user.email } });
+                return res.json({ 
+                    require_restore: true, 
+                    message: 'Акаунт в процесі видалення. Відновити?', 
+                    token, 
+                    user: { id: user.id, username: user.username, email: user.email, status: user.status } 
+                });
             }
         }
         if (user.is_verified === 0) {
@@ -107,8 +112,45 @@ exports.login = async (req, res, next) => {
             user: { 
                 id: user.id, username: user.username, slug: user.slug, email: user.email, avatar_url: user.avatar_url,
                 role: user.role, plan: user.plan || 'FREE', platform_theme_mode: user.platform_theme_mode,
-                platform_theme_accent: user.platform_theme_accent, created_at: user.created_at, has_password: hasPassword
+                platform_theme_accent: user.platform_theme_accent, created_at: user.created_at, has_password: hasPassword,
+                status: user.status
             }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getMe = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
+        if (user.status === 'suspended') return res.status(403).json({ message: 'Ваш акаунт заблоковано.' });
+        if (user.status === 'deleted') {
+            const diffDays = (Date.now() - new Date(user.deleted_at).getTime()) / (1000 * 3600 * 24);
+            if (diffDays > 14) {
+                if (user.avatar_url && user.avatar_url.includes('/avatars/custom/')) await deleteFile(user.avatar_url).catch(() => {});
+                await User.deleteById(user.id);
+                return res.status(403).json({ message: 'Акаунт видалено безповоротно.' });
+            }
+            return res.json({ 
+                id: user.id, 
+                username: user.username, 
+                email: user.email,
+                status: user.status, 
+                require_restore: true, 
+                message: 'Акаунт в процесі видалення. Бажаєте відновити?' 
+            });
+        }
+        const hasPassword = await User.hasPassword(req.user.id);
+        res.json({
+            id: user.id, username: user.username, slug: user.slug, email: user.email, avatar_url: user.avatar_url, role: user.role,
+            plan: user.plan || 'FREE', platform_theme_mode: user.platform_theme_mode, platform_theme_accent: user.platform_theme_accent,
+            platform_bg_url: user.platform_bg_url, platform_bg_blur: user.platform_bg_blur, platform_bg_brightness: user.platform_bg_brightness,
+            bio: user.bio, social_telegram: user.social_telegram, social_instagram: user.social_instagram, social_website: user.social_website,
+            is_profile_public: user.is_profile_public, phone_number: user.phone_number, created_at: user.created_at, 
+            last_login_at: user.last_login_at, has_password: hasPassword,
+            status: user.status
         });
     } catch (error) {
         next(error);
@@ -120,11 +162,11 @@ exports.adminLogin = async (req, res, next) => {
         const { loginInput, password } = req.body;
         const user = await User.findByLoginInput(loginInput);
         if (!user) return res.status(401).json({ message: 'Невірні облікові дані.' });
-        if (user.role !== 'admin') {
-            return res.status(403).json({ message: 'Відмовлено у доступі. Зона лише для адміністраторів.' });
+        if (!['admin', 'moderator'].includes(user.role)) {
+            return res.status(403).json({ message: 'Відмовлено у доступі. Зона лише для персоналу.' });
         }
         if (user.status !== 'active') {
-            return res.status(403).json({ message: 'Акаунт адміністратора неактивний.' });
+            return res.status(403).json({ message: 'Акаунт співробітника неактивний.' });
         }
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) return res.status(401).json({ message: 'Невірні облікові дані.' });
@@ -160,12 +202,14 @@ exports.verify2FA = async (req, res, next) => {
         );
         const hasPassword = !!user.password_hash;
         res.json({
-            message: 'Вхід в панель адміністратора успішний',
-            token, require_restore: user.status === 'deleted',
+            message: 'Вхід в панель успішний',
+            token, 
+            require_restore: user.status === 'deleted',
             user: { 
                 id: user.id, username: user.username, slug: user.slug, email: user.email, avatar_url: user.avatar_url,
                 role: user.role, plan: user.plan || 'FREE', platform_theme_mode: user.platform_theme_mode,
-                platform_theme_accent: user.platform_theme_accent, created_at: user.created_at, has_password: hasPassword
+                platform_theme_accent: user.platform_theme_accent, created_at: user.created_at, has_password: hasPassword,
+                status: user.status
             }
         });
     } catch (error) {
@@ -194,7 +238,7 @@ exports.forgotPassword = async (req, res, next) => {
         const { email } = req.body;
         const user = await User.findByEmail(email);
         const genericMessage = 'Якщо цей email зареєстровано в системі, ми відправили на нього інструкції.';
-        if (!user || user.status === 'suspended' || user.role === 'admin') {
+        if (!user || user.status === 'suspended' || ['admin', 'moderator'].includes(user.role)) {
              return res.json({ message: genericMessage }); 
         }
         const otpCode = generateOTP();
@@ -256,44 +300,42 @@ exports.resetPassword = async (req, res, next) => {
 
 exports.googleCallback = async (req, res) => {
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    if (req.user && req.user.role === 'admin') {
+    if (!req.user) {
         return res.redirect(`${clientUrl}/login?error=auth_failed`);
     }
-    if (req.user && req.user.id) {
-        await User.updateLastLogin(req.user.id);
+    
+    if (['admin', 'moderator'].includes(req.user.role)) {
+        return res.redirect(`${clientUrl}/login?error=auth_failed`);
     }
+
+    if (req.user.status === 'suspended') {
+        return res.redirect(`${clientUrl}/login?error=auth_failed`);
+    }
+
+    if (req.user.status === 'deleted') {
+        const deletedAt = req.user.deleted_at ? new Date(req.user.deleted_at).getTime() : 0;
+        const diffDays = (Date.now() - deletedAt) / (1000 * 3600 * 24);
+        if (diffDays > 14) {
+            if (req.user.avatar_url && req.user.avatar_url.includes('/avatars/custom/')) {
+                await deleteFile(req.user.avatar_url).catch(() => {});
+            }
+            await User.deleteById(req.user.id);
+            return res.redirect(`${clientUrl}/login?error=auth_failed`); 
+        } else {
+            const token = jwt.sign(
+                { id: req.user.id, role: 'RESTORE_ONLY', plan: req.user.plan || 'FREE', token_version: req.user.token_version }, 
+                process.env.JWT_SECRET || 'secret_key', 
+                { expiresIn: '1h' }
+            );
+            return res.redirect(`${clientUrl}/auth/success?token=${token}`);
+        }
+    }
+
+    await User.updateLastLogin(req.user.id);
     const token = jwt.sign(
         { id: req.user.id, role: req.user.role, plan: req.user.plan || 'FREE', token_version: req.user.token_version }, 
         process.env.JWT_SECRET || 'secret_key', 
         { expiresIn: '24h' }
     );
     res.redirect(`${clientUrl}/auth/success?token=${token}`);
-};
-
-exports.getMe = async (req, res, next) => {
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
-        if (user.status === 'suspended') return res.status(403).json({ message: 'Ваш акаунт заблоковано.' });
-        if (user.status === 'deleted') {
-            const diffDays = (Date.now() - new Date(user.deleted_at).getTime()) / (1000 * 3600 * 24);
-            if (diffDays > 14) {
-                if (user.avatar_url && user.avatar_url.includes('/avatars/custom/')) await deleteFile(user.avatar_url).catch(() => {});
-                await User.deleteById(user.id);
-                return res.status(403).json({ message: 'Акаунт видалено безповоротно.' });
-            }
-            return res.json({ require_restore: true, message: 'Акаунт в процесі видалення. Бажаєте відновити?', user: { id: user.id, username: user.username, status: user.status } });
-        }
-        const hasPassword = await User.hasPassword(req.user.id);
-        res.json({
-            id: user.id, username: user.username, slug: user.slug, email: user.email, avatar_url: user.avatar_url, role: user.role,
-            plan: user.plan || 'FREE', platform_theme_mode: user.platform_theme_mode, platform_theme_accent: user.platform_theme_accent,
-            platform_bg_url: user.platform_bg_url, platform_bg_blur: user.platform_bg_blur, platform_bg_brightness: user.platform_bg_brightness,
-            bio: user.bio, social_telegram: user.social_telegram, social_instagram: user.social_instagram, social_website: user.social_website,
-            is_profile_public: user.is_profile_public, phone_number: user.phone_number, created_at: user.created_at, 
-            last_login_at: user.last_login_at, has_password: hasPassword
-        });
-    } catch (error) {
-        next(error);
-    }
 };

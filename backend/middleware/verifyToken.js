@@ -14,8 +14,18 @@ const verifyToken = async (req, res, next) => {
         if (!user) {
             return res.status(401).json({ message: 'Користувача не знайдено.' });
         }
-        if (user.status === 'suspended' || user.status === 'deleted') {
-             return res.status(403).json({ message: 'Доступ заблоковано. Ваш акаунт деактивовано.' });
+        if (user.status === 'suspended') {
+             return res.status(403).json({ message: 'Доступ заблоковано. Ваш акаунт деактивовано.', code: 'ACCOUNT_SUSPENDED' });
+        }
+        if (user.status === 'deleted') {
+            const isRestoreRoute = req.originalUrl.includes('/restore');
+            const isMeRoute = req.originalUrl.match(/\/(auth|users)\/me/);
+            if (!isRestoreRoute && !isMeRoute) {
+                return res.status(403).json({ 
+                    message: 'Акаунт видалено. Необхідно відновити.', 
+                    code: 'ACCOUNT_DELETED' 
+                });
+            }
         }
         if (decoded.token_version !== undefined && user.token_version !== decoded.token_version) {
             return res.status(401).json({ message: 'Сесія застаріла через зміну пароля або налаштувань безпеки. Будь ласка, увійдіть знову.' });

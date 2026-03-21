@@ -95,16 +95,19 @@ const CreateSitePage = () => {
         const data = getTemplatePreviewData(manager.selectedTemplate);
         return data || { pages: [], theme: { mode: 'light', accent: 'blue' }, header: [], footer: [], siteData: {} };
     }, [manager.selectedTemplate]);
+
     useEffect(() => {
         if (previewData.pages.length > 0) {
             const hasHomePage = previewData.pages.find(p => p.slug === 'home');
             setCurrentPreviewSlug(hasHomePage ? 'home' : (previewData.pages[0]?.slug || 'home'));
         }
     }, [manager.selectedTemplateId, previewData.pages]);
+
     const currentBlocks = useMemo(() => {
         const page = previewData.pages.find(p => p.slug === currentPreviewSlug);
         return page ? (page.blocks || []) : [];
     }, [previewData.pages, currentPreviewSlug]);
+
     const effectiveLogo = customLogo || defaultRandomLogo;
     const handleTitleChange = (e) => {
         const { val, error } = validateSiteTitle(e.target.value);
@@ -146,6 +149,7 @@ const CreateSitePage = () => {
         if (path.includes('/assets/') || path.includes('/src/') || path.includes('@fs')) return path;
         return `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
     };
+
     const containerStyle = { position: 'absolute', inset: 0, display: 'flex', overflow: 'hidden', background: 'var(--platform-bg)' };
     if (isLoadingMeta || manager.isLoading) return <div style={{...containerStyle, alignItems: 'center', justifyContent: 'center'}}><LoadingState title="Завантаження даних..." layout="page" /></div>;
     const isFormReady = !isLimitReached && formData.title.trim().length >= 2 && !titleError && formData.slug && slugStatus === 'available' && !slugError;
@@ -200,12 +204,12 @@ const CreateSitePage = () => {
                                     <label className="mb-3 font-semibold text-(--platform-text-primary) text-sm flex items-center gap-2"><Sparkles size={18} className="text-(--platform-accent)" /> Логотип</label>
                                     <UniversalMediaInput type="image" value={customLogo} onChange={setCustomLogo} aspect={1} circularCrop={true} triggerStyle={{ width: '100%', border: 'none', background: 'transparent', padding: 0 }}>
                                         {customLogo ? (
-                                            <div className="relative group w-32 h-32 mx-auto rounded-xl border border-(--platform-border-color) bg-(--platform-bg) flex items-center justify-center overflow-hidden cursor-pointer hover:border-(--platform-accent) transition-all shadow-sm">
+                                            <div key="custom-logo" className="relative group w-32 h-32 mx-auto rounded-xl border border-(--platform-border-color) bg-(--platform-bg) flex items-center justify-center overflow-hidden cursor-pointer hover:border-(--platform-accent) transition-colors shadow-sm">
                                                 <img src={getFullUrl(customLogo)} alt="Custom Logo" className="w-full h-full object-contain p-2" />
                                                 <button onClick={(e) => { e.stopPropagation(); setCustomLogo(null); }} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md" title="Видалити та повернути стандартний"><Trash size={14} /></button>
                                             </div>
                                         ) : (
-                                            <div className="w-full h-32 border-2 border-dashed border-(--platform-border-color) rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-(--platform-accent) hover:bg-gray-50/50 dark:hover:bg-white/5 transition-all group bg-(--platform-bg)">
+                                            <div key="default-logo" className="w-full h-32 border-2 border-dashed border-(--platform-border-color) rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-(--platform-accent) hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors group bg-(--platform-bg)">
                                                 <div className="w-12 h-12 opacity-50 grayscale group-hover:grayscale-0 transition-all flex items-center justify-center">
                                                      {defaultRandomLogo ? (<img src={getFullUrl(defaultRandomLogo)} className="w-full h-full object-contain" alt="Default" />) : (<Image size={40} className="text-gray-400" />)}
                                                 </div>

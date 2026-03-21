@@ -1,5 +1,5 @@
 // frontend/src/modules/admin/pages/AdminDashboardPage.jsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../../../shared/api/api';
@@ -7,6 +7,7 @@ import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import AdminPageLayout from '../components/AdminPageLayout';
 import AdminLogsPage from '../components/AdminLogsPage'; 
 import LoadingState from '../../../shared/ui/complex/LoadingState';
+import { AuthContext } from '../../../app/providers/AuthContext';
 import { Users, Globe, AlertTriangle, MessageSquare, LayoutDashboard, TrendingUp, BarChart2, ArrowUpRight, ArrowDownRight, Calendar, Activity, Zap, Check, Ban, Lock, EyeOff, Shield, Archive, CheckCircle } from 'lucide-react';
 
 const GRAPH_TYPE_OPTIONS = [
@@ -74,7 +75,7 @@ const StatusBadge = ({ label, icon: Icon, colorVar }) => {
 
 const renderStatusBadge = (type, statusInfo) => {
     if (type === 'site_create') {
-        const status = statusInfo || 'draft';
+        const status = statusInfo || 'maintenance';
         switch (status) {
             case 'published':
                 return <StatusBadge label="Published" icon={Globe} colorVar="--platform-success" />;
@@ -84,9 +85,9 @@ const renderStatusBadge = (type, statusInfo) => {
                 return <StatusBadge label="Probation" icon={Shield} colorVar="--platform-warning" />;
             case 'private':
                 return <StatusBadge label="Private" icon={Lock} colorVar="--platform-text-secondary" />;
-            case 'draft':
+            case 'maintenance':
             default:
-                return <StatusBadge label="Draft" icon={EyeOff} colorVar="--platform-text-secondary" />;
+                return <StatusBadge label="Maintenance" icon={EyeOff} colorVar="--platform-text-secondary" />;
         }
     }
     if (type === 'user_register') {
@@ -316,9 +317,11 @@ const LogItem = ({ log }) => {
 const AdminDashboardPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useContext(AuthContext);
+    const isAdmin = user?.role === 'admin';
     const [activeTab, setActiveTab] = useState(() => {
         const params = new URLSearchParams(location.search);
-        return params.get('tab') === 'admins' ? 'admins' : 'overview';
+        return params.get('tab') === 'logs' && isAdmin ? 'logs' : 'overview';
     });
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -326,6 +329,7 @@ const AdminDashboardPage = () => {
     const [graphType, setGraphType] = useState('users');
     const [logTypeFilter, setLogTypeFilter] = useState('all');
     const [logSortOrder, setLogSortOrder] = useState('newest');
+    const [logsRefreshCounter, setLogsRefreshCounter] = useState(0);
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         if (params.get('tab') !== activeTab) {
@@ -348,7 +352,6 @@ const AdminDashboardPage = () => {
             setLoading(false);
         }
     }, [period, graphType, activeTab]);
-
     useEffect(() => {
         fetchData();
     }, [fetchData]);
@@ -375,26 +378,34 @@ const AdminDashboardPage = () => {
     return (
         <AdminPageLayout 
             title="Дашборд" 
-            icon={LayoutDashboard} 
+            icon={LayoutDashboard}
             onRefresh={() => {
-                if (activeTab === 'overview') fetchData(true);
+                if (activeTab === 'overview') {
+                    fetchData(true);
+                } else if (activeTab === 'logs') {
+                    setLogsRefreshCounter(prev => prev + 1);
+                    toast.success('Логи оновлено');
+                }
             }} 
             loading={loading && activeTab === 'overview'}
         >
-            <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-fit mb-6">
-                <button
-                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'overview' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
-                    onClick={() => setActiveTab('overview')}
-                >
-                    <LayoutDashboard size={16} /> Огляд
-                </button>
-                <button
-                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'admins' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
-                    onClick={() => setActiveTab('admins')}
-                >
-                    <Shield size={16} /> Адміністратори
-                </button>
-            </div>
+            {isAdmin && (
+                <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-fit mb-6">
+                    <button
+                        className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'overview' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                        onClick={() => setActiveTab('overview')}
+                    >
+                        <LayoutDashboard size={16} /> Огляд
+                    </button>
+                    
+                    <button
+                        className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'logs' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                        onClick={() => setActiveTab('logs')}
+                    >
+                        <Shield size={16} /> Логи дій
+                    </button>
+                </div>
+            )}
             <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
                 {activeTab === 'overview' ? (
                     <div 
@@ -485,16 +496,16 @@ const AdminDashboardPage = () => {
                             </div>
                         </div>
                     </div>
-                ) : (
+                ) : activeTab === 'logs' && isAdmin ? (
                     <div style={{ 
                         display: 'flex', 
                         flexDirection: 'column', 
                         height: '100%', 
                         paddingBottom: '24px' 
                     }}>
-                        <AdminLogsPage />
+                        <AdminLogsPage key={logsRefreshCounter} />
                     </div>
-                )}
+                ) : null}
             </div>
         </AdminPageLayout>
     );

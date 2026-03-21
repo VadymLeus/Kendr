@@ -126,12 +126,10 @@ const AdminTicketsReportsPage = () => {
     };
     const currentLoading = activeTab === 'tickets' ? ticketsData.loading : reportsData.loading;
     const currentRefresh = activeTab === 'tickets' ? ticketsData.refresh : reportsData.refresh;
-    const currentCount = activeTab === 'tickets' ? processedTickets.length : processedReports.length;
     return (
         <AdminPageLayout 
             title="Підтримка та Скарги" 
             icon={MessageSquare} 
-            count={currentCount} 
             onRefresh={currentRefresh} 
             loading={currentLoading}
         >
@@ -149,7 +147,6 @@ const AdminTicketsReportsPage = () => {
                     <ShieldAlert size={16} /> Скарги
                 </button>
             </div>
-            
             {activeTab === 'tickets' && (
                 <>
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>

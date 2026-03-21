@@ -1,5 +1,4 @@
-// frontend/src/shared/ui/elements/Button.jsx
-
+// frontend/src/shared/ui/elements/DateRangePicker.jsx
 import React from 'react';
 import { Calendar, ArrowRight, X } from 'lucide-react';
 

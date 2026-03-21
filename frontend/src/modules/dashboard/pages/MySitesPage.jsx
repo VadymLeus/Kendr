@@ -4,7 +4,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { useConfirm } from '../../../shared/hooks/useConfirm';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import SiteGridCard from '../../../shared/ui/complex/SiteGridCard';
 import EmptyState from '../../../shared/ui/complex/EmptyState';
@@ -35,7 +34,6 @@ const MySitesPage = () => {
     const [limits, setLimits] = useState(null);
     const { user, plan } = useContext(AuthContext);
     const navigate = useNavigate();
-    const { confirm } = useConfirm();
     const searchTimeoutRef = useRef(null);
     useEffect(() => {
         if (!user) { navigate('/login'); return; }
@@ -47,6 +45,7 @@ const MySitesPage = () => {
             .then(res => setLimits(res.data))
             .catch(console.error);
     }, [user, navigate]);
+
     const fetchMySites = async () => {
         try {
             setLoading(true);
@@ -67,34 +66,37 @@ const MySitesPage = () => {
             setLoading(false); 
         }
     };
+
     useEffect(() => {
         if (!user) return;
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
         searchTimeoutRef.current = setTimeout(() => { fetchMySites(); }, 500);
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm, selectedTag, sortOption, user]);
+
     const handleSearchSubmit = () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); fetchMySites(); };
     const handleLoadMore = () => setVisibleCount(prev => prev + ITEMS_PER_PAGE);
     const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const handleDeleteSite = async (e, sitePath, siteTitle) => {
-        if (await confirm({ title: "Видалення", message: `Видалити "${siteTitle}"?`, type: "danger" })) {
-            try {
-                await apiClient.delete(`/sites/${sitePath}`);
-                setSites(prev => prev.filter(s => s.site_path !== sitePath));
-                setTotalSiteCount(prev => Math.max(0, prev - 1));
-                toast.success('Видалено!');
-            } catch (err) { toast.error('Помилка'); }
+        try {
+            await apiClient.delete(`/sites/${sitePath}`);
+            setSites(prev => prev.filter(s => s.site_path !== sitePath));
+            setTotalSiteCount(prev => Math.max(0, prev - 1));
+            toast.success('Видалено!');
+        } catch (err) { 
+            toast.error('Помилка при видаленні'); 
         }
     };
 
     const handleStatusChange = async (site, requestedStatus) => {
         try {
-            const newStatus = requestedStatus || (site.status === 'published' ? 'draft' : 'published');
+            const newStatus = requestedStatus || (site.status === 'published' ? 'maintenance' : 'published');
             await apiClient.put(`/sites/${site.site_path}/settings`, { status: newStatus });
             setSites(prev => prev.map(s => s.id === site.id ? { ...s, status: newStatus } : s));
+            
             if (newStatus === 'private') toast.success('Сайт приховано');
             else if (newStatus === 'published') toast.success('Сайт опубліковано');
-            else toast.success('Сайт перенесено в чернетки');
+            else toast.success('Сайт переведено в режим обслуговування');
         } catch (err) { 
             console.error(err);
             if (err.response && err.response.status === 403) {
@@ -111,6 +113,7 @@ const MySitesPage = () => {
             setSites(prev => prev.map(s => s.id === siteId ? { ...s, is_pinned: res.data.is_pinned } : s));
         } catch (error) { toast.error('Помилка'); }
     };
+
     const safeSites = Array.isArray(sites) ? sites : [];
     const filteredSites = safeSites.filter(s => onlyPinned ? s.is_pinned : true)
         .sort((a, b) => (a.is_pinned === b.is_pinned ? 0 : a.is_pinned ? -1 : 1));

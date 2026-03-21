@@ -15,26 +15,50 @@ import apiClient, { suspendUser, restoreUser } from '../../../shared/api/api';
 import { useDataList } from '../../../shared/hooks/useDataList';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { exportToCsv } from '../../../shared/utils/exportToCsv';
-import { Users, Settings, Layout, AlertTriangle, Smartphone, CheckCircle, Search, Ban, Globe, ShieldAlert, Clock, Minus, Inbox, Eye, UserX, Zap } from 'lucide-react';
+import { Users, User, Settings, Layout, AlertTriangle, Smartphone, CheckCircle, Search, Ban, Globe, ShieldAlert, Clock, Minus, Inbox, Eye, UserX, Zap, Shield, Lock, Construction, Pause } from 'lucide-react';
 
 const STATUS_OPTIONS = [
     { value: 'all', label: 'Всі', icon: Inbox }, 
-    { value: 'published', label: 'Активні', icon: CheckCircle },
-    { value: 'probation', label: 'Модерація', icon: ShieldAlert }, 
-    { value: 'suspended', label: 'Заблоковані', icon: Ban }, 
-    { value: 'draft', label: 'Чернетки', icon: Clock }
+    { value: 'published', label: 'Опубліковано', icon: Globe },
+    { value: 'private', label: 'Прихований', icon: Lock },
+    { value: 'probation', label: 'На модерації', icon: AlertTriangle }, 
+    { value: 'suspended', label: 'Призупинено', icon: Pause }, 
+    { value: 'maintenance', label: 'Тех. Роботи', icon: Construction }
+];
+
+const ROLE_OPTIONS = [
+    { value: 'all', label: 'Всі ролі', icon: Users },
+    { value: 'user', label: 'Користувачі', icon: User },
+    { value: 'moderator', label: 'Модератори', icon: Shield },
+    { value: 'admin', label: 'Адміністратори', icon: Zap }
+];
+
+const PLAN_OPTIONS = [
+    { value: 'all', label: 'Всі тарифи', icon: Inbox },
+    { value: 'FREE', label: 'FREE', icon: User },
+    { value: 'PLUS', label: 'PLUS', icon: Zap },
+    { value: 'ADMIN', label: 'ADMIN', icon: Shield }
 ];
 
 const STATUS_CONFIG = {
-    published: { bg: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)', label: 'Активний', icon: CheckCircle },
-    suspended: { bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)', label: 'Заблоковано', icon: Ban },
-    probation: { bg: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', color: 'var(--platform-warning)', label: 'Модерація', icon: ShieldAlert },
-    draft: { bg: 'var(--platform-hover-bg)', color: 'var(--platform-text-secondary)', label: 'Чернетка', icon: Clock }
+    published: { bg: 'rgba(56, 161, 105, 0.1)', color: '#38a169', label: 'Опубліковано', icon: Globe },
+    private: { bg: 'rgba(128, 90, 213, 0.1)', color: '#805ad5', label: 'Прихований', icon: Lock },
+    suspended: { bg: 'rgba(229, 62, 62, 0.1)', color: '#e53e3e', label: 'Призупинено', icon: Pause },
+    probation: { bg: 'rgba(214, 158, 46, 0.1)', color: '#d69e2e', label: 'На модерації', icon: AlertTriangle },
+    maintenance: { bg: 'rgba(214, 158, 46, 0.1)', color: '#d69e2e', label: 'Тех. Роботи', icon: Construction }
+};
+
+const getCurrentUser = () => {
+    try {
+        const user = localStorage.getItem('user') || localStorage.getItem('auth_user');
+        return user ? JSON.parse(user) : { role: 'moderator' }; 
+    } catch { return { role: 'moderator' }; }
 };
 
 const AdminUsersSitesPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const currentUser = useMemo(() => getCurrentUser(), []);
     const [activeTab, setActiveTab] = useState(() => {
         const params = new URLSearchParams(location.search);
         return params.get('tab') === 'sites' ? 'sites' : 'users';
@@ -51,12 +75,20 @@ const AdminUsersSitesPage = () => {
     const [hideSuspendedUsers, setHideSuspendedUsers] = useState(true);
     const [userStartDate, setUserStartDate] = useState('');
     const [userEndDate, setUserEndDate] = useState('');
-    const usersData = useDataList('/admin/users', ['username', 'email', 'id', 'phone_number', 'slug', 'plan']);
+    const [userRoleFilter, setUserRoleFilter] = useState('all');
+    const [userPlanFilter, setUserPlanFilter] = useState('all');
+    const usersData = useDataList('/admin/users', ['username', 'email', 'id', 'phone_number', 'slug', 'plan', 'role']);
     const { confirm } = useConfirm();
     const processedUsers = useMemo(() => {
         let res = [...usersData.filteredData];
         if (hideSuspendedUsers) {
             res = res.filter(u => u.status !== 'suspended');
+        }
+        if (userRoleFilter !== 'all') {
+            res = res.filter(u => (u.role || 'user') === userRoleFilter);
+        }
+        if (userPlanFilter !== 'all') {
+            res = res.filter(u => (u.plan || 'FREE') === userPlanFilter);
         }
         if (userStartDate) {
             const start = new Date(`${userStartDate}T00:00:00`);
@@ -71,7 +103,7 @@ const AdminUsersSitesPage = () => {
             const valB = b[userSort.key] || '';
             return (valA < valB ? -1 : 1) * (userSort.direction === 'asc' ? 1 : -1);
         });
-    }, [usersData.filteredData, userSort, hideSuspendedUsers, userStartDate, userEndDate]);
+    }, [usersData.filteredData, userSort, hideSuspendedUsers, userRoleFilter, userPlanFilter, userStartDate, userEndDate]);
     const handleUserSort = (key) => setUserSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const handleDeleteUser = (userId) => {
         confirm({ 
@@ -88,10 +120,11 @@ const AdminUsersSitesPage = () => {
                     toast.success('Користувача видалено'); 
                     setSelectedUser(null); 
                     usersData.refresh(); 
-                } catch { toast.error('Помилка видалення'); } 
+                } catch(error) { toast.error(error.response?.data?.message || 'Помилка видалення'); } 
             } 
         });
     };
+
     const handleSuspendUser = (userId) => {
         confirm({ 
             title: 'Заблокувати назавжди?', 
@@ -131,6 +164,7 @@ const AdminUsersSitesPage = () => {
             } 
         });
     };
+
     const handleExportUsers = () => {
         if (!processedUsers?.length) return toast.info('Немає даних');
         exportToCsv(processedUsers.map(u => ({
@@ -147,12 +181,16 @@ const AdminUsersSitesPage = () => {
     };
     const [selectedSite, setSelectedSite] = useState(null);
     const [siteStatusFilter, setSiteStatusFilter] = useState('all');
+    const [siteRoleFilter, setSiteRoleFilter] = useState('all');
     const [siteStartDate, setSiteStartDate] = useState('');
     const [siteEndDate, setSiteEndDate] = useState('');
     const [siteSort, setSiteSort] = useState({ key: 'created_at', direction: 'desc' });
     const sitesData = useDataList('/admin/sites', ['title', 'site_path', 'author', 'author_email']);
     const processedSites = useMemo(() => {
         let res = siteStatusFilter !== 'all' ? sitesData.filteredData.filter(s => s.status === siteStatusFilter) : [...sitesData.filteredData];
+        if (siteRoleFilter !== 'all') {
+            res = res.filter(s => (s.owner_role || 'user') === siteRoleFilter);
+        }
         if (siteStartDate) {
             const start = new Date(`${siteStartDate}T00:00:00`);
             res = res.filter(s => new Date(s.created_at) >= start);
@@ -162,7 +200,7 @@ const AdminUsersSitesPage = () => {
             res = res.filter(s => new Date(s.created_at) <= end);
         }
         return res.sort((a, b) => (a[siteSort.key] < b[siteSort.key] ? -1 : 1) * (siteSort.direction === 'asc' ? 1 : -1));
-    }, [sitesData.filteredData, siteStatusFilter, siteSort, siteStartDate, siteEndDate]);
+    }, [sitesData.filteredData, siteStatusFilter, siteRoleFilter, siteSort, siteStartDate, siteEndDate]);
     const handleSiteSort = (key) => setSiteSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const handleSiteAction = async (fn) => { 
         try { 
@@ -170,8 +208,9 @@ const AdminUsersSitesPage = () => {
             toast.success(res?.data?.message || 'Успішно'); 
             setSelectedSite(null); 
             sitesData.refresh(); 
-        } catch { console.error('Error'); } 
+        } catch(error) { toast.error(error.response?.data?.message || 'Помилка'); } 
     };
+
     const siteActions = {
         suspend: (path) => confirm({ 
             title: 'Призупинити сайт?', 
@@ -231,12 +270,10 @@ const AdminUsersSitesPage = () => {
     };
     const currentDataLoading = activeTab === 'users' ? usersData.loading : sitesData.loading;
     const currentDataRefresh = activeTab === 'users' ? usersData.refresh : sitesData.refresh;
-    const currentCount = activeTab === 'users' ? processedUsers.length : processedSites.length;
     return (
         <AdminPageLayout 
             title="Користувачі / Сайти" 
             icon={Users} 
-            count={currentCount} 
             viewMode={viewMode} 
             setViewMode={setViewMode} 
             onRefresh={currentDataRefresh} 
@@ -259,7 +296,27 @@ const AdminUsersSitesPage = () => {
             {activeTab === 'users' && (
                 <>
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                        <FilterBar>
+                        <FilterBar style={{ flexWrap: 'wrap' }}>
+                            <div style={{ width: '160px' }}>
+                                <CustomSelect 
+                                    value={userRoleFilter} 
+                                    onChange={(e) => setUserRoleFilter(e.target.value)} 
+                                    options={ROLE_OPTIONS} 
+                                    variant="minimal" 
+                                    placeholder="Роль" 
+                                    style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                                />
+                            </div>
+                            <div style={{ width: '160px' }}>
+                                <CustomSelect 
+                                    value={userPlanFilter} 
+                                    onChange={(e) => setUserPlanFilter(e.target.value)} 
+                                    options={PLAN_OPTIONS} 
+                                    variant="minimal" 
+                                    placeholder="Тариф" 
+                                    style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                                />
+                            </div>
                             <DateRangePicker 
                                 startDate={userStartDate}
                                 endDate={userEndDate}
@@ -290,8 +347,8 @@ const AdminUsersSitesPage = () => {
                             <colgroup>
                                 <col style={{width: '60px'}} />
                                 <col style={{width: '18%'}} />
-                                <col style={{width: '12%'}} />
-                                <col style={{width: '18%'}} />
+                                <col style={{width: '10%'}} />
+                                <col style={{width: '16%'}} />
                                 <col style={{width: '10%'}} />
                                 <col style={{width: '12%'}} />
                                 <col style={{width: '10%'}} />
@@ -302,7 +359,7 @@ const AdminUsersSitesPage = () => {
                                 <tr>
                                     <AdminTh label="ID" sortKey="id" currentSort={userSort} onSort={handleUserSort} />
                                     <AdminTh label="Користувач" sortKey="username" currentSort={userSort} onSort={handleUserSort} />
-                                    <AdminTh label="Slug" sortKey="slug" currentSort={userSort} onSort={handleUserSort} />
+                                    <AdminTh label="Роль" sortKey="role" currentSort={userSort} onSort={handleUserSort} />
                                     <AdminTh label="Email" sortKey="email" currentSort={userSort} onSort={handleUserSort} />
                                     <AdminTh label="Тариф" sortKey="plan" currentSort={userSort} onSort={handleUserSort} />
                                     <AdminTh label="Телефон" sortKey="phone_number" currentSort={userSort} onSort={handleUserSort} />
@@ -312,91 +369,96 @@ const AdminUsersSitesPage = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {usersData.loading ? <LoadingRow cols={9} /> : !processedUsers.length ? <EmptyRow cols={9} /> : processedUsers.map(u => (
-                                    <AdminRow key={u.id} onClick={() => setSelectedUser(u)} isSelected={selectedUser?.id === u.id}>
-                                        <AdminCell style={{opacity: 0.6}}>#{u.id}</AdminCell>
-                                        <AdminCell>
-                                            <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                                                <div onClick={(e)=>{e.stopPropagation(); if(u.status !== 'suspended') navigate(`/profile/${u.slug || u.username}`)}} className="hover:opacity-80 cursor-pointer">
-                                                    <Avatar url={u.avatar_url} name={u.username} size={36} />
-                                                </div>
-                                                <div>
+                                {usersData.loading ? <LoadingRow cols={9} /> : !processedUsers.length ? <EmptyRow cols={9} /> : processedUsers.map(u => {
+                                    const isClickable = u.status !== 'suspended' && u.role !== 'admin' && u.role !== 'moderator';
+                                    
+                                    return (
+                                        <AdminRow key={u.id} onClick={() => setSelectedUser(u)} isSelected={selectedUser?.id === u.id}>
+                                            <AdminCell style={{opacity: 0.6}}>#{u.id}</AdminCell>
+                                            <AdminCell>
+                                                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
                                                     <div 
-                                                        onClick={(e) => { e.stopPropagation(); if (u.status !== 'suspended') navigate(`/profile/${u.slug || u.username}`); }}
-                                                        style={{
-                                                            fontWeight: '600', 
-                                                            color: u.status === 'suspended' ? 'var(--platform-danger)' : 'var(--platform-text-primary)',
-                                                            cursor: u.status === 'suspended' ? 'default' : 'pointer',
-                                                            transition: 'color 0.2s',
-                                                            display: 'inline-block'
-                                                        }}
-                                                        onMouseEnter={e => { if(u.status !== 'suspended') e.currentTarget.style.color = 'var(--platform-accent)' }}
-                                                        onMouseLeave={e => { if(u.status !== 'suspended') e.currentTarget.style.color = 'var(--platform-text-primary)' }}
+                                                        onClick={(e) => { e.stopPropagation(); if(isClickable) navigate(`/profile/${u.slug || u.username}`)}} 
+                                                        className={isClickable ? "hover:opacity-80 cursor-pointer" : ""}
                                                     >
-                                                        {u.username}
+                                                        <Avatar url={u.avatar_url} name={u.username} size={36} />
                                                     </div>
-                                                    {u.status === 'suspended' && <span style={{marginLeft: '8px', fontSize: '10px', background: 'var(--platform-danger)', color: 'white', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle', fontWeight: 'bold'}}>BLOCKED</span>}
-                                                    {u.is_verified && u.status !== 'suspended' && <div style={{fontSize: '11px', color: 'var(--platform-success)', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px'}}><CheckCircle size={10}/> Verified</div>}
-                                                </div>
-                                            </div>
-                                        </AdminCell>
-                                        <AdminCell>
-                                            <div style={{fontSize: '13px', fontFamily: u.slug ? 'monospace' : 'inherit'}}>
-                                                {u.slug ? <span style={{color: 'var(--platform-text-secondary)'}}>@{u.slug}</span> : <span style={{opacity: 0.5}}>-</span>}
-                                            </div>
-                                        </AdminCell>
-                                        <AdminCell>
-                                            <div style={{fontSize: '13px'}}>
-                                                <div style={{textDecoration: u.status === 'suspended' ? 'line-through' : 'none', opacity: u.status === 'suspended' ? 0.5 : 1}}>{u.email}</div>
-                                            </div>
-                                        </AdminCell>
-                                        <AdminCell>
-                                            <div style={{
-                                                fontSize: '11px', 
-                                                fontWeight: 'bold', 
-                                                padding: '2px 8px', 
-                                                borderRadius: '12px', 
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                                backgroundColor: u.plan === 'PLUS' ? 'var(--platform-accent)' : 'var(--platform-bg)',
-                                                color: u.plan === 'PLUS' ? '#fff' : 'var(--platform-text-secondary)',
-                                                border: u.plan === 'PLUS' ? 'none' : '1px solid var(--platform-border-color)'
-                                            }}>
-                                                {u.plan === 'PLUS' && <Zap size={10} />}
-                                                {u.plan || 'FREE'}
-                                            </div>
-                                        </AdminCell>
-                                        <AdminCell>
-                                            <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px'}}>
-                                                {u.phone_number ? <><Smartphone size={12}/> {u.phone_number}</> : <span style={{opacity: 0.5}}>-</span>}
-                                            </div>
-                                        </AdminCell>
-                                        <AdminCell>
-                                            <div style={{display: 'flex', gap: '16px'}}>
-                                                <div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px'}}>
-                                                    <Layout size={14} color="var(--platform-text-secondary)" /> {u.status === 'suspended' ? 0 : u.site_count}
-                                                </div>
-                                                {u.warning_count > 0 && (
-                                                    <div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--platform-danger)'}}>
-                                                        <AlertTriangle size={14} /> {u.warning_count}
+                                                    <div>
+                                                        <div 
+                                                            onClick={(e) => { e.stopPropagation(); if (isClickable) navigate(`/profile/${u.slug || u.username}`); }}
+                                                            style={{
+                                                                fontWeight: '600', 
+                                                                color: u.status === 'suspended' ? 'var(--platform-danger)' : 'var(--platform-text-primary)',
+                                                                cursor: isClickable ? 'pointer' : 'default',
+                                                                transition: 'color 0.2s',
+                                                                display: 'inline-block'
+                                                            }}
+                                                            onMouseEnter={e => { if(isClickable) e.currentTarget.style.color = 'var(--platform-accent)' }}
+                                                            onMouseLeave={e => { if(isClickable) e.currentTarget.style.color = 'var(--platform-text-primary)' }}
+                                                        >
+                                                            {u.username}
+                                                            {u.role === 'admin' && <span style={{marginLeft:'4px', color:'var(--platform-danger)'}} title="Адміністратор">★</span>}
+                                                            {u.role === 'moderator' && <span style={{marginLeft:'4px', color:'var(--platform-warning)'}} title="Модератор">✦</span>}
+                                                        </div>
+                                                        {u.status === 'suspended' && <span style={{marginLeft: '8px', fontSize: '10px', background: 'var(--platform-danger)', color: 'white', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle', fontWeight: 'bold'}}>BLOCKED</span>}
                                                     </div>
+                                                </div>
+                                            </AdminCell>
+                                            <AdminCell>
+                                                <div style={{
+                                                    fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', 
+                                                    color: u.role === 'admin' ? 'var(--platform-danger)' : u.role === 'moderator' ? 'var(--platform-warning)' : 'var(--platform-text-secondary)'
+                                                }}>
+                                                    {u.role === 'admin' ? 'Адмін' : u.role === 'moderator' ? 'Модератор' : 'Користувач'}
+                                                </div>
+                                            </AdminCell>
+                                            <AdminCell>
+                                                <div style={{fontSize: '13px'}}>
+                                                    <div style={{textDecoration: u.status === 'suspended' ? 'line-through' : 'none', opacity: u.status === 'suspended' ? 0.5 : 1}}>{u.email}</div>
+                                                </div>
+                                            </AdminCell>
+                                            <AdminCell>
+                                                <div style={{
+                                                    fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                                    backgroundColor: u.plan === 'PLUS' ? 'var(--platform-accent)' : 'var(--platform-bg)',
+                                                    color: u.plan === 'PLUS' ? '#fff' : 'var(--platform-text-secondary)',
+                                                    border: u.plan === 'PLUS' ? 'none' : '1px solid var(--platform-border-color)'
+                                                }}>
+                                                    {u.plan === 'PLUS' && <Zap size={10} />}
+                                                    {u.plan || 'FREE'}
+                                                </div>
+                                            </AdminCell>
+                                            <AdminCell>
+                                                <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                                                    {u.phone_number ? <><Smartphone size={12}/> {u.phone_number}</> : <span style={{opacity: 0.5}}>-</span>}
+                                                </div>
+                                            </AdminCell>
+                                            <AdminCell>
+                                                <div style={{display: 'flex', gap: '16px'}}>
+                                                    <div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px'}}>
+                                                        <Layout size={14} color="var(--platform-text-secondary)" /> {u.status === 'suspended' ? 0 : u.site_count}
+                                                    </div>
+                                                    {u.warning_count > 0 && (
+                                                        <div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--platform-danger)'}}>
+                                                            <AlertTriangle size={14} /> {u.warning_count}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </AdminCell>
+                                            <AdminCell>
+                                                <div style={{fontSize: '13px', color: 'var(--platform-text-primary)'}}>Реєстрація: {new Date(u.created_at).toLocaleDateString()}</div>
+                                                {u.last_login_at ? (
+                                                    <div style={{fontSize: '12px', color: 'var(--platform-text-secondary)', marginTop: '2px'}}>Вхід: {new Date(u.last_login_at).toLocaleDateString()}</div>
+                                                ) : (
+                                                    <div style={{fontSize: '12px', color: 'var(--platform-text-secondary)', marginTop: '2px'}}>Вхід: Ніколи</div>
                                                 )}
-                                            </div>
-                                        </AdminCell>
-                                        <AdminCell>
-                                            <div style={{fontSize: '13px', color: 'var(--platform-text-primary)'}}>Реєстрація: {new Date(u.created_at).toLocaleDateString()}</div>
-                                            {u.last_login_at ? (
-                                                <div style={{fontSize: '12px', color: 'var(--platform-text-secondary)', marginTop: '2px'}}>Вхід: {new Date(u.last_login_at).toLocaleDateString()}</div>
-                                            ) : (
-                                                <div style={{fontSize: '12px', color: 'var(--platform-text-secondary)', marginTop: '2px'}}>Вхід: Ніколи</div>
-                                            )}
-                                        </AdminCell>
-                                        <AdminCell align="right" style={{overflow: 'visible'}}>
-                                            <Button variant="ghost" style={{padding: '6px'}}><Settings size={18} color="var(--platform-text-secondary)" /></Button>
-                                        </AdminCell>
-                                    </AdminRow>
-                                ))}
+                                            </AdminCell>
+                                            <AdminCell align="right" style={{overflow: 'visible'}}>
+                                                <Button variant="ghost" style={{padding: '6px'}}><Settings size={18} color="var(--platform-text-secondary)" /></Button>
+                                            </AdminCell>
+                                        </AdminRow>
+                                    );
+                                })}
                             </tbody>
                         </AdminTable>
                     ) : <div style={{ padding: '40px', textAlign: 'center', color: 'var(--platform-text-secondary)' }}>Режим сітки в розробці</div>}
@@ -407,7 +469,24 @@ const AdminUsersSitesPage = () => {
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                         <FilterBar>
                             <div style={{ width: '180px' }}>
-                                <CustomSelect value={siteStatusFilter} onChange={(e) => setSiteStatusFilter(e.target.value)} options={STATUS_OPTIONS} variant="minimal" placeholder="Статус" style={{ height: '36px', background: 'var(--platform-card-bg)' }} />
+                                <CustomSelect 
+                                    value={siteStatusFilter} 
+                                    onChange={(e) => setSiteStatusFilter(e.target.value)} 
+                                    options={STATUS_OPTIONS} 
+                                    variant="minimal" 
+                                    placeholder="Статус" 
+                                    style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                                />
+                            </div>
+                            <div style={{ width: '180px' }}>
+                                <CustomSelect 
+                                    value={siteRoleFilter} 
+                                    onChange={(e) => setSiteRoleFilter(e.target.value)} 
+                                    options={ROLE_OPTIONS} 
+                                    variant="minimal" 
+                                    placeholder="Роль власника" 
+                                    style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                                />
                             </div>
                             <DateRangePicker 
                                 startDate={siteStartDate}
@@ -425,40 +504,46 @@ const AdminUsersSitesPage = () => {
                     {viewMode === 'list' ? (
                         <AdminTable>
                             <colgroup><col style={{width: '30%'}} /><col style={{width: '20%'}} /><col style={{width: '10%'}} /><col style={{width: '15%'}} /><col style={{width: '10%'}} /><col style={{width: '80px'}} /></colgroup>
-                            <thead><tr><AdminTh label="Назва" sortKey="title" currentSort={siteSort} onSort={handleSiteSort} /><AdminTh label="Автор" sortKey="author" currentSort={siteSort} onSort={handleSiteSort} /><AdminTh label="Перегляди" sortKey="view_count" currentSort={siteSort} onSort={handleSiteSort} /><AdminTh label="Статус" sortKey="status" currentSort={siteSort} onSort={handleSiteSort} /><AdminTh label="Апеляція" sortKey="appeal_status" currentSort={siteSort} onSort={handleSiteSort} align="center" /><AdminTh label="Дії" align="right" /></tr></thead>
+                            <thead><tr><AdminTh label="Назва" sortKey="title" currentSort={siteSort} onSort={handleSiteSort} /><AdminTh label="Власник" sortKey="author" currentSort={siteSort} onSort={handleSiteSort} /><AdminTh label="Перегляди" sortKey="view_count" currentSort={siteSort} onSort={handleSiteSort} /><AdminTh label="Статус" sortKey="status" currentSort={siteSort} onSort={handleSiteSort} /><AdminTh label="Апеляція" sortKey="appeal_status" currentSort={siteSort} onSort={handleSiteSort} align="center" /><AdminTh label="Дії" align="right" /></tr></thead>
                             <tbody>
                                 {sitesData.loading ? <LoadingRow cols={6} /> : !processedSites.length ? <EmptyRow cols={6} /> : processedSites.map(site => {
-                                    const st = STATUS_CONFIG[site.status] || STATUS_CONFIG.draft;
+                                    const st = STATUS_CONFIG[site.status] || STATUS_CONFIG.maintenance;
+                                    const isAuthorClickable = site.owner_role !== 'admin' && site.owner_role !== 'moderator';
                                     return (
                                         <AdminRow key={site.id} onClick={() => setSelectedSite(site)} isSelected={selectedSite?.id === site.id} style={{background: site.status === 'suspended' ? 'color-mix(in srgb, var(--platform-danger), transparent 98%)' : undefined}}>
                                             <AdminCell>
                                                 <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                                                    <Avatar url={site.logo_url} name={site.title} size={36} />
+                                                    <Avatar url={site.logo_url} name={site.title} size={42} />
                                                     <div>
-                                                        <div style={{fontWeight: '600', fontSize: '15px'}}>{site.title}</div>
+                                                        <div style={{fontSize: '15px', color: 'var(--platform-text-primary)', fontWeight: '500'}}>{site.title}</div>
                                                         <div style={{fontSize: '13px', color: 'var(--platform-accent)', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px'}}><Globe size={12}/> /{site.site_path}</div>
                                                     </div>
                                                 </div>
                                             </AdminCell>
                                             <AdminCell>
                                                 <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                                                    <div onClick={(e)=>{e.stopPropagation();navigate(`/profile/${site.author_slug || site.author}`)}} className="hover:opacity-80 cursor-pointer">
+                                                    <div 
+                                                        onClick={(e) => { e.stopPropagation(); if(isAuthorClickable) navigate(`/profile/${site.author_slug || site.author}`)}} 
+                                                        className={isAuthorClickable ? "hover:opacity-80 cursor-pointer" : ""}
+                                                    >
                                                         <Avatar url={site.author_avatar_url || site.avatar_url} name={site.author} size={36} />
                                                     </div>
                                                     <div style={{minWidth: 0}}>
                                                         <div 
-                                                            onClick={(e)=>{e.stopPropagation(); navigate(`/profile/${site.author_slug || site.author}`)}}
+                                                            onClick={(e)=>{e.stopPropagation(); if(isAuthorClickable) navigate(`/profile/${site.author_slug || site.author}`)}}
                                                             style={{
-                                                                fontWeight: '600',
-                                                                cursor: 'pointer',
-                                                                transition: 'color 0.2s',
-                                                                color: 'var(--platform-text-primary)',
+                                                                fontWeight: '600', 
+                                                                cursor: isAuthorClickable ? 'pointer' : 'default', 
+                                                                transition: 'color 0.2s', 
+                                                                color: 'var(--platform-text-primary)', 
                                                                 display: 'inline-block'
                                                             }}
-                                                            onMouseEnter={e => e.currentTarget.style.color = 'var(--platform-accent)'}
-                                                            onMouseLeave={e => e.currentTarget.style.color = 'var(--platform-text-primary)'}
+                                                            onMouseEnter={e => { if(isAuthorClickable) e.currentTarget.style.color = 'var(--platform-accent)' }}
+                                                            onMouseLeave={e => { if(isAuthorClickable) e.currentTarget.style.color = 'var(--platform-text-primary)' }}
                                                         >
                                                             {site.author}
+                                                            {site.owner_role === 'admin' && <span style={{marginLeft:'4px', color:'var(--platform-danger)'}} title="Адміністратор">★</span>}
+                                                            {site.owner_role === 'moderator' && <span style={{marginLeft:'4px', color:'var(--platform-warning)'}} title="Модератор">✦</span>}
                                                         </div>
                                                         <div style={{fontSize: '12px', opacity: 0.6}}>{site.author_email}</div>
                                                         {site.warning_count > 0 && <div style={{display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--platform-danger)', fontWeight: '600'}}><AlertTriangle size={10} /> {site.warning_count} страйк(ів)</div>}
@@ -477,8 +562,8 @@ const AdminUsersSitesPage = () => {
                     ) : <div style={{ padding: '40px', textAlign: 'center', color: 'var(--platform-text-secondary)' }}>Режим сітки в розробці</div>}
                 </>
             )}
-            <UserDetailsPanel user={selectedUser} onClose={() => setSelectedUser(null)} onDelete={handleDeleteUser} onSuspend={handleSuspendUser} onRestore={handleRestoreUser} />
-            <SiteDetailsPanel site={selectedSite} onClose={() => setSelectedSite(null)} actions={siteActions} />
+            <UserDetailsPanel currentUser={currentUser} user={selectedUser} onClose={() => setSelectedUser(null)} onDelete={handleDeleteUser} onSuspend={handleSuspendUser} onRestore={handleRestoreUser} />
+            <SiteDetailsPanel currentUser={currentUser} site={selectedSite} onClose={() => setSelectedSite(null)} actions={siteActions} />
         </AdminPageLayout>
     );
 };

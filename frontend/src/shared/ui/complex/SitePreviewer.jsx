@@ -16,7 +16,6 @@ const SitePreviewer = ({
     userTitle = "",
     userLogo = ""
 }) => {
-
     const blockInput = (e) => { e.preventDefault(); e.stopPropagation(); };
     const simulatedSiteData = useMemo(() => {
         const baseSettings = previewData?.siteData || {};
@@ -35,7 +34,7 @@ const SitePreviewer = ({
     }, [previewData, userTitle, userLogo]);
 
     const injectedHeaderBlocks = useMemo(() => {
-        if (!previewData.header) return [];
+        if (!previewData?.header) return [];
         return previewData.header.map(block => {
             if (block.type === 'header') {
                 return {
@@ -50,8 +49,7 @@ const SitePreviewer = ({
             }
             return block;
         });
-    }, [previewData.header, userTitle, userLogo]);
-
+    }, [previewData, userTitle, userLogo]);
     return (
         <div className="flex-1 flex flex-col h-full bg-gray-50/50 dark:bg-gray-900/50 relative overflow-hidden min-h-0 z-10 min-w-0">
             <style>{`
@@ -64,21 +62,18 @@ const SitePreviewer = ({
                     vertical-align: middle;
                 }
             `}</style>
-
             <div className="h-14 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex items-center px-4 gap-4 shrink-0 justify-between z-10 shadow-sm">
                 <div className="flex gap-2 w-20">
                      <div className="w-3 h-3 rounded-full bg-[#ff5f57] border border-[#e0443e] opacity-80"></div>
                      <div className="w-3 h-3 rounded-full bg-[#febc2e] border border-[#d89e24] opacity-80"></div>
                      <div className="w-3 h-3 rounded-full bg-[#28c840] border border-[#1aab29] opacity-80"></div>
                 </div>
-
                 <div className="flex-1 max-w-xl mx-auto min-w-0">
                      <div className="bg-(--platform-input-bg) h-9 rounded-md border border-(--platform-border-color) flex items-center px-3 text-xs text-(--platform-text-secondary) shadow-sm">
                          <span className="text-(--platform-text-secondary) mr-2 opacity-50"><Lock size={12} /></span>
                          <span className="text-(--platform-text-primary) truncate">{url}</span>
                      </div>
                 </div>
-
                 <div className="flex items-center gap-3 w-20 justify-end">
                      <div className="flex bg-(--platform-input-bg) rounded-lg p-0.5 border border-(--platform-border-color)">
                          <button 
@@ -98,7 +93,6 @@ const SitePreviewer = ({
                      </div>
                 </div>
             </div>
-
             <div className="flex-1 overflow-hidden relative min-h-0 flex items-center justify-center p-4">
                  <div 
                     className={`
@@ -126,14 +120,13 @@ const SitePreviewer = ({
                                         fontBody={previewData.theme.font_body} 
                                     />
                                 )}
-                                
                                 <div 
                                     className="site-wysiwyg-wrapper flex-1 flex flex-col" 
                                     style={{ backgroundColor: 'transparent' }} 
                                     data-site-mode={simulatedSiteData.site_theme_mode} 
                                     data-site-accent={simulatedSiteData.site_theme_accent}
                                 >
-                                    {injectedHeaderBlocks && (
+                                    {injectedHeaderBlocks && injectedHeaderBlocks.length > 0 && (
                                         <BlockRenderer blocks={injectedHeaderBlocks} siteData={simulatedSiteData} />
                                     )}
 
@@ -148,7 +141,7 @@ const SitePreviewer = ({
                                         )}
                                     </main>
 
-                                    {previewData.footer && (
+                                    {previewData.footer && previewData.footer.length > 0 && (
                                         <BlockRenderer blocks={previewData.footer} siteData={simulatedSiteData} />
                                     )}
                                 </div>

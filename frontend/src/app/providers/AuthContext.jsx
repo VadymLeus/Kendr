@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
         if (token && userDataRaw && userDataRaw !== 'undefined' && userDataRaw !== 'null') {
           const parsedUser = JSON.parse(userDataRaw);
           setUser(parsedUser);
-          if (restorePendingRaw === 'true') {
+          if (restorePendingRaw === 'true' || parsedUser.status === 'deleted') {
             setIsRestorePending(true);
           }
         } else {
@@ -47,10 +47,12 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(false);
       }
     };
+    
     initAuth();
     const handleUnauthorized = () => {
       logout();
     };
+    
     window.addEventListener('auth_unauthorized', handleUnauthorized);
     return () => {
       window.removeEventListener('auth_unauthorized', handleUnauthorized);
@@ -61,7 +63,8 @@ export const AuthProvider = ({ children }) => {
     if (!userData || !token) return;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
-    if (requireRestore) {
+    const needsRestore = requireRestore || userData.status === 'deleted';
+    if (needsRestore) {
         localStorage.setItem('isRestorePending', 'true');
         setIsRestorePending(true);
     } else {
@@ -103,6 +106,7 @@ export const AuthProvider = ({ children }) => {
       updateUser, 
       restoreAccount,
       isAdmin: user?.role === 'admin',
+      isModerator: user?.role === 'moderator',
       plan: user?.plan || 'FREE',
       isAuthenticated: !!user 
     }}>

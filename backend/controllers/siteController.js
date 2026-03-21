@@ -40,7 +40,6 @@ const validateSlugOnly = (slug) => {
     if (isRepetitive || BAD_SEQUENCES.some(seq => trimmedSlug.includes(seq))) {
         return 'Адреса містить занадто просту/сміттєву послідовність';
     }
-
     return null;
 };
 
@@ -59,7 +58,6 @@ exports.getSiteInfoById = async (req, res, next) => {
         if (sites.length === 0) {
             return res.status(404).json({ message: 'Сайт не знайдено' });
         }
-        
         res.json({ site_path: sites[0].site_path, title: sites[0].title });
     } catch (error) {
         console.error('Помилка в getSiteInfoById:', error);
@@ -84,7 +82,6 @@ exports.getTemplates = async (req, res, next) => {
                 ? JSON.parse(row.default_block_content) 
                 : row.default_block_content
         }));
-        
         res.json(processedRows);
     } catch (error) { next(error); }
 };
@@ -178,6 +175,13 @@ exports.getSites = async (req, res, next) => {
         const { search, scope, tag, sort, onlyFavorites, userId, username } = req.query; 
         let targetUserId = null;
         let includeAllStatuses = false;
+        let isStaff = false;
+        if (req.user) {
+            const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+            if (currentUser[0]?.role === 'admin' || currentUser[0]?.role === 'moderator') {
+                isStaff = true;
+            }
+        }
         if (scope === 'my' && req.user) {
             targetUserId = req.user.id;
             includeAllStatuses = true;
@@ -189,6 +193,9 @@ exports.getSites = async (req, res, next) => {
                 targetUserId = users[0].id;
             }
         }
+        if (isStaff && targetUserId) {
+            includeAllStatuses = true;
+        }
         const sites = await Site.getPublic({ 
             searchTerm: search, 
             userId: targetUserId, 
@@ -199,7 +206,9 @@ exports.getSites = async (req, res, next) => {
             includeAllStatuses: includeAllStatuses
         });
         res.json(sites);
-    } catch (error) { next(error); }
+    } catch (error) { 
+        next(error); 
+    }
 };
 
 exports.getDefaultLogos = async (req, res, next) => {
@@ -215,22 +224,26 @@ exports.getSiteByPath = async (req, res, next) => {
         if (!site) {
             return res.status(200).json(null); 
         }
-        let isAdmin = false;
+        let isStaff = false;
         if (req.user) {
             const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
-            if (currentUser[0]?.role === 'admin') isAdmin = true;
+            if (currentUser[0]?.role === 'admin' || currentUser[0]?.role === 'moderator') {
+                isStaff = true;
+            }
         }
+        
         const isOwner = req.user && req.user.id === site.user_id;
         if (site.status === 'suspended') {
-            if (!isAdmin) {
+            if (!isStaff) { 
                 return res.status(403).json({ 
                     message: 'Цей сайт заблоковано за порушення правил платформи.',
                     isSuspended: true 
                 });
             }
         }
+        
         if (site.status === 'probation') {
-            if (!isOwner && !isAdmin) {
+            if (!isOwner && !isStaff) { 
                 return res.status(403).json({ message: 'Сайт знаходиться на модерації.' });
             }
         }
@@ -275,12 +288,10 @@ exports.updateSiteSettings = async (req, res, next) => {
             title, status, tags, site_theme_mode, site_theme_accent, theme_settings, 
             header_content, footer_content, favicon_url, site_title_seo, 
             cover_image, cover_layout, logo_url,
-            cover_logo_size,
-            cover_logo_radius,
-            cover_title_size,
-            liqpay_public_key,
-            liqpay_private_key
+            cover_logo_size, cover_logo_radius, cover_title_size,
+            liqpay_public_key, liqpay_private_key
         } = req.body;
+        
         const safeParse = (data, fallback) => {
             if (!data) return fallback;
             if (typeof data === 'object') return data;
@@ -412,9 +423,12 @@ exports.getMySuspendedSites = async (req, res, next) => {
         const query = `
             SELECT 
                 s.id, s.site_path, s.title, s.logo_url, s.deletion_scheduled_for,
-                sa.status as appeal_status
+                sa.status as appeal_status,
+                sa.ticket_id,
+                st.status as ticket_status
             FROM sites s
             LEFT JOIN site_appeals sa ON s.id = sa.site_id
+            LEFT JOIN support_tickets st ON sa.ticket_id = st.id
             WHERE s.user_id = ? AND s.status = 'suspended'
         `;
         const [sites] = await db.query(query, [userId]);

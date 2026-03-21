@@ -23,7 +23,7 @@ class Site {
     const params = [];
     const conditions = [];
     if (!includeAllStatuses) {
-        conditions.push("s.status IN ('published', 'public', 'draft')");
+        conditions.push("s.status IN ('published', 'public', 'maintenance')");
     }
 
     if (userId) {
@@ -111,7 +111,6 @@ class Site {
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
-    
     if (!sites[0]) return null;
     const site = sites[0];
     try {
@@ -132,7 +131,6 @@ class Site {
         WHERE p.site_id = ?
         ORDER BY p.created_at DESC
     `, [site.id]);
-
     return { ...site, products: productRows };
   }
 
@@ -145,7 +143,7 @@ class Site {
     const [rows] = await db.query('SELECT * FROM sites WHERE user_id = ?', [userId]);
     return rows;
   }
-
+  
   static async create(userId, sitePath, title, logoUrl) {
     const [result] = await db.query(
       'INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, ?)',
@@ -157,7 +155,7 @@ class Site {
       site_path: sitePath, 
       title: title, 
       logo_url: logoUrl, 
-      status: 'private' 
+      status: 'private'
     };
   }
 
@@ -198,7 +196,6 @@ class Site {
         liqpay_private_key || null,
         siteId
     ];
-
     const query = `
         UPDATE sites 
         SET 
@@ -302,6 +299,7 @@ class Site {
     }
     return rows;
   }
+
   static async findSuspendedForUser(userId) {
     const [rows] = await db.query(
       "SELECT id, site_path, title, deletion_scheduled_for FROM sites WHERE user_id = ? AND status = 'suspended'",
@@ -309,13 +307,15 @@ class Site {
     );
     return rows;
   }
+
   static async togglePin(siteId) {
     await db.query('UPDATE sites SET is_pinned = NOT is_pinned WHERE id = ?', [siteId]);
     const [rows] = await db.query('SELECT is_pinned FROM sites WHERE id = ?', [siteId]);
     return rows[0] ? !!rows[0].is_pinned : false;
   }
-  static async setAllUserSitesToDraft(userId) {
-      const [result] = await db.query("UPDATE sites SET status = 'private' WHERE user_id = ?", [userId]);
+
+  static async setAllUserSitesToMaintenance(userId) {
+      const [result] = await db.query("UPDATE sites SET status = 'maintenance' WHERE user_id = ?", [userId]);
       return result;
   }
 }

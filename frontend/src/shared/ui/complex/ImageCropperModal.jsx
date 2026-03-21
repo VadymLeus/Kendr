@@ -23,6 +23,7 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
     mediaHeight,
   )
 }
+
 const ImageCropperModal = ({ 
     isOpen,
     imageSrc, 
@@ -41,12 +42,14 @@ const ImageCropperModal = ({
             setCompletedCrop(undefined);
         }
     }, [isOpen]);
+
     const onImageLoad = (e) => {
         const { width, height } = e.currentTarget;
         const initCrop = centerAspectCrop(width, height, aspect);
         setCrop(initCrop);
         setCompletedCrop(initCrop);
     };
+
     const handleConfirm = async () => {
         if (!completedCrop || !imgRef.current) {
             toast.warning('Виділіть область для обрізки.');
@@ -55,7 +58,7 @@ const ImageCropperModal = ({
         setIsProcessing(true);
         try {
             const blob = await getCroppedImg(imgRef.current, completedCrop);
-            const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+            const file = new File([blob], 'cropped_image.png', { type: 'image/png' });
             await onCropComplete(file);
             onClose();
         } catch (e) {
@@ -65,6 +68,7 @@ const ImageCropperModal = ({
             setIsProcessing(false);
         }
     };
+
     if (!isOpen || !imageSrc) return null;
     return ReactDOM.createPortal(
         <div className="fixed inset-0 bg-black/85 backdrop-blur-[5px] z-9999 flex items-center justify-center p-5 animate-in fade-in duration-200">

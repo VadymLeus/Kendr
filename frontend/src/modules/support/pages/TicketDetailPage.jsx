@@ -9,6 +9,7 @@ import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog';
 import DragDropWrapper from '../../../shared/ui/complex/DragDropWrapper';
 import { FILE_LIMITS } from '../../../shared/config/limits';
+import NotFoundPage from '../../../pages/NotFoundPage';
 import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
 import { Send, Loader, User, Shield, Lock, ArrowLeft, CheckCircle, Clock, XCircle, Paperclip, X, RotateCcw, ArrowDown } from 'lucide-react';
@@ -23,6 +24,7 @@ const TicketDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
+    const [isNotFound, setIsNotFound] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const { user } = useContext(AuthContext);
@@ -51,7 +53,6 @@ const TicketDetailPage = () => {
             setUnreadCount(0);
         }
     };
-
     const fetchTicket = async (isBackground = false) => {
         try {
             const response = await apiClient.get(`/support/${ticketId}`);
@@ -73,7 +74,9 @@ const TicketDetailPage = () => {
                 setTimeout(scrollToBottom, 100);
             }
         } catch (err) {
-            if (!isBackground) {
+            if (err.response && err.response.status === 404) {
+                setIsNotFound(true);
+            } else if (!isBackground) {
                 setError(err.response?.data?.message || 'Сталася помилка при завантаженні звернення.');
             }
         } finally {
@@ -103,7 +106,6 @@ const TicketDetailPage = () => {
         if (!ticket) return true;
         return ticket.status === 'closed' || isSpamBlocked;
     }, [ticket, isSpamBlocked]);
-
     const isCurrentUserAdmin = user?.role === 'admin';
     const closedByText = ticket?.closed_by === 'admin'
         ? (isCurrentUserAdmin ? 'Ви (Адміністратор) закрили це звернення.' : 'Це звернення було закрите адміністратором.')
@@ -164,6 +166,7 @@ const TicketDetailPage = () => {
     useEffect(() => {
         return () => attachments.forEach(file => URL.revokeObjectURL(file.preview));
     }, [attachments]);
+
     const handleReplySubmit = async (e) => {
         e.preventDefault();
         if ((!replyBody.trim() && attachments.length === 0) || isInputDisabled) return;
@@ -198,6 +201,7 @@ const TicketDetailPage = () => {
         if (url.startsWith('http') || url.startsWith('blob:')) return url;
         return `${API_URL}${url.startsWith('/') ? url : '/' + url}`;
     };
+
     const styles = {
         pageWrapper: {
             position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -303,6 +307,7 @@ const TicketDetailPage = () => {
         attachmentGrid: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' },
         attachmentImage: { maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', objectFit: 'cover', cursor: 'pointer' }
     };
+    if (isNotFound) return <NotFoundPage />;
     if (loading) return <LoadingState />;
     if (error) return <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--platform-danger)' }}>{error}</div>;
     if (!ticket) return null;
@@ -533,7 +538,7 @@ const TicketDetailPage = () => {
                             padding: 0, 
                             display: 'flex', 
                             alignItems: 'center', 
-                            justifyContent: 'center',
+                            justify: 'center',
                             color: 'var(--platform-text-secondary)',
                             flexShrink: 0 
                         }}
@@ -588,7 +593,7 @@ const TicketDetailPage = () => {
                             padding: 0, 
                             display: 'flex', 
                             alignItems: 'center', 
-                            justifyContent: 'center', 
+                            justify: 'center', 
                             flexShrink: 0 
                         }}
                     >

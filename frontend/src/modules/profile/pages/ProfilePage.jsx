@@ -12,7 +12,8 @@ import SiteGridCard from '../../../shared/ui/complex/SiteGridCard';
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
 import UserDetailsPanel from '../../admin/components/UserDetailsPanel';
-import { Send, Instagram, Globe, Settings, Calendar, Grid, User as UserIcon, ExternalLink, EyeOff, Search, Layout, ShieldAlert, AlertTriangle, Shield } from 'lucide-react';
+import NotFoundPage from '../../../pages/NotFoundPage';
+import { Send, Instagram, Globe, Settings, Calendar, Grid, User as UserIcon, ExternalLink, EyeOff, Layout, ShieldAlert, AlertTriangle, Shield } from 'lucide-react';
 
 const SORT_OPTIONS = [
     { value: 'created_at:desc', label: 'Нові' },
@@ -54,7 +55,7 @@ const ProfilePage = () => {
     const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const isOwner = authUser && authUser.slug === slug;
     useEffect(() => {
-        if (isOwner && authUser?.role === 'admin') {
+        if (isOwner && (authUser?.role === 'admin' || authUser?.role === 'moderator')) {
             setErrorStatus(404);
             setLoadingProfile(false);
             return;
@@ -67,6 +68,10 @@ const ProfilePage = () => {
                     suppressToast: true
                 });
                 const data = response.data?.user || response.data?.data || response.data;
+                if (data && (data.role === 'admin' || data.role === 'moderator')) {
+                    setErrorStatus(404);
+                    return;
+                }
                 setProfileData(data);
             } catch (err) {
                 if (err.response) {
@@ -98,6 +103,7 @@ const ProfilePage = () => {
             setSitesLoading(false);
         }
     }, [profileData, searchTerm, sortOption]);
+
     useEffect(() => {
         if (profileData) {
             const timer = setTimeout(() => {
@@ -243,16 +249,9 @@ const ProfilePage = () => {
         );
     }
     if (errorStatus === 404) {
-        return (
-            <div style={errorContainerStyle}>
-                <Helmet><title>Користувача не знайдено | Kendr</title></Helmet>
-                <div style={errorIconCircleStyle}><Search size={40} /></div>
-                <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Користувача не знайдено</h2>
-                <p>Ми не змогли знайти такий профіль.</p>
-                <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
-            </div>
-        );
+        return <NotFoundPage />;
     }
+    
     if (errorStatus) return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-danger)' }}>Сталася помилка при завантаженні профілю.</div>;
     const displayUsername = profileData?.username || 'Користувач';
     const displayAvatarUrl = isOwner ? authUser?.avatar_url : profileData?.avatar_url;
@@ -403,7 +402,7 @@ const ProfilePage = () => {
                             </span>
                         </div>
                         <div style={{ ...statItemStyle, borderBottom: 'none' }}>
-                            <span>Всього переглядів</span>
+                            <span>Всього переглядів на активних сайтах </span>
                             <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--platform-accent)' }}>
                                 {displayTotalViews}
                             </span>

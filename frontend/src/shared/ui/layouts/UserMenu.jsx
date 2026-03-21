@@ -11,9 +11,9 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
     const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
     if (!user) return null;
-    const isAdmin = user.role === 'admin';
-    const profileLink = isAdmin ? '/settings' : `/profile/${user.slug}`;
-    const profileTitle = isAdmin ? 'Налаштування' : 'Мій профіль';
+    const isStaff = user.role === 'admin' || user.role === 'moderator';
+    const profileLink = isStaff ? '/settings' : `/profile/${user.slug}`;
+    const profileTitle = isStaff ? 'Налаштування' : 'Мій профіль';
     return (
         <>
             <div className="w-full">

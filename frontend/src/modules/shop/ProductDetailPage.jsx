@@ -1,4 +1,4 @@
-// frontend/src/modules/shop/pages/ProductDetailPage.jsx
+// frontend/src/modules/shop/ProductDetailPage.jsx
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -43,8 +43,9 @@ const ProductDetailPage = () => {
         finalPrice: 0, originalPrice: 0, activeDiscount: 0, isDiscounted: false
     });
     const isDarkMode = siteData?.site_theme_mode === 'dark';
-    const isOwner = user && siteData && user.id === siteData.user_id; 
-    const isSiteHidden = siteData && siteData.status === 'draft' && !isOwner;
+    const isOwner = user && siteData && user.id === siteData.user_id;
+    const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
+    const isSiteHidden = siteData && siteData.status === 'maintenance' && !isOwner;
     const isSoldOut = product ? product.stock_quantity === 0 : false;
     useEffect(() => {
         if (isSiteHidden) {
@@ -80,7 +81,7 @@ const ProductDetailPage = () => {
                 if (prod.site_id) fetchRecommendations(prod.site_id, prod.category_id, prod.id);
             } catch (err) {
                 console.error("Product load error:", err);
-                if (err.response && (err.response.status === 403 || err.response.data?.code === 'SITE_DRAFT_MODE')) {
+                if (err.response && (err.response.status === 403 || err.response.data?.code === 'SITE_MAINTENANCE_MODE' || err.response.data?.code === 'SITE_DRAFT_MODE')) {
                     setIsRestricted(true);
                 } else {
                     setIsNotFound(true);
@@ -89,7 +90,6 @@ const ProductDetailPage = () => {
                 setLoading(false);
             }
         };
-
         if (!isSiteLoading) {
             fetchProduct();
         }
@@ -168,6 +168,7 @@ const ProductDetailPage = () => {
     }, [isDragging, dragStart, imageScale]);
 
     const handleAddToCart = () => {
+        if (isStaff) return;
         if (!user) {
             if (window.confirm("Щоб додати товар до кошика, необхідно увійти. Перейти на сторінку входу?")) navigate('/login');
             return;
@@ -306,10 +307,10 @@ const ProductDetailPage = () => {
                         <div style={{marginTop: '20px'}}>
                             <button
                                 onClick={handleAddToCart}
-                                disabled={isOwner || isSoldOut}
-                                className={`${styles.addToCartButton} ${(isOwner || isSoldOut) ? styles.disabled : styles.available}`}
+                                disabled={isOwner || isSoldOut || isStaff}
+                                className={`${styles.addToCartButton} ${(isOwner || isSoldOut || isStaff) ? styles.disabled : styles.available}`}
                             >
-                                {isOwner ? 'Ви власник цього товару' : (isSoldOut ? 'Немає в наявності' : 'Додати в кошик')}
+                                {isStaff ? 'Купівля недоступна для персоналу' : isOwner ? 'Ви власник цього товару' : (isSoldOut ? 'Немає в наявності' : 'Додати в кошик')}
                             </button>
                         </div>
                     </div>

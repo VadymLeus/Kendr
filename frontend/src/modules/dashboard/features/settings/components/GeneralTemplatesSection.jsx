@@ -22,7 +22,8 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [viewMode, setViewMode] = useState('desktop');
     const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
-    const manager = useTemplateManager({ isAdmin, initialSourceTab: isAdmin ? 'system' : 'personal' });
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator' || isAdmin;
+    const manager = useTemplateManager({ isAdmin: isStaff, initialSourceTab: isStaff ? 'system' : 'personal' });
     const handleSaveTemplate = async (name, description, thumbnailUrl, category, overwriteId) => {
         if (!siteData?.id) return toast.error("Помилка: Не знайдено ID сайту");
         if (!name) return toast.error("Вкажіть назву шаблону");
@@ -31,7 +32,7 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                 siteId: siteData.id, templateName: name, description,
                 thumbnail_url: thumbnailUrl, category: category || 'General', icon: 'Layout' 
             };
-            if (isAdmin) {
+            if (isStaff) {
                 await apiClient.post('/admin/templates', payload);
                 toast.success(`Системний шаблон "${name}" збережено як чернетку!`);
             } else {
@@ -101,10 +102,10 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                                 <Palette size={20} className="text-(--platform-accent)" /> Бібліотека шаблонів
                             </h3>
                             <Button variant="primary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)}>
-                                <Plus size={16} /> {isAdmin ? "Новий шаблон" : "Зберегти свій"}
+                                <Plus size={16} /> {isStaff ? "Новий шаблон" : "Зберегти свій"}
                             </Button>
                         </div>
-                        <TemplateFilters filters={manager.filters} isAdmin={isAdmin} compact={true} />
+                        <TemplateFilters filters={manager.filters} isAdmin={isStaff} compact={true} />
                     </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-5 bg-(--platform-bg)">
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -115,10 +116,10 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                                     isSelected={manager.selectedTemplateId === tpl.id}
                                     onClick={() => manager.setSelectedTemplateId(tpl.id)}
                                     getFullUrl={getFullUrl}
-                                    badge={<TemplateBadge template={tpl} user={user} isAdmin={isAdmin} sourceTab={manager.filters.templateSourceTab} />}
-                                    actions={(manager.filters.templateSourceTab === 'personal' || isAdmin) && (
+                                    badge={<TemplateBadge template={tpl} user={user} isAdmin={isStaff} sourceTab={manager.filters.templateSourceTab} />}
+                                    actions={(manager.filters.templateSourceTab === 'personal' || isStaff) && (
                                         <div className="flex gap-2 w-full justify-end mt-2 pt-2 border-t border-(--platform-border-color)">
-                                            {isAdmin && manager.filters.templateSourceTab === 'system' && (
+                                            {isStaff && manager.filters.templateSourceTab === 'system' && (
                                                 <>
                                                     {!tpl.is_ready ? (
                                                         <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'markReady' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 rounded-md transition-colors border border-transparent" title="Відправити на перевірку"><ArrowUpCircle size={14} /></button>

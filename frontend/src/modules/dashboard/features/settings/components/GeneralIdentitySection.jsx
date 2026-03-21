@@ -1,5 +1,6 @@
-// frontend/src/modules/dashboard/features/settings/components/GeneralIdentitySection.jsx
-import React, { useState } from 'react';
+// frontend/src/modules/dashboard/features/settings/components/GeneralIdentitySection.jsx 
+import React, { useState, useContext } from 'react';
+import { AuthContext } from '../../../../../app/providers/AuthContext';
 import { Button, Input } from '../../../../../shared/ui/elements';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import { InputWithCounter } from '../../../../../shared/ui/complex/InputWithCounter';
@@ -22,11 +23,13 @@ const GeneralIdentitySection = ({
     hasIdentityChanges, 
     onUpdate, 
     getImageUrl, 
-    isAdmin, 
+    isAdmin,
     isLocked 
 }) => {
+    const { user } = useContext(AuthContext);
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [statusCooldown, startStatusCooldown] = useCooldown('kendr_status_cooldown');
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator' || isAdmin;
     const handleStatusSave = () => {
         if (statusCooldown > 0) {
             toast.warning(`Зачекайте ${statusCooldown}с перед наступною зміною статусу.`);
@@ -35,10 +38,9 @@ const GeneralIdentitySection = ({
         toast.success('Статус сайту успішно оновлено!');
         startStatusCooldown(30);
     };
-
     const statusOptions = [
         { value: 'published', label: 'Опубліковано (Доступний всім)', icon: Globe, iconProps: { className: 'text-green-500' } },
-        { value: 'draft', label: 'Чернетка (Тех. роботи)', icon: AlertCircle, iconProps: { className: 'text-orange-500' } }, 
+        { value: 'maintenance', label: 'Тех. роботи (Тимчасово закритий)', icon: AlertCircle, iconProps: { className: 'text-orange-500' } }, 
         { value: 'private', label: 'Приватний (Прихований)', icon: Lock, iconProps: { className: 'text-gray-500' } }
     ];
     const canSaveIdentity = hasIdentityChanges && !titleError && !slugError && !isSavingIdentity && (slugStatus === 'available' || slugStatus === 'unchanged');
@@ -157,7 +159,7 @@ const GeneralIdentitySection = ({
                     </div>
                 </div>
             </div>
-            {!isAdmin && (
+            {!isStaff && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                     <div className="mb-6 flex items-center justify-between gap-3">
                         <div>
@@ -207,7 +209,7 @@ const GeneralIdentitySection = ({
                     </div>
                 </div>
             )}
-            {!isAdmin && !isLocked && (
+            {!isStaff && !isLocked && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                     <div className="mb-6">
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">

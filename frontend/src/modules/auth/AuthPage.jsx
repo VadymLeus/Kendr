@@ -83,7 +83,7 @@ const AuthPage = () => {
         const message = error.response?.data?.message || fallback;
         toast.error(message, { toastId: message });
     };
-    const handleLogin = async (e) => {
+const handleLogin = async (e) => {
         e.preventDefault();
         if (!turnstileToken) return toast.warning('Будь ласка, пройдіть перевірку безпеки.', { toastId: 'captcha-warn' });
         setIsLoading(true);
@@ -93,11 +93,12 @@ const AuthPage = () => {
                 password: formData.password,
                 turnstileToken
             });
-            login(res.data.user, res.data.token, res.data.require_restore);
-            if (res.data.require_restore) {
+            const isDeleted = res.data.require_restore === true || res.data.user?.status === 'deleted';
+            login(res.data.user, res.data.token, isDeleted);
+            if (isDeleted) {
                 toast.warning(res.data.message || 'Акаунт знаходиться в процесі видалення.', { toastId: 'restore-warn' });
             } else {
-                toast.success(`З поверненням, ${res.data.user.username}!`, { toastId: 'login-success' });
+                toast.success(`З поверненням, ${res.data.user?.username || ''}!`, { toastId: 'login-success' });
                 navigate('/');
             }
         } catch (error) {
@@ -110,7 +111,9 @@ const AuthPage = () => {
             } else {
                 handleError(error, 'Помилка входу');
             }
-        } finally { setIsLoading(false); }
+        } finally { 
+            setIsLoading(false); 
+        }
     };
 
     const handleRegister = async (e) => {
@@ -129,7 +132,6 @@ const AuthPage = () => {
             regData.append('turnstileToken', turnstileToken);
             if (avatarData.file) regData.append('avatar', avatarData.file);
             else if (avatarData.url) regData.append('avatar_url', avatarData.url);
-            
             await apiClient.post('/auth/register', regData);
             setTargetEmail(formData.email);
             setOtpPurpose('VERIFY_EMAIL');

@@ -42,8 +42,9 @@ const AnnouncementTimer = ({ targetTime }) => {
     if (!timeLeft) return null;
     return <span className="font-mono font-bold ml-1"> - {timeLeft}</span>;
 };
+
 const Layout = () => {
-    const { user, isAdmin, isLoading: isAuthLoading } = useContext(AuthContext);
+    const { user, isAdmin, isModerator, isLoading: isAuthLoading } = useContext(AuthContext);
     const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
     const location = useLocation();
     const [siteData, setSiteData] = useState(null);
@@ -51,6 +52,7 @@ const Layout = () => {
     const [globalAnnouncement, setGlobalAnnouncement] = useState(null);
     const [announcementText, setAnnouncementText] = useState('');
     const [announcementTargetTime, setAnnouncementTargetTime] = useState(null);
+    const isStaff = isAdmin || isModerator;
     const handleToggleSidebar = () => {
         setIsCollapsed(prev => {
             const newState = !prev;
@@ -58,6 +60,7 @@ const Layout = () => {
             return newState;
         });
     };
+
     useEffect(() => {
         if (!globalAnnouncement) {
             setAnnouncementText('');
@@ -78,6 +81,7 @@ const Layout = () => {
             setAnnouncementTargetTime(null);
         }
     }, [globalAnnouncement]);
+
     useEffect(() => {
         const handleAnnouncementUpdate = (event) => {
             setGlobalAnnouncement(event.detail);
@@ -86,13 +90,11 @@ const Layout = () => {
         if (user && !globalAnnouncement) {
              apiClient.get('/auth/me').catch(() => {});
         }
-        
         const intervalId = setInterval(() => {
             if (user) {
                 apiClient.get('/auth/me', { suppressToast: true }).catch(() => {});
             }
         }, 30000);
-
         return () => {
             window.removeEventListener('global_announcement_update', handleAnnouncementUpdate);
             clearInterval(intervalId);
@@ -104,10 +106,10 @@ const Layout = () => {
     const isMediaMatch = location.pathname.startsWith('/media');
     const isAppPage = !!(dashboardMatch || location.pathname === '/create-site' || location.pathname === '/admin/templates' || isMediaMatch);
     const isOwner = user && siteData && user.id === siteData.user_id;
-    const isHiddenStatus = siteData && ['draft', 'suspended', 'private'].includes(siteData.status);
-    const isMaintenanceMode = isHiddenStatus && !isOwner && !isAdmin;
+    const isHiddenStatus = siteData && ['maintenance', 'suspended', 'private'].includes(siteData.status);
+    const isMaintenanceMode = isHiddenStatus && !isOwner && !isStaff;
     const shouldShowSiteHeader = !!(publicMatch || productInsideSiteMatch) && siteData && !isMaintenanceMode;
-    const shouldShowFooter = !isAdmin && !isAppPage && !publicMatch && !productInsideSiteMatch;
+    const shouldShowFooter = !isStaff && !isAppPage && !publicMatch && !productInsideSiteMatch;
     useEffect(() => {
         const fetchSiteData = async () => {
             setIsSiteLoading(true);
@@ -132,7 +134,6 @@ const Layout = () => {
         if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
         else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
-
     if (isAuthLoading) return <div className="h-screen"><LoadingState title="Завантаження платформи..." layout="page" /></div>;
     const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
@@ -174,7 +175,7 @@ const Layout = () => {
                 <PlatformSidebar 
                     isCollapsed={isCollapsed} 
                     onToggle={handleToggleSidebar} 
-                    variant={isAdmin ? 'admin' : 'user'}
+                    variant={isStaff ? 'admin' : 'user'}
                 />
                 <div 
                     className={`layout-content flex-1 min-w-0 ${isCollapsed ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''} ${scrollClass}`}

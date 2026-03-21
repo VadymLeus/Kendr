@@ -11,14 +11,20 @@ const db = require('../config/db');
 const { getLimitsForUser } = require('../config/mediaLimits');
 const getUserStats = async (userId, plan, role) => {
     try {
-        const [siteRows] = await db.query('SELECT COUNT(id) as count FROM sites WHERE user_id = ?', [userId]);
-        const [mediaRows] = await db.query('SELECT COUNT(id) as count FROM user_media WHERE user_id = ?', [userId]);
+        const [[siteRows], [mediaRows], totalViews, warnings] = await Promise.all([
+            db.query('SELECT COUNT(id) as count FROM sites WHERE user_id = ?', [userId]),
+            db.query('SELECT COUNT(id) as count FROM user_media WHERE user_id = ?', [userId]),
+            User.getTotalSiteViews(userId),
+            Warning.findForUser(userId)
+        ]);
         const limits = getLimitsForUser(plan);
         return {
             siteCount: siteRows[0].count || 0,
             siteLimit: limits.maxSites,
             mediaCount: mediaRows[0].count || 0,
-            mediaLimit: limits.maxFiles
+            mediaLimit: limits.maxFiles,
+            totalViews: totalViews || 0,
+            warningCount: warnings ? warnings.length : 0
         };
     } catch (err) {
         console.error("Помилка отримання статистики:", err);
@@ -27,7 +33,9 @@ const getUserStats = async (userId, plan, role) => {
             siteCount: 0, 
             siteLimit: fallbackLimits.maxSites, 
             mediaCount: 0, 
-            mediaLimit: fallbackLimits.maxFiles 
+            mediaLimit: fallbackLimits.maxFiles,
+            totalViews: 0,
+            warningCount: 0
         };
     }
 };
@@ -69,14 +77,13 @@ exports.getPublicProfile = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ message: 'Користувача не знайдено', code: 'USER_NOT_FOUND' });
         }
-        
         if (user.role === 'admin') {
             return res.status(404).json({ message: 'Користувача не знайдено', code: 'USER_NOT_FOUND' });
         }
         const isOwner = req.user && req.user.id === user.id;
-        const isAdmin = req.user && req.user.role === 'admin';
+        const isStaff = req.user && (req.user.role === 'admin' || req.user.role === 'moderator');
         if (!user.is_profile_public) {
-            if (!isOwner && !isAdmin) {
+            if (!isOwner && !isStaff) {
                 return res.status(403).json({ message: 'Цей профіль є приватним.', code: 'PROFILE_PRIVATE' });
             }
         }
@@ -105,7 +112,7 @@ exports.getPublicProfile = async (req, res, next) => {
             },
             warnings: warnings || []
         };
-        if (isAdmin || isOwner) {
+        if (isStaff || isOwner) {
             publicData.email = user.email;
             publicData.phone_number = user.phone_number;
             publicData.last_login_at = user.last_login_at;

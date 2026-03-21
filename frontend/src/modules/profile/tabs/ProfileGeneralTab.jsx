@@ -10,7 +10,7 @@ import ImageUploadTrigger from '../../../shared/ui/complex/ImageUploadTrigger';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { useCooldown } from '../../../shared/hooks/useCooldown';
-import { User, Mail, Phone, Trash2, Camera, LogOut, Check, Upload, BarChart2, Zap, LayoutTemplate, HardDrive, Timer } from 'lucide-react';
+import { User, Mail, Phone, Trash2, Camera, LogOut, Check, Upload, BarChart2, Zap, LayoutTemplate, HardDrive, Timer, Eye, ShieldAlert } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
@@ -26,6 +26,8 @@ const ProfileGeneralTab = () => {
     const [statsData, setStatsData] = useState({
         siteCount: 0,
         mediaCount: 0,
+        totalViews: 0,
+        warningCount: 0,
         limits: null
     });
     useEffect(() => {
@@ -36,14 +38,19 @@ const ProfileGeneralTab = () => {
             });
             const fetchStats = async () => {
                 try {
-                    const [sitesRes, limitsRes] = await Promise.all([
+                    const [sitesRes, limitsRes, profileRes] = await Promise.all([
                         apiClient.get('/sites/catalog', { params: { scope: 'my' } }),
-                        apiClient.get('/media/limits')
+                        apiClient.get('/media/limits'),
+                        apiClient.get(`/users/${user.slug || user.username}`)
                     ]);
+                    const sites = Array.isArray(sitesRes.data) ? sitesRes.data : [];
+                    const calculatedViews = sites.reduce((sum, site) => sum + (site.view_count || 0), 0);
                     setStatsData({
-                        siteCount: Array.isArray(sitesRes.data) ? sitesRes.data.length : 0,
+                        siteCount: sites.length,
                         mediaCount: limitsRes.data.currentFiles || 0,
-                        limits: limitsRes.data
+                        limits: limitsRes.data,
+                        totalViews: profileRes.data?.totalViews !== undefined ? profileRes.data.totalViews : calculatedViews,
+                        warningCount: profileRes.data?.warning_count || 0
                     });
                 } catch (error) {
                     console.error("Failed to fetch stats", error);
@@ -52,6 +59,7 @@ const ProfileGeneralTab = () => {
             fetchStats();
         }
     }, [user]);
+
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -114,14 +122,15 @@ const ProfileGeneralTab = () => {
         navigate('/auth');
         toast.info("Ви вийшли з системи");
     };
+
     if (!user) return null;
-    const isAdmin = user?.role === 'admin';
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const containerStyle = { maxWidth: '900px', margin: '0 auto', width: '100%' };
     const gridLayout = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' };
     const cardStyle = { background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '16px', padding: '24px', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' };
     const sectionTitleStyle = { fontSize: '1.25rem', fontWeight: '600', color: 'var(--platform-text-primary)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' };
     const sectionDescStyle = { fontSize: '0.9rem', color: 'var(--platform-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5', margin: 0 };
-    const isPlanAdmin = user.plan && String(user.plan).trim().toUpperCase() === 'ADMIN';
+    const isPlanAdmin = isStaff || (user.plan && String(user.plan).trim().toUpperCase() === 'ADMIN');
     const isPremium = isPlanAdmin || user.plan === 'PLUS';
     const maxSitesDisplay = isPlanAdmin ? '∞' : (statsData.limits ? statsData.limits.maxSites : '...');
     const maxMediaDisplay = isPlanAdmin ? '∞' : (statsData.limits ? statsData.limits.maxFiles : '...');
@@ -195,7 +204,7 @@ const ProfileGeneralTab = () => {
                             <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--platform-text-primary)' }}>
                                 {user.username}
                             </div>
-                            {!isAdmin && (
+                            {!isStaff && (
                                 <div style={{ fontSize: '1rem', color: 'var(--platform-text-secondary)' }}>
                                     {user.email}
                                 </div>
@@ -224,7 +233,7 @@ const ProfileGeneralTab = () => {
                             showCounter={true}
                             helperText="Мінімум 3 символи"
                         />
-                        {!isAdmin && (
+                        {!isStaff && (
                             <Input 
                                 name="email" 
                                 label="Email" 
@@ -282,13 +291,31 @@ const ProfileGeneralTab = () => {
                             {statsData.siteCount} / {maxSitesDisplay}
                         </div>
                     </div>
-                    <div className="stat-row" style={{ marginBottom: 0 }}>
+                    <div className="stat-row">
                         <div className="stat-label">
                             <HardDrive size={18} style={{ color: 'var(--platform-text-secondary)' }} />
                             Завантажено файлів
                         </div>
                         <div className="stat-value" style={{ color: isMediaLimitReached ? 'var(--platform-danger)' : 'inherit' }}>
                             {statsData.mediaCount} / {maxMediaDisplay}
+                        </div>
+                    </div>
+                    <div className="stat-row">
+                        <div className="stat-label">
+                            <Eye size={18} style={{ color: 'var(--platform-text-secondary)' }} />
+                            Всього переглядів на активних сайтах 
+                        </div>
+                        <div className="stat-value">
+                            {statsData.totalViews}
+                        </div>
+                    </div>
+                    <div className="stat-row" style={{ marginBottom: 0 }}>
+                        <div className="stat-label">
+                            <ShieldAlert size={18} style={{ color: statsData.warningCount > 0 ? 'var(--platform-danger)' : 'var(--platform-text-secondary)' }} />
+                            Активні страйки
+                        </div>
+                        <div className="stat-value" style={{ color: statsData.warningCount > 0 ? 'var(--platform-danger)' : 'inherit' }}>
+                            {statsData.warningCount} / 3
                         </div>
                     </div>
                 </div>

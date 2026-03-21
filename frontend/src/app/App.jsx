@@ -108,8 +108,10 @@ function App() {
                                     <Route path="/admin/reports" element={<Navigate to="/admin/support-hub?tab=reports" replace />} />
                                     <Route path="/admin/support" element={<Navigate to="/admin/support-hub?tab=tickets" replace />} />
                                     <Route path="/admin/templates" element={<AdminTemplatesPage />} />
-                                    <Route path="/admin/billing" element={<AdminBillingPage />} />
-                                    <Route path="/admin/control" element={<AdminControlPage />} />
+                                    <Route element={<ProtectedRoute requireStrictAdmin={true} />}>
+                                        <Route path="/admin/billing" element={<AdminBillingPage />} />
+                                        <Route path="/admin/control" element={<AdminControlPage />} />
+                                    </Route>
                                 </Route>
                                 
                                 <Route path="*" element={<NotFoundPage />} />
