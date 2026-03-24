@@ -7,9 +7,22 @@ const { sendOtpEmail } = require('../utils/emailService');
 const { deleteFile } = require('../utils/fileUtils');
 const db = require('../config/db');
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+const getGlobalSettings = async () => {
+    try {
+        const [rows] = await db.query('SELECT registration_enabled, auth_enabled FROM global_settings LIMIT 1');
+        if (rows && rows.length > 0) return rows[0];
+    } catch (e) {
+        console.warn('Таблиця global_settings не знайдена або порожня, використовуються налаштування за замовчуванням.');
+    }
+    return { registration_enabled: 1, auth_enabled: 1 };
+};
 
 exports.register = async (req, res, next) => {
     try {
+        const settings = await getGlobalSettings();
+        if (!settings.registration_enabled) {
+            return res.status(403).json({ message: 'Реєстрація тимчасово призупинена з технічних причин.' });
+        }
         const { email, password, avatar_url: selected_avatar_url } = req.body;
         const username = req.body.username.replace(/_/g, ' ').trim().replace(/\s+/g, ' ');
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -64,6 +77,10 @@ exports.login = async (req, res, next) => {
         const { loginInput, password } = req.body;
         const user = await User.findByLoginInput(loginInput);
         if (!user) return res.status(401).json({ message: 'Невірний логін або пароль.' });
+        const settings = await getGlobalSettings();
+        if (!settings.auth_enabled && !['admin', 'moderator'].includes(user.role)) {
+            return res.status(403).json({ message: 'Авторизація тимчасово призупинена. Ведуться технічні роботи.' });
+        }
         if (user.status === 'suspended') return res.status(403).json({ message: 'Ваш акаунт заблоковано назавжди за порушення правил платформи.' });
         if (['admin', 'moderator'].includes(user.role)) {
             return res.status(401).json({ message: 'Невірний логін або пароль.' });
@@ -303,15 +320,16 @@ exports.googleCallback = async (req, res) => {
     if (!req.user) {
         return res.redirect(`${clientUrl}/login?error=auth_failed`);
     }
-    
+    const settings = await getGlobalSettings();
+    if (!settings.auth_enabled && !['admin', 'moderator'].includes(req.user.role)) {
+        return res.redirect(`${clientUrl}/login?error=auth_disabled`);
+    }
     if (['admin', 'moderator'].includes(req.user.role)) {
         return res.redirect(`${clientUrl}/login?error=auth_failed`);
     }
-
     if (req.user.status === 'suspended') {
         return res.redirect(`${clientUrl}/login?error=auth_failed`);
     }
-
     if (req.user.status === 'deleted') {
         const deletedAt = req.user.deleted_at ? new Date(req.user.deleted_at).getTime() : 0;
         const diffDays = (Date.now() - deletedAt) / (1000 * 3600 * 24);
@@ -330,7 +348,6 @@ exports.googleCallback = async (req, res) => {
             return res.redirect(`${clientUrl}/auth/success?token=${token}`);
         }
     }
-
     await User.updateLastLogin(req.user.id);
     const token = jwt.sign(
         { id: req.user.id, role: req.user.role, plan: req.user.plan || 'FREE', token_version: req.user.token_version }, 

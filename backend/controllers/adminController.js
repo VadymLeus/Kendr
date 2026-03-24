@@ -154,7 +154,7 @@ exports.getAdminLogs = async (req, res, next) => {
                    u.username as admin_name, 
                    u.avatar_url as admin_avatar, 
                    u.email as admin_email,
-                   u.role as admin_role -- ДОДАНО: витягуємо роль для позначок
+                   u.role as admin_role
             FROM admin_logs l
             JOIN users u ON l.admin_id = u.id
             WHERE 1=1
@@ -396,7 +396,6 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
         }
         const siteOwner = { email: site.email, username: site.username };
         await db.query("UPDATE site_appeals SET status = 'rejected', resolved_at = NOW() WHERE site_id = ? AND status = 'pending'", [site.id]);
-        
         if (site.logo_url && !site.logo_url.includes('/default/')) {
             await deleteFile(site.logo_url);
         }
@@ -625,7 +624,6 @@ exports.updateSystemTemplate = async (req, res, next) => {
             access_level: finalAccessLevel,
             category
         });
-        
         res.json({ message: 'Шаблон оновлено.' });
     } catch (error) { 
         next(error); 
@@ -646,21 +644,27 @@ exports.deleteSystemTemplate = async (req, res, next) => {
 
 exports.getSystemSettings = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM platform_settings WHERE id = 1');
+        const [rows] = await db.query('SELECT * FROM global_settings WHERE id = 1');
         if (rows.length === 0) {
             return res.json({
                 maintenance_mode: false,
                 editor_locked: false,
                 maintenance_message: '',
-                registration_enabled: true
+                registration_enabled: true,
+                auth_enabled: true,
+                site_creation_enabled: true,
+                billing_enabled: true
             });
         }
         const dbSettings = rows[0];
         res.json({
-            maintenance_mode: !!dbSettings.is_platform_maintenance,
-            editor_locked: !!dbSettings.is_editor_locked,
-            maintenance_message: dbSettings.global_announcement || '',
-            registration_enabled: true 
+            maintenance_mode: !!dbSettings.maintenance_mode,
+            editor_locked: !!dbSettings.editor_locked,
+            maintenance_message: dbSettings.maintenance_message || '',
+            registration_enabled: !!dbSettings.registration_enabled,
+            auth_enabled: !!dbSettings.auth_enabled,
+            site_creation_enabled: !!dbSettings.site_creation_enabled,
+            billing_enabled: !!dbSettings.billing_enabled
         });
     } catch (error) {
         next(error);
@@ -669,23 +673,43 @@ exports.getSystemSettings = async (req, res, next) => {
 
 exports.updateSystemSettings = async (req, res, next) => {
     try {
-        const { maintenance_mode, editor_locked, maintenance_message, registration_enabled } = req.body;
+        const { 
+            maintenance_mode, 
+            editor_locked, 
+            maintenance_message, 
+            registration_enabled,
+            auth_enabled,
+            site_creation_enabled,
+            billing_enabled
+        } = req.body;
         await db.query(`
-            UPDATE platform_settings 
-            SET is_platform_maintenance = ?, 
-                is_editor_locked = ?, 
-                global_announcement = ? 
+            UPDATE global_settings 
+            SET maintenance_mode = ?, 
+                editor_locked = ?, 
+                maintenance_message = ?, 
+                registration_enabled = ?,
+                auth_enabled = ?,
+                site_creation_enabled = ?,
+                billing_enabled = ?
             WHERE id = 1
         `, [
             maintenance_mode ? 1 : 0,
             editor_locked ? 1 : 0,
-            maintenance_message || null
+            maintenance_message || null,
+            registration_enabled !== false ? 1 : 0,
+            auth_enabled !== false ? 1 : 0,
+            site_creation_enabled !== false ? 1 : 0,
+            billing_enabled !== false ? 1 : 0
         ]);
         clearSettingsCache();
         await logAdminAction(req, 'settings_update', 'system', null, {
             maintenance: maintenance_mode,
             editor_lock: editor_locked,
-            announcement: maintenance_message
+            announcement: maintenance_message,
+            registration_enabled,
+            auth_enabled,
+            site_creation_enabled,
+            billing_enabled
         });
         if (maintenance_message) {
             res.set('X-Global-Announcement', Buffer.from(maintenance_message).toString('base64'));
@@ -698,7 +722,10 @@ exports.updateSystemSettings = async (req, res, next) => {
                 maintenance_mode, 
                 editor_locked, 
                 maintenance_message,
-                registration_enabled
+                registration_enabled,
+                auth_enabled,
+                site_creation_enabled,
+                billing_enabled
             } 
         });
     } catch (error) {

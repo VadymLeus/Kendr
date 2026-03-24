@@ -21,6 +21,16 @@ const regenerateBlockIds = (blocks) => {
     return Array.isArray(blocks) ? blocks.map(mapBlock) : blocks;
 };
 
+const getGlobalSettings = async () => {
+    try {
+        const [rows] = await db.query('SELECT site_creation_enabled FROM global_settings LIMIT 1');
+        if (rows && rows.length > 0) return rows[0];
+    } catch (e) {
+        console.warn('Таблиця global_settings не знайдена або порожня.');
+    }
+    return { site_creation_enabled: 1 };
+};
+
 const RESERVED_SLUGS = [
     'admin', 'api', 'login', 'register', 'support', 'test', 'www', 
     'billing', 'orders', 'dashboard', 'sites', 'media', 'settings', 
@@ -87,9 +97,15 @@ exports.getTemplates = async (req, res, next) => {
 };
 
 exports.createSite = async (req, res, next) => {
+    const settings = await getGlobalSettings();
+    if (!settings.site_creation_enabled) {
+        if (req.file) await deleteFile(req.file.path).catch(() => {});
+        return res.status(403).json({ message: 'Створення нових сайтів тимічасово призупинено адміністрацією.' });
+    }
     const { templateId, sitePath, title, selected_logo_url } = req.body;
     const validationError = validateSiteCreation(title, sitePath);
     if (validationError) {
+        if (req.file) await deleteFile(req.file.path).catch(() => {});
         return res.status(400).json({ message: validationError });
     }
     const cleanTitle = title.trim();
@@ -162,7 +178,7 @@ exports.createSite = async (req, res, next) => {
         res.status(201).json({ message: 'Сайт успішно створено!', site: { id: newSiteId, site_path: cleanSitePath } });
     } catch (error) {
         await connection.rollback();
-        if (req.file) await deleteFile(req.file.path);
+        if (req.file) await deleteFile(req.file.path).catch(() => {});
         const status = (error.message.includes('не знайдено') || error.message.includes('вже зайнята') || error.message.includes('доступу')) ? 400 : 500;
         res.status(status).json({ message: error.message || 'Не вдалося створити сайт.' });
     } finally {
@@ -231,7 +247,6 @@ exports.getSiteByPath = async (req, res, next) => {
                 isStaff = true;
             }
         }
-        
         const isOwner = req.user && req.user.id === site.user_id;
         if (site.status === 'suspended') {
             if (!isStaff) { 

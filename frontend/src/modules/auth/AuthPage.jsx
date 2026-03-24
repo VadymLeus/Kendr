@@ -32,12 +32,15 @@ const AuthPage = () => {
         setViewInternal(newView);
         resetTurnstile();
     };
+
     const googleError = searchParams.get('error');
     if (googleError) {
         if (googleError === 'google_auth_failed') {
             toast.error('Не вдалося увійти через Google', { toastId: 'google-err' });
         } else if (googleError === 'auth_failed') {
             toast.error('Помилка авторизації. Будь ласка, перевірте свої дані або спробуйте інший спосіб.', { toastId: 'auth-failed-err' });
+        } else if (googleError === 'auth_disabled') {
+            toast.error('Авторизація тимчасово призупинена. Ведуться технічні роботи.', { toastId: 'auth-disabled-err' });
         }
         searchParams.delete('error');
         setSearchParams(searchParams);
@@ -68,6 +71,7 @@ const AuthPage = () => {
         if (view === 'register') return 'Реєстрація акаунту | Kendr';
         return 'Вхід до системи | Kendr';
     };
+
     const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleGoogleAuth = () => { window.location.href = GOOGLE_AUTH_URL; };
     const handleAvatarUpload = (file) => {
@@ -75,15 +79,18 @@ const AuthPage = () => {
         setAvatarData({ file: file, url: null, preview: URL.createObjectURL(file) });
         setIsAvatarUploading(false);
     };
+
     const handleRemoveAvatar = (e) => {
         if(e) e.stopPropagation();
         setAvatarData({ file: null, url: null, preview: null });
     };
+
     const handleError = (error, fallback) => {
         const message = error.response?.data?.message || fallback;
         toast.error(message, { toastId: message });
     };
-const handleLogin = async (e) => {
+
+    const handleLogin = async (e) => {
         e.preventDefault();
         if (!turnstileToken) return toast.warning('Будь ласка, пройдіть перевірку безпеки.', { toastId: 'captcha-warn' });
         setIsLoading(true);
@@ -206,6 +213,7 @@ const handleLogin = async (e) => {
         } catch (error) { handleError(error, 'Невірний код або пароль'); } 
         finally { setIsLoading(false); }
     };
+
     const handleResendOtp = async (e) => {
         if (e) e.preventDefault();
         if (resendCooldown > 0) return toast.warning(`Зачекайте ${resendCooldown}с.`, { toastId: 'cooldown-warn' });
@@ -217,6 +225,7 @@ const handleLogin = async (e) => {
         } catch (error) { handleError(error, 'Помилка відправки'); } 
         finally { setIsLoading(false); }
     };
+
     if (view === 'otp') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -249,6 +258,7 @@ const handleLogin = async (e) => {
             </div>
         );
     }
+
     if (view === 'reset_pass') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -313,6 +323,7 @@ const handleLogin = async (e) => {
             </div>
         );
     }
+
     if (view === 'forgot') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -343,6 +354,7 @@ const handleLogin = async (e) => {
             </div>
         );
     }
+
     const isRegister = view === 'register';
     return (
         <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">

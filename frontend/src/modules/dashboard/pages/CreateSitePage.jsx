@@ -64,7 +64,6 @@ const CreateSitePage = () => {
         };
         fetchMeta();
     }, []);
-
     const isPlanAdmin = plan && String(plan).trim().toUpperCase() === 'ADMIN';
     const maxSitesDisplay = isPlanAdmin ? '∞' : (limits ? limits.maxSites : '...');
     const isLimitReached = !isPlanAdmin && limits && currentSiteCount >= limits.maxSites;
@@ -90,35 +89,29 @@ const CreateSitePage = () => {
         const timer = setTimeout(checkSlug, 500);
         return () => clearTimeout(timer);
     }, [formData.slug]);
-
     const previewData = useMemo(() => {
         const data = getTemplatePreviewData(manager.selectedTemplate);
         return data || { pages: [], theme: { mode: 'light', accent: 'blue' }, header: [], footer: [], siteData: {} };
     }, [manager.selectedTemplate]);
-
     useEffect(() => {
         if (previewData.pages.length > 0) {
             const hasHomePage = previewData.pages.find(p => p.slug === 'home');
             setCurrentPreviewSlug(hasHomePage ? 'home' : (previewData.pages[0]?.slug || 'home'));
         }
     }, [manager.selectedTemplateId, previewData.pages]);
-
     const currentBlocks = useMemo(() => {
         const page = previewData.pages.find(p => p.slug === currentPreviewSlug);
         return page ? (page.blocks || []) : [];
     }, [previewData.pages, currentPreviewSlug]);
-
     const effectiveLogo = customLogo || defaultRandomLogo;
     const handleTitleChange = (e) => {
         const { val, error } = validateSiteTitle(e.target.value);
         setTitleError(error); setFormData(prev => ({ ...prev, title: val }));
     };
-
     const handleSlugChange = (e) => {
         const sanitizedVal = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
         setFormData(prev => ({ ...prev, slug: sanitizedVal }));
     };
-
     const handleSubmit = async () => {
         const trimmedTitle = formData.title.trim();
         if (isLimitReached || !trimmedTitle || !formData.slug || !manager.selectedTemplateId || slugStatus !== 'available' || titleError || slugError) return;
@@ -131,17 +124,14 @@ const CreateSitePage = () => {
             toast.success('Сайт створено успішно!');
             window.location.href = `/dashboard/${res.data.site.site_path}`;
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Помилка створення сайту');
-            setIsSubmitting(false);
+            setIsSubmitting(false); 
         }
     };
-
     const handleConfirmAction = async () => {
         const { actionType, template } = manager.modals.confirmModal;
         await manager.actions.handleAction(actionType, template);
         manager.modals.setConfirmModal({ isOpen: false, template: null, actionType: null });
     };
-
     const getFullUrl = (path) => {
         if (!path) return '';
         if (path.startsWith('http') || path.startsWith('data:')) return path;
@@ -149,7 +139,6 @@ const CreateSitePage = () => {
         if (path.includes('/assets/') || path.includes('/src/') || path.includes('@fs')) return path;
         return `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
     };
-
     const containerStyle = { position: 'absolute', inset: 0, display: 'flex', overflow: 'hidden', background: 'var(--platform-bg)' };
     if (isLoadingMeta || manager.isLoading) return <div style={{...containerStyle, alignItems: 'center', justifyContent: 'center'}}><LoadingState title="Завантаження даних..." layout="page" /></div>;
     const isFormReady = !isLimitReached && formData.title.trim().length >= 2 && !titleError && formData.slug && slugStatus === 'available' && !slugError;

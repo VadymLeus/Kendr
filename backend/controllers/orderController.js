@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const emailService = require('../utils/emailService');
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-
 const generateOrderNumber = (size = 12) => {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     let id = '';
@@ -13,6 +12,16 @@ const generateOrderNumber = (size = 12) => {
         id += chars[bytes[i] % chars.length];
     }
     return id;
+};
+
+const getGlobalSettings = async () => {
+    try {
+        const [rows] = await db.query('SELECT billing_enabled FROM global_settings LIMIT 1');
+        if (rows && rows.length > 0) return rows[0];
+    } catch (e) {
+        console.warn('Таблиця global_settings не знайдена або порожня.');
+    }
+    return { billing_enabled: 1 };
 };
 
 const generateLiqPayData = (orderId, amount, publicKey, privateKey) => {
@@ -35,6 +44,10 @@ const generateLiqPayData = (orderId, amount, publicKey, privateKey) => {
 };
 
 exports.processCheckout = async (req, res, next) => {
+    const settings = await getGlobalSettings();
+    if (!settings.billing_enabled) {
+        return res.status(403).json({ message: 'Прийом платежів тимчасово призупинено адміністрацією платформи.' });
+    }
     const { siteId, items, customerData } = req.body;
     const userId = req.user.id;
     if (!siteId) {
@@ -115,6 +128,10 @@ exports.processCheckout = async (req, res, next) => {
 };
 
 exports.generatePaymentForOrder = async (req, res) => {
+    const settings = await getGlobalSettings();
+    if (!settings.billing_enabled) {
+        return res.status(403).json({ message: 'Прийом платежів тимчасово призупинено адміністрацією платформи.' });
+    }
     const orderId = req.params.id;
     const userId = req.user.id;
     try {
