@@ -63,10 +63,8 @@ const CartPage = () => {
                     console.error("Помилка завантаження site_path для id:", id);
                 }
             }
-            
             setResolvedPaths(newPaths);
         };
-
         fetchPaths();
     }, [cartItems]);
 
@@ -240,7 +238,6 @@ const CartPage = () => {
                         </p>
                     )}
                 </div>
-
                 {cartItems.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center min-h-[60vh]">
                         <EmptyState 
@@ -441,7 +438,7 @@ const CartPage = () => {
                                     </div>
                                     <Button 
                                         type="submit" 
-                                        className="w-full mt-6 h-14 text-lg font-bold bg-orange-600 hover:bg-orange-700 text-white border-none shadow-md transition-all hover:-translate-y-0.5"
+                                        className="w-full mt-6 h-14 text-lg font-bold bg-orange-600 hover:bg-orange-700 text-white border-none shadow-md transition-colors"
                                         disabled={isSubmitting}
                                     >
                                         {isSubmitting ? (

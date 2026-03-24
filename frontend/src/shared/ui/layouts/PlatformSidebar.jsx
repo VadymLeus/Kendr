@@ -1,16 +1,18 @@
 // frontend/src/shared/ui/layouts/PlatformSidebar.jsx
 import React, { useContext } from 'react';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import UserMenu from './UserMenu';
-import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders, Package, Shield } from 'lucide-react';
+import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders, Package, Shield, CreditCard } from 'lucide-react';
 
 const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
     const { cartItems } = useContext(CartContext);
-    const { user } = useContext(AuthContext);
+    const { user, isAdmin: isStrictAdmin, isModerator } = useContext(AuthContext); 
     const navigate = useNavigate();
-    const isAdmin = variant === 'admin';
+    const location = useLocation();
+    const isStaff = isStrictAdmin || isModerator;
+    const isAdminView = variant === 'admin' || (isStaff && location.pathname.startsWith('/admin'));
     const handleProtectedLink = (e, path) => {
         if (!user) {
             e.preventDefault();
@@ -23,7 +25,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
             <NavLink 
                 to={to} 
                 className={({ isActive }) => `${baseClass} ${isActive ? 'active' : ''}`}
-                onClick={(e) => protectedLink && !isAdmin && handleProtectedLink(e, to)}
+                onClick={(e) => protectedLink && !isAdminView && handleProtectedLink(e, to)}
                 title={isCollapsed ? label : ''}
                 end={to === '/admin' || to === '/admin/dashboard'}
             >
@@ -40,7 +42,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
     return (
         <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} custom-scrollbar`}>
             <div className="sidebar-header">
-                <Link to={isAdmin ? "/admin/dashboard" : "/"} className="flex justify-center w-full h-full items-center">
+                <Link to={isAdminView ? "/admin/dashboard" : "/"} className="flex justify-center w-full h-full items-center">
                     <div className="sidebar-logo" />
                 </Link>
                 <button onClick={onToggle} className="sidebar-toggle-btn">
@@ -48,22 +50,26 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
                 </button>
             </div>
             <div className="sidebar-nav custom-scrollbar">
-                {isAdmin ? (
+                {isAdminView ? (
                     <>
                         <SidebarLink to="/create-site" icon={FileText} label="Створити сайт" isCreateButton />
                         <div className="nav-separator" />
                         <SidebarLink to="/my-sites" icon={Layout} label="Мої сайти" />
-                        <SidebarLink to="/media-library" icon={FileText} label="Медіатека" />
                         <SidebarLink to="/admin/templates" icon={Palette} label="Шаблони" />
+                        <SidebarLink to="/media-library" icon={FileText} label="Медіатека" />
                         <div className="nav-separator" />
-                        <SidebarLink to="/admin/sites" icon={Globe} label="Всі сайти" />
-                        <SidebarLink to="/admin/users" icon={Users} label="Користувачі" />
-                        <div className="nav-separator" />
-                        <SidebarLink to="/admin/tickets" icon={MessageSquare} label="Тікети" />
-                        <SidebarLink to="/admin/reports" icon={AlertTriangle} label="Скарги" />
-                        <div className="nav-separator" />
-                        <SidebarLink to="/admin/control" icon={Sliders} label="Управління" />
+                        <SidebarLink to="/admin/users-sites" icon={Users} label="Користувачі / Сайти" />
+                        <SidebarLink to="/admin/support-hub" icon={MessageSquare} label="Тікети / Скарги" />
+                        {isStrictAdmin && (
+                            <SidebarLink to="/admin/billing" icon={CreditCard} label="Білінг" />
+                        )}
                         <SidebarLink to="/admin/dashboard" icon={LayoutDashboard} label="Дашборд" />
+                        {isStrictAdmin && (
+                            <>
+                                <div className="nav-separator" />
+                                <SidebarLink to="/admin/control" icon={Sliders} label="Управління" />
+                            </>
+                        )}
                     </>
                 ) : (
                     <>
@@ -103,7 +109,10 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
                         {!isCollapsed && <span>Увійти</span>}
                     </Link>
                 ) : (
-                    <UserMenu isCollapsed={isCollapsed} customSubtitle={isAdmin ? "Адміністратор" : null} />
+                    <UserMenu 
+                        isCollapsed={isCollapsed} 
+                        customSubtitle={isAdminView ? (isStrictAdmin ? "Адміністратор" : "Модератор") : null} 
+                    />
                 )}
             </div>
         </div>

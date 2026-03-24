@@ -24,9 +24,11 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
     }, [url]);
     const getFullUrl = (src) => {
         if (!src) return null;
-        if (src.startsWith('blob:')) return src;
-        if (src.startsWith('http')) return src;
-        return `${BASE_URL}${src}`;
+        if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:')) return src;
+        if (src.startsWith('/logos/')) return src;
+        if (src.includes('/src/') || src.includes('/assets/') || src.includes('@fs')) return src;
+        const cleanSrc = src.startsWith('/') ? src : `/${src}`;
+        return `${BASE_URL}${cleanSrc}`;
     };
     const finalUrl = getFullUrl(url);
     const sizeStyle = {
@@ -35,7 +37,6 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
         fontSize: fontSize || `${Math.round(size * 0.45)}px`,
         ...style
     };
-
     if (finalUrl && !imgError) {
         return (
             <div className={`avatar-container ${className}`} style={sizeStyle}>
@@ -49,7 +50,6 @@ const Avatar = ({ url, name, size = 40, fontSize, className = '', style = {} }) 
             </div>
         );
     }
-
     const bgColor = stringToColor(name || 'User');
     return (
         <div 

@@ -1,16 +1,16 @@
-// frontend/src/app/guards/ProtectedRoute
-import React, { useContext } from 'react';
+// frontend/src/app/guards/ProtectedRoute.jsx
+import React, { useContext, useEffect } from 'react';
 import { Navigate, Outlet, useOutletContext } from 'react-router-dom';
 import { AuthContext } from '../providers/AuthContext';
 
 const ProtectedRoute = ({ 
     requireAdmin = false, 
+    requireStrictAdmin = false,
     onlyPublic = false, 
     excludeAdmin = false 
 }) => {
-    const { user, isAdmin, isLoading } = useContext(AuthContext);
+    const { user, isAdmin, isModerator, isLoading, logout } = useContext(AuthContext); 
     const outletContext = useOutletContext();
-
     if (isLoading) {
         return (
             <div style={{ 
@@ -22,10 +22,16 @@ const ProtectedRoute = ({
             </div>
         );
     }
-
+    const isAnyAdmin = isAdmin || isModerator;
+    if (user && user.status === 'deleted' && !onlyPublic) {
+        setTimeout(() => {
+            logout();
+        }, 0);
+        return <Navigate to="/login" replace />;
+    }
     if (onlyPublic) {
-        if (user) {
-            return isAdmin ? <Navigate to="/admin" replace /> : <Navigate to="/" replace />;
+        if (user && user.status !== 'deleted') {
+            return isAnyAdmin ? <Navigate to="/admin" replace /> : <Navigate to="/" replace />;
         }
         return <Outlet context={outletContext} />;
     }
@@ -34,11 +40,15 @@ const ProtectedRoute = ({
         return <Navigate to="/login" replace />;
     }
 
-    if (requireAdmin && !isAdmin) {
+    if (requireStrictAdmin && !isAdmin) {
+        return <Navigate to="/admin/dashboard" replace />;
+    }
+
+    if (requireAdmin && !isAnyAdmin) {
         return <Navigate to="/login" replace />;
     }
 
-    if (excludeAdmin && isAdmin) {
+    if (excludeAdmin && isAnyAdmin) {
         return <Navigate to="/admin" replace />;
     }
 

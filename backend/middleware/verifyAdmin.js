@@ -6,16 +6,14 @@ async function verifyAdmin(req, res, next) {
         if (!req.user || !req.user.id) {
             return res.status(401).json({ message: 'Доступ заборонено. Потрібна автентифікація.' });
         }
-
         const user = await User.findById(req.user.id);
-
-        if (!user || user.role !== 'admin') {
-            return res.status(403).json({ message: 'Доступ заборонено. У вас немає прав адміністратора.' });
+        if (!user || !['admin', 'moderator'].includes(user.role)) {
+            return res.status(403).json({ message: 'Доступ заборонено. Недостатньо прав.' });
         }
-
+        req.user.role = user.role;
         next();
     } catch (error) {
-        res.status(500).json({ message: 'Внутрішня помилка сервера під час перевірки прав адміністратора.' });
+        res.status(500).json({ message: 'Внутрішня помилка сервера під час перевірки прав.' });
     }
 }
 

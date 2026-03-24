@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements';
 import { BASE_URL } from '../../../shared/config';
+import { FILE_LIMITS } from '../../../shared/config/limits';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { Upload, Search, Download, Trash2, Check, X as XIcon, HardDrive } from 'lucide-react';
@@ -55,7 +56,6 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         fetchData();
     }, []);
-
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -85,6 +85,7 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         setActiveFormat(null);
     }, [activeType]);
+
     const filteredFiles = useMemo(() => {
         if (!files) return [];
         let result = [...files];
@@ -131,7 +132,6 @@ const MediaLibraryPage = () => {
             if (valA > valB) return dir === 'asc' ? 1 : -1;
             return 0;
         });
-
         return result;
     }, [files, searchTerm, activeType, activeFormat, sortOption, onlyFavorites]);
     const visibleFiles = filteredFiles.slice(0, visibleCount);
@@ -144,6 +144,13 @@ const MediaLibraryPage = () => {
         let failedFiles = [];
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i];
+            if (file.size > FILE_LIMITS.MEDIA_LIBRARY.MAX_SIZE) {
+                failedFiles.push({ 
+                    name: file.name, 
+                    reason: `Розмір перевищує ${FILE_LIMITS.MEDIA_LIBRARY.MAX_SIZE / (1024 * 1024)}MB` 
+                });
+                continue;
+            }
             const formData = new FormData();
             formData.append('mediaFile', file);
             try {
@@ -190,6 +197,7 @@ const MediaLibraryPage = () => {
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
+
     const handleUpdateFile = useCallback((updatedFile) => {
         setFiles(prev => prev.map(f => f.id === updatedFile.id ? updatedFile : f));
         setSelectedFile(prev => prev?.id === updatedFile.id ? updatedFile : prev);
@@ -204,6 +212,7 @@ const MediaLibraryPage = () => {
             handleUpdateFile({ ...file, is_favorite: !newStatus });
         }
     }, [handleUpdateFile]);
+
     const handleDelete = async (file) => {
         if (await confirm({ title: "Видалити файл?", message: "Ця дія незворотна.", type: "danger", confirmLabel: "Видалити" })) {
             try {
@@ -295,7 +304,6 @@ const MediaLibraryPage = () => {
             setCheckedFiles(new Set());
             return;
         }
-
         const toastId = toast.loading(`Збираємо архів з ${filesToDownload.length} файлів...`);
         try {
             const zip = new JSZip();
@@ -314,6 +322,26 @@ const MediaLibraryPage = () => {
         } catch (error) {
             console.error("ZIP Generation failed:", error);
             toast.update(toastId, { render: "Помилка при створенні архіву", type: "error", isLoading: false, autoClose: 3000 });
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        const filesToDelete = files.filter(f => checkedFiles.has(f.id));
+        if (filesToDelete.length === 0) return;
+        if (await confirm({ title: "Видалити вибрані файли?", message: `Ви впевнені, що хочете видалити ${filesToDelete.length} файлів? Ця дія незворотна.`, type: "danger", confirmLabel: "Видалити" })) {
+            const toastId = toast.loading(`Видалення ${filesToDelete.length} файлів...`);
+            try {
+                const deletePromises = filesToDelete.map(file => apiClient.delete(`/media/${file.id}`));
+                await Promise.all(deletePromises);
+                setFiles(prev => prev.filter(f => !checkedFiles.has(f.id)));
+                setCheckedFiles(new Set());
+                setSelectedFile(null);
+                toast.update(toastId, { render: "Файли успішно видалено", type: "success", isLoading: false, autoClose: 3000 });
+                fetchLimits();
+            } catch (error) {
+                console.error("Bulk delete failed:", error);
+                toast.update(toastId, { render: "Помилка при видаленні файлів", type: "error", isLoading: false, autoClose: 3000 });
+            }
         }
     };
 
@@ -422,6 +450,7 @@ const MediaLibraryPage = () => {
             ))}
         </div>
     ) : null;
+
     const isLimitReached = limits && !limits.isUnlimited && limits.currentFiles >= limits.maxFiles;
     return (
         <DragDropWrapper 

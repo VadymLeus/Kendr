@@ -1,15 +1,19 @@
 // frontend/src/modules/profile/pages/ProfilePage.jsx
 import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import apiClient from '../../../shared/api/api';
+import { toast } from 'react-toastify';
+import apiClient, { suspendUser, restoreUser } from '../../../shared/api/api';
 import { AuthContext } from '../../../app/providers/AuthContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import SiteGridCard from '../../../shared/ui/complex/SiteGridCard'; 
 import SiteFilters from '../../../shared/ui/complex/SiteFilters';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
-import { Send, Instagram, Globe, Settings, Calendar, Grid, User as UserIcon, ExternalLink, EyeOff, Search, Layout, ShieldAlert, AlertTriangle } from 'lucide-react';
+import UserDetailsPanel from '../../admin/components/UserDetailsPanel';
+import NotFoundPage from '../../../pages/NotFoundPage';
+import { Send, Instagram, Globe, Settings, Calendar, Grid, User as UserIcon, ExternalLink, EyeOff, Layout, ShieldAlert, AlertTriangle, Shield } from 'lucide-react';
 
 const SORT_OPTIONS = [
     { value: 'created_at:desc', label: 'Нові' },
@@ -38,6 +42,8 @@ const getFormattedDate = (dateString) => {
 
 const ProfilePage = () => {
     const { slug } = useParams();
+    const navigate = useNavigate();
+    const { confirm } = useConfirm();
     const { user: authUser } = useContext(AuthContext);
     const [profileData, setProfileData] = useState(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
@@ -46,8 +52,14 @@ const ProfilePage = () => {
     const [sitesLoading, setSitesLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState('created_at:desc');
+    const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const isOwner = authUser && authUser.slug === slug;
     useEffect(() => {
+        if (isOwner && (authUser?.role === 'admin' || authUser?.role === 'moderator')) {
+            setErrorStatus(404);
+            setLoadingProfile(false);
+            return;
+        }
         const fetchProfile = async () => {
             try {
                 setLoadingProfile(true);
@@ -56,6 +68,10 @@ const ProfilePage = () => {
                     suppressToast: true
                 });
                 const data = response.data?.user || response.data?.data || response.data;
+                if (data && (data.role === 'admin' || data.role === 'moderator')) {
+                    setErrorStatus(404);
+                    return;
+                }
                 setProfileData(data);
             } catch (err) {
                 if (err.response) {
@@ -68,7 +84,7 @@ const ProfilePage = () => {
             }
         };
         fetchProfile();
-    }, [slug]);
+    }, [slug, isOwner, authUser]);
 
     const fetchUserSites = useCallback(async () => {
         if (!profileData) return;
@@ -96,7 +112,67 @@ const ProfilePage = () => {
             return () => clearTimeout(timer);
         }
     }, [fetchUserSites]);
-    
+
+    const handleDeleteUser = (userId) => {
+        confirm({ 
+            title: 'Видалити акаунт?', 
+            message: 'Ця дія незворотна. Всі дані будуть видалені. Введіть "DELETE" для підтвердження.', 
+            requireInput: true,
+            expectedInput: 'DELETE',
+            confirmText: 'Видалити повністю', 
+            danger: true,
+            onConfirm: async (inputValue) => { 
+                if (inputValue !== 'DELETE') return toast.error('Невірне підтвердження.');
+                try { 
+                    await apiClient.delete(`/admin/users/${userId}`); 
+                    toast.success('Користувача видалено'); 
+                    setIsAdminPanelOpen(false);
+                    navigate('/'); 
+                } catch { toast.error('Помилка видалення'); } 
+            } 
+        });
+    };
+
+    const handleSuspendUser = (userId) => {
+        confirm({ 
+            title: 'Заблокувати назавжди?', 
+            message: 'Пошта залишиться в блеклісті, але сайти, медіафайли та персональні дані будуть незворотно стерті. Введіть "SUSPEND" для підтвердження.', 
+            requireInput: true,
+            expectedInput: 'SUSPEND',
+            confirmText: 'Заблокувати', 
+            danger: true,
+            onConfirm: async (inputValue) => { 
+                if (inputValue !== 'SUSPEND') return toast.error('Невірне підтвердження.');
+                try { 
+                    await suspendUser(userId); 
+                    toast.success('Користувача заблоковано'); 
+                    setProfileData(prev => ({ ...prev, status: 'suspended' }));
+                    setIsAdminPanelOpen(false);
+                } catch (error) { toast.error(error.response?.data?.message || 'Помилка блокування'); } 
+            } 
+        });
+    };
+
+    const handleRestoreUser = (userId) => {
+        confirm({ 
+            title: 'Розблокувати акаунт?', 
+            message: 'Користувач знову зможе користуватися платформою. Введіть "RESTORE" для підтвердження.', 
+            type: 'success',
+            requireInput: true,
+            expectedInput: 'RESTORE',
+            confirmText: 'Розблокувати',
+            onConfirm: async (inputValue) => { 
+                if (inputValue !== 'RESTORE') return toast.error('Невірне підтвердження.');
+                try { 
+                    await restoreUser(userId); 
+                    toast.success('Користувача розблоковано'); 
+                    setProfileData(prev => ({ ...prev, status: 'published' }));
+                    setIsAdminPanelOpen(false);
+                } catch (error) { toast.error(error.response?.data?.message || 'Помилка розблокування'); } 
+            } 
+        });
+    };
+
     const containerStyle = {
         maxWidth: '1280px', 
         width: '100%',
@@ -119,15 +195,16 @@ const ProfilePage = () => {
         borderColor: 'var(--platform-danger)',
         background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)'
     };
-
     const errorContainerStyle = {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '60vh',
+        minHeight: 'calc(100vh - 150px)',
+        width: '100%',
         textAlign: 'center',
-        color: 'var(--platform-text-secondary)'
+        color: 'var(--platform-text-secondary)',
+        padding: '2rem'
     };
 
     const errorIconCircleStyle = {
@@ -148,6 +225,7 @@ const ProfilePage = () => {
         gap: '20px',
         padding: '24px'
     };
+    
     const cardHeaderStyle = { padding: '1.5rem 1.5rem 1rem 1.5rem', borderBottom: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center', gap: '10px' };
     const cardTitleStyle = { fontSize: '1.25rem', fontWeight: '700', color: 'var(--platform-text-primary)', margin: 0 };
     const cardBodyStyle = { padding: '1.5rem' };
@@ -158,34 +236,20 @@ const ProfilePage = () => {
         background: 'var(--platform-bg)', color: 'var(--platform-text-primary)', textDecoration: 'none', 
         fontSize: '0.95rem', fontWeight: '500', transition: 'all 0.2s ease', border: '1px solid transparent', marginBottom: '0.75rem' 
     };
-
     if (loadingProfile) return <LoadingState />;
     if (errorStatus === 403) {
         return (
-            <div style={containerStyle}>
+            <div style={errorContainerStyle}>
                 <Helmet><title>Приватний профіль | Kendr</title></Helmet>
-                <div style={errorContainerStyle}>
-                    <div style={errorIconCircleStyle}><EyeOff size={40} /></div>
-                    <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Цей профіль закритий</h2>
-                    <p style={{ maxWidth: '400px', lineHeight: '1.6' }}>Користувач обмежив доступ до своєї сторінки.</p>
-                    <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
-                </div>
+                <div style={errorIconCircleStyle}><EyeOff size={40} /></div>
+                <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Цей профіль закритий</h2>
+                <p style={{ maxWidth: '400px', lineHeight: '1.6' }}>Користувач обмежив доступ до своєї сторінки.</p>
+                <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
             </div>
         );
     }
-    
     if (errorStatus === 404) {
-        return (
-            <div style={containerStyle}>
-                <Helmet><title>Користувача не знайдено | Kendr</title></Helmet>
-                <div style={errorContainerStyle}>
-                    <div style={errorIconCircleStyle}><Search size={40} /></div>
-                    <h2 style={{ color: 'var(--platform-text-primary)', marginBottom: '0.5rem' }}>Користувача не знайдено</h2>
-                    <p>Ми не змогли знайти такий профіль.</p>
-                    <Link to="/" style={{ marginTop: '1.5rem', textDecoration: 'none' }}><Button variant="secondary">На головну</Button></Link>
-                </div>
-            </div>
-        );
+        return <NotFoundPage />;
     }
     
     if (errorStatus) return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--platform-danger)' }}>Сталася помилка при завантаженні профілю.</div>;
@@ -195,10 +259,7 @@ const ProfilePage = () => {
     const displaySiteCount = profileData?.siteCount !== undefined ? profileData.siteCount : (sitesLoading ? '-' : userSites.length);
     const displayTotalViews = profileData?.totalViews !== undefined ? profileData.totalViews : (sitesLoading ? '-' : userSites.reduce((sum, site) => sum + (site.view_count || 0), 0));
     const userAccentColor = profileData?.accent_color || 'var(--platform-accent)';
-    const coverStyle = {
-        height: '240px', width: '100%', position: 'relative',
-        background: `linear-gradient(to bottom, ${userAccentColor}, var(--platform-card-bg))`
-    };
+    const coverStyle = { height: '240px', width: '100%', position: 'relative', background: `linear-gradient(to bottom, ${userAccentColor}, var(--platform-card-bg))` };
     const topInfoStyle = { padding: '0 2rem 2rem 2rem', marginTop: '-80px', display: 'flex', alignItems: 'flex-end', gap: '2rem', position: 'relative', flexWrap: 'wrap' };
     const avatarWrapperStyle = { borderRadius: '50%', border: '6px solid var(--platform-card-bg)', background: 'var(--platform-bg)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' };
     const headerContentStyle = { flex: 1, paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' };
@@ -217,12 +278,25 @@ const ProfilePage = () => {
                             name={displayUsername} 
                             size={160} 
                             fontSize="64px" 
+                            style={{ filter: profileData.status === 'suspended' ? 'grayscale(100%)' : 'none' }}
                         />
                     </div>
                     <div style={headerContentStyle}>
                         <div>
                             <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--platform-text-primary)', margin: '0 0 0.5rem 0', lineHeight: '1' }}>{displayUsername}</h1>
+                                <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--platform-text-primary)', margin: '0 0 0.5rem 0', lineHeight: '1' }}>
+                                    {displayUsername}
+                                </h1>
+                                {authUser?.role === 'admin' && (
+                                    <Button 
+                                        variant="ghost" 
+                                        onClick={() => setIsAdminPanelOpen(true)}
+                                        style={{ padding: '6px', marginBottom: '4px', color: 'var(--platform-accent)' }}
+                                        title="Керування профілем (Адмін)"
+                                    >
+                                        <Shield size={22} />
+                                    </Button>
+                                )}
                                 {!profileData.is_profile_public && isOwner && (
                                     <div title="Приватний профіль (бачите тільки ви)" style={{paddingBottom: '8px'}}>
                                         <EyeOff size={24} color="var(--platform-text-secondary)" />
@@ -242,6 +316,12 @@ const ProfilePage = () => {
                     </div>
                 </div>
             </div>
+            {profileData.status === 'suspended' && (
+                <div style={{...warningSectionStyle, marginBottom: '24px', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '12px'}}>
+                     <AlertTriangle size={24} style={{ color: 'var(--platform-danger)' }} />
+                     <div style={{ fontWeight: '600', color: 'var(--platform-danger)' }}>Цей акаунт заблоковано за порушення правил платформи.</div>
+                </div>
+            )}
             {profileData.warnings && profileData.warnings.length > 0 && (
                 <div style={warningSectionStyle}>
                     <div style={{...cardHeaderStyle, borderBottomColor: 'color-mix(in srgb, var(--platform-danger), transparent 80%)'}}>
@@ -322,7 +402,7 @@ const ProfilePage = () => {
                             </span>
                         </div>
                         <div style={{ ...statItemStyle, borderBottom: 'none' }}>
-                            <span>Всього переглядів</span>
+                            <span>Всього переглядів на активних сайтах </span>
                             <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--platform-accent)' }}>
                                 {displayTotalViews}
                             </span>
@@ -403,6 +483,15 @@ const ProfilePage = () => {
                     </div>
                 )}
             </div>
+            {isAdminPanelOpen && profileData && (
+                <UserDetailsPanel 
+                    user={profileData} 
+                    onClose={() => setIsAdminPanelOpen(false)} 
+                    onDelete={handleDeleteUser} 
+                    onSuspend={handleSuspendUser} 
+                    onRestore={handleRestoreUser} 
+                />
+            )}
         </div>
     );
 };

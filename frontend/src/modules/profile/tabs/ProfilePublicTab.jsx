@@ -15,21 +15,19 @@ const PublicProfileTab = () => {
         social_telegram: user.social_telegram || '',
         social_instagram: user.social_instagram || '',
         social_website: user.social_website || '',
-        is_profile_public: user.is_profile_public
+        is_profile_public: Boolean(user.is_profile_public)
     });
     const [publicCooldown, startPublicCooldown] = useCooldown('kendr_public_update_cooldown');
     const handleChange = (e) => {
         const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
         setFormData({ ...formData, [e.target.name]: value });
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (publicCooldown > 0) {
             toast.warning(`Зачекайте ${publicCooldown}с перед наступним оновленням.`);
             return;
         }
-
         const cleanBio = formData.bio.trim().replace(/[<>]/g, '').slice(0, 300);
         const cleanTelegram = formData.social_telegram.trim().replace(/[<>]/g, '');
         const cleanInstagram = formData.social_instagram.trim().replace(/[<>]/g, '');
@@ -38,7 +36,6 @@ const PublicProfileTab = () => {
             toast.error('Сайт повинен починатися з http:// або https://');
             return;
         }
-        
         setIsLoading(true);
         try {
             const payload = {
@@ -60,7 +57,6 @@ const PublicProfileTab = () => {
             setIsLoading(false); 
         }
     };
-
     const profileUrl = `${window.location.origin}/profile/${user.slug}`;
     const copyLink = () => {
         navigator.clipboard.writeText(profileUrl);
@@ -69,6 +65,12 @@ const PublicProfileTab = () => {
     const openLink = () => {
         window.open(profileUrl, '_blank');
     };
+    const hasChanges = 
+        formData.bio !== (user.bio || '') ||
+        formData.social_telegram !== (user.social_telegram || '') ||
+        formData.social_instagram !== (user.social_instagram || '') ||
+        formData.social_website !== (user.social_website || '') ||
+        formData.is_profile_public !== Boolean(user.is_profile_public);
 
     return (
         <div className="public-profile-container">
@@ -96,7 +98,7 @@ const PublicProfileTab = () => {
                         <span className="slider"></span>
                     </label>
                 </div>
-                {formData.is_profile_public && (
+                {Boolean(formData.is_profile_public) && (
                     <div className="link-box">
                         <a href={profileUrl} target="_blank" rel="noreferrer" className="profile-link">
                             {profileUrl}
@@ -173,7 +175,7 @@ const PublicProfileTab = () => {
                     <div className="form-footer">
                         <Button 
                             type="submit" 
-                            disabled={isLoading || publicCooldown > 0} 
+                            disabled={isLoading || publicCooldown > 0 || !hasChanges} 
                             icon={isLoading ? null : (publicCooldown > 0 ? <Timer size={18} /> : <Check size={18} />)}
                         >
                             {isLoading ? 'Збереження...' : (publicCooldown > 0 ? `Зачекайте ${publicCooldown}с` : 'Зберегти зміни')}
@@ -310,7 +312,6 @@ const STYLES = `
         border-color: var(--platform-accent);
         box-shadow: 0 0 0 3px color-mix(in srgb, var(--platform-accent), transparent 85%);
     }
-    
     .bio-textarea::-webkit-scrollbar { width: 8px; height: 8px; }
     .bio-textarea::-webkit-scrollbar-track { background: var(--platform-sidebar-bg); border-radius: 4px; }
     .bio-textarea::-webkit-scrollbar-thumb {
@@ -332,7 +333,6 @@ const STYLES = `
     }
     input:checked + .slider { background-color: var(--platform-accent); }
     input:checked + .slider:before { transform: translateX(20px); }
-
     @media (max-width: 600px) {
         .social-grid { grid-template-columns: 1fr; }
     }

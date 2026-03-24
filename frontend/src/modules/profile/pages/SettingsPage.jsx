@@ -10,9 +10,14 @@ import { User, Shield, Palette, Globe, ExternalLink } from 'lucide-react';
 
 const SettingsPage = () => {
     const { user } = useContext(AuthContext);
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const [activeTab, setActiveTab] = useState(() => {
         const savedTab = localStorage.getItem('settings_active_tab');
-        return ['general', 'security', 'public', 'appearance'].includes(savedTab) ? savedTab : 'general';
+        const allowedTabs = isStaff 
+            ? ['general', 'security', 'appearance'] 
+            : ['general', 'security', 'public', 'appearance'];
+            
+        return allowedTabs.includes(savedTab) ? savedTab : 'general';
     });
     useEffect(() => {
         localStorage.setItem('settings_active_tab', activeTab);
@@ -20,10 +25,10 @@ const SettingsPage = () => {
     const tabs = [
         { id: 'general', label: 'Загальні', icon: <User size={18} /> },
         { id: 'security', label: 'Безпека', icon: <Shield size={18} /> },
-        { id: 'public', label: 'Публічність', icon: <Globe size={18} /> },
+        ...(isStaff ? [] : [{ id: 'public', label: 'Публічність', icon: <Globe size={18} /> }]),
         { id: 'appearance', label: 'Вигляд', icon: <Palette size={18} /> },
     ];
-    
+
     return (
         <div 
             style={{
@@ -70,7 +75,7 @@ const SettingsPage = () => {
                     </nav>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: '150px', gap: '12px' }}>
-                    {user && (
+                    {user && !isStaff && (
                         <Link 
                             to={`/profile/${user.slug}`} 
                             target="_blank"
@@ -94,7 +99,7 @@ const SettingsPage = () => {
                         {activeTab === 'general' && <ProfileGeneralTab />}
                         {activeTab === 'security' && <ProfileSecurityTab />}
                         {activeTab === 'appearance' && <ProfileAppearanceTab />}
-                        {activeTab === 'public' && <ProfilePublicTab />}
+                        {!isStaff && activeTab === 'public' && <ProfilePublicTab />}
                     </div>
                 </div>
             </div>

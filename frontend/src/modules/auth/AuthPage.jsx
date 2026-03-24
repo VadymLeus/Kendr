@@ -32,12 +32,15 @@ const AuthPage = () => {
         setViewInternal(newView);
         resetTurnstile();
     };
+
     const googleError = searchParams.get('error');
     if (googleError) {
         if (googleError === 'google_auth_failed') {
             toast.error('Не вдалося увійти через Google', { toastId: 'google-err' });
         } else if (googleError === 'auth_failed') {
             toast.error('Помилка авторизації. Будь ласка, перевірте свої дані або спробуйте інший спосіб.', { toastId: 'auth-failed-err' });
+        } else if (googleError === 'auth_disabled') {
+            toast.error('Авторизація тимчасово призупинена. Ведуться технічні роботи.', { toastId: 'auth-disabled-err' });
         }
         searchParams.delete('error');
         setSearchParams(searchParams);
@@ -68,6 +71,7 @@ const AuthPage = () => {
         if (view === 'register') return 'Реєстрація акаунту | Kendr';
         return 'Вхід до системи | Kendr';
     };
+
     const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleGoogleAuth = () => { window.location.href = GOOGLE_AUTH_URL; };
     const handleAvatarUpload = (file) => {
@@ -75,14 +79,17 @@ const AuthPage = () => {
         setAvatarData({ file: file, url: null, preview: URL.createObjectURL(file) });
         setIsAvatarUploading(false);
     };
+
     const handleRemoveAvatar = (e) => {
         if(e) e.stopPropagation();
         setAvatarData({ file: null, url: null, preview: null });
     };
+
     const handleError = (error, fallback) => {
         const message = error.response?.data?.message || fallback;
         toast.error(message, { toastId: message });
     };
+
     const handleLogin = async (e) => {
         e.preventDefault();
         if (!turnstileToken) return toast.warning('Будь ласка, пройдіть перевірку безпеки.', { toastId: 'captcha-warn' });
@@ -93,11 +100,12 @@ const AuthPage = () => {
                 password: formData.password,
                 turnstileToken
             });
-            login(res.data.user, res.data.token, res.data.require_restore);
-            if (res.data.require_restore) {
+            const isDeleted = res.data.require_restore === true || res.data.user?.status === 'deleted';
+            login(res.data.user, res.data.token, isDeleted);
+            if (isDeleted) {
                 toast.warning(res.data.message || 'Акаунт знаходиться в процесі видалення.', { toastId: 'restore-warn' });
             } else {
-                toast.success(`З поверненням, ${res.data.user.username}!`, { toastId: 'login-success' });
+                toast.success(`З поверненням, ${res.data.user?.username || ''}!`, { toastId: 'login-success' });
                 navigate('/');
             }
         } catch (error) {
@@ -110,7 +118,9 @@ const AuthPage = () => {
             } else {
                 handleError(error, 'Помилка входу');
             }
-        } finally { setIsLoading(false); }
+        } finally { 
+            setIsLoading(false); 
+        }
     };
 
     const handleRegister = async (e) => {
@@ -129,7 +139,6 @@ const AuthPage = () => {
             regData.append('turnstileToken', turnstileToken);
             if (avatarData.file) regData.append('avatar', avatarData.file);
             else if (avatarData.url) regData.append('avatar_url', avatarData.url);
-            
             await apiClient.post('/auth/register', regData);
             setTargetEmail(formData.email);
             setOtpPurpose('VERIFY_EMAIL');
@@ -204,6 +213,7 @@ const AuthPage = () => {
         } catch (error) { handleError(error, 'Невірний код або пароль'); } 
         finally { setIsLoading(false); }
     };
+
     const handleResendOtp = async (e) => {
         if (e) e.preventDefault();
         if (resendCooldown > 0) return toast.warning(`Зачекайте ${resendCooldown}с.`, { toastId: 'cooldown-warn' });
@@ -215,6 +225,7 @@ const AuthPage = () => {
         } catch (error) { handleError(error, 'Помилка відправки'); } 
         finally { setIsLoading(false); }
     };
+
     if (view === 'otp') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -247,6 +258,7 @@ const AuthPage = () => {
             </div>
         );
     }
+
     if (view === 'reset_pass') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -311,6 +323,7 @@ const AuthPage = () => {
             </div>
         );
     }
+
     if (view === 'forgot') {
         return (
             <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">
@@ -341,6 +354,7 @@ const AuthPage = () => {
             </div>
         );
     }
+
     const isRegister = view === 'register';
     return (
         <div className="min-h-[calc(100vh-140px)] w-full flex items-center justify-center p-5 bg-(--platform-bg)">

@@ -11,23 +11,31 @@ const db = require('../config/db');
 const { getLimitsForUser } = require('../config/mediaLimits');
 const getUserStats = async (userId, plan, role) => {
     try {
-        const [siteRows] = await db.query('SELECT COUNT(id) as count FROM sites WHERE user_id = ?', [userId]);
-        const [mediaRows] = await db.query('SELECT COUNT(id) as count FROM user_media WHERE user_id = ?', [userId]);
-        const limits = getLimitsForUser(role, plan);
+        const [[siteRows], [mediaRows], totalViews, warnings] = await Promise.all([
+            db.query('SELECT COUNT(id) as count FROM sites WHERE user_id = ?', [userId]),
+            db.query('SELECT COUNT(id) as count FROM user_media WHERE user_id = ?', [userId]),
+            User.getTotalSiteViews(userId),
+            Warning.findForUser(userId)
+        ]);
+        const limits = getLimitsForUser(plan);
         return {
             siteCount: siteRows[0].count || 0,
             siteLimit: limits.maxSites,
             mediaCount: mediaRows[0].count || 0,
-            mediaLimit: limits.maxFiles
+            mediaLimit: limits.maxFiles,
+            totalViews: totalViews || 0,
+            warningCount: warnings ? warnings.length : 0
         };
     } catch (err) {
         console.error("Помилка отримання статистики:", err);
-        const fallbackLimits = getLimitsForUser('user', 'FREE');
+        const fallbackLimits = getLimitsForUser('FREE');
         return { 
             siteCount: 0, 
             siteLimit: fallbackLimits.maxSites, 
             mediaCount: 0, 
-            mediaLimit: fallbackLimits.maxFiles 
+            mediaLimit: fallbackLimits.maxFiles,
+            totalViews: 0,
+            warningCount: 0
         };
     }
 };
@@ -64,31 +72,19 @@ const sanitizeUser = (user, stats = null) => {
 exports.getPublicProfile = async (req, res, next) => {
     try {
         const targetSlug = req.params.slug || req.params.username;
-        const user = await User.findBySlug(targetSlug);
+        const [users] = await db.query('SELECT * FROM users WHERE slug = ? OR username = ? LIMIT 1', [targetSlug, targetSlug]);
+        const user = users[0];
         if (!user) {
-            return res.status(404).json({ 
-                message: 'Користувача не знайдено',
-                code: 'USER_NOT_FOUND' 
-            });
+            return res.status(404).json({ message: 'Користувача не знайдено', code: 'USER_NOT_FOUND' });
         }
         if (user.role === 'admin') {
-            const isOwner = req.user && req.user.id === user.id;
-            const isRequesterAdmin = req.user && req.user.role === 'admin';
-            if (!isOwner && !isRequesterAdmin) {
-                return res.status(404).json({ 
-                    message: 'Користувача не знайдено',
-                    code: 'USER_NOT_FOUND' 
-                });
-            }
+            return res.status(404).json({ message: 'Користувача не знайдено', code: 'USER_NOT_FOUND' });
         }
+        const isOwner = req.user && req.user.id === user.id;
+        const isStaff = req.user && (req.user.role === 'admin' || req.user.role === 'moderator');
         if (!user.is_profile_public) {
-            const isOwner = req.user && req.user.id === user.id;
-            const isAdmin = req.user && req.user.role === 'admin';
-            if (!isOwner && !isAdmin) {
-                return res.status(403).json({ 
-                    message: 'Цей профіль є приватним.',
-                    code: 'PROFILE_PRIVATE' 
-                });
+            if (!isOwner && !isStaff) {
+                return res.status(403).json({ message: 'Цей профіль є приватним.', code: 'PROFILE_PRIVATE' });
             }
         }
         const [siteCount, totalViews, warnings] = await Promise.all([
@@ -101,11 +97,14 @@ exports.getPublicProfile = async (req, res, next) => {
             username: user.username,
             slug: user.slug,
             createdAt: user.created_at,
+            created_at: user.created_at,
             siteCount: siteCount,
             totalViews: totalViews,
             avatar_url: user.avatar_url,
             bio: user.bio,
             is_profile_public: user.is_profile_public,
+            status: user.status,
+            warning_count: warnings?.length || 0,
             socials: {
                 telegram: user.social_telegram,
                 instagram: user.social_instagram,
@@ -113,7 +112,13 @@ exports.getPublicProfile = async (req, res, next) => {
             },
             warnings: warnings || []
         };
-        
+        if (isStaff || isOwner) {
+            publicData.email = user.email;
+            publicData.phone_number = user.phone_number;
+            publicData.last_login_at = user.last_login_at;
+            publicData.role = user.role;
+            publicData.plan = user.plan || 'FREE';
+        }
         res.json(publicData);
     } catch (error) {
         next(error);

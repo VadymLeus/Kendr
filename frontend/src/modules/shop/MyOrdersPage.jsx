@@ -6,6 +6,7 @@ import LoadingState from '../../shared/ui/complex/LoadingState';
 import { Button } from '../../shared/ui/elements/Button';
 import { Input } from '../../shared/ui/elements/Input';
 import CustomSelect from '../../shared/ui/elements/CustomSelect';
+import DateRangePicker from '../../shared/ui/elements/DateRangePicker';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { BASE_URL } from '../../shared/config';
@@ -70,7 +71,6 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
         await onPay(order.id);
         setIsPaying(false);
     };
-
     return (
         <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl overflow-hidden mb-4 transition-all hover:shadow-sm">
             <div 
@@ -124,7 +124,7 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                         <Button 
                             onClick={handlePayClick} 
                             disabled={isPaying}
-                            className="bg-orange-600 hover:bg-orange-700 text-white shrink-0 border-none shadow-md transition-transform hover:-translate-y-0.5"
+                            className="bg-orange-600 hover:bg-orange-700 text-white shrink-0 border-none shadow-md transition-colors"
                         >
                             {isPaying ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
                             Оплатити зараз
@@ -142,7 +142,7 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                             <AlertCircle className="shrink-0 mt-0.5" size={20} />
                             <div className="text-sm">
                                 <p className="font-semibold mb-1 m-0">У замовленні є цифрові товари</p>
-                                <p className="m-0">Оплатіть замовлення, щоб отримати доступ до посилань та файлів.</p>
+                                <p className="m-0">Оплатіть замовлення, щоб отримати доступ до посилань або файлів.</p>
                             </div>
                         </div>
                     )}
@@ -268,6 +268,8 @@ const MyOrdersPage = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [sortBy, setSortBy] = useState('date');
     const [sortOrder, setSortOrder] = useState('desc');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     useEffect(() => {
         const fetchOrders = async () => {
             try {
@@ -282,7 +284,6 @@ const MyOrdersPage = () => {
         };
         fetchOrders();
     }, []);
-
     useEffect(() => {
         const fetchPaths = async () => {
             const missingIds = orders
@@ -308,6 +309,11 @@ const MyOrdersPage = () => {
         }
     }, [orders]);
 
+    const clearDateFilter = () => {
+        setStartDate('');
+        setEndDate('');
+    };
+
     const processedOrders = useMemo(() => {
         let result = [...orders];
         if (search.trim()) {
@@ -323,6 +329,14 @@ const MyOrdersPage = () => {
         if (statusFilter !== 'all') {
             result = result.filter(o => o.status === statusFilter);
         }
+        if (startDate) {
+            const start = new Date(`${startDate}T00:00:00`);
+            result = result.filter(o => new Date(o.created_at) >= start);
+        }
+        if (endDate) {
+            const end = new Date(`${endDate}T23:59:59`);
+            result = result.filter(o => new Date(o.created_at) <= end);
+        }
         result.sort((a, b) => {
             let comparison = 0;
             if (sortBy === 'date') {
@@ -335,12 +349,11 @@ const MyOrdersPage = () => {
             return sortOrder === 'asc' ? comparison : comparison * -1;
         });
         return result;
-    }, [orders, search, statusFilter, sortBy, sortOrder, resolvedPaths]);
+    }, [orders, search, statusFilter, startDate, endDate, sortBy, sortOrder, resolvedPaths]);
 
     const toggleSortOrder = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
-
     const handlePayExistingOrder = async (orderId) => {
         try {
             const response = await apiClient.post(`/orders/${orderId}/pay`);
@@ -367,7 +380,6 @@ const MyOrdersPage = () => {
             toast.error(error.response?.data?.message || 'Не вдалося створити платіж. Спробуйте пізніше.');
         }
     };
-
     if (loading) {
         return <LoadingState layout="page" />;
     }
@@ -388,8 +400,8 @@ const MyOrdersPage = () => {
                 </div>
             ) : (
                 <>
-                    <div className="mb-6 p-4 bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl flex flex-wrap gap-4 items-center justify-between shadow-sm">
-                        <div className="flex-1 min-w-60">
+                    <div className="mb-6 p-5 bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl flex flex-col gap-4 shadow-sm">
+                        <div className="w-full">
                             <Input
                                 leftIcon={<Search size={16} />}
                                 placeholder="Пошук за номером, магазином або товаром..."
@@ -399,7 +411,14 @@ const MyOrdersPage = () => {
                                 debounceTime={400}
                             />
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <div className="flex flex-wrap justify-center items-center gap-3 w-full">
+                            <DateRangePicker 
+                                startDate={startDate}
+                                endDate={endDate}
+                                onStartDateChange={setStartDate}
+                                onEndDateChange={setEndDate}
+                                onClear={clearDateFilter}
+                            />
                             <div className="w-44">
                                 <CustomSelect
                                     value={statusFilter}
@@ -431,12 +450,14 @@ const MyOrdersPage = () => {
                                 description="За вашим запитом або фільтрами нічого не знайдено."
                                 icon={Search}
                                 action={
-                                    <Button 
-                                        variant="ghost" 
-                                        onClick={() => { setSearch(''); setStatusFilter('all'); }}
-                                    >
-                                        Очистити фільтри
-                                    </Button>
+                                    (search || statusFilter !== 'all' || startDate || endDate) && (
+                                        <Button 
+                                            variant="ghost" 
+                                            onClick={() => { setSearch(''); setStatusFilter('all'); clearDateFilter(); }}
+                                        >
+                                            Очистити фільтри
+                                        </Button>
+                                    )
                                 }
                             />
                         </div>

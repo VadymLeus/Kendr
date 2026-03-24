@@ -7,22 +7,31 @@ export const FavoritesContext = createContext(null);
 export const FavoritesProvider = ({ children }) => {
     const [favoriteSiteIds, setFavoriteSiteIds] = useState(new Set());
     const { user } = useContext(AuthContext);
+
     useEffect(() => {
-        if (user) {
+        if (user && user.status !== 'deleted') {
             apiClient.get('/favorites/ids')
                 .then(response => {
                     setFavoriteSiteIds(new Set(response.data));
                 })
-                .catch(err => console.error("Не вдалося завантажити обрані сайти:", err));
+                .catch(err => {
+                    if (err.response?.status !== 403) {
+                        console.error("Не вдалося завантажити обрані сайти:", err);
+                    }
+                });
         } else {
             setFavoriteSiteIds(new Set());
         }
     }, [user]);
+
     const addFavorite = async (siteId) => {
+        if (!user || user.status === 'deleted') return;
         await apiClient.post(`/favorites/${siteId}`);
         setFavoriteSiteIds(prev => new Set(prev).add(siteId));
     };
+
     const removeFavorite = async (siteId) => {
+        if (!user || user.status === 'deleted') return;
         await apiClient.delete(`/favorites/${siteId}`);
         setFavoriteSiteIds(prev => {
             const newSet = new Set(prev);
@@ -30,6 +39,7 @@ export const FavoritesProvider = ({ children }) => {
             return newSet;
         });
     };
+
     return (
         <FavoritesContext.Provider value={{ favoriteSiteIds, addFavorite, removeFavorite }}>
             {children}

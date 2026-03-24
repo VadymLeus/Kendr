@@ -26,7 +26,6 @@ const SiteCoverDisplay = ({ site, style, className }) => {
         site_theme_accent = 'orange',
         site_theme_mode = 'light'
     } = site;
-
     const logoSize = parseInt(site.cover_logo_size) || 80;
     const logoRadius = parseInt(site.cover_logo_radius) || 0;
     const titleSize = parseInt(site.cover_title_size) || 24;
@@ -35,7 +34,6 @@ const SiteCoverDisplay = ({ site, style, className }) => {
     const accentColor = PRESET_COLORS[site_theme_accent] || site_theme_accent || '#ed8936';
     const isDark = site_theme_mode === 'dark';
     const wrapperBaseClass = `w-full h-full relative overflow-hidden flex items-center justify-center p-4 box-border transition-colors duration-300 ${isDark ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'} ${className || ''}`;
-
     if (fullCoverImage) {
         return (
             <div className={`site-cover-display mode-image ${wrapperBaseClass}`} style={style}>
@@ -55,7 +53,6 @@ const SiteCoverDisplay = ({ site, style, className }) => {
             : `linear-gradient(135deg, #ffffff 0%, ${accentColor}15 100%)`,
         borderBottom: `6px solid ${accentColor}`
     };
-
     let layoutClasses = "flex gap-3 items-center justify-center max-w-full w-full h-full overflow-hidden";
     switch (cover_layout) {
         case 'classic':
@@ -74,7 +71,6 @@ const SiteCoverDisplay = ({ site, style, className }) => {
             layoutClasses += " flex-col text-center";
             break;
     }
-
     const showLogo = fullLogoUrl && cover_layout !== 'minimal';
     const showText = cover_layout !== 'logo_only';
     return (

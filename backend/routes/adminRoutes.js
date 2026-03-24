@@ -2,14 +2,16 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+const transactionController = require('../controllers/transactionController');
 const verifyToken = require('../middleware/verifyToken');
 const verifyAdmin = require('../middleware/verifyAdmin');
+const verifyStrictAdmin = require('../middleware/verifyStrictAdmin');
 
 router.use(verifyToken, verifyAdmin);
 router.get('/dashboard-stats', adminController.getDashboardStats);
 router.get('/logs', adminController.getAdminLogs);
-router.get('/control/settings', adminController.getSystemSettings);
-router.put('/control/settings', adminController.updateSystemSettings);
+router.get('/control/settings', verifyStrictAdmin, adminController.getSystemSettings);
+router.put('/control/settings', verifyStrictAdmin, adminController.updateSystemSettings);
 router.get('/users', adminController.getAllUsers);
 router.post('/users/:id/suspend', adminController.suspendUserAccount);
 router.post('/users/:id/restore', adminController.restoreUserAccount);
@@ -27,5 +29,8 @@ router.get('/templates', adminController.getSystemTemplates);
 router.post('/templates', adminController.createSystemTemplate);
 router.put('/templates/:id', adminController.updateSystemTemplate);
 router.delete('/templates/:id', adminController.deleteSystemTemplate);
+router.post('/templates/:id/copy', adminController.copyTemplate);
+router.get('/transactions', verifyStrictAdmin, transactionController.getAdminTransactions);
+router.get('/orders', verifyStrictAdmin, transactionController.getAdminOrders);
 
 module.exports = router;

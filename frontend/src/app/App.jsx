@@ -35,12 +35,11 @@ import AppealPage from '../modules/support/pages/AppealPage';
 import MyTicketsPage from '../modules/support/pages/MyTicketsPage';
 import TicketDetailPage from '../modules/support/pages/TicketDetailPage';
 import AdminDashboardPage from '../modules/admin/pages/AdminDashboardPage';
-import AdminReportsPage from '../modules/admin/pages/AdminReportsPage';
-import AdminUsersPage from '../modules/admin/pages/AdminUsersPage';
-import AdminSitesPage from '../modules/admin/pages/AdminSitesPage';
-import AdminTicketsPage from '../modules/admin/pages/AdminTicketsPage';
+import AdminUsersSitesPage from '../modules/admin/pages/AdminUsersSitesPage';
+import AdminTicketsReportsPage from '../modules/admin/pages/AdminTicketsReportsPage';
 import AdminTemplatesPage from '../modules/admin/pages/AdminTemplatesPage';
 import AdminControlPage from '../modules/admin/pages/AdminControlPage';
+import AdminBillingPage from '../modules/admin/pages/AdminBillingPage';
 
 function App() {
     const { isAdmin, isLoading, isRestorePending } = useContext(AuthContext);
@@ -101,14 +100,20 @@ function App() {
                                 <Route element={<ProtectedRoute requireAdmin={true} />}>
                                     <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                                     <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-                                    <Route path="/admin/reports" element={<AdminReportsPage />} />
-                                    <Route path="/admin/users" element={<AdminUsersPage />} />
-                                    <Route path="/admin/sites" element={<AdminSitesPage />} />
-                                    <Route path="/admin/tickets" element={<AdminTicketsPage />} />
+                                    <Route path="/admin/users-sites" element={<AdminUsersSitesPage />} />
+                                    <Route path="/admin/users" element={<Navigate to="/admin/users-sites?tab=users" replace />} />
+                                    <Route path="/admin/sites" element={<Navigate to="/admin/users-sites?tab=sites" replace />} />
+                                    <Route path="/admin/support-hub" element={<AdminTicketsReportsPage />} />
+                                    <Route path="/admin/tickets" element={<Navigate to="/admin/support-hub?tab=tickets" replace />} />
+                                    <Route path="/admin/reports" element={<Navigate to="/admin/support-hub?tab=reports" replace />} />
+                                    <Route path="/admin/support" element={<Navigate to="/admin/support-hub?tab=tickets" replace />} />
                                     <Route path="/admin/templates" element={<AdminTemplatesPage />} />
-                                    <Route path="/admin/control" element={<AdminControlPage />} />
-                                    <Route path="/admin/support" element={<Navigate to="/admin/tickets" replace />} />
+                                    <Route element={<ProtectedRoute requireStrictAdmin={true} />}>
+                                        <Route path="/admin/billing" element={<AdminBillingPage />} />
+                                        <Route path="/admin/control" element={<AdminControlPage />} />
+                                    </Route>
                                 </Route>
+                                
                                 <Route path="*" element={<NotFoundPage />} />
                             </Route>
                         </Routes>
@@ -130,4 +135,5 @@ function App() {
         </DndProvider>
     );
 }
+
 export default App;

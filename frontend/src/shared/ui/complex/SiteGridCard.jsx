@@ -8,17 +8,17 @@ import { AuthContext } from '../../../app/providers/AuthContext';
 import { BASE_URL } from '../../config';
 import { useCooldown } from '../../hooks/useCooldown';
 import { useConfirm } from '../../hooks/useConfirm';
-import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock, AlertTriangle, Construction, Wrench } from 'lucide-react';
+import { MoreVertical, ExternalLink, Trash, Edit, Globe, GlobeLock, Eye, Calendar, Star, Pause, FileText, Flag, Lock, AlertTriangle, Construction, Wrench, Gavel } from 'lucide-react';
 
 const SiteStatusBadge = ({ status }) => {
     const config = {
         published: { label: 'Опубліковано', color: '#38a169', bg: 'rgba(56, 161, 105, 0.1)', icon: Globe },
-        draft: { label: 'Тех. Роботи', color: '#d69e2e', bg: 'rgba(214, 158, 46, 0.1)', icon: Construction },
+        maintenance: { label: 'Тех. Роботи', color: '#d69e2e', bg: 'rgba(214, 158, 46, 0.1)', icon: Construction },
         suspended: { label: 'Призупинено', color: '#e53e3e', bg: 'rgba(229, 62, 62, 0.1)', icon: Pause },
         private: { label: 'Прихований', color: '#805ad5', bg: 'rgba(128, 90, 213, 0.1)', icon: Lock },
         probation: { label: 'На модерації', color: '#d69e2e', bg: 'rgba(214, 158, 46, 0.1)', icon: AlertTriangle }
     };
-    const s = config[status] || config.draft;
+    const s = config[status] || config.maintenance;
     const Icon = s.icon;
     return (
         <div 
@@ -123,7 +123,7 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport, 
                                         disabled={isStatusDisabled}
                                         onClick={(e) => { 
                                             setIsOpen(false); 
-                                            onToggleStatus(site, site.status === 'published' ? 'draft' : 'published'); 
+                                            onToggleStatus(site, site.status === 'published' ? 'maintenance' : 'published'); 
                                         }}
                                     />
                                     {site.status !== 'private' ? (
@@ -139,11 +139,11 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport, 
                                     ) : (
                                         <MenuItem 
                                             icon={FileText} 
-                                            label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : "Зробити чернеткою"}
+                                            label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : "На тех. роботи"}
                                             disabled={isStatusDisabled}
                                             onClick={(e) => { 
                                                 setIsOpen(false); 
-                                                onToggleStatus(site, 'draft'); 
+                                                onToggleStatus(site, 'maintenance'); 
                                             }}
                                         />
                                     )}
@@ -186,13 +186,13 @@ const SiteGridCard = ({
     const [statusCooldown, startStatusCooldown] = useCooldown('kendr_status_cooldown');
     const { user } = useContext(AuthContext);
     const { confirm } = useConfirm();
-    const isUserAdmin = user?.role === 'admin';
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const isOwner = variant === 'owner';
-    const isEffectiveAdmin = variant === 'admin' || isUserAdmin;
+    const isEffectiveAdmin = variant === 'admin' || isStaff;
     const mainLink = isOwner ? `/dashboard/${site.site_path}` : `/site/${site.site_path}`;
     const isPinnedOrFav = isOwner ? site.is_pinned : isFavorite;
     const isSuspended = site.status === 'suspended';
-    const isDraft = site.status === 'draft';
+    const isMaintenance = site.status === 'maintenance';
     const getImageUrl = (src) => {
         if (!src) return '';
         if (typeof src === 'string') {
@@ -204,6 +204,7 @@ const SiteGridCard = ({
         }
         return '';
     };
+
     const handleToggleStatusWithCooldown = (siteObj, newStatus) => {
         if (statusCooldown > 0) {
             toast.warning(`Зачекайте ${statusCooldown}с перед наступною зміною статусу.`);
@@ -212,6 +213,7 @@ const SiteGridCard = ({
         onToggleStatus(siteObj, newStatus);
         startStatusCooldown(30);
     };
+
     const handleDeleteWithConfirm = (e, sitePath, title) => {
         if (e) {
             e.preventDefault();
@@ -234,12 +236,11 @@ const SiteGridCard = ({
             }
         });
     };
-
     return (
         <>
             <div className={`
                 bg-(--platform-card-bg) rounded-xl border border-(--platform-border-color) overflow-hidden flex flex-col relative h-full transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg
-                ${isDraft ? 'border-dashed border-(--platform-border-color) bg-[repeating-linear-gradient(45deg,var(--platform-card-bg),var(--platform-card-bg)_10px,var(--platform-bg)_10px,var(--platform-bg)_20px)]' : ''}
+                ${isMaintenance ? 'border-dashed border-(--platform-border-color) bg-[repeating-linear-gradient(45deg,var(--platform-card-bg),var(--platform-card-bg)_10px,var(--platform-bg)_10px,var(--platform-bg)_20px)]' : ''}
             `}>
                 <button 
                     className="absolute top-2.5 left-2.5 z-20 bg-black/40 backdrop-blur-xs rounded-full w-8 h-8 flex items-center justify-center cursor-pointer border border-white/10 transition-colors p-0 hover:bg-black/60"
@@ -280,10 +281,10 @@ const SiteGridCard = ({
                         }} 
                         className="w-full h-full object-cover"
                         style={{ 
-                            filter: isSuspended ? 'grayscale(1)' : (isDraft ? 'blur(1px) grayscale(0.3)' : 'none') 
+                            filter: isSuspended ? 'grayscale(1)' : (isMaintenance ? 'blur(1px) grayscale(0.3)' : 'none') 
                         }} 
                     />
-                    {isDraft && (
+                    {isMaintenance && (
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-amber-400 backdrop-blur-[2px] text-center p-4 z-10 transition-opacity duration-200 group-hover:bg-black/75">
                             <Construction size={40} className="mb-2" />
                             <div className="font-bold text-lg uppercase tracking-widest">
@@ -305,7 +306,7 @@ const SiteGridCard = ({
                                 <h3 
                                     className={`
                                         m-0 text-lg font-semibold whitespace-nowrap overflow-hidden text-ellipsis no-underline
-                                        ${isDraft ? 'opacity-80' : ''}
+                                        ${isMaintenance ? 'opacity-80' : ''}
                                     `}
                                     title={site.title}
                                 >
@@ -351,15 +352,18 @@ const SiteGridCard = ({
                     <div className="mt-auto pt-3">
                         {isOwner ? (
                             isSuspended ? (
-                                <button className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-lg bg-(--platform-border-color) text-(--platform-text-secondary) cursor-not-allowed opacity-70 font-medium text-sm border-none" disabled>
-                                    <Lock size={16} /> Заблоковано
-                                </button>
+                                <Link 
+                                    to="/support/appeal"
+                                    className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-lg bg-[color-mix(in_srgb,var(--platform-danger),transparent_85%)] text-(--platform-danger) hover:bg-(--platform-danger) hover:text-white border border-(--platform-danger) font-medium text-sm transition-all no-underline outline-none"
+                                >
+                                    <Gavel size={16} /> Оскаржити блокування
+                                </Link>
                             ) : (
                                 <Link 
                                     to={`/dashboard/${site.site_path}`}
                                     className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-lg bg-(--platform-accent) text-white border-none font-medium text-sm cursor-pointer transition-all hover:bg-(--platform-accent-hover) no-underline outline-none"
                                 >
-                                    {isDraft ? (
+                                    {isMaintenance ? (
                                         <><Wrench size={16} /> Налаштувати</>
                                     ) : (
                                         <><Edit size={16} /> Редагувати</>
@@ -373,12 +377,12 @@ const SiteGridCard = ({
                                 rel="noopener noreferrer"
                                 className={`
                                     flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-lg border-none font-medium text-sm cursor-pointer transition-all no-underline outline-none
-                                    ${isDraft 
+                                    ${isMaintenance 
                                         ? 'bg-(--platform-border-color) text-(--platform-text-secondary) cursor-not-allowed opacity-80' 
                                         : 'bg-(--platform-accent) text-white hover:bg-(--platform-accent-hover)'}
                                 `}
                             >
-                                {isDraft ? (
+                                {isMaintenance ? (
                                     <><Construction size={16} /> Роботи</>
                                 ) : (
                                     <><ExternalLink size={16} /> Відвідати</>

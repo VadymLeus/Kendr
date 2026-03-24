@@ -1,10 +1,10 @@
 // frontend/src/modules/editor/ui/components/ProductCard.jsx
 import React, { useState, useMemo, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Settings } from 'lucide-react';
 import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { BASE_URL } from '../../../../shared/config';
+import { ShoppingCart, User, Settings, Shield } from 'lucide-react';
 
 const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const cartContext = useContext(CartContext);
@@ -27,6 +27,7 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
         return ['https://placehold.co/300?text=No+Image'];
     }, [product.image_gallery]);
     const isOwner = user && siteData && user.id === siteData.user_id;
+    const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
     const hasDiscount = product.sale_percentage > 0;
     const finalPrice = product.price ? (hasDiscount 
         ? Math.round(product.price * (1 - product.sale_percentage / 100)) 
@@ -62,13 +63,13 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             navigate(productLink);
             return;
         }
+        if (isStaff) return;
         if (!user) {
             if (typeof window !== 'undefined' && window.confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
                 navigate('/login');
             }
             return;
         }
-        
         if (addToCart) {
             const productForCart = {
                 ...product,
@@ -163,19 +164,22 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                         </div>
                         <button
                             onClick={handleAction}
-                            disabled={isSoldOut || (isOwner && !hasVariants)}
+                            disabled={isSoldOut || ((isOwner || isStaff) && !hasVariants)}
                             className={`
                                 w-9 h-9 flex items-center justify-center rounded-lg ml-2 shrink-0 transition-all duration-200
-                                ${isSoldOut || isOwner ? 'cursor-default' : 'cursor-pointer'}
+                                ${isSoldOut || (isOwner || isStaff) ? 'cursor-default' : 'cursor-pointer'}
                             `}
                             style={{
-                                background: isOwner ? 'transparent' : 'var(--site-accent)',
-                                color: isOwner ? 'var(--site-text-secondary)' : 'var(--site-accent-text)',
-                                border: isOwner ? '1px solid var(--site-border-color)' : 'none',
+                                background: (isOwner || isStaff) ? 'transparent' : 'var(--site-accent)',
+                                color: (isOwner || isStaff) ? 'var(--site-text-secondary)' : 'var(--site-accent-text)',
+                                border: (isOwner || isStaff) ? '1px solid var(--site-border-color)' : 'none',
                             }}
+                            title={isStaff ? 'Купівля недоступна для персоналу' : isOwner ? 'Ви власник цього товару' : 'Додати в кошик'}
                         >
                             {isOwner ? (
                                 <User size={18} />
+                            ) : isStaff ? (
+                                <Shield size={18} />
                             ) : hasVariants ? (
                                 <Settings size={18} />
                             ) : (

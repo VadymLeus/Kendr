@@ -1,5 +1,6 @@
 // frontend/src/modules/dashboard/components/DashboardHeader.jsx
-import React from 'react';
+import React, { useContext } from 'react';
+import { AuthContext } from '../../../app/providers/AuthContext';
 import { Undo, Redo, Play, Edit, FileText, Store, Palette, Mail, Settings, ShoppingBag } from 'lucide-react';
 
 const DashboardHeader = ({ 
@@ -12,7 +13,9 @@ const DashboardHeader = ({
     canRedo,
     isSaving 
 }) => {
-    const tabs = [
+    const { user } = useContext(AuthContext);
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator';
+    const allTabs = [
         { key: 'editor', icon: <Edit />, text: 'Редактор' },
         { key: 'pages', icon: <FileText />, text: 'Сторінки' },
         { key: 'theme', icon: <Palette />, text: 'Стилі' },
@@ -21,7 +24,10 @@ const DashboardHeader = ({
         { key: 'crm', icon: <Mail />, text: 'Заявки' },
         { key: 'settings', icon: <Settings />, text: 'Налаштування' }
     ];
-
+    const tabs = allTabs.filter(tab => {
+        if (isStaff && tab.key === 'orders') return false;
+        return true;
+    });
     return (
         <header className="editor-header">
             <div className="header-left">
@@ -44,7 +50,6 @@ const DashboardHeader = ({
                     </div>
                 </div>
             </div>
-
             <div className="header-center">
                 <nav className="editor-tabs">
                     {tabs.map(tab => (
@@ -60,7 +65,6 @@ const DashboardHeader = ({
                     ))}
                 </nav>
             </div>
-
             <div className="header-right">
                 {activeTab === 'editor' && (
                     <div className="undo-redo-container">
@@ -331,76 +335,62 @@ const DashboardHeader = ({
                         width: auto;
                         min-width: auto;
                     }
-                    
                     .tab-text {
                         display: none;
                     }
-                    
                     .tab-btn {
                         padding: 8px 12px;
                         font-size: 1.2rem;
                     }
-                    
                     .preview-btn span {
                         display: none;
                     }
-                    
                     .preview-btn {
                         padding: 0 12px;
                         width: 38px;
                     }
                 }
-
                 @media (max-width: 600px) {
                     .site-title {
                         display: none;
                     }
                 }
-
                 @media (max-width: 768px) {
                     .editor-header {
                         padding: 0 12px;
                         height: 56px;
                     }
-
                     .tab-btn {
                         padding: 6px 10px;
                         font-size: 12px;
                     }
-
                     .action-btn {
                         width: 32px;
                         height: 32px;
                     }
-
                     .undo-redo-container {
                         min-width: 72px;
                         margin-right: 8px;
                         padding-right: 8px;
                     }
-                    
                     .preview-btn {
                         height: 32px;
                         width: 32px;
                         padding: 0;
                     }
                 }
-
                 @media (max-width: 480px) {
                     .editor-header {
                         padding: 0 8px;
                         gap: 8px;
                     }
-
                     .tab-btn {
                         padding: 4px 8px;
                     }
-
                     .tab-icon {
                         width: 16px;
                         height: 16px;
                     }
-
                     .action-btn svg {
                         width: 16px;
                         height: 16px;

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
+import DateRangePicker from '../../../../shared/ui/elements/DateRangePicker';
 import EmptyState from '../../../../shared/ui/complex/EmptyState';
 import LoadingState from '../../../../shared/ui/complex/LoadingState';
 import { Package, MapPin, User, Calendar, Search } from 'lucide-react';
@@ -32,6 +33,12 @@ const FILTER_STATUS_OPTIONS = [
     }))
 ];
 
+const FILTER_TYPE_OPTIONS = [
+    { value: 'all', label: 'Всі типи' },
+    { value: 'digital', label: 'Тільки цифрові' },
+    { value: 'physical', label: 'Містять фізичні' }
+];
+
 const SORT_FIELDS = [
     { value: 'date', label: 'За датою' },
     { value: 'amount', label: 'За сумою' },
@@ -44,8 +51,11 @@ const OrdersTab = ({ site, siteData }) => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [typeFilter, setTypeFilter] = useState('all');
     const [sortBy, setSortBy] = useState('date');
     const [sortOrder, setSortOrder] = useState('desc');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     useEffect(() => {
         if (!currentSite?.id) {
             setLoading(false);
@@ -86,6 +96,14 @@ const OrdersTab = ({ site, siteData }) => {
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
         return `${day}.${month}.${year} о ${hours}:${minutes}`;
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setStatusFilter('all');
+        setTypeFilter('all');
+        setStartDate('');
+        setEndDate('');
     };
 
     const getStatusControl = (order) => {
@@ -129,6 +147,19 @@ const OrdersTab = ({ site, siteData }) => {
         if (statusFilter !== 'all') {
             result = result.filter(o => o.status === statusFilter);
         }
+        if (typeFilter === 'digital') {
+            result = result.filter(o => o.items && o.items.length > 0 && o.items.every(item => item.type === 'digital'));
+        } else if (typeFilter === 'physical') {
+            result = result.filter(o => o.items && o.items.some(item => item.type !== 'digital'));
+        }
+        if (startDate) {
+            const start = new Date(`${startDate}T00:00:00`);
+            result = result.filter(o => new Date(o.created_at) >= start);
+        }
+        if (endDate) {
+            const end = new Date(`${endDate}T23:59:59`);
+            result = result.filter(o => new Date(o.created_at) <= end);
+        }
         result.sort((a, b) => {
             let comparison = 0;
             if (sortBy === 'date') {
@@ -140,8 +171,9 @@ const OrdersTab = ({ site, siteData }) => {
             }
             return sortOrder === 'asc' ? comparison : comparison * -1;
         });
+        
         return result;
-    }, [orders, search, statusFilter, sortBy, sortOrder]);
+    }, [orders, search, statusFilter, typeFilter, startDate, endDate, sortBy, sortOrder]);
     const toggleSortOrder = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
@@ -159,7 +191,6 @@ const OrdersTab = ({ site, siteData }) => {
             </div>
         );
     }
-
     return (
         <div className="px-6 pb-6 pt-2 h-full overflow-y-auto custom-scrollbar bg-(--platform-bg)">
             <div className="mb-6 shrink-0 flex flex-col items-center text-center">
@@ -181,12 +212,26 @@ const OrdersTab = ({ site, siteData }) => {
                         wrapperStyle={{ margin: 0 }}
                     />
                 </div>
-                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                    <DateRangePicker 
+                        startDate={startDate}
+                        endDate={endDate}
+                        onStartDateChange={setStartDate}
+                        onEndDateChange={setEndDate}
+                        onClear={() => {setStartDate(''); setEndDate('');}}
+                    />
                     <div className="w-44">
                         <CustomSelect
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             options={FILTER_STATUS_OPTIONS}
+                        />
+                    </div>
+                    <div className="w-44">
+                        <CustomSelect
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                            options={FILTER_TYPE_OPTIONS}
                         />
                     </div>
                     <div className="w-40">
@@ -206,6 +251,7 @@ const OrdersTab = ({ site, siteData }) => {
                     </Button>
                 </div>
             </div>
+
             {processedOrders.length === 0 ? (
                 <div className="py-10">
                     <EmptyState 
@@ -213,10 +259,10 @@ const OrdersTab = ({ site, siteData }) => {
                         description="За вашим запитом або фільтрами нічого не знайдено. Спробуйте змінити критерії пошуку."
                         icon={Search}
                         action={
-                            (search || statusFilter !== 'all') && (
+                            (search || statusFilter !== 'all' || typeFilter !== 'all' || startDate || endDate) && (
                                 <Button 
                                     variant="ghost" 
-                                    onClick={() => { setSearch(''); setStatusFilter('all'); }}
+                                    onClick={clearFilters}
                                 >
                                     Очистити фільтри
                                 </Button>

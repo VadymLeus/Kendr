@@ -45,13 +45,14 @@ const SiteDisplayPage = () => {
             </div>
         );
     }
+    
     if (isMissingData && show404) return <NotFoundPage />;
     const isOwner = user && user.id === siteData.user_id;
-    const isAdmin = user && user.role === 'admin';
-    if (siteData.status === 'private' && !isOwner && !isAdmin) {
+    const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
+    if (siteData.status === 'private' && !isOwner && !isStaff) {
         return <NotFoundPage />;
     }
-    if ((siteData.status === 'draft' || siteData.status === 'suspended') && !isOwner && !isAdmin) {
+    if ((siteData.status === 'maintenance' || siteData.status === 'suspended') && !isOwner && !isStaff) {
         return <MaintenancePage logoUrl={siteData.logo_url} siteName={siteData.title} />;
     }
     const page = siteData.page;
@@ -64,7 +65,6 @@ const SiteDisplayPage = () => {
             ? siteData.favicon_url
             : `${BASE_URL}${siteData.favicon_url.startsWith('/') ? '' : '/'}${siteData.favicon_url}`)
         : '/icon-light.webp';
-        
     let pageBlocks = [];
     try {
         pageBlocks = Array.isArray(siteData.page.block_content)

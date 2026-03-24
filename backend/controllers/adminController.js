@@ -8,6 +8,12 @@ const { deleteFile } = require('../utils/fileUtils');
 const logAdminAction = require('../utils/adminLogger');
 const { clearSettingsCache } = require('../middleware/platformGuards');
 const { sendAccountBannedEmail, sendSiteBannedEmail } = require('../utils/emailService');
+const checkHierarchyPermission = (reqUserRole, targetUserRole) => {
+    if (reqUserRole === 'admin') return true;
+    if (reqUserRole === 'moderator' && targetUserRole === 'user') return true;
+    return false;
+};
+
 const deleteFullUserAccount = async (userId) => {
     const user = await User.findById(userId);
     if (user && user.avatar_url && user.avatar_url.includes('/avatars/custom/')) {
@@ -50,8 +56,8 @@ exports.getDashboardStats = async (req, res, next) => {
     try {
         const { period = 30, type = 'users' } = req.query;
         const days = parseInt(period) || 30;
-        const [usersResult] = await db.query("SELECT COUNT(*) as count FROM users WHERE role != 'admin'");
-        const [usersGrowthResult] = await db.query("SELECT COUNT(*) as count FROM users WHERE role != 'admin' AND created_at >= NOW() - INTERVAL 30 DAY");
+        const [usersResult] = await db.query("SELECT COUNT(*) as count FROM users");
+        const [usersGrowthResult] = await db.query("SELECT COUNT(*) as count FROM users WHERE created_at >= NOW() - INTERVAL 30 DAY");
         const [sitesResult] = await db.query("SELECT COUNT(*) as count FROM sites WHERE status = 'published'");
         const [reportsResult] = await db.query("SELECT COUNT(*) as count FROM site_reports WHERE status = 'new'");
         const [ticketsResult] = await db.query("SELECT COUNT(*) as count FROM support_tickets WHERE status = 'open'");
@@ -72,7 +78,7 @@ exports.getDashboardStats = async (req, res, next) => {
             case 'users':
             default:
                 tableName = 'users';
-                whereCondition = "role != 'admin'";
+                whereCondition = "1=1";
                 break;
         }
         const chartQuery = `
@@ -106,21 +112,17 @@ exports.getDashboardStats = async (req, res, next) => {
                 'user_register' as type,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = u.id) as status_info
             FROM users u
-            WHERE u.role != 'admin' 
             ORDER BY u.created_at DESC LIMIT 10
         `);
-        
         const [lastSites] = await db.query(`
             SELECT s.id, s.title, s.created_at, s.status as status_info, 'site_create' as type
             FROM sites s ORDER BY created_at DESC LIMIT 10
         `);
-        
         const [lastReports] = await db.query(`
             SELECT r.id, s.title as title, r.created_at, r.status as status_info, 'report' as type
             FROM site_reports r JOIN sites s ON r.site_id = s.id 
             ORDER BY r.created_at DESC LIMIT 10
         `);
-        
         const [lastTickets] = await db.query(`
             SELECT id, subject as title, created_at, status as status_info, 'ticket' as type
             FROM support_tickets ORDER BY created_at DESC LIMIT 10
@@ -151,7 +153,8 @@ exports.getAdminLogs = async (req, res, next) => {
             SELECT l.*, 
                    u.username as admin_name, 
                    u.avatar_url as admin_avatar, 
-                   u.email as admin_email
+                   u.email as admin_email,
+                   u.role as admin_role
             FROM admin_logs l
             JOIN users u ON l.admin_id = u.id
             WHERE 1=1
@@ -177,11 +180,10 @@ exports.getAllUsers = async (req, res, next) => {
     try {
         const query = `
             SELECT 
-                u.id, u.username, u.email, u.role, u.status, u.created_at, u.avatar_url,
+                u.id, u.username, u.slug, u.phone_number, u.email, u.role, u.status, u.created_at, u.avatar_url, u.last_login_at, u.plan,
                 (SELECT COUNT(*) FROM sites WHERE user_id = u.id) as site_count,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = u.id) as warning_count
             FROM users u
-            WHERE u.role != 'admin'
             ORDER BY u.created_at DESC
         `;
         const [users] = await db.query(query);
@@ -197,16 +199,18 @@ exports.deleteUser = async (req, res, next) => {
         if (parseInt(id) === req.user.id) {
             return res.status(400).json({ message: 'Ви не можете видалити свій власний акаунт з адмінки.' });
         }
-        const [users] = await db.query('SELECT username, email FROM users WHERE id = ?', [id]);
+        const [users] = await db.query('SELECT username, email, role FROM users WHERE id = ?', [id]);
         const userDetails = users[0];
-        await deleteFullUserAccount(id);
-        if (userDetails) {
-            await logAdminAction(req, 'user_delete', 'user', id, { 
-                username: userDetails.username, 
-                email: userDetails.email 
-            });
-            sendAccountBannedEmail(userDetails.email, userDetails.username, true).catch(console.error);
+        if (!userDetails) return res.status(404).json({ message: 'Користувача не знайдено.' });
+        if (!checkHierarchyPermission(req.user.role, userDetails.role)) {
+            return res.status(403).json({ message: 'Недостатньо прав для видалення адміністрації або модераторів.' });
         }
+        await deleteFullUserAccount(id);
+        await logAdminAction(req, 'user_delete', 'user', id, { 
+            username: userDetails.username, 
+            email: userDetails.email 
+        });
+        sendAccountBannedEmail(userDetails.email, userDetails.username, true).catch(console.error);
         res.json({ message: 'Користувача та всі його дані успішно видалено.' });
     } catch (error) {
         next(error);
@@ -221,6 +225,9 @@ exports.suspendUserAccount = async (req, res, next) => {
         }
         const userDetails = await User.findById(id);
         if (!userDetails) return res.status(404).json({ message: 'Користувача не знайдено.' });
+        if (!checkHierarchyPermission(req.user.role, userDetails.role)) {
+            return res.status(403).json({ message: 'Недостатньо прав для блокування адміністрації або модераторів.' });
+        }
         await suspendFullUserAccount(id);
         await logAdminAction(req, 'user_suspend', 'user', id, { 
             username: userDetails.username, 
@@ -238,14 +245,14 @@ exports.restoreUserAccount = async (req, res, next) => {
         const { id } = req.params;
         const userDetails = await User.findById(id);
         if (!userDetails) return res.status(404).json({ message: 'Користувача не знайдено.' });
-        
+        if (!checkHierarchyPermission(req.user.role, userDetails.role)) {
+            return res.status(403).json({ message: 'Недостатньо прав для взаємодії з акаунтами адміністрації або модераторів.' });
+        }
         await User.restoreUser(id);
-        
         await logAdminAction(req, 'user_restore', 'user', id, { 
             username: userDetails.username, 
             email: userDetails.email 
         });
-        
         res.json({ message: 'Акаунт користувача успішно розблоковано. Тепер він може відновити доступ.' });
     } catch (error) {
         next(error);
@@ -257,14 +264,14 @@ exports.getAllSites = async (req, res, next) => {
         const query = `
             SELECT 
                 s.id, s.site_path, s.title, s.status, s.user_id, s.created_at, s.deletion_scheduled_for,
-                s.view_count,
-                u.username as author, u.email as author_email,
+                s.view_count, s.logo_url,
+                u.username as author, u.slug as author_slug, u.email as author_email, u.avatar_url as author_avatar_url,
+                u.role as owner_role,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = s.user_id) as warning_count,
                 (SELECT status FROM site_appeals WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as appeal_status,
                 (SELECT created_at FROM site_appeals WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as appeal_date
             FROM sites s
             JOIN users u ON s.user_id = u.id
-            WHERE u.role != 'admin'
             ORDER BY s.created_at DESC
         `;
         const [sites] = await db.query(query);
@@ -277,14 +284,21 @@ exports.getAllSites = async (req, res, next) => {
 exports.suspendSite = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const [sites] = await db.query('SELECT * FROM sites WHERE site_path = ?', [site_path]);
+        const [sites] = await db.query(`
+            SELECT s.*, u.email, u.username, u.role as owner_role 
+            FROM sites s 
+            JOIN users u ON s.user_id = u.id 
+            WHERE s.site_path = ?
+        `, [site_path]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
         const site = sites[0];
+        if (!checkHierarchyPermission(req.user.role, site.owner_role)) {
+            return res.status(403).json({ message: 'Недостатньо прав для блокування сайтів адміністрації або модераторів.' });
+        }
         const deletionDate = new Date();
         deletionDate.setDate(deletionDate.getDate() + 7);
         await Site.updateStatus(site.id, 'suspended', deletionDate);
-        const [users] = await db.query('SELECT email, username FROM users WHERE id = ?', [site.user_id]);
-        const siteOwner = users[0];
+        const siteOwner = { email: site.email, username: site.username };
         const [existingWarning] = await db.query(
             'SELECT id FROM user_warnings WHERE user_id = ? AND site_id = ?', 
             [site.user_id, site.id]
@@ -320,9 +334,17 @@ exports.suspendSite = async (req, res, next) => {
 exports.setProbation = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const [sites] = await db.query('SELECT * FROM sites WHERE site_path = ?', [site_path]);
+        const [sites] = await db.query(`
+            SELECT s.*, u.role as owner_role 
+            FROM sites s 
+            JOIN users u ON s.user_id = u.id 
+            WHERE s.site_path = ?
+        `, [site_path]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
         const site = sites[0];
+        if (!checkHierarchyPermission(req.user.role, site.owner_role)) {
+            return res.status(403).json({ message: 'Недостатньо прав для взаємодії з сайтами адміністрації або модераторів.' });
+        }
         await Site.updateStatus(site.id, 'probation', null);
         await logAdminAction(req, 'site_probation', 'site', site.id, { 
             title: site.title,
@@ -337,9 +359,17 @@ exports.setProbation = async (req, res, next) => {
 exports.restoreSite = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const [sites] = await db.query('SELECT * FROM sites WHERE site_path = ?', [site_path]);
+        const [sites] = await db.query(`
+            SELECT s.*, u.role as owner_role 
+            FROM sites s 
+            JOIN users u ON s.user_id = u.id 
+            WHERE s.site_path = ?
+        `, [site_path]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
         const site = sites[0];
+        if (!checkHierarchyPermission(req.user.role, site.owner_role)) {
+            return res.status(403).json({ message: 'Недостатньо прав.' });
+        }
         await Site.updateStatus(site.id, 'published', null);
         await db.query("UPDATE site_appeals SET status = 'approved', resolved_at = NOW() WHERE site_id = ? AND status = 'pending'", [site.id]);
         await db.query('DELETE FROM user_warnings WHERE site_id = ?', [site.id]);
@@ -353,11 +383,18 @@ exports.restoreSite = async (req, res, next) => {
 exports.deleteSiteByAdmin = async (req, res, next) => {
     try {
         const { site_path } = req.params;
-        const [sites] = await db.query('SELECT * FROM sites WHERE site_path = ?', [site_path]);
+        const [sites] = await db.query(`
+            SELECT s.*, u.email, u.username, u.role as owner_role 
+            FROM sites s 
+            JOIN users u ON s.user_id = u.id 
+            WHERE s.site_path = ?
+        `, [site_path]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено.' });
         const site = sites[0];
-        const [users] = await db.query('SELECT email, username FROM users WHERE id = ?', [site.user_id]);
-        const siteOwner = users[0];
+        if (!checkHierarchyPermission(req.user.role, site.owner_role)) {
+            return res.status(403).json({ message: 'Недостатньо прав для видалення сайтів адміністрації або модераторів.' });
+        }
+        const siteOwner = { email: site.email, username: site.username };
         await db.query("UPDATE site_appeals SET status = 'rejected', resolved_at = NOW() WHERE site_id = ? AND status = 'pending'", [site.id]);
         if (site.logo_url && !site.logo_url.includes('/default/')) {
             await deleteFile(site.logo_url);
@@ -387,7 +424,6 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
         } else {
             if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, reason).catch(console.error);
         }
-
         res.json({ message: `Сайт "${site.title}" остаточно видалено.${userActionMessage}` });
     } catch (error) {
         next(error);
@@ -444,11 +480,18 @@ exports.banSiteFromReport = async (req, res, next) => {
         const [reports] = await db.query('SELECT * FROM site_reports WHERE id = ?', [id]);
         if (reports.length === 0) return res.status(404).json({ message: 'Скаргу не знайдено' });
         const report = reports[0];
-        const [sites] = await db.query('SELECT * FROM sites WHERE id = ?', [report.site_id]);
+        const [sites] = await db.query(`
+            SELECT s.*, u.email, u.username, u.role as owner_role 
+            FROM sites s 
+            JOIN users u ON s.user_id = u.id 
+            WHERE s.id = ?
+        `, [report.site_id]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
         const site = sites[0];
-        const [users] = await db.query('SELECT email, username FROM users WHERE id = ?', [site.user_id]);
-        const siteOwner = users[0];
+        if (!checkHierarchyPermission(req.user.role, site.owner_role)) {
+            return res.status(403).json({ message: 'Недостатньо прав для блокування сайту адміністрації або іншого модератора.' });
+        }
+        const siteOwner = { email: site.email, username: site.username };
         await db.query("UPDATE site_reports SET status = 'banned' WHERE id = ?", [id]);
         const deletionDate = new Date();
         deletionDate.setDate(deletionDate.getDate() + 7); 
@@ -465,7 +508,6 @@ exports.banSiteFromReport = async (req, res, next) => {
         } else {
             strikeMessage = ' (Страйк вже існував).';
         }
-
         await logAdminAction(req, 'report_ban', 'report', id, { 
             site_id: site.id,
             site_title: site.title,
@@ -489,19 +531,27 @@ exports.banSiteFromReport = async (req, res, next) => {
 
 exports.getSystemTemplates = async (req, res, next) => {
     try {
-        const query = "SELECT * FROM templates WHERE type = 'system' ORDER BY is_ready DESC, created_at DESC";
-        const [templates] = await db.query(query);
+        const adminId = req.user.id;
+        const query = `
+            SELECT * FROM templates 
+            WHERE type = 'system' 
+            AND (is_ready = 1 OR user_id = ?)
+            ORDER BY is_ready DESC, created_at DESC
+        `;
+        const [templates] = await db.query(query, [adminId]);
         const processed = templates.map(t => ({
             ...t,
             default_block_content: (typeof t.default_block_content === 'string') ? JSON.parse(t.default_block_content) : t.default_block_content
         }));
         res.json(processed);
-    } catch (error) { next(error); }
+    } catch (error) { 
+        next(error); 
+    }
 };
 
 exports.createSystemTemplate = async (req, res, next) => {
     try {
-        const { siteId, templateName, description, icon, category } = req.body;
+        const { siteId, templateName, description, icon, category, thumbnail_url } = req.body;
         const adminId = req.user ? req.user.id : null;
         const [sites] = await db.query('SELECT * FROM sites WHERE id = ?', [siteId]);
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт-джерело не знайдено' });
@@ -523,7 +573,7 @@ exports.createSystemTemplate = async (req, res, next) => {
             }))
         };
         const query = `INSERT INTO templates (user_id, name, description, thumbnail_url, default_block_content, type, is_ready, access_level, icon, category) VALUES (?, ?, ?, ?, ?, 'system', 0, 'admin_only', ?, ?)`;
-        const thumbnail = site.cover_image || '/previews/empty.png';
+        const thumbnail = thumbnail_url || site.cover_image || '/previews/empty.png';
         const [result] = await db.query(query, [
             adminId, 
             templateName, 
@@ -544,7 +594,7 @@ exports.createSystemTemplate = async (req, res, next) => {
 exports.updateSystemTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { name, description, is_ready, access_level, icon, category } = req.body;
+        const { name, description, is_ready, access_level, icon, category, thumbnail_url } = req.body;
         if (access_level === 'public') {
             if (is_ready === false || is_ready === 0) return res.status(400).json({ message: 'Не можна опублікувати шаблон, який має статус "В розробці".' });
             if (is_ready === undefined) {
@@ -563,6 +613,7 @@ exports.updateSystemTemplate = async (req, res, next) => {
         if (category) { updates.push('category = ?'); params.push(category); }
         if (is_ready !== undefined) { updates.push('is_ready = ?'); params.push(is_ready ? 1 : 0); }
         if (finalAccessLevel !== undefined) { updates.push('access_level = ?'); params.push(finalAccessLevel); }
+        if (thumbnail_url !== undefined) { updates.push('thumbnail_url = ?'); params.push(thumbnail_url); }
         if (updates.length === 0) return res.json({ message: 'Немає даних для оновлення' });
         query += updates.join(', ') + ' WHERE id = ?';
         params.push(id);
@@ -573,9 +624,10 @@ exports.updateSystemTemplate = async (req, res, next) => {
             access_level: finalAccessLevel,
             category
         });
-
         res.json({ message: 'Шаблон оновлено.' });
-    } catch (error) { next(error); }
+    } catch (error) { 
+        next(error); 
+    }
 };
 
 exports.deleteSystemTemplate = async (req, res, next) => {
@@ -586,28 +638,33 @@ exports.deleteSystemTemplate = async (req, res, next) => {
         await logAdminAction(req, 'template_delete', 'template', id, { 
             name: tpl[0]?.name 
         });
-
         res.json({ message: 'Системний шаблон видалено.' });
     } catch (error) { next(error); }
 };
 
 exports.getSystemSettings = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM platform_settings WHERE id = 1');
+        const [rows] = await db.query('SELECT * FROM global_settings WHERE id = 1');
         if (rows.length === 0) {
             return res.json({
                 maintenance_mode: false,
                 editor_locked: false,
                 maintenance_message: '',
-                registration_enabled: true
+                registration_enabled: true,
+                auth_enabled: true,
+                site_creation_enabled: true,
+                billing_enabled: true
             });
         }
         const dbSettings = rows[0];
         res.json({
-            maintenance_mode: !!dbSettings.is_platform_maintenance,
-            editor_locked: !!dbSettings.is_editor_locked,
-            maintenance_message: dbSettings.global_announcement || '',
-            registration_enabled: true 
+            maintenance_mode: !!dbSettings.maintenance_mode,
+            editor_locked: !!dbSettings.editor_locked,
+            maintenance_message: dbSettings.maintenance_message || '',
+            registration_enabled: !!dbSettings.registration_enabled,
+            auth_enabled: !!dbSettings.auth_enabled,
+            site_creation_enabled: !!dbSettings.site_creation_enabled,
+            billing_enabled: !!dbSettings.billing_enabled
         });
     } catch (error) {
         next(error);
@@ -616,23 +673,43 @@ exports.getSystemSettings = async (req, res, next) => {
 
 exports.updateSystemSettings = async (req, res, next) => {
     try {
-        const { maintenance_mode, editor_locked, maintenance_message, registration_enabled } = req.body;
+        const { 
+            maintenance_mode, 
+            editor_locked, 
+            maintenance_message, 
+            registration_enabled,
+            auth_enabled,
+            site_creation_enabled,
+            billing_enabled
+        } = req.body;
         await db.query(`
-            UPDATE platform_settings 
-            SET is_platform_maintenance = ?, 
-                is_editor_locked = ?, 
-                global_announcement = ? 
+            UPDATE global_settings 
+            SET maintenance_mode = ?, 
+                editor_locked = ?, 
+                maintenance_message = ?, 
+                registration_enabled = ?,
+                auth_enabled = ?,
+                site_creation_enabled = ?,
+                billing_enabled = ?
             WHERE id = 1
         `, [
             maintenance_mode ? 1 : 0,
             editor_locked ? 1 : 0,
-            maintenance_message || null
+            maintenance_message || null,
+            registration_enabled !== false ? 1 : 0,
+            auth_enabled !== false ? 1 : 0,
+            site_creation_enabled !== false ? 1 : 0,
+            billing_enabled !== false ? 1 : 0
         ]);
         clearSettingsCache();
         await logAdminAction(req, 'settings_update', 'system', null, {
             maintenance: maintenance_mode,
             editor_lock: editor_locked,
-            announcement: maintenance_message
+            announcement: maintenance_message,
+            registration_enabled,
+            auth_enabled,
+            site_creation_enabled,
+            billing_enabled
         });
         if (maintenance_message) {
             res.set('X-Global-Announcement', Buffer.from(maintenance_message).toString('base64'));
@@ -645,10 +722,47 @@ exports.updateSystemSettings = async (req, res, next) => {
                 maintenance_mode, 
                 editor_locked, 
                 maintenance_message,
-                registration_enabled
+                registration_enabled,
+                auth_enabled,
+                site_creation_enabled,
+                billing_enabled
             } 
         });
     } catch (error) {
         next(error);
+    }
+};
+
+exports.copyTemplate = async (req, res) => {
+    try {
+        const templateId = req.params.id;
+        const adminId = req.user.id;
+        const [templates] = await db.query('SELECT * FROM templates WHERE id = ? AND type = "system"', [templateId]);
+        if (templates.length === 0) {
+            return res.status(404).json({ message: 'Шаблон не знайдено' });
+        }
+        const original = templates[0];
+        const newName = `${original.name} (Копія)`;
+        const insertQuery = `
+            INSERT INTO templates 
+            (user_id, name, description, icon, thumbnail_url, default_block_content, type, category, is_ready, access_level) 
+            VALUES (?, ?, ?, ?, ?, ?, 'system', ?, 0, 'private')
+        `;
+        const blockContentStr = typeof original.default_block_content === 'string' 
+            ? original.default_block_content 
+            : JSON.stringify(original.default_block_content);
+        const [result] = await db.query(insertQuery, [
+            adminId,
+            newName,
+            original.description,
+            original.icon,
+            original.thumbnail_url,
+            blockContentStr,
+            original.category
+        ]);
+        res.status(201).json({ message: 'Шаблон успішно скопійовано', templateId: result.insertId });
+    } catch (error) {
+        console.error("Помилка при копіюванні шаблону:", error);
+        res.status(500).json({ message: 'Помилка сервера при копіюванні' });
     }
 };

@@ -10,7 +10,7 @@ import ImageUploadTrigger from '../../../shared/ui/complex/ImageUploadTrigger';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { useCooldown } from '../../../shared/hooks/useCooldown';
-import { User, Mail, Phone, Trash2, Camera, LogOut, Check, Upload, BarChart2, Zap, LayoutTemplate, HardDrive, Timer } from 'lucide-react';
+import { User, Mail, Phone, Trash2, Camera, LogOut, Check, Upload, BarChart2, Zap, LayoutTemplate, HardDrive, Timer, Eye, ShieldAlert } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
@@ -23,14 +23,43 @@ const ProfileGeneralTab = () => {
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [updateCooldown, startUpdateCooldown] = useCooldown('kendr_profile_update_cooldown');
+    const [statsData, setStatsData] = useState({
+        siteCount: 0,
+        mediaCount: 0,
+        totalViews: 0,
+        warningCount: 0,
+        limits: null
+    });
     useEffect(() => {
         if (user) {
             setFormData({
                 username: user.username,
                 phone_number: user.phone_number || ''
             });
+            const fetchStats = async () => {
+                try {
+                    const [sitesRes, limitsRes, profileRes] = await Promise.all([
+                        apiClient.get('/sites/catalog', { params: { scope: 'my' } }),
+                        apiClient.get('/media/limits'),
+                        apiClient.get(`/users/${user.slug || user.username}`)
+                    ]);
+                    const sites = Array.isArray(sitesRes.data) ? sitesRes.data : [];
+                    const calculatedViews = sites.reduce((sum, site) => sum + (site.view_count || 0), 0);
+                    setStatsData({
+                        siteCount: sites.length,
+                        mediaCount: limitsRes.data.currentFiles || 0,
+                        limits: limitsRes.data,
+                        totalViews: profileRes.data?.totalViews !== undefined ? profileRes.data.totalViews : calculatedViews,
+                        warningCount: profileRes.data?.warning_count || 0
+                    });
+                } catch (error) {
+                    console.error("Failed to fetch stats", error);
+                }
+            };
+            fetchStats();
         }
     }, [user]);
+
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -38,7 +67,6 @@ const ProfileGeneralTab = () => {
             toast.warning(`Зачекайте ${updateCooldown}с перед наступним оновленням.`);
             return;
         }
-
         if (!formData.username || formData.username.trim().length < 3) {
             toast.warn('Нікнейм повинен містити мінімум 3 символи');
             return;
@@ -48,7 +76,6 @@ const ProfileGeneralTab = () => {
             toast.error('Некоректний формат телефону. Використовуйте лише цифри та символи + ( ) -');
             return;
         }
-
         setIsLoading(true);
         try {
             const response = await apiClient.put('/users/profile', formData);
@@ -97,13 +124,18 @@ const ProfileGeneralTab = () => {
     };
 
     if (!user) return null;
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const containerStyle = { maxWidth: '900px', margin: '0 auto', width: '100%' };
     const gridLayout = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' };
     const cardStyle = { background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '16px', padding: '24px', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' };
     const sectionTitleStyle = { fontSize: '1.25rem', fontWeight: '600', color: 'var(--platform-text-primary)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' };
     const sectionDescStyle = { fontSize: '0.9rem', color: 'var(--platform-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5', margin: 0 };
-    const stats = user.stats || { siteCount: 0, siteLimit: 2, mediaCount: 0, mediaLimit: 50 };
-    const isPlus = user.plan === 'PLUS';
+    const isPlanAdmin = isStaff || (user.plan && String(user.plan).trim().toUpperCase() === 'ADMIN');
+    const isPremium = isPlanAdmin || user.plan === 'PLUS';
+    const maxSitesDisplay = isPlanAdmin ? '∞' : (statsData.limits ? statsData.limits.maxSites : '...');
+    const maxMediaDisplay = isPlanAdmin ? '∞' : (statsData.limits ? statsData.limits.maxFiles : '...');
+    const isSiteLimitReached = !isPlanAdmin && statsData.limits && statsData.siteCount >= statsData.limits.maxSites;
+    const isMediaLimitReached = !isPlanAdmin && statsData.limits && statsData.mediaCount >= statsData.limits.maxFiles;
     return (
         <div style={containerStyle}>
             <style>{`
@@ -117,7 +149,7 @@ const ProfileGeneralTab = () => {
                 .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--platform-bg); border-radius: 12px; border: 1px solid var(--platform-border-color); margin-bottom: 12px; }
                 .stat-label { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--platform-text-primary); font-weight: 500; }
                 .stat-value { font-weight: 600; font-size: 0.95rem; }
-                .tariff-badge { background: ${isPlus ? 'var(--platform-accent)' : 'var(--platform-border-color)'}; color: ${isPlus ? '#fff' : 'var(--platform-text-primary)'}; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; }
+                .tariff-badge { background: ${isPremium ? 'var(--platform-accent)' : 'var(--platform-border-color)'}; color: ${isPremium ? '#fff' : 'var(--platform-text-primary)'}; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; }
             `}</style>
             <div style={gridLayout}>
                 <div style={cardStyle}>
@@ -172,9 +204,11 @@ const ProfileGeneralTab = () => {
                             <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--platform-text-primary)' }}>
                                 {user.username}
                             </div>
-                            <div style={{ fontSize: '1rem', color: 'var(--platform-text-secondary)' }}>
-                                {user.email}
-                            </div>
+                            {!isStaff && (
+                                <div style={{ fontSize: '1rem', color: 'var(--platform-text-secondary)' }}>
+                                    {user.email}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -199,14 +233,16 @@ const ProfileGeneralTab = () => {
                             showCounter={true}
                             helperText="Мінімум 3 символи"
                         />
-                        <Input 
-                            name="email" 
-                            label="Email" 
-                            value={user.email} 
-                            disabled 
-                            leftIcon={<Mail size={18} />}
-                            style={{ opacity: 0.7, cursor: 'not-allowed' }}
-                        />
+                        {!isStaff && (
+                            <Input 
+                                name="email" 
+                                label="Email" 
+                                value={user.email} 
+                                disabled 
+                                leftIcon={<Mail size={18} />}
+                                style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                            />
+                        )}
                         <Input 
                             name="phone_number" 
                             label="Телефон" 
@@ -239,7 +275,7 @@ const ProfileGeneralTab = () => {
                     </div>
                     <div className="stat-row">
                         <div className="stat-label">
-                            <Zap size={18} style={{ color: isPlus ? 'var(--platform-accent)' : 'var(--platform-text-secondary)' }} />
+                            <Zap size={18} style={{ color: isPremium ? 'var(--platform-accent)' : 'var(--platform-text-secondary)' }} />
                             Поточний тариф
                         </div>
                         <div className="stat-value">
@@ -251,17 +287,35 @@ const ProfileGeneralTab = () => {
                             <LayoutTemplate size={18} style={{ color: 'var(--platform-text-secondary)' }} />
                             Створено сайтів
                         </div>
-                        <div className="stat-value" style={{ color: stats.siteCount >= stats.siteLimit ? 'var(--platform-danger)' : 'inherit' }}>
-                            {stats.siteCount} / {stats.siteLimit === Infinity ? '∞' : stats.siteLimit}
+                        <div className="stat-value" style={{ color: isSiteLimitReached ? 'var(--platform-danger)' : 'inherit' }}>
+                            {statsData.siteCount} / {maxSitesDisplay}
                         </div>
                     </div>
-                    <div className="stat-row" style={{ marginBottom: 0 }}>
+                    <div className="stat-row">
                         <div className="stat-label">
                             <HardDrive size={18} style={{ color: 'var(--platform-text-secondary)' }} />
                             Завантажено файлів
                         </div>
-                        <div className="stat-value" style={{ color: stats.mediaCount >= stats.mediaLimit ? 'var(--platform-danger)' : 'inherit' }}>
-                            {stats.mediaCount} / {stats.mediaLimit === Infinity ? '∞' : stats.mediaLimit}
+                        <div className="stat-value" style={{ color: isMediaLimitReached ? 'var(--platform-danger)' : 'inherit' }}>
+                            {statsData.mediaCount} / {maxMediaDisplay}
+                        </div>
+                    </div>
+                    <div className="stat-row">
+                        <div className="stat-label">
+                            <Eye size={18} style={{ color: 'var(--platform-text-secondary)' }} />
+                            Всього переглядів на активних сайтах 
+                        </div>
+                        <div className="stat-value">
+                            {statsData.totalViews}
+                        </div>
+                    </div>
+                    <div className="stat-row" style={{ marginBottom: 0 }}>
+                        <div className="stat-label">
+                            <ShieldAlert size={18} style={{ color: statsData.warningCount > 0 ? 'var(--platform-danger)' : 'var(--platform-text-secondary)' }} />
+                            Активні страйки
+                        </div>
+                        <div className="stat-value" style={{ color: statsData.warningCount > 0 ? 'var(--platform-danger)' : 'inherit' }}>
+                            {statsData.warningCount} / 3
                         </div>
                     </div>
                 </div>
