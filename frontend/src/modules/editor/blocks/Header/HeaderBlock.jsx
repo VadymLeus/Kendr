@@ -47,7 +47,8 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         nav_fontFamily,     
         buttonSettings = {}, 
         logo_radius,
-        borderRadius 
+        borderRadius,
+        is_sticky
     } = blockData;
     const effectiveLogoRadius = logo_radius !== undefined ? logo_radius : (borderRadius || 0);
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
@@ -79,7 +80,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         observer.observe(headerRef.current);
         return () => observer.disconnect();
     }, []);
-
     const IS_COMPACT_NAV = containerWidth < 850;
     const IS_COMPACT_BTN = containerWidth < 480;
     const getLogoHeight = () => {
@@ -90,7 +90,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
             default: return '50px';
         }
     };
-
     const getButtonStyle = (isHovered) => {
         const { 
             variant = 'solid', 
@@ -142,7 +141,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
             transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
         };
     };
-
     const [hoveredNavId, setHoveredNavId] = useState(null);
     const [isBtnHovered, setIsBtnHovered] = useState(false);
     const [isMenuHovered, setIsMenuHovered] = useState(false);
@@ -158,7 +156,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         <header 
             ref={headerRef} 
             className={`
-                flex items-center justify-between bg-(--site-header-bg,var(--site-bg)) border-b border-(--site-border-color) text-(--site-text-primary) relative transition-all duration-300 gap-4
+                flex items-center justify-between w-full relative bg-(--site-header-bg,var(--site-bg)) border-b border-(--site-border-color) text-(--site-text-primary) transition-all duration-300 gap-4
                 ${IS_COMPACT_BTN ? 'py-3 px-4' : 'py-4 px-8 gap-8'}
             `}
             style={cssVariables}

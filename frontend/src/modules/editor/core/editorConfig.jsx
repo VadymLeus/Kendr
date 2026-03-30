@@ -1,6 +1,6 @@
 // frontend/src/modules/editor/core/editorConfig.jsx
 import React from 'react';
-import { Image, FileText, MousePointerClick, Star, Grid, ShoppingBag, List, Mail, Video, MapPin, HelpCircle, Share2, PanelTop, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { Image, FileText, MousePointerClick, Star, Grid, ShoppingBag, List, Mail, Video, MapPin, HelpCircle, Share2, PanelTop, PanelBottom, AlignLeft, AlignCenter, AlignRight, Globe } from 'lucide-react';
 
 export const BLOCK_LIBRARY = [
     { type: 'hero', name: 'Обкладинка', icon: <Image size={20} /> },
@@ -26,7 +26,8 @@ export const BLOCK_LIBRARY = [
     { type: 'map', name: 'Мапа', icon: <MapPin size={20} /> },
     { type: 'accordion', name: 'Акордеон', icon: <HelpCircle size={20} /> },
     { type: 'social_icons', name: 'Соцмережі', icon: <Share2 size={20} /> },
-    { type: 'header', name: 'Глобальний Хедер', icon: <PanelTop size={20} />, isSystem: true },
+    { type: 'global-header', name: 'Глобальний Хедер', icon: <Globe size={20} /> },
+    { type: 'global-footer', name: 'Глобальний Футер', icon: <Globe size={20} /> },
 ];
 
 export const generateBlockId = () => {
@@ -47,26 +48,23 @@ export const FONT_LIBRARY = [
     { label: 'Nunito', value: "'Nunito', sans-serif", googleFont: 'Nunito' },
     { label: 'Oswald', value: "'Oswald', sans-serif", googleFont: 'Oswald' },
     { label: 'Raleway', value: "'Raleway', sans-serif", googleFont: 'Raleway' },
-
     { label: 'Merriweather', value: "'Merriweather', serif", googleFont: 'Merriweather' },
     { label: 'Playfair Display', value: "'Playfair Display', serif", googleFont: 'Playfair Display' },
     { label: 'Lora', value: "'Lora', serif", googleFont: 'Lora' },
     { label: 'PT Serif', value: "'PT Serif', serif", googleFont: 'PT Serif' },
     { label: 'Bitter', value: "'Bitter', serif", googleFont: 'Bitter' },
-
     { label: 'Comfortaa', value: "'Comfortaa', display", googleFont: 'Comfortaa' },
     { label: 'Russo One', value: "'Russo One', sans-serif", googleFont: 'Russo One' },
     { label: 'Pacifico', value: "'Pacifico', cursive", googleFont: 'Pacifico' },
     { label: 'Lobster', value: "'Lobster', cursive", googleFont: 'Lobster' },
     { label: 'Caveat', value: "'Caveat', cursive", googleFont: 'Caveat' },
-    
     { label: 'Roboto Mono', value: "'Roboto Mono', monospace", googleFont: 'Roboto Mono' },
     { label: 'Ubuntu Mono', value: "'Ubuntu Mono', monospace", googleFont: 'Ubuntu Mono' }
 ];
 
 export const getDefaultBlockData = (type, options = {}) => {
     switch (type) {
-        case 'header':
+        case 'global-header':
             return {
                 logo_src: '',
                 site_title: 'Мій Сайт',
@@ -80,7 +78,22 @@ export const getDefaultBlockData = (type, options = {}) => {
                 ],
                 block_theme: 'auto'
             };
-
+        case 'global-footer':
+            return {
+                variant: 'standard',
+                bg_color: 'dark',
+                logo_src: '',
+                copyright: `© ${new Date().getFullYear()} Назва компанії`,
+                links: [
+                    { id: generateBlockId(), label: 'Політика конфіденційності', link: '/privacy' },
+                    { id: generateBlockId(), label: 'Контакти', link: '/contact' }
+                ],
+                socials: [
+                    { id: generateBlockId(), platform: 'facebook', link: '#' },
+                    { id: generateBlockId(), platform: 'instagram', link: '#' }
+                ],
+                block_theme: 'auto'
+            };
         case 'hero':
             return { 
                 bg_image: '',
@@ -94,7 +107,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 fontFamily: 'global',
                 block_theme: 'auto'
             };
-
         case 'text':
             return { 
                 content: 'Вставте сюди свій текст.',
@@ -103,7 +115,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 fontFamily: 'global',
                 block_theme: 'auto'
             };
-
         case 'image':
             return { 
                 mode: 'single',
@@ -122,7 +133,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 settings_grid: { columns: 3 },
                 block_theme: 'auto'
             };
-
         case 'button':
             return { 
                 text: 'Натисніть тут',
@@ -132,7 +142,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 targetBlank: false,
                 block_theme: 'auto'
             };
-
         case 'layout':
             const columnCount = options.columns || 2;
             return { 
@@ -142,7 +151,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 direction: 'row',
                 block_theme: 'auto'
             };
-
         case 'showcase':
             return {
                 title: 'Хіти продажів',
@@ -153,7 +161,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 limit: 8,
                 block_theme: 'auto'
             };
-
         case 'catalog':
             return { 
                 title: 'Каталог товарів',
@@ -166,7 +173,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 columns: 3,
                 block_theme: 'auto'
             };
-
         case 'features':
             return { 
                 title: 'Наші переваги',
@@ -177,7 +183,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 ],
                 block_theme: 'auto'
             };
-
         case 'form':
             return {
                 buttonText: 'Надіслати',
@@ -185,21 +190,18 @@ export const getDefaultBlockData = (type, options = {}) => {
                 notifyEmail: '',
                 block_theme: 'auto'
             };
-
         case 'video':
             return {
                 url: '',
                 sizePreset: 'medium',
                 block_theme: 'auto'
             };
-
         case 'map':
             return {
                 embed_code: '',
                 sizePreset: 'medium',
                 block_theme: 'auto'
             };
-
         case 'accordion':
             return {
                 fontFamily: 'global',
@@ -209,7 +211,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 ],
                 block_theme: 'auto'
             };
-
         case 'social_icons':
             return {
                 alignment: 'left',
@@ -220,7 +221,6 @@ export const getDefaultBlockData = (type, options = {}) => {
                 tiktok: '',
                 block_theme: 'auto'
             };
-
         default:
             return { block_theme: 'auto' };
     }

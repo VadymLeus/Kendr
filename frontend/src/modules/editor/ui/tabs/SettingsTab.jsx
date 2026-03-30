@@ -15,6 +15,7 @@ import MapSettings from '../../blocks/Map/MapSettings';
 import AccordionSettings from '../../blocks/Accordion/AccordionSettings';
 import SocialIconsSettings from '../../blocks/SocialIcons/SocialIconsSettings';
 import HeaderSettings from '../../blocks/Header/HeaderSettings';
+import FooterSettings from '../../blocks/Footer/FooterSettings';
 import AdvancedSettingsTab from './AdvancedSettingsTab';
 import { Settings, FileText, MousePointerClick, AlertCircle, SlidersHorizontal } from 'lucide-react';
 
@@ -32,23 +33,23 @@ const SettingsComponentMap = {
     map: MapSettings,
     accordion: AccordionSettings,
     social_icons: SocialIconsSettings,
+    'global-header': HeaderSettings,
+    'global-footer': FooterSettings,
     header: HeaderSettings,
+    footer: FooterSettings,
 };
 
 const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData }) => {
     const [activeTab, setActiveTab] = useState('content');
-
     const selectedBlock = selectedBlockPath 
         ? findBlockByPath(blocks, selectedBlockPath) 
         : null;
-
-    const isHeaderBlock = selectedBlock?.type === 'header';
+    const isGlobalBlock = selectedBlock?.type.startsWith('global-') || selectedBlock?.type === 'header' || selectedBlock?.type === 'footer';
     useEffect(() => {
-        if (isHeaderBlock && activeTab === 'advanced') {
+        if (isGlobalBlock && activeTab === 'advanced') {
             setActiveTab('content');
         }
-    }, [isHeaderBlock, activeTab]);
-
+    }, [isGlobalBlock, activeTab]);
     if (!selectedBlock) {
         return (
             <div className="flex flex-col items-center justify-center min-h-full p-5 text-center text-(--platform-text-secondary)">
@@ -64,13 +65,10 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
             </div>
         );
     }
-
     const SettingsComponent = SettingsComponentMap[selectedBlock.type];
-
     const handleLiveUpdate = (newData, addToHistory = true) => {
         onUpdateBlockData(selectedBlockPath, newData, addToHistory);
     };
-
     const TabButton = ({ id, label, icon: Icon }) => {
         const isActive = activeTab === id;
         return (
@@ -88,7 +86,6 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
             </button>
         );
     };
-
     return (
         <div className="min-h-full bg-(--platform-sidebar-bg) pb-20 relative">
             <div className="sticky top-0 z-20 bg-(--platform-sidebar-bg) border-b border-(--platform-border-color)">
@@ -102,20 +99,18 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                                 Редагування
                             </div>
                             <div className="text-[1.05rem] font-bold capitalize text-(--platform-text-primary)">
-                                {selectedBlock.name || selectedBlock.type}
+                                {selectedBlock.name || selectedBlock.type.replace('global-', 'Глобальний ')}
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <div className="flex px-4">
                     <TabButton id="content" label="Контент" icon={FileText} />
-                    {!isHeaderBlock && (
+                    {!isGlobalBlock && (
                         <TabButton id="advanced" label="Вигляд" icon={SlidersHorizontal} />
                     )}
                 </div>
             </div>
-            
             <div className="p-4 animate-in fade-in slide-in-from-bottom-1 duration-300">
                 {activeTab === 'content' && (
                     <div>
@@ -137,8 +132,7 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
                         )}
                     </div>
                 )}
-
-                {activeTab === 'advanced' && !isHeaderBlock && (
+                {activeTab === 'advanced' && !isGlobalBlock && (
                     <AdvancedSettingsTab 
                         data={selectedBlock.data}
                         onUpdate={handleLiveUpdate}

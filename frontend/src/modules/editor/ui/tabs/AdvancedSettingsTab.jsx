@@ -11,7 +11,6 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
     const handleAnchorChange = (e) => {
         const rawValue = e.target.value;
         const sanitized = rawValue.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
-        
         onUpdate({
             ...data,
             anchorId: sanitized

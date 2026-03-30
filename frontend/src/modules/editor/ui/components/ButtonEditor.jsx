@@ -16,18 +16,15 @@ const ButtonEditor = ({
     hideLinks = false, 
     hideIcons = false 
 }) => {
-    
     const themeSettings = siteData?.theme_settings || {};
     const currentSiteFonts = {
         heading: themeSettings.font_heading,
         body: themeSettings.font_body
     };
-
     const val = (key, def) => (data && data[key] !== undefined ? data[key] : def);
     const handleChange = (name, value) => {
         onChange({ ...data, [name]: value });
     };
-
     const iconList = [
         { value: 'none', icon: <X size={18} />, label: 'Ні' },
         { value: 'arrowRight', icon: <ArrowRight size={18} />, label: 'Стрілка' },
@@ -38,7 +35,6 @@ const ButtonEditor = ({
         { value: 'star', icon: <Star size={18} />, label: 'Зірка' },
         { value: 'pointer', icon: <MousePointer2 size={18} />, label: 'Клік' },
     ];
-
     const hasIcon = val('icon', 'none') !== 'none';
     const activeBtnStyle = {
         borderColor: 'var(--platform-accent)',
@@ -59,7 +55,7 @@ const ButtonEditor = ({
                 </div>
                 {!hideLinks && (
                     <div className="form-group">
-                        <div className="flex gap-2 items-end">
+                        <div className="flex gap-2 items-start">
                             <div className="flex-1">
                                 <Input 
                                     value={val('link', '')}
@@ -71,7 +67,7 @@ const ButtonEditor = ({
                             <button
                                 title="Відкривати у новій вкладці"
                                 onClick={() => handleChange('targetBlank', !val('targetBlank', false))}
-                                className={`btn btn-icon-square ${!val('targetBlank') ? 'btn-outline' : ''}`}
+                                className={`btn btn-icon-square shrink-0 flex items-center justify-center p-0 h-10.5 w-10.5 ${!val('targetBlank') ? 'btn-outline' : ''}`}
                                 style={val('targetBlank') ? activeBtnStyle : {}}
                             >
                                 <SquareArrowOutUpRight size={18} />
@@ -80,7 +76,6 @@ const ButtonEditor = ({
                     </div>
                 )}
             </div>
-            
             <div className="h-px bg-(--platform-border-color) opacity-50 my-1" />
             <div>
                 <span className="text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary) mb-3 block">Дизайн</span>
@@ -104,7 +99,6 @@ const ButtonEditor = ({
                         />
                     </div>
                 </div>
-
                 <div className="form-group">
                     <ToggleGroup 
                         options={[
@@ -116,7 +110,6 @@ const ButtonEditor = ({
                         onChange={(v) => handleChange('size', v)}
                     />
                 </div>
-
                 {showAlignment && val('width') !== 'full' && (
                     <div className="form-group">
                          <AlignmentControl 
@@ -126,7 +119,6 @@ const ButtonEditor = ({
                         />
                     </div>
                 )}
-
                 <div className="form-group">
                     <FontSelector 
                         value={val('fontFamily', 'global')}
@@ -135,7 +127,6 @@ const ButtonEditor = ({
                         siteFonts={currentSiteFonts}
                     />
                 </div>
-
                 <div className="form-group">
                     <RangeSlider 
                         label="Скруглення"
@@ -147,7 +138,6 @@ const ButtonEditor = ({
                     />
                 </div>
             </div>
-
             {!hideIcons && (
                 <>
                     <div className="h-px bg-(--platform-border-color) opacity-50 my-1" />
@@ -169,7 +159,6 @@ const ButtonEditor = ({
                                 );
                             })}
                         </div>
-
                         <div 
                             className="flex items-stretch gap-2 mt-5 transition-opacity duration-200"
                             style={{
@@ -187,7 +176,6 @@ const ButtonEditor = ({
                                     onChange={(v) => handleChange('iconPosition', v)}
                                 />
                             </div>
-                            
                             <button
                                 onClick={() => handleChange('iconFlip', !val('iconFlip', false))}
                                 title="Віддзеркалити"

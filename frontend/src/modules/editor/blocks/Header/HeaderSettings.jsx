@@ -153,14 +153,14 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                 </div>
                 <div className="mb-5">
                     <Input 
-                        label="Назва сайту (текст)"
-                        value={data.site_title}
+                        label="Назва сайту"
+                        value={data.site_title || ''}
                         onChange={(e) => updateData({ site_title: e.target.value })}
                         leftIcon={<Type size={16}/>}
                     />
                 </div>
                 <ToggleSwitch 
-                    checked={data.show_title}
+                    checked={data.show_title || false}
                     onChange={(checked) => updateData({ show_title: checked })}
                     label="Показувати назву поруч з лого"
                 />
@@ -171,6 +171,13 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
             </div>
             <div>
                 <SectionTitle icon={<LayoutTemplate size={18}/>}>Розміщення та Стиль</SectionTitle>
+                <div className="mb-5">
+                    <ToggleSwitch 
+                        checked={data.is_sticky || false}
+                        onChange={(checked) => updateData({ is_sticky: checked })}
+                        label="Закріпити при прокрутці (Sticky)"
+                    />
+                </div>
                 <div className="mb-5">
                     <AlignmentControl 
                         label="Вирівнювання меню"

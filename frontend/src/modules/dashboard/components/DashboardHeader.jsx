@@ -1,7 +1,7 @@
 // frontend/src/modules/dashboard/components/DashboardHeader.jsx
 import React, { useContext } from 'react';
 import { AuthContext } from '../../../app/providers/AuthContext';
-import { Undo, Redo, Play, Edit, FileText, Store, Palette, Mail, Settings, ShoppingBag } from 'lucide-react';
+import { Undo, Redo, Play, Edit, FileText, Store, Palette, Mail, Settings, ShoppingBag, Monitor, Smartphone, PenTool } from 'lucide-react';
 
 const DashboardHeader = ({ 
     siteData, 
@@ -11,7 +11,9 @@ const DashboardHeader = ({
     redo,
     canUndo,
     canRedo,
-    isSaving 
+    isSaving,
+    viewMode,
+    onViewModeChange 
 }) => {
     const { user } = useContext(AuthContext);
     const isStaff = user?.role === 'admin' || user?.role === 'moderator';
@@ -67,24 +69,50 @@ const DashboardHeader = ({
             </div>
             <div className="header-right">
                 {activeTab === 'editor' && (
-                    <div className="undo-redo-container">
-                        <button 
-                            className="action-btn" 
-                            onClick={undo} 
-                            disabled={!canUndo} 
-                            title="Скасувати (Ctrl+Z)"
-                        >
-                            <Undo />
-                        </button>
-                        <button 
-                            className="action-btn" 
-                            onClick={redo} 
-                            disabled={!canRedo} 
-                            title="Повернути (Ctrl+Y)"
-                        >
-                            <Redo />
-                        </button>
-                    </div>
+                    <>
+                        <div className="view-mode-toggle">
+                            <button
+                                className={`mode-btn ${viewMode === 'editor' ? 'active' : ''}`}
+                                onClick={() => onViewModeChange('editor')}
+                                title="Режим редактора"
+                            >
+                                <PenTool size={16} />
+                            </button>
+                            <button
+                                className={`mode-btn ${viewMode === 'desktop' ? 'active' : ''}`}
+                                onClick={() => onViewModeChange('desktop')}
+                                title="ПК версія"
+                            >
+                                <Monitor size={16} />
+                            </button>
+                            <button
+                                className={`mode-btn ${viewMode === 'mobile' ? 'active' : ''}`}
+                                onClick={() => onViewModeChange('mobile')}
+                                title="Мобільна версія"
+                            >
+                                <Smartphone size={16} />
+                            </button>
+                        </div>
+                        
+                        <div className="undo-redo-container">
+                            <button 
+                                className="action-btn" 
+                                onClick={undo} 
+                                disabled={!canUndo} 
+                                title="Скасувати (Ctrl+Z)"
+                            >
+                                <Undo />
+                            </button>
+                            <button 
+                                className="action-btn" 
+                                onClick={redo} 
+                                disabled={!canRedo} 
+                                title="Повернути (Ctrl+Y)"
+                            >
+                                <Redo />
+                            </button>
+                        </div>
+                    </>
                 )}
                 <a 
                     href={`/site/${siteData.site_path}`} 
@@ -144,36 +172,12 @@ const DashboardHeader = ({
                     font-weight: 500;
                     height: 18px;
                 }
-
-                .saving-state {
-                    color: var(--platform-accent);
-                }
-
-                .saved-state {
-                    color: var(--platform-text-secondary);
-                    opacity: 0.8;
-                }
-
-                .check-icon {
-                    color: var(--platform-success);
-                    font-weight: bold;
-                }
-
-                .indicator-text {
-                    white-space: nowrap;
-                }
-
-                .animate-spin {
-                    display: inline-block;
-                    animation: spin 1s linear infinite;
-                }
-
-                @keyframes spin {
-                    100% { 
-                        transform: rotate(360deg); 
-                    }
-                }
-
+                .saving-state { color: var(--platform-accent); }
+                .saved-state { color: var(--platform-text-secondary); opacity: 0.8; }
+                .check-icon { color: var(--platform-success); font-weight: bold; }
+                .indicator-text { white-space: nowrap; }
+                .animate-spin { display: inline-block; animation: spin 1s linear infinite; }
+                @keyframes spin { 100% { transform: rotate(360deg); } }
                 .header-center {
                     flex-grow: 1;
                     display: flex;
@@ -238,9 +242,7 @@ const DashboardHeader = ({
                     stroke-linejoin: round;
                 }
 
-                .tab-text {
-                    font-weight: 500;
-                }
+                .tab-text { font-weight: 500; }
 
                 .header-right {
                     flex-shrink: 0;
@@ -249,6 +251,41 @@ const DashboardHeader = ({
                     gap: 12px;
                     min-width: 200px;
                     justify-content: flex-end;
+                }
+
+                .view-mode-toggle {
+                    display: flex;
+                    background: var(--platform-bg);
+                    padding: 4px;
+                    border-radius: 8px;
+                    gap: 2px;
+                    border: 1px solid var(--platform-border-color);
+                    margin-right: 12px;
+                }
+
+                .mode-btn {
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 6px;
+                    border: none;
+                    background: transparent;
+                    color: var(--platform-text-secondary);
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .mode-btn:hover {
+                    color: var(--platform-text-primary);
+                    background: var(--platform-hover-bg);
+                }
+
+                .mode-btn.active {
+                    background: var(--platform-card-bg);
+                    color: var(--platform-accent);
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
                 }
 
                 .undo-redo-container {
@@ -286,12 +323,10 @@ const DashboardHeader = ({
                     opacity: 0.4;
                     cursor: default;
                 }
-
                 .action-btn svg {
                     width: 18px;
                     height: 18px;
                 }
-
                 .preview-btn {
                     display: flex;
                     align-items: center;
@@ -311,90 +346,42 @@ const DashboardHeader = ({
                     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                     transition: background-color 0.2s ease;
                 }
-
                 .preview-btn:hover {
                     text-decoration: none;
                     background-color: var(--platform-accent-hover); 
                     color: var(--platform-accent-text);
                 }
-
                 .preview-btn svg {
                     width: 16px;
                     height: 16px;
                     fill: none;
                     stroke: currentColor;
                 }
-
-                .preview-text {
-                    font-weight: 600;
-                }
-                    
+                .preview-text { font-weight: 600; }
                 @media (max-width: 1800px) {
                     .header-left,
-                    .header-right {
-                        width: auto;
-                        min-width: auto;
-                    }
-                    .tab-text {
-                        display: none;
-                    }
-                    .tab-btn {
-                        padding: 8px 12px;
-                        font-size: 1.2rem;
-                    }
-                    .preview-btn span {
-                        display: none;
-                    }
-                    .preview-btn {
-                        padding: 0 12px;
-                        width: 38px;
-                    }
+                    .header-right { width: auto; min-width: auto; }
+                    .tab-text { display: none; }
+                    .tab-btn { padding: 8px 12px; font-size: 1.2rem; }
+                    .preview-btn span { display: none; }
+                    .preview-btn { padding: 0 12px; width: 38px; }
                 }
                 @media (max-width: 600px) {
-                    .site-title {
-                        display: none;
-                    }
+                    .site-title { display: none; }
                 }
                 @media (max-width: 768px) {
-                    .editor-header {
-                        padding: 0 12px;
-                        height: 56px;
-                    }
-                    .tab-btn {
-                        padding: 6px 10px;
-                        font-size: 12px;
-                    }
-                    .action-btn {
-                        width: 32px;
-                        height: 32px;
-                    }
-                    .undo-redo-container {
-                        min-width: 72px;
-                        margin-right: 8px;
-                        padding-right: 8px;
-                    }
-                    .preview-btn {
-                        height: 32px;
-                        width: 32px;
-                        padding: 0;
-                    }
+                    .editor-header { padding: 0 12px; height: 56px; }
+                    .tab-btn { padding: 6px 10px; font-size: 12px; }
+                    .action-btn { width: 32px; height: 32px; }
+                    .undo-redo-container { min-width: 72px; margin-right: 8px; padding-right: 8px; }
+                    .preview-btn { height: 32px; width: 32px; padding: 0; }
+                    .view-mode-toggle { display: none; }
                 }
                 @media (max-width: 480px) {
-                    .editor-header {
-                        padding: 0 8px;
-                        gap: 8px;
-                    }
-                    .tab-btn {
-                        padding: 4px 8px;
-                    }
-                    .tab-icon {
-                        width: 16px;
-                        height: 16px;
-                    }
-                    .action-btn svg {
-                        width: 16px;
-                        height: 16px;
-                    }
+                    .editor-header { padding: 0 8px; gap: 8px; }
+                    .tab-btn { padding: 4px 8px; }
+                    .tab-icon { width: 16px; height: 16px; }
+                    .action-btn svg { width: 16px; height: 16px; }
                 }
             `}</style>
         </header>

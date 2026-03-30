@@ -19,6 +19,8 @@ const MapBlock = lazy(() => import('../blocks/Map/MapBlock'));
 const AccordionBlock = lazy(() => import('../blocks/Accordion/AccordionBlock'));
 const SocialIconsBlock = lazy(() => import('../blocks/SocialIcons/SocialIconsBlock'));
 const HeaderBlock = lazy(() => import('../blocks/Header/HeaderBlock'));
+const FooterBlock = lazy(() => import('../blocks/Footer/FooterBlock'));
+
 const blockMap = {
     hero: HeroBlock,
     text: TextBlock,
@@ -33,6 +35,8 @@ const blockMap = {
     map: MapBlock,
     accordion: AccordionBlock,
     social_icons: SocialIconsBlock,
+    'global-header': HeaderBlock,
+    'global-footer': FooterBlock,
     header: HeaderBlock,
 };
 
@@ -44,7 +48,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
     const textPrimary = 'var(--site-text-primary)';
     const textSecondary = 'var(--site-text-secondary)';
     const danger = 'var(--site-danger, #ef4444)';
-    const headerBlock = blocks?.find(b => b.type === 'header');
+    const headerBlock = blocks?.find(b => b.type === 'global-header' || b.type === 'header');
     const navItems = headerBlock?.data?.nav_items || [];
     if (!Array.isArray(blocks) || blocks.length === 0) {
         return (
@@ -99,21 +103,19 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                     paddingTop: styles.paddingTop ? `${styles.paddingTop}px` : '60px',
                     paddingBottom: styles.paddingBottom ? `${styles.paddingBottom}px` : '60px'
                 };
+                const isHeader = block.type === 'global-header' || block.type === 'header';
+                const isSticky = isHeader && block.data?.is_sticky && !isEditorPreview;
                 return (
                     <div 
                         key={block.block_id || index}
                         id={elementId}
-                        className="w-full"
+                        className={`w-full ${isSticky ? 'sticky top-0 z-85' : 'relative'}`}
                     >
-                        <AnimationWrapper animationConfig={block.data?.animation}>
+                        {isHeader ? (
                             <Suspense
                                 fallback={
                                     <div className="w-full flex items-center justify-center py-10">
-                                        <Loader2 
-                                            size={32} 
-                                            className="animate-spin text-(--platform-accent)" 
-                                            style={{ color: 'var(--site-accent, var(--platform-accent))' }}
-                                        />
+                                        <Loader2 size={32} className="animate-spin text-(--platform-accent)" style={{ color: 'var(--site-accent, var(--platform-accent))' }} />
                                     </div>
                                 }
                             >
@@ -127,10 +129,31 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                                     onMenuToggle={() => !isEditorPreview && setIsMobileMenuOpen(true)}
                                 />
                             </Suspense>
-                        </AnimationWrapper>
+                        ) : (
+                            <AnimationWrapper animationConfig={block.data?.animation}>
+                                <Suspense
+                                    fallback={
+                                        <div className="w-full flex items-center justify-center py-10">
+                                            <Loader2 size={32} className="animate-spin text-(--platform-accent)" style={{ color: 'var(--site-accent, var(--platform-accent))' }} />
+                                        </div>
+                                    }
+                                >
+                                    <Component
+                                        blockData={block.data}
+                                        siteData={siteData}
+                                        isEditorPreview={isEditorPreview}
+                                        style={dynamicStyle} 
+                                        {...props}
+                                        block={block}
+                                        onMenuToggle={() => !isEditorPreview && setIsMobileMenuOpen(true)}
+                                    />
+                                </Suspense>
+                            </AnimationWrapper>
+                        )}
                     </div>
                 );
             })}
+            
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 z-10000 flex justify-end">
                     <div 
@@ -143,7 +166,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                     >
                         <button 
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="self-end bg-none border-none cursor-pointer p-2"
+                            className="self-end bg-transparent border-none cursor-pointer p-2"
                             style={{ color: 'var(--site-text-primary)' }}
                         >
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

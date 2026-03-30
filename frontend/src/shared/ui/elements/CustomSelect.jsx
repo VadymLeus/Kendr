@@ -12,42 +12,63 @@ const CustomSelect = ({ name, value, onChange, options = [], placeholder = "Об
         opt.options ? [{ label: opt.label, isGroup: true }, ...opt.options] : opt
     ), [options]);
 
-    const selected = flatOptions.find(o => !o.isGroup && String(o.value) === String(value));
+    const selected = flatOptions.find(o => !o.isGroup && String(o.value) === String(value))
     useEffect(() => {
         if (!isOpen) return;
         const close = (e) => {
-            if (triggerRef.current && !triggerRef.current.contains(e.target) && menuRef.current && !menuRef.current.contains(e.target)) {
+            if (e.type === 'mousedown') {
+                if (triggerRef.current && !triggerRef.current.contains(e.target) && menuRef.current && !menuRef.current.contains(e.target)) {
+                    setIsOpen(false);
+                }
+            } else {
+                if (menuRef.current && menuRef.current.contains(e.target)) return;
                 setIsOpen(false);
             }
         };
-
         document.addEventListener('mousedown', close);
-        window.addEventListener('resize', () => setIsOpen(false));
+        window.addEventListener('resize', close);
+        window.addEventListener('scroll', close, true);
         return () => { 
             document.removeEventListener('mousedown', close); 
-            window.removeEventListener('resize', () => setIsOpen(false)); 
+            window.removeEventListener('resize', close); 
+            window.removeEventListener('scroll', close, true); 
         };
     }, [isOpen]);
 
     useLayoutEffect(() => {
         if (isOpen && triggerRef.current) {
             const rect = triggerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            const idealMaxHeight = 260;
+            let maxHeight, topStyle, bottomStyle;
+            if (spaceBelow >= idealMaxHeight || spaceBelow > spaceAbove) {
+                maxHeight = Math.min(idealMaxHeight, spaceBelow - 16);
+                topStyle = `${rect.bottom + 4}px`;
+                bottomStyle = 'auto';
+            }
+            else {
+                maxHeight = Math.min(idealMaxHeight, spaceAbove - 16);
+                topStyle = 'auto';
+                bottomStyle = `${window.innerHeight - rect.top + 4}px`;
+            }
             setMenuStyle({
-                position: 'absolute',
-                top: rect.bottom + window.scrollY + 6, 
-                left: rect.left + window.scrollX, 
-                width: rect.width,
-                maxHeight: '300px',
-                zIndex: 9999
+                position: 'fixed',
+                top: topStyle,
+                bottom: bottomStyle,
+                left: `${rect.left}px`,
+                width: `${rect.width}px`,
+                maxHeight: `${maxHeight}px`,
+                zIndex: 9999,
+                overflowY: 'auto'
             });
         }
-    }, [isOpen]);
+    }, [isOpen, flatOptions.length]);
 
     const handleSelect = (val) => {
         onChange && onChange({ target: { name, value: val } });
         setIsOpen(false);
     };
-
     return (
         <>
             <div 
@@ -62,7 +83,6 @@ const CustomSelect = ({ name, value, onChange, options = [], placeholder = "Об
                 </div>
                 <ChevronDown size={16} className={`text-(--platform-text-secondary) transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
-
             {isOpen && createPortal(
                 <div ref={menuRef} className="select-dropdown-menu custom-scrollbar" style={menuStyle}>
                     {flatOptions.length ? flatOptions.map((opt, i) => (
@@ -87,4 +107,5 @@ const CustomSelect = ({ name, value, onChange, options = [], placeholder = "Об
         </>
     );
 };
+
 export default CustomSelect;

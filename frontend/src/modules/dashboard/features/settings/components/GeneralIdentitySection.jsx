@@ -109,7 +109,7 @@ const GeneralIdentitySection = ({
                 </div>
                 <div className="mb-4">
                     <InputWithCounter
-                        label="Назва сайту (текст)"
+                        label="Назва сайту"
                         value={identityData.title}
                         onChange={(e) => handleIdentityChange('title', e.target.value)}
                         placeholder="Мій інтернет-магазин"

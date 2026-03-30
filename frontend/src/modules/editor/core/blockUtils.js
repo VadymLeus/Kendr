@@ -3,7 +3,6 @@ import { produce } from 'immer';
 import { get } from 'lodash';
 
 const getPathString = (path) => path.join('.');
-
 export const findBlockByPath = (blocks, path) => {
     if (!path) return null;
     return get(blocks, getPathString(path), null);
@@ -47,28 +46,20 @@ export const addBlockByPath = (blocks, newBlock, path) => {
 export const moveBlock = (blocks, dragPath, hoverPath) => {
     return produce(blocks, draft => {
         if (!dragPath || !hoverPath || !Array.isArray(dragPath) || !Array.isArray(hoverPath)) return;
-
         const dragBlock = get(draft, getPathString(dragPath));
         if (!dragBlock) {
             return;
         }
-        
         const dragParentPath = dragPath.slice(0, -1);
         const dragIndex = dragPath[dragPath.length - 1];
-        
         let parent = draft;
         if (dragParentPath.length > 0) parent = get(draft, getPathString(dragParentPath));
-        
         if (!parent || !Array.isArray(parent) || !parent[dragIndex]) return;
-
         const [movedItem] = parent.splice(dragIndex, 1);
-
         const hoverParentPath = hoverPath.slice(0, -1);
         const hoverIndex = hoverPath[hoverPath.length - 1];
-        
         let hoverParent = draft;
         if (hoverParentPath.length > 0) hoverParent = get(draft, getPathString(hoverParentPath));
-
         if (hoverParent && Array.isArray(hoverParent)) {
             hoverParent.splice(hoverIndex, 0, movedItem);
         }
@@ -78,12 +69,10 @@ export const moveBlock = (blocks, dragPath, hoverPath) => {
 export const handleDrop = (blocks, dragItem, dropPath) => {
     const dragPath = dragItem.path;
     const targetBlockList = get(blocks, getPathString(dropPath));
-
     if (Array.isArray(targetBlockList)) {
         const hoverPath = [...dropPath, targetBlockList.length];
         return moveBlock(blocks, dragPath, hoverPath);
     }
-    
     return blocks;
 };
 

@@ -17,31 +17,49 @@ export const useBlockDrop = ({
         collect(monitor) {
             return {
                 handlerId: monitor.getHandlerId(),
-                isOver: monitor.isOver(),
+                isOver: monitor.isOver({ shallow: true }), 
             };
         },
         hover(item, monitor) {
             if (!ref.current) return;
+            if (!monitor.isOver({ shallow: true })) {
+                setDropPosition(null);
+                return;
+            }
             const dragPath = item.path;
             const hoverPath = path;
-            if (dragPath && item.type !== DND_TYPE_NEW && dragPath.join(',') === hoverPath.join(',')) {
-                if (!canDropOnSelf) {
-                    setDropPosition(null);
-                    return;
+            const hoverBoundingRect = ref.current?.getBoundingClientRect();
+            const clientOffset = monitor.getClientOffset();
+            if (!clientOffset) return;
+            const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+            const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+            let newPosition = hoverClientY < hoverMiddleY ? 'top' : 'bottom';
+            if (dragPath && item.type !== DND_TYPE_NEW) {
+                const dragIndex = dragPath[dragPath.length - 1];
+                const hoverIndex = hoverPath[hoverPath.length - 1];
+                const isSameParent = dragPath.slice(0, -1).join(',') === hoverPath.slice(0, -1).join(',');
+                if (isSameParent) {
+                    if (dragIndex === hoverIndex) {
+                        setDropPosition('center');
+                        return;
+                    }
+                    if (newPosition === 'bottom' && hoverIndex === dragIndex - 1) {
+                        setDropPosition(null);
+                        return;
+                    }
+                    if (newPosition === 'top' && hoverIndex === dragIndex + 1) {
+                        setDropPosition(null);
+                        return;
+                    }
                 }
             }
-
-            const hoverBoundingRect = ref.current?.getBoundingClientRect();
-            const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-            const clientOffset = monitor.getClientOffset();
-            const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-            const newPosition = hoverClientY < hoverMiddleY ? 'top' : 'bottom';
             setDropPosition(newPosition);
         },
         drop(item, monitor) {
             const currentPos = dropPosition; 
             setDropPosition(null);
             if (monitor.didDrop()) return;
+            if (!currentPos) return;
             const dragType = monitor.getItemType();
             if (dragType === DND_TYPE_NEW && onAddBlock && monitor.isOver({ shallow: true })) {
                 const currentPathIndex = path[path.length - 1];
@@ -50,23 +68,27 @@ export const useBlockDrop = ({
                 if (currentPos === 'bottom') {
                     insertIndex = currentPathIndex + 1;
                 }
-                
                 const insertPath = [...parentPath, insertIndex];
                 onAddBlock(insertPath, item.blockType, item.presetData);
                 return { handled: true };
             }
 
-            if (dragType === DND_TYPE_EXISTING && onMoveBlock) {
+            if (dragType === DND_TYPE_EXISTING && onMoveBlock && monitor.isOver({ shallow: true })) {
                 const dragPath = item.path;
                 const hoverPath = path;
                 if (dragPath.join(',') === hoverPath.join(',')) return;
                 const parentPath = hoverPath.slice(0, -1);
+                const dragParentPath = dragPath.slice(0, -1);
                 const hoverIndex = hoverPath[hoverPath.length - 1];
+                const dragIndex = dragPath[dragPath.length - 1];
                 let targetIndex = hoverIndex;
                 if (currentPos === 'bottom') {
                     targetIndex = hoverIndex + 1;
                 }
-
+                const isSameParent = dragParentPath.join(',') === parentPath.join(',');
+                if (isSameParent && dragIndex < hoverIndex) {
+                    targetIndex -= 1;
+                }
                 const targetPath = [...parentPath, targetIndex];
                 onMoveBlock(dragPath, targetPath);
                 item.path = targetPath;

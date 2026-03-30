@@ -13,6 +13,7 @@ import FontLoader from '../components/FontLoader';
 import ReportModal from '../../../shared/ui/complex/ReportModal';
 import { BASE_URL } from '../../../shared/config';
 import { Loader2 } from 'lucide-react';
+import { getDefaultBlockData } from '../../editor/core/editorConfig';
 
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
@@ -45,7 +46,6 @@ const SiteDisplayPage = () => {
             </div>
         );
     }
-    
     if (isMissingData && show404) return <NotFoundPage />;
     const isOwner = user && user.id === siteData.user_id;
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
@@ -67,16 +67,32 @@ const SiteDisplayPage = () => {
         : '/icon-light.webp';
     let pageBlocks = [];
     try {
-        pageBlocks = Array.isArray(siteData.page.block_content)
+        let parsedBlocks = Array.isArray(siteData.page.block_content)
             ? siteData.page.block_content
             : JSON.parse(siteData.page.block_content || '[]');
-    } catch (e) {}
-    let footerBlocks = [];
-    try {
-        footerBlocks = Array.isArray(siteData.footer_content)
-            ? siteData.footer_content
-            : JSON.parse(siteData.footer_content || '[]');
-    } catch (e) {}
+        pageBlocks = parsedBlocks.map(block => {
+            if (block.type === 'global-header' || block.type === 'header') {
+                let globalData = typeof siteData.header_content === 'string' 
+                    ? JSON.parse(siteData.header_content || '{}') 
+                    : (siteData.header_content || {});
+                
+                if (Object.keys(globalData).length === 0) globalData = getDefaultBlockData('global-header');
+                return { ...block, type: 'global-header', data: globalData };
+            }
+            if (block.type === 'global-footer' || block.type === 'footer') {
+                let globalData = typeof siteData.footer_content === 'string' 
+                    ? JSON.parse(siteData.footer_content || '{}') 
+                    : (siteData.footer_content || {});
+                
+                if (Object.keys(globalData).length === 0) globalData = getDefaultBlockData('global-footer');
+                return { ...block, type: 'global-footer', data: globalData };
+            }
+            return block;
+        });
+    } catch (e) {
+        console.error("Error parsing blocks:", e);
+    }
+
     const layoutStyle = {
         display: 'flex',
         flexDirection: 'column',
@@ -146,37 +162,34 @@ const SiteDisplayPage = () => {
             <main style={mainContentStyle}>
                 <BlockRenderer blocks={pageBlocks} siteData={siteData} />
             </main>
-            {(footerBlocks.length > 0 || true) && (
-                <footer style={footerStyle}>
-                    {footerBlocks.length > 0 && <BlockRenderer blocks={footerBlocks} siteData={siteData} />}
-                    <div style={copyrightStyle}>
-                        <span>Powered by Kendr</span>
-                        {!isOwner && (
-                            <>
-                                <span>•</span>
-                                <button
-                                    onClick={() => setIsReportOpen(true)}
-                                    style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: 'inherit',
-                                        textDecoration: 'none',
-                                        cursor: 'pointer',
-                                        fontSize: 'inherit',
-                                        opacity: 0.8,
-                                        padding: 0
-                                    }}
-                                    onMouseEnter={(e) => e.target.style.color = 'var(--platform-danger)'}
-                                    onMouseLeave={(e) => e.target.style.color = 'inherit'}
-                                    title="Report Abuse / Поскаржитись"
-                                >
-                                    Report
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </footer>
-            )}
+            <footer style={footerStyle}>
+                <div style={copyrightStyle}>
+                    <span>Powered by Kendr</span>
+                    {!isOwner && (
+                        <>
+                            <span>•</span>
+                            <button
+                                onClick={() => setIsReportOpen(true)}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'inherit',
+                                    textDecoration: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: 'inherit',
+                                    opacity: 0.8,
+                                    padding: 0
+                                }}
+                                onMouseEnter={(e) => e.target.style.color = 'var(--platform-danger)'}
+                                onMouseLeave={(e) => e.target.style.color = 'inherit'}
+                                title="Report Abuse / Поскаржитись"
+                            >
+                                Report
+                            </button>
+                        </>
+                    )}
+                </div>
+            </footer>
             <CookieBanner
                 settings={siteData.theme_settings?.cookie_banner}
                 siteId={siteData.id}
