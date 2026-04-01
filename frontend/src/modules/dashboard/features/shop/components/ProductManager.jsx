@@ -21,6 +21,7 @@ const SORT_FIELDS = [
     { value: 'price', label: 'За ціною', icon: List },
     { value: 'stock', label: 'За залишком', icon: List }
 ];
+
 const getValidImageUrl = (url) => {
     if (!url) return '';
     return url.startsWith('http') ? url : `${BASE_URL}${url}`;
@@ -45,7 +46,8 @@ const useProducts = (siteId) => {
                           (typeof p.variants === 'string' ? JSON.parse(p.variants) : []),
                 image_gallery: Array.isArray(p.image_gallery) ? p.image_gallery : 
                                (typeof p.image_gallery === 'string' ? JSON.parse(p.image_gallery) : 
-                               (p.image_url ? [p.image_url] : []))
+                               (p.image_url ? [p.image_url] : [])),
+                category_ids: Array.isArray(p.categories) ? p.categories.map(c => c.id.toString()) : []
             }));
             setProducts(productsData);
             setCategories(cRes.data || []);
@@ -68,7 +70,6 @@ const useProducts = (siteId) => {
             toast.error('Помилка видалення');
         }
     }, []);
-    
     return { 
         products, categories, loading, filters, setFilters,
         fetchData, handleDelete
@@ -92,7 +93,6 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
             setInputState({ label: '', price: '', sale: '' });
         }
     }, [editingIndex, variant.values]);
-
     const handleSaveValue = () => {
         if (!inputState.label.trim()) return;
         const valueData = { 
@@ -110,7 +110,6 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
         setEditingIndex(null);
         setInputState({ label: '', price: '', sale: '' });
     };
-
     return (
         <div className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 mb-3 relative">
             <div className="flex justify-between gap-2 mb-4">
@@ -222,11 +221,11 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
     );
 });
 
-const ProductTable = memo(({ 
-    products, categories, loading, filters, setFilters, 
-    sortOrder, setSortOrder, sortFields, onSelect, 
-    onCreate, onDelete, selectedId, maxProducts 
-}) => {
+    const ProductTable = memo(({ 
+        products, categories, loading, filters, setFilters, 
+        sortOrder, setSortOrder, sortFields, onSelect, 
+        onCreate, onDelete, selectedId, maxProducts 
+    }) => {
     const categoryOptions = [
         { value: 'all', label: 'Всі категорії' },
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
@@ -236,6 +235,7 @@ const ProductTable = memo(({
         { value: 'physical', label: 'Фізичні' },
         { value: 'digital', label: 'Цифрові' }
     ];
+    
     const hasActiveFilters = filters.search.trim() !== '' || filters.category !== 'all' || filters.type !== 'all';
     const isLimitReached = maxProducts !== Infinity && products.length >= maxProducts;
     if (loading) return <LoadingState title="Завантаження товарів..." />;
@@ -328,7 +328,10 @@ const ProductTable = memo(({
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5 content-start">
                         {products.map(product => {
                             const isSelected = selectedId === product.id;
-                            const categoryName = categories.find(c => String(c.id) === String(product.category_id))?.name;
+                            let categoryDisplay = '';
+                            if (product.categories && product.categories.length > 0) {
+                                categoryDisplay = product.categories.map(c => c.name).join(', ');
+                            }
                             return (
                                 <div 
                                     key={product.id} 
@@ -361,10 +364,10 @@ const ProductTable = memo(({
                                                 </div>
                                             )}
                                          </div>
-                                         {categoryName && (
+                                         {categoryDisplay && (
                                             <div className="absolute bottom-3 left-3 max-w-[calc(100%-24px)] z-10">
                                                 <div className="px-2.5 py-1 bg-(--platform-bg)/90 backdrop-blur-md rounded-lg text-[0.7rem] uppercase tracking-wider font-bold shadow-sm border border-(--platform-border-color) text-(--platform-text-secondary) truncate">
-                                                    {categoryName}
+                                                    {categoryDisplay}
                                                 </div>
                                             </div>
                                          )}
@@ -388,7 +391,7 @@ const ProductTable = memo(({
                                         </div>
                                         <div className="mt-auto flex items-center gap-2 pt-1">
                                             <div className="font-bold text-(--platform-text-primary) text-lg">
-                                                {product.price} ₴
+                                                {product.price}
                                             </div>
                                             {product.sale_percentage > 0 && (
                                                 <div className="text-[0.7rem] font-bold text-(--platform-danger) bg-(--platform-danger)/10 px-2 py-1 rounded-md">
@@ -415,17 +418,18 @@ const ProductEditorPanel = ({
     const [showMediaPicker, setShowMediaPicker] = useState(false);
     const initialFormData = {
         id: null, name: '', description: '', price: 0,
-        stock_quantity: 1, category_id: '', image_gallery: [],
+        stock_quantity: 1, category_ids: [], image_gallery: [],
         variants: [], sale_percentage: 0,
         type: 'physical', digital_file_url: ''
     };
     const [formData, setFormData] = useState(initialFormData);
     const DESCRIPTION_LIMIT = 2000;
+    const formCategoryOptions = categories.map(c => ({ value: c.id.toString(), label: c.name }));
     useEffect(() => {
         if (productToEdit) {
             setFormData({
                 ...productToEdit,
-                category_id: productToEdit.category_id ? productToEdit.category_id.toString() : '',
+                category_ids: productToEdit.category_ids || [],
                 type: productToEdit.type || 'physical',
                 digital_file_url: productToEdit.digital_file_url || ''
             });
@@ -455,6 +459,7 @@ const ProductEditorPanel = ({
             }
             if (formData.id) await apiClient.put(`/products/${formData.id}`, payload);
             else await apiClient.post(`/products`, payload);
+            
             toast.success('Збережено');
             onSuccess();
         } catch (e) { 
@@ -463,11 +468,6 @@ const ProductEditorPanel = ({
             onSavingChange(false); 
         }
     };
-
-    const categoryOptions = [
-        { value: '', label: 'Без категорії' },
-        ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
-    ];
 
     return (
         <div className={`
@@ -534,7 +534,7 @@ const ProductEditorPanel = ({
                     />
                     <div className="flex gap-3">
                         <Input 
-                            label="Ціна (₴)" 
+                            label="Ціна" 
                             type="number" 
                             value={formData.price} 
                             onChange={e => setFormData({...formData, price: e.target.value})} 
@@ -572,8 +572,17 @@ const ProductEditorPanel = ({
                         </div>
                     )}
                     <div>
-                        <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">Категорія</label>
-                        <CustomSelect value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})} options={categoryOptions} />
+                        <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">
+                            Категорії (макс. 3)
+                        </label>
+                        <CustomSelect 
+                            multiple={true}
+                            maxSelections={3}
+                            value={formData.category_ids || []} 
+                            onChange={(e) => setFormData(prev => ({...prev, category_ids: e.target.value}))}
+                            options={formCategoryOptions}
+                            placeholder="Оберіть категорії..."
+                        />
                     </div>
                     <div>
                         <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">Галерея</label>
@@ -667,11 +676,15 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
             }
         }
     }, [loading, products, searchParams]);
+    
     const processedProducts = useMemo(() => {
         let result = products.filter(product => {
             const matchesSearch = filters.search === '' || 
                 product.name.toLowerCase().includes(filters.search.toLowerCase());
-            const matchesCategory = filters.category === 'all' || product.category_id === parseInt(filters.category);
+            
+            const matchesCategory = filters.category === 'all' || 
+                (product.category_ids && product.category_ids.includes(filters.category));
+                
             const matchesType = filters.type === 'all' || product.type === filters.type;
             return matchesSearch && matchesCategory && matchesType;
         });
@@ -684,6 +697,7 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
         });
         return result;
     }, [products, filters, sortOrder]);
+    
     const handleProductSelect = useCallback((product) => {
         if (activeProduct && activeProduct.id === product.id) {
             setActiveProduct(null);
@@ -694,6 +708,7 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
             setSearchParams(prev => { prev.set('productId', product.id); return prev; });
         }
     }, [activeProduct, setSearchParams]);
+    
     const handleCreateNew = useCallback(() => {
         if (maxProducts !== Infinity && products.length >= maxProducts) {
             toast.warning(`Досягнуто ліміт товарів (${maxProducts}) для вашого тарифу.`);
@@ -703,10 +718,12 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
         setIsPanelOpen(true);
         setSearchParams(prev => { prev.set('productId', 'new'); return prev; });
     }, [maxProducts, products.length, setSearchParams]);
+    
     const handleClosePanel = useCallback(() => {
         setIsPanelOpen(false);
         setSearchParams(prev => { prev.delete('productId'); return prev; });
     }, [setSearchParams]);
+    
     const handleCancelForm = useCallback(() => {
         setActiveProduct(null);
         setSearchParams(prev => { prev.delete('productId'); return prev; });

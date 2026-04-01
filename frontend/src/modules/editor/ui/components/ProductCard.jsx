@@ -16,16 +16,27 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const [isHovered, setIsHovered] = useState(false);
     const intervalRef = useRef(null);
     const images = useMemo(() => {
-        if (product.image_gallery && product.image_gallery.length > 0) {
-            let gallery = typeof product.image_gallery === 'string' 
-                ? JSON.parse(product.image_gallery) 
-                : product.image_gallery;
-            return gallery.map(img => 
-                img.startsWith('http') ? img : `${BASE_URL}${img}`
-            );
+        if (product.image_gallery) {
+            let gallery = [];
+            if (typeof product.image_gallery === 'string') {
+                try {
+                    gallery = JSON.parse(product.image_gallery);
+                } catch (e) {
+                    console.error("Failed to parse image_gallery:", e);
+                    gallery = [];
+                }
+            } else if (Array.isArray(product.image_gallery)) {
+                gallery = product.image_gallery;
+            }
+            if (gallery.length > 0) {
+                return gallery.map(img => 
+                    img.startsWith('http') ? img : `${BASE_URL}${img}`
+                );
+            }
         }
         return ['https://placehold.co/300?text=No+Image'];
     }, [product.image_gallery]);
+
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
     const hasDiscount = product.sale_percentage > 0;
@@ -38,6 +49,13 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const productLink = sitePath 
         ? `/site/${sitePath}/product/${product.id}` 
         : `/product/${product.id}`;
+    const currencyMap = {
+        'UAH': '₴',
+        'USD': '$',
+        'EUR': '€'
+    };
+    const siteCurrency = siteData?.currency || 'UAH';
+    const currencySymbol = currencyMap[siteCurrency] || '₴';
     const handleMouseEnter = () => {
         setIsHovered(true);
         if (isEditorPreview || images.length <= 1) return;
@@ -45,7 +63,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             setActiveImgIndex(prev => (prev + 1) % images.length);
         }, 1200);
     };
-
     const handleMouseLeave = () => {
         setIsHovered(false);
         if (intervalRef.current) {
@@ -74,7 +91,8 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             const productForCart = {
                 ...product,
                 site_path: siteData?.site_path || product.site_path,
-                site_name: siteData?.title || product.site_name
+                site_name: siteData?.title || product.site_name,
+                currency: siteCurrency
             };
             addToCart(productForCart, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
         }
@@ -153,13 +171,13 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                         <div className="min-w-0 flex-1 overflow-hidden">
                             {hasDiscount ? (
                                 <div className="flex flex-col">
-                                    <span className="text-red-600 font-bold text-lg">{finalPrice} ₴</span>
+                                    <span className="text-red-600 font-bold text-lg">{finalPrice} {currencySymbol}</span>
                                     <span className="text-xs text-(--site-text-secondary) line-through">
-                                        {product.price} ₴
+                                        {product.price} {currencySymbol}
                                     </span>
                                 </div>
                             ) : (
-                                <span className="text-(--site-text-primary) font-bold text-lg">{product.price} ₴</span>
+                                <span className="text-(--site-text-primary) font-bold text-lg">{product.price} {currencySymbol}</span>
                             )}
                         </div>
                         <button

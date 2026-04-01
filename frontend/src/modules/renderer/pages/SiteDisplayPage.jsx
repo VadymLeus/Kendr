@@ -46,15 +46,18 @@ const SiteDisplayPage = () => {
             </div>
         );
     }
+    
     if (isMissingData && show404) return <NotFoundPage />;
     const isOwner = user && user.id === siteData.user_id;
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
     if (siteData.status === 'private' && !isOwner && !isStaff) {
         return <NotFoundPage />;
     }
+    
     if ((siteData.status === 'maintenance' || siteData.status === 'suspended') && !isOwner && !isStaff) {
         return <MaintenancePage logoUrl={siteData.logo_url} siteName={siteData.title} />;
     }
+    
     const page = siteData.page;
     const titlePart = page.seo_title || page.name;
     const sitePart = siteData.site_title_seo || siteData.title;
@@ -94,45 +97,26 @@ const SiteDisplayPage = () => {
     }
 
     const layoutStyle = {
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        width: '100%',
-        margin: 0,
-        padding: 0,
-        backgroundColor: 'var(--site-bg)',
-        color: 'var(--site-text-primary)'
+        display: 'flex', flexDirection: 'column', minHeight: '100vh',
+        width: '100%', margin: 0, padding: 0,
+        backgroundColor: 'var(--site-bg)', color: 'var(--site-text-primary)'
     };
 
     const mainContentStyle = {
-        flex: '1',
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        marginBottom: '0'
+        flex: '1', display: 'flex', flexDirection: 'column',
+        width: '100%', marginBottom: '0'
     };
 
     const footerStyle = {
-        flexShrink: 0,
-        backgroundColor: 'var(--site-bg)',
+        flexShrink: 0, backgroundColor: 'var(--site-bg)',
         borderTop: '1px solid var(--site-border-color)',
-        width: '100%',
-        margin: 0,
-        padding: 0,
-        marginTop: '0'
+        width: '100%', margin: 0, padding: 0, marginTop: '0'
     };
 
     const copyrightStyle = {
-        textAlign: 'center',
-        padding: '1.5rem',
-        fontSize: '0.8rem',
-        color: 'var(--site-text-secondary)',
-        width: '100%',
-        boxSizing: 'border-box',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px'
+        textAlign: 'center', padding: '1.5rem', fontSize: '0.8rem',
+        color: 'var(--site-text-secondary)', width: '100%', boxSizing: 'border-box',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
     };
 
     return (
@@ -171,14 +155,9 @@ const SiteDisplayPage = () => {
                             <button
                                 onClick={() => setIsReportOpen(true)}
                                 style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'inherit',
-                                    textDecoration: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: 'inherit',
-                                    opacity: 0.8,
-                                    padding: 0
+                                    background: 'transparent', border: 'none', color: 'inherit',
+                                    textDecoration: 'none', cursor: 'pointer', fontSize: 'inherit',
+                                    opacity: 0.8, padding: 0
                                 }}
                                 onMouseEnter={(e) => e.target.style.color = 'var(--platform-danger)'}
                                 onMouseLeave={(e) => e.target.style.color = 'inherit'}
@@ -191,7 +170,8 @@ const SiteDisplayPage = () => {
                 </div>
             </footer>
             <CookieBanner
-                settings={siteData.theme_settings?.cookie_banner}
+                enabled={siteData.cookie_banner_enabled}
+                text={siteData.cookie_banner_text}
                 siteId={siteData.id}
             />
             <ReportModal

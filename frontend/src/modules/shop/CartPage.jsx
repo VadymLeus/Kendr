@@ -31,6 +31,12 @@ const CartPage = () => {
         title: '',
         message: ''
     });
+    const currencyMap = {
+        'UAH': '₴',
+        'USD': '$',
+        'EUR': '€'
+    };
+
     useEffect(() => {
         if (user) {
             setCustomerData(prev => ({
@@ -40,6 +46,7 @@ const CartPage = () => {
             }));
         }
     }, [user]);
+
     useEffect(() => {
         const fetchPaths = async () => {
             const missingIds = cartItems
@@ -66,18 +73,21 @@ const CartPage = () => {
             setResolvedPaths(newPaths);
         };
         fetchPaths();
-    }, [cartItems]);
+    }, [cartItems, resolvedPaths]);
 
     const groupedItems = useMemo(() => {
         const groups = {};
         cartItems.forEach(item => {
             const siteId = item.site_id || 'unknown';
             const sitePath = item.site_path || resolvedPaths[siteId] || siteId; 
+            const itemCurrency = item.currency || 'UAH';
             if (!groups[siteId]) {
                 groups[siteId] = {
                     siteName: item.site_name || `Магазин #${siteId}`,
                     siteId: siteId,
                     sitePath: sitePath,
+                    currency: itemCurrency,
+                    currencySymbol: currencyMap[itemCurrency] || '₴',
                     items: [],
                     total: 0,
                     totalOriginal: 0,
@@ -313,7 +323,7 @@ const CartPage = () => {
                                                         <div className="mt-4 flex items-center">
                                                             <div className="flex items-center bg-(--platform-bg) border border-(--platform-border-color) rounded-lg p-1" onClick={e => e.stopPropagation()}>
                                                                 <button 
-                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30"
+                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30 cursor-pointer"
                                                                     onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity - 1); }}
                                                                     disabled={item.quantity <= 1}
                                                                     type="button"
@@ -322,7 +332,7 @@ const CartPage = () => {
                                                                 </button>
                                                                 <span className="w-10 text-center font-bold text-(--platform-text-primary)">{item.quantity}</span>
                                                                 <button 
-                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30"
+                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30 cursor-pointer"
                                                                     onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity + 1); }}
                                                                     disabled={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity}
                                                                     type="button"
@@ -337,16 +347,16 @@ const CartPage = () => {
                                                         <div className="text-left sm:text-right">
                                                             {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
                                                                 <p className="text-xs text-(--platform-text-secondary) line-through m-0">
-                                                                    {(item.originalPrice * item.quantity).toFixed(0)} ₴
+                                                                    {(item.originalPrice * item.quantity).toFixed(0)} {group.currencySymbol}
                                                                 </p>
                                                             )}
                                                             <p className="text-xl font-bold text-(--platform-text-primary) m-0">
-                                                                {(item.price * item.quantity).toFixed(0)} ₴
+                                                                {(item.price * item.quantity).toFixed(0)} {group.currencySymbol}
                                                             </p>
                                                         </div>
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); promptRemoveItem(item); }}
-                                                            className="p-2 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors z-10 relative sm:mt-auto"
+                                                            className="p-2 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors z-10 relative sm:mt-auto cursor-pointer"
                                                             title="Видалити"
                                                             type="button"
                                                         >
@@ -415,17 +425,17 @@ const CartPage = () => {
                                     <div className="space-y-3 pt-4 border-t border-(--platform-border-color)">
                                         <div className="flex justify-between text-sm text-(--platform-text-secondary)">
                                             <span>Товари ({activeGroup.items.length}):</span>
-                                            <span>{activeGroup.totalOriginal.toFixed(0)} ₴</span>
+                                            <span>{activeGroup.totalOriginal.toFixed(0)} {activeGroup.currencySymbol}</span>
                                         </div>
                                         {activeGroup.totalDiscount > 0 && (
                                             <div className="flex justify-between text-sm text-green-500 font-medium">
                                                 <span>Знижка:</span>
-                                                <span>-{activeGroup.totalDiscount.toFixed(0)} ₴</span>
+                                                <span>-{activeGroup.totalDiscount.toFixed(0)} {activeGroup.currencySymbol}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between text-2xl font-bold text-(--platform-text-primary) pt-2">
                                             <span>До сплати:</span>
-                                            <span>{activeGroup.total.toFixed(0)} ₴</span>
+                                            <span>{activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</span>
                                         </div>
                                     </div>
                                     <div className={`mt-5 p-3 rounded-lg flex gap-3 text-xs leading-relaxed ${activeGroup.isDigitalOnly ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>
@@ -444,7 +454,7 @@ const CartPage = () => {
                                         {isSubmitting ? (
                                             <><Loader2 className="animate-spin mr-2" /> Обробка...</>
                                         ) : (
-                                            <><CreditCard className="mr-2" /> Оплатити {activeGroup.total.toFixed(0)} ₴</>
+                                            <><CreditCard className="mr-2" /> Оплатити {activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</>
                                         )}
                                     </Button>
                                 </form>

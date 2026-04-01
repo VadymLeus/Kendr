@@ -150,7 +150,7 @@ exports.createSite = async (req, res, next) => {
             }];
         }
         const [siteResult] = await connection.query(
-            `INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, 'private')`,
+            `INSERT INTO sites (user_id, site_path, title, logo_url, status, currency) VALUES (?, ?, ?, ?, 'private', 'UAH')`,
             [userId, cleanSitePath, cleanTitle, relativeLogoUrl]
         );
         const newSiteId = siteResult.insertId;
@@ -256,7 +256,6 @@ exports.getSiteByPath = async (req, res, next) => {
                 });
             }
         }
-        
         if (site.status === 'probation') {
             if (!isOwner && !isStaff) { 
                 return res.status(403).json({ message: 'Сайт знаходиться на модерації.' });
@@ -304,9 +303,9 @@ exports.updateSiteSettings = async (req, res, next) => {
             header_content, footer_content, favicon_url, site_title_seo, 
             cover_image, cover_layout, logo_url,
             cover_logo_size, cover_logo_radius, cover_title_size,
-            liqpay_public_key, liqpay_private_key
+            liqpay_public_key, liqpay_private_key, currency,
+            cookie_banner_enabled, cookie_banner_text
         } = req.body;
-        
         const safeParse = (data, fallback) => {
             if (!data) return fallback;
             if (typeof data === 'object') return data;
@@ -388,7 +387,10 @@ exports.updateSiteSettings = async (req, res, next) => {
             cover_logo_radius: cover_logo_radius !== undefined ? parseInt(cover_logo_radius) : site.cover_logo_radius,
             cover_title_size: cover_title_size !== undefined ? parseInt(cover_title_size) : site.cover_title_size,
             liqpay_public_key: liqpay_public_key !== undefined ? liqpay_public_key : site.liqpay_public_key,
-            liqpay_private_key: liqpay_private_key !== undefined ? liqpay_private_key : site.liqpay_private_key
+            liqpay_private_key: liqpay_private_key !== undefined ? liqpay_private_key : site.liqpay_private_key,
+            currency: currency !== undefined ? currency : site.currency,
+            cookie_banner_enabled: cookie_banner_enabled !== undefined ? cookie_banner_enabled : site.cookie_banner_enabled,
+            cookie_banner_text: cookie_banner_text !== undefined ? cookie_banner_text : site.cookie_banner_text
         };
         await Site.updateSettings(site.id, updateData);
         if (Array.isArray(tags)) {
@@ -400,7 +402,8 @@ exports.updateSiteSettings = async (req, res, next) => {
                 logo_url: finalLogoUrl,
                 title: finalTitle,
                 header_content: currentHeaderContent,
-                status: finalStatus
+                status: finalStatus,
+                currency: updateData.currency
             }
         });
     } catch (error) {

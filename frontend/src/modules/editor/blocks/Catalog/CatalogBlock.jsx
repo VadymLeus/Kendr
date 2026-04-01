@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '../../../../shared/api/api';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 import { Input } from '../../../../shared/ui/elements/Input'; 
+import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import ProductCard from '../../ui/components/ProductCard';
 import { Search, X, ArrowUpAZ, ArrowDownAZ, ShoppingBag } from 'lucide-react';
 
@@ -16,7 +17,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         sortBy: "name",
         sortOrder: "asc"
     });
-    
     const [currentPage, setCurrentPage] = useState(1);
     const { 
         title, source_type = 'all', root_category_id, 
@@ -26,7 +26,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         height = 'auto',
         styles = {} 
     } = blockData;
-
     const heightMap = {
         small: '300px',
         medium: '500px',
@@ -55,7 +54,8 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 const enrichedProducts = prodRes.data.map(p => ({
                     ...p,
                     site_path: siteData?.site_path,
-                    site_name: siteData?.title
+                    site_name: siteData?.title,
+                    category_ids: Array.isArray(p.categories) ? p.categories.map(c => c.id.toString()) : []
                 }));
                 setProducts(enrichedProducts);
             } catch (error) {
@@ -96,7 +96,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             );
         }
         if (filters.selectedCategoryId !== 'all') {
-            result = result.filter(p => String(p.category_id) === String(filters.selectedCategoryId));
+            result = result.filter(p => p.category_ids && p.category_ids.includes(String(filters.selectedCategoryId)));
         }
         result.sort((a, b) => {
             let aValue, bValue;
@@ -111,7 +111,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
             return 0;
         });
-
         return result;
     }, [products, filters]);
 
@@ -127,6 +126,14 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
     const showFilters = show_search || show_category_filter || show_sorting;
     const filterBtnClass = "h-9.5 min-w-9.5 px-3 bg-(--site-card-bg) border border-(--site-border-color) rounded-lg text-(--site-text-primary) cursor-pointer flex items-center justify-center gap-2 text-sm transition-all duration-200 hover:border-(--site-accent)";
+    const categoryOptions = useMemo(() => [
+        { label: "Всі категорії", value: "all" },
+        ...availableCategories.map(cat => ({ label: cat.name, value: cat.id }))
+    ], [availableCategories]);
+    const sortOptions = [
+        { label: "За назвою", value: "name" },
+        { label: "За ціною", value: "price" }
+    ];
     return (
         <div 
             id={`catalog-${blockData.block_id || 'preview'}`} 
@@ -169,7 +176,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     {title}
                 </h2>
             )}
-
             {showFilters && (
                 <div className="z-10 mb-8 bg-(--site-card-bg) p-3 rounded-xl border border-(--site-border-color) shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex flex-col gap-3">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -191,34 +197,42 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                         <div className="flex items-center gap-2 flex-wrap shrink-0 ml-auto">
                             {show_category_filter && availableCategories.length > 0 && (
                                 <div className="relative w-45">
-                                    <select
-                                        className="appearance-none h-9.5 pl-3 pr-7.5 bg-(--site-card-bg) border border-(--site-border-color) rounded-lg text-(--site-text-primary) text-sm w-full cursor-pointer outline-none focus:border-(--site-accent)"
+                                    <CustomSelect
+                                        name="categoryFilter"
                                         value={filters.selectedCategoryId}
+                                        options={categoryOptions}
                                         onChange={(e) => {
                                             setFilters(prev => ({ ...prev, selectedCategoryId: e.target.value }));
                                             setCurrentPage(1);
                                         }}
-                                    >
-                                        <option value="all">Всі категорії</option>
-                                        {availableCategories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.6rem] text-(--site-text-secondary) pointer-events-none">▼</div>
+                                        style={{ 
+                                            height: '38px', 
+                                            background: 'var(--site-card-bg)', 
+                                            border: '1px solid var(--site-border-color)', 
+                                            borderRadius: '0.5rem',
+                                            color: 'var(--site-text-primary)',
+                                            fontSize: '0.875rem'
+                                        }}
+                                    />
                                 </div>
                             )}
                             {show_sorting && (
                                 <>
                                     <div className="relative w-37.5">
-                                        <select
-                                            className="appearance-none h-9.5 pl-3 pr-7.5 bg-(--site-card-bg) border border-(--site-border-color) rounded-lg text-(--site-text-primary) text-sm w-full cursor-pointer outline-none focus:border-(--site-accent)"
+                                        <CustomSelect
+                                            name="sortBy"
                                             value={filters.sortBy}
+                                            options={sortOptions}
                                             onChange={(e) => handleSortFieldChange(e.target.value)}
-                                        >
-                                            <option value="name">За назвою</option>
-                                            <option value="price">За ціною</option>
-                                        </select>
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.6rem] text-(--site-text-secondary) pointer-events-none">▼</div>
+                                            style={{ 
+                                                height: '38px', 
+                                                background: 'var(--site-card-bg)', 
+                                                border: '1px solid var(--site-border-color)', 
+                                                borderRadius: '0.5rem',
+                                                color: 'var(--site-text-primary)',
+                                                fontSize: '0.875rem'
+                                            }}
+                                        />
                                     </div>
                                     <button 
                                         onClick={toggleSortOrder}
@@ -272,7 +286,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     ))}
                 </div>
             )}
-
             {totalPages > 1 && (
                 <div className="flex justify-center gap-2 mt-8">
                     <button 

@@ -56,6 +56,13 @@ const OrdersTab = ({ site, siteData }) => {
     const [sortOrder, setSortOrder] = useState('desc');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const currencyMap = {
+        'UAH': '₴',
+        'USD': '$',
+        'EUR': '€'
+    };
+    const siteCurrency = currentSite?.currency || 'UAH';
+    const currencySymbol = currencyMap[siteCurrency] || '₴';
     useEffect(() => {
         if (!currentSite?.id) {
             setLoading(false);
@@ -73,7 +80,6 @@ const OrdersTab = ({ site, siteData }) => {
                 setLoading(false);
             }
         };
-
         fetchOrders();
     }, [currentSite]);
 
@@ -174,12 +180,15 @@ const OrdersTab = ({ site, siteData }) => {
         
         return result;
     }, [orders, search, statusFilter, typeFilter, startDate, endDate, sortBy, sortOrder]);
+
     const toggleSortOrder = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
+
     if (loading) {
         return <LoadingState title="Завантаження замовлень..." />;
     }
+
     if (orders.length === 0) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center text-(--platform-text-primary)">
@@ -191,6 +200,7 @@ const OrdersTab = ({ site, siteData }) => {
             </div>
         );
     }
+
     return (
         <div className="px-6 pb-6 pt-2 h-full overflow-y-auto custom-scrollbar bg-(--platform-bg)">
             <div className="mb-6 shrink-0 flex flex-col items-center text-center">
@@ -251,7 +261,6 @@ const OrdersTab = ({ site, siteData }) => {
                     </Button>
                 </div>
             </div>
-
             {processedOrders.length === 0 ? (
                 <div className="py-10">
                     <EmptyState 
@@ -286,7 +295,9 @@ const OrdersTab = ({ site, siteData }) => {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-sm text-(--platform-text-secondary) mb-1">Сума замовлення</div>
-                                    <div className="text-xl font-bold text-(--platform-text-primary)">{parseFloat(order.total_amount).toFixed(2)} ₴</div>
+                                    <div className="text-xl font-bold text-(--platform-text-primary)">
+                                        {parseFloat(order.total_amount).toFixed(2)} {currencySymbol}
+                                    </div>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -324,7 +335,9 @@ const OrdersTab = ({ site, siteData }) => {
                                                     </div>
                                                     <div className="text-right ml-4 shrink-0">
                                                         <div className="font-semibold">{item.quantity} шт.</div>
-                                                        <div className="text-(--platform-text-secondary) text-xs">{parseFloat(item.price).toFixed(0)} ₴/шт.</div>
+                                                        <div className="text-(--platform-text-secondary) text-xs">
+                                                            {parseFloat(item.price).toFixed(0)} {currencySymbol}/шт.
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );

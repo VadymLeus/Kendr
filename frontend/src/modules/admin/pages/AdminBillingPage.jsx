@@ -57,6 +57,12 @@ const AdminBillingPage = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+    const currencyMap = {
+        'UAH': '₴',
+        'USD': '$',
+        'EUR': '€'
+    };
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchQuery);
@@ -88,9 +94,11 @@ const AdminBillingPage = () => {
             setIsLoading(false);
         }
     };
+
     useEffect(() => {
         fetchData();
     }, [activeTab, page, statusFilter, debouncedSearch, startDate, endDate]);
+
     const handleTabChange = (tab) => {
         if (activeTab === tab) return;
         setIsLoading(true);
@@ -172,6 +180,7 @@ const AdminBillingPage = () => {
             </div>
         </div>
     );
+
     return (
         <AdminPageLayout 
             title="Фінансовий моніторинг" 
@@ -199,7 +208,7 @@ const AdminBillingPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                     <Widget 
                         title="Оборот" 
-                        value={`${summary.totalEarned} ₴`} 
+                        value={`${summary.totalEarned} ${currencyMap[summary.currency] || summary.currency || '₴'}`} 
                         icon={<DollarSign size={24} />} 
                         colorClass="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" 
                     />
@@ -337,7 +346,7 @@ const AdminBillingPage = () => {
                                         </AdminCell>
                                         <AdminCell>
                                             <div style={{fontWeight: 'bold', color: 'var(--platform-text-primary)'}}>
-                                                {Number(item.amount).toFixed(2)} <span style={{fontSize: '12px', opacity: 0.7}}>{item.currency}</span>
+                                                {Number(item.amount).toFixed(2)} <span style={{fontSize: '12px', opacity: 0.7}}>{item.currency || 'UAH'}</span>
                                             </div>
                                         </AdminCell>
                                         <AdminCell align="right">

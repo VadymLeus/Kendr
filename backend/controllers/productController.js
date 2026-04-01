@@ -2,7 +2,6 @@
 const Product = require('../models/Product');
 const Site = require('../models/Site');
 const { deleteFile } = require('../utils/fileUtils');
-
 const parseDecimal = (value) => {
     if (value === '' || value === undefined || value === null) return 0;
     const parsed = parseFloat(value);
@@ -57,9 +56,8 @@ exports.getProducts = async (req, res, next) => {
 };
 
 exports.addProduct = async (req, res, next) => {
-    const { site_id, name, description, price, category_id, stock_quantity, image_gallery, variants, sale_percentage, type, digital_file_url } = req.body;
+    const { site_id, name, description, price, category_ids, stock_quantity, image_gallery, variants, sale_percentage, type, digital_file_url } = req.body;
     const userId = req.user.id;
-    
     try {
         const site = await Site.findByIdAndUserId(site_id, userId);
         if (!site) {
@@ -71,6 +69,10 @@ exports.addProduct = async (req, res, next) => {
         } else if (typeof image_gallery === 'string') {
             galleryData = [image_gallery];
         }
+        let catIds = [];
+        if (category_ids) {
+            catIds = Array.isArray(category_ids) ? category_ids : [category_ids];
+        }
         const cleanPrice = parseDecimal(price);
         const cleanSale = parseDecimal(sale_percentage);
         const cleanStock = parseIntNullable(stock_quantity);
@@ -80,7 +82,7 @@ exports.addProduct = async (req, res, next) => {
             description, 
             price: cleanPrice, 
             image_path: galleryData.length > 0 ? galleryData[0] : null,
-            category_id: category_id || null, 
+            category_ids: catIds, 
             stock_quantity: cleanStock,
             variants,
             sale_percentage: cleanSale,
@@ -88,7 +90,6 @@ exports.addProduct = async (req, res, next) => {
             type,
             digital_file_url
         });
-        
         res.status(201).json(newProduct);
     } catch (error) {
         next(error);
@@ -97,7 +98,7 @@ exports.addProduct = async (req, res, next) => {
 
 exports.updateProduct = async (req, res, next) => {
     const { productId } = req.params;
-    const { name, description, price, category_id, stock_quantity, image_gallery, variants, sale_percentage, type, digital_file_url } = req.body;
+    const { name, description, price, category_ids, stock_quantity, image_gallery, variants, sale_percentage, type, digital_file_url } = req.body;
     const userId = req.user.id;
     try {
         const product = await Product.findById(productId);
@@ -108,6 +109,10 @@ exports.updateProduct = async (req, res, next) => {
         if (!site) {
             return res.status(403).json({ message: 'У вас немає прав для зміни цього товару.' });
         }
+        let catIds = product.categories?.map(c => c.id) || [];
+        if (category_ids !== undefined) {
+            catIds = Array.isArray(category_ids) ? category_ids : [category_ids];
+        }
         const cleanPrice = parseDecimal(price);
         const cleanSale = parseDecimal(sale_percentage);
         const cleanStock = parseIntNullable(stock_quantity);
@@ -115,14 +120,13 @@ exports.updateProduct = async (req, res, next) => {
             name, 
             description, 
             price: cleanPrice, 
-            category_id: category_id || null, 
+            category_ids: catIds, 
             stock_quantity: cleanStock, 
             variants, 
             sale_percentage: cleanSale,
             type,
             digital_file_url
         };
-
         if (image_gallery !== undefined) {
             updateData.image_gallery = JSON.stringify(Array.isArray(image_gallery) ? image_gallery : [image_gallery]);
         }
@@ -198,7 +202,6 @@ exports.removeFromGallery = async (req, res, next) => {
         await Product.update(productId, { 
             image_gallery: JSON.stringify(updatedGallery) 
         });
-
         res.json({ 
             message: 'Зображення видалено з галереї.',
             image_gallery: updatedGallery 

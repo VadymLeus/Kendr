@@ -1,14 +1,14 @@
 // frontend/src/modules/dashboard/features/settings/components/GeneralIdentitySection.jsx 
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../../../../app/providers/AuthContext';
-import { Button, Input } from '../../../../../shared/ui/elements';
+import { Button, Input, Switch } from '../../../../../shared/ui/elements';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import { InputWithCounter } from '../../../../../shared/ui/complex/InputWithCounter';
 import UniversalMediaInput from '../../../../../shared/ui/complex/UniversalMediaInput';
 import { TEXT_LIMITS } from '../../../../../shared/config/limits';
 import { toast } from 'react-toastify';
 import { useCooldown } from '../../../../../shared/hooks/useCooldown';
-import { Image, Upload, Trash, Type, AlertCircle, CreditCard, Key, Lock, Globe, Check, Timer, Loader } from 'lucide-react';
+import { Image, Upload, Trash, Type, AlertCircle, CreditCard, Key, Lock, Globe, Check, Timer, Loader, Cookie } from 'lucide-react';
 
 const GeneralIdentitySection = ({ 
     data, 
@@ -38,11 +38,13 @@ const GeneralIdentitySection = ({
         toast.success('Статус сайту успішно оновлено!');
         startStatusCooldown(30);
     };
+    
     const statusOptions = [
         { value: 'published', label: 'Опубліковано (Доступний всім)', icon: Globe, iconProps: { className: 'text-green-500' } },
         { value: 'maintenance', label: 'Тех. роботи (Тимчасово закритий)', icon: AlertCircle, iconProps: { className: 'text-orange-500' } }, 
         { value: 'private', label: 'Приватний (Прихований)', icon: Lock, iconProps: { className: 'text-gray-500' } }
     ];
+    
     const canSaveIdentity = hasIdentityChanges && !titleError && !slugError && !isSavingIdentity && (slugStatus === 'available' || slugStatus === 'unchanged');
     return (
         <>
@@ -158,6 +160,35 @@ const GeneralIdentitySection = ({
                         </Button>
                     </div>
                 </div>
+            </div>
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                            <Cookie size={22} className="text-(--platform-accent)" /> Cookie Банер
+                        </h3>
+                        <p className="text-sm text-(--platform-text-secondary) m-0">
+                            Запитувати згоду відвідувачів на використання файлів cookie
+                        </p>
+                    </div>
+                    <Switch 
+                        checked={data.cookie_banner_enabled} 
+                        onChange={(val) => handleChange('cookie_banner_enabled', typeof val === 'boolean' ? val : val.target.checked)} 
+                    />
+                </div>
+                {data.cookie_banner_enabled && (
+                    <div className="mt-6 pt-6 border-t border-(--platform-border-color) animate-in fade-in slide-in-from-top-2">
+                        <label className="block text-sm font-medium text-(--platform-text-primary) mb-2">
+                            Текст банера
+                        </label>
+                        <textarea
+                            className="w-full bg-(--platform-input-bg) border border-(--platform-border-color) rounded-lg p-3 text-(--platform-text-primary) text-sm focus:border-(--platform-accent) focus:ring-1 focus:ring-(--platform-accent) transition-all outline-none resize-y min-h-25"
+                            value={data.cookie_banner_text}
+                            onChange={(e) => handleChange('cookie_banner_text', e.target.value)}
+                            placeholder="Введіть текст для Cookie банера..."
+                        />
+                    </div>
+                )}
             </div>
             {!isStaff && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
