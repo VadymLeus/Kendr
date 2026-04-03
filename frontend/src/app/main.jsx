@@ -9,6 +9,9 @@ import { AuthProvider } from './providers/AuthContext.jsx';
 import { CartProvider } from './providers/CartContext.jsx';
 import { FavoritesProvider } from './providers/FavoritesContext.jsx';
 import { ThemeProvider } from './providers/ThemeContext.jsx';
+import { ConfirmProvider } from './providers/ConfirmContext.jsx';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -18,7 +21,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <ThemeProvider>
             <CartProvider>
               <FavoritesProvider>
-                <App />
+                <ConfirmProvider>
+                  <DndProvider backend={HTML5Backend}>
+                    <App />
+                  </DndProvider>
+                </ConfirmProvider>
               </FavoritesProvider>
             </CartProvider>
           </ThemeProvider>

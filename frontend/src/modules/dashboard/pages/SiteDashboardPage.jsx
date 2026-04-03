@@ -10,10 +10,11 @@ import GeneralSettingsTab from '../features/settings/GeneralSettingsTab';
 import PagesSettingsTab from '../features/settings/PagesSettingsTab';
 import StyleSettingsTab from '../features/settings/StyleSettingsTab';
 import ShopContentTab from '../features/shop/ShopContentTab';
-import OrdersTab from '../features/shop/OrdersTab';
 import SubmissionsTab from '../features/content/SubmissionsTab';
+import AnalyticsTab from '../features/analytics/AnalyticsTab';
 import DashboardHeader from '../components/DashboardHeader';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
+import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
 import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, handleDrop } from '../../editor/core/blockUtils';
@@ -51,7 +52,6 @@ const useDragAutoScroll = (ref, isEnabled) => {
                 currentSpeed = 0;
             }
         };
-
         const stopScrolling = () => { currentSpeed = 0; };
         document.addEventListener('dragover', onDragOver, true);
         document.addEventListener('dragend', stopScrolling, true);
@@ -75,8 +75,16 @@ const SiteDashboardPage = () => {
     });
     const [viewMode, setViewMode] = useState('editor');
     const [isReadOnly, setIsReadOnly] = useState(false);
+    const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
     const pcScrollRef = useRef(null);
     useDragAutoScroll(pcScrollRef, activeTab === 'editor');
+    useEffect(() => {
+        const hiddenTabs = siteData?.dashboard_config?.hiddenTabs || [];
+        if (hiddenTabs.includes(activeTab)) {
+            setActiveTab('editor');
+        }
+    }, [siteData?.dashboard_config?.hiddenTabs, activeTab]);
+
     useEffect(() => {
         const handleLockStatus = (e) => {
             const serverLocked = e.detail;
@@ -102,7 +110,9 @@ const SiteDashboardPage = () => {
             localStorage.setItem(`editor_active_tab_${site_path}`, activeTab);
         }
     }, [activeTab, site_path]);
+    
     const [blocks, setBlocks, undo, redo, { canUndo, canRedo }] = useHistory([]);
+    const [savedBlocksStr, setSavedBlocksStr] = useState('');
     const [currentPageId, setCurrentPageId] = useState(() => {
         const savedPage = localStorage.getItem(`last_edited_page_${site_path}`);
         return savedPage ? parseInt(savedPage, 10) : null;
@@ -124,20 +134,47 @@ const SiteDashboardPage = () => {
         }
         return [];
     });
-    
     useEffect(() => {
         if (site_path && currentPageId) {
             const key = `collapsed_blocks_${site_path}_${currentPageId}`;
             localStorage.setItem(key, JSON.stringify(collapsedBlocks));
         }
     }, [collapsedBlocks, site_path, currentPageId]);
-    
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
-        pages: false, store: false, crm: false, settings: false, orders: false
+        pages: false, store: false, crm: false, settings: false
     });
     const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
+    useEffect(() => {
+        if (isPageLoading || !currentPageId || !siteData?.id || isReadOnly) return;
+        const currentBlocksStr = JSON.stringify(blocks);
+        const draftKey = `draft_${siteData.id}_${currentPageId}`;
+        if (currentBlocksStr !== savedBlocksStr && savedBlocksStr !== '') {
+            localStorage.setItem(draftKey, currentBlocksStr);
+        } else if (currentBlocksStr === savedBlocksStr) {
+            localStorage.removeItem(draftKey);
+        }
+    }, [blocks, savedBlocksStr, currentPageId, siteData?.id, isPageLoading, isReadOnly]);
+
+    const handleDiscardChanges = useCallback(() => {
+        setIsDiscardModalOpen(true);
+    }, []);
+
+    const executeDiscardChanges = useCallback(() => {
+        setIsDiscardModalOpen(false);
+        const draftKey = `draft_${siteData.id}_${currentPageId}`;
+        localStorage.removeItem(draftKey);
+        try {
+            const originalBlocks = JSON.parse(savedBlocksStr);
+            setBlocks(originalBlocks, false);
+            toast.success('Зміни скасовано');
+        } catch (e) {
+            console.error("Помилка відновлення сторінки:", e);
+            toast.error('Не вдалося скинути зміни');
+        }
+    }, [savedBlocksStr, siteData?.id, currentPageId, setBlocks]);
+
     const setComponentSaving = useCallback((component, isSaving) => {
         setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
@@ -150,7 +187,6 @@ const SiteDashboardPage = () => {
         const anyComponentSaving = Object.values(componentsSaving).some(saving => saving);
         setIsSaving(anyComponentSaving);
     }, [componentsSaving]);
-    
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
@@ -190,7 +226,20 @@ const SiteDashboardPage = () => {
                 }
                 return block;
             });
-            setBlocks(content, false);
+            const serverBlocksStr = JSON.stringify(content);
+            setSavedBlocksStr(serverBlocksStr); 
+            const draftKey = `draft_${siteData.id}_${pageId}`;
+            const draftStr = localStorage.getItem(draftKey);
+            if (draftStr && draftStr !== serverBlocksStr && !isReadOnly) {
+                try {
+                    const parsedDraft = JSON.parse(draftStr);
+                    setBlocks(parsedDraft, false);
+                } catch (e) {
+                    setBlocks(content, false);
+                }
+            } else {
+                setBlocks(content, false);
+            }
         } catch (err) {
             console.error('Помилка завантаження сторінки:', err);
             if (err.response && err.response.status === 404) {
@@ -202,7 +251,6 @@ const SiteDashboardPage = () => {
             setIsPageLoading(false);
         }
     };
-    
     const handleEditPage = (pageId) => {
         if (pageId === currentPageId && !isPageLoading && blocks.length > 0) return;
         setCurrentPageId(pageId);
@@ -215,7 +263,6 @@ const SiteDashboardPage = () => {
         fetchPageContent(pageId);
         setSelectedBlockPath(null);
     };
-    
     useEffect(() => {
         if (siteData && !allPages.length) {
             apiClient.get(`/sites/${siteData.id}/pages`)
@@ -235,7 +282,7 @@ const SiteDashboardPage = () => {
                 .catch(console.error);
         }
     }, [siteData]);
-
+    
     const handleMoveBlock = (drag, hover) => !isReadOnly && setBlocks(prev => moveBlock(prev, drag, hover));
     const handleDropBlock = (item, path) => !isReadOnly && setBlocks(prev => handleDrop(prev, item, path));
     const handleAddBlock = (path, type, preset) => {
@@ -259,7 +306,6 @@ const SiteDashboardPage = () => {
                 : (siteData?.footer_content || {});
             if (Object.keys(globalData).length > 0) blockData = globalData;
         }
-
         const newBlock = { block_id: generateBlockId(), type, data: blockData };
         setBlocks(prev => addBlockByPath(prev, newBlock, path));
     };
@@ -312,6 +358,9 @@ const SiteDashboardPage = () => {
                 requests.push(apiClient.put(`/sites/${siteData.site_path}/settings`, siteUpdates));
             }
             await Promise.all(requests);
+            const savedStr = JSON.stringify(blocksToProcess);
+            setSavedBlocksStr(savedStr);
+            localStorage.removeItem(`draft_${siteData.id}_${currentPageId}`);
             if (Object.keys(siteUpdates).length > 0) {
                 setSiteData(prev => ({ ...prev, ...siteUpdates }));
             }
@@ -321,7 +370,6 @@ const SiteDashboardPage = () => {
             setTimeout(() => setIsSaving(false), 500);
         }
     };
-
     const saveThemeSettings = async (updatedData) => {
         if (isReadOnly) return;
         setIsThemeSaving(true);
@@ -340,12 +388,10 @@ const SiteDashboardPage = () => {
             setTimeout(() => setIsThemeSaving(false), 500);
         }
     };
-
     const handleSiteDataUpdate = (newData) => {
         setSiteData(prev => ({ ...prev, ...newData }));
         saveThemeSettings(newData);
     };
-
     const refreshPageList = () => {
         apiClient.get(`/sites/${siteData.id}/pages`)
             .then(response => {
@@ -357,20 +403,30 @@ const SiteDashboardPage = () => {
             })
             .catch(console.error);
     };
-    
     const toggleBlockCollapse = (blockId) => {
         setCollapsedBlocks(prev => prev.includes(blockId) ? prev.filter(id => id !== blockId) : [...prev, blockId]);
     };
     const handleSavingChange = useCallback((isSaving) => {
-        const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings', orders: 'orders' };
+        const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings' };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
     if (isSiteLoading || !siteData) {
         return <LoadingState title="Завантаження редактора..." />;
     }
-    const isFullHeightTab = ['store', 'crm', 'orders'].includes(activeTab);
+    const isFullHeightTab = ['store', 'crm', 'analytics'].includes(activeTab);
+    const hasUnsavedChanges = JSON.stringify(blocks) !== savedBlocksStr && savedBlocksStr !== '';
     return (
         <div className="flex flex-col h-screen overflow-hidden">
+            <ConfirmModal 
+                isOpen={isDiscardModalOpen}
+                title="Скинути зміни?"
+                message="Ви впевнені, що хочете скинути всі незбережені зміни? Вони будуть видалені безповоротно."
+                confirmLabel="Скинути"
+                cancelLabel="Скасувати"
+                onConfirm={executeDiscardChanges}
+                onCancel={() => setIsDiscardModalOpen(false)}
+                type="danger" 
+            />
             {isReadOnly && (
                 <div className="bg-orange-500 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 shadow-sm z-50 animate-in slide-in-from-top-2 duration-300">
                     <Lock size={16} />
@@ -388,6 +444,7 @@ const SiteDashboardPage = () => {
                 isReadOnly={isReadOnly}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
+                onUpdateConfig={handleSiteDataUpdate}
             />
             <div className="flex-1 flex overflow-hidden relative">
                 {activeTab === 'editor' && (
@@ -435,6 +492,9 @@ const SiteDashboardPage = () => {
                                     currentPageId={currentPageId}
                                     onSelectPage={(id) => handleEditPage(id)}
                                     savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
+                                    isSaving={isSaving}
+                                    hasChanges={hasUnsavedChanges}
+                                    onDiscardChanges={handleDiscardChanges}
                                 />
                             </div>
                         )}
@@ -462,10 +522,18 @@ const SiteDashboardPage = () => {
                                 />
                             )}
                             {activeTab === 'store' && <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />}
-                            {activeTab === 'orders' && <OrdersTab siteData={siteData} />}
                             {activeTab === 'theme' && <StyleSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />}
                             {activeTab === 'crm' && <SubmissionsTab siteId={siteData.id} onSavingChange={handleSavingChange} />}
                             {activeTab === 'settings' && <GeneralSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} onSavingChange={handleSavingChange} />}
+                            {activeTab === 'analytics' && (
+                                <AnalyticsTab 
+                                    siteData={siteData} 
+                                    onGoToOrders={() => {
+                                        setActiveTab('store');
+                                        navigate(`?shopTab=orders`);
+                                    }} 
+                                />
+                            )}
                         </div>
                     </div>
                 )}

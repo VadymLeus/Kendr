@@ -4,24 +4,27 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import CategoryManager from './components/CategoryManager';
 import ProductManager from './components/ProductManager'; 
+import OrdersTab from './OrdersTab';
 import { Button } from '../../../../shared/ui/elements/Button'; 
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import apiClient from '../../../../shared/api/api';
-import { Grid, Folder, Loader2, Store, Banknote } from 'lucide-react';
+import { Grid, Folder, Store, Banknote, Package, ShoppingBag } from 'lucide-react';
 
 const ShopContentTab = ({ siteData, onSavingChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [isShopSaving, setIsShopSaving] = useState(false);
     const activeSubTab = searchParams.get('shopTab') || 'products';
-    const { plan } = useContext(AuthContext);
+    const { plan, user } = useContext(AuthContext);
     const [limits, setLimits] = useState(null);
     const [currency, setCurrency] = useState(siteData?.currency || 'UAH');
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const CURRENCY_OPTIONS = [
         { value: 'UAH', label: 'Гривня (₴)', icon: Banknote },
         { value: 'USD', label: 'Долар ($)', icon: Banknote },
         { value: 'EUR', label: 'Євро (€)', icon: Banknote }
     ];
+
     useEffect(() => {
         apiClient.get('/media/limits')
             .then(res => setLimits(res.data))
@@ -41,7 +44,6 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
             return prev;
         });
     };
-
     const handleCurrencyChange = async (e) => {
         const newCurrency = e.target.value;
         setCurrency(newCurrency);
@@ -52,12 +54,11 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
         } catch (error) {
             console.error(error);
             toast.error("Не вдалося оновити валюту.");
-            setCurrency(siteData.currency || 'UAH'); // відкат
+            setCurrency(siteData.currency || 'UAH');
         } finally {
             setIsShopSaving(false);
         }
     };
-
     return (
         <div className="h-full flex flex-col gap-6 overflow-hidden pb-5 box-border">
             <div className="flex flex-col md:flex-row justify-between items-center px-1 shrink-0 gap-4">
@@ -72,18 +73,12 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                 </div>
                 <div className="flex flex-col items-center text-center flex-1 shrink-0">
                     <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
-                        <Store size={28} />
-                        Управління товарами
+                        <ShoppingBag size={28} />
+                        Комерція
                     </h2>
                 </div>
                 <div className="flex items-center justify-end gap-4 flex-1 w-full md:w-auto">
-                    {isShopSaving && (
-                        <div className="flex items-center gap-2 text-(--platform-accent) font-medium text-sm">
-                            <Loader2 size={14} className="animate-spin" />
-                            Збереження...
-                        </div>
-                    )}
-                    <div className="flex gap-1 bg-(--platform-card-bg) p-1 rounded-lg border border-(--platform-border-color) shrink-0 ml-auto md:ml-0 shadow-sm">
+                    <div className="flex gap-1 bg-(--platform-card-bg) p-1 rounded-lg border border-(--platform-border-color) shrink-0 ml-auto md:ml-0 shadow-sm overflow-x-auto custom-scrollbar">
                         <Button 
                             variant={activeSubTab === 'products' ? 'primary' : 'ghost'} 
                             onClick={() => handleTabChange('products')}
@@ -100,6 +95,16 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                         >
                             Категорії
                         </Button>
+                        {!isStaff && (
+                            <Button 
+                                variant={activeSubTab === 'orders' ? 'primary' : 'ghost'} 
+                                onClick={() => handleTabChange('orders')}
+                                icon={<Package size={16}/>}
+                                size="sm"
+                            >
+                                Замовлення
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -116,6 +121,11 @@ const ShopContentTab = ({ siteData, onSavingChange }) => {
                         siteId={siteData.id} 
                         onSavingChange={setIsShopSaving}
                         maxCategories={maxCategories}
+                    />
+                )}
+                {activeSubTab === 'orders' && !isStaff && (
+                    <OrdersTab 
+                        siteData={siteData} 
                     />
                 )}
             </div>

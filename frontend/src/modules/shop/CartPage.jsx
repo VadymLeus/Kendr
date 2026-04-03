@@ -184,7 +184,7 @@ const CartPage = () => {
                 items: formattedItems,
                 customerData
             };
-            const response = await apiClient.post('/orders/checkout', payload);
+            const response = await apiClient.post('/orders/checkout', payload, { suppressToast: true });
             if (response.data && response.data.data && response.data.signature) {
                 setIsRedirecting(true);
                 const { data, signature, orderId } = response.data;

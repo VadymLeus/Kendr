@@ -7,7 +7,6 @@ const getAccentHex = (colorName) => siteColors[colorName] || siteColors.blue;
 const platformAccent = '#4299e1';
 const platformDanger = '#ef4444';
 const FROM_EMAIL = 'Kendr <info@kendr.online>';
-
 exports.sendSubmissionNotification = async (toEmail, siteTitle, formData) => {
     const { name, email, subject, message } = formData;
     const html = `
@@ -65,7 +64,6 @@ exports.sendDigitalGoodsEmail = async (toEmail, customerName, digitalItems, site
             </div>
         `;
     }).join('');
-
     const html = `
         <div style="font-family: 'Inter', -apple-system, sans-serif; background-color: #f1f5f9; padding: 40px 20px; color: #334155;">
             <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
@@ -129,10 +127,12 @@ exports.sendSiteBannedEmail = async (toEmail, siteTitle, reason) => {
                     Повідомляємо, що ваш сайт <strong>"${siteTitle}"</strong> був заблокований або видалений адміністратором платформи.
                 </p>
                 <div style="background-color: #fffbeb; border-radius: 12px; padding: 20px; border: 1px solid #fde68a; margin-bottom: 24px;">
-                    <p style="margin: 0; font-size: 15px; color: #92400e;"><strong>Причина:</strong> ${reason || 'Порушення правил платформи'}</p>
+                    <p style="margin: 0; font-size: 15px; color: #92400e;">
+                        <strong>Причина:</strong> ${reason || 'Порушення правил платформи.'}
+                    </p>
                 </div>
                 <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
-                    Якщо ви отримаєте 3 страйки (блокування сайтів), ваш обліковий запис буде назавжди заблоковано. Будь ласка, перегляньте правила нашої платформи.
+                    У вас є 7 днів на оскарження цього рішення. Якщо ви отримаєте 3 страйки, ваш обліковий запис буде назавжди заблоковано. Будь ласка, перегляньте правила нашої платформи.
                 </p>
                 <div style="text-align: center; margin: 32px 0;">
                     <a href="${clientUrl}/admin/support" style="display: inline-block; background-color: #475569; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 14px;">
@@ -167,7 +167,6 @@ exports.sendOtpEmail = async (toEmail, code, purpose) => {
     } else {
         return;
     }
-
     const html = `
         <div style="font-family: 'Inter', -apple-system, sans-serif; background-color: #f1f5f9; padding: 40px 20px; color: #334155;">
             <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">

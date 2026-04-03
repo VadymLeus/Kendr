@@ -30,10 +30,7 @@ exports.createPage = async (req, res, next) => {
         if (!site) {
             return res.status(403).json({ message: 'Доступ заборонено.' });
         }
-        const initialBlocks = [
-            { block_id: `header-${Date.now()}`, type: 'global-header', data: {} },
-            { block_id: `footer-${Date.now()}`, type: 'global-footer', data: {} }
-        ];
+        const initialBlocks = [];
         const newPage = await Page.create({
             site_id: siteId,
             name,
@@ -41,6 +38,7 @@ exports.createPage = async (req, res, next) => {
             block_content: initialBlocks,
             is_homepage: 0
         });
+        
         res.status(201).json(newPage);
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {

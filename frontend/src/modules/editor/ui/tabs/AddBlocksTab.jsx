@@ -5,7 +5,7 @@ import { BLOCK_LIBRARY } from '../../core/editorConfig';
 import apiClient from '../../../../shared/api/api';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Input } from '../../../../shared/ui/elements/Input';
-import { toast } from 'react-toastify'; // <--- Додали toast для сповіщень
+import { toast } from 'react-toastify';
 import { ChevronDown, ChevronRight, Trash2, Edit, Check, X, Package, PanelTop, Box, ShoppingBag, GripVertical, Globe, Loader2 } from 'lucide-react';
 
 const Section = ({ title, children, defaultOpen = false, icon }) => {
@@ -38,7 +38,7 @@ const Section = ({ title, children, defaultOpen = false, icon }) => {
     );
 };
 
-const SavedBlockItem = ({ block, onDelete, onRename, onClickAdd }) => { // <--- Додали onClickAdd
+const SavedBlockItem = ({ block, onDelete, onRename, onClickAdd }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState(block.name);
     const [isSaving, setIsSaving] = useState(false);

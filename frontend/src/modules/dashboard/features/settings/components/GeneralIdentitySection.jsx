@@ -1,5 +1,5 @@
 // frontend/src/modules/dashboard/features/settings/components/GeneralIdentitySection.jsx 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../../../../../app/providers/AuthContext';
 import { Button, Input, Switch } from '../../../../../shared/ui/elements';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
@@ -30,13 +30,36 @@ const GeneralIdentitySection = ({
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [statusCooldown, startStatusCooldown] = useCooldown('kendr_status_cooldown');
     const isStaff = user?.role === 'admin' || user?.role === 'moderator' || isAdmin;
+    const [localStatus, setLocalStatus] = useState(data.status || 'published');
+    const [localLiqpay, setLocalLiqpay] = useState({
+        public: data.liqpay_public_key || '',
+        private: data.liqpay_private_key || ''
+    });
+    useEffect(() => {
+        setLocalStatus(data.status || 'published');
+    }, [data.status]);
+
+    useEffect(() => {
+        setLocalLiqpay({
+            public: data.liqpay_public_key || '',
+            private: data.liqpay_private_key || ''
+        });
+    }, [data.liqpay_public_key, data.liqpay_private_key]);
+
     const handleStatusSave = () => {
         if (statusCooldown > 0) {
             toast.warning(`Зачекайте ${statusCooldown}с перед наступною зміною статусу.`);
             return;
         }
+        handleChange('status', localStatus); 
         toast.success('Статус сайту успішно оновлено!');
         startStatusCooldown(30);
+    };
+
+    const handleLiqpaySave = () => {
+        handleChange('liqpay_public_key', localLiqpay.public);
+        handleChange('liqpay_private_key', localLiqpay.private);
+        toast.success('Налаштування LiqPay успішно збережено!');
     };
     
     const statusOptions = [
@@ -206,8 +229,8 @@ const GeneralIdentitySection = ({
                         <div>
                             <Input
                                 label="Public Key (Публічний ключ)"
-                                value={data.liqpay_public_key}
-                                onChange={(e) => handleChange('liqpay_public_key', e.target.value)}
+                                value={localLiqpay.public}
+                                onChange={(e) => setLocalLiqpay(prev => ({ ...prev, public: e.target.value }))}
                                 placeholder="sandbox_..."
                                 leftIcon={<Key size={16}/>}
                             />
@@ -215,8 +238,8 @@ const GeneralIdentitySection = ({
                         <div>
                             <Input
                                 label="Private Key (Приватний ключ)"
-                                value={data.liqpay_private_key}
-                                onChange={(e) => handleChange('liqpay_private_key', e.target.value)}
+                                value={localLiqpay.private}
+                                onChange={(e) => setLocalLiqpay(prev => ({ ...prev, private: e.target.value }))}
                                 placeholder="sandbox_..."
                                 leftIcon={<Lock size={16}/>}
                                 type="password"
@@ -231,7 +254,7 @@ const GeneralIdentitySection = ({
                         <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
                             <Button 
                                 type="button" 
-                                onClick={() => toast.success('Налаштування LiqPay успішно збережено!')}
+                                onClick={handleLiqpaySave}
                                 icon={<Check size={18} />}
                             >
                                 Зберегти зміни
@@ -252,8 +275,8 @@ const GeneralIdentitySection = ({
                             </label>
                             <CustomSelect 
                                 name="status"
-                                value={data.status} 
-                                onChange={(e) => handleChange('status', e.target.value)}
+                                value={localStatus} 
+                                onChange={(e) => setLocalStatus(e.target.value)}
                                 options={statusOptions}
                                 disabled={statusCooldown > 0} 
                             />

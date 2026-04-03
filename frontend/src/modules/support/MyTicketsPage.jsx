@@ -1,13 +1,13 @@
-// frontend/src/modules/support/pages/MyTicketsPage.jsx
+// frontend/src/modules/support/MyTicketsPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '../../../shared/api/api';
-import { Button } from '../../../shared/ui/elements/Button';
-import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import { Input } from '../../../shared/ui/elements/Input';
-import { AdminTable, AdminTh, AdminRow, AdminCell, LoadingRow, EmptyRow, FilterBar, GenericBadge } from '../../admin/components/AdminTableComponents';
-import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
-import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog';
+import apiClient from '../../shared/api/api';
+import { Button } from '../../shared/ui/elements/Button';
+import CustomSelect from '../../shared/ui/elements/CustomSelect';
+import { Input } from '../../shared/ui/elements/Input';
+import { AdminTable, AdminTh, AdminRow, AdminCell, LoadingRow, EmptyRow, FilterBar, GenericBadge } from '../admin/components/AdminTableComponents';
+import ConfirmModal from '../../shared/ui/complex/ConfirmModal';
+import { useConfirmDialog } from '../../shared/hooks/useConfirmDialog';
 import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
 import { Plus, MessageSquare, CheckCircle, Gavel, Clock, Inbox, HelpCircle, Wrench, CreditCard, Handshake, Search, ExternalLink, XCircle } from 'lucide-react';
@@ -173,7 +173,6 @@ const MyTicketsPage = () => {
                     </div>
                 </div>
             </div>
-
             <AdminTable>
                 <colgroup>
                     <col style={{width: '80px'}} />

@@ -268,6 +268,7 @@ exports.getAllSites = async (req, res, next) => {
                 u.username as author, u.slug as author_slug, u.email as author_email, u.avatar_url as author_avatar_url,
                 u.role as owner_role,
                 (SELECT COUNT(*) FROM user_warnings WHERE user_id = s.user_id) as warning_count,
+                (SELECT reason_note FROM user_warnings WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as suspension_reason,
                 (SELECT status FROM site_appeals WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as appeal_status,
                 (SELECT created_at FROM site_appeals WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as appeal_date
             FROM sites s
@@ -284,6 +285,7 @@ exports.getAllSites = async (req, res, next) => {
 exports.suspendSite = async (req, res, next) => {
     try {
         const { site_path } = req.params;
+        const { reason: customReason } = req.body;
         const [sites] = await db.query(`
             SELECT s.*, u.email, u.username, u.role as owner_role 
             FROM sites s 
@@ -303,17 +305,19 @@ exports.suspendSite = async (req, res, next) => {
             'SELECT id FROM user_warnings WHERE user_id = ? AND site_id = ?', 
             [site.user_id, site.id]
         );
+        
         let strikeMessage = '';
-        const reason = `Сайт заблоковано адміністратором. У вас є 7 днів на оскарження.`;
+        const baseReasonText = customReason ? customReason : 'Порушення правил платформи';
         if (existingWarning.length === 0) {
-            await Warning.create(site.user_id, site.id, reason);
+            await Warning.create(site.user_id, site.id, baseReasonText);
             strikeMessage = ' (Видано страйк).';
         } else {
             strikeMessage = ' (Страйк за цей сайт вже існує).';
         }
         await logAdminAction(req, 'site_suspend', 'site', site.id, { 
             title: site.title, 
-            path: site.site_path 
+            path: site.site_path,
+            reason: baseReasonText
         });
         const warningCount = await Warning.countForUser(site.user_id);
         if (warningCount >= 3) {
@@ -324,7 +328,8 @@ exports.suspendSite = async (req, res, next) => {
                 action: 'USER_DELETED' 
             });
         }
-        if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, reason).catch(console.error);
+        
+        if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, baseReasonText).catch(console.error);
         res.json({ message: `Сайт призупинено.${strikeMessage} Включено таймер 7 днів.` });
     } catch (error) {
         next(error);
@@ -383,12 +388,14 @@ exports.restoreSite = async (req, res, next) => {
 exports.deleteSiteByAdmin = async (req, res, next) => {
     try {
         const { site_path } = req.params;
+        const { reason: customReason } = req.body;
         const [sites] = await db.query(`
             SELECT s.*, u.email, u.username, u.role as owner_role 
             FROM sites s 
             JOIN users u ON s.user_id = u.id 
             WHERE s.site_path = ?
         `, [site_path]);
+        
         if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено.' });
         const site = sites[0];
         if (!checkHierarchyPermission(req.user.role, site.owner_role)) {
@@ -406,14 +413,15 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
             'SELECT id FROM user_warnings WHERE user_id = ? AND site_id = ?', 
             [site.user_id, site.id]
         );
-        const reason = `Сайт було видалено адміністратором через грубі порушення.`;
+        const baseReasonText = customReason ? customReason : 'Грубі порушення правил платформи';
         if (existingWarning.length === 0) {
-            await Warning.create(site.user_id, site.id, reason);
+            await Warning.create(site.user_id, site.id, baseReasonText);
         }
         await Site.delete(site.id);
         await logAdminAction(req, 'site_delete', 'site', site.id, { 
             title: site.title, 
-            path: site.site_path 
+            path: site.site_path,
+            reason: baseReasonText 
         });
         const warningCount = await Warning.countForUser(site.user_id);
         let userActionMessage = '';
@@ -422,7 +430,7 @@ exports.deleteSiteByAdmin = async (req, res, next) => {
             if (siteOwner) sendAccountBannedEmail(siteOwner.email, siteOwner.username).catch(console.error);
             userActionMessage = ' Користувач отримав 3-й страйк і був ЗАБЛОКОВАНИЙ назавжди.';
         } else {
-            if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, reason).catch(console.error);
+            if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, baseReasonText).catch(console.error);
         }
         res.json({ message: `Сайт "${site.title}" остаточно видалено.${userActionMessage}` });
     } catch (error) {
@@ -501,9 +509,9 @@ exports.banSiteFromReport = async (req, res, next) => {
             [site.user_id, site.id]
         );
         let strikeMessage = '';
-        const reason = `Блокування за скаргою #${id}. Причина: ${report.reason}.`;
+        const baseReasonText = `Блокування за скаргою #${id}. Причина: ${report.reason}`;
         if (existingWarning.length === 0) {
-            await Warning.create(site.user_id, site.id, reason);
+            await Warning.create(site.user_id, site.id, baseReasonText);
             strikeMessage = ' (Видано страйк).';
         } else {
             strikeMessage = ' (Страйк вже існував).';
@@ -522,7 +530,7 @@ exports.banSiteFromReport = async (req, res, next) => {
                 action: 'USER_DELETED'
             });
         }
-        if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, reason).catch(console.error);
+        if (siteOwner) sendSiteBannedEmail(siteOwner.email, site.title, baseReasonText).catch(console.error);
         res.json({ message: `Сайт заблоковано на 7 днів.${strikeMessage}` });
     } catch (error) {
         next(error);

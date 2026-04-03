@@ -52,7 +52,6 @@ const validateSlugOnly = (slug) => {
     }
     return null;
 };
-
 const validateSiteCreation = (title, slug) => {
     if (!title || typeof title !== 'string') return 'Назва сайту обов\'язкова';
     const trimmedTitle = title.trim();
@@ -299,7 +298,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             }
         }
         const { 
-            title, status, tags, site_theme_mode, site_theme_accent, theme_settings, 
+            title, status, tags, site_theme_mode, site_theme_accent, theme_settings, dashboard_config,
             header_content, footer_content, favicon_url, site_title_seo, 
             cover_image, cover_layout, logo_url,
             cover_logo_size, cover_logo_radius, cover_title_size,
@@ -377,6 +376,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             site_theme_mode: site_theme_mode !== undefined ? site_theme_mode : site.site_theme_mode,
             site_theme_accent: site_theme_accent !== undefined ? site_theme_accent : site.site_theme_accent,
             theme_settings: safeParse(theme_settings, site.theme_settings),
+            dashboard_config: safeParse(dashboard_config, site.dashboard_config),
             header_content: currentHeaderContent,
             footer_content: safeParse(footer_content, site.footer_content),
             favicon_url: favicon_url !== undefined ? favicon_url : site.favicon_url,
@@ -443,7 +443,8 @@ exports.getMySuspendedSites = async (req, res, next) => {
                 s.id, s.site_path, s.title, s.logo_url, s.deletion_scheduled_for,
                 sa.status as appeal_status,
                 sa.ticket_id,
-                st.status as ticket_status
+                st.status as ticket_status,
+                (SELECT reason_note FROM user_warnings WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as suspension_reason
             FROM sites s
             LEFT JOIN site_appeals sa ON s.id = sa.site_id
             LEFT JOIN support_tickets st ON sa.ticket_id = st.id
@@ -451,7 +452,9 @@ exports.getMySuspendedSites = async (req, res, next) => {
         `;
         const [sites] = await db.query(query, [userId]);
         res.json(sites); 
-    } catch (error) { next(error); } 
+    } catch (error) { 
+        next(error); 
+    } 
 };
 
 exports.deleteSite = async (req, res, next) => { 
@@ -539,6 +542,48 @@ exports.checkSlug = async (req, res, next) => {
         }
         res.json({ isAvailable: true });
     } catch (error) {
+        next(error);
+    }
+};
+
+exports.getSiteAnalytics = async (req, res, next) => {
+    try {
+        const siteId = req.params.id;
+        const userId = req.user.id;
+        const [sites] = await db.query('SELECT user_id, view_count, currency FROM sites WHERE id = ?', [siteId]);
+        if (sites.length === 0) {
+            return res.status(404).json({ message: 'Сайт не знайдено' });
+        }
+        if (sites[0].user_id !== userId) {
+            return res.status(403).json({ message: 'У вас немає прав доступу до аналітики цього сайту' });
+        }
+        const { view_count: views, currency } = sites[0];
+        const [orderStats] = await db.query(`
+            SELECT 
+                COUNT(id) as totalOrders,
+                SUM(CASE WHEN status IN ('completed', 'paid', 'shipped') THEN 1 ELSE 0 END) as completedOrders,
+                SUM(CASE WHEN status IN ('completed', 'paid', 'shipped') THEN total_amount ELSE 0 END) as revenue
+            FROM orders 
+            WHERE site_id = ?
+        `, [siteId]);
+        const stats = orderStats[0] || {};
+        const [recentOrders] = await db.query(`
+            SELECT id, customer_name, total_amount, status, created_at
+            FROM orders
+            WHERE site_id = ?
+            ORDER BY created_at DESC
+            LIMIT 5
+        `, [siteId]);
+        res.json({
+            views: views || 0,
+            totalOrders: stats.totalOrders || 0,
+            completedOrders: stats.completedOrders || 0,
+            revenue: Number(stats.revenue || 0),
+            currency: currency || 'UAH',
+            recentOrders
+        });
+    } catch (error) {
+        console.error('Помилка в getSiteAnalytics:', error);
         next(error);
     }
 };

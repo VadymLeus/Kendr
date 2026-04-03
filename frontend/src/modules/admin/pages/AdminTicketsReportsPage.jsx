@@ -8,10 +8,9 @@ import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import { Input } from '../../../shared/ui/elements/Input';
 import DateRangePicker from '../../../shared/ui/elements/DateRangePicker';
 import AdminPageLayout from '../components/AdminPageLayout';
-import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { AdminTable, AdminTh, AdminRow, AdminCell, LoadingRow, EmptyRow, FilterBar, GenericBadge, CsvExportButton } from '../components/AdminTableComponents';
 import { useDataList } from '../../../shared/hooks/useDataList';
-import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 import apiClient from '../../../shared/api/api';
 import { exportToCsv } from '../../../shared/utils/exportToCsv';
 import { MessageSquare, CheckCircle, Gavel, XCircle, RotateCcw, Clock, ExternalLink, Inbox, User, HelpCircle, Wrench, CreditCard, Handshake, Search, ShieldAlert, X, AlertTriangle, FileWarning, Ban, Copyright, Check } from 'lucide-react';
@@ -50,12 +49,11 @@ const AdminTicketsReportsPage = () => {
             navigate({ search: `?tab=${activeTab}` }, { replace: true });
         }
     }, [activeTab, navigate, location.search]);
-    const confirmDialog = useConfirmDialog();
+    const { confirm } = useConfirm();
     const handleAction = async (fn, msg, refreshFn) => { 
         try { 
             await fn(); 
             toast.success(msg); 
-            confirmDialog.close(); 
             refreshFn(); 
         } catch { 
             toast.error('Помилка виконання дії'); 
@@ -79,11 +77,23 @@ const AdminTicketsReportsPage = () => {
         }
         return res.sort((a, b) => (a[ticketSort.key] < b[ticketSort.key] ? -1 : 1) * (ticketSort.direction === 'asc' ? 1 : -1));
     }, [ticketsData.filteredData, ticketCategory, ticketSort, ticketStartDate, ticketEndDate]);
+    
     const handleTicketSort = (key) => setTicketSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const ticketActions = {
-        closeTicket: (id) => confirmDialog.requestConfirm({ title: 'Закрити?', message: `Тікет #${id} в архів.`, type: 'warning', confirmLabel: 'Закрити', onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'closed' }), 'Закрито', ticketsData.refresh) }),
-        restoreTicket: (id) => confirmDialog.requestConfirm({ title: 'Відновити?', message: `Тікет #${id} активний.`, type: 'info', confirmLabel: 'Відновити', onConfirm: () => handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'open' }), 'Відновлено', ticketsData.refresh) })
+        closeTicket: async (id) => {
+            const isConfirmed = await confirm({ title: 'Закрити?', message: `Тікет #${id} в архів.`, type: 'warning', confirmText: 'Закрити' });
+            if (isConfirmed) {
+                handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'closed' }), 'Закрито', ticketsData.refresh);
+            }
+        },
+        restoreTicket: async (id) => {
+            const isConfirmed = await confirm({ title: 'Відновити?', message: `Тікет #${id} активний.`, type: 'info', confirmText: 'Відновити' });
+            if (isConfirmed) {
+                handleAction(() => apiClient.put(`/support/admin/${id}/status`, { status: 'open' }), 'Відновлено', ticketsData.refresh);
+            }
+        }
     };
+    
     const handleExportTickets = () => {
         if (!processedTickets?.length) return toast.info('Немає даних');
         exportToCsv(processedTickets.map(t => ({
@@ -113,10 +123,45 @@ const AdminTicketsReportsPage = () => {
     const handleReportSort = (key) => setReportSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const filterByUser = (email, e) => { e.stopPropagation(); reportsData.setSearchQuery(email); toast.info(`Фільтр: ${email}`); };
     const reportActions = {
-        dismiss: (id) => confirmDialog.requestConfirm({ title: 'Відхилити?', message: 'Скаргу буде відхилено', type: 'warning', confirmLabel: 'Відхилити', onConfirm: () => handleAction(() => apiClient.put(`/admin/reports/${id}/dismiss`), 'Відхилено', reportsData.refresh) }),
-        ban: (id) => confirmDialog.requestConfirm({ title: 'Заблокувати?', message: 'Сайт буде заблоковано.', type: 'danger', confirmLabel: 'Заблокувати', onConfirm: () => handleAction(() => apiClient.post(`/admin/reports/${id}/ban`), 'Заблоковано', reportsData.refresh) }),
-        reopen: (id) => confirmDialog.requestConfirm({ title: 'Відновити?', message: 'Повернути на розгляд.', type: 'info', confirmLabel: 'Відновити', onConfirm: () => handleAction(() => apiClient.put(`/admin/reports/${id}/reopen`), 'Відновлено', reportsData.refresh) })
+        dismiss: async (id) => {
+            const isConfirmed = await confirm({ 
+                title: 'Відхилити скаргу?', 
+                message: 'Скаргу буде відхилено. Для підтвердження введіть "CANCEL".', 
+                type: 'warning', 
+                confirmText: 'Відхилити',
+                requireInput: true,
+                expectedInput: 'CANCEL'
+            });
+            if (isConfirmed) {
+                handleAction(() => apiClient.put(`/admin/reports/${id}/dismiss`), 'Відхилено', reportsData.refresh);
+            }
+        },
+        ban: async (id) => {
+            const isConfirmed = await confirm({ 
+                title: 'Заблокувати сайт?', 
+                message: 'Сайт буде заблоковано. Для підтвердження введіть "SUSPEND".', 
+                type: 'danger', 
+                confirmText: 'Заблокувати',
+                requireInput: true,
+                expectedInput: 'SUSPEND'
+            });
+            if (isConfirmed) {
+                handleAction(() => apiClient.post(`/admin/reports/${id}/ban`), 'Заблоковано', reportsData.refresh);
+            }
+        },
+        reopen: async (id) => {
+            const isConfirmed = await confirm({ 
+                title: 'Відновити?', 
+                message: 'Повернути на розгляд.', 
+                type: 'info', 
+                confirmText: 'Відновити' 
+            });
+            if (isConfirmed) {
+                handleAction(() => apiClient.put(`/admin/reports/${id}/reopen`), 'Відновлено', reportsData.refresh);
+            }
+        }
     };
+
     const handleExportReports = () => {
         if (!processedReports?.length) return toast.info('Немає даних');
         exportToCsv(processedReports.map(r => ({
@@ -219,7 +264,6 @@ const AdminTicketsReportsPage = () => {
                     </AdminTable>
                 </>
             )}
-            
             {activeTab === 'reports' && (
                 <>
                     <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -270,7 +314,6 @@ const AdminTicketsReportsPage = () => {
                     </AdminTable>
                 </>
             )}
-            <ConfirmModal isOpen={confirmDialog.isOpen} {...confirmDialog.config} onCancel={confirmDialog.close} />
         </AdminPageLayout>
     );
 };

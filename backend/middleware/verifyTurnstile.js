@@ -1,5 +1,8 @@
 // backend/middleware/verifyTurnstile.js
 const verifyTurnstile = async (req, res, next) => {
+    if (req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
+        return next();
+    }
     const token = req.body.turnstileToken;
     const secretKey = process.env.TURNSTILE_SECRET_KEY;
     if (!token) {

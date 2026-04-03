@@ -104,6 +104,7 @@ const AdminUsersSitesPage = () => {
             return (valA < valB ? -1 : 1) * (userSort.direction === 'asc' ? 1 : -1);
         });
     }, [usersData.filteredData, userSort, hideSuspendedUsers, userRoleFilter, userPlanFilter, userStartDate, userEndDate]);
+    
     const handleUserSort = (key) => setUserSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const handleDeleteUser = (userId) => {
         confirm({ 
@@ -210,20 +211,23 @@ const AdminUsersSitesPage = () => {
             sitesData.refresh(); 
         } catch(error) { toast.error(error.response?.data?.message || 'Помилка'); } 
     };
-
     const siteActions = {
-        suspend: (path) => confirm({ 
-            title: 'Призупинити сайт?', 
-            message: 'Сайт стане недоступним. Власник отримає 1 страйк. Введіть "SUSPEND" для підтвердження.', 
-            type: 'warning', 
-            confirmText: 'Призупинити', 
-            requireInput: true,
-            expectedInput: 'SUSPEND',
-            onConfirm: async (inputValue) => {
-                if (inputValue !== 'SUSPEND') return toast.error('Невірне підтвердження.');
-                handleSiteAction(() => apiClient.post(`/admin/sites/${path}/suspend`));
-            }
-        }),
+        suspend: (path) => {
+            confirm({ 
+                title: 'Призупинити сайт?', 
+                message: 'Сайт стане недоступним. Власник отримає 1 страйк. Введіть "SUSPEND" для підтвердження.', 
+                type: 'warning', 
+                confirmText: 'Призупинити', 
+                requireInput: true,
+                expectedInput: 'SUSPEND',
+                requireReason: true,
+                reasonPlaceholder: 'Причина блокування (побачить власник)',
+                onConfirm: async (inputValue, reasonValue) => {
+                    if (inputValue !== 'SUSPEND') return toast.error('Невірне підтвердження.');
+                    handleSiteAction(() => apiClient.post(`/admin/sites/${path}/suspend`, { reason: reasonValue }));
+                }
+            });
+        },
         restore: (path) => confirm({ 
             title: 'Відновити?', 
             message: 'Сайт стане публічним. Введіть "RESTORE" для підтвердження.', 
@@ -248,19 +252,24 @@ const AdminUsersSitesPage = () => {
                 handleSiteAction(() => apiClient.post(`/admin/sites/${path}/probation`));
             }
         }),
-        delete: (path) => confirm({ 
-            title: 'Видалити остаточно?', 
-            message: 'Ця дія незворотна. Всі дані сайту будуть стерті. Введіть "DELETE" для підтвердження.', 
-            danger: true, 
-            confirmText: 'Видалити', 
-            requireInput: true,
-            expectedInput: 'DELETE',
-            onConfirm: async (inputValue) => {
-                if (inputValue !== 'DELETE') return toast.error('Невірне підтвердження.');
-                handleSiteAction(() => apiClient.delete(`/admin/sites/${path}`));
-            }
-        })
+        delete: (path) => {
+            confirm({ 
+                title: 'Видалити остаточно?', 
+                message: 'Ця дія незворотна. Всі дані сайту будуть стерті. Введіть "DELETE" для підтвердження.', 
+                danger: true, 
+                confirmText: 'Видалити', 
+                requireInput: true,
+                expectedInput: 'DELETE',
+                requireReason: true,
+                reasonPlaceholder: 'Причина видалення (побачить власник)',
+                onConfirm: async (inputValue, reasonValue) => {
+                    if (inputValue !== 'DELETE') return toast.error('Невірне підтвердження.');
+                    handleSiteAction(() => apiClient.delete(`/admin/sites/${path}`, { data: { reason: reasonValue } }));
+                }
+            });
+        }
     };
+
     const handleExportSites = () => {
         if (!processedSites?.length) return toast.info('Немає даних');
         exportToCsv(processedSites.map(s => ({
@@ -371,7 +380,6 @@ const AdminUsersSitesPage = () => {
                             <tbody>
                                 {usersData.loading ? <LoadingRow cols={9} /> : !processedUsers.length ? <EmptyRow cols={9} /> : processedUsers.map(u => {
                                     const isClickable = u.status !== 'suspended' && u.role !== 'admin' && u.role !== 'moderator';
-                                    
                                     return (
                                         <AdminRow key={u.id} onClick={() => setSelectedUser(u)} isSelected={selectedUser?.id === u.id}>
                                             <AdminCell style={{opacity: 0.6}}>#{u.id}</AdminCell>

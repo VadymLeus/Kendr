@@ -1,12 +1,8 @@
 // frontend/src/app/App.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FavoritesProvider } from './providers/FavoritesContext'; 
-import { ConfirmProvider } from './providers/ConfirmContext';
 import { AuthContext } from './providers/AuthContext';
 import ProtectedRoute from './guards/ProtectedRoute';
 import Layout from '../shared/ui/layouts/Layout';
@@ -29,11 +25,11 @@ import SiteDisplayPage from '../modules/renderer/pages/SiteDisplayPage';
 import CartPage from '../modules/shop/CartPage';
 import MyOrdersPage from '../modules/shop/MyOrdersPage';
 import ProductDetailPage from '../modules/shop/ProductDetailPage';
-import SupportPage from '../modules/support/pages/SupportPage';
-import NewTicketPage from '../modules/support/pages/NewTicketPage';
-import AppealPage from '../modules/support/pages/AppealPage';
-import MyTicketsPage from '../modules/support/pages/MyTicketsPage';
-import TicketDetailPage from '../modules/support/pages/TicketDetailPage';
+import SupportPage from '../modules/support/SupportPage';
+import NewTicketPage from '../modules/support/NewTicketPage';
+import AppealPage from '../modules/support/AppealPage';
+import MyTicketsPage from '../modules/support/MyTicketsPage';
+import TicketDetailPage from '../modules/support/TicketDetailPage';
 import AdminDashboardPage from '../modules/admin/pages/AdminDashboardPage';
 import AdminUsersSitesPage from '../modules/admin/pages/AdminUsersSitesPage';
 import AdminTicketsReportsPage from '../modules/admin/pages/AdminTicketsReportsPage';
@@ -56,83 +52,78 @@ function App() {
         return <MaintenanceScreen message={maintenanceInfo.message} />;
     }
     return (
-        <DndProvider backend={HTML5Backend}>
-            <FavoritesProvider>
-                <ConfirmProvider>
-                    {isRestorePending ? (
-                        <RestoreAccountPage />
-                    ) : (
-                        <Routes>
-                            <Route element={<ProtectedRoute onlyPublic={true} />}>
-                                <Route path="/admin-gate" element={<AdminLoginPage />} />
+        <>
+            {isRestorePending ? (
+                <RestoreAccountPage />
+            ) : (
+                <Routes>
+                    <Route element={<ProtectedRoute onlyPublic={true} />}>
+                        <Route path="/admin-gate" element={<AdminLoginPage />} />
+                    </Route>
+                    <Route element={<Layout />}>
+                        <Route element={<ProtectedRoute onlyPublic={true} />}>
+                            <Route path="/login" element={<AuthPage />} />
+                            <Route path="/register" element={<AuthPage />} />
+                            <Route path="/reset-password" element={<Navigate to="/login?view=forgot" replace />} />
+                            <Route path="/verify-email" element={<Navigate to="/login" replace />} />
+                        </Route>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/catalog" element={<CatalogPage />} />
+                        <Route path="/profile/:slug" element={<ProfilePage />} />
+                        <Route path="/site/:site_path/product/:productId" element={<ProductDetailPage />} />
+                        <Route path="/site/:site_path" element={<SiteDisplayPage />} />
+                        <Route path="/site/:site_path/:slug" element={<SiteDisplayPage />} />
+                        <Route path="/rules" element={<RulesPage />} />
+                        <Route path="/auth/success" element={<AuthSuccessPage />} />
+                        <Route element={<ProtectedRoute />}>
+                            <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
+                            <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />
+                            <Route path="/my-sites" element={<MySitesPage />} />
+                            <Route path="/create-site" element={<CreateSitePage />} />
+                            <Route path="/media-library" element={<MediaLibraryPage />} />
+                            <Route path="/my-orders" element={<MyOrdersPage />} />
+                        </Route>
+                        <Route element={<ProtectedRoute excludeAdmin={true} />}>
+                            <Route path="/cart" element={<CartPage />} />
+                            <Route path="/support" element={<SupportPage />} />
+                            <Route path="/support/new-ticket" element={<NewTicketPage />} />
+                            <Route path="/support/appeal" element={<AppealPage />} />
+                            <Route path="/support/my-tickets" element={<MyTicketsPage />} />
+                        </Route>
+                        <Route element={<ProtectedRoute requireAdmin={true} />}>
+                            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+                            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+                            <Route path="/admin/users-sites" element={<AdminUsersSitesPage />} />
+                            <Route path="/admin/users" element={<Navigate to="/admin/users-sites?tab=users" replace />} />
+                            <Route path="/admin/sites" element={<Navigate to="/admin/users-sites?tab=sites" replace />} />
+                            <Route path="/admin/support-hub" element={<AdminTicketsReportsPage />} />
+                            <Route path="/admin/tickets" element={<Navigate to="/admin/support-hub?tab=tickets" replace />} />
+                            <Route path="/admin/reports" element={<Navigate to="/admin/support-hub?tab=reports" replace />} />
+                            <Route path="/admin/support" element={<Navigate to="/admin/support-hub?tab=tickets" replace />} />
+                            <Route path="/admin/templates" element={<AdminTemplatesPage />} />
+                            <Route element={<ProtectedRoute requireStrictAdmin={true} />}>
+                                <Route path="/admin/billing" element={<AdminBillingPage />} />
+                                <Route path="/admin/control" element={<AdminControlPage />} />
                             </Route>
-                            <Route element={<Layout />}>
-                                <Route element={<ProtectedRoute onlyPublic={true} />}>
-                                    <Route path="/login" element={<AuthPage />} />
-                                    <Route path="/register" element={<AuthPage />} />
-                                    <Route path="/reset-password" element={<Navigate to="/login?view=forgot" replace />} />
-                                    <Route path="/verify-email" element={<Navigate to="/login" replace />} />
-                                </Route>
-                                <Route path="/" element={<HomePage />} />
-                                <Route path="/catalog" element={<CatalogPage />} />
-                                <Route path="/profile/:slug" element={<ProfilePage />} />
-                                <Route path="/site/:site_path/product/:productId" element={<ProductDetailPage />} />
-                                <Route path="/site/:site_path" element={<SiteDisplayPage />} />
-                                <Route path="/site/:site_path/:slug" element={<SiteDisplayPage />} />
-                                <Route path="/rules" element={<RulesPage />} />
-                                <Route path="/auth/success" element={<AuthSuccessPage />} />
-                                <Route element={<ProtectedRoute />}>
-                                    <Route path="/settings" element={<SettingsPage />} />
-                                    <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
-                                    <Route path="/dashboard/:site_path" element={<SiteDashboardPage />} />
-                                    <Route path="/my-sites" element={<MySitesPage />} />
-                                    <Route path="/create-site" element={<CreateSitePage />} />
-                                    <Route path="/media-library" element={<MediaLibraryPage />} />
-                                    <Route path="/my-orders" element={<MyOrdersPage />} />
-                                </Route>
-                                <Route element={<ProtectedRoute excludeAdmin={true} />}>
-                                    <Route path="/cart" element={<CartPage />} />
-                                    <Route path="/support" element={<SupportPage />} />
-                                    <Route path="/support/new-ticket" element={<NewTicketPage />} />
-                                    <Route path="/support/appeal" element={<AppealPage />} />
-                                    <Route path="/support/my-tickets" element={<MyTicketsPage />} />
-                                </Route>
-                                <Route element={<ProtectedRoute requireAdmin={true} />}>
-                                    <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-                                    <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-                                    <Route path="/admin/users-sites" element={<AdminUsersSitesPage />} />
-                                    <Route path="/admin/users" element={<Navigate to="/admin/users-sites?tab=users" replace />} />
-                                    <Route path="/admin/sites" element={<Navigate to="/admin/users-sites?tab=sites" replace />} />
-                                    <Route path="/admin/support-hub" element={<AdminTicketsReportsPage />} />
-                                    <Route path="/admin/tickets" element={<Navigate to="/admin/support-hub?tab=tickets" replace />} />
-                                    <Route path="/admin/reports" element={<Navigate to="/admin/support-hub?tab=reports" replace />} />
-                                    <Route path="/admin/support" element={<Navigate to="/admin/support-hub?tab=tickets" replace />} />
-                                    <Route path="/admin/templates" element={<AdminTemplatesPage />} />
-                                    <Route element={<ProtectedRoute requireStrictAdmin={true} />}>
-                                        <Route path="/admin/billing" element={<AdminBillingPage />} />
-                                        <Route path="/admin/control" element={<AdminControlPage />} />
-                                    </Route>
-                                </Route>
-                                
-                                <Route path="*" element={<NotFoundPage />} />
-                            </Route>
-                        </Routes>
-                    )}
-                    <ToastContainer
-                        position="bottom-right"
-                        autoClose={3000}
-                        hideProgressBar={false}
-                        newestOnTop={false}
-                        closeOnClick
-                        rtl={false}
-                        pauseOnFocusLoss
-                        draggable
-                        pauseOnHover
-                        theme="colored"
-                    />
-                </ConfirmProvider>
-            </FavoritesProvider>
-        </DndProvider>
+                        </Route>
+                        <Route path="*" element={<NotFoundPage />} />
+                    </Route>
+                </Routes>
+            )}
+            <ToastContainer
+                position="bottom-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
+        </>
     );
 }
 

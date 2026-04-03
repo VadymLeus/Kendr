@@ -1,7 +1,7 @@
-// frontend/src/modules/support/pages/SupportPage.jsx
+// frontend/src/modules/support/SupportPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../../../shared/ui/elements/Button';
+import { Button } from '../../shared/ui/elements/Button';
 import { Helmet } from 'react-helmet-async';
 import { HelpCircle, MessageCircle, Gavel, ChevronRight, Plus } from 'lucide-react';
 
@@ -30,7 +30,6 @@ const SupportPage = () => {
             <Helmet>
                 <title>Центр підтримки | Kendr</title>
             </Helmet>
-
             <div className="text-center mb-12">
                 <h1 className="text-(--platform-text-primary) mb-4 text-[2.5rem] font-extrabold flex items-center justify-center gap-3">
                     <HelpCircle size={40} className="text-(--platform-accent)" />
@@ -40,7 +39,6 @@ const SupportPage = () => {
                     Ми тут, щоб допомогти. Знайдіть відповіді на питання або зв'яжіться з нами.
                 </p>
             </div>
-
             <div className="mb-10 p-8 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm">
                 <h2 className="text-(--platform-text-primary) mb-6 text-2xl font-bold">
                     Часті запитання (FAQ)
@@ -62,7 +60,6 @@ const SupportPage = () => {
                     ))}
                 </div>
             </div>
-            
             <div className="bg-linear-to-br from-(--platform-card-bg) to-(--platform-bg) rounded-2xl border border-(--platform-border-color) py-12 px-8 text-center shadow-lg">
                 <h3 className="text-(--platform-text-primary) mb-4 text-2xl font-bold">
                     Не знайшли відповідь?
@@ -70,20 +67,17 @@ const SupportPage = () => {
                 <p className="text-(--platform-text-secondary) mb-8 text-[1.1rem] max-w-125 mx-auto">
                     Створіть звернення, і наша команда підтримки допоможе вам вирішити проблему.
                 </p>
-                
                 <div className="flex gap-4 justify-center flex-wrap">
                     <Link to="/support/new-ticket" className="no-underline">
                         <Button variant="primary" size="lg" icon={<Plus size={20}/>}>
                             Створити звернення
                         </Button>
                     </Link>
-
                     <Link to="/support/my-tickets" className="no-underline">
                         <Button variant="secondary" size="lg" icon={<MessageCircle size={20}/>}>
                             Мої звернення
                         </Button>
                     </Link>
-                    
                     <Link to="/support/appeal" className="no-underline">
                          <Button variant="outline" size="lg" icon={<Gavel size={20}/>}>
                             Апеляції

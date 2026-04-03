@@ -57,19 +57,18 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
             gap: '6px'
         }
     }), [currentStatus]);
-
     if (!site) return null;
     const canModify = currentUser?.role === 'admin' || (currentUser?.role === 'moderator' && site.owner_role === 'user');
     const isSuspended = site.status === 'suspended';
     const isProbation = site.status === 'probation';
     const { expired: isExpired, text: timeLeftString } = calculateTimeLeft(site.deletion_scheduled_for);
+    const siteReason = site.suspension_reason || site.reason; // Отримуємо причину блокування
     const handleVisitProfile = () => {
         if (isAuthorClickable) {
             const targetIdentifier = site.author_slug || site.author;
             navigate(`/profile/${targetIdentifier}`);
         }
     };
-
     return (
         <BaseDetailsPanel 
             title="Керування сайтом" 
@@ -164,11 +163,26 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
             </div>
             {isSuspended && (
                 <div style={styles.infoBox('error')}>
-                    <Clock size={20} />
-                    <div>
+                    <Clock size={20} style={{ shrink: 0, marginTop: '2px' }} />
+                    <div style={{ width: '100%' }}>
                         <div style={{fontWeight: 'bold', marginBottom: '4px'}}>Сайт призупинено</div>
                         <div style={{fontSize: '13px'}}>До видалення: <strong>{timeLeftString}</strong></div>
-                        {isExpired && <div style={{fontSize: '13px', marginTop: '4px', fontWeight: 'bold'}}>Можна видаляти.</div>}
+                        {siteReason && (
+                            <div style={{
+                                marginTop: '12px', 
+                                padding: '10px 12px', 
+                                backgroundColor: 'color-mix(in srgb, var(--platform-danger), transparent 85%)', 
+                                borderRadius: '8px',
+                                border: '1px solid color-mix(in srgb, var(--platform-danger), transparent 75%)',
+                                fontSize: '13px',
+                                color: 'var(--platform-danger)'
+                            }}>
+                                <strong style={{display: 'block', marginBottom: '4px'}}>Причина блокування:</strong>
+                                <span style={{opacity: 0.9, lineHeight: '1.4'}}>{siteReason}</span>
+                            </div>
+                        )}
+                        
+                        {isExpired && <div style={{fontSize: '13px', marginTop: '8px', fontWeight: 'bold'}}>Можна видаляти.</div>}
                     </div>
                 </div>
             )}

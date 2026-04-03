@@ -106,7 +106,7 @@ class Site {
         SELECT
             s.id, s.user_id, s.title, s.logo_url, s.status,
             s.view_count, s.site_theme_mode, s.site_theme_accent,
-            s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout,
+            s.site_path, s.theme_settings, s.dashboard_config, s.header_content, s.footer_content, s.footer_layout,
             s.favicon_url, s.site_title_seo,
             s.cover_image, s.cover_layout,
             s.cover_logo_size,
@@ -121,11 +121,13 @@ class Site {
     const site = sites[0];
     try {
         if (typeof site.theme_settings === 'string') site.theme_settings = JSON.parse(site.theme_settings);
+        if (typeof site.dashboard_config === 'string') site.dashboard_config = JSON.parse(site.dashboard_config);
         if (typeof site.header_content === 'string') site.header_content = JSON.parse(site.header_content);
         if (typeof site.footer_content === 'string') site.footer_content = JSON.parse(site.footer_content);
     } catch (error) {
         console.error('Error parsing JSON fields for site:', sitePath, error);
         site.theme_settings = site.theme_settings || {};
+        site.dashboard_config = site.dashboard_config || { hiddenTabs: [] };
         site.header_content = site.header_content || [];
         site.footer_content = site.footer_content || [];
     }
@@ -178,7 +180,7 @@ class Site {
 
   static async updateSettings(siteId, data) {
     const { 
-      title, status, site_theme_mode, site_theme_accent, theme_settings, 
+      title, status, site_theme_mode, site_theme_accent, theme_settings, dashboard_config,
       header_content, footer_content, favicon_url, site_title_seo, 
       cover_image, cover_layout, logo_url,
       cover_logo_size, cover_logo_radius, cover_title_size,
@@ -198,6 +200,7 @@ class Site {
         site_theme_mode || 'light',
         site_theme_accent || 'orange',
         safeStringify(theme_settings),
+        safeStringify(dashboard_config),
         safeStringify(header_content),
         safeStringify(footer_content),
         safeFaviconUrl,
@@ -223,6 +226,7 @@ class Site {
             site_theme_mode = ?, 
             site_theme_accent = ?,
             theme_settings = ?,
+            dashboard_config = ?,
             header_content = ?,
             footer_content = ?,
             favicon_url = ?, 
@@ -240,7 +244,6 @@ class Site {
             cookie_banner_text = ?
         WHERE id = ?
     `;
-    
     const [result] = await db.query(query, params);
     return result;
   }
