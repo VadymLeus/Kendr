@@ -60,7 +60,9 @@ export const Input = ({
     const handleClear = (e) => {
         e.preventDefault(); e.stopPropagation();
         setLocalValue('');
-        onChange({ target: { name, value: '' } });
+        if (onChange) {
+            onChange({ target: { name, value: '' } });
+        }
         inputRef.current?.focus();
     };
     const paddingLeft = leftIcon ? '40px' : '12px';
