@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { analyzePassword, validateSiteSlug, validateSiteTitle } from '../../shared/utils/validationUtils';
+import { analyzePassword, validateSiteSlug, validateSiteTitle } from '../../src/shared/utils/validationUtils';
 
 describe('validationUtils', () => {
     describe('analyzePassword', () => {

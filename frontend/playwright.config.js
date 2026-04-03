@@ -1,31 +1,9 @@
-// @ts-check
-import { defineConfig, devices } from '@playwright/test';
-/**
- * @see https://playwright.dev/docs/test-configuration
- */
-export default defineConfig({
-  testDir: './tests',
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
-  use: {
-    trace: 'on-first-retry',
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-  ],
-});
+import { defineConfig } from '@playwright/test';
 
+export default defineConfig({
+  testDir: './tests/e2e',// Вказуємо, де лежать наші E2E тести
+  use: {
+    headless: false, // Одразу кажемо роботу завжди показувати браузер (щоб не писати --headed)
+    baseURL: 'http://localhost:5173', // Базова адреса твого сайту
+  },
+});

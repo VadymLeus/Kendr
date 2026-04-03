@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import InputWithCounter from '../../shared/ui/complex/InputWithCounter';
+import InputWithCounter from '../../src/shared/ui/complex/InputWithCounter';
 
 describe('InputWithCounter (Integration)', () => {
     it('рендерить інпут з початковим лічильником (0 / customLimit)', () => {
