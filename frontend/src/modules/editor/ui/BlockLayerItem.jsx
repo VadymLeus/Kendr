@@ -3,6 +3,8 @@ import React, { useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { BLOCK_LIBRARY } from '../core/editorConfig'; 
 import { useBlockDrop, DND_TYPE_EXISTING } from '../core/useBlockDrop';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
+import { toast } from 'react-toastify';
 import { Settings, Trash2, PanelTop, HelpCircle, GripVertical } from 'lucide-react';
 
 const BlockLayerItem = ({
@@ -13,11 +15,13 @@ const BlockLayerItem = ({
     onDeleteBlock
 }) => {
     const ref = useRef(null);
+    const { confirm } = useConfirm();
     const blockInfo = BLOCK_LIBRARY.find(b => b.type === block.type) || { 
         name: block.type, 
         icon: <HelpCircle size={16} /> 
     };
 
+    const isGlobal = block.type.startsWith('global-');
     const [{ isDragging }, drag] = useDrag({
         type: DND_TYPE_EXISTING,
         item: { path },
@@ -32,10 +36,21 @@ const BlockLayerItem = ({
 
     drag(drop(ref));
     const showDropIndicator = dropPosition && !isDragging;
-    
-    const handleDelete = (e) => {
+    const handleDelete = async (e) => {
         e.stopPropagation();
-        onDeleteBlock(path);
+        const msg = isGlobal 
+            ? "Видалити глобальний блок з цієї сторінки? (Він залишиться в базі і його можна буде додати знову)."
+            : "Ви впевнені, що хочете видалити цей блок? Цю дію не можна буде скасувати.";
+        const isConfirmed = await confirm({
+            title: isGlobal ? "Видалення глобального блоку" : "Видалення блоку",
+            message: msg,
+            type: "danger",
+            confirmLabel: "Видалити"
+        });
+        if (isConfirmed) {
+            onDeleteBlock(path);
+            toast.info("Блок видалено");
+        }
     };
 
     const handleSelectAndScroll = (e) => {
@@ -47,7 +62,6 @@ const BlockLayerItem = ({
             element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
         }
     };
-
     let nestedBlocks = null;
     if (block.type === 'layout' && block.data.columns) {
         nestedBlocks = (
@@ -82,7 +96,6 @@ const BlockLayerItem = ({
     }
 
     const actionBtnClasses = "flex items-center justify-center w-6 h-6 min-w-6 shrink-0 border-none bg-transparent cursor-pointer rounded p-0 transition-all duration-200 text-(--platform-text-secondary)";
-
     return (
         <>
             <div
@@ -95,27 +108,21 @@ const BlockLayerItem = ({
                         : 'bg-(--platform-card-bg) border-(--platform-border-color) hover:border-(--platform-accent)'}
                 `}
             >
-                
                 {showDropIndicator && dropPosition === 'top' && (
                     <div className="absolute left-0 right-0 h-0.5 bg-(--platform-accent) z-10 pointer-events-none shadow-sm -top-0.5" />
                 )}
-
                 {showDropIndicator && dropPosition === 'bottom' && (
                     <div className="absolute left-0 right-0 h-0.5 bg-(--platform-accent) z-10 pointer-events-none shadow-sm -bottom-0.5" />
                 )}
-
                 <div className="flex items-center justify-center w-5 h-5 min-w-5 shrink-0 text-(--platform-text-secondary) cursor-grab mr-1">
                     <GripVertical size={14} />
                 </div>
-
                 <div className="flex items-center justify-center w-5 h-5 min-w-5 shrink-0 text-(--platform-accent) opacity-80">
                     {blockInfo.icon}
                 </div>
-
                 <div className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis min-w-0 leading-tight">
                     {blockInfo.name}
                 </div>
-                
                 <div className="flex items-center gap-0.5 shrink-0">
                     <button 
                         title="Налаштування" 

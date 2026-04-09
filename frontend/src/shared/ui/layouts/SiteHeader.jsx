@@ -11,7 +11,6 @@ const resolveUrl = (src) => {
     const cleanSrc = src.startsWith('/') ? src : `/${src}`;
     return `${BASE_URL}${cleanSrc}`;
 };
-
 const SiteHeader = ({ siteData, loading }) => {
     if (loading || !siteData) {
         return (
@@ -23,7 +22,6 @@ const SiteHeader = ({ siteData, loading }) => {
             }} />
         );
     }
-
     let headerBlocks = [];
     if (siteData.header_content) {
         if (Array.isArray(siteData.header_content)) {
@@ -36,16 +34,20 @@ const SiteHeader = ({ siteData, loading }) => {
             }
         }
     }
-
     if (!headerBlocks || headerBlocks.length === 0) return null;
     const processedSiteData = {
         ...siteData,
         logo_url: resolveUrl(siteData.logo_url)
     };
-
+    const isSticky = headerBlocks[0]?.is_sticky === true;
     return (
         <div 
-            style={{ position: 'sticky', top: 0, zIndex: 100, width: '100%' }}
+            style={{ 
+                width: '100%', 
+                position: isSticky ? 'sticky' : 'relative', 
+                top: isSticky ? 0 : 'auto', 
+                zIndex: 9999 
+            }}
             className="site-theme-context"
             data-site-mode={processedSiteData.site_theme_mode || 'light'}
             data-site-accent={processedSiteData.site_theme_accent || 'orange'}

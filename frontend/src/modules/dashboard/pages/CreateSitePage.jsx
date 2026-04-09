@@ -19,7 +19,7 @@ import { BASE_URL } from '../../../shared/config';
 import { validateSiteSlug, validateSiteTitle } from '../../../shared/utils/validationUtils';
 import { useTemplateManager } from '../../../shared/hooks/useTemplateManager';
 import { getTemplatePreviewData } from '../../../shared/utils/templateUtils';
-import { ArrowLeft, Layout, Check, Loader, AlertCircle, Trash, Info, Palette, Sparkles, Globe, Image, ChevronLeft, ChevronRight, Copy, Edit } from 'lucide-react';
+import { Layout, Check, Loader, AlertCircle, Trash, Info, Palette, Sparkles, Globe, Image, ChevronLeft, ChevronRight, Copy, Edit, ArrowLeft } from 'lucide-react';
 
 const logosModules = import.meta.glob('../../../shared/assets/CreateLogos/*.{png,jpg,jpeg,webp,svg}', { 
     eager: true, 
@@ -33,6 +33,7 @@ const CreateSitePage = () => {
     const [currentSiteCount, setCurrentSiteCount] = useState(0);
     const [limits, setLimits] = useState(null);
     const [isLoadingMeta, setIsLoadingMeta] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [panelTab, setPanelTab] = useState('info'); 
     const [viewMode, setViewMode] = useState('desktop'); 
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -64,6 +65,13 @@ const CreateSitePage = () => {
         };
         fetchMeta();
     }, []);
+
+    useEffect(() => {
+        if (!isLoadingMeta && !manager.isLoading) {
+            setIsInitialLoad(false);
+        }
+    }, [isLoadingMeta, manager.isLoading]);
+
     const isPlanAdmin = plan && String(plan).trim().toUpperCase() === 'ADMIN';
     const maxSitesDisplay = isPlanAdmin ? '∞' : (limits ? limits.maxSites : '...');
     const isLimitReached = !isPlanAdmin && limits && currentSiteCount >= limits.maxSites;
@@ -89,49 +97,81 @@ const CreateSitePage = () => {
         const timer = setTimeout(checkSlug, 500);
         return () => clearTimeout(timer);
     }, [formData.slug]);
+
+    const displayTemplates = useMemo(() => {
+        if (manager.filters.templateSourceTab === 'system') {
+            return [{ id: 'blank', isBlank: true }, ...manager.templates];
+        }
+        return manager.templates;
+    }, [manager.templates, manager.filters.templateSourceTab]);
+
     const previewData = useMemo(() => {
+        if (manager.selectedTemplateId === 'blank') {
+            return { 
+                pages: [{ slug: 'home', name: 'Головна', blocks: [] }], 
+                theme: { mode: 'light', accent: 'blue' }, 
+                header: [], 
+                footer: [], 
+                siteData: {} 
+            };
+        }
         const data = getTemplatePreviewData(manager.selectedTemplate);
         return data || { pages: [], theme: { mode: 'light', accent: 'blue' }, header: [], footer: [], siteData: {} };
-    }, [manager.selectedTemplate]);
+    }, [manager.selectedTemplate, manager.selectedTemplateId]);
+
     useEffect(() => {
         if (previewData.pages.length > 0) {
             const hasHomePage = previewData.pages.find(p => p.slug === 'home');
             setCurrentPreviewSlug(hasHomePage ? 'home' : (previewData.pages[0]?.slug || 'home'));
         }
     }, [manager.selectedTemplateId, previewData.pages]);
+
     const currentBlocks = useMemo(() => {
         const page = previewData.pages.find(p => p.slug === currentPreviewSlug);
         return page ? (page.blocks || []) : [];
     }, [previewData.pages, currentPreviewSlug]);
+
     const effectiveLogo = customLogo || defaultRandomLogo;
     const handleTitleChange = (e) => {
         const { val, error } = validateSiteTitle(e.target.value);
         setTitleError(error); setFormData(prev => ({ ...prev, title: val }));
     };
+
     const handleSlugChange = (e) => {
         const sanitizedVal = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
         setFormData(prev => ({ ...prev, slug: sanitizedVal }));
     };
+
     const handleSubmit = async () => {
         const trimmedTitle = formData.title.trim();
         if (isLimitReached || !trimmedTitle || !formData.slug || !manager.selectedTemplateId || slugStatus !== 'available' || titleError || slugError) return;
         setIsSubmitting(true);
         try {
-            const res = await apiClient.post('/sites/create', { 
-                templateId: manager.selectedTemplateId, sitePath: formData.slug, 
-                title: trimmedTitle, selected_logo_url: effectiveLogo 
-            });
+            const isBlank = manager.selectedTemplateId === 'blank';
+            const payload = {
+                sitePath: formData.slug, 
+                title: trimmedTitle, 
+                selected_logo_url: effectiveLogo,
+                isBlank: isBlank
+            };
+            if (!isBlank) {
+                payload.templateId = manager.selectedTemplateId;
+            }
+            const res = await apiClient.post('/sites/create', payload);
             toast.success('Сайт створено успішно!');
             window.location.href = `/dashboard/${res.data.site.site_path}`;
         } catch (err) {
             setIsSubmitting(false); 
+            toast.error(err.response?.data?.message || 'Помилка при створенні сайту');
         }
     };
+
     const handleConfirmAction = async () => {
         const { actionType, template } = manager.modals.confirmModal;
         await manager.actions.handleAction(actionType, template);
         manager.modals.setConfirmModal({ isOpen: false, template: null, actionType: null });
     };
+
     const getFullUrl = (path) => {
         if (!path) return '';
         if (path.startsWith('http') || path.startsWith('data:')) return path;
@@ -139,8 +179,9 @@ const CreateSitePage = () => {
         if (path.includes('/assets/') || path.includes('/src/') || path.includes('@fs')) return path;
         return `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
     };
+
     const containerStyle = { position: 'absolute', inset: 0, display: 'flex', overflow: 'hidden', background: 'var(--platform-bg)' };
-    if (isLoadingMeta || manager.isLoading) return <div style={{...containerStyle, alignItems: 'center', justifyContent: 'center'}}><LoadingState title="Завантаження даних..." layout="page" /></div>;
+    if (isInitialLoad) return <div style={{...containerStyle, alignItems: 'center', justifyContent: 'center'}}><LoadingState title="Завантаження даних..." layout="page" /></div>;
     const isFormReady = !isLimitReached && formData.title.trim().length >= 2 && !titleError && formData.slug && slugStatus === 'available' && !slugError;
     return (
         <div style={containerStyle}>
@@ -163,8 +204,7 @@ const CreateSitePage = () => {
             }}>
                 <div style={{ width: '100%', minWidth: '400px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div className="p-6 border-b border-(--platform-border-color) shrink-0">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Button variant="ghost" onClick={() => navigate('/my-sites')} className="p-2!"><ArrowLeft size={20}/></Button>
+                        <div className="flex items-center mb-6">
                             <h1 className="text-xl font-bold text-(--platform-text-primary) m-0">Новий сайт</h1>
                         </div>
                         <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
@@ -172,6 +212,7 @@ const CreateSitePage = () => {
                             <button className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${panelTab === 'design' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`} onClick={() => setPanelTab('design')}><Palette size={16} /> 2. Дизайн</button>
                         </div>
                     </div>
+                    
                     <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6 pt-0 bg-(--platform-bg) min-h-0 [scrollbar-gutter:stable]">
                         {panelTab === 'info' ? (
                              <div className="flex flex-col gap-6 pt-6">
@@ -213,32 +254,62 @@ const CreateSitePage = () => {
                                 <div className="sticky top-0 -mx-6 px-6 pt-4 pb-2 bg-(--platform-bg)/95 z-20 mb-4 backdrop-blur-sm border-b border-transparent transition-all">
                                     <TemplateFilters filters={manager.filters} isAdmin={isAdmin} />
                                 </div>
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pb-4 px-1">
-                                    {manager.templates.length > 0 ? manager.templates.map(tpl => (
-                                        <TemplateCard 
-                                            key={tpl.id}
-                                            template={tpl}
-                                            isSelected={manager.selectedTemplateId === tpl.id}
-                                            onClick={() => manager.setSelectedTemplateId(tpl.id)}
-                                            getFullUrl={getFullUrl}
-                                            badge={<TemplateBadge template={tpl} user={user} isAdmin={isAdmin} sourceTab={manager.filters.templateSourceTab} />}
-                                            actions={(manager.filters.templateSourceTab === 'personal' || isAdmin) && (
-                                                <div className="flex gap-2 w-full justify-end mt-2 pt-2 border-t border-(--platform-border-color)">
-                                                    {isAdmin && manager.filters.templateSourceTab === 'system' && (
-                                                        <button 
-                                                            onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'copy' }); }} 
-                                                            className="p-1.5 text-(--platform-text-secondary) hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 rounded-md transition-colors border border-transparent hover:border-indigo-500/30" 
-                                                            title="Скопіювати як чернетку"
-                                                        >
-                                                            <Copy size={14}/>
-                                                        </button>
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pb-4 px-1 relative">
+                                    {manager.isLoading && (
+                                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-(--platform-bg)/50 backdrop-blur-sm rounded-xl">
+                                            <Loader size={32} className="animate-spin text-(--platform-accent)" />
+                                        </div>
+                                    )}
+                                    {displayTemplates.length > 0 ? displayTemplates.map(tpl => {
+                                        if (tpl.id === 'blank') {
+                                            const isSelected = manager.selectedTemplateId === 'blank';
+                                            return (
+                                                <div 
+                                                    key="blank"
+                                                    onClick={() => manager.setSelectedTemplateId('blank')}
+                                                    className={`relative flex flex-col items-center justify-center p-6 rounded-2xl cursor-pointer transition-all duration-200 h-full min-h-75 bg-(--platform-bg) hover:border-(--platform-accent) group ${isSelected ? 'border-2 border-(--platform-accent) ring-4 ring-(--platform-accent)/10' : 'border-2 border-dashed border-(--platform-border-color)'}`}
+                                                >
+                                                    <div className={`w-16 h-16 rounded-full shadow-sm flex items-center justify-center mb-5 transition-all duration-300 ${isSelected ? 'bg-(--platform-accent) text-white scale-110' : 'bg-(--platform-card-bg) text-(--platform-text-secondary) group-hover:text-(--platform-accent) group-hover:scale-110'}`}>
+                                                        <Layout size={32} />
+                                                    </div>
+                                                    <h3 className="text-xl font-bold text-(--platform-text-primary) mb-3">Пустий сайт</h3>
+                                                    <p className="text-sm text-(--platform-text-secondary) text-center max-w-[85%]">
+                                                        Почніть з чистого аркуша і створіть свій ідеальний сайт.
+                                                    </p>
+                                                    {isSelected && (
+                                                        <div className="absolute top-4 right-4 w-7 h-7 bg-(--platform-accent) text-white rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
+                                                            <Check size={16} />
+                                                        </div>
                                                     )}
-                                                    <button onClick={(e) => { e.stopPropagation(); manager.modals.setEditingTemplate(tpl); manager.modals.setIsEditModalOpen(true); }} className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-(--platform-bg) rounded-md transition-colors border border-transparent hover:border-(--platform-accent)/30" title="Редагувати шаблон"><Edit size={14}/></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'delete' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors border border-transparent hover:border-red-500/30" title="Видалити шаблон"><Trash size={14}/></button>
                                                 </div>
-                                            )}
-                                        />
-                                    )) : <div className="col-span-1 xl:col-span-2 mt-10"><EmptyState title="Не знайдено" description="Спробуйте змінити фільтри" icon={Layout}/></div>}
+                                            );
+                                        }
+                                        return (
+                                            <TemplateCard 
+                                                key={tpl.id}
+                                                template={tpl}
+                                                isSelected={manager.selectedTemplateId === tpl.id}
+                                                onClick={() => manager.setSelectedTemplateId(tpl.id)}
+                                                getFullUrl={getFullUrl}
+                                                badge={<TemplateBadge template={tpl} user={user} isAdmin={isAdmin} sourceTab={manager.filters.templateSourceTab} />}
+                                                actions={(manager.filters.templateSourceTab === 'personal' || isAdmin) && (
+                                                    <div className="flex gap-2 w-full justify-end mt-2 pt-2 border-t border-(--platform-border-color)">
+                                                        {isAdmin && manager.filters.templateSourceTab === 'system' && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'copy' }); }} 
+                                                                className="p-1.5 text-(--platform-text-secondary) hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 rounded-md transition-colors border border-transparent hover:border-indigo-500/30" 
+                                                                title="Скопіювати як чернетку"
+                                                            >
+                                                                <Copy size={14}/>
+                                                            </button>
+                                                        )}
+                                                        <button onClick={(e) => { e.stopPropagation(); manager.modals.setEditingTemplate(tpl); manager.modals.setIsEditModalOpen(true); }} className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-(--platform-bg) rounded-md transition-colors border border-transparent hover:border-(--platform-accent)/30" title="Редагувати шаблон"><Edit size={14}/></button>
+                                                        <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'delete' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors border border-transparent hover:border-red-500/30" title="Видалити шаблон"><Trash size={14}/></button>
+                                                    </div>
+                                                )}
+                                            />
+                                        );
+                                    }) : <div className="col-span-1 xl:col-span-2 mt-10"><EmptyState title="Не знайдено" description="Спробуйте змінити фільтри" icon={Layout}/></div>}
                                 </div>
                             </div>
                         )}
@@ -246,7 +317,7 @@ const CreateSitePage = () => {
                     <div className="p-6 bg-(--platform-card-bg) border-t border-(--platform-border-color) shrink-0">
                         {panelTab === 'info' ? 
                             <Button variant="primary" className="w-full py-3 justify-center" onClick={handleSubmit} disabled={!isFormReady || isSubmitting}>
-                                {isSubmitting ? <Loader size={18} className="animate-spin" /> : <>Створити сайт <ArrowLeft size={18} className="rotate-180" /></>}
+                                {isSubmitting ? <Loader size={18} className="animate-spin" /> : <>Створити сайт <ArrowLeft size={18} className="rotate-180 ml-2" /></>}
                             </Button> 
                             : <Button variant="outline" className="w-full justify-center" onClick={() => setPanelTab('info')}>Далі: Введіть назву <ArrowLeft size={16} className="rotate-180 ml-2" /></Button>
                         }
@@ -261,7 +332,18 @@ const CreateSitePage = () => {
                 </button>
             </div>
             <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', background: 'var(--platform-bg)' }}>
-                <SitePreviewer viewMode={viewMode} setViewMode={setViewMode} previewData={previewData} currentBlocks={currentBlocks} isLoading={isLoadingMeta || manager.isLoading} emptyTitle="Оберіть шаблон" emptyDescription="Оберіть шаблон для попереднього перегляду" url={`kendr.site/${formData.slug || 'your-site'}`} userTitle={formData.title} userLogo={effectiveLogo} />
+                <SitePreviewer 
+                    viewMode={viewMode} 
+                    setViewMode={setViewMode} 
+                    previewData={previewData} 
+                    currentBlocks={currentBlocks} 
+                    isLoading={manager.isLoading}
+                    emptyTitle="Оберіть шаблон" 
+                    emptyDescription="Оберіть шаблон для попереднього перегляду" 
+                    url={`kendr.site/${formData.slug || 'your-site'}`} 
+                    userTitle={formData.title} 
+                    userLogo={effectiveLogo} 
+                />
             </div>
         </div>
     );

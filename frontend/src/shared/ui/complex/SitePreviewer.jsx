@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import BlockRenderer from '../../../modules/editor/core/BlockRenderer';
 import FontLoader from '../../../modules/renderer/components/FontLoader';
-import { Monitor, Smartphone, Lock, AlertCircle, Layout } from 'lucide-react';
+import { Monitor, Smartphone, Lock, Layout, Layers } from 'lucide-react';
 
 const SitePreviewer = ({ 
     viewMode, 
@@ -32,7 +32,6 @@ const SitePreviewer = ({
             site_name: mergedTitle 
         };
     }, [previewData, userTitle, userLogo]);
-
     const injectedHeaderBlocks = useMemo(() => {
         if (!previewData?.header) return [];
         return previewData.header.map(block => {
@@ -50,8 +49,9 @@ const SitePreviewer = ({
             return block;
         });
     }, [previewData, userTitle, userLogo]);
+
     return (
-        <div className="flex-1 flex flex-col h-full bg-gray-50/50 dark:bg-gray-900/50 relative overflow-hidden min-h-0 z-10 min-w-0">
+        <div className="flex-1 flex flex-col h-full bg-(--platform-bg) relative overflow-hidden min-h-0 min-w-0">
             <style>{`
                 .site-header-logo-text, .logo-text, h1.logo {
                     max-width: 200px;
@@ -62,7 +62,7 @@ const SitePreviewer = ({
                     vertical-align: middle;
                 }
             `}</style>
-            <div className="h-14 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex items-center px-4 gap-4 shrink-0 justify-between z-10 shadow-sm">
+            <div className="h-14 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex items-center px-4 gap-4 shrink-0 justify-between shadow-sm relative">
                 <div className="flex gap-2 w-20">
                      <div className="w-3 h-3 rounded-full bg-[#ff5f57] border border-[#e0443e] opacity-80"></div>
                      <div className="w-3 h-3 rounded-full bg-[#febc2e] border border-[#d89e24] opacity-80"></div>
@@ -129,14 +129,23 @@ const SitePreviewer = ({
                                     {injectedHeaderBlocks && injectedHeaderBlocks.length > 0 && (
                                         <BlockRenderer blocks={injectedHeaderBlocks} siteData={simulatedSiteData} />
                                     )}
-
-                                    <main className="flex-1">
+                                    <main className="flex-1 flex flex-col">
                                         {currentBlocks && currentBlocks.length > 0 ? (
                                             <BlockRenderer blocks={currentBlocks} siteData={simulatedSiteData} />
                                         ) : (
-                                            <div className="h-full flex flex-col items-center justify-center p-20 text-gray-300 gap-4 min-h-60">
-                                                <AlertCircle size={48} strokeWidth={1} className="opacity-50"/>
-                                                <p className="text-lg font-medium text-center">Шаблон порожній</p>
+                                            <div className="flex-1 flex flex-col items-center justify-center p-10 min-h-100">
+                                                <div 
+                                                    className="p-5 rounded-2xl mb-5 flex items-center justify-center" 
+                                                    style={{ backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 5%, transparent)' }}
+                                                >
+                                                    <Layers size={42} strokeWidth={1.5} style={{ color: 'var(--site-text-primary)', opacity: 0.6 }}/>
+                                                </div>
+                                                <p className="text-xl font-medium" style={{ color: 'var(--site-text-primary)' }}>
+                                                    Шаблон порожній
+                                                </p>
+                                                <p className="text-sm mt-2 text-center max-w-xs" style={{ color: 'var(--site-text-primary)', opacity: 0.6 }}>
+                                                    Цей шаблон не містить жодного збереженого блоку контенту.
+                                                </p>
                                             </div>
                                         )}
                                     </main>
@@ -147,14 +156,20 @@ const SitePreviewer = ({
                                 </div>
                             </div>
                         ) : (
-                            <div className="h-full flex flex-col items-center justify-center p-20 text-gray-300 gap-4 min-h-full">
-                                <Layout size={64} strokeWidth={1} />
-                                <p className="text-lg font-medium text-center">{emptyTitle}</p>
-                                <p className="text-sm text-center opacity-70">{emptyDescription}</p>
+                            <div className="h-full flex flex-col items-center justify-center p-12 min-h-full">
+                                <div className="p-6 rounded-[28px] bg-(--platform-card-bg) border border-(--platform-border-color) shadow-sm mb-6 flex items-center justify-center">
+                                    <Layout size={48} strokeWidth={1.2} className="text-(--platform-text-secondary) opacity-80" />
+                                </div>
+                                <p className="text-xl font-semibold text-(--platform-text-primary) text-center">
+                                    {emptyTitle}
+                                </p>
+                                <p className="text-sm mt-2 text-(--platform-text-secondary) text-center opacity-80">
+                                    {emptyDescription}
+                                </p>
                             </div>
                         )}
                     </div>
-                </div>
+                 </div>
             </div>
         </div>
     );

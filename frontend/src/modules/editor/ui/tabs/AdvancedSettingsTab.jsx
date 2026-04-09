@@ -2,16 +2,15 @@
 import React from 'react';
 import { Input } from '../../../../shared/ui/elements/Input';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
-import { Hash, MoveVertical, Link2, Maximize } from 'lucide-react';
 import { SectionTitle } from '../configuration/SettingsUI';
 import AnimationSettings from '../configuration/AnimationSettings';
 import SpacingControl from '../configuration/SpacingControl';
+import { Hash, MoveVertical, Link2, Maximize } from 'lucide-react';
 
 const AdvancedSettingsTab = ({ data, onUpdate }) => {
     const handleAnchorChange = (e) => {
         const rawValue = e.target.value;
         const sanitized = rawValue.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
-        
         onUpdate({
             ...data,
             anchorId: sanitized
@@ -47,7 +46,7 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
         { value: 'small', label: 'Маленька (300px)' },
         { value: 'medium', label: 'Середня (500px)' },
         { value: 'large', label: 'Велика (700px)' },
-        { value: 'full', label: 'На весь екран' },
+        { value: 'full', label: 'Дуже велика (XL)' },
     ];
 
     return (
@@ -67,9 +66,7 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
                     </div>
                 </div>
             </div>
-
             <div className="h-px bg-(--platform-border-color) opacity-50"></div>
-
             <div>
                 <SectionTitle icon={<Maximize size={16}/>}>Висота блоку</SectionTitle>
                 <div className="mt-3">
@@ -82,11 +79,8 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
                     />
                 </div>
             </div>
-
             <div className="h-px bg-(--platform-border-color) opacity-50"></div>
-
             <div>
-                <SectionTitle icon={<MoveVertical size={16} />}>Внутрішні відступи</SectionTitle>
                 <div className="mt-3">
                     <SpacingControl 
                         styles={data.styles || {}} 
@@ -94,9 +88,7 @@ const AdvancedSettingsTab = ({ data, onUpdate }) => {
                     />
                 </div>
             </div>
-
             <div className="h-px bg-(--platform-border-color) opacity-50"></div>
-
             <AnimationSettings 
                 animationConfig={data.animation} 
                 onChange={handleAnimationUpdate} 

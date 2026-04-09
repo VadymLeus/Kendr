@@ -10,9 +10,11 @@ import MaintenancePage from '../../../pages/MaintenancePage';
 import useScrollToHash from '../../../shared/hooks/useScrollToHash';
 import CookieBanner from '../components/CookieBanner';
 import FontLoader from '../components/FontLoader';
+import SiteControls from '../components/SiteControls';
 import ReportModal from '../../../shared/ui/complex/ReportModal';
 import { BASE_URL } from '../../../shared/config';
-import { Loader2 } from 'lucide-react';
+import { getDefaultBlockData } from '../../editor/core/editorConfig';
+import { Loader2, Layers } from 'lucide-react';
 
 const SiteDisplayPage = () => {
     const { siteData, isSiteLoading } = useOutletContext();
@@ -27,6 +29,7 @@ const SiteDisplayPage = () => {
                 .catch(err => console.warn("View counter error:", err));
         }
     }, [isSiteLoading, siteData, site_path]);
+    
     const isMissingData = !siteData || !siteData.page;
     useEffect(() => {
         let timer;
@@ -37,6 +40,7 @@ const SiteDisplayPage = () => {
         }
         return () => clearTimeout(timer);
     }, [isSiteLoading, isMissingData]);
+    
     if (isSiteLoading || (isMissingData && !show404)) {
         return (
             <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh', color: 'var(--platform-text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -65,63 +69,62 @@ const SiteDisplayPage = () => {
             ? siteData.favicon_url
             : `${BASE_URL}${siteData.favicon_url.startsWith('/') ? '' : '/'}${siteData.favicon_url}`)
         : '/icon-light.webp';
+        
     let pageBlocks = [];
     try {
-        pageBlocks = Array.isArray(siteData.page.block_content)
+        let parsedBlocks = Array.isArray(siteData.page.block_content)
             ? siteData.page.block_content
             : JSON.parse(siteData.page.block_content || '[]');
-    } catch (e) {}
-    let footerBlocks = [];
-    try {
-        footerBlocks = Array.isArray(siteData.footer_content)
-            ? siteData.footer_content
-            : JSON.parse(siteData.footer_content || '[]');
-    } catch (e) {}
+        pageBlocks = parsedBlocks.map(block => {
+            if (block.type === 'global-header' || block.type === 'header') {
+                let globalData = typeof siteData.header_content === 'string' 
+                    ? JSON.parse(siteData.header_content || '{}') 
+                    : (siteData.header_content || {});
+                
+                if (Object.keys(globalData).length === 0) globalData = getDefaultBlockData('global-header');
+                return { ...block, type: 'global-header', data: globalData };
+            }
+            if (block.type === 'global-footer' || block.type === 'footer') {
+                let globalData = typeof siteData.footer_content === 'string' 
+                    ? JSON.parse(siteData.footer_content || '{}') 
+                    : (siteData.footer_content || {});
+                
+                if (Object.keys(globalData).length === 0) globalData = getDefaultBlockData('global-footer');
+                return { ...block, type: 'global-footer', data: globalData };
+            }
+            return block;
+        });
+    } catch (e) {
+        console.error("Error parsing blocks:", e);
+    }
+
+    const hasHeader = pageBlocks.some(block => block.type === 'header' || block.type === 'global-header');
     const layoutStyle = {
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        width: '100%',
-        margin: 0,
-        padding: 0,
-        backgroundColor: 'var(--site-bg)',
-        color: 'var(--site-text-primary)'
+        display: 'flex', flexDirection: 'column', minHeight: '100dvh',
+        width: '100%', margin: 0, padding: 0,
+        backgroundColor: 'var(--site-bg)', color: 'var(--site-text-primary)'
     };
 
     const mainContentStyle = {
-        flex: '1',
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        marginBottom: '0'
+        flex: '1', display: 'flex', flexDirection: 'column',
+        width: '100%', marginBottom: '0'
     };
 
     const footerStyle = {
-        flexShrink: 0,
-        backgroundColor: 'var(--site-bg)',
+        flexShrink: 0, backgroundColor: 'var(--site-bg)',
         borderTop: '1px solid var(--site-border-color)',
-        width: '100%',
-        margin: 0,
-        padding: 0,
-        marginTop: '0'
+        width: '100%', margin: 0, padding: 0, marginTop: '0'
     };
 
     const copyrightStyle = {
-        textAlign: 'center',
-        padding: '1.5rem',
-        fontSize: '0.8rem',
-        color: 'var(--site-text-secondary)',
-        width: '100%',
-        boxSizing: 'border-box',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px'
+        textAlign: 'center', padding: '1.5rem', fontSize: '0.8rem',
+        color: 'var(--site-text-secondary)', width: '100%', boxSizing: 'border-box',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
     };
 
     return (
         <div 
-            className="site-root site-theme-context" 
+            className="site-root site-theme-context relative" 
             style={layoutStyle}
             data-site-mode={siteData.site_theme_mode || 'light'}
             data-site-accent={siteData.site_accent || 'blue'}
@@ -137,55 +140,46 @@ const SiteDisplayPage = () => {
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.href} />
             </Helmet>
+            {!hasHeader && <SiteControls siteData={siteData} />}
             {siteData && siteData.theme_settings && (
-                <FontLoader
-                    fontHeading={siteData.theme_settings.font_heading}
-                    fontBody={siteData.theme_settings.font_body}
-                />
+                <FontLoader fontHeading={siteData.theme_settings.font_heading} fontBody={siteData.theme_settings.font_body} />
             )}
             <main style={mainContentStyle}>
-                <BlockRenderer blocks={pageBlocks} siteData={siteData} />
-            </main>
-            {(footerBlocks.length > 0 || true) && (
-                <footer style={footerStyle}>
-                    {footerBlocks.length > 0 && <BlockRenderer blocks={footerBlocks} siteData={siteData} />}
-                    <div style={copyrightStyle}>
-                        <span>Powered by Kendr</span>
-                        {!isOwner && (
-                            <>
-                                <span>•</span>
-                                <button
-                                    onClick={() => setIsReportOpen(true)}
-                                    style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: 'inherit',
-                                        textDecoration: 'none',
-                                        cursor: 'pointer',
-                                        fontSize: 'inherit',
-                                        opacity: 0.8,
-                                        padding: 0
-                                    }}
-                                    onMouseEnter={(e) => e.target.style.color = 'var(--platform-danger)'}
-                                    onMouseLeave={(e) => e.target.style.color = 'inherit'}
-                                    title="Report Abuse / Поскаржитись"
-                                >
-                                    Report
-                                </button>
-                            </>
-                        )}
+                {pageBlocks && pageBlocks.length > 0 ? (
+                    <BlockRenderer blocks={pageBlocks} siteData={siteData} />
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh] w-full" style={{ backgroundColor: 'var(--site-bg)' }}>
+                        <div className="mb-6 opacity-40">
+                            <Layers size={64} style={{ color: 'var(--site-text-primary)' }} />
+                        </div>
+                        <h1 className="text-2xl font-bold mb-3" style={{ color: 'var(--site-text-primary)' }}>Сторінка в розробці</h1>
+                        <p className="max-w-md mx-auto text-[1.05rem]" style={{ color: 'var(--site-text-secondary)' }}>
+                            Власник сайту ще не додав контент на цю сторінку. Завітайте сюди трохи згодом!
+                        </p>
                     </div>
-                </footer>
-            )}
-            <CookieBanner
-                settings={siteData.theme_settings?.cookie_banner}
-                siteId={siteData.id}
-            />
-            <ReportModal
-                isOpen={isReportOpen}
-                onClose={() => setIsReportOpen(false)}
-                siteId={siteData.id}
-            />
+                )}
+            </main>
+            <footer style={footerStyle}>
+                <div style={copyrightStyle}>
+                    <span>Powered by Kendr</span>
+                    {!isOwner && (
+                        <>
+                            <span>•</span>
+                            <button
+                                onClick={() => setIsReportOpen(true)}
+                                style={{ background: 'transparent', border: 'none', color: 'inherit', textDecoration: 'none', cursor: 'pointer', fontSize: 'inherit', opacity: 0.8, padding: 0 }}
+                                onMouseEnter={(e) => e.target.style.color = 'var(--platform-danger)'}
+                                onMouseLeave={(e) => e.target.style.color = 'inherit'}
+                                title="Report Abuse / Поскаржитись"
+                            >
+                                Report
+                            </button>
+                        </>
+                    )}
+                </div>
+            </footer>
+            <CookieBanner enabled={siteData.cookie_banner_enabled} text={siteData.cookie_banner_text} siteId={siteData.id} />
+            <ReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} siteId={siteData.id} />
         </div>
     );
 };

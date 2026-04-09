@@ -1,4 +1,4 @@
-// frontend/src/modules/shop/MyOrdersPage.jsx
+// frontend/src/modules/shop/CartPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '../../shared/api/api';
 import EmptyState from '../../shared/ui/complex/EmptyState';
@@ -56,6 +56,12 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
     const StatusIcon = statusConfig.icon;
     const siteLogin = resolvedPaths[order.site_id];
     const siteLinkBase = siteLogin ? `/site/${siteLogin}` : null;
+    const currencyMap = {
+        'UAH': '₴',
+        'USD': '$',
+        'EUR': '€'
+    };
+    const currencySymbol = currencyMap[order.currency] || '₴';
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, '0');
@@ -71,6 +77,7 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
         await onPay(order.id);
         setIsPaying(false);
     };
+
     return (
         <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl overflow-hidden mb-4 transition-all hover:shadow-sm">
             <div 
@@ -117,7 +124,7 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                     <div className="text-left md:text-right">
                         <p className="text-sm text-(--platform-text-secondary) m-0 mb-1">Сума</p>
                         <p className="font-bold text-(--platform-text-primary) text-lg m-0">
-                            {parseFloat(order.total_amount).toFixed(0)} ₴
+                            {parseFloat(order.total_amount).toFixed(0)} {currencySymbol}
                         </p>
                     </div>
                     {order.status === 'pending' && (
@@ -218,11 +225,11 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                                                 <div className="text-left sm:text-right">
                                                     {item.quantity > 1 && (
                                                         <p className="text-xs text-(--platform-text-secondary) m-0 mb-1">
-                                                            {parseFloat(item.price).toFixed(0)} ₴ / шт.
+                                                            {parseFloat(item.price).toFixed(0)} {currencySymbol} / шт.
                                                         </p>
                                                     )}
                                                     <p className="text-lg font-bold text-(--platform-text-primary) m-0">
-                                                        {(parseFloat(item.price) * item.quantity).toFixed(0)} ₴
+                                                        {(parseFloat(item.price) * item.quantity).toFixed(0)} {currencySymbol}
                                                     </p>
                                                 </div>
                                             </div>
@@ -308,12 +315,10 @@ const MyOrdersPage = () => {
             fetchPaths();
         }
     }, [orders]);
-
     const clearDateFilter = () => {
         setStartDate('');
         setEndDate('');
     };
-
     const processedOrders = useMemo(() => {
         let result = [...orders];
         if (search.trim()) {
@@ -350,7 +355,6 @@ const MyOrdersPage = () => {
         });
         return result;
     }, [orders, search, statusFilter, startDate, endDate, sortBy, sortOrder, resolvedPaths]);
-
     const toggleSortOrder = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };

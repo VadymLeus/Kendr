@@ -19,7 +19,6 @@ const LayersTab = ({
             </div>
         )
     }
-
     if (!blocks || blocks.length === 0) {
         return (
             <div className="h-full flex flex-col items-center justify-center p-5 text-center text-(--platform-text-secondary)">
@@ -32,15 +31,9 @@ const LayersTab = ({
                 <p className="text-sm leading-relaxed max-w-60">
                     Додайте перші блоки з меню "Додати", щоб побачити структуру сторінки.
                 </p>
-                
-                <div className="mt-7.5 py-3 px-4 bg-(--platform-bg) border border-dashed border-(--platform-border-color) rounded-lg text-xs flex items-center gap-2 text-(--platform-text-secondary)">
-                    <PlusCircle size={14} /> 
-                    <span>Перейдіть у вкладку "Додати"</span>
-                </div>
             </div>
         );
     }
-
     return (
         <div className="p-4">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-(--platform-border-color)">
@@ -49,7 +42,6 @@ const LayersTab = ({
                     Структура сторінки
                 </h3>
             </div>
-            
             <div className="flex flex-col gap-1">
                 {blocks.map((block, index) => (
                     <BlockLayerItem

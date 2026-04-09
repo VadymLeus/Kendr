@@ -7,7 +7,6 @@ exports.saveBlock = async (req, res, next) => {
         if (!name || !content) {
             return res.status(400).json({ message: 'Назва та вміст блоку обов\'язкові.' });
         }
-
         const id = await SavedBlock.create(req.user.id, name, type, content);
         res.status(201).json({ message: 'Блок збережено в бібліотеку.', id });
     } catch (error) {

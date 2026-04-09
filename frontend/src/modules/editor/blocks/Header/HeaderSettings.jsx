@@ -10,13 +10,11 @@ import AlignmentControl from '../../ui/components/AlignmentControl';
 import ButtonEditor from '../../ui/components/ButtonEditor';
 import FontSelector from '../../ui/components/FontSelector';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
-import { BASE_URL } from '../../../../shared/config';
-import { Trash2, Plus, Image, Type, LayoutTemplate, List, Link, Pencil, AlertCircle, Upload } from 'lucide-react';
+import { Trash2, Plus, Image, Type, LayoutTemplate, List, Link as LinkIcon, Pencil, Crop } from 'lucide-react';
 
 const HeaderSettings = ({ data, onChange, siteData }) => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [itemToDeleteId, setItemToDeleteId] = useState(null);
-    const [isLogoHovered, setIsLogoHovered] = useState(false);
     const MAX_NAV_ITEMS = 5;
     const navItemsCount = (data.nav_items || []).length;
     const isLimitReached = navItemsCount >= MAX_NAV_ITEMS;
@@ -52,18 +50,6 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
         updateData({ logo_src: newValue });
     };
 
-    const getLogoUrl = (src) => {
-        if (!src) return '';
-        if (typeof src === 'string') {
-            if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:')) return src;
-            if (src.startsWith('/logos/')) return src;
-            if (src.includes('/src/') || src.includes('/assets/') || src.includes('@fs')) return src;
-            const cleanSrc = src.startsWith('/') ? src : `/${src}`;
-            return `${BASE_URL}${cleanSrc}`;
-        }
-        return '';
-    };
-
     const currentLogoRadius = data.logo_radius !== undefined ? data.logo_radius : (data.borderRadius || 0);
     return (
         <div className="flex flex-col gap-6">
@@ -87,50 +73,12 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                                 type="image"
                                 value={data.logo_src} 
                                 onChange={handleLogoChange} 
-                                aspect={1}
-                                triggerStyle={{ width: '100%', height: '100%', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }}
-                            >
-                                <div 
-                                    className="w-full h-full flex items-center justify-center relative rounded-lg overflow-hidden bg-(--platform-card-bg) border border-dashed border-(--platform-border-color)"
-                                    onMouseEnter={() => setIsLogoHovered(true)}
-                                    onMouseLeave={() => setIsLogoHovered(false)}
-                                >
-                                    {data.logo_src ? (
-                                        <>
-                                            <img 
-                                                src={getLogoUrl(data.logo_src)} 
-                                                alt="Logo" 
-                                                className="max-w-[80%] max-h-[80%] object-contain transition-all duration-200"
-                                                style={{ borderRadius: `${currentLogoRadius}px` }} 
-                                            />
-                                            <div 
-                                                className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200 backdrop-blur-[2px] ${isLogoHovered ? 'opacity-100' : 'opacity-0'}`}
-                                            >
-                                                <div className="text-white flex gap-2 items-center font-medium">
-                                                    <Upload size={18} /> Змінити
-                                                </div>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleLogoChange(''); }}
-                                                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white border-none flex items-center justify-center cursor-pointer hover:bg-black/70 transition-colors"
-                                                    title="Видалити"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-(--platform-text-secondary) opacity-60">
-                                            <Image size={32} />
-                                            <span className="text-sm">Завантажити лого</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </UniversalMediaInput>
+                                aspect={data.aspectRatio === 1 ? 1 : null}
+                            />
                         </div>
                     </div>
                 </div>
                 <div className="mb-5">
-                    <label style={commonStyles.label}>Розмір логотипу</label>
                     <ToggleGroup 
                         options={[
                             { value: 'small', label: 'S' },
@@ -153,24 +101,43 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                 </div>
                 <div className="mb-5">
                     <Input 
-                        label="Назва сайту (текст)"
-                        value={data.site_title}
+                        label="Назва сайту"
+                        value={data.site_title || ''}
                         onChange={(e) => updateData({ site_title: e.target.value })}
                         leftIcon={<Type size={16}/>}
                     />
                 </div>
                 <ToggleSwitch 
-                    checked={data.show_title}
+                    checked={data.show_title || false}
                     onChange={(checked) => updateData({ show_title: checked })}
                     label="Показувати назву поруч з лого"
                 />
             </div>
-            <div className="text-xs text-(--platform-text-secondary) leading-snug flex gap-2">
-                <AlertCircle size={16} className="shrink-0 mt-0.5 text-(--platform-accent)" />
-                <span>Логотип і назву сайту синхронізовано глобальними налаштуваннями.</span>
+            <div>
+                <SectionTitle icon={<Crop size={16}/>}>Формат логотипу</SectionTitle>
+                <div className="mb-5">
+                      <ToggleSwitch 
+                        label="Квадратне зображення (1:1)"
+                        checked={data.aspectRatio === 1}
+                        onChange={(val) => updateData({ aspectRatio: val ? 1 : null })}
+                      />
+                      <div className="text-xs text-(--platform-text-secondary) mt-1.5 leading-snug">
+                        {data.aspectRatio === 1 
+                            ? "При завантаженні буде запропоновано обрізати логотип під квадрат." 
+                            : "Логотип відображатиметься в оригінальних пропорціях."}
+                      </div>
+                </div>
             </div>
+            
             <div>
                 <SectionTitle icon={<LayoutTemplate size={18}/>}>Розміщення та Стиль</SectionTitle>
+                <div className="mb-5">
+                    <ToggleSwitch 
+                        checked={data.is_sticky || false}
+                        onChange={(checked) => updateData({ is_sticky: checked })}
+                        label="Закріпити при прокрутці"
+                    />
+                </div>
                 <div className="mb-5">
                     <AlignmentControl 
                         label="Вирівнювання меню"
@@ -199,6 +166,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                             showAlignment={false} 
                             hideLinks={true}      
                             hideIcons={true}
+                            hideText={true}
                         />
                     </div>
                 ) : (
@@ -231,34 +199,37 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         <li><code className="bg-black/5 px-1 rounded">#blockId</code> - якір (скрол до блоку)</li>
                     </ul>
                 </div>
-                <div className="flex flex-col gap-2">
-                    {data.nav_items && data.nav_items.map((item) => (
-                        <div key={item.id} className="flex gap-2 items-start bg-(--platform-card-bg) p-2.5 rounded-lg border border-(--platform-border-color)">
-                            <div className="flex-1 flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
+                    {data.nav_items && data.nav_items.map((item, idx) => (
+                        <div key={item.id} className="relative bg-(--platform-card-bg) p-3 rounded-xl border border-(--platform-border-color) flex flex-col gap-3 transition-all hover:border-(--platform-accent)/40">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary) flex items-center gap-1.5">
+                                    <List size={14} /> Пункт {idx + 1}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => requestDelete(item.id)}
+                                    className="text-(--platform-text-secondary) hover:text-(--platform-danger) hover:bg-red-500/10 p-1.5 rounded-md transition-colors"
+                                    title="Видалити"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                            <div className="flex flex-col gap-2">
                                 <Input 
                                     value={item.label} 
                                     onChange={(e) => handleNavItemChange(item.id, 'label', e.target.value)}
                                     placeholder="Назва"
                                     leftIcon={<Pencil size={14}/>}
-                                    style={{fontSize: '0.9rem', padding: '8px 8px 8px 36px'}}
                                 />
                                 <Input 
                                     value={item.link} 
                                     onChange={(e) => handleNavItemChange(item.id, 'link', e.target.value)}
                                     placeholder="/page"
-                                    leftIcon={<Link size={14}/>}
-                                    style={{fontSize: '0.85rem', padding: '8px 8px 8px 36px', fontFamily: 'monospace'}}
+                                    leftIcon={<LinkIcon size={14}/>}
+                                    style={{fontFamily: 'monospace'}}
                                 />
                             </div>
-                            <Button 
-                                variant="danger"
-                                size="sm"
-                                onClick={() => requestDelete(item.id)}
-                                title="Видалити"
-                                className="h-auto! p-1.5!"
-                            >
-                                <Trash2 size={16} />
-                            </Button>
                         </div>
                     ))}
                 </div>

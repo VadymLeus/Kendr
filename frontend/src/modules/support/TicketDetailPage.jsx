@@ -1,15 +1,15 @@
-// frontend/src/modules/support/pages/TicketDetailPage.jsx
+// frontend/src/modules/support/TicketDetailPage.jsx
 import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import apiClient from '../../../shared/api/api';
-import { AuthContext } from '../../../app/providers/AuthContext';
-import { Button } from '../../../shared/ui/elements/Button';
-import LoadingState from '../../../shared/ui/complex/LoadingState';
-import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
-import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog';
-import DragDropWrapper from '../../../shared/ui/complex/DragDropWrapper';
-import { FILE_LIMITS } from '../../../shared/config/limits';
-import NotFoundPage from '../../../pages/NotFoundPage';
+import apiClient from '../../shared/api/api';
+import { AuthContext } from '../../app/providers/AuthContext';
+import { Button } from '../../shared/ui/elements/Button';
+import LoadingState from '../../shared/ui/complex/LoadingState';
+import ConfirmModal from '../../shared/ui/complex/ConfirmModal';
+import { useConfirmDialog } from '../../shared/hooks/useConfirmDialog';
+import DragDropWrapper from '../../shared/ui/complex/DragDropWrapper';
+import { FILE_LIMITS } from '../../shared/config/limits';
+import NotFoundPage from '../../pages/NotFoundPage';
 import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
 import { Send, Loader, User, Shield, Lock, ArrowLeft, CheckCircle, Clock, XCircle, Paperclip, X, RotateCcw, ArrowDown } from 'lucide-react';

@@ -16,7 +16,7 @@ const IconWrapper = ({ children, href, isEditorPreview, baseColor }) => (
         target="_blank"
         rel="noopener noreferrer"
         onClick={isEditorPreview ? (e) => e.preventDefault() : undefined}
-        className="inline-flex items-center justify-center w-10 h-10 mx-1 no-underline transition-all duration-200 rounded-full hover:text-(--site-accent) hover:bg-black/5 hover:-translate-y-0.5"
+        className="inline-flex items-center justify-center w-10 h-10 mx-1 no-underline transition-all duration-200 rounded-full hover:text-(--site-accent) hover:bg-black/5 dark:hover:bg-white/5 hover:-translate-y-0.5"
         style={{
             color: baseColor, 
             opacity: isEditorPreview ? 0.8 : 1, 
@@ -27,7 +27,17 @@ const IconWrapper = ({ children, href, isEditorPreview, baseColor }) => (
 );
 
 const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
-    const { alignment, theme_mode = 'auto', facebook, instagram, telegram, youtube, tiktok } = blockData;
+    const { 
+        alignment, 
+        theme_mode = 'auto', 
+        facebook, 
+        instagram, 
+        telegram, 
+        youtube, 
+        tiktok,
+        height = 'auto'
+    } = blockData;
+
     let baseColor = 'var(--site-text-primary)';
     if (theme_mode === 'light') baseColor = '#1a202c';
     if (theme_mode === 'dark') baseColor = '#ffffff';
@@ -39,11 +49,25 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
         { key: 'tiktok', href: tiktok },
     ].filter(item => item.href); 
 
+    const heightClasses = {
+        small: 'min-h-[300px]',
+        medium: 'min-h-[500px]',
+        large: 'min-h-[700px]',
+        full: 'min-h-[calc(100vh-60px)]',
+        auto: 'min-h-auto'
+    };
+
+    const currentHeightClass = heightClasses[height] || heightClasses.auto;
     const hasLinks = socialLinks.length > 0;
     if (!hasLinks && isEditorPreview) {
         return (
             <div 
-                className="p-8 text-center bg-(--site-card-bg) border border-dashed border-(--site-border-color) rounded-lg text-(--site-text-secondary) min-h-37.5 flex items-center justify-center flex-col gap-3"
+                className={`
+                    w-full flex flex-col items-center justify-center gap-3 text-center p-8
+                    bg-(--site-card-bg) text-(--site-text-secondary)
+                    ${currentHeightClass === 'min-h-auto' ? 'min-h-37.5' : currentHeightClass}
+                    border border-dashed border-(--site-border-color)
+                `}
                 style={style}
             >
                 <div className="text-(--site-accent) opacity-70">
@@ -60,22 +84,27 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
     return (
         <div 
             className={`
-                p-5 bg-transparent
-                ${isEditorPreview ? 'border border-dashed border-(--site-border-color) rounded-lg bg-(--site-card-bg)' : ''}
+                w-full flex flex-col justify-center bg-transparent
+                ${currentHeightClass}
             `}
             style={{ 
-                textAlign: alignment || 'left',
-                ...style
+                ...style,
+                backgroundColor: 'var(--site-bg)'
             }}
         >
-            {socialLinks.map((net) => {
-                const IconComponent = IconsMap[net.key];
-                return (
-                    <IconWrapper key={net.key} href={net.href} isEditorPreview={isEditorPreview} baseColor={baseColor}>
-                        <IconComponent size={24} />
-                    </IconWrapper>
-                );
-            })}
+            <div 
+                className="w-full max-w-300 mx-auto px-5"
+                style={{ textAlign: alignment || 'center' }}
+            >
+                {socialLinks.map((net) => {
+                    const IconComponent = IconsMap[net.key];
+                    return (
+                        <IconWrapper key={net.key} href={net.href} isEditorPreview={isEditorPreview} baseColor={baseColor}>
+                            <IconComponent size={24} />
+                        </IconWrapper>
+                    );
+                })}
+            </div>
         </div>
     );
 };

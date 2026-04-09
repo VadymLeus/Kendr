@@ -64,11 +64,24 @@ exports.processCheckout = async (req, res, next) => {
         const realUserEmail = users[0].email;
         const deliveryName = (customerData && customerData.name) ? customerData.name : users[0].username;
         const deliveryPhone = (customerData && customerData.phone) ? customerData.phone : '';
+        let spamQuery = `SELECT COUNT(*) as count FROM orders WHERE site_id = ? AND status = 'pending' AND (customer_id = ? OR customer_email = ?`;
+        let spamParams = [siteId, userId, realUserEmail];
+        if (deliveryPhone && deliveryPhone.trim() !== '') {
+            spamQuery += ` OR customer_phone = ?`;
+            spamParams.push(deliveryPhone);
+        }
+        spamQuery += `)`;
+        const [pendingOrders] = await connection.query(spamQuery, spamParams);
+        if (pendingOrders[0].count >= 5) {
+            const error = new Error('Ви досягли ліміту неоплачених замовлень (5). Будь ласка, оплатіть або скасуйте попередні замовлення перед створенням нових.');
+            error.status = 429;
+            throw error;
+        }
         const [sites] = await connection.query('SELECT liqpay_public_key, liqpay_private_key FROM sites WHERE id = ?', [siteId]);
         if (!sites[0] || !sites[0].liqpay_public_key || !sites[0].liqpay_private_key) {
-            return res.status(400).json({ 
-                message: 'Вибачте, продавець ще не налаштував прийом платежів на своєму сайті.' 
-            });
+            const error = new Error('Вибачте, продавець ще не налаштував прийом платежів на своєму сайті.');
+            error.status = 400;
+            throw error;
         }
         const sitePublicKey = sites[0].liqpay_public_key;
         const sitePrivateKey = sites[0].liqpay_private_key;
@@ -118,10 +131,14 @@ exports.processCheckout = async (req, res, next) => {
         await connection.commit();
         const paymentData = generateLiqPayData(orderId, total, sitePublicKey, sitePrivateKey);
         res.status(200).json({ ...paymentData, orderId });
+        
     } catch (error) {
         await connection.rollback();
-        console.error("Помилка при створенні замовлення:", error);
-        res.status(400).json({ message: error.message || 'Не вдалося створити замовлення. Можливо, товару немає в наявності.' });
+        const status = error.status || 400;
+        if (status >= 500 || !error.status) {
+            console.error("Критична помилка при створенні замовлення:", error);
+        }
+        res.status(status).json({ message: error.message || 'Не вдалося створити замовлення. Можливо, товару немає в наявності.' });
     } finally {
         connection.release();
     }
@@ -165,6 +182,7 @@ exports.generatePaymentForOrder = async (req, res) => {
 exports.liqpayCallback = async (req, res) => {
     const { data, signature } = req.body;
     if (!data || !signature) return res.status(400).send('Missing data or signature');
+    
     try {
         const decodedData = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
         const { order_id: liqpayOrderId, status } = decodedData;

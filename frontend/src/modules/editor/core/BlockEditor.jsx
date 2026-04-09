@@ -1,5 +1,5 @@
 // frontend/src/modules/editor/core/BlockEditor.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../ui/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../ui/DraggableBlockItem';
@@ -8,7 +8,54 @@ import { resolveAccentColor, adjustColor, isLightColor } from '../../../shared/u
 import ContextMenu from '../ui/ContextMenu';
 import { findBlockByPath } from './blockUtils';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
-import { PackageOpen } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PackageOpen, ArrowDownToLine, Layers } from 'lucide-react';
+
+const useDragAutoScroll = (ref, isEnabled) => {
+    useEffect(() => {
+        const container = ref.current;
+        if (!container || !isEnabled) return;
+        let animationFrameId;
+        let currentSpeed = 0;
+        const animateScroll = () => {
+            if (currentSpeed !== 0) {
+                container.scrollTop += currentSpeed;
+            }
+            animationFrameId = requestAnimationFrame(animateScroll);
+        };
+        animationFrameId = requestAnimationFrame(animateScroll);
+        const onDragOver = (e) => {
+            const { clientY, clientX } = e;
+            const rect = container.getBoundingClientRect();
+            if (clientX < rect.left || clientX > rect.right) {
+                currentSpeed = 0;
+                return;
+            }
+            const topDist = clientY - rect.top;
+            const bottomDist = rect.bottom - clientY;
+            const threshold = 150; 
+            const maxSpeed = 20;
+            if (topDist >= 0 && topDist < threshold) {
+                currentSpeed = -maxSpeed * (1 - topDist / threshold);
+            } else if (bottomDist >= 0 && bottomDist < threshold) {
+                currentSpeed = maxSpeed * (1 - bottomDist / threshold);
+            } else {
+                currentSpeed = 0;
+            }
+        };
+
+        const stopScrolling = () => { currentSpeed = 0; };
+        document.addEventListener('dragover', onDragOver, true);
+        document.addEventListener('dragend', stopScrolling, true);
+        document.addEventListener('drop', stopScrolling, true);
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            document.removeEventListener('dragover', onDragOver, true);
+            document.removeEventListener('dragend', stopScrolling, true);
+            document.removeEventListener('drop', stopScrolling, true);
+        };
+    }, [ref, isEnabled]);
+};
 
 const BlockEditor = ({
     blocks,
@@ -22,111 +69,72 @@ const BlockEditor = ({
     collapsedBlocks,
     onToggleCollapse,
     onBlockSaved,
-    isHeaderMode
+    isHeaderMode,
+    viewMode = 'editor'
 }) => {
     const { confirm } = useConfirm();
-    const [contextMenu, setContextMenu] = useState({
-        visible: false,
-        x: 0,
-        y: 0,
-        path: null,
-        blockId: null
-    });
+    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, path: null, blockId: null });
+    const mobileScrollRef = useRef(null);
+    useDragAutoScroll(mobileScrollRef, viewMode === 'mobile');
     const [{ isOverBottom }, bottomDropRef] = useDrop(() => ({
         accept: [DND_TYPE_NEW_BLOCK, DND_TYPE_EXISTING],
-        collect: (monitor) => ({
-            isOverBottom: monitor.isOver(),
-        }),
+        collect: (monitor) => ({ isOverBottom: monitor.isOver({ shallow: true }) }),
         drop: (item, monitor) => {
             if (monitor.didDrop()) return;
             const dragType = monitor.getItemType();
             if (dragType === DND_TYPE_NEW_BLOCK) {
                 onAddBlock([blocks.length], item.blockType, item.presetData);
-            }
-            else if (dragType === DND_TYPE_EXISTING) {
+            } else if (dragType === DND_TYPE_EXISTING) {
                 const dragPath = item.path;
                 const targetPath = [blocks.length]; 
                 const isLastBlock = dragPath.length === 1 && dragPath[0] === blocks.length - 1;
-                if (!isLastBlock) {
-                    onMoveBlock(dragPath, targetPath);
-                }
+                if (!isLastBlock) onMoveBlock(dragPath, targetPath);
             }
         },
     }), [blocks.length, onAddBlock, onMoveBlock]);
-    const emptyDropRef = useDrop(() => ({
+    
+    const [{ isOverEmpty }, emptyDropRef] = useDrop(() => ({
         accept: [DND_TYPE_NEW_BLOCK],
+        collect: (monitor) => ({ isOverEmpty: monitor.isOver({ shallow: true }) }),
         drop: (item, monitor) => {
             if (monitor.didDrop()) return;
             onAddBlock([blocks.length], item.blockType, item.presetData); 
         },
-    }), [blocks.length, onAddBlock])[1];
+    }), [blocks.length, onAddBlock]);
+    
     const handleContextMenu = (e, path, blockId) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setContextMenu({
-            visible: true,
-            x: e.clientX,
-            y: e.clientY,
-            path: path,
-            blockId: blockId
-        });
+        if (viewMode !== 'editor') return; 
+        e.preventDefault(); e.stopPropagation();
+        setContextMenu({ visible: true, x: e.clientX, y: e.clientY, path: path, blockId: blockId });
     };
-    const handleCloseContextMenu = () => {
-        setContextMenu(prev => ({ ...prev, visible: false }));
-    };
+    
+    const handleCloseContextMenu = () => setContextMenu(prev => ({ ...prev, visible: false }));
     const handleContextMenuAction = async (action) => {
         const { path } = contextMenu;
         if (!path) return;
         handleCloseContextMenu();
         switch (action) {
-            case 'edit':
-                onSelectBlock(path);
-                break;
+            case 'edit': onSelectBlock(path); break;
             case 'duplicate':
                 const blockToClone = findBlockByPath(blocks, path);
                 if (blockToClone) {
                     const parentPath = path.slice(0, -1);
                     const currentIndex = path[path.length - 1];
                     const newPath = [...parentPath, currentIndex + 1];
-                    
-                    onAddBlock(newPath, blockToClone.type, { 
-                        isSavedBlock: true,
-                        content: blockToClone.data 
-                    });
+                    onAddBlock(newPath, blockToClone.type, { isSavedBlock: true, content: blockToClone.data });
                 }
                 break;
             case 'delete':
-                const isConfirmed = await confirm({
-                    title: "Видалити блок?",
-                    message: "Ви впевнені, що хочете видалити цей блок? Цю дію не можна буде скасувати.",
-                    type: "danger",
-                    confirmLabel: "Видалити"
-                });
-
-                if (isConfirmed) {
-                    onDeleteBlock(path);
-                }
+                const isConfirmed = await confirm({ title: "Видалити блок?", message: "Ви впевнені, що хочете видалити цей блок?", type: "danger", confirmLabel: "Видалити" });
+                if (isConfirmed) onDeleteBlock(path);
                 break;
             case 'moveUp':
-                {
-                    const parentPath = path.slice(0, -1);
-                    const index = path[path.length - 1];
-                    if (index > 0) {
-                        const newPath = [...parentPath, index - 1];
-                        onMoveBlock(path, newPath);
-                    }
-                }
+                if (path[path.length - 1] > 0) onMoveBlock(path, [...path.slice(0, -1), path[path.length - 1] - 1]);
                 break;
             case 'moveDown':
-                {
-                    const parentPath = path.slice(0, -1);
-                    const index = path[path.length - 1];
-                    const newPath = [...parentPath, index + 1];
-                    onMoveBlock(path, newPath);
-                }
+                onMoveBlock(path, [...path.slice(0, -1), path[path.length - 1] + 1]);
                 break;
-            default:
-                break;
+            default: break;
         }
     };
     const themeSettings = siteData?.theme_settings || {};
@@ -136,128 +144,85 @@ const BlockEditor = ({
     const siteCardBg = isSiteDark ? '#2d3748' : '#ffffff';
     const siteBorder = isSiteDark ? '#4a5568' : '#e2e8f0';
     const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');
-    const siteAccentHover = adjustColor(siteAccent, -10);
-    const siteAccentLight = adjustColor(siteAccent, 90);
-    const siteAccentText = isLightColor(siteAccent) ? '#000000' : '#ffffff';
-    const siteIsolationStyles = {
-        '--site-bg': siteBg,
-        '--site-text-primary': siteText,
-        '--site-text-secondary': isSiteDark ? '#a0aec0' : '#718096',
-        '--site-card-bg': siteCardBg,
-        '--site-border-color': siteBorder,
-        '--site-accent': siteAccent,
-        '--site-accent-hover': siteAccentHover,
-        '--site-accent-light': siteAccentLight,
-        '--site-accent-text': siteAccentText,
-        '--site-font-main': themeSettings.font_body || "'Inter', sans-serif",
-        '--site-font-headings': themeSettings.font_heading || "'Inter', sans-serif",
-        '--site-btn-radius': themeSettings.button_radius || '8px',
-    };
+    const siteIsolationStyles = { '--site-bg': siteBg, '--site-text-primary': siteText, '--site-text-secondary': isSiteDark ? '#a0aec0' : '#718096', '--site-card-bg': siteCardBg, '--site-border-color': siteBorder, '--site-accent': siteAccent, '--site-font-main': themeSettings.font_body || "'Inter', sans-serif" };
+    let containerClass = viewMode === 'mobile' ? 'px-8 pb-8 pt-10 flex flex-col' : 'px-8 pb-8 pt-3 flex flex-col flex-1';
+    const isEmptyPreview = blocks.length === 0 && viewMode !== 'editor';
+    const blocksContainerClass = `blocks-container ${viewMode === 'mobile' ? 'mobile-preview-device hide-scrollbar' : 'w-full flex-none'} ${isEmptyPreview ? 'flex flex-col' : 'flow-root'}`;
     return (
-        <div className="px-8 pb-8">
-            {blocks.length === 0 && (
-                <div
-                    ref={emptyDropRef}
-                    className="
-                        p-12 text-center border-2 border-dashed border-(--platform-border-color) rounded-xl 
-                        text-(--platform-text-secondary) my-5 bg-(--platform-bg) transition-all duration-300 
-                        cursor-pointer relative overflow-hidden
-                        hover:border-(--platform-accent) hover:text-(--platform-accent) hover:bg-[rgba(var(--platform-accent-rgb),0.05)]
-                    "
-                >
-                    <div className="mb-4 text-(--platform-accent) flex justify-center">
-                        <PackageOpen size={48} />
+        <div className={containerClass}>
+            {blocks.length === 0 && viewMode === 'editor' ? (
+                <div className="flex flex-col items-center justify-center w-full min-h-[calc(100vh-150px)] p-4">
+                    <div ref={emptyDropRef} className={`flex flex-col items-center justify-center w-full max-w-4xl p-16 text-center border-4 border-dashed rounded-[2.5rem] transition-all duration-300 cursor-pointer h-full min-h-100 ${isOverEmpty ? 'border-(--platform-accent) bg-black/5 text-(--platform-accent) scale-[1.02] shadow-xl' : 'border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-accent)'}`}>
+                        <div className={`mb-6 transition-transform duration-300 ${isOverEmpty ? 'scale-110 animate-pulse' : ''}`}><PackageOpen size={80} strokeWidth={1.5} /></div>
+                        <h3 className="mb-4 text-3xl font-bold tracking-tight">{isOverEmpty ? 'Відпустіть блок тут!' : 'Початок роботи'}</h3>
+                        <p className="m-0 text-lg opacity-80 max-w-md mx-auto leading-relaxed">Перетягніть ваш перший блок з бібліотеки праворуч</p>
                     </div>
-                    <h3 className="text-inherit mb-2 text-[1.2rem]">
-                        Початок роботи
-                    </h3>
-                    <p className="m-0 text-[0.95rem] opacity-80">
-                        Перетягніть блок з бібліотеки блоків
-                    </p>
                 </div>
-            )}
-
-            <div 
-                className="site-theme-preview w-full min-h-full p-0 relative bg-transparent" 
-                style={siteIsolationStyles}
-                data-site-mode={siteData?.site_theme_mode || 'light'}
-                data-site-accent={siteData?.site_theme_accent || 'orange'}
-            >
-                <div className="blocks-container">
-                    {blocks.map((block, index) => (
-                        <React.Fragment key={block.block_id}>
-                            <EditableBlockWrapper
-                                index={index}
-                                block={block}
-                                siteData={siteData}
-                                path={[index]}
-                                onMoveBlock={onMoveBlock}
-                                onDropBlock={onDropBlock}
-                                onDeleteBlock={onDeleteBlock}
-                                onAddBlock={onAddBlock}
-                                onSelectBlock={onSelectBlock}
-                                selectedBlockPath={selectedBlockPath}
-                                isCollapsed={collapsedBlocks.includes(block.block_id)}
-                                onToggleCollapse={onToggleCollapse}
-                                onBlockSaved={onBlockSaved}
-                                onContextMenu={handleContextMenu}
-                            />
-                        </React.Fragment>
-                    ))}
-                </div>
-                {blocks.length > 0 && !isHeaderMode && (
-                    <div 
-                        ref={bottomDropRef}
-                        className="h-37.5 -mt-3 w-full bg-transparent relative z-1"
-                    >
-                        {isOverBottom && (
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-(--platform-accent) rounded-sm shadow-md z-50" />
+            ) : (
+                <div className="site-theme-preview w-full flex-1 p-0 relative bg-transparent flex flex-col" style={siteIsolationStyles}>
+                    <div ref={mobileScrollRef} className={blocksContainerClass}>
+                        {isEmptyPreview ? (
+                            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh] w-full" style={{ backgroundColor: 'var(--site-bg)' }}>
+                                <div className="mb-6 opacity-40">
+                                    <Layers size={64} style={{ color: 'var(--site-text-primary)' }} />
+                                </div>
+                                <h1 className="text-2xl font-bold mb-3" style={{ color: 'var(--site-text-primary)' }}>Сторінка порожня</h1>
+                                <p className="max-w-md mx-auto text-[1.05rem]" style={{ color: 'var(--site-text-secondary)' }}>
+                                    Поверніться у режим редактора, щоб додати блоки.
+                                </p>
+                            </div>
+                        ) : (
+                            <AnimatePresence initial={false}>
+                                {blocks.map((block, index) => (
+                                    <motion.div key={block.block_id} layout initial={{ opacity: 0, y: -30, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, height: 0, overflow: 'hidden' }} transition={{ type: "spring", stiffness: 350, damping: 30, mass: 0.8 }}>
+                                        <EditableBlockWrapper
+                                            index={index}
+                                            block={block}
+                                            siteData={siteData}
+                                            path={[index]}
+                                            isLastRootBlock={index === blocks.length - 1}
+                                            onMoveBlock={onMoveBlock}
+                                            onDropBlock={onDropBlock}
+                                            onDeleteBlock={onDeleteBlock}
+                                            onAddBlock={onAddBlock}
+                                            onSelectBlock={onSelectBlock}
+                                            selectedBlockPath={selectedBlockPath}
+                                            isCollapsed={collapsedBlocks.includes(block.block_id)}
+                                            onToggleCollapse={onToggleCollapse}
+                                            onBlockSaved={onBlockSaved}
+                                            onContextMenu={handleContextMenu}
+                                            viewMode={viewMode}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
                         )}
                     </div>
-                )}
-            </div>
-            <ContextMenu 
-                visible={contextMenu.visible}
-                x={contextMenu.x}
-                y={contextMenu.y}
-                onClose={handleCloseContextMenu}
-                onAction={handleContextMenuAction}
-            />
-
+                    {blocks.length > 0 && !isHeaderMode && viewMode === 'editor' && (
+                        <div ref={bottomDropRef} className="flex-1 w-full relative z-1 pt-6 pb-[30vh] flex flex-col cursor-pointer">
+                            <div className={`
+                                w-full h-32 shrink-0 rounded-2xl border-2 border-dashed transition-all duration-300 flex items-center justify-center
+                                ${isOverBottom 
+                                    ? 'border-(--platform-accent) bg-(--platform-accent)/10 scale-[1.01] shadow-sm' 
+                                    : 'border-(--platform-border-color) hover:border-(--platform-accent)/40 bg-transparent'}
+                            `}>
+                                <div className={`transition-all duration-300 flex items-center gap-2 font-medium ${isOverBottom ? 'text-(--platform-accent) scale-110 opacity-100' : 'text-(--platform-text-secondary) opacity-60'}`}>
+                                    <ArrowDownToLine size={20} />
+                                    <span>Додати в кінець сторінки</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+            <ContextMenu visible={contextMenu.visible} x={contextMenu.x} y={contextMenu.y} onClose={handleCloseContextMenu} onAction={handleContextMenuAction} />
             <style>
                 {`
-                .site-theme-preview {
-                    font-family: var(--site-font-main);
-                }
-                .site-theme-preview * {
-                    box-sizing: border-box;
-                }
-                .site-theme-preview .site-block {
-                    background: var(--site-bg);
-                    color: var(--site-text-primary);
-                    font-family: var(--site-font-main);
-                }
-                .site-theme-preview .site-heading {
-                    font-family: var(--site-font-headings);
-                    color: var(--site-text-primary);
-                }
-                .site-theme-preview .site-button {
-                    background: var(--site-accent);
-                    color: var(--site-accent-text);
-                    border-radius: var(--site-btn-radius);
-                    border: none;
-                    padding: 0.5rem 1rem;
-                    font-family: var(--site-font-main);
-                    transition: background-color 0.2s ease;
-                }
-                .site-theme-preview .site-button:hover {
-                    background: var(--site-accent-hover);
-                }
-                .site-theme-preview .site-card {
-                    background: var(--site-card-bg);
-                    border: 1px solid var(--site-border-color);
-                    border-radius: var(--site-btn-radius);
-                }
+                .site-theme-preview { font-family: var(--site-font-main); }
+                .site-theme-preview * { box-sizing: border-box; }
+                .mobile-preview-device { max-width: 400px; margin: 0 auto; border: 12px solid #222; border-radius: 36px; overflow-y: auto; overflow-x: hidden; height: 80vh; background-color: var(--site-bg); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; }
+                .site-theme-preview .site-block { background: var(--site-bg); color: var(--site-text-primary); font-family: var(--site-font-main); }
+                .site-theme-preview .site-heading { font-family: var(--site-font-headings); color: var(--site-text-primary); }
                 `}
             </style>
         </div>

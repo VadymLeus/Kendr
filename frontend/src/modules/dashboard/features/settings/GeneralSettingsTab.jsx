@@ -45,7 +45,9 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             show_title: siteData.show_title !== undefined ? siteData.show_title : true,
             liqpay_public_key: siteData.liqpay_public_key || '',
             liqpay_private_key: siteData.liqpay_private_key || '',
-            tags: []
+            tags: [],
+            cookie_banner_enabled: siteData.cookie_banner_enabled || false,
+            cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду."
         }
     );
 
@@ -79,7 +81,9 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 show_title: siteData.show_title !== undefined ? siteData.show_title : true,
                 liqpay_public_key: siteData.liqpay_public_key || '',
                 liqpay_private_key: siteData.liqpay_private_key || '',
-                theme_settings: siteData.theme_settings || {}
+                theme_settings: siteData.theme_settings || {},
+                cookie_banner_enabled: siteData.cookie_banner_enabled || false,
+                cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду."
             }));
             if (siteData.tags) setSelectedTags(siteData.tags.map(t => t.id));
         }
@@ -99,6 +103,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     useEffect(() => {
         if (onSavingChange) onSavingChange(isSaving || isSavingIdentity);
     }, [isSaving, isSavingIdentity, onSavingChange]);
+    
     useEffect(() => {
         const currentSlug = identityData.slug;
         const originalSlug = siteData?.site_path;
@@ -117,6 +122,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
         const timer = setTimeout(checkSlug, 500);
         return () => clearTimeout(timer);
     }, [identityData.slug, siteData?.site_path]);
+    
     const handleIdentityChange = (field, value) => {
         if (field === 'slug') {
             const val = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -186,6 +192,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             }
         });
     };
+    
     const hasIdentityChanges = identityData.title !== siteData.title || identityData.slug !== siteData.site_path;
     return (
         <div className="w-full mx-auto px-4 pb-20 relative">

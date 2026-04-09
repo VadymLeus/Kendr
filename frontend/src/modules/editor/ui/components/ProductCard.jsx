@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { BASE_URL } from '../../../../shared/config';
-import { ShoppingCart, User, Settings, Shield } from 'lucide-react';
+import { ShoppingCart, User, Settings, Shield, Download } from 'lucide-react';
 
 const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const cartContext = useContext(CartContext);
@@ -16,15 +16,25 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const [isHovered, setIsHovered] = useState(false);
     const intervalRef = useRef(null);
     const images = useMemo(() => {
-        if (product.image_gallery && product.image_gallery.length > 0) {
-            let gallery = typeof product.image_gallery === 'string' 
-                ? JSON.parse(product.image_gallery) 
-                : product.image_gallery;
-            return gallery.map(img => 
-                img.startsWith('http') ? img : `${BASE_URL}${img}`
-            );
+        if (product.image_gallery) {
+            let gallery = [];
+            if (typeof product.image_gallery === 'string') {
+                try {
+                    gallery = JSON.parse(product.image_gallery);
+                } catch (e) {
+                    console.error("Failed to parse image_gallery:", e);
+                    gallery = [];
+                }
+            } else if (Array.isArray(product.image_gallery)) {
+                gallery = product.image_gallery;
+            }
+            if (gallery.length > 0) {
+                return gallery.map(img => 
+                    img.startsWith('http') ? img : `${BASE_URL}${img}`
+                );
+            }
         }
-        return ['https://placehold.co/300?text=No+Image'];
+        return ['https://placehold.co/400?text=No+Image'];
     }, [product.image_gallery]);
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
@@ -32,12 +42,22 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const finalPrice = product.price ? (hasDiscount 
         ? Math.round(product.price * (1 - product.sale_percentage / 100)) 
         : product.price) : 0;
-    const isSoldOut = product.stock_quantity === 0;
+    const isSoldOut = product.stock_quantity === 0 && product.type !== 'digital';
     const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
     const sitePath = siteData?.site_path || product.site_path;
     const productLink = sitePath 
         ? `/site/${sitePath}/product/${product.id}` 
         : `/product/${product.id}`;
+    const currencyMap = {
+        'UAH': '₴',
+        'USD': '$',
+        'EUR': '€'
+    };
+    const siteCurrency = siteData?.currency || 'UAH';
+    const currencySymbol = currencyMap[siteCurrency] || '₴';
+    const categoryDisplay = product.categories && product.categories.length > 0
+        ? product.categories.map(c => c.name).join(', ')
+        : '';
     const handleMouseEnter = () => {
         setIsHovered(true);
         if (isEditorPreview || images.length <= 1) return;
@@ -45,7 +65,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             setActiveImgIndex(prev => (prev + 1) % images.length);
         }, 1200);
     };
-
     const handleMouseLeave = () => {
         setIsHovered(false);
         if (intervalRef.current) {
@@ -74,7 +93,8 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             const productForCart = {
                 ...product,
                 site_path: siteData?.site_path || product.site_path,
-                site_name: siteData?.title || product.site_name
+                site_name: siteData?.title || product.site_name,
+                currency: siteCurrency
             };
             addToCart(productForCart, {}, { finalPrice, originalPrice: product.price, discount: product.sale_percentage });
         }
@@ -85,89 +105,111 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             to={isEditorPreview ? '#' : productLink}
             onClick={(e) => isEditorPreview && e.preventDefault()}
             className={`
-                block h-full w-full min-w-0 no-underline text-inherit 
+                block h-full w-full min-w-0 no-underline text-inherit group
                 ${isEditorPreview ? 'pointer-events-none' : 'pointer-events-auto'}
             `}
         >
             <div 
                 className={`
-                    border border-(--site-border-color) rounded-lg overflow-hidden bg-(--site-card-bg) 
-                    h-full w-full flex flex-col relative transition-all duration-200 box-border
+                    border border-(--site-border-color) rounded-2xl overflow-hidden bg-(--site-card-bg) 
+                    h-full w-full flex flex-col relative transition-all duration-300 box-border
                 `}
                 style={{
-                    transform: (!isEditorPreview && isHovered) ? 'translateY(-4px)' : 'translateY(0)',
-                    boxShadow: (!isEditorPreview && isHovered) ? '0 10px 20px rgba(0,0,0,0.1)' : 'none'
+                    transform: (!isEditorPreview && isHovered) ? 'translateY(-6px)' : 'translateY(0)',
+                    boxShadow: (!isEditorPreview && isHovered) ? '0 12px 24px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.02)'
                 }}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
             >
-                <div className="relative pt-[100%] overflow-hidden bg-(--site-bg)">
+                <div className="relative pt-[100%] overflow-hidden bg-(--site-bg) border-b border-(--site-border-color)/50">
                     {images.map((imgSrc, idx) => (
                         <img 
                             key={idx}
                             src={imgSrc} 
                             alt={product.name}
                             className={`
-                                absolute top-0 left-0 w-full h-full object-contain p-2.5 box-border transition-all duration-500 ease-in-out
+                                absolute top-0 left-0 w-full h-full object-cover transition-all duration-700 ease-out
                             `}
                             style={{
                                 opacity: idx === activeImgIndex ? 1 : 0,
-                                transform: `scale(${idx === activeImgIndex && isHovered ? 1.05 : 1})`,
-                                filter: isSoldOut ? 'grayscale(100%)' : 'none',
+                                transform: `scale(${idx === activeImgIndex && isHovered ? 1.08 : 1})`,
+                                filter: isSoldOut ? 'grayscale(100%) opacity(70%)' : 'none',
                             }}
                         />
                     ))}
                     {images.length > 1 && !isSoldOut && (
                         <div className={`
-                            absolute bottom-2.5 left-0 right-0 flex justify-center gap-1 z-10 transition-opacity duration-200
+                            absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10 transition-opacity duration-300
                         `} style={{ opacity: isHovered ? 1 : 0 }}>
                             {images.map((_, idx) => (
                                 <div key={idx} 
-                                    className="w-1.5 h-1.5 rounded-full transition-all duration-300"
+                                    className="h-1.5 rounded-full transition-all duration-300 shadow-sm"
                                     style={{
-                                        background: idx === activeImgIndex ? 'var(--site-accent)' : 'rgba(0,0,0,0.1)'
+                                        width: idx === activeImgIndex ? '16px' : '6px',
+                                        background: idx === activeImgIndex ? 'var(--site-accent)' : 'rgba(255,255,255,0.7)'
                                     }} 
                                 />
                             ))}
                         </div>
                     )}
                     {hasDiscount && !isSoldOut && (
-                        <div className="absolute top-2 right-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-xs font-bold z-10">
+                        <div className="absolute top-3 left-3 bg-red-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide z-10 shadow-sm">
                             -{product.sale_percentage}%
                         </div>
                     )}
+                    {product.type === 'digital' && !isSoldOut && (
+                        <div className={`absolute top-3 ${hasDiscount ? 'left-14' : 'left-3'} bg-(--site-bg)/90 backdrop-blur-sm text-(--site-text-primary) px-2 py-1 rounded-lg text-[0.65rem] uppercase font-bold tracking-wider z-10 shadow-sm border border-(--site-border-color) flex items-center gap-1`}>
+                            <Download size={10} /> Цифровий
+                        </div>
+                    )}
                     {isSoldOut && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-gray-600 font-bold z-10 backdrop-blur-sm">
-                            Закінчився
+                        <div className="absolute inset-0 flex items-center justify-center bg-(--site-bg)/80 backdrop-blur-sm z-10">
+                            <span className="bg-(--site-card-bg) text-(--site-text-primary) border border-(--site-border-color) px-4 py-2 rounded-xl text-sm font-bold shadow-sm uppercase tracking-wider">
+                                Немає в наявності
+                            </span>
                         </div>
                     )}
                 </div>
-                <div className="p-4 flex-1 flex flex-col min-w-0">
+                <div className="p-5 flex-1 flex flex-col min-w-0 gap-2">
+                    <div className="min-h-4">
+                        {categoryDisplay ? (
+                            <div className="text-[0.65rem] uppercase tracking-wider font-bold text-(--site-text-secondary) truncate opacity-80">
+                                {categoryDisplay}
+                            </div>
+                        ) : (
+                            <div className="text-[0.65rem] opacity-0 h-full">_</div>
+                        )}
+                    </div>
                     <h4 
-                        className="m-0 mb-2 text-base text-(--site-text-primary) font-semibold leading-snug line-clamp-2 overflow-hidden text-ellipsi wrap-break-words"
+                        className="m-0 text-[1.1rem] text-(--site-text-primary) font-medium leading-snug line-clamp-2 overflow-hidden transition-colors duration-200 group-hover:text-(--site-accent)"
                         style={{ fontFamily: fontStyles?.content || 'inherit' }}
+                        title={product.name}
                     >
                         {product.name}
                     </h4>
-                    <div className="mt-auto flex justify-between items-center">
-                        <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="mt-auto flex justify-between items-end pt-3">
+                        <div className="min-w-0 flex-1 overflow-hidden flex flex-col justify-end">
                             {hasDiscount ? (
-                                <div className="flex flex-col">
-                                    <span className="text-red-600 font-bold text-lg">{finalPrice} ₴</span>
-                                    <span className="text-xs text-(--site-text-secondary) line-through">
-                                        {product.price} ₴
+                                <>
+                                    <span className="text-xs text-(--site-text-secondary) line-through mb-0.5 opacity-70 decoration-red-500/50">
+                                        {product.price} {currencySymbol}
                                     </span>
-                                </div>
+                                    <span className="text-red-500 font-bold text-[1.25rem] leading-none">
+                                        {finalPrice} {currencySymbol}
+                                    </span>
+                                </>
                             ) : (
-                                <span className="text-(--site-text-primary) font-bold text-lg">{product.price} ₴</span>
+                                <span className="text-(--site-text-primary) font-bold text-[1.25rem] leading-none mt-auto">
+                                    {product.price} {currencySymbol}
+                                </span>
                             )}
                         </div>
                         <button
                             onClick={handleAction}
                             disabled={isSoldOut || ((isOwner || isStaff) && !hasVariants)}
                             className={`
-                                w-9 h-9 flex items-center justify-center rounded-lg ml-2 shrink-0 transition-all duration-200
-                                ${isSoldOut || (isOwner || isStaff) ? 'cursor-default' : 'cursor-pointer'}
+                                h-10 w-10 flex items-center justify-center rounded-xl ml-3 shrink-0 transition-all duration-300 shadow-sm
+                                ${isSoldOut || (isOwner || isStaff) ? 'cursor-default opacity-50' : 'cursor-pointer hover:scale-105 active:scale-95'}
                             `}
                             style={{
                                 background: (isOwner || isStaff) ? 'transparent' : 'var(--site-accent)',

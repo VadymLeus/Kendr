@@ -1,5 +1,5 @@
 // frontend/src/modules/dashboard/pages/SiteDashboardPage.jsx
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { useParams, useOutletContext, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
@@ -10,14 +10,60 @@ import GeneralSettingsTab from '../features/settings/GeneralSettingsTab';
 import PagesSettingsTab from '../features/settings/PagesSettingsTab';
 import StyleSettingsTab from '../features/settings/StyleSettingsTab';
 import ShopContentTab from '../features/shop/ShopContentTab';
-import OrdersTab from '../features/shop/OrdersTab';
 import SubmissionsTab from '../features/content/SubmissionsTab';
+import AnalyticsTab from '../features/analytics/AnalyticsTab';
 import DashboardHeader from '../components/DashboardHeader';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
+import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
 import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, handleDrop } from '../../editor/core/blockUtils';
 import { Lock } from 'lucide-react';
+
+const useDragAutoScroll = (ref, isEnabled) => {
+    useEffect(() => {
+        const container = ref.current;
+        if (!container || !isEnabled) return;
+        let animationFrameId;
+        let currentSpeed = 0;
+        const animateScroll = () => {
+            if (currentSpeed !== 0) {
+                container.scrollTop += currentSpeed;
+            }
+            animationFrameId = requestAnimationFrame(animateScroll);
+        };
+        animationFrameId = requestAnimationFrame(animateScroll);
+        const onDragOver = (e) => {
+            const { clientY, clientX } = e;
+            const rect = container.getBoundingClientRect();
+            if (clientX < rect.left || clientX > rect.right) {
+                currentSpeed = 0;
+                return;
+            }
+            const topDist = clientY - rect.top;
+            const bottomDist = rect.bottom - clientY;
+            const threshold = 150; 
+            const maxSpeed = 20;
+            if (topDist >= 0 && topDist < threshold) {
+                currentSpeed = -maxSpeed * (1 - topDist / threshold);
+            } else if (bottomDist >= 0 && bottomDist < threshold) {
+                currentSpeed = maxSpeed * (1 - bottomDist / threshold);
+            } else {
+                currentSpeed = 0;
+            }
+        };
+        const stopScrolling = () => { currentSpeed = 0; };
+        document.addEventListener('dragover', onDragOver, true);
+        document.addEventListener('dragend', stopScrolling, true);
+        document.addEventListener('drop', stopScrolling, true);
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            document.removeEventListener('dragover', onDragOver, true);
+            document.removeEventListener('dragend', stopScrolling, true);
+            document.removeEventListener('drop', stopScrolling, true);
+        };
+    }, [isEnabled]);
+};
 
 const SiteDashboardPage = () => {
     const { site_path } = useParams();
@@ -27,7 +73,18 @@ const SiteDashboardPage = () => {
     const [activeTab, setActiveTab] = useState(() => {
         return localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
     });
+    const [viewMode, setViewMode] = useState('editor');
     const [isReadOnly, setIsReadOnly] = useState(false);
+    const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
+    const pcScrollRef = useRef(null);
+    useDragAutoScroll(pcScrollRef, activeTab === 'editor');
+    useEffect(() => {
+        const hiddenTabs = siteData?.dashboard_config?.hiddenTabs || [];
+        if (hiddenTabs.includes(activeTab)) {
+            setActiveTab('editor');
+        }
+    }, [siteData?.dashboard_config?.hiddenTabs, activeTab]);
+
     useEffect(() => {
         const handleLockStatus = (e) => {
             const serverLocked = e.detail;
@@ -53,12 +110,11 @@ const SiteDashboardPage = () => {
             localStorage.setItem(`editor_active_tab_${site_path}`, activeTab);
         }
     }, [activeTab, site_path]);
+    
     const [blocks, setBlocks, undo, redo, { canUndo, canRedo }] = useHistory([]);
+    const [savedBlocksStr, setSavedBlocksStr] = useState('');
     const [currentPageId, setCurrentPageId] = useState(() => {
         const savedPage = localStorage.getItem(`last_edited_page_${site_path}`);
-        if (savedPage === 'header' || savedPage === 'footer') {
-            return savedPage;
-        }
         return savedPage ? parseInt(savedPage, 10) : null;
     });
     const [isPageLoading, setIsPageLoading] = useState(true);
@@ -68,8 +124,7 @@ const SiteDashboardPage = () => {
         if (!site_path) return [];
         let targetId = null;
         const savedPage = localStorage.getItem(`last_edited_page_${site_path}`);
-        if (savedPage === 'header' || savedPage === 'footer') targetId = savedPage;
-        else if (savedPage) targetId = parseInt(savedPage, 10);
+        if (savedPage) targetId = parseInt(savedPage, 10);
         if (targetId) {
             const key = `collapsed_blocks_${site_path}_${targetId}`;
             try {
@@ -88,22 +143,50 @@ const SiteDashboardPage = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
-        pages: false, store: false, crm: false, settings: false, orders: false
+        pages: false, store: false, crm: false, settings: false
     });
     const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
-    const isFooterMode = currentPageId === 'footer';
-    const isHeaderMode = currentPageId === 'header';
+    useEffect(() => {
+        if (isPageLoading || !currentPageId || !siteData?.id || isReadOnly) return;
+        const currentBlocksStr = JSON.stringify(blocks);
+        const draftKey = `draft_${siteData.id}_${currentPageId}`;
+        if (currentBlocksStr !== savedBlocksStr && savedBlocksStr !== '') {
+            localStorage.setItem(draftKey, currentBlocksStr);
+        } else if (currentBlocksStr === savedBlocksStr) {
+            localStorage.removeItem(draftKey);
+        }
+    }, [blocks, savedBlocksStr, currentPageId, siteData?.id, isPageLoading, isReadOnly]);
+
+    const handleDiscardChanges = useCallback(() => {
+        setIsDiscardModalOpen(true);
+    }, []);
+
+    const executeDiscardChanges = useCallback(() => {
+        setIsDiscardModalOpen(false);
+        const draftKey = `draft_${siteData.id}_${currentPageId}`;
+        localStorage.removeItem(draftKey);
+        try {
+            const originalBlocks = JSON.parse(savedBlocksStr);
+            setBlocks(originalBlocks, false);
+            toast.success('Зміни скасовано');
+        } catch (e) {
+            console.error("Помилка відновлення сторінки:", e);
+            toast.error('Не вдалося скинути зміни');
+        }
+    }, [savedBlocksStr, siteData?.id, currentPageId, setBlocks]);
+
     const setComponentSaving = useCallback((component, isSaving) => {
         setComponentsSaving(prev => ({ ...prev, [component]: isSaving }));
     }, []);
+    
     const handleBlockSaved = useCallback(() => {
         setSavedBlocksUpdateTrigger(prev => prev + 1);
     }, []);
+    
     useEffect(() => {
         const anyComponentSaving = Object.values(componentsSaving).some(saving => saving);
         setIsSaving(anyComponentSaving);
     }, [componentsSaving]);
-    
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
@@ -125,29 +208,38 @@ const SiteDashboardPage = () => {
     const fetchPageContent = async (pageId) => {
         setIsPageLoading(true);
         try {
-            let content = [];
-            if (pageId === 'footer' || pageId === 'header') {
-                const res = await apiClient.get(`/sites/${siteData.site_path}`);
-                const contentKey = pageId === 'footer' ? 'footer_content' : 'header_content';
-                content = res.data[contentKey] || [];
-                if (typeof content === 'string') {
-                    try { content = JSON.parse(content); } catch (e) { content = []; }
+            const response = await apiClient.get(`/pages/${pageId}`);
+            let content = response.data.block_content || [];
+            if (typeof content === 'string') {
+                try { content = JSON.parse(content); } catch (e) { content = []; }
+            }
+            content = content.map(block => {
+                if (block.type === 'global-header' || block.type === 'header') {
+                    let globalData = typeof siteData.header_content === 'string' ? JSON.parse(siteData.header_content || '{}') : (siteData.header_content || {});
+                    if (Object.keys(globalData).length === 0) globalData = getDefaultBlockData('global-header');
+                    return { ...block, type: 'global-header', data: globalData };
                 }
-                if (pageId === 'header' && (!content || content.length === 0)) {
-                    content = [{ 
-                        block_id: generateBlockId(), 
-                        type: 'header', 
-                        data: getDefaultBlockData('header') 
-                    }];
+                if (block.type === 'global-footer' || block.type === 'footer') {
+                    let globalData = typeof siteData.footer_content === 'string' ? JSON.parse(siteData.footer_content || '{}') : (siteData.footer_content || {});
+                    if (Object.keys(globalData).length === 0) globalData = getDefaultBlockData('global-footer');
+                    return { ...block, type: 'global-footer', data: globalData };
+                }
+                return block;
+            });
+            const serverBlocksStr = JSON.stringify(content);
+            setSavedBlocksStr(serverBlocksStr); 
+            const draftKey = `draft_${siteData.id}_${pageId}`;
+            const draftStr = localStorage.getItem(draftKey);
+            if (draftStr && draftStr !== serverBlocksStr && !isReadOnly) {
+                try {
+                    const parsedDraft = JSON.parse(draftStr);
+                    setBlocks(parsedDraft, false);
+                } catch (e) {
+                    setBlocks(content, false);
                 }
             } else {
-                const response = await apiClient.get(`/pages/${pageId}`);
-                content = response.data.block_content || [];
-                if (typeof content === 'string') {
-                    try { content = JSON.parse(content); } catch (e) { content = []; }
-                }
+                setBlocks(content, false);
             }
-            setBlocks(content, false);
         } catch (err) {
             console.error('Помилка завантаження сторінки:', err);
             if (err.response && err.response.status === 404) {
@@ -159,7 +251,6 @@ const SiteDashboardPage = () => {
             setIsPageLoading(false);
         }
     };
-    
     const handleEditPage = (pageId) => {
         if (pageId === currentPageId && !isPageLoading && blocks.length > 0) return;
         setCurrentPageId(pageId);
@@ -172,7 +263,6 @@ const SiteDashboardPage = () => {
         fetchPageContent(pageId);
         setSelectedBlockPath(null);
     };
-    
     useEffect(() => {
         if (siteData && !allPages.length) {
             apiClient.get(`/sites/${siteData.id}/pages`)
@@ -181,9 +271,8 @@ const SiteDashboardPage = () => {
                     setAllPages(pages);
                     if (pages.length > 0) {
                         let targetId = currentPageId;
-                        const isSystem = targetId === 'header' || targetId === 'footer';
                         const pageExists = pages.find(p => p.id === targetId);
-                        if (!targetId || (!isSystem && !pageExists)) {
+                        if (!targetId || !pageExists) {
                             const home = pages.find(p => p.is_homepage) || pages[0];
                             targetId = home.id;
                         }
@@ -193,19 +282,40 @@ const SiteDashboardPage = () => {
                 .catch(console.error);
         }
     }, [siteData]);
-
+    
     const handleMoveBlock = (drag, hover) => !isReadOnly && setBlocks(prev => moveBlock(prev, drag, hover));
     const handleDropBlock = (item, path) => !isReadOnly && setBlocks(prev => handleDrop(prev, item, path));
     const handleAddBlock = (path, type, preset) => {
         if (isReadOnly) return;
-        const newBlock = { block_id: generateBlockId(), type, data: getDefaultBlockData(type, preset) };
+        if (type.startsWith('global-')) {
+            const exists = blocks.some(b => b.type === type);
+            if (exists) {
+                toast.warning(`Цей глобальний блок вже додано на сторінку.`);
+                return;
+            }
+        }
+        let blockData = getDefaultBlockData(type, preset);
+        if (type === 'global-header') {
+            const globalData = typeof siteData?.header_content === 'string' 
+                ? JSON.parse(siteData.header_content || '{}') 
+                : (siteData?.header_content || {});
+            if (Object.keys(globalData).length > 0) blockData = globalData;
+        } else if (type === 'global-footer') {
+            const globalData = typeof siteData?.footer_content === 'string' 
+                ? JSON.parse(siteData.footer_content || '{}') 
+                : (siteData?.footer_content || {});
+            if (Object.keys(globalData).length > 0) blockData = globalData;
+        }
+        const newBlock = { block_id: generateBlockId(), type, data: blockData };
         setBlocks(prev => addBlockByPath(prev, newBlock, path));
     };
+
     const handleDeleteBlock = (path) => {
         if (isReadOnly) return;
         setBlocks(prev => removeBlockByPath(prev, path));
         setSelectedBlockPath(null);
     };
+    
     const handleUpdateBlockData = (path, data, addToHistory = true) => {
         if (isReadOnly) return;
         setBlocks(prev => updateBlockDataByPath(prev, path, data), addToHistory);
@@ -222,25 +332,37 @@ const SiteDashboardPage = () => {
 
     const savePageContent = async (currentBlocks) => {
         if (isReadOnly) return; 
-        const blocksToSave = currentBlocks || blocks;
+        const blocksToProcess = currentBlocks || blocks;
         setIsSaving(true);
         try {
-            if (currentPageId === 'header') {
-                await apiClient.put(`/sites/${siteData.site_path}/settings`, { header_content: JSON.stringify(blocksToSave) });
-                const headerBlock = blocksToSave.find(b => b.type === 'header');
-                if (headerBlock && headerBlock.data) {
-                    setSiteData(prev => ({
-                        ...prev,
-                        logo_url: headerBlock.data.logo_src !== undefined ? headerBlock.data.logo_src : prev.logo_url,
-                        title: headerBlock.data.site_title !== undefined ? headerBlock.data.site_title : prev.title,
-                        header_content: blocksToSave
-                    }));
+            let updatedHeaderData = null;
+            let updatedFooterData = null;
+            const blocksToSave = blocksToProcess.map(block => {
+                if (block.type === 'global-header' || block.type === 'header') {
+                    updatedHeaderData = block.data;
+                    return { ...block, data: {} };
                 }
-            } else if (currentPageId === 'footer') {
-                await apiClient.put(`/sites/${siteData.site_path}/settings`, { footer_content: JSON.stringify(blocksToSave) });
-                setSiteData(prev => ({ ...prev, footer_content: blocksToSave }));
-            } else {
-                await apiClient.put(`/pages/${currentPageId}/content`, { block_content: blocksToSave });
+                if (block.type === 'global-footer' || block.type === 'footer') {
+                    updatedFooterData = block.data;
+                    return { ...block, data: {} };
+                }
+                return block;
+            });
+            const requests = [
+                apiClient.put(`/pages/${currentPageId}/content`, { block_content: blocksToSave })
+            ];
+            const siteUpdates = {};
+            if (updatedHeaderData) siteUpdates.header_content = updatedHeaderData;
+            if (updatedFooterData) siteUpdates.footer_content = updatedFooterData;
+            if (Object.keys(siteUpdates).length > 0) {
+                requests.push(apiClient.put(`/sites/${siteData.site_path}/settings`, siteUpdates));
+            }
+            await Promise.all(requests);
+            const savedStr = JSON.stringify(blocksToProcess);
+            setSavedBlocksStr(savedStr);
+            localStorage.removeItem(`draft_${siteData.id}_${currentPageId}`);
+            if (Object.keys(siteUpdates).length > 0) {
+                setSiteData(prev => ({ ...prev, ...siteUpdates }));
             }
         } catch (error) {
             handleSaveError(error);
@@ -248,7 +370,6 @@ const SiteDashboardPage = () => {
             setTimeout(() => setIsSaving(false), 500);
         }
     };
-
     const saveThemeSettings = async (updatedData) => {
         if (isReadOnly) return;
         setIsThemeSaving(true);
@@ -269,17 +390,6 @@ const SiteDashboardPage = () => {
     };
     const handleSiteDataUpdate = (newData) => {
         setSiteData(prev => ({ ...prev, ...newData }));
-        if (newData.logo_url !== undefined || newData.title !== undefined) {
-            setBlocks(prevBlocks => prevBlocks.map(block => {
-                if (block.type === 'header') {
-                    return {
-                        ...block,
-                        data: { ...block.data, logo_src: newData.logo_url !== undefined ? newData.logo_url : block.data.logo_src, site_title: newData.title !== undefined ? newData.title : block.data.site_title }
-                    };
-                }
-                return block;
-            }), false);
-        }
         saveThemeSettings(newData);
     };
     const refreshPageList = () => {
@@ -297,15 +407,26 @@ const SiteDashboardPage = () => {
         setCollapsedBlocks(prev => prev.includes(blockId) ? prev.filter(id => id !== blockId) : [...prev, blockId]);
     };
     const handleSavingChange = useCallback((isSaving) => {
-        const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings', orders: 'orders' };
+        const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings' };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
     if (isSiteLoading || !siteData) {
         return <LoadingState title="Завантаження редактора..." />;
     }
-    const isFullHeightTab = ['store', 'crm', 'orders'].includes(activeTab);
+    const isFullHeightTab = ['store', 'crm', 'analytics'].includes(activeTab);
+    const hasUnsavedChanges = JSON.stringify(blocks) !== savedBlocksStr && savedBlocksStr !== '';
     return (
         <div className="flex flex-col h-screen overflow-hidden">
+            <ConfirmModal 
+                isOpen={isDiscardModalOpen}
+                title="Скинути зміни?"
+                message="Ви впевнені, що хочете скинути всі незбережені зміни? Вони будуть видалені безповоротно."
+                confirmLabel="Скинути"
+                cancelLabel="Скасувати"
+                onConfirm={executeDiscardChanges}
+                onCancel={() => setIsDiscardModalOpen(false)}
+                type="danger" 
+            />
             {isReadOnly && (
                 <div className="bg-orange-500 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 shadow-sm z-50 animate-in slide-in-from-top-2 duration-300">
                     <Lock size={16} />
@@ -321,12 +442,18 @@ const SiteDashboardPage = () => {
                 canRedo={canRedo && !isReadOnly}
                 isSaving={isSaving || isThemeSaving}
                 isReadOnly={isReadOnly}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onUpdateConfig={handleSiteDataUpdate}
             />
             <div className="flex-1 flex overflow-hidden relative">
                 {activeTab === 'editor' && (
                     <>
-                        <div className="flex-1 overflow-y-auto bg-(--platform-bg)">
-                            <div className="pb-25">
+                        <div 
+                            ref={pcScrollRef} 
+                            className={`flex-1 overflow-y-auto ${viewMode !== 'editor' ? 'bg-[#111827]' : 'bg-(--platform-bg)'} transition-colors duration-300`}
+                        >
+                            <div>
                                 {isPageLoading ? (
                                     <LoadingState layout="component" title="Завантаження сторінки..." className="h-75" />
                                 ) : (
@@ -342,30 +469,35 @@ const SiteDashboardPage = () => {
                                             selectedBlockPath={selectedBlockPath}
                                             collapsedBlocks={collapsedBlocks}
                                             onToggleCollapse={toggleBlockCollapse}
-                                            isHeaderMode={isHeaderMode}
                                             onBlockSaved={handleBlockSaved}
+                                            viewMode={viewMode}
                                         />
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <div className={isReadOnly ? 'pointer-events-none opacity-50 grayscale' : ''}>
-                            <EditorSidebar
-                                blocks={blocks}
-                                siteData={siteData}
-                                onMoveBlock={handleMoveBlock}
-                                onDeleteBlock={handleDeleteBlock}
-                                selectedBlockPath={selectedBlockPath}
-                                onSelectBlock={setSelectedBlockPath}
-                                onUpdateBlockData={handleUpdateBlockData}
-                                onSave={savePageContent}
-                                allPages={[{ id: 'header', name: 'Хедер' }, ...allPages, { id: 'footer', name: 'Футер' }]}
-                                currentPageId={currentPageId}
-                                onSelectPage={(id) => handleEditPage(id)}
-                                savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
-                                isHeaderMode={isHeaderMode}
-                            />
-                        </div>
+                        {viewMode === 'editor' && (
+                            <div className={isReadOnly ? 'pointer-events-none opacity-50 grayscale' : ''}>
+                                <EditorSidebar
+                                    blocks={blocks}
+                                    siteData={siteData}
+                                    onMoveBlock={handleMoveBlock}
+                                    onDeleteBlock={handleDeleteBlock}
+                                    selectedBlockPath={selectedBlockPath}
+                                    onSelectBlock={setSelectedBlockPath}
+                                    onUpdateBlockData={handleUpdateBlockData}
+                                    onAddBlock={handleAddBlock}
+                                    onSave={savePageContent}
+                                    allPages={allPages}
+                                    currentPageId={currentPageId}
+                                    onSelectPage={(id) => handleEditPage(id)}
+                                    savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
+                                    isSaving={isSaving}
+                                    hasChanges={hasUnsavedChanges}
+                                    onDiscardChanges={handleDiscardChanges}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
                 {activeTab !== 'editor' && (
@@ -385,17 +517,23 @@ const SiteDashboardPage = () => {
                                 <PagesSettingsTab 
                                     siteId={siteData.id} 
                                     onEditPage={(id) => { handleEditPage(id); setActiveTab('editor'); }}
-                                    onEditFooter={() => { handleEditPage('footer'); setActiveTab('editor'); }}
-                                    onEditHeader={() => { handleEditPage('header'); setActiveTab('editor'); }}
                                     onPageUpdate={refreshPageList}
                                     onSavingChange={handleSavingChange}
                                 />
                             )}
                             {activeTab === 'store' && <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />}
-                            {activeTab === 'orders' && <OrdersTab siteData={siteData} />}
                             {activeTab === 'theme' && <StyleSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />}
                             {activeTab === 'crm' && <SubmissionsTab siteId={siteData.id} onSavingChange={handleSavingChange} />}
                             {activeTab === 'settings' && <GeneralSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} onSavingChange={handleSavingChange} />}
+                            {activeTab === 'analytics' && (
+                                <AnalyticsTab 
+                                    siteData={siteData} 
+                                    onGoToOrders={() => {
+                                        setActiveTab('store');
+                                        navigate(`?shopTab=orders`);
+                                    }} 
+                                />
+                            )}
                         </div>
                     </div>
                 )}

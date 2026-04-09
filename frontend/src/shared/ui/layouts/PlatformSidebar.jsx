@@ -38,9 +38,11 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user' }) => {
             </NavLink>
         );
     };
-
     return (
-        <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} custom-scrollbar`}>
+        <div 
+            className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} custom-scrollbar`}
+            style={{ zIndex: 10000 }}
+        >
             <div className="sidebar-header">
                 <Link to={isAdminView ? "/admin/dashboard" : "/"} className="flex justify-center w-full h-full items-center">
                     <div className="sidebar-logo" />

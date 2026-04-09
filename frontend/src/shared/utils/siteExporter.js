@@ -10,6 +10,10 @@ const getAbsoluteUrl = (url) => {
     if (url.startsWith('data:')) return null;
     if (url.startsWith('blob:')) return null;
     if (url.startsWith('http')) return url;
+    if (url.includes('/src/') || url.includes('/assets/') || url.includes('@fs')) {
+        const cleanPath = url.startsWith('/') ? url : `/${url}`;
+        return `${window.location.origin}${cleanPath}`;
+    }
     const cleanPath = url.startsWith('/') ? url.slice(1) : url;
     return `${BASE_URL}/${cleanPath}`;
 };
@@ -30,7 +34,6 @@ const collectMediaStrings = (obj, foundStrings = new Set()) => {
                 'bg_video', 'video', 'poster', 
                 'logo_src', 'logo_url', 'favicon_url'
             ].includes(key) || key.toLowerCase().includes('image') || key.toLowerCase().includes('video');
-            
             if (isMediaKey && typeof obj[key] === 'string' && obj[key].length > 0) {
                 foundStrings.add(obj[key]);
             } else {
@@ -83,7 +86,6 @@ export const exportSiteToZip = async (initialSiteData) => {
             try {
                 const res = await apiClient.get(`/pages/${page.id}`);
                 let content = res.data.block_content;
-                
                 if (typeof content === 'string') {
                     try {
                         content = JSON.parse(content);
@@ -92,14 +94,12 @@ export const exportSiteToZip = async (initialSiteData) => {
                         content = [];
                     }
                 }
-                
                 pagesContentMap[page.id] = content || [];
             } catch (e) {
                 console.error(`[Exporter] Error loading page ${page.slug}`, e);
                 pagesContentMap[page.id] = [];
             }
         }
-
         const allMediaStrings = new Set();
         collectMediaStrings(initialSiteData, allMediaStrings);
         if (initialSiteData.header_content) collectMediaStrings(initialSiteData.header_content, allMediaStrings);
@@ -129,7 +129,6 @@ export const exportSiteToZip = async (initialSiteData) => {
                 mapOriginalToLocal.set(originalString, `assets/${filename}`);
             }
         });
-
         await Promise.all(downloadPromises);
         const localizedSiteData = replaceStringsInObject(initialSiteData, mapOriginalToLocal);
         const isDark = localizedSiteData.site_theme_mode === 'dark';
@@ -170,9 +169,7 @@ export const exportSiteToZip = async (initialSiteData) => {
             .static-slider::-webkit-scrollbar { height: 6px; }
             .static-slider::-webkit-scrollbar-thumb { background: var(--site-accent); border-radius: 3px; }
         `;
-        
         zip.folder("css").file("style.css", cssContent);
-
         for (const page of allPagesMeta) {
             const originalBlocks = pagesContentMap[page.id];
             const localizedBlocks = replaceStringsInObject(originalBlocks, mapOriginalToLocal);
@@ -180,7 +177,6 @@ export const exportSiteToZip = async (initialSiteData) => {
             const html = generateFullHTML(localizedSiteData, localizedBlocks, page.title);
             zip.file(filename, html);
         }
-
         zip.file("README.txt", "Exported from Kendr Website Builder.\n\nTo view your site, open index.html in any browser.");
         const content = await zip.generateAsync({ type: "blob" });
         saveAs(content, `${initialSiteData.site_path || 'website'}_export.zip`);

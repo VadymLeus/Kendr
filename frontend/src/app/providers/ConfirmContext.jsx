@@ -13,10 +13,11 @@ export const ConfirmProvider = ({ children }) => {
         type: 'danger',
         requireInput: false,
         expectedInput: 'DELETE',
+        requireReason: false,
+        reasonPlaceholder: '',
         onConfirm: () => {},
         onCancel: () => {},
     });
-
     const confirm = useCallback((options) => {
         return new Promise((resolve) => {
             setConfirmState({
@@ -28,9 +29,11 @@ export const ConfirmProvider = ({ children }) => {
                 type: options.danger ? 'danger' : (options.type || 'primary'),
                 requireInput: options.requireInput || false,
                 expectedInput: options.expectedInput || 'DELETE',
-                onConfirm: (inputValue) => {
+                requireReason: options.requireReason || false,
+                reasonPlaceholder: options.reasonPlaceholder || 'Введіть причину...',
+                onConfirm: (inputValue, reasonValue) => {
                     setConfirmState((prev) => ({ ...prev, isOpen: false }));
-                    if (options.onConfirm) options.onConfirm(inputValue);
+                    if (options.onConfirm) options.onConfirm(inputValue, reasonValue);
                     resolve(true);
                 },
                 onCancel: () => {
@@ -41,7 +44,6 @@ export const ConfirmProvider = ({ children }) => {
             });
         });
     }, []);
-
     return (
         <ConfirmContext.Provider value={{ confirm }}>
             {children}
@@ -56,6 +58,8 @@ export const ConfirmProvider = ({ children }) => {
                 type={confirmState.type}
                 requireInput={confirmState.requireInput}
                 expectedInput={confirmState.expectedInput}
+                requireReason={confirmState.requireReason}
+                reasonPlaceholder={confirmState.reasonPlaceholder}
             />
         </ConfirmContext.Provider>
     );

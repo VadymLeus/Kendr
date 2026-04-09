@@ -8,19 +8,15 @@ export const useAutoSave = (endpoint, initialData, onSaveCallback) => {
     const [data, setData] = useState(initialData);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSavedData, setLastSavedData] = useState(initialData);
-    
     const dataRef = useRef(data);
-
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
-
     const saveData = async (dataToSave) => {
         setIsSaving(true);
         try {
             await apiClient.put(endpoint, dataToSave);
             setLastSavedData(dataToSave);
-            
             if (onSaveCallback) onSaveCallback(dataToSave);
         } catch (error) {
             console.error("Autosave error:", error);
@@ -38,13 +34,14 @@ export const useAutoSave = (endpoint, initialData, onSaveCallback) => {
     );
 
     const handleChange = (field, value) => {
-        const newData = { ...data, [field]: value };
-        setData(newData);
-        
-        if (JSON.stringify(newData) !== JSON.stringify(lastSavedData)) {
-            setIsSaving(true);
-            debouncedSave(newData);
-        }
+        setData((prevData) => {
+            const newData = { ...prevData, [field]: value };
+            if (JSON.stringify(newData) !== JSON.stringify(lastSavedData)) {
+                setIsSaving(true);
+                debouncedSave(newData);
+            }
+            return newData;
+        });
     };
 
     const updateAll = (newData) => {

@@ -4,7 +4,7 @@ import AddBlocksTab from './tabs/AddBlocksTab';
 import LayersTab from './tabs/LayersTab';
 import SettingsTab from './tabs/SettingsTab';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import { Save, Plus, Layers, Settings, Star, PanelTop, PanelBottom, File } from 'lucide-react';
+import { Save, Plus, Layers, Settings, Star, File, Loader2, RotateCcw, CheckCircle2 } from 'lucide-react';
 
 const EditorSidebar = ({
     blocks,
@@ -14,12 +14,15 @@ const EditorSidebar = ({
     selectedBlockPath,
     onSelectBlock,
     onUpdateBlockData,
+    onAddBlock,
     onSave,
     allPages,
     currentPageId,
     onSelectPage,
     savedBlocksUpdateTrigger,
-    isHeaderMode
+    isSaving = false,
+    hasChanges = false,
+    onDiscardChanges
 }) => {
     const [activeTab, setActiveTab] = useState(() => {
         return localStorage.getItem('editorActiveTab') || 'add';
@@ -31,12 +34,10 @@ const EditorSidebar = ({
     };
 
     useEffect(() => {
-        if (isHeaderMode) {
-            setActiveTab('settings');
-        } else if (activeTab === 'settings' && !selectedBlockPath) {
+        if (activeTab === 'settings' && !selectedBlockPath) {
             handleTabChange('add');
         }
-    }, [isHeaderMode, selectedBlockPath]);
+    }, [selectedBlockPath]);
 
     useEffect(() => {
         if (selectedBlockPath) {
@@ -47,24 +48,18 @@ const EditorSidebar = ({
     const handleSave = () => {
         onSave(blocks);
     };
-
+    
     const pageOptions = useMemo(() => {
         return (allPages || []).map(page => {
             let icon = File;
             let iconStyle = { flexShrink: 0 }; 
             let iconProps = {};
             let label = page.name;
-
-            if (page.id === 'header') {
-                icon = PanelTop;
-            } else if (page.id === 'footer') {
-                icon = PanelBottom;
-            } else if (page.is_homepage) {
+            if (page.is_homepage) {
                 icon = Star;
                 iconStyle = { ...iconStyle, color: 'var(--platform-accent)', fill: 'var(--platform-accent)' };
                 iconProps = { filled: true };
             }
-
             return {
                 value: page.id,
                 label: label,
@@ -96,7 +91,6 @@ const EditorSidebar = ({
             </button>
         );
     };
-    
     return (
         <div className="w-75 min-w-75 h-full flex flex-col bg-(--platform-sidebar-bg) border-l border-(--platform-border-color) shrink-0">
             <div className="p-3 border-b border-(--platform-border-color) bg-(--platform-card-bg) flex items-center gap-2 shrink-0">
@@ -105,11 +99,7 @@ const EditorSidebar = ({
                         value={currentPageId || ''}
                         onChange={(e) => {
                             const val = e.target.value;
-                            if (val === 'footer' || val === 'header') {
-                                onSelectPage(val);
-                            } else {
-                                onSelectPage(parseInt(val, 10));
-                            }
+                            onSelectPage(parseInt(val, 10));
                         }}
                         options={pageOptions}
                         placeholder="Сторінка"
@@ -117,42 +107,52 @@ const EditorSidebar = ({
                         style={{ width: '100%', margin: 0 }} 
                     />
                 </div>
-
-                <button
-                    onClick={handleSave}
-                    title="Зберегти зміни"
-                    className={`
-                        bg-(--platform-accent) text-(--platform-accent-text) px-3 h-9.5 rounded-lg 
-                        border-none text-[13px] font-semibold cursor-pointer transition-all duration-200 
-                        shadow-sm flex items-center justify-center gap-2 whitespace-nowrap overflow-hidden
-                        hover:bg-(--platform-accent-hover) hover:-translate-y-px hover:shadow-md
-                    `}
-                >
-                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                        <Save size={16} />
-                    </div>
-                    <span>Зберегти</span>
-                </button>
+                <div className="flex items-center gap-1 h-9.5">
+                    {hasChanges ? (
+                        <>
+                            <button
+                                onClick={onDiscardChanges}
+                                title="Скинути до збереженого"
+                                className="h-full px-2.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors flex items-center justify-center border border-red-200 dark:border-red-500/20"
+                            >
+                                <RotateCcw size={16} />
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className="px-3 h-full bg-(--platform-accent) text-(--platform-accent-text) rounded-lg border-none text-[13px] font-semibold cursor-pointer hover:bg-(--platform-accent-hover) transition-all shadow-sm flex items-center gap-2"
+                            >
+                                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                <span>{isSaving ? 'Збереження...' : 'Зберегти'}</span>
+                            </button>
+                        </>
+                    ) : (
+                        <div 
+                            title="Всі зміни збережено"
+                            className="flex items-center justify-center w-9.5 h-full rounded-lg text-(--platform-accent) cursor-default"
+                            style={{ backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)' }}
+                        >
+                            <CheckCircle2 size={20} />
+                        </div>
+                    )}
+                </div>
             </div>
             <nav className="flex border-b border-(--platform-border-color) bg-(--platform-sidebar-bg) shrink-0">
-                {!isHeaderMode && (
-                    <>
-                        <TabButton id="add" label="Додати блок" icon={Plus} />
-                        <TabButton id="layers" label="Шари" icon={Layers} />
-                    </>
-                )}
+                <TabButton id="add" label="Додати блок" icon={Plus} />
+                <TabButton id="layers" label="Шари" icon={Layers} />
                 <TabButton id="settings" label="Налаштування" icon={Settings} />
             </nav>
             <div className="overflow-y-auto flex-1 p-0 bg-(--platform-sidebar-bg) custom-scrollbar">
-                {activeTab === 'add' && !isHeaderMode && (
+                {activeTab === 'add' && (
                     <div className="p-4">
                         <AddBlocksTab 
                             savedBlocksUpdateTrigger={savedBlocksUpdateTrigger} 
+                            blocks={blocks}
+                            onAddBlock={onAddBlock}
                         />
                     </div>
                 )}
-                
-                {activeTab === 'layers' && !isHeaderMode && (
+                {activeTab === 'layers' && (
                     <LayersTab
                         blocks={blocks}
                         siteData={siteData}
@@ -161,7 +161,6 @@ const EditorSidebar = ({
                         onDeleteBlock={onDeleteBlock}
                     />
                 )}
-                
                 {activeTab === 'settings' && (
                     <SettingsTab 
                         blocks={blocks}

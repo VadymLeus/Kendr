@@ -1,6 +1,13 @@
 // backend/models/Site.js
 const db = require('../config/db');
 const { deleteFile } = require('../utils/fileUtils');
+const safeParseCategories = (catsData) => {
+    if (!catsData) return [];
+    if (typeof catsData === 'string') {
+        try { return JSON.parse(catsData) || []; } catch (e) { return []; }
+    }
+    return Array.isArray(catsData) ? catsData : [];
+};
 
 class Site {
   static async getPublic({ searchTerm = '', userId = null, tag = null, sort = 'new', onlyFavorites = false, currentUserId = null, includeAllStatuses = false }) {
@@ -9,7 +16,7 @@ class Site {
             s.id, s.site_path, s.title, s.logo_url, s.status, s.view_count, s.created_at,
             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
             s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
-            s.is_pinned, 
+            s.is_pinned, s.currency, s.cookie_banner_enabled, s.cookie_banner_text,
             u.username AS author, u.slug AS author_slug, u.avatar_url AS author_avatar
         FROM sites s
         JOIN users u ON s.user_id = u.id
@@ -68,7 +75,6 @@ class Site {
             }
         }
     }
-
     query += ` ${orderByClause}`;
     const [rows] = await db.query(query, params);
     for (let site of rows) {
@@ -80,14 +86,13 @@ class Site {
         `, [site.id]);
         site.tags = tags;
     }
-
     return rows;
   }
 
   static async findAllForAdmin() {
     const [rows] = await db.query(`
         SELECT
-             s.id, s.site_path, s.title, s.logo_url, s.status, s.deletion_scheduled_for,
+             s.id, s.site_path, s.title, s.logo_url, s.status, s.deletion_scheduled_for, s.currency,
              u.username AS author, u.slug AS author_slug
         FROM sites s
         JOIN users u ON s.user_id = u.id
@@ -101,13 +106,14 @@ class Site {
         SELECT
             s.id, s.user_id, s.title, s.logo_url, s.status,
             s.view_count, s.site_theme_mode, s.site_theme_accent,
-            s.site_path, s.theme_settings, s.header_content, s.footer_content, s.footer_layout,
+            s.site_path, s.theme_settings, s.dashboard_config, s.header_content, s.footer_content, s.footer_layout,
             s.favicon_url, s.site_title_seo,
             s.cover_image, s.cover_layout,
             s.cover_logo_size,
             s.cover_logo_radius,
             s.cover_title_size,
-            s.liqpay_public_key, s.liqpay_private_key
+            s.liqpay_public_key, s.liqpay_private_key, s.currency,
+            s.cookie_banner_enabled, s.cookie_banner_text
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -115,22 +121,34 @@ class Site {
     const site = sites[0];
     try {
         if (typeof site.theme_settings === 'string') site.theme_settings = JSON.parse(site.theme_settings);
+        if (typeof site.dashboard_config === 'string') site.dashboard_config = JSON.parse(site.dashboard_config);
         if (typeof site.header_content === 'string') site.header_content = JSON.parse(site.header_content);
         if (typeof site.footer_content === 'string') site.footer_content = JSON.parse(site.footer_content);
     } catch (error) {
         console.error('Error parsing JSON fields for site:', sitePath, error);
         site.theme_settings = site.theme_settings || {};
+        site.dashboard_config = site.dashboard_config || { hiddenTabs: [] };
         site.header_content = site.header_content || [];
         site.footer_content = site.footer_content || [];
     }
-
     const [productRows] = await db.query(`
-        SELECT p.*, c.name as category_name
+        SELECT p.*,
+            IF(c.id IS NOT NULL,
+                JSON_ARRAY(
+                    JSON_OBJECT('id', c.id, 'name', c.name, 'discount_percentage', c.discount_percentage)
+                ),
+                '[]'
+            ) AS categories
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         WHERE p.site_id = ?
         ORDER BY p.created_at DESC
     `, [site.id]);
+
+    productRows.forEach(product => {
+        product.categories = safeParseCategories(product.categories);
+    });
+
     return { ...site, products: productRows };
   }
 
@@ -146,8 +164,8 @@ class Site {
   
   static async create(userId, sitePath, title, logoUrl) {
     const [result] = await db.query(
-      'INSERT INTO sites (user_id, site_path, title, logo_url, status) VALUES (?, ?, ?, ?, ?)',
-      [userId, sitePath, title, logoUrl, 'private']
+      'INSERT INTO sites (user_id, site_path, title, logo_url, status, currency) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, sitePath, title, logoUrl, 'private', 'UAH']
     );
     return { 
       id: result.insertId, 
@@ -155,25 +173,25 @@ class Site {
       site_path: sitePath, 
       title: title, 
       logo_url: logoUrl, 
-      status: 'private'
+      status: 'private',
+      currency: 'UAH'
     };
   }
 
   static async updateSettings(siteId, data) {
     const { 
-      title, status, site_theme_mode, site_theme_accent, theme_settings, 
+      title, status, site_theme_mode, site_theme_accent, theme_settings, dashboard_config,
       header_content, footer_content, favicon_url, site_title_seo, 
       cover_image, cover_layout, logo_url,
       cover_logo_size, cover_logo_radius, cover_title_size,
-      liqpay_public_key, liqpay_private_key
+      liqpay_public_key, liqpay_private_key, currency,
+      cookie_banner_enabled, cookie_banner_text
     } = data;
-    
     const safeStringify = (obj) => {
       if (!obj) return null;
       try { return JSON.stringify(obj); } 
       catch (error) { return null; }
     };
-
     let safeFaviconUrl = null;
     if (typeof favicon_url === 'string') safeFaviconUrl = favicon_url;
     const params = [
@@ -182,6 +200,7 @@ class Site {
         site_theme_mode || 'light',
         site_theme_accent || 'orange',
         safeStringify(theme_settings),
+        safeStringify(dashboard_config),
         safeStringify(header_content),
         safeStringify(footer_content),
         safeFaviconUrl,
@@ -194,6 +213,9 @@ class Site {
         cover_title_size !== undefined ? cover_title_size : 24,
         liqpay_public_key || null,
         liqpay_private_key || null,
+        currency || 'UAH',
+        cookie_banner_enabled ? 1 : 0,
+        cookie_banner_text || null,
         siteId
     ];
     const query = `
@@ -204,6 +226,7 @@ class Site {
             site_theme_mode = ?, 
             site_theme_accent = ?,
             theme_settings = ?,
+            dashboard_config = ?,
             header_content = ?,
             footer_content = ?,
             favicon_url = ?, 
@@ -215,10 +238,12 @@ class Site {
             cover_logo_radius = ?,
             cover_title_size = ?,
             liqpay_public_key = ?,
-            liqpay_private_key = ?
+            liqpay_private_key = ?,
+            currency = ?,
+            cookie_banner_enabled = ?,
+            cookie_banner_text = ?
         WHERE id = ?
     `;
-    
     const [result] = await db.query(query, params);
     return result;
   }
@@ -280,10 +305,10 @@ class Site {
 
   static async getUserSites(userId) {
     const [rows] = await db.query(`
-      SELECT s.id, s.site_path, s.title, s.logo_url, s.status, 
+      SELECT s.id, s.site_path, s.title, s.logo_url, s.status, s.currency,
              s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
              s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
-             s.is_pinned, s.view_count, s.created_at
+             s.is_pinned, s.view_count, s.created_at, s.cookie_banner_enabled, s.cookie_banner_text
       FROM sites s 
       WHERE s.user_id = ? 
       ORDER BY s.is_pinned DESC, s.updated_at DESC

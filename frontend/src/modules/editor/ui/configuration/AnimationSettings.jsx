@@ -39,13 +39,14 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
         { value: "fadeRight", label: "Справа наліво (Fade Right)" },
         { value: "zoomIn", label: "Масштабування (Zoom In)" }
     ];
-
     return (
         <div>
             <div className={`form-group ${config.type !== 'none' ? 'mb-5' : ''}`}>
-                <label className="form-label flex items-center gap-2">
-                    <Play size={16} className="text-(--platform-accent)" /> 
-                    Ефект появи
+                <label className="form-label mb-2">
+                    <span className="flex items-center gap-2 whitespace-nowrap">
+                        <Play size={16} className="text-(--platform-accent)" /> 
+                        <span>Ефект появи</span>
+                    </span>
                 </label>
                 <CustomSelect 
                     value={config.type} 
@@ -54,12 +55,10 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                     placeholder="Оберіть ефект"
                 />
             </div>
-
             {config.type !== 'none' && (
                 <div className="flex flex-col gap-5">
-                    
                     <div>
-                        <div className="flex items-center gap-2 text-xs font-medium text-(--platform-text-secondary) mb-1">
+                        <div className="inline-flex items-center gap-2 text-xs font-medium text-(--platform-text-secondary) mb-1 whitespace-nowrap">
                             <Clock size={14} /> Тривалість: <span className="text-(--platform-text-primary)">{config.duration}s</span>
                         </div>
                         <RangeSlider 
@@ -71,9 +70,8 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                             unit="ms"
                         />
                     </div>
-
                     <div>
-                        <div className="flex items-center gap-2 text-xs font-medium text-(--platform-text-secondary) mb-1">
+                        <div className="inline-flex items-center gap-2 text-xs font-medium text-(--platform-text-secondary) mb-1 whitespace-nowrap">
                             <Hourglass size={14} /> Затримка: <span className="text-(--platform-text-primary)">{config.delay}s</span>
                         </div>
                         <RangeSlider 
@@ -85,9 +83,8 @@ const AnimationSettings = ({ animationConfig, onChange }) => {
                             unit="ms"
                         />
                     </div>
-
                     <div className="flex items-center justify-between pt-4 border-t border-dashed border-(--platform-border-color)">
-                        <div className="flex items-center gap-2">
+                        <div className="inline-flex items-center gap-2 whitespace-nowrap">
                             <Repeat size={16} className="text-(--platform-text-secondary)" />
                             <span className="text-sm text-(--platform-text-primary)">Зациклити анімацію</span>
                         </div>

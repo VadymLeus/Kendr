@@ -5,11 +5,11 @@ import { BLOCK_LIBRARY } from '../../core/editorConfig';
 import apiClient from '../../../../shared/api/api';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Input } from '../../../../shared/ui/elements/Input';
-import { ChevronDown, ChevronRight, Trash2, Edit, Check, X, Package, PanelTop, Box, ShoppingBag, GripVertical } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { ChevronDown, ChevronRight, Trash2, Edit, Check, X, Package, PanelTop, Box, ShoppingBag, GripVertical, Globe, Loader2 } from 'lucide-react';
 
 const Section = ({ title, children, defaultOpen = false, icon }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
-
     return (
         <div className={`border-b border-(--platform-border-color) ${isOpen ? 'mb-4' : 'mb-0'}`}>
             <div 
@@ -38,11 +38,10 @@ const Section = ({ title, children, defaultOpen = false, icon }) => {
     );
 };
 
-const SavedBlockItem = ({ block, onDelete, onRename }) => {
+const SavedBlockItem = ({ block, onDelete, onRename, onClickAdd }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState(block.name);
     const [isSaving, setIsSaving] = useState(false);
-
     const handleStartEdit = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -77,7 +76,6 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
     };
 
     const actionBtnClasses = "w-7 h-7 flex items-center justify-center border-none bg-transparent cursor-pointer text-(--platform-text-secondary) rounded hover:bg-(--platform-hover-bg) transition-all duration-200";
-
     if (isEditing) {
         return (
             <div className="p-1.5 bg-(--platform-card-bg) border border-(--platform-accent) rounded-lg mb-2 flex items-center gap-2">
@@ -113,10 +111,9 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
             </div>
         );
     }
-
     return (
         <div 
-            className="relative bg-(--platform-card-bg) border border-(--platform-border-color) rounded-lg mb-2 overflow-hidden flex items-center justify-between pr-2 transition-all duration-200 h-11.5 hover:border-(--platform-accent) hover:shadow-sm"
+            className="relative bg-(--platform-card-bg) border border-(--platform-border-color) rounded-lg mb-2 overflow-hidden flex items-center justify-between pr-2 transition-all duration-200 h-11.5 hover:border-(--platform-accent) hover:shadow-sm group"
         >
             <div className="flex-1 h-full min-w-0">
                 <DraggableBlockItem
@@ -129,6 +126,7 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
                         originId: block.id,
                         originName: block.name
                     }}
+                    onClickAdd={onClickAdd}
                     customStyle={{
                         border: 'none', 
                         boxShadow: 'none', 
@@ -150,8 +148,7 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
                     }
                 />
             </div>
-            
-            <div className="flex items-center gap-0.5 ml-2 z-10">
+            <div className="flex items-center gap-0.5 ml-2 z-10 shrink-0">
                 <button 
                     onClick={handleStartEdit}
                     title="Перейменувати"
@@ -171,14 +168,14 @@ const SavedBlockItem = ({ block, onDelete, onRename }) => {
     );
 };
 
-const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
+const AddBlocksTab = ({ savedBlocksUpdateTrigger, blocks = [], onAddBlock }) => {
     const [savedBlocks, setSavedBlocks] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const { confirm } = useConfirm();
     const layoutBlocks = BLOCK_LIBRARY.filter(b => b.type === 'layout');
     const basicBlocks = BLOCK_LIBRARY.filter(b => ['hero', 'text', 'image', 'button', 'form', 'features', 'video', 'map', 'accordion', 'social_icons'].includes(b.type));
     const ecommerceBlocks = BLOCK_LIBRARY.filter(b => ['catalog', 'showcase'].includes(b.type));
-
+    const globalBlocks = BLOCK_LIBRARY.filter(b => ['global-header', 'global-footer'].includes(b.type));
     useEffect(() => {
         const fetchSavedBlocks = async () => {
             setIsLoading(true);
@@ -201,7 +198,6 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
             type: 'danger',
             confirmLabel: 'Видалити'
         });
-
         if (isConfirmed) {
             try {
                 await apiClient.delete(`/saved-blocks/${id}`);
@@ -211,7 +207,6 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
             }
         }
     };
-
     const handleRenameSaved = async (id, newName) => {
         try {
             await apiClient.put(`/saved-blocks/${id}`, { name: newName });
@@ -220,13 +215,54 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
             console.error(err);
         }
     };
+    const handleBlockClickToAdd = (blockType, presetData = {}) => {
+        if (!onAddBlock) return;
+        if (blockType === 'global-header') {
+            if (blocks.some(b => b.type === 'global-header')) {
+                toast.warning('Глобальний Хедер вже додано на сторінку');
+                return;
+            }
+            onAddBlock([0], blockType, presetData);
+            scrollToBlock(0);
+            return;
+        }
+        if (blockType === 'global-footer') {
+            if (blocks.some(b => b.type === 'global-footer')) {
+                toast.warning('Глобальний Футер вже додано на сторінку');
+                return;
+            }
+            onAddBlock([blocks.length], blockType, presetData);
+            scrollToBlock(blocks.length);
+            return;
+        }
+        const footerIndex = blocks.findIndex(b => b.type === 'global-footer');
+        const targetIndex = footerIndex !== -1 ? footerIndex : blocks.length;
+        onAddBlock([targetIndex], blockType, presetData);
+        scrollToBlock(targetIndex);
+    };
+
+    const scrollToBlock = (targetIndex) => {
+        setTimeout(() => {
+            const container = document.querySelector('.blocks-container');
+            if (container) {
+                const elements = Array.from(container.querySelectorAll('[id^="block-"]')).filter(el => {
+                    return el.parentElement.classList.contains('site-theme-preview') || el.closest('.blocks-container') === container;
+                });
+                if (elements[targetIndex]) {
+                    elements[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else if (targetIndex >= blocks.length) {
+                    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                }
+            }
+        }, 150);
+    };
 
     return (
         <div>
             <Section title="Ваша бібліотека" defaultOpen={false} icon={<Package size={18} />}>
                 {isLoading ? (
                     <div className="flex justify-center p-4 text-(--platform-text-secondary)">
-                        <span className="animate-spin">⌛</span>
+                        <Loader2 size={24} className="animate-spin text-(--platform-accent)" />
                     </div>
                 ) : savedBlocks.length === 0 ? (
                     <div className="p-6 border border-dashed border-(--platform-border-color) rounded-lg text-center text-(--platform-text-secondary) text-sm bg-(--platform-bg)">
@@ -239,11 +275,22 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
                             block={block} 
                             onDelete={handleDeleteSaved}
                             onRename={handleRenameSaved}
+                            onClickAdd={handleBlockClickToAdd}
                         />
                     ))
                 )}
             </Section>
-
+            <Section title="Глобальні блоки" icon={<Globe size={18} />}>
+                {globalBlocks.map(block => (
+                    <DraggableBlockItem
+                        key={block.type}
+                        name={block.name}
+                        icon={block.icon}
+                        blockType={block.type}
+                        onClickAdd={handleBlockClickToAdd}
+                    />
+                ))}
+            </Section>
             <Section title="Макети" icon={<PanelTop size={18} />}>
                 {layoutBlocks.map(block => (
                     block.presets.map(preset => (
@@ -253,11 +300,11 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
                             icon={block.icon}
                             blockType="layout"
                             presetData={{ preset: preset.preset, columns: preset.columns }}
+                            onClickAdd={handleBlockClickToAdd}
                         />
                     ))
                 ))}
             </Section>
-
             <Section title="Базові блоки" icon={<Box size={18} />}>
                 {basicBlocks.map(block => (
                     <DraggableBlockItem
@@ -265,10 +312,10 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
                         name={block.name}
                         icon={block.icon}
                         blockType={block.type}
+                        onClickAdd={handleBlockClickToAdd}
                     />
                 ))}
             </Section>
-
             <Section title="E-commerce" icon={<ShoppingBag size={18} />}>
                 {ecommerceBlocks.map(block => (
                     <DraggableBlockItem
@@ -276,6 +323,7 @@ const AddBlocksTab = ({ savedBlocksUpdateTrigger }) => {
                         name={block.name}
                         icon={block.icon}
                         blockType={block.type}
+                        onClickAdd={handleBlockClickToAdd}
                     />
                 ))}
             </Section>

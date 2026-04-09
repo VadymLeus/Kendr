@@ -290,7 +290,6 @@
 .priceContainer { display: flex; align-items: flex-end; gap: 15px; margin-bottom: 10px; }
 .finalPrice { font-size: 2.8rem; font-weight: bold; color: var(--site-text-primary); }
 .originalPrice { text-decoration: line-through; color: var(--site-text-secondary); font-size: 1.4rem; margin-bottom: 8px; }
-
 .footer {
     flex-shrink: 0;
     background-color: var(--footer-bg);
@@ -306,7 +305,6 @@
 }
 
 .loadingContainer, .errorContainer { padding: 50px; text-align: center; color: var(--site-text-secondary); }
-
 @media (max-width: 1200px) {
     .productsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
@@ -323,3 +321,4 @@
 @media (max-width: 600px) {
     .productsGrid { grid-template-columns: minmax(0, 1fr) !important; }
 }
+

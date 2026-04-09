@@ -3,7 +3,6 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useLocation, Outlet } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import PlatformSidebar from './PlatformSidebar';
-import SiteHeader from './SiteHeader';
 import Footer from './Footer';
 import TitleManager from './TitleManager';
 import apiClient from '../../api/api';
@@ -60,7 +59,6 @@ const Layout = () => {
             return newState;
         });
     };
-
     useEffect(() => {
         if (!globalAnnouncement) {
             setAnnouncementText('');
@@ -108,7 +106,6 @@ const Layout = () => {
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isHiddenStatus = siteData && ['maintenance', 'suspended', 'private'].includes(siteData.status);
     const isMaintenanceMode = isHiddenStatus && !isOwner && !isStaff;
-    const shouldShowSiteHeader = !!(publicMatch || productInsideSiteMatch) && siteData && !isMaintenanceMode;
     const shouldShowFooter = !isStaff && !isAppPage && !publicMatch && !productInsideSiteMatch;
     useEffect(() => {
         const fetchSiteData = async () => {
@@ -134,6 +131,7 @@ const Layout = () => {
         if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
         else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
+
     if (isAuthLoading) return <div className="h-screen"><LoadingState title="Завантаження платформи..." layout="page" /></div>;
     const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
@@ -184,9 +182,6 @@ const Layout = () => {
                     <div className={`flex flex-col w-full ${innerWrapperClass}`}>
                         {siteData?.theme_settings && (
                             <FontLoader fontHeading={siteData.theme_settings.font_heading} fontBody={siteData.theme_settings.font_body} />
-                        )}
-                        {shouldShowSiteHeader && (
-                            <SiteHeader siteData={siteData} loading={isSiteLoading} />
                         )}
                         <main 
                             className={`flex flex-col w-full ${mainFlexClass} ${paddingClass}`}

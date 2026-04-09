@@ -8,7 +8,19 @@ import OverlayControl from '../../ui/components/OverlayControl';
 import ButtonEditor from '../../ui/components/ButtonEditor';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import { BASE_URL } from '../../../../shared/config';
-import { Image, Video, Moon, Sun, Type, Palette, MousePointerClick, ImageIcon } from 'lucide-react';
+import { Image, Video, Moon, Sun, Type, Palette, MousePointerClick, ImageIcon, Eye } from 'lucide-react';
+
+const SwitchControl = ({ label, checked, onChange }) => (
+    <div 
+        className="flex items-center justify-between cursor-pointer group py-2"
+        onClick={() => onChange(!checked)}
+    >
+        <span className="text-sm font-medium text-(--platform-text-primary) transition-colors">{label}</span>
+        <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-in-out ${checked ? 'bg-(--platform-accent)' : 'bg-black/20 dark:bg-white/20'}`}>
+            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm ${checked ? 'translate-x-4.5' : 'translate-x-1'}`} />
+        </div>
+    </div>
+);
 
 const HeroSettings = ({ data, onChange, siteData }) => {
     const safeData = {
@@ -18,12 +30,15 @@ const HeroSettings = ({ data, onChange, siteData }) => {
         overlay_color: data.overlay_color || '#000000', 
         title: data.title || '',
         subtitle: data.subtitle || '',
-        alignment: data.alignment || 'center',
+        alignment: data.alignment || 'middle-center',
         height: data.height || 'medium',
         titleFontFamily: data.titleFontFamily || 'global',
         contentFontFamily: data.contentFontFamily || 'global',
         theme_mode: data.theme_mode || 'light',
         overlay_opacity: (data.overlay_opacity !== undefined && !isNaN(data.overlay_opacity)) ? parseFloat(data.overlay_opacity) : 0.5,
+        show_title: data.show_title !== false, 
+        show_subtitle: data.show_subtitle !== false,
+        show_button: data.show_button !== false,
         button: data.button || {
             text: data.button_text || '',
             link: data.button_link || '',
@@ -46,6 +61,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
         setLocalTitle(safeData.title);
         setLocalSubtitle(safeData.subtitle);
     }, [safeData.title, safeData.subtitle]);
+
     const handleChange = (name, value) => {
         onChange({ ...safeData, [name]: value }, true);
     };
@@ -90,17 +106,39 @@ const HeroSettings = ({ data, onChange, siteData }) => {
     };
 
     const bgTypeOptions = [
-        { value: 'image', label: <div className="flex items-center gap-1.5"><Image size={16}/> Фото</div> },
-        { value: 'video', label: <div className="flex items-center gap-1.5"><Video size={16}/> Відео</div> }
+        { value: 'image', label: <div className="flex items-center justify-center w-full gap-1.5"><Image size={16}/> Фото</div> },
+        { value: 'video', label: <div className="flex items-center justify-center w-full gap-1.5"><Video size={16}/> Відео</div> }
     ];
 
     const themeOptions = [
-        { value: 'light', label: <div className="flex items-center gap-1.5"><Sun size={16}/> Світла</div>, title: 'Темний текст на світлому' },
-        { value: 'dark', label: <div className="flex items-center gap-1.5"><Moon size={16}/> Темна</div>, title: 'Світлий текст на темному' },
+        { value: 'light', label: <div className="flex items-center justify-center w-full gap-1.5"><Sun size={16}/> Світла</div>, title: 'Темний текст на світлому' },
+        { value: 'dark', label: <div className="flex items-center justify-center w-full gap-1.5"><Moon size={16}/> Темна</div>, title: 'Світлий текст на темному' },
     ];
 
     return (
         <div className="flex flex-col gap-6"> 
+            <div>
+                <SectionTitle icon={<Eye size={18}/>}>Відображення елементів</SectionTitle>
+                <div className="flex flex-col gap-0.5">
+                    <SwitchControl 
+                        label="Заголовок" 
+                        checked={safeData.show_title} 
+                        onChange={(val) => handleChange('show_title', val)} 
+                    />
+                    <div className="h-px bg-(--platform-border-color) opacity-30 my-1" />
+                    <SwitchControl 
+                        label="Підзаголовок" 
+                        checked={safeData.show_subtitle} 
+                        onChange={(val) => handleChange('show_subtitle', val)} 
+                    />
+                    <div className="h-px bg-(--platform-border-color) opacity-30 my-1" />
+                    <SwitchControl 
+                        label="Кнопка дії" 
+                        checked={safeData.show_button} 
+                        onChange={(val) => handleChange('show_button', val)} 
+                    />
+                </div>
+            </div>
             <div>
                 <SectionTitle icon={<Palette size={18}/>}>Фон блоку</SectionTitle>
                 <div className="mb-5">
@@ -111,7 +149,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                         onChange={(val) => handleChange('bg_type', val)}
                     />
                 </div>
-
                 {safeData.bg_type === 'image' && (
                     <div className="mb-5">
                         <label style={commonStyles.label}>Зображення</label>
@@ -125,7 +162,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                         </div>
                     </div>
                 )}
-
                 {safeData.bg_type === 'video' && (
                     <>
                         <div className="mb-5">
@@ -139,7 +175,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                                 />
                             </div>
                         </div>
-
                         <div className="mb-5">
                             <label className="flex items-center gap-1.5 mb-1.5 font-medium text-sm text-(--platform-text-primary)">
                                 <ImageIcon size={14} />
@@ -156,7 +191,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                         </div>
                     </>
                 )}
-
                 <div className="mb-5">
                     <label style={commonStyles.label}>Тема тексту (Контраст)</label>
                     <ToggleGroup 
@@ -165,7 +199,6 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                         onChange={(val) => handleChange('theme_mode', val)}
                     />
                 </div>
-
                 <OverlayControl 
                     color={safeData.overlay_color}
                     opacity={safeData.overlay_opacity}
@@ -173,61 +206,60 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                     onOpacityChange={(val) => onChange({ ...safeData, overlay_opacity: val }, false)}
                 />
             </div>
-
             <div>
                 <SectionTitle icon={<Type size={18}/>}>Вміст</SectionTitle>
-                <div className="mb-5">
-                    <FontSelector 
-                        value={safeData.titleFontFamily}
-                        onChange={(val) => handleChange('titleFontFamily', val)}
-                        label="Шрифт заголовка"
-                        siteFonts={currentSiteFonts}
-                    />
+                <div className={`transition-all duration-300 ${!safeData.show_title ? 'opacity-40 pointer-events-none grayscale' : ''}`}>
+                    <div className="mb-5">
+                        <FontSelector 
+                            value={safeData.titleFontFamily}
+                            onChange={(val) => handleChange('titleFontFamily', val)}
+                            label="Шрифт заголовка"
+                            siteFonts={currentSiteFonts}
+                        />
+                    </div>
+                    <div className="mb-5">
+                        <Input 
+                            label="Заголовок"
+                            type="text" 
+                            name="title" 
+                            value={localTitle}
+                            onChange={(e) => setLocalTitle(e.target.value)} 
+                            onBlur={handleTitleBlur}
+                            placeholder="Головний заголовок"
+                        />
+                    </div>
                 </div>
-                
-                <div className="mb-5">
-                    <Input 
-                        label="Заголовок"
-                        type="text" 
-                        name="title" 
-                        value={localTitle}
-                        onChange={(e) => setLocalTitle(e.target.value)} 
-                        onBlur={handleTitleBlur}
-                        placeholder="Головний заголовок"
-                    />
+                <div className={`transition-all duration-300 ${!safeData.show_subtitle ? 'opacity-40 pointer-events-none grayscale' : ''}`}>
+                    <div className="mb-5">
+                        <FontSelector 
+                            value={safeData.contentFontFamily}
+                            onChange={(val) => handleChange('contentFontFamily', val)}
+                            label="Шрифт тексту"
+                            siteFonts={currentSiteFonts}
+                        />
+                    </div>
+                    <div className="mb-5">
+                        <label style={commonStyles.label}>Підзаголовок</label>
+                        <textarea 
+                            name="subtitle"
+                            className="custom-scrollbar custom-input min-h-20 max-h-50 h-25 resize-y overflow-y-auto"
+                            value={localSubtitle}
+                            onChange={(e) => setLocalSubtitle(e.target.value)} 
+                            onBlur={handleSubtitleBlur}
+                            placeholder="Короткий опис або слоган"
+                        />
+                    </div>
                 </div>
-
-                <div className="mb-5">
-                    <FontSelector 
-                        value={safeData.contentFontFamily}
-                        onChange={(val) => handleChange('contentFontFamily', val)}
-                        label="Шрифт тексту"
-                        siteFonts={currentSiteFonts}
-                    />
-                </div>
-                
-                <div className="mb-5">
-                    <label style={commonStyles.label}>Підзаголовок</label>
-                    <textarea 
-                        name="subtitle"
-                        className="custom-scrollbar custom-input min-h-20 max-h-50 h-25 resize-y overflow-y-auto"
-                        value={localSubtitle}
-                        onChange={(e) => setLocalSubtitle(e.target.value)} 
-                        onBlur={handleSubtitleBlur}
-                        placeholder="Короткий опис або слоган"
-                    />
-                </div>
-
                 <div className="mb-5">
                     <AlignmentControl 
-                        label="Вирівнювання тексту"
+                        label="Вирівнювання контенту"
                         value={safeData.alignment}
                         onChange={(val) => handleChange('alignment', val)}
+                        gridMode={true}
                     />
                 </div>
             </div>
-
-            <div>
+            <div className={`transition-all duration-300 ${!safeData.show_button ? 'opacity-40 pointer-events-none grayscale' : ''}`}>
                 <SectionTitle icon={<MousePointerClick size={18}/>}>Кнопка дії</SectionTitle>
                 <ButtonEditor 
                     data={safeData.button}

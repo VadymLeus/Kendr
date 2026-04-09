@@ -1,14 +1,14 @@
 // frontend/src/modules/dashboard/features/settings/components/GeneralIdentitySection.jsx 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../../../../../app/providers/AuthContext';
-import { Button, Input } from '../../../../../shared/ui/elements';
+import { Button, Input, Switch } from '../../../../../shared/ui/elements';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import { InputWithCounter } from '../../../../../shared/ui/complex/InputWithCounter';
 import UniversalMediaInput from '../../../../../shared/ui/complex/UniversalMediaInput';
 import { TEXT_LIMITS } from '../../../../../shared/config/limits';
 import { toast } from 'react-toastify';
 import { useCooldown } from '../../../../../shared/hooks/useCooldown';
-import { Image, Upload, Trash, Type, AlertCircle, CreditCard, Key, Lock, Globe, Check, Timer, Loader } from 'lucide-react';
+import { Image, Upload, Trash, Type, AlertCircle, CreditCard, Key, Lock, Globe, Check, Timer, Loader, Cookie } from 'lucide-react';
 
 const GeneralIdentitySection = ({ 
     data, 
@@ -30,19 +30,44 @@ const GeneralIdentitySection = ({
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [statusCooldown, startStatusCooldown] = useCooldown('kendr_status_cooldown');
     const isStaff = user?.role === 'admin' || user?.role === 'moderator' || isAdmin;
+    const [localStatus, setLocalStatus] = useState(data.status || 'published');
+    const [localLiqpay, setLocalLiqpay] = useState({
+        public: data.liqpay_public_key || '',
+        private: data.liqpay_private_key || ''
+    });
+    useEffect(() => {
+        setLocalStatus(data.status || 'published');
+    }, [data.status]);
+
+    useEffect(() => {
+        setLocalLiqpay({
+            public: data.liqpay_public_key || '',
+            private: data.liqpay_private_key || ''
+        });
+    }, [data.liqpay_public_key, data.liqpay_private_key]);
+
     const handleStatusSave = () => {
         if (statusCooldown > 0) {
             toast.warning(`Зачекайте ${statusCooldown}с перед наступною зміною статусу.`);
             return;
         }
+        handleChange('status', localStatus); 
         toast.success('Статус сайту успішно оновлено!');
         startStatusCooldown(30);
     };
+
+    const handleLiqpaySave = () => {
+        handleChange('liqpay_public_key', localLiqpay.public);
+        handleChange('liqpay_private_key', localLiqpay.private);
+        toast.success('Налаштування LiqPay успішно збережено!');
+    };
+    
     const statusOptions = [
         { value: 'published', label: 'Опубліковано (Доступний всім)', icon: Globe, iconProps: { className: 'text-green-500' } },
         { value: 'maintenance', label: 'Тех. роботи (Тимчасово закритий)', icon: AlertCircle, iconProps: { className: 'text-orange-500' } }, 
         { value: 'private', label: 'Приватний (Прихований)', icon: Lock, iconProps: { className: 'text-gray-500' } }
     ];
+    
     const canSaveIdentity = hasIdentityChanges && !titleError && !slugError && !isSavingIdentity && (slugStatus === 'available' || slugStatus === 'unchanged');
     return (
         <>
@@ -109,7 +134,7 @@ const GeneralIdentitySection = ({
                 </div>
                 <div className="mb-4">
                     <InputWithCounter
-                        label="Назва сайту (текст)"
+                        label="Назва сайту"
                         value={identityData.title}
                         onChange={(e) => handleIdentityChange('title', e.target.value)}
                         placeholder="Мій інтернет-магазин"
@@ -159,6 +184,35 @@ const GeneralIdentitySection = ({
                     </div>
                 </div>
             </div>
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                            <Cookie size={22} className="text-(--platform-accent)" /> Cookie Банер
+                        </h3>
+                        <p className="text-sm text-(--platform-text-secondary) m-0">
+                            Запитувати згоду відвідувачів на використання файлів cookie
+                        </p>
+                    </div>
+                    <Switch 
+                        checked={data.cookie_banner_enabled} 
+                        onChange={(val) => handleChange('cookie_banner_enabled', typeof val === 'boolean' ? val : val.target.checked)} 
+                    />
+                </div>
+                {data.cookie_banner_enabled && (
+                    <div className="mt-6 pt-6 border-t border-(--platform-border-color) animate-in fade-in slide-in-from-top-2">
+                        <label className="block text-sm font-medium text-(--platform-text-primary) mb-2">
+                            Текст банера
+                        </label>
+                        <textarea
+                            className="w-full bg-(--platform-input-bg) border border-(--platform-border-color) rounded-lg p-3 text-(--platform-text-primary) text-sm focus:border-(--platform-accent) focus:ring-1 focus:ring-(--platform-accent) transition-all outline-none resize-y min-h-25"
+                            value={data.cookie_banner_text}
+                            onChange={(e) => handleChange('cookie_banner_text', e.target.value)}
+                            placeholder="Введіть текст для Cookie банера..."
+                        />
+                    </div>
+                )}
+            </div>
             {!isStaff && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                     <div className="mb-6 flex items-center justify-between gap-3">
@@ -175,8 +229,8 @@ const GeneralIdentitySection = ({
                         <div>
                             <Input
                                 label="Public Key (Публічний ключ)"
-                                value={data.liqpay_public_key}
-                                onChange={(e) => handleChange('liqpay_public_key', e.target.value)}
+                                value={localLiqpay.public}
+                                onChange={(e) => setLocalLiqpay(prev => ({ ...prev, public: e.target.value }))}
                                 placeholder="sandbox_..."
                                 leftIcon={<Key size={16}/>}
                             />
@@ -184,8 +238,8 @@ const GeneralIdentitySection = ({
                         <div>
                             <Input
                                 label="Private Key (Приватний ключ)"
-                                value={data.liqpay_private_key}
-                                onChange={(e) => handleChange('liqpay_private_key', e.target.value)}
+                                value={localLiqpay.private}
+                                onChange={(e) => setLocalLiqpay(prev => ({ ...prev, private: e.target.value }))}
                                 placeholder="sandbox_..."
                                 leftIcon={<Lock size={16}/>}
                                 type="password"
@@ -200,7 +254,7 @@ const GeneralIdentitySection = ({
                         <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
                             <Button 
                                 type="button" 
-                                onClick={() => toast.success('Налаштування LiqPay успішно збережено!')}
+                                onClick={handleLiqpaySave}
                                 icon={<Check size={18} />}
                             >
                                 Зберегти зміни
@@ -221,8 +275,8 @@ const GeneralIdentitySection = ({
                             </label>
                             <CustomSelect 
                                 name="status"
-                                value={data.status} 
-                                onChange={(e) => handleChange('status', e.target.value)}
+                                value={localStatus} 
+                                onChange={(e) => setLocalStatus(e.target.value)}
                                 options={statusOptions}
                                 disabled={statusCooldown > 0} 
                             />

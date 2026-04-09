@@ -26,11 +26,9 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
         items = [],
         styles = {}
     } = blockData;
-
     const effectiveItems = (blockData.imageUrl && items.length === 0) 
         ? [{ id: 'legacy', src: blockData.imageUrl }] 
         : items;
-
     const settings_slider = blockData.settings_slider || { navigation: true, pagination: true, autoplay: false, loop: true };
     const settings_grid = { columns: 3, ...blockData.settings_grid };
     const heightClasses = {
@@ -40,7 +38,6 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
         full: 'h-[calc(100vh-80px)]', 
         auto: 'h-auto'
     };
-    
     const currentHeightClass = heightClasses[height] || 'h-auto';
     const isFixedHeight = height !== 'auto';
     const renderImage = (item, customStyle = {}) => {
@@ -120,7 +117,7 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
                     {effectiveItems.map((item, idx) => (
                         <SwiperSlide key={item.id || idx} className="h-full">
                             <div 
-                                className="w-full bg-(--site-card-bg)"
+                                className="w-full flex justify-center items-center"
                                 style={{ 
                                     height: isFixedHeight ? '100%' : 'auto',
                                     aspectRatio: isFixedHeight ? 'auto' : '16 / 9',
@@ -150,7 +147,7 @@ const ImageBlock = ({ blockData, isEditorPreview, siteData, style }) => {
                 {effectiveItems.map((item, idx) => (
                     <div 
                         key={item.id || idx} 
-                        className="w-full overflow-hidden flex justify-center items-center bg-(--site-card-bg)"
+                        className="w-full overflow-hidden flex justify-center items-center"
                         style={{ 
                             height: cols === 1 ? (isFixedHeight ? '100%' : 'auto') : 'auto',
                             aspectRatio: cols === 1 ? 'auto' : '1 / 1', 

@@ -40,10 +40,11 @@ const VideoSettings = ({ data, onChange }) => {
         <div className="flex flex-col gap-6">
             <div>
                 <SectionTitle icon={<Video size={18}/>}>Відео контент</SectionTitle>
-                
-                <div className="form-group">
-                    <label className="form-label">Відео файл</label>
-                    <div className="h-37.5 mb-4">
+                <div className="mb-5">
+                    <label className="block text-sm font-medium text-(--platform-text-primary) mb-1.5">
+                        Відео файл
+                    </label>
+                    <div className="h-37.5">
                         <UniversalMediaInput 
                             type="video"
                             value={safeData.url}
@@ -51,10 +52,11 @@ const VideoSettings = ({ data, onChange }) => {
                             placeholder="Завантажити відео"
                         />
                     </div>
-
-                    <label className="form-label flex items-center gap-1.5">
-                        <ImageIcon size={14} />
-                        Обкладинка (Poster)
+                </div>
+                <div className="mb-5">
+                    <label className="flex items-center gap-1.5 mb-1.5 text-sm font-medium text-(--platform-text-primary)">
+                        <ImageIcon size={14} className="text-(--platform-text-secondary)" />
+                        Обкладинка
                     </label>
                     <div className="h-37.5">
                         <UniversalMediaInput 
@@ -66,7 +68,6 @@ const VideoSettings = ({ data, onChange }) => {
                     </div>
                 </div>
             </div>
-
             <div>
                 <SectionTitle icon={<Settings size={18}/>}>Поведінка плеєра</SectionTitle>
                 <div className="flex flex-col gap-3">
@@ -96,7 +97,6 @@ const VideoSettings = ({ data, onChange }) => {
                     />
                 </div>
             </div>
-
             <div>
                 <SectionTitle icon={<Palette size={18}/>}>Вигляд та Фон</SectionTitle>
                 <OverlayControl 

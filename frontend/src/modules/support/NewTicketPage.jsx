@@ -1,13 +1,13 @@
-// frontend/src/modules/support/pages/NewTicketPage.jsx
+// frontend/src/modules/support/NewTicketPage.jsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import apiClient from '../../../shared/api/api';
+import apiClient from '../../shared/api/api';
 import { toast } from 'react-toastify';
-import { Button } from '../../../shared/ui/elements/Button';
-import CustomSelect from '../../../shared/ui/elements/CustomSelect';
+import { Button } from '../../shared/ui/elements/Button';
+import CustomSelect from '../../shared/ui/elements/CustomSelect';
 import { Helmet } from 'react-helmet-async';
-import DragDropWrapper from '../../../shared/ui/complex/DragDropWrapper';
-import { FILE_LIMITS } from '../../../shared/config/limits';
+import DragDropWrapper from '../../shared/ui/complex/DragDropWrapper';
+import { FILE_LIMITS } from '../../shared/config/limits';
 import { Send, Info, FileText, ArrowLeft, ShieldAlert, Tag, AlignLeft, AlertCircle, HelpCircle, Wrench, CreditCard, MessageSquare, Handshake, Paperclip, X } from 'lucide-react';
 
 const TICKET_CATEGORIES = [

@@ -44,11 +44,10 @@ const TextSettings = ({ data, onChange, siteData }) => {
         <div>
             <div className="mb-8">
                 <SectionTitle icon={<FileText size={18}/>}>Вміст</SectionTitle>
-                
                 <div className="form-group">
                     <textarea 
                         ref={textareaRef}
-                        className="custom-input custom-scrollbar"
+                        className="custom-input custom-scrollbar transition-colors shadow-none"
                         value={localContent}
                         onChange={(e) => {
                             setLocalContent(e.target.value);
@@ -64,8 +63,7 @@ const TextSettings = ({ data, onChange, siteData }) => {
                             height: 'auto'
                         }}
                     />
-
-                    <div className="flex gap-2">
+                    <div className="flex justify-center gap-2">
                         <button 
                             onClick={() => toggleStyle('isBold')}
                             className={`btn btn-icon-square ${data.isBold ? 'btn-primary' : 'btn-outline'}`}
@@ -89,7 +87,6 @@ const TextSettings = ({ data, onChange, siteData }) => {
                         </button>
                     </div>
                 </div>
-
                 <div className="form-group">
                     <AlignmentControl 
                         value={data.alignment}
@@ -98,10 +95,8 @@ const TextSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
             </div>
-
             <div>
                 <SectionTitle icon={<Type size={18}/>}>Типографіка</SectionTitle>
-
                 <div className="form-group">
                     <label className="form-label">Семантика</label>
                     <ToggleGroup 
@@ -110,7 +105,6 @@ const TextSettings = ({ data, onChange, siteData }) => {
                         onChange={(val) => handleChange('tag', val)}
                     />
                 </div>
-
                 <div className="form-group">
                     <FontSelector 
                         value={data.fontFamily}

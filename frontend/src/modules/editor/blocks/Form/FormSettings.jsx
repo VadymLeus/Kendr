@@ -41,18 +41,25 @@ const FormSettings = ({ data, onChange, siteData }) => {
                 <div className="mb-5">
                     <label style={commonStyles.label}>Повідомлення про успіх</label>
                     <div className="relative">
+                        <div className="absolute top-3.5 left-3.5 text-(--platform-text-secondary) pointer-events-none">
+                            <CheckCircle size={16} />
+                        </div>
                         <textarea 
-                            className="custom-scrollbar custom-input min-h-20 pl-9 w-full resize-y"
+                            className="custom-scrollbar custom-input w-full resize-y shadow-none"
+                            style={{ 
+                                minHeight: '80px', 
+                                paddingLeft: '40px',
+                                paddingTop: '12px',
+                                paddingBottom: '12px',
+                                lineHeight: '1.5',
+                                transition: 'background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease'
+                            }}
                             value={data.successMessage || ''}
                             onChange={(e) => updateData({ successMessage: e.target.value })}
                             placeholder="Дякуємо! Ваше повідомлення надіслано."
                         />
-                        <div className="absolute top-2.5 left-2.5 text-(--platform-text-secondary)">
-                            <CheckCircle size={16} />
-                        </div>
                     </div>
                 </div>
-
                 <div className="mt-6">
                       <div className="text-sm font-semibold mb-4 flex items-center gap-2 text-(--platform-text-primary) pb-2 border-b border-(--platform-border-color)">
                         <MousePointerClick size={16} className="text-(--platform-accent)"/>
@@ -67,7 +74,6 @@ const FormSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
             </div>
-
             <div>
                 <SectionTitle icon={<Mail size={18}/>}>Налаштування сповіщень</SectionTitle>
                 <div className="mb-5">
@@ -85,7 +91,6 @@ const FormSettings = ({ data, onChange, siteData }) => {
                             </Button>
                         )}
                     </div>
-                    
                     <Input 
                         type="email"
                         value={data.notifyEmail || ''}

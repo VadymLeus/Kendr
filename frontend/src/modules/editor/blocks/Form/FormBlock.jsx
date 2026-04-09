@@ -10,7 +10,7 @@ const DEFAULT_BUTTON_CONFIG = {
     styleType: 'primary',
     variant: 'solid',
     size: 'medium',
-    borderRadius: 6,
+    borderRadius: 8,
     width: 'auto',
     alignment: 'center',
     icon: 'none',
@@ -36,13 +36,16 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const rawRadius = buttonConfig.borderRadius;
     const safeRadius = (rawRadius !== undefined && rawRadius !== null && rawRadius !== '') 
         ? parseInt(rawRadius, 10) 
-        : 6;
+        : 8;
+        
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         button: buttonConfig.fontFamily
     }, siteData);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (isEditorPreview) return;
@@ -70,9 +73,9 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     };
 
     const sizeClasses = {
-        small: 'px-4 py-2 text-[0.85rem]',
-        medium: 'px-6 py-3 text-base',
-        large: 'px-8 py-4 text-[1.2rem]'
+        small: 'px-5 py-2.5 text-[0.9rem]',
+        medium: 'px-7 py-3.5 text-base',
+        large: 'px-10 py-4 text-[1.15rem]'
     };
     
     const alignMap = {
@@ -90,12 +93,25 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
     const scopeClass = `form-scope-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
     const btnClass = `form-btn-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
-    const inputClasses = "w-full px-4 py-3 bg-(--site-bg) border border-(--site-border-color) text-(--site-text-primary) rounded-lg mb-4 text-base transition-all duration-200 outline-none focus:border-(--site-accent) focus:ring-1 focus:ring-(--site-accent) hover:border-(--site-accent)";
+    const inputClasses = `
+        w-full px-4 py-3.5 
+        bg-black/[0.03] dark:bg-white/[0.03] 
+        border border-transparent
+        text-(--site-text-primary) 
+        rounded-xl text-base 
+        transition duration-300 outline-none 
+        focus:bg-transparent dark:focus:bg-transparent
+        focus:border-(--site-accent) focus:ring-4 focus:ring-(--site-accent)/15 
+        hover:bg-black/[0.05] dark:hover:bg-white/[0.05]
+    `;
+
+    const labelClasses = "block text-xs font-semibold uppercase tracking-wider text-(--site-text-secondary) opacity-80 mb-1.5 ml-1";
     return (
         <div 
             className={`
-                p-7.5 bg-(--site-card-bg) text-(--site-text-primary) border border-(--site-border-color)
-                max-w-150 w-full mx-auto rounded-xl flex flex-col justify-center
+                p-8 md:p-10 bg-(--site-card-bg) text-(--site-text-primary) 
+                border border-(--site-border-color) shadow-2xl shadow-black/5
+                max-w-150 w-full mx-auto rounded-2xl flex flex-col justify-center
                 ${heightClasses[height]}
                 ${scopeClass}
             `}
@@ -113,34 +129,64 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 .${scopeClass} input::placeholder,
                 .${scopeClass} textarea::placeholder {
                     color: var(--site-text-secondary);
-                    opacity: 0.7;
+                    opacity: 0.5;
                 }
             `}</style>
-            <form onSubmit={handleSubmit} className="w-full">
+            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
                 {status.error && (
-                    <div className="p-3 border border-(--site-danger) bg-red-500/10 text-(--site-danger) rounded-md mb-6 text-sm text-center">
+                    <div className="p-4 border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl mb-2 text-sm text-center font-medium">
                         {status.error}
                     </div>
                 )}
-                <div className="grid grid-cols-2 gap-4 mb-0">
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Ваше ім'я*" required 
-                        className={inputClasses} />
-                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Ваш Email*" required 
-                        className={inputClasses} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label className={labelClasses}>Ваше ім'я *</label>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            value={formData.name} 
+                            onChange={handleChange}
+                            required 
+                            className={inputClasses} 
+                        />
+                    </div>
+                    <div>
+                        <label className={labelClasses}>Email *</label>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            value={formData.email} 
+                            onChange={handleChange} 
+                            placeholder="email@example.com" 
+                            required 
+                            className={inputClasses} 
+                        />
+                    </div>
                 </div>
-                <input type="text" name="subject" value={formData.subject} onChange={handleChange} placeholder="Тема (необов'язково)" 
-                    className={inputClasses} />
-                <textarea 
-                    name="message" 
-                    value={formData.message} 
-                    onChange={handleChange} 
-                    placeholder="Ваше повідомлення*" 
-                    required 
-                    className={`custom-scrollbar min-h-37.5 resize-y ${inputClasses}`}
-                />
+                <div>
+                    <label className={labelClasses}>Тема (необов'язково)</label>
+                    <input 
+                        type="text" 
+                        name="subject" 
+                        value={formData.subject} 
+                        onChange={handleChange}
+                        className={inputClasses} 
+                    />
+                </div>
+                <div>
+                    <label className={labelClasses}>Повідомлення *</label>
+                    <textarea 
+                        name="message" 
+                        value={formData.message} 
+                        onChange={handleChange} 
+                        placeholder="Напишіть ваше повідомлення тут..." 
+                        required 
+                        className={`custom-scrollbar min-h-32 md:min-h-40 resize-y ${inputClasses}`}
+                    />
+                </div>
                 <div 
                     className={`
-                        flex w-full
+                        flex w-full mt-2
                         ${buttonConfig.width === 'full' ? 'text-center justify-stretch' : (alignMap[buttonConfig.alignment] || 'justify-center')}
                     `}
                     style={{ textAlign: buttonConfig.width === 'full' ? 'center' : (buttonConfig.alignment || 'center') }}
@@ -149,8 +195,8 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                         type="submit" 
                         className={`
                             ${btnClass}
-                            inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 appearance-none
-                            ${(isEditorPreview || status.loading) ? 'cursor-default' : 'cursor-pointer hover:-translate-y-px hover:opacity-90'}
+                            inline-flex items-center justify-center gap-2.5 font-medium transition-all duration-300 appearance-none shadow-sm
+                            ${(isEditorPreview || status.loading) ? 'cursor-default' : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'}
                             ${sizeClasses[buttonConfig.size || 'medium']}
                         `}
                         disabled={status.loading} 

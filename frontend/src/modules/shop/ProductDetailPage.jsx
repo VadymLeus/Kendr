@@ -1,5 +1,5 @@
 // frontend/src/modules/shop/ProductDetailPage.jsx
-import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import apiClient from '../../shared/api/api';
@@ -9,6 +9,7 @@ import BlockRenderer from '../editor/core/BlockRenderer';
 import ProductCard from '../editor/ui/components/ProductCard'; 
 import MaintenancePage from '../../pages/MaintenancePage'; 
 import NotFoundPage from '../../pages/NotFoundPage';
+import CookieBanner from '../renderer/components/CookieBanner';
 import styles from './ProductDetailPage.module.css';
 import { BASE_URL } from '../../shared/config';
 import { Folder } from 'lucide-react';
@@ -17,6 +18,21 @@ const safeParseFloat = (val) => {
     if (val === null || val === undefined || val === '') return 0;
     const num = parseFloat(val);
     return isNaN(num) ? 0 : num;
+};
+
+const getGlobalBlocks = (content, blockType) => {
+    if (!content) return [];
+    let parsed = content;
+    if (typeof content === 'string') {
+        try { parsed = JSON.parse(content); } catch (e) { return []; }
+    }
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].type) {
+        return parsed;
+    }
+    if (typeof parsed === 'object' && parsed !== null && Object.keys(parsed).length > 0) {
+        return [{ block_id: `sys-${blockType}`, type: blockType, data: parsed }];
+    }
+    return [];
 };
 
 const ProductDetailPage = () => {
@@ -47,6 +63,11 @@ const ProductDetailPage = () => {
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
     const isSiteHidden = siteData && siteData.status === 'maintenance' && !isOwner;
     const isSoldOut = product ? product.stock_quantity === 0 : false;
+    const headerBlocks = useMemo(() => getGlobalBlocks(siteData?.header_content, 'global-header'), [siteData?.header_content]);
+    const footerBlocks = useMemo(() => getGlobalBlocks(siteData?.footer_content, 'global-footer'), [siteData?.footer_content]);
+    const currencyMap = { 'UAH': '₴', 'USD': '$', 'EUR': '€' };
+    const siteCurrency = siteData?.currency || 'UAH';
+    const currencySymbol = currencyMap[siteCurrency] || '₴';
     useEffect(() => {
         if (isSiteHidden) {
             setLoading(false);
@@ -60,9 +81,7 @@ const ProductDetailPage = () => {
                 if (!productId) throw new Error("No ID");
                 const response = await apiClient.get(`/products/${productId}`);
                 const prod = response.data;
-                if (!prod || Object.keys(prod).length === 0) {
-                    throw new Error("Empty product");
-                }
+                if (!prod || Object.keys(prod).length === 0) throw new Error("Empty product");
                 
                 ['variants', 'image_gallery'].forEach(key => {
                     if (prod[key] && typeof prod[key] === 'string') {
@@ -78,7 +97,9 @@ const ProductDetailPage = () => {
                     });
                     setSelectedOptions(defaults);
                 }
-                if (prod.site_id) fetchRecommendations(prod.site_id, prod.category_id, prod.id);
+                
+                const primaryCategoryId = (prod.categories && prod.categories.length > 0) ? prod.categories[0].id : null;
+                if (prod.site_id) fetchRecommendations(prod.site_id, primaryCategoryId, prod.id);
             } catch (err) {
                 console.error("Product load error:", err);
                 if (err.response && (err.response.status === 403 || err.response.data?.code === 'SITE_MAINTENANCE_MODE' || err.response.data?.code === 'SITE_DRAFT_MODE')) {
@@ -90,9 +111,7 @@ const ProductDetailPage = () => {
                 setLoading(false);
             }
         };
-        if (!isSiteLoading) {
-            fetchProduct();
-        }
+        if (!isSiteLoading) fetchProduct();
     }, [productId, isSiteHidden, isSiteLoading]);
 
     const fetchRecommendations = async (siteId, categoryId, currentId) => {
@@ -101,7 +120,11 @@ const ProductDetailPage = () => {
             if (Array.isArray(res.data)) {
                 const others = res.data
                     .filter(p => p.id !== currentId)
-                    .sort((a, b) => (b.category_id === categoryId ? 1 : 0) - (a.category_id === categoryId ? 1 : 0))
+                    .sort((a, b) => {
+                        const aHasCat = a.category_ids?.includes(String(categoryId)) ? 1 : 0;
+                        const bHasCat = b.category_ids?.includes(String(categoryId)) ? 1 : 0;
+                        return bHasCat - aHasCat;
+                    })
                     .slice(0, 6);
                 setRelatedProducts(others);
             }
@@ -117,7 +140,6 @@ const ProductDetailPage = () => {
                 if (!v) return;
                 const selectedVal = selectedOptions[v.name];
                 const optionObj = v.values?.find(val => val.label === selectedVal);
-                
                 if (optionObj) {
                     if (optionObj.priceModifier) basePrice += safeParseFloat(optionObj.priceModifier);
                     if (optionObj.salePercentage > 0) maxVariantDiscount = Math.max(maxVariantDiscount, safeParseFloat(optionObj.salePercentage));
@@ -125,14 +147,16 @@ const ProductDetailPage = () => {
             });
         }
         const prodSale = safeParseFloat(product.sale_percentage);
-        const catSale = safeParseFloat(product.category_discount);
-        let activeDiscount = maxVariantDiscount || prodSale || catSale || 0;
+        let maxCategoryDiscount = 0;
+        if (product.categories && product.categories.length > 0) {
+             maxCategoryDiscount = Math.max(...product.categories.map(c => safeParseFloat(c.discount_percentage)));
+        }
+        let activeDiscount = maxVariantDiscount || prodSale || maxCategoryDiscount || 0;
         const finalPrice = Math.round(basePrice * (1 - activeDiscount / 100));
         setPriceData({
             finalPrice, originalPrice: basePrice, activeDiscount, isDiscounted: activeDiscount > 0
         });
     }, [selectedOptions, product]);
-
     const handleZoom = useCallback((direction) => {
         setImageScale(prev => {
             let newScale = direction === 'in' ? Math.min(prev + 0.25, 5) : Math.max(prev - 0.25, 0.5);
@@ -176,13 +200,13 @@ const ProductDetailPage = () => {
         const productForCart = {
             ...product,
             site_path: siteData?.site_path,
-            site_name: siteData?.title
+            site_name: siteData?.title,
+            currency: siteCurrency
         };
         addToCart(productForCart, selectedOptions, {
             finalPrice: priceData.finalPrice, originalPrice: priceData.originalPrice, discount: priceData.activeDiscount
         });
     };
-
     if (loading || isSiteLoading) return <div className={styles.loadingContainer}>⏳ Завантаження...</div>;
     if (isSiteHidden || isRestricted) {
         return (
@@ -193,11 +217,11 @@ const ProductDetailPage = () => {
             />
         );
     }
-
     if (isNotFound || !product || Object.keys(product).length === 0) return <NotFoundPage />;
     const galleryImages = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length > 0)
         ? product.image_gallery.map(img => img.startsWith('http') ? img : `${BASE_URL}${img}`)
         : ['https://placehold.co/600x600?text=No+Image'];
+        
     const faviconUrl = siteData?.favicon_url?.startsWith('http') ? siteData.favicon_url : `${BASE_URL}${siteData?.favicon_url || '/icon-light.webp'}`;
     const pageTitle = `${product.name || 'Товар'} | ${siteData?.site_title_seo || siteData?.title || 'Kendr Store'}`;
     const dynamicStyles = {
@@ -210,15 +234,35 @@ const ProductDetailPage = () => {
         '--footer-border': 'var(--site-border-color)',
         color: 'var(--site-text-primary)',
     };
-
     return (
-        <div className={styles.pageWrapper} style={dynamicStyles}>
+        <div 
+            className={`${styles.pageWrapper} site-theme-context`} 
+            style={dynamicStyles}
+            data-site-mode={siteData?.site_theme_mode || 'light'}
+            data-site-accent={siteData?.site_theme_accent || 'orange'}
+        >
             <Helmet>
                 <title>{pageTitle}</title>
                 <link rel="icon" type="image/webp" href={faviconUrl} />
                 <meta property="og:title" content={pageTitle} />
                 <meta property="og:image" content={galleryImages[0]} />
             </Helmet>
+            {headerBlocks.length > 0 && (
+                <div 
+                    className="w-full shrink-0 z-50 relative"
+                    style={{ 
+                        position: headerBlocks[0].data?.is_sticky ? 'sticky' : 'relative', 
+                        top: headerBlocks[0].data?.is_sticky ? 0 : 'auto', 
+                        zIndex: 9999 
+                    }}
+                >
+                    <BlockRenderer 
+                        blocks={headerBlocks} 
+                        siteData={siteData} 
+                        isEditorPreview={false} 
+                    />
+                </div>
+            )}
             <div className={styles.mainContent}>
                 <div className={styles.productGrid}>
                     <div className={styles.galleryContainer}>
@@ -270,10 +314,10 @@ const ProductDetailPage = () => {
                                 <div className={`${styles.badge} ${isSoldOut ? styles.outOfStock : styles.inStock}`}>
                                     {isSoldOut ? 'Закінчився' : 'В наявності'}
                                 </div>
-                                {product.category_name && (
+                                {product.categories && product.categories.length > 0 && (
                                     <div className={styles.categoryTag}>
                                         <Folder size={18} style={{color: 'var(--site-accent)'}} />
-                                        <span>{product.category_name}</span>
+                                        <span>{product.categories.map(c => c.name).join(', ')}</span>
                                     </div>
                                 )}
                             </div>
@@ -281,11 +325,11 @@ const ProductDetailPage = () => {
                         <div className={styles.priceContainer}>
                             {priceData.isDiscounted ? (
                                 <>
-                                    <span className={styles.finalPrice}>{priceData.finalPrice} ₴</span>
-                                    <span className={styles.originalPrice}>{priceData.originalPrice} ₴</span>
+                                    <span className={styles.finalPrice}>{priceData.finalPrice} {currencySymbol}</span>
+                                    <span className={styles.originalPrice}>{priceData.originalPrice} {currencySymbol}</span>
                                 </>
                             ) : (
-                                <span className={styles.finalPrice}>{priceData.finalPrice} ₴</span>
+                                <span className={styles.finalPrice}>{priceData.finalPrice} {currencySymbol}</span>
                             )}
                         </div>
                         {product.variants?.map((variant, idx) => (
@@ -334,15 +378,20 @@ const ProductDetailPage = () => {
                     </div>
                 )}
             </div>
-            {siteData?.footer_content && (
-                <footer className={styles.footer}>
+            {footerBlocks.length > 0 && (
+                <div className="w-full shrink-0">
                     <BlockRenderer 
-                        blocks={Array.isArray(siteData.footer_content) ? siteData.footer_content : JSON.parse(siteData.footer_content)} 
+                        blocks={footerBlocks} 
                         siteData={siteData} 
+                        isEditorPreview={false} 
                     />
-                    <div className={styles.footerText}>Powered by Kendr</div>
-                </footer>
+                </div>
             )}
+            <CookieBanner 
+                enabled={siteData?.cookie_banner_enabled} 
+                text={siteData?.cookie_banner_text} 
+                siteId={siteData?.id} 
+            />
         </div>
     );
 };
