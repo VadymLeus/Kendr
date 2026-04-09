@@ -9,79 +9,60 @@ const parseSrcFromIframe = (embedCode) => {
 };
 
 const MapBlock = ({ blockData, isEditorPreview, style }) => {
-    const { embed_code, sizePreset = 'medium' } = blockData;
+    const { embed_code, height = 'medium' } = blockData;
     const mapSrc = parseSrcFromIframe(embed_code);
-    const maxWidthClasses = {
-        small: 'max-w-[400px]',
-        medium: 'max-w-[800px]',
-        large: 'max-w-full'
+    const heightClasses = {
+        small: 'h-[300px]',
+        medium: 'h-[500px]',
+        large: 'h-[700px]',
+        full: 'h-[calc(100vh-60px)]',
+        auto: 'h-[500px]'
     };
-    
-    const wrapperClass = `mx-auto w-full ${maxWidthClasses[sizePreset] || 'max-w-[800px]'}`;
+
+    const currentHeightClass = heightClasses[height] || heightClasses.medium;
     if (!mapSrc) {
         return (
-            <div className="py-5">
-                <div 
-                    className={`
-                        py-10 px-5 text-center bg-(--site-card-bg) rounded-lg text-(--site-text-secondary) min-h-62.5 flex flex-col items-center justify-center gap-3
-                        ${wrapperClass}
-                        ${isEditorPreview ? 'border border-dashed border-(--site-border-color)' : ''}
-                    `}
-                    style={style}
-                >
-                    <div className="text-(--site-accent) opacity-70">
-                        <MapPin size={48} />
-                    </div>
-                    <div>
-                        <p className="m-0 font-semibold text-(--site-text-primary) text-lg">
-                            Карту не додано
-                        </p> 
-                        {isEditorPreview && (
-                            <small className="block mt-1 opacity-80">
-                                Вставте код iframe у налаштуваннях блоку
-                            </small>
-                        )}
-                    </div>
+            <div 
+                className={`
+                    w-full bg-(--site-card-bg) text-(--site-text-secondary) flex flex-col items-center justify-center gap-3
+                    ${currentHeightClass}
+                    ${isEditorPreview ? 'border border-dashed border-(--site-border-color)' : ''}
+                `}
+                style={style}
+            >
+                <div className="text-(--site-accent) opacity-70">
+                    <MapPin size={48} />
+                </div>
+                <div className="text-center">
+                    <p className="m-0 font-semibold text-(--site-text-primary) text-lg">
+                        Карту не додано
+                    </p> 
+                    {isEditorPreview && (
+                        <small className="block mt-1 opacity-80">
+                            Вставте код iframe у налаштуваннях блоку
+                        </small>
+                    )}
                 </div>
             </div>
         );
     }
     
-    const iframeContent = (
-        <iframe
-            src={mapSrc}
-            className={`
-                border-0 block w-full rounded-lg shadow-sm
-                ${sizePreset === 'large' ? 'h-125' : 'h-100'}
-            `}
-            allowFullScreen=""
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Google Map"
-        />
-    );
-
-    if (isEditorPreview) {
-        return (
-            <div className="py-5">
-                <div 
-                    className={`
-                        border border-dashed border-(--site-border-color) p-1 rounded-xl pointer-events-none
-                        ${wrapperClass}
-                    `}
-                    style={style}
-                >
-                    {iframeContent}
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="py-5">
-            <div className={wrapperClass} style={style}>
-                {iframeContent}
-            </div>
+        <div 
+            className={`relative w-full overflow-hidden ${currentHeightClass}`}
+            style={style}
+        >
+            <iframe
+                src={mapSrc}
+                className="absolute inset-0 w-full h-full border-0"
+                style={{
+                    pointerEvents: isEditorPreview ? 'none' : 'auto' 
+                }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Google Map"
+            />
         </div>
     );
 };

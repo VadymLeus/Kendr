@@ -14,7 +14,8 @@ const ButtonEditor = ({
     siteData, 
     showAlignment = true, 
     hideLinks = false, 
-    hideIcons = false 
+    hideIcons = false,
+    hideText = false
 }) => {
     const themeSettings = siteData?.theme_settings || {};
     const currentSiteFonts = {
@@ -41,18 +42,21 @@ const ButtonEditor = ({
         backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)',
         color: 'var(--platform-accent)'
     };
-
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <span className="text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary) mb-3 block">Текст кнопки</span>
-                <div className="form-group">
-                    <Input 
-                        value={val('text', 'Кнопка')}
-                        onChange={(e) => handleChange('text', e.target.value)}
-                        placeholder="Текст кнопки"
-                    />
-                </div>
+                {!hideText && (
+                    <>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary) mb-3 block">Текст кнопки</span>
+                        <div className="form-group mb-3">
+                            <Input 
+                                value={val('text', 'Кнопка')}
+                                onChange={(e) => handleChange('text', e.target.value)}
+                                placeholder="Текст кнопки"
+                            />
+                        </div>
+                    </>
+                )}
                 {!hideLinks && (
                     <div className="form-group">
                         <div className="flex gap-2 items-start">
@@ -76,7 +80,7 @@ const ButtonEditor = ({
                     </div>
                 )}
             </div>
-            <div className="h-px bg-(--platform-border-color) opacity-50 my-1" />
+            {(!hideText || !hideLinks) && <div className="h-px bg-(--platform-border-color) opacity-50 my-1" />}
             <div>
                 <span className="text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary) mb-3 block">Дизайн</span>
                 <div className="form-group">

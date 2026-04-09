@@ -20,7 +20,6 @@ const AccordionBlock = lazy(() => import('../blocks/Accordion/AccordionBlock'));
 const SocialIconsBlock = lazy(() => import('../blocks/SocialIcons/SocialIconsBlock'));
 const HeaderBlock = lazy(() => import('../blocks/Header/HeaderBlock'));
 const FooterBlock = lazy(() => import('../blocks/Footer/FooterBlock'));
-
 const blockMap = {
     hero: HeroBlock,
     text: TextBlock,
@@ -52,8 +51,8 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
     const navItems = headerBlock?.data?.nav_items || [];
     if (!Array.isArray(blocks) || blocks.length === 0) {
         return (
-            <div 
-                className="text-center py-12 px-6 rounded-lg my-4 font-sans"
+            <div
+                className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-lg my-4 font-sans min-h-[60vh] w-full"
                 style={{ 
                     color: textSecondary,
                     background: bg,
@@ -72,6 +71,7 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
             </div>
         );
     }
+
     return (
         <div className="relative w-full">
             {blocks.map((block, index) => {

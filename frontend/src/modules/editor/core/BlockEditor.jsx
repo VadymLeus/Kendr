@@ -9,7 +9,7 @@ import ContextMenu from '../ui/ContextMenu';
 import { findBlockByPath } from './blockUtils';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PackageOpen, ArrowDownToLine } from 'lucide-react';
+import { PackageOpen, ArrowDownToLine, Layers } from 'lucide-react';
 
 const useDragAutoScroll = (ref, isEnabled) => {
     useEffect(() => {
@@ -146,6 +146,8 @@ const BlockEditor = ({
     const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');
     const siteIsolationStyles = { '--site-bg': siteBg, '--site-text-primary': siteText, '--site-text-secondary': isSiteDark ? '#a0aec0' : '#718096', '--site-card-bg': siteCardBg, '--site-border-color': siteBorder, '--site-accent': siteAccent, '--site-font-main': themeSettings.font_body || "'Inter', sans-serif" };
     let containerClass = viewMode === 'mobile' ? 'px-8 pb-8 pt-10 flex flex-col' : 'px-8 pb-8 pt-3 flex flex-col flex-1';
+    const isEmptyPreview = blocks.length === 0 && viewMode !== 'editor';
+    const blocksContainerClass = `blocks-container ${viewMode === 'mobile' ? 'mobile-preview-device hide-scrollbar' : 'w-full flex-none'} ${isEmptyPreview ? 'flex flex-col' : 'flow-root'}`;
     return (
         <div className={containerClass}>
             {blocks.length === 0 && viewMode === 'editor' ? (
@@ -158,31 +160,43 @@ const BlockEditor = ({
                 </div>
             ) : (
                 <div className="site-theme-preview w-full flex-1 p-0 relative bg-transparent flex flex-col" style={siteIsolationStyles}>
-                    <div ref={mobileScrollRef} className={`blocks-container ${viewMode === 'mobile' ? 'mobile-preview-device hide-scrollbar flow-root' : 'w-full flex-none flow-root'}`}>
-                        <AnimatePresence initial={false}>
-                            {blocks.map((block, index) => (
-                                <motion.div key={block.block_id} layout initial={{ opacity: 0, y: -30, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, height: 0, overflow: 'hidden' }} transition={{ type: "spring", stiffness: 350, damping: 30, mass: 0.8 }}>
-                                    <EditableBlockWrapper
-                                        index={index}
-                                        block={block}
-                                        siteData={siteData}
-                                        path={[index]}
-                                        isLastRootBlock={index === blocks.length - 1}
-                                        onMoveBlock={onMoveBlock}
-                                        onDropBlock={onDropBlock}
-                                        onDeleteBlock={onDeleteBlock}
-                                        onAddBlock={onAddBlock}
-                                        onSelectBlock={onSelectBlock}
-                                        selectedBlockPath={selectedBlockPath}
-                                        isCollapsed={collapsedBlocks.includes(block.block_id)}
-                                        onToggleCollapse={onToggleCollapse}
-                                        onBlockSaved={onBlockSaved}
-                                        onContextMenu={handleContextMenu}
-                                        viewMode={viewMode}
-                                    />
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
+                    <div ref={mobileScrollRef} className={blocksContainerClass}>
+                        {isEmptyPreview ? (
+                            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh] w-full" style={{ backgroundColor: 'var(--site-bg)' }}>
+                                <div className="mb-6 opacity-40">
+                                    <Layers size={64} style={{ color: 'var(--site-text-primary)' }} />
+                                </div>
+                                <h1 className="text-2xl font-bold mb-3" style={{ color: 'var(--site-text-primary)' }}>Сторінка порожня</h1>
+                                <p className="max-w-md mx-auto text-[1.05rem]" style={{ color: 'var(--site-text-secondary)' }}>
+                                    Поверніться у режим редактора, щоб додати блоки.
+                                </p>
+                            </div>
+                        ) : (
+                            <AnimatePresence initial={false}>
+                                {blocks.map((block, index) => (
+                                    <motion.div key={block.block_id} layout initial={{ opacity: 0, y: -30, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, height: 0, overflow: 'hidden' }} transition={{ type: "spring", stiffness: 350, damping: 30, mass: 0.8 }}>
+                                        <EditableBlockWrapper
+                                            index={index}
+                                            block={block}
+                                            siteData={siteData}
+                                            path={[index]}
+                                            isLastRootBlock={index === blocks.length - 1}
+                                            onMoveBlock={onMoveBlock}
+                                            onDropBlock={onDropBlock}
+                                            onDeleteBlock={onDeleteBlock}
+                                            onAddBlock={onAddBlock}
+                                            onSelectBlock={onSelectBlock}
+                                            selectedBlockPath={selectedBlockPath}
+                                            isCollapsed={collapsedBlocks.includes(block.block_id)}
+                                            onToggleCollapse={onToggleCollapse}
+                                            onBlockSaved={onBlockSaved}
+                                            onContextMenu={handleContextMenu}
+                                            viewMode={viewMode}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        )}
                     </div>
                     {blocks.length > 0 && !isHeaderMode && viewMode === 'editor' && (
                         <div ref={bottomDropRef} className="flex-1 w-full relative z-1 pt-6 pb-[30vh] flex flex-col cursor-pointer">

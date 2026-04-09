@@ -46,7 +46,6 @@ const SocialIconsSettings = ({ data, onChange }) => {
             </div>
             <div>
                 <SectionTitle icon={<Share2 size={18}/>}>Посилання</SectionTitle>
-
                 <div className="flex flex-col gap-3">
                     {socialNetworks.map(net => (
                         <Input

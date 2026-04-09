@@ -8,7 +8,8 @@ const AccordionBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { 
         items = [], 
         titleFontFamily, 
-        contentFontFamily 
+        contentFontFamily,
+        height = 'auto'
     } = blockData;
 
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
@@ -17,14 +18,23 @@ const AccordionBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     }, siteData);
     
     const uniqueClass = `accordion-scope-${blockData.id || 'preview'}`;
+    const heightClasses = {
+        small: 'min-h-[300px]',
+        medium: 'min-h-[500px]',
+        large: 'min-h-[700px]',
+        full: 'min-h-[calc(100vh-60px)]',
+        auto: 'min-h-auto'
+    };
+
+    const currentHeightClass = heightClasses[height] || heightClasses.auto;
     if (items.length === 0) {
         return (
             <div 
                 className={`
                     flex flex-col items-center justify-center gap-3 text-center p-12 
-                    border border-dashed border-(--platform-border-color) bg-(--site-card-bg)
-                    max-w-225 mx-auto
-                    ${isEditorPreview ? 'rounded-lg' : ''}
+                    bg-(--site-card-bg) w-full
+                    ${currentHeightClass}
+                    ${isEditorPreview ? 'border border-dashed border-(--platform-border-color)' : ''}
                 `}
                 style={style}
             >
@@ -38,30 +48,32 @@ const AccordionBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             </div>
         );
     }
-
     return (
         <div 
             className={`
-                p-5 max-w-225 mx-auto bg-transparent
-                ${isEditorPreview ? 'border border-dashed border-(--site-border-color) rounded-lg' : ''}
+                w-full flex flex-col justify-center py-10
+                ${currentHeightClass}
                 ${uniqueClass}
             `}
             style={{
                 ...style,
-                ...cssVariables
+                ...cssVariables,
+                backgroundColor: 'var(--site-bg)'
             }}
         >
             <RenderFonts />
             <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
-            {items.map((item) => (
-                <AccordionItem
-                    key={item.id}
-                    item={item}
-                    isEditorPreview={isEditorPreview}
-                    titleFont={fontStyles.title}
-                    contentFont={fontStyles.content}
-                />
-            ))}
+            <div className="w-full max-w-225 mx-auto flex flex-col gap-3.5 px-5">
+                {items.map((item) => (
+                    <AccordionItem
+                        key={item.id}
+                        item={item}
+                        isEditorPreview={isEditorPreview}
+                        titleFont={fontStyles.title}
+                        contentFont={fontStyles.content}
+                    />
+                ))}
+            </div>
         </div>
     );
 };

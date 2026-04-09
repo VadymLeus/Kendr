@@ -10,7 +10,7 @@ export const BLOCK_LIBRARY = [
     { type: 'showcase', name: 'Вітрина', icon: <Star size={20} /> },
     { 
         type: 'layout', 
-        name: 'Макет (Колонки)', 
+        name: 'Макет', 
         icon: <Grid size={20} />, 
         presets: [
             { preset: '50-50', name: '2 колонки (50/50)', columns: 2 },
@@ -248,7 +248,7 @@ export const HEIGHT_OPTIONS = [
     { value: 'small', label: 'Мала' },
     { value: 'medium', label: 'Середня' },
     { value: 'large', label: 'Велика' },
-    { value: 'fullscreen', label: 'На весь екран' }
+    { value: 'fullscreen', label: 'Дуже велика' }
 ];
 
 export const getDraggableBlocks = () => {

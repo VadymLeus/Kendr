@@ -14,7 +14,7 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         button_text, 
         button_link,
         button = {}, 
-        alignment = 'center', 
+        alignment = 'middle-center', 
         height = 'medium', 
         styles = {}, 
         titleFontFamily, 
@@ -22,15 +22,20 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         theme_mode = 'auto', 
         overlay_opacity,
         overlay_color = '#000000',
+        show_title = true,
+        show_subtitle = true,
+        show_button = true,
     } = blockData || {};
 
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         title: titleFontFamily,
         content: contentFontFamily
     }, siteData);
+    
     const videoRef = useRef(null);
     const safeOpacity = (overlay_opacity === undefined || isNaN(Number(overlay_opacity))) 
         ? 0.5 : Number(overlay_opacity);
+        
     const getTextColor = () => {
         if (theme_mode === 'dark') return '#ffffff';
         if (theme_mode === 'light') return 'var(--site-text-primary, #000000)';
@@ -60,7 +65,22 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         full: 'min-h-[calc(100vh-60px)]'
     };
 
-    const alignClasses = { left: 'justify-start items-start text-left', center: 'justify-center items-center text-center', right: 'justify-end items-end text-right' };
+    const alignClassesMap = {
+        'left': { outer: 'justify-start items-center', inner: 'items-start text-left', btn: 'justify-start' },
+        'center': { outer: 'justify-center items-center', inner: 'items-center text-center', btn: 'justify-center' },
+        'right': { outer: 'justify-end items-center', inner: 'items-end text-right', btn: 'justify-end' },
+        'top-left': { outer: 'justify-start items-start', inner: 'items-start text-left', btn: 'justify-start' },
+        'top-center': { outer: 'justify-center items-start', inner: 'items-center text-center', btn: 'justify-center' },
+        'top-right': { outer: 'justify-end items-start', inner: 'items-end text-right', btn: 'justify-end' },
+        'middle-left': { outer: 'justify-start items-center', inner: 'items-start text-left', btn: 'justify-start' },
+        'middle-center': { outer: 'justify-center items-center', inner: 'items-center text-center', btn: 'justify-center' },
+        'middle-right': { outer: 'justify-end items-center', inner: 'items-end text-right', btn: 'justify-end' },
+        'bottom-left': { outer: 'justify-start items-end', inner: 'items-start text-left', btn: 'justify-start' },
+        'bottom-center': { outer: 'justify-center items-end', inner: 'items-center text-center', btn: 'justify-center' },
+        'bottom-right': { outer: 'justify-end items-end', inner: 'items-end text-right', btn: 'justify-end' }
+    };
+
+    const currentAlign = alignClassesMap[alignment] || alignClassesMap['middle-center'];
     const resolvedButtonData = {
         text: button.text || button_text,
         link: button.link || button_link,
@@ -70,6 +90,7 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         targetBlank: button.targetBlank,
         icon: button.icon,
         iconPosition: button.iconPosition,
+        iconFlip: button.iconFlip,
         borderRadius: button.borderRadius,
         fontFamily: button.fontFamily || contentFontFamily, 
         width: button.width || 'auto',
@@ -91,7 +112,7 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
             className={`
                 relative w-full flex box-border overflow-hidden
                 ${heightClasses[height] || 'min-h-125'}
-                ${alignClasses[alignment] || 'justify-center items-center text-center'}
+                ${currentAlign.outer}
                 ${uniqueClass}
             `}
             id={blockData.anchorId}
@@ -110,21 +131,19 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
                     />
                 ) : null}
             </div>
-
             {!isTransparent && (
                 <div
                     className="absolute inset-0 z-1 transition-all duration-300"
                     style={{ backgroundColor: overlay_color, opacity: safeOpacity }}
                 ></div>
             )}
-
             <div
                 className={`
-                    relative z-2 max-w-200 w-full px-5 text-inherit flex flex-col
-                    ${alignClasses[alignment] || 'items-center'}
+                    relative z-2 max-w-200 w-full px-5 py-12 text-inherit flex flex-col
+                    ${currentAlign.inner}
                 `}
             >
-                {title && (
+                {show_title && title && (
                     <h1 
                         className="m-0 mb-4 font-extrabold leading-[1.1] text-inherit"
                         style={{ 
@@ -136,8 +155,7 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
                         {title}
                     </h1>
                 )}
-                
-                {subtitle && (
+                {show_subtitle && subtitle && (
                     <p 
                         className="m-0 mb-8 opacity-90 leading-[1.6] text-inherit max-w-150 whitespace-pre-wrap"
                         style={{ 
@@ -149,9 +167,8 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
                         {subtitle}
                     </p>
                 )}
-                
-                {resolvedButtonData.text && (
-                    <div className={`mt-2 w-full flex ${alignClasses[alignment].split(' ')[0] || 'justify-center'}`}>
+                {show_button && resolvedButtonData.text && (
+                    <div className={`mt-2 w-full flex ${currentAlign.btn}`}>
                         <ButtonBlock 
                             blockData={resolvedButtonData} 
                             siteData={siteData} 

@@ -58,6 +58,7 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
 
         if (siteData?.id || source_type === 'manual') fetchProducts();
     }, [blockData.selected_product_ids, blockData.category_id, source_type, siteData?.id, siteData?.site_path, siteData?.title]);
+
     const heightClasses = {
         small: 'min-h-[300px]',
         medium: 'min-h-[500px]',
@@ -65,6 +66,7 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
         full: 'min-h-[calc(100vh-80px)]',
         auto: 'min-h-auto'
     };
+    
     const currentHeightClass = heightClasses[height] || 'min-h-auto';
     const isFixedHeight = height !== 'auto';
     const uniqueClass = `showcase-${blockData.id || 'preview'}`;
@@ -75,84 +77,95 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
     };
 
     const containerAlignmentClass = isFixedHeight ? 'justify-center' : 'justify-start';
+    if (products.length === 0 && !loading && isEditorPreview) {
+        return (
+            <div 
+                className={`
+                    flex flex-col items-center justify-center gap-3 text-center p-12 
+                    bg-(--site-card-bg) w-full
+                    ${currentHeightClass === 'min-h-auto' ? 'min-h-75' : currentHeightClass}
+                `}
+                style={styles}
+            >
+                <div className="text-(--site-accent) opacity-70">
+                     <ShoppingBag size={48} />
+                </div>
+                 <h4 className="text-(--site-text-primary) m-0 font-medium text-lg">Вітрина товарів</h4>
+                <p className="text-(--site-text-secondary) m-0">
+                     Товарів не знайдено. Перевірте налаштування категорії або додайте товари вручну.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div 
             style={{ 
                 ...styles,
-                backgroundColor: isEditorPreview ? 'var(--site-bg)' : 'transparent',
+                backgroundColor: 'var(--site-bg)',
             }} 
             className={`
-                py-10 px-5 max-w-300 mx-auto flex flex-col w-full
+                py-10 max-w-300 mx-auto flex flex-col w-full
                 ${currentHeightClass}
                 ${containerAlignmentClass}
-                ${isEditorPreview ? 'border border-dashed border-(--site-border-color)' : ''}
                 ${uniqueClass}
             `}
         >
             <RenderFonts />
             <style>{`.${uniqueClass} { ${Object.entries(cssVariables).map(([k,v]) => `${k}:${v}`).join(';')} }`}</style>
-            {title && (
-                <h2 
-                    className={`mb-8 text-(--site-text-primary) text-[2rem] leading-[1.2]`}
-                    style={{ 
-                        textAlign: alignment, 
-                        fontFamily: fontStyles.title,
-                    }}
-                >
-                    {title}
-                </h2>
-            )}
-
-            {loading ? (
-                <div className="text-center p-10 text-(--site-text-secondary)">
-                    Завантаження товарів...
-                </div>
-            ) : products.length === 0 ? (
-                <div className="text-center p-10 text-(--site-text-secondary) border border-dashed border-(--site-border-color) rounded-xl bg-(--site-card-bg) flex flex-col items-center gap-4">
-                    <div className="w-15 h-15 rounded-full bg-black/5 flex items-center justify-center text-(--site-text-secondary)">
-                        <ShoppingBag size={32} />
+            <div className="px-5 w-full">
+                {title && (
+                    <h2 
+                        className={`mb-8 text-(--site-text-primary) text-[2rem] leading-[1.2]`}
+                        style={{ 
+                            textAlign: alignment, 
+                            fontFamily: fontStyles.title,
+                        }}
+                    >
+                        {title}
+                    </h2>
+                )}
+                {loading ? (
+                    <div className="text-center p-10 text-(--site-text-secondary)">
+                        Завантаження товарів...
                     </div>
-                    <div>
-                        <strong>Товарів не знайдено</strong>
-                        <p className="m-0 mt-1 text-sm">Перевірте налаштування категорії або додайте товари.</p>
+                ) : (
+                    <div 
+                        className={`grid gap-6 w-full ${alignmentClasses[alignment] || 'justify-center'}`}
+                        style={{
+                            gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
+                        }}
+                    >
+                        <style>{`
+                            @media (max-width: 1024px) {
+                                .${uniqueClass} .grid {
+                                    grid-template-columns: repeat(${Math.min(3, columns)}, minmax(0, 1fr)) !important;
+                                }
+                            }
+                            @media (max-width: 768px) {
+                                .${uniqueClass} .grid {
+                                    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                                }
+                            }
+                            @media (max-width: 480px) {
+                                .${uniqueClass} .grid {
+                                    grid-template-columns: minmax(0, 1fr) !important;
+                                }
+                            }
+                        `}</style>
+                        {products.map(product => (
+                            <div key={product.id} className="h-full">
+                                <ProductCard 
+                                    product={product} 
+                                    isEditorPreview={isEditorPreview} 
+                                    siteData={siteData}
+                                    fontStyles={fontStyles}
+                                />
+                            </div>
+                        ))}
                     </div>
-                </div>
-            ) : (
-                <div 
-                    className={`grid gap-6 w-full ${alignmentClasses[alignment] || 'justify-center'}`}
-                    style={{
-                        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
-                    }}
-                >
-                    <style>{`
-                        @media (max-width: 1024px) {
-                            .${uniqueClass} .grid {
-                                grid-template-columns: repeat(${Math.min(3, columns)}, minmax(0, 1fr)) !important;
-                            }
-                        }
-                        @media (max-width: 768px) {
-                            .${uniqueClass} .grid {
-                                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                            }
-                        }
-                        @media (max-width: 480px) {
-                            .${uniqueClass} .grid {
-                                grid-template-columns: minmax(0, 1fr) !important;
-                            }
-                        }
-                    `}</style>
-                    {products.map(product => (
-                        <div key={product.id} className="h-full">
-                            <ProductCard 
-                                product={product} 
-                                isEditorPreview={isEditorPreview} 
-                                siteData={siteData}
-                                fontStyles={fontStyles}
-                            />
-                        </div>
-                    ))}
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

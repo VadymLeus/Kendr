@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '../../../../shared/api/api';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
-import { Input } from '../../../../shared/ui/elements/Input'; 
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import ProductCard from '../../ui/components/ProductCard';
 import { Search, X, ArrowUpAZ, ArrowDownAZ, ShoppingBag } from 'lucide-react';
@@ -26,17 +25,19 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         height = 'auto',
         styles = {} 
     } = blockData;
-    const heightMap = {
-        small: '300px',
-        medium: '500px',
-        large: '700px',
-        full: 'calc(100vh - 80px)',
-        auto: 'auto'
+
+    const heightClasses = {
+        small: 'min-h-[300px]',
+        medium: 'min-h-[500px]',
+        large: 'min-h-[700px]',
+        full: 'min-h-[calc(100vh-60px)]',
+        auto: 'min-h-auto'
     };
-    const currentHeight = heightMap[height] || 'auto';
+    const currentHeightClass = heightClasses[height] || heightClasses.auto;
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         title: titleFontFamily
     }, siteData);
+
     const safeItemsPerPage = (parseInt(items_per_page, 10) > 0 && parseInt(items_per_page, 10) <= 100) ? parseInt(items_per_page, 10) : 12;
     const safeColumns = (parseInt(columns, 10) >= 1 && parseInt(columns, 10) <= 6) ? parseInt(columns, 10) : 3;
     useEffect(() => {
@@ -46,11 +47,13 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             try {
                 const catRes = await apiClient.get(`/categories/site/${siteData.id}`);
                 setAvailableCategories(catRes.data);
+                
                 let params = { siteId: siteData.id, limit: 1000 }; 
                 if (source_type === 'category' && root_category_id) {
                     params.category = root_category_id;
                 }
                 const prodRes = await apiClient.get('/products', { params });
+                
                 const enrichedProducts = prodRes.data.map(p => ({
                     ...p,
                     site_path: siteData?.site_path,
@@ -125,25 +128,40 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     };
     const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
     const showFilters = show_search || show_category_filter || show_sorting;
-    const filterBtnClass = "h-9.5 min-w-9.5 px-3 bg-(--site-card-bg) border border-(--site-border-color) rounded-lg text-(--site-text-primary) cursor-pointer flex items-center justify-center gap-2 text-sm transition-all duration-200 hover:border-(--site-accent)";
+    const paginationBtnClass = "h-[44px] min-w-[44px] px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 text-sm transition-all duration-200 hover:opacity-80 border-none";
     const categoryOptions = useMemo(() => [
         { label: "Всі категорії", value: "all" },
         ...availableCategories.map(cat => ({ label: cat.name, value: cat.id }))
     ], [availableCategories]);
+    
     const sortOptions = [
         { label: "За назвою", value: "name" },
         { label: "За ціною", value: "price" }
     ];
+    const panelStyle = {
+        backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 3%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--site-text-primary) 8%, transparent)'
+    };
+    
+    const inputElementStyle = {
+        backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 5%, transparent)',
+        border: 'none',
+        color: 'var(--site-text-primary)',
+        fontFamily: 'inherit'
+    };
+
     return (
         <div 
             id={`catalog-${blockData.block_id || 'preview'}`} 
             className={`
-                py-15 px-5 max-w-7xl mx-auto flex flex-col justify-start
-                ${isEditorPreview ? 'bg-(--site-bg) border border-dashed border-(--site-border-color)' : 'bg-transparent border-none'}
+                py-10 w-full flex flex-col justify-start
+                ${currentHeightClass}
                 ${uniqueClass}
             `}
             style={{
-                minHeight: currentHeight,
+                backgroundColor: 'var(--site-bg, transparent)',
+                fontFamily: 'var(--site-font-body, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif)',
+                color: 'var(--site-text-primary, inherit)',
                 ...styles,
                 ...style
             }}
@@ -167,36 +185,49 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 @media (max-width: 480px) { 
                     .${uniqueClass} .catalog-grid { grid-template-columns: minmax(0, 1fr) !important; } 
                 }
+                .${uniqueClass} input, .${uniqueClass} select, .${uniqueClass} button {
+                    font-family: inherit;
+                }
+                .${uniqueClass} input::placeholder {
+                    color: color-mix(in srgb, var(--site-text-primary) 50%, transparent);
+                }
             `}</style>
-            {title && (
-                <h2 
-                    className="text-center mb-8 text-(--site-text-primary) text-[2rem] leading-tight"
-                    style={{ fontFamily: fontStyles.title }}
-                >
-                    {title}
-                </h2>
-            )}
-            {showFilters && (
-                <div className="z-10 mb-8 bg-(--site-card-bg) p-3 rounded-xl border border-(--site-border-color) shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex flex-col gap-3">
-                    <div className="flex items-center gap-3 flex-wrap">
+            <div className="max-w-300 mx-auto px-5 w-full flex flex-col h-full">
+                {title && (
+                    <h2 
+                        className="text-center mb-10 text-[2rem] leading-tight"
+                        style={{ fontFamily: fontStyles.title, color: 'var(--site-text-primary)' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+                {showFilters && (
+                    <div 
+                        className="z-10 mb-10 w-full rounded-2xl shadow-sm p-2 flex flex-col lg:flex-row items-stretch lg:items-center gap-2"
+                        style={panelStyle}
+                    >
                         {show_search && (
-                            <div className="flex-auto min-w-50">
-                                <Input 
-                                    placeholder="Пошук..." 
+                            <div 
+                                className="flex-1 relative flex items-center rounded-xl px-4 h-11 transition-colors focus-within:ring-1 focus-within:ring-(--site-accent)"
+                                style={inputElementStyle}
+                            >
+                                <Search size={18} style={{ color: 'var(--site-text-secondary)' }} className="shrink-0" />
+                                <input 
+                                    type="text"
+                                    placeholder="Пошук товарів..." 
                                     value={filters.searchQuery} 
                                     onChange={(e) => {
                                         setFilters(prev => ({ ...prev, searchQuery: e.target.value }));
                                         setCurrentPage(1);
                                     }}
-                                    leftIcon={<Search size={18} />}
-                                    wrapperStyle={{ marginBottom: 0 }}
-                                    style={{ height: '38px', background: 'var(--site-bg)', border: '1px solid var(--site-border-color)' }} 
+                                    className="w-full h-full pl-3 pr-2 bg-transparent border-none text-sm focus:outline-none focus:ring-0"
+                                    style={{ fontFamily: 'inherit', color: 'var(--site-text-primary)' }}
                                 />
                             </div>
                         )}
-                        <div className="flex items-center gap-2 flex-wrap shrink-0 ml-auto">
+                        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 shrink-0">
                             {show_category_filter && availableCategories.length > 0 && (
-                                <div className="relative w-45">
+                                <div className="relative w-full md:w-auto md:min-w-45 flex-1 md:flex-none">
                                     <CustomSelect
                                         name="categoryFilter"
                                         value={filters.selectedCategoryId}
@@ -206,136 +237,152 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                             setCurrentPage(1);
                                         }}
                                         style={{ 
-                                            height: '38px', 
-                                            background: 'var(--site-card-bg)', 
-                                            border: '1px solid var(--site-border-color)', 
-                                            borderRadius: '0.5rem',
-                                            color: 'var(--site-text-primary)',
-                                            fontSize: '0.875rem'
+                                            height: '44px', 
+                                            borderRadius: '0.75rem',
+                                            fontSize: '0.875rem',
+                                            ...inputElementStyle
                                         }}
                                     />
                                 </div>
                             )}
                             {show_sorting && (
-                                <>
-                                    <div className="relative w-37.5">
+                                <div className="flex items-center gap-2 w-full md:w-auto flex-1 md:flex-none">
+                                    <div className="relative flex-1 md:min-w-40">
                                         <CustomSelect
                                             name="sortBy"
                                             value={filters.sortBy}
                                             options={sortOptions}
                                             onChange={(e) => handleSortFieldChange(e.target.value)}
                                             style={{ 
-                                                height: '38px', 
-                                                background: 'var(--site-card-bg)', 
-                                                border: '1px solid var(--site-border-color)', 
-                                                borderRadius: '0.5rem',
-                                                color: 'var(--site-text-primary)',
-                                                fontSize: '0.875rem'
+                                                height: '44px', 
+                                                borderRadius: '0.75rem',
+                                                fontSize: '0.875rem',
+                                                ...inputElementStyle
                                             }}
                                         />
                                     </div>
                                     <button 
                                         onClick={toggleSortOrder}
-                                        className={`${filterBtnClass} p-0! w-9.5!`}
+                                        className="h-11 w-11 shrink-0 rounded-xl cursor-pointer flex items-center justify-center transition-all duration-200 border-none hover:opacity-80"
                                         title={filters.sortOrder === 'desc' ? "За спаданням" : "За зростанням"}
+                                        style={inputElementStyle}
                                     >
                                         {filters.sortOrder === 'asc' ? <ArrowUpAZ size={18}/> : <ArrowDownAZ size={18}/>}
                                     </button>
-                                </>
+                                </div>
                             )}
-                            <button 
-                                onClick={handleClearAll}
-                                className={`${filterBtnClass} p-0! w-9.5! border-[#e53e3e] text-[#e53e3e] hover:bg-[#e53e3e10] hover:border-[#e53e3e]`}
-                                title="Очистити фільтри"
-                            >
-                                <X size={18} />
-                            </button>
+                            {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
+                                <button 
+                                    onClick={handleClearAll}
+                                    className="h-11 px-4 shrink-0 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 border-none w-full md:w-auto hover:opacity-80"
+                                    title="Очистити фільтри"
+                                    style={{ 
+                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                        color: '#ef4444',
+                                        fontFamily: 'inherit' 
+                                    }}
+                                >
+                                    <X size={16} />
+                                    <span className="text-sm font-medium md:hidden lg:inline">Очистити</span>
+                                </button>
+                            )}
                         </div>
                     </div>
-                </div>
-            )}
-
-            {loading ? (
-                <div className="text-center p-15 text-(--site-text-secondary)">
-                    <div className="animate-spin inline-block mb-2.5">⏳</div>
-                    <div>Завантаження каталогу...</div>
-                </div>
-            ) : paginatedProducts.length === 0 ? (
-                <div className="text-center py-20 px-5 text-(--site-text-secondary) border border-dashed border-(--site-border-color) rounded-xl bg-(--site-card-bg)">
-                    <ShoppingBag size={48} className="opacity-20 mb-4 mx-auto" />
-                    <p className="text-lg mb-0">Товарів не знайдено</p>
-                    {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
+                )}
+                {loading ? (
+                    <div className="text-center py-20 flex-1 flex flex-col items-center justify-center" style={{ color: 'var(--site-text-secondary)' }}>
+                        <div className="w-8 h-8 border-4 border-(--site-accent) border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <div style={{ fontFamily: 'inherit' }}>Завантаження каталогу...</div>
+                    </div>
+                ) : paginatedProducts.length === 0 ? (
+                    <div 
+                        className="text-center p-12 rounded-2xl flex-1 flex flex-col items-center justify-center gap-3"
+                        style={panelStyle}
+                    >
+                        <div style={{ color: 'var(--site-accent)' }} className="opacity-70">
+                            <ShoppingBag size={48} />
+                        </div>
+                        <h4 className="m-0 font-medium text-lg" style={{ fontFamily: 'inherit', color: 'var(--site-text-primary)' }}>Товарів не знайдено</h4>
+                        <p className="m-0" style={{ fontFamily: 'inherit', color: 'var(--site-text-secondary)' }}>
+                            {products.length === 0 ? "У цьому каталозі поки немає товарів." : "Немає товарів за вибраними фільтрами."}
+                        </p>
+                        {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
+                            <button 
+                                onClick={handleClearAll}
+                                className="mt-2 underline cursor-pointer hover:no-underline text-sm font-medium bg-transparent border-none p-0"
+                                style={{ fontFamily: 'inherit', color: 'var(--site-accent)' }}
+                            >
+                                Скинути фільтри
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="catalog-grid">
+                        {paginatedProducts.map(product => (
+                            <ProductCard 
+                                key={product.id} 
+                                product={product} 
+                                isEditorPreview={isEditorPreview}
+                                siteData={siteData}
+                                fontStyles={fontStyles}
+                            />
+                        ))}
+                    </div>
+                )}
+                {totalPages > 1 && (
+                    <div className="flex justify-center gap-2 mt-auto pt-8">
                         <button 
-                            onClick={handleClearAll}
-                            className="mt-2.5 bg-transparent border-none text-(--site-accent) underline cursor-pointer text-sm"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className={`
+                                ${paginationBtnClass} px-5 font-medium
+                                ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}
+                            `}
+                            style={inputElementStyle}
                         >
-                            Очистити пошук
+                            Назад
                         </button>
-                    )}
-                </div>
-            ) : (
-                <div className="catalog-grid">
-                    {paginatedProducts.map(product => (
-                        <ProductCard 
-                            key={product.id} 
-                            product={product} 
-                            isEditorPreview={isEditorPreview}
-                            siteData={siteData}
-                            fontStyles={fontStyles}
-                        />
-                    ))}
-                </div>
-            )}
-            {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-8">
-                    <button 
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`
-                            ${filterBtnClass} px-4
-                            ${currentPage === 1 ? 'opacity-50 cursor-not-allowed hover:border-(--site-border-color)' : ''}
-                        `}
-                    >
-                        Назад
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
-                        const isActive = currentPage === page;
-                        const showEllipsis = totalPages > 7 && ((page > 2 && page < currentPage - 1) || (page > currentPage + 1 && page < totalPages - 1));
-                        if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
-                            return (
-                                <button
-                                    key={page}
-                                    onClick={() => handlePageChange(page)}
-                                    className={`
-                                        ${filterBtnClass} p-0! w-9.5!
-                                        ${isActive 
-                                            ? 'border-(--site-accent) bg-(--site-accent) text-(--site-accent-text) hover:border-(--site-accent)' 
-                                            : 'bg-(--site-card-bg) hover:border-(--site-accent)'
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                            const isActive = currentPage === page;
+                            const showEllipsis = totalPages > 7 && ((page > 2 && page < currentPage - 1) || (page > currentPage + 1 && page < totalPages - 1));
+                            if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => handlePageChange(page)}
+                                        className={`
+                                            ${paginationBtnClass} p-0! w-11! font-medium
+                                        `}
+                                        style={
+                                            isActive 
+                                            ? { backgroundColor: 'var(--site-accent)', color: 'var(--site-accent-text, #fff)', border: 'none' }
+                                            : inputElementStyle
                                         }
-                                    `}
-                                >
-                                    {page}
-                                </button>
-                            );
-                        } else if (showEllipsis) {
-                            if (page === currentPage - 2 || page === currentPage + 2) {
-                                return <span key={page} className="p-2 text-(--site-text-secondary)">...</span>;
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            } else if (showEllipsis) {
+                                if (page === currentPage - 2 || page === currentPage + 2) {
+                                    return <span key={page} className="px-2 py-2 font-medium" style={{ fontFamily: 'inherit', color: 'var(--site-text-secondary)' }}>...</span>;
+                                }
                             }
-                        }
-                        return null;
-                    })}
-                    <button 
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`
-                            ${filterBtnClass} px-4
-                            ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed hover:border-(--site-border-color)' : ''}
-                        `}
-                    >
-                        Далі
-                    </button>
-                </div>
-            )}
+                            return null;
+                        })}
+                        <button 
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className={`
+                                ${paginationBtnClass} px-5 font-medium
+                                ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}
+                            `}
+                            style={inputElementStyle}
+                        >
+                            Далі
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

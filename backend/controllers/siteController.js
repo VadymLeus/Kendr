@@ -52,6 +52,7 @@ const validateSlugOnly = (slug) => {
     }
     return null;
 };
+
 const validateSiteCreation = (title, slug) => {
     if (!title || typeof title !== 'string') return 'Назва сайту обов\'язкова';
     const trimmedTitle = title.trim();
@@ -101,7 +102,7 @@ exports.createSite = async (req, res, next) => {
         if (req.file) await deleteFile(req.file.path).catch(() => {});
         return res.status(403).json({ message: 'Створення нових сайтів тимічасово призупинено адміністрацією.' });
     }
-    const { templateId, sitePath, title, selected_logo_url } = req.body;
+    const { templateId, sitePath, title, selected_logo_url, isBlank } = req.body;
     const validationError = validateSiteCreation(title, sitePath);
     if (validationError) {
         if (req.file) await deleteFile(req.file.path).catch(() => {});
@@ -113,31 +114,42 @@ exports.createSite = async (req, res, next) => {
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
-        if (!templateId) throw new Error('ID шаблону не було надано.');
-        const [templates] = await connection.query('SELECT * FROM templates WHERE id = ?', [templateId]);
-        if (templates.length === 0) throw new Error('Шаблон не знайдено.');
-        const template = templates[0];
-        if (template.type === 'personal') {
-            if (template.user_id !== userId) throw new Error('У вас немає доступу до цього приватного шаблону.');
-        }
-        const rawContent = template.default_block_content;
-        const templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
+        if (!templateId && !isBlank) throw new Error('ID шаблону не було надано.');
         const [existing] = await connection.query('SELECT id FROM sites WHERE site_path = ?', [cleanSitePath]);
         if (existing.length > 0) throw new Error('Ця адреса сайту вже зайнята.');
+        let siteThemeConfig = {
+            theme_settings: {},
+            site_theme_mode: 'light',
+            site_theme_accent: 'blue'
+        };
+        let pagesToCreate = [];
+        let footerToSave = [];
+        let headerToSave = [];
+        if (!isBlank) {
+            const [templates] = await connection.query('SELECT * FROM templates WHERE id = ?', [templateId]);
+            if (templates.length === 0) throw new Error('Шаблон не знайдено.');
+            const template = templates[0];
+            if (template.type === 'personal') {
+                if (template.user_id !== userId) throw new Error('У вас немає доступу до цього приватного шаблону.');
+            }
+            const rawContent = template.default_block_content;
+            const templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent;
+            siteThemeConfig = {
+                theme_settings: templateData.theme_settings || {},
+                site_theme_mode: templateData.site_theme_mode || templateData.theme_settings?.mode || 'light',
+                site_theme_accent: templateData.site_theme_accent || templateData.theme_settings?.accent || 'blue'
+            };
+            pagesToCreate = templateData.pages || [];
+            footerToSave = regenerateBlockIds(templateData.footer_content || []);
+            headerToSave = regenerateBlockIds(templateData.header_content || []);
+            
+            if (!templateData.pages && Array.isArray(templateData)) {
+                pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }];
+            }
+        }
+
         let logoUrl = selected_logo_url || '/logos/logo1.png'; 
         const relativeLogoUrl = logoUrl.replace(/^http:\/\/localhost:5000/, '');
-        const siteThemeConfig = {
-            theme_settings: templateData.theme_settings || {},
-            header_content: regenerateBlockIds(templateData.header_content || []),
-            site_theme_mode: templateData.site_theme_mode || templateData.theme_settings?.mode || 'light',
-            site_theme_accent: templateData.site_theme_accent || templateData.theme_settings?.accent || 'blue'
-        };
-        let pagesToCreate = templateData.pages || [];
-        let footerToSave = regenerateBlockIds(templateData.footer_content || []);
-        let headerToSave = regenerateBlockIds(templateData.header_content || []);
-        if (!templateData.pages && Array.isArray(templateData)) {
-            pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }];
-        }
         if (headerToSave.length > 0) {
             headerToSave = headerToSave.map(b => b.type === 'header' ? ({
                 ...b, data: { ...b.data, site_title: cleanTitle, logo_src: relativeLogoUrl, show_title: true }
@@ -148,6 +160,7 @@ exports.createSite = async (req, res, next) => {
                 data: { site_title: cleanTitle, logo_src: relativeLogoUrl, show_title: true, nav_items: [{ id: uuidv4(), label: 'Головна', link: '/' }], show_profile_icon: true, show_cart_icon: true, block_theme: 'auto' }
             }];
         }
+        
         const [siteResult] = await connection.query(
             `INSERT INTO sites (user_id, site_path, title, logo_url, status, currency) VALUES (?, ?, ?, ?, 'private', 'UAH')`,
             [userId, cleanSitePath, cleanTitle, relativeLogoUrl]
@@ -164,7 +177,7 @@ exports.createSite = async (req, res, next) => {
                 const isHome = (pageSlug === 'home' || pageData.is_homepage) ? 1 : 0;
                 await connection.query(
                     `INSERT INTO pages (site_id, name, slug, block_content, is_homepage, seo_title, seo_description) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [newSiteId, pageData.title || 'Нова сторінка', pageSlug, JSON.stringify(pageBlocks), isHome, pageData.seo_title, pageData.seo_description]
+                    [newSiteId, pageData.title || 'Нова сторінка', pageSlug, JSON.stringify(pageBlocks), isHome, pageData.seo_title || null, pageData.seo_description || null]
                 );
             }
         } else {
@@ -471,34 +484,50 @@ exports.resetSiteToTemplate = async (req, res, next) => {
     const { siteId } = req.params; 
     const { templateId } = req.body; 
     const userId = req.user.id; 
+    const isBlank = req.body.isBlank || templateId === 'blank';
     const connection = await db.getConnection();
     try { 
         const site = await Site.findByIdAndUserId(siteId, userId); 
-        if (!site) return res.status(403).json({ message: 'Сайт не знайдено або у вас немає прав.' }); 
-        const [templates] = await connection.query('SELECT * FROM templates WHERE id = ?', [templateId]); 
-        if (!templates[0]) throw new Error('Шаблон не знайдено.'); 
-        const template = templates[0];
-        if (template.type === 'personal' && template.user_id !== userId) {
-             throw new Error('У вас немає доступу до цього шаблону.');
+        if (!site) return res.status(403).json({ message: 'Сайт не знайдено або у вас немає прав.' });
+        let headerToSave = [];
+        let footerToSave = [];
+        let pagesToCreate = [];
+        let siteThemeMode = 'light';
+        let siteThemeAccent = 'blue';
+        let themeSettings = {};
+        if (!isBlank) {
+            const [templates] = await connection.query('SELECT * FROM templates WHERE id = ?', [templateId]); 
+            if (!templates[0]) throw new Error('Шаблон не знайдено.'); 
+            const template = templates[0];
+            if (template.type === 'personal' && template.user_id !== userId) {
+                 throw new Error('У вас немає доступу до цього шаблону.');
+            }
+            const rawContent = template.default_block_content; 
+            const templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent; 
+            headerToSave = regenerateBlockIds(templateData.header_content || []); 
+            footerToSave = regenerateBlockIds(templateData.footer_content || []); 
+            pagesToCreate = templateData.pages || []; 
+            if (!templateData.pages && Array.isArray(templateData)) pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }]; 
+            themeSettings = templateData.theme_settings || {};
+            siteThemeMode = templateData.site_theme_mode || templateData.theme_settings?.mode || 'light'; 
+            siteThemeAccent = templateData.site_theme_accent || templateData.theme_settings?.accent || 'orange'; 
+        } else {
+            pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: [] }];
+            headerToSave = [{
+                block_id: uuidv4(), type: 'header',
+                data: { site_title: site.title, logo_src: site.logo_url || '/logos/logo1.png', show_title: true, nav_items: [{ id: uuidv4(), label: 'Головна', link: '/' }], show_profile_icon: true, show_cart_icon: true, block_theme: 'auto' }
+            }];
         }
-        const rawContent = template.default_block_content; 
-        const templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent; 
-        const headerToSave = regenerateBlockIds(templateData.header_content || []); 
-        const footerToSave = regenerateBlockIds(templateData.footer_content || []); 
-        let pagesToCreate = templateData.pages || []; 
-        if (!templateData.pages && Array.isArray(templateData)) pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }]; 
+
         await connection.beginTransaction(); 
         await connection.query('DELETE FROM pages WHERE site_id = ?', [siteId]); 
         const updateQuery = `UPDATE sites SET header_content = ?, footer_content = ?, site_theme_mode = ?, site_theme_accent = ?, theme_settings = ? WHERE id = ?`; 
-        const themeSettings = templateData.theme_settings || {}; 
-        const siteThemeMode = templateData.site_theme_mode || templateData.theme_settings?.mode || 'light'; 
-        const siteThemeAccent = templateData.site_theme_accent || templateData.theme_settings?.accent || 'orange'; 
         await connection.query(updateQuery, [JSON.stringify(headerToSave), JSON.stringify(footerToSave), siteThemeMode, siteThemeAccent, JSON.stringify(themeSettings), siteId]); 
         for (const pageData of pagesToCreate) { 
             const blocks = regenerateBlockIds(pageData.blocks || pageData.block_content || []); 
             await connection.query(
                 'INSERT INTO pages (site_id, name, slug, block_content, is_homepage, seo_title, seo_description) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-                [siteId, pageData.title || 'Нова сторінка', pageData.slug || `page-${uuidv4()}`, JSON.stringify(blocks), (pageData.slug === 'home' || pageData.is_homepage) ? 1 : 0, pageData.seo_title, pageData.seo_description]
+                [siteId, pageData.title || 'Нова сторінка', pageData.slug || `page-${uuidv4()}`, JSON.stringify(blocks), (pageData.slug === 'home' || pageData.is_homepage) ? 1 : 0, pageData.seo_title || null, pageData.seo_description || null]
             ); 
         } 
         await connection.commit(); 
