@@ -178,7 +178,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                         <div className="mb-5">
                             <label className="flex items-center gap-1.5 mb-1.5 font-medium text-sm text-(--platform-text-primary)">
                                 <ImageIcon size={14} />
-                                Обкладинка (Poster)
+                                Обкладинка
                             </label>
                             <div className="h-37.5">
                                 <UniversalMediaInput 

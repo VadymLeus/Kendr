@@ -79,6 +79,12 @@ const SiteDashboardPage = () => {
     const pcScrollRef = useRef(null);
     useDragAutoScroll(pcScrollRef, activeTab === 'editor');
     useEffect(() => {
+        if (siteData && siteData.site_path && siteData.site_path !== site_path) {
+            navigate(`/dashboard/${siteData.site_path}`, { replace: true });
+        }
+    }, [siteData?.site_path, site_path, navigate]);
+
+    useEffect(() => {
         const hiddenTabs = siteData?.dashboard_config?.hiddenTabs || [];
         if (hiddenTabs.includes(activeTab)) {
             setActiveTab('editor');
@@ -134,12 +140,14 @@ const SiteDashboardPage = () => {
         }
         return [];
     });
+    
     useEffect(() => {
         if (site_path && currentPageId) {
             const key = `collapsed_blocks_${site_path}_${currentPageId}`;
             localStorage.setItem(key, JSON.stringify(collapsedBlocks));
         }
     }, [collapsedBlocks, site_path, currentPageId]);
+    
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
@@ -187,6 +195,7 @@ const SiteDashboardPage = () => {
         const anyComponentSaving = Object.values(componentsSaving).some(saving => saving);
         setIsSaving(anyComponentSaving);
     }, [componentsSaving]);
+    
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
@@ -251,6 +260,7 @@ const SiteDashboardPage = () => {
             setIsPageLoading(false);
         }
     };
+    
     const handleEditPage = (pageId) => {
         if (pageId === currentPageId && !isPageLoading && blocks.length > 0) return;
         setCurrentPageId(pageId);
@@ -263,6 +273,7 @@ const SiteDashboardPage = () => {
         fetchPageContent(pageId);
         setSelectedBlockPath(null);
     };
+    
     useEffect(() => {
         if (siteData && !allPages.length) {
             apiClient.get(`/sites/${siteData.id}/pages`)
@@ -370,16 +381,22 @@ const SiteDashboardPage = () => {
             setTimeout(() => setIsSaving(false), 500);
         }
     };
+
     const saveThemeSettings = async (updatedData) => {
         if (isReadOnly) return;
         setIsThemeSaving(true);
         try {
             const updateData = {};
+            const restrictedKeys = ['site_path', 'title', 'slug', 'status'];
+
             Object.keys(updatedData).forEach(key => {
-                if (updatedData[key] !== siteData[key]) updateData[key] = updatedData[key];
+                if (updatedData[key] !== siteData[key] && !restrictedKeys.includes(key)) {
+                    updateData[key] = updatedData[key];
+                }
             });
             if (Object.keys(updateData).length > 0) {
-                await apiClient.put(`/sites/${siteData.site_path}/settings`, updateData);
+                const targetSlug = updatedData.site_path || siteData.site_path;
+                await apiClient.put(`/sites/${targetSlug}/settings`, updateData);
                 setSiteData(prev => ({ ...prev, ...updateData }));
             }
         } catch (error) {
@@ -388,10 +405,12 @@ const SiteDashboardPage = () => {
             setTimeout(() => setIsThemeSaving(false), 500);
         }
     };
+
     const handleSiteDataUpdate = (newData) => {
         setSiteData(prev => ({ ...prev, ...newData }));
         saveThemeSettings(newData);
     };
+
     const refreshPageList = () => {
         apiClient.get(`/sites/${siteData.id}/pages`)
             .then(response => {
@@ -403,16 +422,20 @@ const SiteDashboardPage = () => {
             })
             .catch(console.error);
     };
+
     const toggleBlockCollapse = (blockId) => {
         setCollapsedBlocks(prev => prev.includes(blockId) ? prev.filter(id => id !== blockId) : [...prev, blockId]);
     };
+
     const handleSavingChange = useCallback((isSaving) => {
         const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings' };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
+
     if (isSiteLoading || !siteData) {
         return <LoadingState title="Завантаження редактора..." />;
     }
+
     const isFullHeightTab = ['store', 'crm', 'analytics'].includes(activeTab);
     const hasUnsavedChanges = JSON.stringify(blocks) !== savedBlocksStr && savedBlocksStr !== '';
     return (

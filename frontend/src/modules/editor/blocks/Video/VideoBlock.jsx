@@ -3,6 +3,13 @@ import React, { useRef, useEffect } from 'react';
 import { BASE_URL } from '../../../../shared/config';
 import { Video as VideoIcon } from 'lucide-react';
 
+const getYoutubeVideoId = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    const regExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regExp);
+    return match ? match[1] : null;
+};
+
 const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     const { 
         url, 
@@ -17,7 +24,6 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
         controls = false,
         styles = {}
     } = blockData;
-
     const videoRef = useRef(null);
     const safeOpacity = (overlay_opacity === undefined || isNaN(Number(overlay_opacity))) 
         ? 0.5 
@@ -28,10 +34,11 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     const fullPosterUrl = poster 
         ? (poster.startsWith('http') ? poster : `${BASE_URL}${poster}`) 
         : null;
+    const ytVideoId = getYoutubeVideoId(fullVideoUrl);
     useEffect(() => {
+        if (ytVideoId) return; 
         const video = videoRef.current;
         if (!video) return;
-
         if (!controls && autoplay) {
             const playPromise = video.play();
             if (playPromise !== undefined) {
@@ -43,7 +50,8 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
                 });
             }
         }
-    }, [controls, autoplay, muted, fullVideoUrl]);
+    }, [controls, autoplay, muted, fullVideoUrl, ytVideoId]);
+
     const heightMap = { 
         small: '300px', 
         medium: '500px', 
@@ -51,11 +59,10 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
         full: 'calc(100vh - 60px)',
         auto: 'auto'
     };
-
     const currentHeight = heightMap[height] || '500px';
     const isTransparent = overlay_color === 'transparent';
     const Placeholder = () => (
-        <div className="w-full h-full min-h-75 p-12 text-center bg-(--site-card-bg) border border-dashed border-(--site-border-color) text-(--site-text-secondary) flex flex-col items-center justify-center gap-3 box-border">
+        <div className="absolute inset-0 w-full h-full p-12 text-center bg-(--site-card-bg) border border-dashed border-(--site-border-color) text-(--site-text-secondary) flex flex-col items-center justify-center gap-3 box-border">
             <div className="opacity-40 text-(--site-text-primary)">
                 <VideoIcon size={64} />
             </div>
@@ -64,8 +71,33 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
             </div>
         </div>
     );
-
     const renderContent = () => {
+        if (ytVideoId) {
+            const ytParams = new URLSearchParams({
+                autoplay: autoplay ? '1' : '0',
+                mute: muted ? '1' : '0',
+                controls: controls ? '1' : '0',
+                loop: loop ? '1' : '0',
+                playlist: ytVideoId,
+                playsinline: '1',
+                rel: '0'
+            });
+            return (
+                <div className={`absolute inset-0 w-full h-full overflow-hidden ${!controls ? 'pointer-events-none' : ''}`}>
+                    <iframe
+                        src={`https://www.youtube.com/embed/${ytVideoId}?${ytParams.toString()}`}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                        style={{
+                            transform: !controls ? 'scale(1.25)' : 'none'
+                        }}
+                    />
+                </div>
+            );
+        }
         if (fullVideoUrl) {
             return (
                 <video
@@ -77,30 +109,28 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
                     loop={loop}
                     controls={controls}
                     playsInline
-                    className="w-full h-full object-cover block"
+                    className="absolute inset-0 w-full h-full object-cover block"
                 />
             );
         }
-
         if (fullPosterUrl) {
             return (
                 <img 
                     src={fullPosterUrl}
                     alt="Video poster"
-                    className="w-full h-full object-cover block"
+                    className="absolute inset-0 w-full h-full object-cover block"
                 />
             );
         }
         if (isEditorPreview) {
             return <Placeholder />;
         }
-
-        return <div className="w-full h-full bg-black/10"></div>;
+        return <div className="absolute inset-0 w-full h-full bg-black/10"></div>;
     };
 
     return (
         <div 
-            className={`block-theme-${block_theme} relative w-full overflow-hidden flex flex-col justify-center`}
+            className={`block-theme-${block_theme} relative w-full overflow-hidden`}
             style={{
                 minHeight: currentHeight,
                 backgroundColor: 'var(--site-bg)',
@@ -108,24 +138,16 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
                 ...style 
             }}
         >
-            <div 
-                className="relative w-full flex-1 flex"
-                style={{ height: height === 'auto' ? 'auto' : '100%' }}
-            >
-                <div className="w-full h-full">
-                    {renderContent()}
-                </div>
-
-                {(fullVideoUrl || fullPosterUrl) && !isTransparent && (
-                    <div 
-                        className="absolute inset-0 z-1 pointer-events-none transition-all duration-300"
-                        style={{
-                            backgroundColor: overlay_color,
-                            opacity: safeOpacity,
-                        }}
-                    ></div>
-                )}
-            </div>
+            {renderContent()}
+            {(fullVideoUrl || fullPosterUrl || ytVideoId) && !isTransparent && (
+                <div 
+                    className="absolute inset-0 z-10 pointer-events-none transition-all duration-300"
+                    style={{
+                        backgroundColor: overlay_color,
+                        opacity: safeOpacity,
+                    }}
+                ></div>
+            )}
         </div>
     );
 };

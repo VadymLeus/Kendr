@@ -1,5 +1,5 @@
 // frontend/src/modules/renderer/pages/SiteDisplayPage.jsx
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useMemo } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import apiClient from '../../../shared/api/api';
@@ -14,6 +14,7 @@ import SiteControls from '../components/SiteControls';
 import ReportModal from '../../../shared/ui/complex/ReportModal';
 import { BASE_URL } from '../../../shared/config';
 import { getDefaultBlockData } from '../../editor/core/editorConfig';
+import { resolveAccentColor } from '../../../shared/utils/themeUtils';
 import { Loader2, Layers } from 'lucide-react';
 
 const SiteDisplayPage = () => {
@@ -23,6 +24,37 @@ const SiteDisplayPage = () => {
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [show404, setShow404] = useState(false);
     useScrollToHash();
+    const themeSettings = useMemo(() => {
+        if (!siteData) return {};
+        let ts = siteData.theme_settings;
+        if (typeof ts === 'string') {
+            try { ts = JSON.parse(ts); } catch (e) { ts = {}; }
+        }
+        return ts || {};
+    }, [siteData]);
+
+    const isSiteDark = siteData?.site_theme_mode === 'dark';
+    const siteBg = isSiteDark ? '#1a202c' : '#f7fafc';
+    const siteText = isSiteDark ? '#f7fafc' : '#1a202c';
+    const siteCardBg = isSiteDark ? '#2d3748' : '#ffffff';
+    const siteBorder = isSiteDark ? '#4a5568' : '#e2e8f0';
+    const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');
+    const siteIsolationStyles = { 
+        '--site-bg': siteBg, 
+        '--site-text-primary': siteText, 
+        '--site-text-secondary': isSiteDark ? '#a0aec0' : '#718096', 
+        '--site-card-bg': siteCardBg, 
+        '--site-border-color': siteBorder, 
+        '--site-accent': siteAccent, 
+        '--site-font-main': themeSettings.font_body || "'Inter', sans-serif",
+        '--site-font-headings': themeSettings.font_heading || themeSettings.font_body || "'Inter', sans-serif"
+    };
+
+    let hex = siteAccent.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+    if (hex.length === 6) {
+        siteIsolationStyles['--site-accent-rgb'] = `${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)}`;
+    }
     useEffect(() => {
         if (!isSiteLoading && siteData && siteData.page && siteData.page.is_homepage) {
             apiClient.get(`/sites/${site_path}`, { params: { increment_view: 'true' } })
@@ -40,7 +72,6 @@ const SiteDisplayPage = () => {
         }
         return () => clearTimeout(timer);
     }, [isSiteLoading, isMissingData]);
-    
     if (isSiteLoading || (isMissingData && !show404)) {
         return (
             <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh', color: 'var(--platform-text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -80,7 +111,6 @@ const SiteDisplayPage = () => {
                 let globalData = typeof siteData.header_content === 'string' 
                     ? JSON.parse(siteData.header_content || '{}') 
                     : (siteData.header_content || {});
-                
                 if (Object.keys(globalData).length === 0) globalData = getDefaultBlockData('global-header');
                 return { ...block, type: 'global-header', data: globalData };
             }
@@ -88,7 +118,6 @@ const SiteDisplayPage = () => {
                 let globalData = typeof siteData.footer_content === 'string' 
                     ? JSON.parse(siteData.footer_content || '{}') 
                     : (siteData.footer_content || {});
-                
                 if (Object.keys(globalData).length === 0) globalData = getDefaultBlockData('global-footer');
                 return { ...block, type: 'global-footer', data: globalData };
             }
@@ -102,7 +131,8 @@ const SiteDisplayPage = () => {
     const layoutStyle = {
         display: 'flex', flexDirection: 'column', minHeight: '100dvh',
         width: '100%', margin: 0, padding: 0,
-        backgroundColor: 'var(--site-bg)', color: 'var(--site-text-primary)'
+        backgroundColor: 'var(--site-bg)', 
+        color: 'var(--site-text-primary)'
     };
 
     const mainContentStyle = {
@@ -124,10 +154,8 @@ const SiteDisplayPage = () => {
 
     return (
         <div 
-            className="site-root site-theme-context relative" 
-            style={layoutStyle}
-            data-site-mode={siteData.site_theme_mode || 'light'}
-            data-site-accent={siteData.site_accent || 'blue'}
+            className="site-root relative site-theme-context site-theme-preview" 
+            style={{ ...layoutStyle, ...siteIsolationStyles }}
         >
             <Helmet>
                 <title>{finalTitle}</title>
@@ -140,11 +168,23 @@ const SiteDisplayPage = () => {
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.href} />
             </Helmet>
+            <style>
+                {`
+                .site-theme-preview { font-family: var(--site-font-main); }
+                .site-theme-preview * { box-sizing: border-box; }
+                .site-theme-preview .site-block { background: var(--site-bg); color: var(--site-text-primary); font-family: var(--site-font-main); }
+                .site-theme-preview .site-heading { font-family: var(--site-font-headings); color: var(--site-text-primary); }
+                `}
+            </style>
             {!hasHeader && <SiteControls siteData={siteData} />}
             {siteData && siteData.theme_settings && (
                 <FontLoader fontHeading={siteData.theme_settings.font_heading} fontBody={siteData.theme_settings.font_body} />
             )}
-            <main style={mainContentStyle}>
+            
+            <main 
+                className="site-wysiwyg-wrapper flex-1 flex flex-col" 
+                style={mainContentStyle}
+            >
                 {pageBlocks && pageBlocks.length > 0 ? (
                     <BlockRenderer blocks={pageBlocks} siteData={siteData} />
                 ) : (
@@ -168,7 +208,7 @@ const SiteDisplayPage = () => {
                             <button
                                 onClick={() => setIsReportOpen(true)}
                                 style={{ background: 'transparent', border: 'none', color: 'inherit', textDecoration: 'none', cursor: 'pointer', fontSize: 'inherit', opacity: 0.8, padding: 0 }}
-                                onMouseEnter={(e) => e.target.style.color = 'var(--platform-danger)'}
+                                onMouseEnter={(e) => e.target.style.color = 'var(--site-danger, #ef4444)'}
                                 onMouseLeave={(e) => e.target.style.color = 'inherit'}
                                 title="Report Abuse / Поскаржитись"
                             >

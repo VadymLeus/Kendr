@@ -103,9 +103,22 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
     } else if (manager.modals.confirmModal.actionType === 'revertDraft') {
         modalConfig = { title: "Повернути в чернетки?", message: "Шаблон буде знято з перевірки.", confirmLabel: "Повернути", type: "warning" };
     }
-    if (isInitialLoad) return <div className="h-150 flex items-center justify-center bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color)"><LoadingState title="Завантаження шаблонів..." /></div>;
+    if (isInitialLoad) return (
+        <div className="h-150 flex items-center justify-center rounded-2xl border" style={{ backgroundColor: 'var(--platform-card-bg)', borderColor: 'var(--platform-border-color)' }}>
+            <LoadingState title="Завантаження шаблонів..." />
+        </div>
+    );
+
     return (
-        <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) mb-6 shadow-sm overflow-hidden flex flex-col relative" style={{ height: 'calc(100vh - 120px)', minHeight: '700px' }}>
+        <div 
+            className="rounded-2xl border mb-6 shadow-sm overflow-hidden flex flex-col relative" 
+            style={{ 
+                height: 'calc(100vh - 120px)', 
+                minHeight: '700px', 
+                backgroundColor: 'var(--platform-card-bg)', 
+                borderColor: 'var(--platform-border-color)' 
+            }}
+        >
             <TemplateModal isOpen={isSaveTemplateModalOpen} onClose={() => setIsSaveTemplateModalOpen(false)} onSave={handleSaveTemplate} />
             <TemplateModal isOpen={manager.modals.isEditModalOpen} initialData={manager.modals.editingTemplate} onClose={() => { manager.modals.setIsEditModalOpen(false); manager.modals.setEditingTemplate(null); }} onSave={manager.actions.handleSaveTemplateChanges} />
             <ConfirmModal 
@@ -117,15 +130,23 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                 confirmLabel={modalConfig.confirmLabel} 
                 type={modalConfig.type} 
             />
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: 'var(--platform-bg)' }}>
                 <div style={{
-                    width: isSidebarOpen ? '38%' : '0px', minWidth: isSidebarOpen ? '350px' : '0px', opacity: isSidebarOpen ? 1 : 0,
-                    transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)', display: 'flex', flexDirection: 'column',
-                    borderRight: isSidebarOpen ? '1px solid var(--platform-border-color)' : 'none', flexShrink: 0
+                    width: isSidebarOpen ? '38%' : '0px', 
+                    minWidth: isSidebarOpen ? '350px' : '0px', 
+                    opacity: isSidebarOpen ? 1 : 0,
+                    transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    borderRight: isSidebarOpen ? '1px solid var(--platform-border-color)' : 'none', 
+                    flexShrink: 0,
+                    backgroundColor: 'var(--platform-card-bg)',
+                    zIndex: 10,
+                    boxShadow: isSidebarOpen ? '10px 0 15px -3px rgba(0, 0, 0, 0.05)' : 'none'
                 }}>
-                    <div className="p-5 border-b border-(--platform-border-color) shrink-0 bg-(--platform-bg)/50">
+                    <div className="p-5 border-b shrink-0" style={{ backgroundColor: 'var(--platform-bg)', borderColor: 'var(--platform-border-color)' }}>
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold text-(--platform-text-primary) m-0 flex items-center gap-2">
+                            <h3 className="text-lg font-semibold m-0 flex items-center gap-2" style={{ color: 'var(--platform-text-primary)' }}>
                                 <Palette size={20} className="text-(--platform-accent)" /> Бібліотека шаблонів
                             </h3>
                             <Button variant="primary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)}>
@@ -134,9 +155,9 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                         </div>
                         <TemplateFilters filters={manager.filters} isAdmin={isStaff} compact={true} />
                     </div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-5 bg-(--platform-bg) relative">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-5 relative" style={{ backgroundColor: 'var(--platform-bg)' }}>
                         {manager.isLoading && (
-                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-(--platform-bg)/50 backdrop-blur-[2px]">
+                            <div className="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[2px]" style={{ backgroundColor: 'color-mix(in srgb, var(--platform-bg) 50%, transparent)' }}>
                                 <Loader size={32} className="animate-spin text-(--platform-accent)" />
                             </div>
                         )}
@@ -148,17 +169,21 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                                         <div 
                                             key="blank"
                                             onClick={() => manager.setSelectedTemplateId('blank')}
-                                            className={`relative flex flex-col items-center justify-center p-6 rounded-2xl cursor-pointer transition-all duration-200 h-full min-h-75 bg-(--platform-bg) hover:border-(--platform-accent) group ${isSelected ? 'border-2 border-(--platform-accent) ring-4 ring-(--platform-accent)/10' : 'border-2 border-dashed border-(--platform-border-color)'}`}
+                                            className={`relative flex flex-col items-center justify-center p-6 rounded-2xl cursor-pointer transition-all duration-200 h-full min-h-75 group shadow-sm ${isSelected ? 'border-2 shadow-[0_0_0_4px_rgba(var(--platform-accent-rgb),0.1)]' : 'border-2 border-dashed'}`}
+                                            style={{ 
+                                                backgroundColor: 'var(--platform-card-bg)', 
+                                                borderColor: isSelected ? 'var(--platform-accent)' : 'var(--platform-border-color)'
+                                            }}
                                         >
-                                            <div className={`w-16 h-16 rounded-full shadow-sm flex items-center justify-center mb-5 transition-all duration-300 ${isSelected ? 'bg-(--platform-accent) text-white scale-110' : 'bg-(--platform-card-bg) text-(--platform-text-secondary) group-hover:text-(--platform-accent) group-hover:scale-110'}`}>
+                                            <div className={`w-16 h-16 rounded-full shadow-sm flex items-center justify-center mb-5 transition-all duration-300 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`} style={{ backgroundColor: isSelected ? 'var(--platform-accent)' : 'var(--platform-bg)', color: isSelected ? '#fff' : 'var(--platform-text-secondary)' }}>
                                                 <Layout size={32} />
                                             </div>
-                                            <h3 className="text-xl font-bold text-(--platform-text-primary) mb-3">Пустий сайт</h3>
-                                            <p className="text-sm text-(--platform-text-secondary) text-center max-w-[85%]">
+                                            <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--platform-text-primary)' }}>Пустий сайт</h3>
+                                            <p className="text-sm text-center max-w-[85%]" style={{ color: 'var(--platform-text-secondary)' }}>
                                                 Почніть з чистого аркуша і створіть свій ідеальний сайт.
                                             </p>
                                             {isSelected && (
-                                                <div className="absolute top-4 right-4 w-7 h-7 bg-(--platform-accent) text-white rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
+                                                <div className="absolute top-4 right-4 w-7 h-7 text-white rounded-full flex items-center justify-center shadow-md animate-in zoom-in" style={{ backgroundColor: 'var(--platform-accent)' }}>
                                                     <Check size={16} />
                                                 </div>
                                             )}
@@ -174,19 +199,19 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                                         getFullUrl={getFullUrl}
                                         badge={<TemplateBadge template={tpl} user={user} isAdmin={isStaff} sourceTab={manager.filters.templateSourceTab} />}
                                         actions={(manager.filters.templateSourceTab === 'personal' || isStaff) && (
-                                            <div className="flex gap-2 w-full justify-end mt-2 pt-2 border-t border-(--platform-border-color)">
+                                            <div className="flex gap-2 w-full justify-end mt-2 pt-2 border-t" style={{ borderColor: 'var(--platform-border-color)' }}>
                                                 {isStaff && manager.filters.templateSourceTab === 'system' && (
                                                     <>
                                                         {!tpl.is_ready ? (
-                                                            <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'markReady' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 rounded-md transition-colors border border-transparent" title="Відправити на перевірку"><ArrowUpCircle size={14} /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'markReady' }); }} className="p-1.5 rounded-md transition-colors border border-transparent hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10" style={{ color: 'var(--platform-text-secondary)' }} title="Відправити на перевірку"><ArrowUpCircle size={14} /></button>
                                                         ) : tpl.access_level !== 'public' && (
-                                                            <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'revertDraft' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 rounded-md transition-colors border border-transparent" title="Повернути в чернетки"><Construction size={14} /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'revertDraft' }); }} className="p-1.5 rounded-md transition-colors border border-transparent hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10" style={{ color: 'var(--platform-text-secondary)' }} title="Повернути в чернетки"><Construction size={14} /></button>
                                                         )}
-                                                        <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'copy' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 rounded-md transition-colors border border-transparent" title="Скопіювати як чернетку"><Copy size={14} /></button>
+                                                        <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'copy' }); }} className="p-1.5 rounded-md transition-colors border border-transparent hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10" style={{ color: 'var(--platform-text-secondary)' }} title="Скопіювати як чернетку"><Copy size={14} /></button>
                                                     </>
                                                 )}
-                                                <button onClick={(e) => { e.stopPropagation(); manager.modals.setEditingTemplate(tpl); manager.modals.setIsEditModalOpen(true); }} className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-(--platform-bg) rounded-md transition-colors border border-transparent"><Edit size={14}/></button>
-                                                <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'delete' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors border border-transparent"><Trash size={14}/></button>
+                                                <button onClick={(e) => { e.stopPropagation(); manager.modals.setEditingTemplate(tpl); manager.modals.setIsEditModalOpen(true); }} className="p-1.5 rounded-md transition-colors border border-transparent hover:text-(--platform-accent) hover:bg-gray-100 dark:hover:bg-gray-700" style={{ color: 'var(--platform-text-secondary)' }}><Edit size={14}/></button>
+                                                <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'delete' }); }} className="p-1.5 rounded-md transition-colors border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" style={{ color: 'var(--platform-text-secondary)' }}><Trash size={14}/></button>
                                             </div>
                                         )}
                                     />
@@ -194,7 +219,7 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                             }) : <div className="col-span-1 xl:col-span-2 mt-10"><EmptyState title="Не знайдено" description="Спробуйте змінити фільтри" icon={Layout}/></div>}
                         </div>
                     </div>
-                    <div className="p-5 border-t border-(--platform-border-color) shrink-0 bg-(--platform-bg)/50">
+                    <div className="p-5 border-t shrink-0" style={{ backgroundColor: 'var(--platform-card-bg)', borderColor: 'var(--platform-border-color)' }}>
                         <Button 
                             variant="primary" 
                             className="w-full py-3 justify-center text-base" 
@@ -209,13 +234,13 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                     </div>
                 </div>
                 <div style={{ width: '0px', position: 'relative', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? "Згорнути панель" : "Розгорнути панель"} className="group flex items-center justify-center w-7 h-28 bg-(--platform-card-bg) border border-(--platform-border-color) shadow-md cursor-pointer transition-all duration-200 focus:outline-none z-20" style={{ position: 'absolute', left: '0px', transform: 'translateY(-50%)', top: '50%', borderRadius: '0 12px 12px 0', borderLeft: isSidebarOpen ? 'none' : '1px solid var(--platform-border-color)', marginLeft: isSidebarOpen ? '-1px' : '0' }}>
-                        <div className="transition-transform duration-200 group-hover:scale-110 text-(--platform-text-secondary) group-hover:text-(--platform-accent)">
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? "Згорнути панель" : "Розгорнути панель"} className="group flex items-center justify-center w-7 h-28 shadow-md cursor-pointer transition-all duration-200 focus:outline-none z-20" style={{ position: 'absolute', left: '0px', transform: 'translateY(-50%)', top: '50%', borderRadius: '0 12px 12px 0', border: '1px solid var(--platform-border-color)', borderLeft: isSidebarOpen ? 'none' : 'inherit', marginLeft: isSidebarOpen ? '-1px' : '0', backgroundColor: 'var(--platform-card-bg)' }}>
+                        <div className="transition-transform duration-200 group-hover:scale-110 group-hover:text-(--platform-accent)" style={{ color: 'var(--platform-text-secondary)' }}>
                             {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
                         </div>
                     </button>
                 </div>
-                <div className="flex-1 relative bg-(--platform-bg)">
+                <div className="flex-1 relative" style={{ backgroundColor: 'var(--platform-bg)', minWidth: 0 }}>
                     <SitePreviewer 
                         viewMode={viewMode} 
                         setViewMode={setViewMode} 

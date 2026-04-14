@@ -31,7 +31,8 @@ const getGridClasses = (direction = 'row', preset, verticalAlign = 'top') => {
     return `grid ${colsClass} ${alignClass}`;
 };
 
-const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock }) => {
+const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock, viewMode = 'editor' }) => {
+    const isActuallyEditing = isEditorPreview && viewMode === 'editor';
     const [{ isOver, canDrop }, drop] = useDrop({
         accept: [DRAG_ITEM_TYPE_EXISTING, DND_TYPE_NEW_BLOCK],
         drop: (item, monitor) => {
@@ -42,7 +43,6 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
                 const dropZonePath = path;
                 const isDroppingOnSelf = dropZonePath.join(',').startsWith(dragPath.join(',')) &&
                                          dropZonePath.length > dragPath.length;
-                
                 if (isDroppingOnSelf) return;
                 onDrop(item, path);
             } else if (dragType === DND_TYPE_NEW_BLOCK) {
@@ -51,7 +51,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
             }
             return { name: 'ColumnDropZone', path };
         },
-        canDrop: () => isEditorPreview,
+        canDrop: () => isActuallyEditing,
         collect: (monitor) => ({
             isOver: monitor.isOver(),
             canDrop: monitor.canDrop(),
@@ -62,7 +62,7 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
     const contentRef = useRef(null);
     const [scale, setScale] = useState(1);
     useEffect(() => {
-        if (!isEditorPreview) return;
+        if (!isActuallyEditing) return;
         const calculateScale = () => {
             if (columnRef.current) {
                 const columnWidth = columnRef.current.offsetWidth;
@@ -77,19 +77,21 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
         const observer = new ResizeObserver(calculateScale);
         if (columnRef.current) observer.observe(columnRef.current);
         return () => observer.disconnect();
-    }, [isEditorPreview, children]);
+    }, [isActuallyEditing, children]);
 
     const setRefs = useCallback((node) => {
         drop(node);
         columnRef.current = node;
     }, [drop]);
+    
     const isActive = isOver && canDrop;
     return (
         <div 
             ref={setRefs} 
             className={`
+                layout-drop-zone
                 min-h-25 p-2.5 rounded-lg w-full box-border overflow-hidden flex flex-col relative transition-all duration-200
-                ${isActive ? 'border-2 border-dashed border-(--platform-accent) bg-blue-500/5' : `border border-dashed ${isEditorPreview ? 'border-(--platform-border-color)' : 'border-transparent'}`}
+                ${isActive ? 'border-2 border-dashed border-(--platform-accent) bg-blue-500/5' : `border border-dashed ${isActuallyEditing ? 'border-(--platform-border-color)' : 'border-transparent'}`}
             `}
         >
             <div 
@@ -103,8 +105,8 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock })
                 }}
             >
                 {children}
-                {isEditorPreview && React.Children.count(children) === 0 && (
-                    <div className="flex flex-col items-center justify-center h-25 text-(--platform-text-secondary) opacity-60 pointer-events-none">
+                {isActuallyEditing && React.Children.count(children) === 0 && (
+                    <div className="layout-empty-placeholder flex flex-col items-center justify-center h-25 text-(--platform-text-secondary) opacity-60 pointer-events-none">
                         <div className="w-8 h-8 rounded-full border border-(--platform-border-color) flex items-center justify-center mb-1.5 bg-(--platform-bg)">
                             <Plus size={16} />
                         </div>
@@ -121,6 +123,7 @@ const LayoutBlock = ({
     siteData, 
     isEditorPreview, 
     path = [], 
+    viewMode = 'editor',
     onMoveBlock, 
     onDropBlock, 
     onDeleteBlock, 
@@ -171,6 +174,7 @@ const LayoutBlock = ({
     const alignmentClass = activeMinHeightClass !== 'min-h-auto' 
         ? (verticalAlign === 'middle' ? 'justify-center' : (verticalAlign === 'bottom' ? 'justify-end' : 'justify-start'))
         : 'justify-start';
+    const isActuallyEditing = isEditorPreview && viewMode === 'editor';
     return (
         <div 
             className={`
@@ -210,7 +214,6 @@ const LayoutBlock = ({
                     }} 
                 />
             )}
-            
             <div 
                 className={`
                     w-full relative z-2
@@ -221,7 +224,7 @@ const LayoutBlock = ({
                 {columns.map((columnBlocks, colIndex) => {
                     const safePath = path || [];
                     const columnPath = [...safePath, 'data', 'columns', colIndex];
-                    if (!isEditorPreview) {
+                    if (!isActuallyEditing) {
                         return (
                             <div key={colIndex} className="min-w-0">
                                 <BlockRenderer
@@ -232,11 +235,11 @@ const LayoutBlock = ({
                             </div>
                         );
                     }
-
                     return (
                         <ColumnDropZone
                             key={colIndex}
                             isEditorPreview={isEditorPreview}
+                            viewMode={viewMode}
                             path={columnPath}
                             onDrop={onDropBlock}
                             onAddBlock={onAddBlock}
@@ -247,6 +250,7 @@ const LayoutBlock = ({
                                     block={childBlock}
                                     siteData={siteData}
                                     path={[...columnPath, childIndex]}
+                                    viewMode={viewMode}
                                     onMoveBlock={onMoveBlock}
                                     onDropBlock={onDropBlock}
                                     onDeleteBlock={onDeleteBlock}

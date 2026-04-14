@@ -43,7 +43,6 @@ const useDragAutoScroll = (ref, isEnabled) => {
                 currentSpeed = 0;
             }
         };
-
         const stopScrolling = () => { currentSpeed = 0; };
         document.addEventListener('dragover', onDragOver, true);
         document.addEventListener('dragend', stopScrolling, true);
@@ -137,6 +136,7 @@ const BlockEditor = ({
             default: break;
         }
     };
+    
     const themeSettings = siteData?.theme_settings || {};
     const isSiteDark = siteData?.site_theme_mode === 'dark';
     const siteBg = isSiteDark ? '#1a202c' : '#f7fafc';
@@ -221,6 +221,8 @@ const BlockEditor = ({
                 .site-theme-preview { font-family: var(--site-font-main); }
                 .site-theme-preview * { box-sizing: border-box; }
                 .mobile-preview-device { max-width: 400px; margin: 0 auto; border: 12px solid #222; border-radius: 36px; overflow-y: auto; overflow-x: hidden; height: 80vh; background-color: var(--site-bg); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; }
+                .mobile-preview-device .layout-drop-zone { border-color: transparent !important; padding: 0 !important; min-height: auto !important; }
+                .mobile-preview-device .layout-empty-placeholder { display: none !important; }
                 .site-theme-preview .site-block { background: var(--site-bg); color: var(--site-text-primary); font-family: var(--site-font-main); }
                 .site-theme-preview .site-heading { font-family: var(--site-font-headings); color: var(--site-text-primary); }
                 `}

@@ -3,8 +3,9 @@ import React from 'react';
 import { SectionTitle, ToggleSwitch } from '../../ui/configuration/SettingsUI';
 import OverlayControl from '../../ui/components/OverlayControl';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
+import { Input } from '../../../../shared/ui/elements';
 import { BASE_URL } from '../../../../shared/config';
-import { Video, Palette, Settings, Play, VolumeX, Repeat, Image as ImageIcon } from 'lucide-react';
+import { Video, Palette, Settings, Play, VolumeX, Repeat, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
 
 const VideoSettings = ({ data, onChange }) => {
     const safeData = {
@@ -24,7 +25,8 @@ const VideoSettings = ({ data, onChange }) => {
         let finalUrl = '';
         if (val && val.target && typeof val.target.value === 'string') finalUrl = val.target.value;
         else if (typeof val === 'string') finalUrl = val;
-        const relativeUrl = finalUrl.replace(BASE_URL, '');
+        const isYouTube = finalUrl.includes('youtube.com') || finalUrl.includes('youtu.be');
+        const relativeUrl = isYouTube ? finalUrl : finalUrl.replace(BASE_URL, '');
         updateData({ url: relativeUrl });
     };
 
@@ -44,14 +46,23 @@ const VideoSettings = ({ data, onChange }) => {
                     <label className="block text-sm font-medium text-(--platform-text-primary) mb-1.5">
                         Відео файл
                     </label>
-                    <div className="h-37.5">
+                    <div className="h-37.5 mb-3">
                         <UniversalMediaInput 
                             type="video"
-                            value={safeData.url}
+                            value={safeData.url && !safeData.url.includes('youtu') ? safeData.url : ''}
                             onChange={handleVideoChange}
                             placeholder="Завантажити відео"
                         />
                     </div>
+                    <label className="block text-sm font-medium text-(--platform-text-primary) mb-1.5 mt-4">
+                        Або посилання на YouTube
+                    </label>
+                    <Input 
+                        value={safeData.url}
+                        onChange={handleVideoChange}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        leftIcon={<LinkIcon size={16}/>}
+                    />
                 </div>
                 <div className="mb-5">
                     <label className="flex items-center gap-1.5 mb-1.5 text-sm font-medium text-(--platform-text-primary)">
