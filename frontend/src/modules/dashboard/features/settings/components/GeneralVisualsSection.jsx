@@ -2,7 +2,28 @@
 import React, { useState } from 'react';
 import UniversalMediaInput from '../../../../../shared/ui/complex/UniversalMediaInput';
 import SiteCoverDisplay from '../../../../../shared/ui/complex/SiteCoverDisplay';
-import { Tag, X, Check, Image, Upload, Trash } from 'lucide-react';
+import { Tag, X, Check, Image, Upload, Trash, Type, Maximize, CircleDashed } from 'lucide-react';
+
+const RangeControl = ({ label, icon, value, min, max, unit = 'px', onChange }) => (
+    <div className="mb-4">
+        <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-medium text-(--platform-text-primary) flex items-center gap-1.5">
+                {icon} {label}
+            </label>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary)">
+                {value}{unit}
+            </span>
+        </div>
+        <input 
+            type="range" 
+            min={min} 
+            max={max} 
+            value={value || min} 
+            onChange={(e) => onChange(Number(e.target.value))}
+            className="w-full h-1.5 bg-(--platform-border-color) rounded-lg appearance-none cursor-pointer accent-(--platform-accent)"
+        />
+    </div>
+);
 
 const GeneralVisualsSection = ({ 
     data, 
@@ -78,10 +99,10 @@ const GeneralVisualsSection = ({
                         </p>
                     </div>
                 </div>
-                <div className="flex flex-col gap-8">
-                    <div className="flex justify-center bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-8 bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat">
-                        <div className="relative group">
-                            <div style={{ width: '320px', height: '200px', transform: 'scale(1.2)', transformOrigin: 'center', transition: 'transform 0.3s' }} className="shadow-2xl rounded-lg overflow-hidden border border-(--platform-border-color)">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="flex items-center justify-center bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-8 bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat overflow-hidden min-h-75">
+                        <div className="relative group w-full max-w-110 mx-auto flex justify-center">
+                            <div style={{ width: '100%', aspectRatio: '16 / 11', transition: 'all 0.3s' }} className="shadow-2xl rounded-lg overflow-hidden border border-(--platform-border-color) shrink-0">
                                 <UniversalMediaInput 
                                     type="image"
                                     value={data.cover_image} 
@@ -102,7 +123,7 @@ const GeneralVisualsSection = ({
                                             title: identityData.title,
                                             logo_url: getImageUrl(data.logo_url),
                                             cover_image: getImageUrl(data.cover_image),
-                                            cover_layout: data.cover_layout,
+                                            cover_layout: data.cover_layout || 'centered',
                                             cover_logo_radius: data.cover_logo_radius,
                                             cover_logo_size: data.cover_logo_size,
                                             cover_title_size: data.cover_title_size
@@ -125,8 +146,56 @@ const GeneralVisualsSection = ({
                             </div>
                         </div>
                     </div>
+                    <div className="flex flex-col gap-5 py-2">
+                        <RangeControl 
+                            label="Розмір логотипу" 
+                            icon={<Maximize size={16} />} 
+                            value={data.cover_logo_size || 60} 
+                            min={20} 
+                            max={120} 
+                            onChange={(val) => handleChange('cover_logo_size', val)} 
+                        />
+                        <RangeControl 
+                            label="Скруглення логотипу" 
+                            icon={<CircleDashed size={16} />} 
+                            value={data.cover_logo_radius || 0} 
+                            min={0} 
+                            max={50} 
+                            unit="%" 
+                            onChange={(val) => handleChange('cover_logo_radius', val)} 
+                        />
+                        <RangeControl 
+                            label="Розмір заголовку" 
+                            icon={<Type size={16} />} 
+                            value={data.cover_title_size || 24} 
+                            min={14} 
+                            max={40} 
+                            onChange={(val) => handleChange('cover_title_size', val)} 
+                        />
+                    </div>
                 </div>
             </div>
+            <style>{`
+                input[type=range]::-webkit-slider-thumb {
+                    appearance: none;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background: var(--platform-accent);
+                    cursor: pointer;
+                    border: 2px solid white;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                }
+                input[type=range]::-moz-range-thumb {
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background: var(--platform-accent);
+                    cursor: pointer;
+                    border: 2px solid white;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                }
+            `}</style>
         </>
     );
 };

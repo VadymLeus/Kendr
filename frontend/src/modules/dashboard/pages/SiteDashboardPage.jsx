@@ -7,19 +7,17 @@ import { AuthContext } from '../../../app/providers/AuthContext';
 import BlockEditor from '../../editor/core/BlockEditor';
 import EditorSidebar from '../../editor/ui/EditorSidebar';
 import GeneralSettingsTab from '../features/settings/GeneralSettingsTab';
-import PagesSettingsTab from '../features/settings/PagesSettingsTab';
 import StyleSettingsTab from '../features/settings/StyleSettingsTab';
-import ShopContentTab from '../features/shop/ShopContentTab';
-import SubmissionsTab from '../features/content/SubmissionsTab';
-import AnalyticsTab from '../features/analytics/AnalyticsTab';
+import CommerceTab from '../features/commerce/CommerceTab';
+import OverviewTab from '../features/overview/OverviewTab';
 import DashboardHeader from '../components/DashboardHeader';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
 import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, handleDrop } from '../../editor/core/blockUtils';
+import PagesManagerModal from '../features/settings/PagesManagerModal';
 import { Lock } from 'lucide-react';
-
 const useDragAutoScroll = (ref, isEnabled) => {
     useEffect(() => {
         const container = ref.current;
@@ -70,14 +68,18 @@ const SiteDashboardPage = () => {
     const navigate = useNavigate();
     const { siteData, setSiteData, isSiteLoading } = useOutletContext();
     const { isAdmin } = useContext(AuthContext);
+    const [isPagesManagerOpen, setIsPagesManagerOpen] = useState(false);
     const [activeTab, setActiveTab] = useState(() => {
-        return localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
+        const saved = localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
+        return saved === 'pages' ? 'editor' : saved;
     });
+    
     const [viewMode, setViewMode] = useState('editor');
     const [isReadOnly, setIsReadOnly] = useState(false);
     const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
     const pcScrollRef = useRef(null);
     useDragAutoScroll(pcScrollRef, activeTab === 'editor');
+    
     useEffect(() => {
         if (siteData && siteData.site_path && siteData.site_path !== site_path) {
             navigate(`/dashboard/${siteData.site_path}`, { replace: true });
@@ -151,7 +153,7 @@ const SiteDashboardPage = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
-        pages: false, store: false, crm: false, settings: false
+        pages: false, commerce: false, overview: false, settings: false
     });
     const [savedBlocksUpdateTrigger, setSavedBlocksUpdateTrigger] = useState(0);
     useEffect(() => {
@@ -199,9 +201,8 @@ const SiteDashboardPage = () => {
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-            if (document.querySelector('.ReactModal__Content')) return;
+            if (document.querySelector('.ReactModal__Content') || isPagesManagerOpen) return;
             if (isReadOnly) return;
-            
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
                 if (e.shiftKey) { e.preventDefault(); redo(); }
                 else { e.preventDefault(); undo(); }
@@ -212,7 +213,7 @@ const SiteDashboardPage = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, redo, isReadOnly]);
+    }, [undo, redo, isReadOnly, isPagesManagerOpen]);
 
     const fetchPageContent = async (pageId) => {
         setIsPageLoading(true);
@@ -428,15 +429,14 @@ const SiteDashboardPage = () => {
     };
 
     const handleSavingChange = useCallback((isSaving) => {
-        const tabMap = { pages: 'pages', store: 'store', crm: 'crm', settings: 'settings' };
+        const tabMap = { pages: 'pages', commerce: 'commerce', overview: 'overview', settings: 'settings' };
         if (tabMap[activeTab]) setComponentSaving(tabMap[activeTab], isSaving);
     }, [activeTab, setComponentSaving]);
 
     if (isSiteLoading || !siteData) {
         return <LoadingState title="Завантаження редактора..." />;
     }
-
-    const isFullHeightTab = ['store', 'crm', 'analytics'].includes(activeTab);
+    const isFullHeightTab = ['commerce', 'overview'].includes(activeTab);
     const hasUnsavedChanges = JSON.stringify(blocks) !== savedBlocksStr && savedBlocksStr !== '';
     return (
         <div className="flex flex-col h-screen overflow-hidden">
@@ -450,6 +450,19 @@ const SiteDashboardPage = () => {
                 onCancel={() => setIsDiscardModalOpen(false)}
                 type="danger" 
             />
+            <PagesManagerModal 
+                isOpen={isPagesManagerOpen} 
+                onClose={() => setIsPagesManagerOpen(false)} 
+                siteId={siteData.id} 
+                onPageUpdate={refreshPageList} 
+                onEditPage={(id) => { 
+                    handleEditPage(id); 
+                    setActiveTab('editor'); 
+                    setIsPagesManagerOpen(false); 
+                }} 
+                onSavingChange={(isSaving) => setComponentSaving('pages', isSaving)} 
+            />
+
             {isReadOnly && (
                 <div className="bg-orange-500 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 shadow-sm z-50 animate-in slide-in-from-top-2 duration-300">
                     <Lock size={16} />
@@ -468,6 +481,9 @@ const SiteDashboardPage = () => {
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 onUpdateConfig={handleSiteDataUpdate}
+                hasChanges={hasUnsavedChanges}
+                onSave={() => savePageContent()}
+                onDiscardChanges={handleDiscardChanges}
             />
             <div className="flex-1 flex overflow-hidden relative">
                 {activeTab === 'editor' && (
@@ -510,14 +526,11 @@ const SiteDashboardPage = () => {
                                     onSelectBlock={setSelectedBlockPath}
                                     onUpdateBlockData={handleUpdateBlockData}
                                     onAddBlock={handleAddBlock}
-                                    onSave={savePageContent}
                                     allPages={allPages}
                                     currentPageId={currentPageId}
                                     onSelectPage={(id) => handleEditPage(id)}
                                     savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
-                                    isSaving={isSaving}
-                                    hasChanges={hasUnsavedChanges}
-                                    onDiscardChanges={handleDiscardChanges}
+                                    onOpenPagesManager={() => setIsPagesManagerOpen(true)}
                                 />
                             </div>
                         )}
@@ -536,27 +549,19 @@ const SiteDashboardPage = () => {
                                 isFullHeightTab ? 'w-full h-full' : (activeTab === 'settings' ? 'w-full' : 'max-w-250')
                             } ${isReadOnly ? 'pointer-events-none opacity-70' : ''}`}
                         >
-                            {activeTab === 'pages' && (
-                                <PagesSettingsTab 
-                                    siteId={siteData.id} 
-                                    onEditPage={(id) => { handleEditPage(id); setActiveTab('editor'); }}
-                                    onPageUpdate={refreshPageList}
-                                    onSavingChange={handleSavingChange}
-                                />
-                            )}
-                            {activeTab === 'store' && <ShopContentTab siteData={siteData} onSavingChange={handleSavingChange} />}
+                            {activeTab === 'commerce' && <CommerceTab siteData={siteData} onSavingChange={handleSavingChange} />}
                             {activeTab === 'theme' && <StyleSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} isSaving={isThemeSaving} />}
-                            {activeTab === 'crm' && <SubmissionsTab siteId={siteData.id} onSavingChange={handleSavingChange} />}
-                            {activeTab === 'settings' && <GeneralSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} onSavingChange={handleSavingChange} />}
-                            {activeTab === 'analytics' && (
-                                <AnalyticsTab 
+                            {activeTab === 'overview' && (
+                                <OverviewTab 
                                     siteData={siteData} 
+                                    onSavingChange={handleSavingChange}
                                     onGoToOrders={() => {
-                                        setActiveTab('store');
-                                        navigate(`?shopTab=orders`);
+                                        setActiveTab('commerce');
+                                        navigate(`?commerceTab=orders`);
                                     }} 
                                 />
                             )}
+                            {activeTab === 'settings' && <GeneralSettingsTab siteData={siteData} onUpdate={handleSiteDataUpdate} onSavingChange={handleSavingChange} />}
                         </div>
                     </div>
                 )}

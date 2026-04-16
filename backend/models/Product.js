@@ -48,7 +48,7 @@ class Product {
                     s.user_id, s.site_path,
                     (
                         SELECT JSON_ARRAYAGG(
-                            JSON_OBJECT('id', c.id, 'name', c.name, 'discount_percentage', c.discount_percentage)
+                            JSON_OBJECT('id', c.id, 'name', c.name, 'discount_percentage', c.discount_percentage, 'icon', c.icon)
                         )
                         FROM product_categories pc
                         JOIN categories c ON pc.category_id = c.id
@@ -71,7 +71,7 @@ class Product {
             SELECT p.*, 
                 (
                     SELECT JSON_ARRAYAGG(
-                        JSON_OBJECT('id', c.id, 'name', c.name, 'discount_percentage', c.discount_percentage)
+                        JSON_OBJECT('id', c.id, 'name', c.name, 'discount_percentage', c.discount_percentage, 'icon', c.icon)
                     )
                     FROM product_categories pc
                     JOIN categories c ON pc.category_id = c.id
@@ -81,7 +81,6 @@ class Product {
             WHERE p.site_id = ?
             ORDER BY p.created_at DESC
         `, [siteId]);
-        
         return rows.map(product => {
             product.image_gallery = safeParseGallery(product.image_gallery);
             product.variants = safeParseVariants(product.variants);
@@ -144,7 +143,7 @@ class Product {
             SELECT p.*,
                 (
                     SELECT JSON_ARRAYAGG(
-                        JSON_OBJECT('id', c.id, 'name', c.name, 'discount_percentage', c.discount_percentage)
+                        JSON_OBJECT('id', c.id, 'name', c.name, 'discount_percentage', c.discount_percentage, 'icon', c.icon)
                     )
                     FROM product_categories pc
                     JOIN categories c ON pc.category_id = c.id

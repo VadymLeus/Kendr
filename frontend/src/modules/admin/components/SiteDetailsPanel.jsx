@@ -62,7 +62,7 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
     const isSuspended = site.status === 'suspended';
     const isProbation = site.status === 'probation';
     const { expired: isExpired, text: timeLeftString } = calculateTimeLeft(site.deletion_scheduled_for);
-    const siteReason = site.suspension_reason || site.reason; // Отримуємо причину блокування
+    const siteReason = site.suspension_reason || site.reason;
     const handleVisitProfile = () => {
         if (isAuthorClickable) {
             const targetIdentifier = site.author_slug || site.author;

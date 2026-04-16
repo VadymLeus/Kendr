@@ -1,14 +1,14 @@
 // frontend/src/modules/dashboard/features/settings/components/GeneralIdentitySection.jsx 
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../../../../../app/providers/AuthContext';
-import { Button, Input, Switch } from '../../../../../shared/ui/elements';
+import { Button, Switch } from '../../../../../shared/ui/elements';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import { InputWithCounter } from '../../../../../shared/ui/complex/InputWithCounter';
 import UniversalMediaInput from '../../../../../shared/ui/complex/UniversalMediaInput';
 import { TEXT_LIMITS } from '../../../../../shared/config/limits';
 import { toast } from 'react-toastify';
 import { useCooldown } from '../../../../../shared/hooks/useCooldown';
-import { Image, Upload, Trash, Type, AlertCircle, CreditCard, Key, Lock, Globe, Check, Timer, Loader, Cookie } from 'lucide-react';
+import { Image, Upload, Trash, Type, AlertCircle, Lock, Globe, Check, Timer, Loader, Cookie } from 'lucide-react';
 
 const GeneralIdentitySection = ({ 
     data, 
@@ -31,21 +31,9 @@ const GeneralIdentitySection = ({
     const [statusCooldown, startStatusCooldown] = useCooldown('kendr_status_cooldown');
     const isStaff = user?.role === 'admin' || user?.role === 'moderator' || isAdmin;
     const [localStatus, setLocalStatus] = useState(data.status || 'published');
-    const [localLiqpay, setLocalLiqpay] = useState({
-        public: data.liqpay_public_key || '',
-        private: data.liqpay_private_key || ''
-    });
     useEffect(() => {
         setLocalStatus(data.status || 'published');
     }, [data.status]);
-
-    useEffect(() => {
-        setLocalLiqpay({
-            public: data.liqpay_public_key || '',
-            private: data.liqpay_private_key || ''
-        });
-    }, [data.liqpay_public_key, data.liqpay_private_key]);
-
     const handleStatusSave = () => {
         if (statusCooldown > 0) {
             toast.warning(`Зачекайте ${statusCooldown}с перед наступною зміною статусу.`);
@@ -56,18 +44,11 @@ const GeneralIdentitySection = ({
         startStatusCooldown(30);
     };
 
-    const handleLiqpaySave = () => {
-        handleChange('liqpay_public_key', localLiqpay.public);
-        handleChange('liqpay_private_key', localLiqpay.private);
-        toast.success('Налаштування LiqPay успішно збережено!');
-    };
-    
     const statusOptions = [
-        { value: 'published', label: 'Опубліковано (Доступний всім)', icon: Globe, iconProps: { className: 'text-green-500' } },
-        { value: 'maintenance', label: 'Тех. роботи (Тимчасово закритий)', icon: AlertCircle, iconProps: { className: 'text-orange-500' } }, 
-        { value: 'private', label: 'Приватний (Прихований)', icon: Lock, iconProps: { className: 'text-gray-500' } }
+        { value: 'published', label: 'Опубліковано - Доступний всім', icon: Globe, iconProps: { className: 'text-green-500' } },
+        { value: 'maintenance', label: 'Технічні роботи - Обмежений доступ', icon: AlertCircle, iconProps: { className: 'text-orange-500' } }, 
+        { value: 'private', label: 'Приватний - Доступний тільки вам', icon: Lock, iconProps: { className: 'text-gray-500' } }
     ];
-    
     const canSaveIdentity = hasIdentityChanges && !titleError && !slugError && !isSavingIdentity && (slugStatus === 'available' || slugStatus === 'unchanged');
     return (
         <>
@@ -200,7 +181,7 @@ const GeneralIdentitySection = ({
                     />
                 </div>
                 {data.cookie_banner_enabled && (
-                    <div className="mt-6 pt-6 border-t border-(--platform-border-color) animate-in fade-in slide-in-from-top-2">
+                    <div className="mt-4 animate-in fade-in slide-in-from-top-2">
                         <label className="block text-sm font-medium text-(--platform-text-primary) mb-2">
                             Текст банера
                         </label>
@@ -213,56 +194,6 @@ const GeneralIdentitySection = ({
                     </div>
                 )}
             </div>
-            {!isStaff && (
-                <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
-                    <div className="mb-6 flex items-center justify-between gap-3">
-                        <div>
-                            <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                                <CreditCard size={22} className="text-(--platform-accent)" /> Налаштування оплати (LiqPay)
-                            </h3>
-                            <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
-                                Додайте ваші ключі LiqPay, щоб почати приймати платежі на сайті.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-4">
-                        <div>
-                            <Input
-                                label="Public Key (Публічний ключ)"
-                                value={localLiqpay.public}
-                                onChange={(e) => setLocalLiqpay(prev => ({ ...prev, public: e.target.value }))}
-                                placeholder="sandbox_..."
-                                leftIcon={<Key size={16}/>}
-                            />
-                        </div>
-                        <div>
-                            <Input
-                                label="Private Key (Приватний ключ)"
-                                value={localLiqpay.private}
-                                onChange={(e) => setLocalLiqpay(prev => ({ ...prev, private: e.target.value }))}
-                                placeholder="sandbox_..."
-                                leftIcon={<Lock size={16}/>}
-                                type="password"
-                            />
-                        </div>
-                        {(!data.liqpay_public_key || !data.liqpay_private_key) && (
-                            <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', fontSize: '0.85rem', color: '#ef4444', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                <AlertCircle size={16} style={{flexShrink: 0}} />
-                                <span>Ключі не налаштовані. Клієнти не зможуть оплачувати замовлення.</span>
-                            </div>
-                        )}
-                        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
-                            <Button 
-                                type="button" 
-                                onClick={handleLiqpaySave}
-                                icon={<Check size={18} />}
-                            >
-                                Зберегти зміни
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
             {!isStaff && !isLocked && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
                     <div className="mb-6">
@@ -270,9 +201,6 @@ const GeneralIdentitySection = ({
                             <Globe size={22} className="text-(--platform-accent)" /> Статус сайту
                         </h3>
                         <div className="max-w-md mx-auto mt-4">
-                            <label className="block mb-2 font-medium text-(--platform-text-primary) text-sm">
-                                Поточний статус
-                            </label>
                             <CustomSelect 
                                 name="status"
                                 value={localStatus} 

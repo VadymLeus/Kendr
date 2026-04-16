@@ -359,7 +359,6 @@ export const generateFullHTML = (siteData, blocks, pageTitle) => {
     }
 
     const blocksHTML = allBlocks.map(generateBlockHTML).join('\n');
-
     return `<!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -368,13 +367,9 @@ export const generateFullHTML = (siteData, blocks, pageTitle) => {
     <title>${pageTitle ? `${pageTitle} - ` : ''}${siteData.title || 'My Website'}</title>
     <meta name="description" content="${siteData.seo_description || ''}">
     ${siteData.favicon_url ? `<link rel="icon" href="${siteData.favicon_url}" type="image/x-icon">` : ''}
-    
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="css/style.css">
-    
     <style>
         * { box-sizing: border-box; }
         details > summary { list-style: none; }

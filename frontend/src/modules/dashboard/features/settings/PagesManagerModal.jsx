@@ -1,4 +1,4 @@
-// frontend/src/modules/dashboard/features/settings/PagesSettingsTab.jsx
+// frontend/src/modules/dashboard/features/settings/PagesManagerModal.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../../../../shared/api/api';
 import { toast } from 'react-toastify';
@@ -25,13 +25,19 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
             setShowSeo(false);
         }
     }, [page, isOpen]);
+
     const handleSlugChange = (e) => {
         setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!name || !slug) {
-            toast.warning('Назва та Slug є обов\'язковими.');
+        if (!name.trim()) {
+            toast.warning('Будь ласка, введіть назву сторінки.');
+            return;
+        }
+        if (!slug.trim()) {
+            toast.warning('Slug (URL) порожній або містить недопустимі символи. Використовуйте лише латинські літери (a-z), цифри та дефіси.');
             return;
         }
         if (onSavingChange) onSavingChange(true);
@@ -54,11 +60,12 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
             setTimeout(() => { if (onSavingChange) onSavingChange(false); }, 500);
         }
     };
+
     if (!isOpen) return null;
     return (
         <div 
             ref={overlayRef}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-2100 backdrop-blur-xs animate-[fadeIn_0.2s_ease-out]"
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-2100 p-4 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
             onMouseDown={(e) => {
                 overlayRef.current.isSelfClick = (e.target === overlayRef.current);
             }}
@@ -68,22 +75,22 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
                 }
             }}
         >
-            <div className="bg-(--platform-card-bg) text-(--platform-text-primary) border border-(--platform-border-color) rounded-2xl w-[90%] max-w-115 shadow-2xl overflow-hidden flex flex-col animate-[slideUp_0.3s_ease-out]">
-                <div className="p-6 pb-2">
-                    <div className="flex gap-4 items-start">
-                        <div className="w-12 h-12 rounded-xl bg-(--platform-accent)/10 text-(--platform-accent) flex items-center justify-center shrink-0">
-                             {page ? <Settings size={24} /> : <Plus size={24} />}
+            <div className="bg-(--platform-card-bg) text-(--platform-text-primary) border border-(--platform-border-color) rounded-2xl w-full max-w-115 shadow-2xl overflow-hidden flex flex-col animate-[slideUp_0.3s_ease-out]">
+                <div className="p-5 md:p-6 pb-2">
+                    <div className="flex gap-3 md:gap-4 items-start">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-(--platform-accent)/10 text-(--platform-accent) flex items-center justify-center shrink-0">
+                             {page ? <Settings size={20} className="md:w-6 md:h-6" /> : <Plus size={20} className="md:w-6 md:h-6" />}
                         </div>
-                        <div className="flex-1 flex flex-col gap-2 pt-0.5">
-                            <h3 className="text-lg font-semibold m-0">
+                        <div className="flex-1 flex flex-col gap-1 md:gap-2 pt-0.5">
+                            <h3 className="text-base md:text-lg font-semibold m-0">
                                 {page ? 'Налаштування сторінки' : 'Створити сторінку'}
                             </h3>
-                            <p className="m-0 text-sm text-(--platform-text-secondary) leading-relaxed">
+                            <p className="m-0 text-xs md:text-sm text-(--platform-text-secondary) leading-relaxed">
                                 {page ? 'Змініть основні налаштування та SEO параметри.' : 'Заповніть інформацію для створення нової сторінки.'}
                             </p>
                         </div>
                     </div>
-                    <div className="mt-6">
+                    <div className="mt-5 md:mt-6">
                         <form id="page-form" onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <Input 
@@ -140,7 +147,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
                         </form>
                     </div>
                 </div>
-                <div className="p-4 px-6 flex justify-end items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color) mt-4">
+                <div className="p-4 md:px-6 flex justify-end items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color) mt-4">
                     <UIButton variant="outline" onClick={onClose} disabled={loading}>Скасувати</UIButton>
                     <UIButton type="submit" form="page-form" disabled={loading}>{page ? 'Зберегти' : 'Створити'}</UIButton>
                 </div>
@@ -148,8 +155,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
         </div>
     );
 };
-
-const GRID_COLS_CLASS = "grid grid-cols-[2fr_1.5fr_110px_220px] items-center gap-4";
+const RESPONSIVE_GRID_CLASS = "grid grid-cols-[1fr_auto] md:grid-cols-[2fr_1.5fr_110px_180px] lg:grid-cols-[2fr_1.5fr_110px_220px] items-center gap-3 md:gap-4";
 const CustomActionButton = ({ onClick, title, children, variant = 'default', loading = false }) => {
     const variantClasses = {
         editor: "bg-[#10B981] hover:bg-[#059669]",
@@ -162,8 +168,8 @@ const CustomActionButton = ({ onClick, title, children, variant = 'default', loa
         <button
             onClick={onClick} title={title} disabled={loading}
             className={`
-                px-3 py-2 border-none rounded-lg cursor-pointer text-[0.85rem] font-semibold 
-                flex items-center gap-1.5 transition-all duration-200 text-white
+                p-2 md:px-3 md:py-2 border-none rounded-lg cursor-pointer text-[0.85rem] font-semibold 
+                flex items-center justify-center gap-1.5 transition-all duration-200 text-white
                 ${bgClass} ${loading ? 'opacity-70 cursor-wait' : ''}
             `}
         >
@@ -172,29 +178,35 @@ const CustomActionButton = ({ onClick, title, children, variant = 'default', loa
     );
 };
 
-const ListRow = ({ icon, title, subtitle, badges, actions }) => {
+const ListRow = ({ icon, title, badges, actions }) => {
     return (
         <div className={`
-            ${GRID_COLS_CLASS}
-            bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-3 px-5 mb-3 transition-all duration-200
+            ${RESPONSIVE_GRID_CLASS}
+            bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-3 md:px-5 mb-3 transition-all duration-200
             hover:border-(--platform-accent) hover:bg-white/5
         `}>
-            <div className="flex items-center gap-4 overflow-hidden">
-                <div className="p-2 rounded-xl flex items-center justify-center shrink-0 bg-white/5 border border-(--platform-border-color) text-(--platform-text-secondary)">
+            <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+                <div className="p-2 md:p-2.5 rounded-xl flex items-center justify-center shrink-0 bg-white/5 border border-(--platform-border-color) text-(--platform-text-secondary)">
                     {icon}
                 </div>
-                <div className="min-w-0">
-                    <div className="font-bold text-base text-(--platform-text-primary) whitespace-nowrap overflow-hidden text-ellipsis">
+                <div className="min-w-0 flex-1">
+                    <div className="font-bold text-sm md:text-base text-(--platform-text-primary) whitespace-nowrap overflow-hidden text-ellipsis">
                         {title}
                     </div>
-                    {subtitle && <div className="text-xs text-(--platform-text-secondary) mt-0.5">{subtitle}</div>}
+                    <div className="flex md:hidden items-center gap-2 mt-1.5 overflow-hidden">
+                        <div className="truncate max-w-30 text-xs">{badges.slug}</div>
+                        <div className="shrink-0 scale-90 origin-left">{badges.status}</div>
+                    </div>
                 </div>
             </div>
-            <div className="font-mono text-(--platform-text-secondary) text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+            <div className="hidden md:block font-mono text-(--platform-text-secondary) text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                 {badges.slug}
             </div>
-            <div>{badges.status}</div>
-            <div className="flex gap-2 justify-end">
+            <div className="hidden md:block">
+                {badges.status}
+            </div>
+            
+            <div className="flex gap-1.5 md:gap-2 justify-end">
                 {actions}
             </div>
         </div>
@@ -202,20 +214,21 @@ const ListRow = ({ icon, title, subtitle, badges, actions }) => {
 };
 
 const HeaderRow = () => (
-    <div className={`${GRID_COLS_CLASS} px-5 pb-2.5 text-(--platform-text-secondary) text-xs font-bold uppercase tracking-wider`}>
+    <div className={`${RESPONSIVE_GRID_CLASS} px-4 md:px-5 pb-2.5 text-(--platform-text-secondary) text-[10px] md:text-xs font-bold uppercase tracking-wider`}>
         <div>Назва</div>
-        <div>URL (Slug)</div>
-        <div>Статус</div>
+        <div className="hidden md:block">URL (Slug)</div>
+        <div className="hidden md:block">Статус</div>
         <div className="text-right">Дії</div>
     </div>
 );
 
-const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onSavingChange }) => {
+const PagesManagerModal = ({ isOpen, onClose, siteId, onEditPage, onPageUpdate, onSavingChange }) => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const { confirm } = useConfirm();
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isInnerModalOpen, setIsInnerModalOpen] = useState(false);
     const [editingPage, setEditingPage] = useState(null);
+    const overlayRef = useRef(null);
     const fetchPages = useCallback(async () => {
         setLoading(true);
         try {
@@ -228,11 +241,19 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onSavingChange }) 
         }
     }, [siteId]);
     
-    useEffect(() => { fetchPages(); }, [fetchPages]);
-    const handleOpenCreate = () => { setEditingPage(null); setIsModalOpen(true); };
-    const handleOpenEdit = (page) => { setEditingPage(page); setIsModalOpen(true); };
-    const handleCloseModal = () => { setIsModalOpen(false); setEditingPage(null); };
-    const handleSaveSuccess = () => { handleCloseModal(); fetchPages(); if (onPageUpdate) onPageUpdate(); };
+    useEffect(() => { 
+        if (isOpen) fetchPages(); 
+    }, [isOpen, fetchPages]);
+
+    const handleOpenCreate = () => { setEditingPage(null); setIsInnerModalOpen(true); };
+    const handleOpenEdit = (page) => { setEditingPage(page); setIsInnerModalOpen(true); };
+    const handleCloseInnerModal = () => { setIsInnerModalOpen(false); setEditingPage(null); };
+    const handleSaveSuccess = () => { 
+        handleCloseInnerModal(); 
+        fetchPages(); 
+        if (onPageUpdate) onPageUpdate(); 
+    };
+
     const handleDelete = async (page) => {
         if (page.is_homepage) return toast.warning('Неможливо видалити головну сторінку.');
         if (!await confirm({ title: "Видалити?", message: `Видалити сторінку "${page.name}"?`, type: "danger", confirmLabel: "Видалити" })) return;
@@ -245,6 +266,7 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onSavingChange }) 
         } catch (err) { toast.error('Помилка видалення'); }
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
+
     const handleSetHome = async (pageId, pageName) => {
         if (onSavingChange) onSavingChange(true);
         try {
@@ -256,77 +278,90 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onSavingChange }) 
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
 
+    if (!isOpen) return null;
     return (
-        <div className="flex flex-col gap-6 w-full">
-            <PageModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveSuccess} page={editingPage} siteId={siteId} onPageUpdate={onPageUpdate} onSavingChange={onSavingChange} />
-            <div className="flex flex-col md:flex-row justify-between items-center px-1 shrink-0 gap-4">
-                <div className="hidden md:block flex-1"></div>
-                <div className="flex flex-col items-center text-center flex-1 shrink-0">
-                    <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
-                        <Layout size={28} />
-                        Структура сайту
-                    </h2>
-                    <p className="text-(--platform-text-secondary) m-0 text-sm">
-                        Керуйте сторінками вашого сайту
-                    </p>
-                </div>
-                <div className="flex items-center justify-end gap-4 flex-1 w-full md:w-auto">
-                    <UIButton onClick={handleOpenCreate}><Plus size={18} /> Додати сторінку</UIButton>
-                </div>
-            </div>
-            <div className="bg-(--platform-card-bg) p-8 rounded-[20px] border border-(--platform-border-color) shadow-sm">
-                {loading ? (
-                    <div className="py-10">
-                        <LoadingState title="Завантаження сторінок..." />
+        <div 
+            ref={overlayRef}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-2000 p-2 md:p-4 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
+            onMouseDown={(e) => { overlayRef.current.isSelfClick = (e.target === overlayRef.current); }}
+            onMouseUp={(e) => { if (e.target === overlayRef.current && overlayRef.current.isSelfClick) onClose(); }}
+        >
+            <div className="bg-(--platform-card-bg) text-(--platform-text-primary) border border-(--platform-border-color) rounded-2xl w-full max-w-5xl max-h-[90vh] md:max-h-[85vh] shadow-2xl flex flex-col animate-[slideUp_0.3s_ease-out] overflow-hidden">
+                <PageModal isOpen={isInnerModalOpen} onClose={handleCloseInnerModal} onSave={handleSaveSuccess} page={editingPage} siteId={siteId} onPageUpdate={onPageUpdate} onSavingChange={onSavingChange} />
+                <div className="shrink-0 flex flex-col bg-(--platform-card-bg) z-20 border-b border-(--platform-border-color) shadow-sm">
+                    <div className="flex justify-between items-center p-4 md:p-6 border-b border-(--platform-border-color)/50">
+                        <div className="flex items-center gap-3 md:gap-4">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-(--platform-accent)/10 text-(--platform-accent) flex items-center justify-center shrink-0">
+                                <Layout size={20} className="md:w-6 md:h-6" />
+                            </div>
+                            <div className="flex flex-col gap-0.5 md:gap-1">
+                                <h2 className="text-lg md:text-xl font-semibold m-0 leading-none">Управління сторінками</h2>
+                                <p className="text-xs md:text-sm text-(--platform-text-secondary) m-0 hidden sm:block">Створюйте та налаштовуйте структуру вашого сайту</p>
+                            </div>
+                        </div>
+                        <button onClick={onClose} className="p-2 hover:bg-(--platform-hover-bg) rounded-lg text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors border-none bg-transparent cursor-pointer shrink-0">
+                            <X size={20} className="md:w-6 md:h-6" />
+                        </button>
                     </div>
-                ) : (
-                    <div>
-                        <div className="flex justify-between items-end mb-3">
-                            <h4 className="text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) m-0 tracking-wider">
-                                Сторінки ({pages.length})
+
+                    <div className="px-4 md:px-6 pt-4 md:pt-5 pb-2">
+                        <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-xs md:text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) m-0 tracking-wider">
+                                Всі сторінки {!loading && pages ? `(${pages.length})` : ''}
                             </h4>
+                            <UIButton onClick={handleOpenCreate} disabled={loading} className="text-xs md:text-sm px-3 py-1.5 md:px-4 md:py-2">
+                                <Plus size={16} /> <span className="hidden sm:inline">Додати сторінку</span><span className="sm:hidden">Додати</span>
+                            </UIButton>
                         </div>
                         <HeaderRow />
-                        {pages.length === 0 ? (
-                             <div className="text-center p-10 border-2 dashed border-(--platform-border-color) rounded-xl mt-2">
-                                <div className="text-(--platform-text-secondary) mb-4">Немає сторінок</div>
-                                <UIButton onClick={handleOpenCreate} variant="outline">Створити першу</UIButton>
+                    </div>
+                </div>
+                <div className="p-3 md:p-6 pt-3 md:pt-4 overflow-y-auto custom-scrollbar flex-1 relative bg-(--platform-bg)/20">
+                    {loading ? (
+                        <div className="py-10">
+                            <LoadingState title="Завантаження сторінок..." />
+                        </div>
+                    ) : (
+                        pages.length === 0 ? (
+                             <div className="text-center p-6 md:p-10 border-2 border-dashed border-(--platform-border-color) rounded-xl mt-2">
+                                <div className="text-(--platform-text-secondary) mb-4 text-sm md:text-base">Немає сторінок</div>
+                                <UIButton onClick={handleOpenCreate} variant="outline" className="text-sm">Створити першу</UIButton>
                             </div>
                         ) : (
-                            <div className="flex flex-col mt-2">
+                            <div className="flex flex-col">
                                 {pages.map(page => (
                                     <ListRow 
                                         key={page.id}
-                                        icon={<FileText size={20} />}
+                                        icon={<FileText size={18} className="md:w-5 md:h-5" />}
                                         title={
                                             <span className="flex items-center gap-2">
                                                 {page.name}
-                                                {!!page.is_homepage && <Star size={16} className="text-amber-500 fill-amber-500" />}
+                                                {!!page.is_homepage && <Star size={14} className="md:w-4 md:h-4 text-amber-500 fill-amber-500 shrink-0" />}
                                             </span>
                                         }
                                         badges={{
-                                            slug: <span className="bg-black/5 px-2 py-1 rounded-md">/{page.slug}</span>,
+                                            slug: <span className="bg-black/5 px-2 py-0.5 md:py-1 rounded-md">/{page.slug}</span>,
                                             status: !!page.is_homepage ? (
-                                                <span className="text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full text-xs font-bold">ГОЛОВНА</span>
+                                                <span className="text-emerald-500 bg-emerald-500/10 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold">ГОЛОВНА</span>
                                             ) : (
-                                                <span className="text-(--platform-text-secondary) text-sm">Звичайна</span>
+                                                <span className="text-(--platform-text-secondary) text-xs md:text-sm">Звичайна</span>
                                             )
                                         }}
                                         actions={
                                             <>
                                                 <CustomActionButton variant="editor" onClick={() => onEditPage(page.id)} title="В редактор">
-                                                    <Edit size={16} />
+                                                    <Edit size={14} className="md:w-4 md:h-4" />
                                                 </CustomActionButton>
                                                 <CustomActionButton variant="settings" onClick={() => handleOpenEdit(page)} title="Налаштування">
-                                                    <Settings size={16} />
+                                                    <Settings size={14} className="md:w-4 md:h-4" />
                                                 </CustomActionButton>
                                                 {!page.is_homepage && (
                                                     <>
                                                         <CustomActionButton variant="home" onClick={() => handleSetHome(page.id, page.name)} title="Зробити головною">
-                                                            <Star size={16} />
+                                                            <Star size={14} className="md:w-4 md:h-4" />
                                                         </CustomActionButton>
                                                         <CustomActionButton variant="delete" onClick={() => handleDelete(page)} title="Видалити">
-                                                            <Trash size={16} />
+                                                            <Trash size={14} className="md:w-4 md:h-4" />
                                                         </CustomActionButton>
                                                     </>
                                                 )}
@@ -335,12 +370,12 @@ const PagesSettingsTab = ({ siteId, onEditPage, onPageUpdate, onSavingChange }) 
                                     />
                                 ))}
                             </div>
-                        )}
-                    </div>
-                )}
+                        )
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
-export default PagesSettingsTab;
+export default PagesManagerModal;

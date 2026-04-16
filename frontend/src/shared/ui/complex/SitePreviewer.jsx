@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import BlockRenderer from '../../../modules/editor/core/BlockRenderer';
 import FontLoader from '../../../modules/renderer/components/FontLoader';
-import { Monitor, Smartphone, Lock, Layout, Layers } from 'lucide-react';
+import { Monitor, Smartphone, Lock, Layout as LayoutIcon, Layers } from 'lucide-react';
 
 const SitePreviewer = ({ 
     viewMode, 
@@ -32,23 +32,35 @@ const SitePreviewer = ({
             site_name: mergedTitle 
         };
     }, [previewData, userTitle, userLogo]);
+
+    const injectHeaderData = (block) => {
+        if (block.type === 'header' || block.type === 'global-header') {
+            return {
+                ...block,
+                data: {
+                    ...(block.data || {}),
+                    site_title: userTitle || block.data?.site_title || simulatedSiteData.title,
+                    logo_src: userLogo || block.data?.logo_src || simulatedSiteData.logo_url,
+                    show_title: block.data?.show_title !== undefined ? block.data.show_title : true
+                }
+            };
+        }
+        return block;
+    };
+
     const injectedHeaderBlocks = useMemo(() => {
-        if (!previewData?.header) return [];
-        return previewData.header.map(block => {
-            if (block.type === 'header') {
-                return {
-                    ...block,
-                    data: {
-                        ...block.data,
-                        site_title: userTitle || block.data.site_title,
-                        logo_src: userLogo || block.data.logo_src,
-                        show_title: userTitle ? true : block.data.show_title
-                    }
-                };
-            }
-            return block;
-        });
-    }, [previewData, userTitle, userLogo]);
+        if (!previewData?.header || !Array.isArray(previewData.header)) return [];
+        return previewData.header.map(injectHeaderData);
+    }, [previewData, userTitle, userLogo, simulatedSiteData]);
+
+    const processedCurrentBlocks = useMemo(() => {
+        if (!Array.isArray(currentBlocks)) return [];
+        return currentBlocks.map(injectHeaderData);
+    }, [currentBlocks, userTitle, userLogo, simulatedSiteData]);
+
+    const hasCanvasHeader = useMemo(() => {
+        return processedCurrentBlocks.some(block => block.type === 'header' || block.type === 'global-header');
+    }, [processedCurrentBlocks]);
 
     return (
         <div className="flex-1 flex flex-col h-full bg-(--platform-bg) relative overflow-hidden min-h-0 min-w-0">
@@ -60,6 +72,44 @@ const SitePreviewer = ({
                     text-overflow: ellipsis;
                     display: inline-block;
                     vertical-align: middle;
+                }
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .hide-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                .view-mode-toggle { 
+                    display: flex; 
+                    background: var(--platform-bg); 
+                    padding: 2px; 
+                    border-radius: 8px; 
+                    gap: 2px; 
+                    border: 1px solid var(--platform-border-color); 
+                    height: 36px; 
+                }
+                .mode-btn { 
+                    width: 32px; 
+                    height: 100%; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    border-radius: 6px; 
+                    border: none; 
+                    background: transparent; 
+                    color: var(--platform-text-secondary); 
+                    cursor: pointer; 
+                    transition: all 0.2s ease; 
+                }
+                .mode-btn:hover { 
+                    color: var(--platform-text-primary); 
+                    background: var(--platform-hover-bg); 
+                }
+                .mode-btn.active { 
+                    background: var(--platform-card-bg); 
+                    color: var(--platform-accent); 
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); 
                 }
             `}</style>
             <div className="h-14 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex items-center px-4 gap-4 shrink-0 justify-between shadow-sm relative">
@@ -74,22 +124,22 @@ const SitePreviewer = ({
                          <span className="text-(--platform-text-primary) truncate">{url}</span>
                      </div>
                 </div>
-                <div className="flex items-center gap-3 w-20 justify-end">
-                     <div className="flex bg-(--platform-input-bg) rounded-lg p-0.5 border border-(--platform-border-color)">
-                         <button 
-                            onClick={() => setViewMode('desktop')} 
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'desktop' ? 'bg-(--platform-accent) text-(--platform-accent-text)' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
-                            title="Десктоп"
-                        >
-                            <Monitor size={14} />
-                        </button>
-                         <button 
-                            onClick={() => setViewMode('mobile')} 
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'mobile' ? 'bg-(--platform-accent) text-(--platform-accent-text)' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
-                            title="Мобільний"
-                        >
-                            <Smartphone size={14} />
-                        </button>
+                <div className="flex items-center gap-3 justify-end">
+                     <div className="view-mode-toggle">
+                         <button
+                             className={`mode-btn ${viewMode === 'desktop' ? 'active' : ''}`}
+                             onClick={() => setViewMode('desktop')}
+                             title="ПК версія"
+                         >
+                             <Monitor size={16} />
+                         </button>
+                         <button
+                             className={`mode-btn ${viewMode === 'mobile' ? 'active' : ''}`}
+                             onClick={() => setViewMode('mobile')}
+                             title="Мобільна версія"
+                         >
+                             <Smartphone size={16} />
+                         </button>
                      </div>
                 </div>
             </div>
@@ -104,7 +154,7 @@ const SitePreviewer = ({
                     `}
                  >
                     <div 
-                        className="flex-1 overflow-y-auto custom-scrollbar site-theme-context"
+                        className={`flex-1 site-theme-context ${viewMode === 'mobile' ? 'overflow-y-auto overflow-x-hidden hide-scrollbar' : 'overflow-y-auto custom-scrollbar'}`}
                         data-site-mode={simulatedSiteData.site_theme_mode}
                         data-site-accent={simulatedSiteData.site_theme_accent}
                         style={{ backgroundColor: 'var(--site-bg)', color: 'var(--site-text-primary)' }}
@@ -126,12 +176,12 @@ const SitePreviewer = ({
                                     data-site-mode={simulatedSiteData.site_theme_mode} 
                                     data-site-accent={simulatedSiteData.site_theme_accent}
                                 >
-                                    {injectedHeaderBlocks && injectedHeaderBlocks.length > 0 && (
+                                    {injectedHeaderBlocks && injectedHeaderBlocks.length > 0 && !hasCanvasHeader && (
                                         <BlockRenderer blocks={injectedHeaderBlocks} siteData={simulatedSiteData} />
                                     )}
                                     <main className="flex-1 flex flex-col">
-                                        {currentBlocks && currentBlocks.length > 0 ? (
-                                            <BlockRenderer blocks={currentBlocks} siteData={simulatedSiteData} />
+                                        {processedCurrentBlocks.length > 0 ? (
+                                            <BlockRenderer blocks={processedCurrentBlocks} siteData={simulatedSiteData} />
                                         ) : (
                                             <div className="flex-1 flex flex-col items-center justify-center p-10 min-h-100">
                                                 <div 
@@ -150,20 +200,23 @@ const SitePreviewer = ({
                                         )}
                                     </main>
 
-                                    {previewData.footer && previewData.footer.length > 0 && (
+                                    {Array.isArray(previewData.footer) && previewData.footer.length > 0 && (
                                         <BlockRenderer blocks={previewData.footer} siteData={simulatedSiteData} />
                                     )}
                                 </div>
                             </div>
                         ) : (
                             <div className="h-full flex flex-col items-center justify-center p-12 min-h-full">
-                                <div className="p-6 rounded-[28px] bg-(--platform-card-bg) border border-(--platform-border-color) shadow-sm mb-6 flex items-center justify-center">
-                                    <Layout size={48} strokeWidth={1.2} className="text-(--platform-text-secondary) opacity-80" />
+                                <div 
+                                    className="p-5 rounded-2xl mb-5 flex items-center justify-center" 
+                                    style={{ backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 5%, transparent)' }}
+                                >
+                                    <Layers size={42} strokeWidth={1.5} style={{ color: 'var(--site-text-primary)', opacity: 0.6 }}/>
                                 </div>
-                                <p className="text-xl font-semibold text-(--platform-text-primary) text-center">
+                                <p className="text-xl font-medium text-center" style={{ color: 'var(--site-text-primary)' }}>
                                     {emptyTitle}
                                 </p>
-                                <p className="text-sm mt-2 text-(--platform-text-secondary) text-center opacity-80">
+                                <p className="text-sm mt-2 text-center max-w-xs" style={{ color: 'var(--site-text-primary)', opacity: 0.6 }}>
                                     {emptyDescription}
                                 </p>
                             </div>

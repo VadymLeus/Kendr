@@ -32,7 +32,7 @@ const DraggableBlockItem = ({ blockType, presetData = {}, name, icon, customStyl
             {onClickAdd && (
                 <button
                     onClick={(e) => {
-                        e.stopPropagation(); // щоб не спрацював drag
+                        e.stopPropagation();
                         onClickAdd(blockType, presetData);
                     }}
                     title="Додати на сторінку (Click-to-Add)"

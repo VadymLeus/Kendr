@@ -1,10 +1,20 @@
 // frontend/src/shared/ui/complex/TemplateCard.jsx
 import React from 'react';
-import { Check } from 'lucide-react';
-import { getTemplateIcon, getCategoryLabel } from '../../utils/templateUtils';
+import { Check, Layout, Briefcase, ShoppingBag, Camera, Globe, FileText, Palette } from 'lucide-react';
+import { getCategoryLabel } from '../../utils/templateUtils';
+
+const CATEGORY_ICONS = {
+    'General': Layout,
+    'Business': Briefcase,
+    'Store': ShoppingBag,
+    'Portfolio': Camera,
+    'Landing': Globe,
+    'Blog': FileText,
+    'Creative': Palette
+};
 
 const TemplateCard = ({ template, isSelected, onClick, actions, badge, getFullUrl }) => {
-    const TemplateIcon = getTemplateIcon(template.icon);
+    const CategoryIcon = CATEGORY_ICONS[template.category] || CATEGORY_ICONS['General'];
     const hasValidImage = template.thumbnail_url && template.thumbnail_url !== 'null' && !template.thumbnail_url.includes('empty.png');
     const imageUrl = hasValidImage 
         ? (getFullUrl && !template.thumbnail_url.startsWith('data:') ? getFullUrl(template.thumbnail_url) : template.thumbnail_url) 
@@ -22,7 +32,7 @@ const TemplateCard = ({ template, isSelected, onClick, actions, badge, getFullUr
                 {hasValidImage ? (
                     <img src={imageUrl} alt={template.name} className="w-full h-full object-cover" />
                 ) : (
-                    <TemplateIcon size={40} className="text-(--platform-text-secondary) opacity-40" />
+                    <CategoryIcon size={40} className="text-(--platform-text-secondary) opacity-40" />
                 )}
                 {badge && (
                     <div className="absolute top-2 left-2 flex flex-col gap-1.5">
@@ -46,13 +56,13 @@ const TemplateCard = ({ template, isSelected, onClick, actions, badge, getFullUr
                         {template.description}
                     </div>
                 )}
-                <div className="flex justify-between items-center mt-auto pt-1">
-                    <div className="flex items-center gap-1.5 text-xs text-(--platform-text-secondary) bg-(--platform-bg) px-2 py-1 rounded-md border border-(--platform-border-color)">
-                        <TemplateIcon size={12} /> 
+                <div className="flex justify-between items-center mt-auto pt-3 border-t border-(--platform-border-color)">
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-(--platform-text-secondary) bg-(--platform-bg) px-2 py-1 rounded-lg border border-(--platform-border-color) shadow-sm">
+                        <CategoryIcon size={14} className="text-(--platform-text-primary) opacity-70" /> 
                         {getCategoryLabel(template.category) || 'Загальне'}
                     </div>
                     {actions && (
-                        <div className="flex gap-1 z-10 relative" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1 z-10 relative" onClick={(e) => e.stopPropagation()}>
                             {actions}
                         </div>
                     )}

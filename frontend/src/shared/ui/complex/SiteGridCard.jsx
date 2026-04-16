@@ -129,7 +129,7 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport, 
                                     {site.status !== 'private' ? (
                                         <MenuItem 
                                             icon={Lock} 
-                                            label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : "Приховати (Приватний)"}
+                                            label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : "Приховати"}
                                             disabled={isStatusDisabled}
                                             onClick={(e) => { 
                                                 setIsOpen(false); 
@@ -139,7 +139,7 @@ const CardMenu = ({ site, isOwner, isAdmin, onToggleStatus, onDelete, onReport, 
                                     ) : (
                                         <MenuItem 
                                             icon={FileText} 
-                                            label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : "На тех. роботи"}
+                                            label={isStatusDisabled ? `Зачекайте ${statusCooldown}с` : "Технічні роботи"}
                                             disabled={isStatusDisabled}
                                             onClick={(e) => { 
                                                 setIsOpen(false); 
@@ -186,6 +186,8 @@ const SiteGridCard = ({
     const [statusCooldown, startStatusCooldown] = useCooldown('kendr_status_cooldown');
     const { user } = useContext(AuthContext);
     const { confirm } = useConfirm();
+    const coverContainerRef = useRef(null);
+    const [scaleFactor, setScaleFactor] = useState(1);
     const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const isOwner = variant === 'owner';
     const isEffectiveAdmin = variant === 'admin' || isStaff;
@@ -193,6 +195,21 @@ const SiteGridCard = ({
     const isPinnedOrFav = isOwner ? site.is_pinned : isFavorite;
     const isSuspended = site.status === 'suspended';
     const isMaintenance = site.status === 'maintenance';
+    useEffect(() => {
+        const node = coverContainerRef.current;
+        if (!node) return;
+
+        const observer = new ResizeObserver((entries) => {
+            const { width } = entries[0].contentRect;
+            if (width > 0) {
+                setScaleFactor(width / 440);
+            }
+        });
+
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, []);
+
     const getImageUrl = (src) => {
         if (!src) return '';
         if (typeof src === 'string') {
@@ -236,6 +253,7 @@ const SiteGridCard = ({
             }
         });
     };
+    
     return (
         <>
             <div className={`
@@ -251,8 +269,8 @@ const SiteGridCard = ({
                     }}
                     title={isOwner ? "Закріпити" : "В обране"}
                     style={{ 
-                        color: isPinnedOrFav ? '#FFD700' : 'white',
-                        borderColor: isPinnedOrFav ? '#FFD700' : 'rgba(255,255,255,0.1)'
+                        color: isPinnedOrFav ? 'var(--platform-accent)' : 'white',
+                        borderColor: isPinnedOrFav ? 'var(--platform-accent)' : 'rgba(255,255,255,0.1)'
                     }}
                 >
                     <Star size={16} fill={isPinnedOrFav ? "currentColor" : "none"} />
@@ -266,18 +284,23 @@ const SiteGridCard = ({
                     onReport={() => setIsReportOpen(true)}
                     statusCooldown={statusCooldown}
                 />
+                
                 <Link 
+                    ref={coverContainerRef}
                     to={isSuspended ? '#' : mainLink} 
                     className={`
-                        block w-full h-45 overflow-hidden border-b border-(--platform-border-color) relative
+                        block w-full overflow-hidden border-b border-(--platform-border-color) relative shrink-0 @container
                         ${isSuspended ? 'cursor-not-allowed' : 'cursor-pointer'}
                     `}
+                    style={{ aspectRatio: '16 / 11' }}
                 >
                     <SiteCoverDisplay 
                         site={{
                             ...site,
                             logo_url: getImageUrl(site.logo_url),
-                            cover_image: getImageUrl(site.cover_image)
+                            cover_image: getImageUrl(site.cover_image),
+                            cover_logo_size: (site.cover_logo_size || 60) * scaleFactor,
+                            cover_title_size: (site.cover_title_size || 24) * scaleFactor,
                         }} 
                         className="w-full h-full object-cover"
                         style={{ 
@@ -296,6 +319,7 @@ const SiteGridCard = ({
                         </div>
                     )}
                 </Link>
+
                 <div className="p-4 flex-1 flex flex-col gap-3">
                     <div className="flex justify-between items-start gap-2">
                         <div className="overflow-hidden">

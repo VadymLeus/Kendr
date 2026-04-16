@@ -192,7 +192,7 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                     </>
                 )}
                 <div className="mb-5">
-                    <label style={commonStyles.label}>Тема тексту (Контраст)</label>
+                    <label style={commonStyles.label}>Контраст тексту</label>
                     <ToggleGroup 
                         options={themeOptions}
                         value={safeData.theme_mode}

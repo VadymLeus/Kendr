@@ -59,6 +59,7 @@ const Layout = () => {
             return newState;
         });
     };
+
     useEffect(() => {
         if (!globalAnnouncement) {
             setAnnouncementText('');
@@ -98,6 +99,7 @@ const Layout = () => {
             clearInterval(intervalId);
         };
     }, [user]);
+
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
@@ -117,7 +119,6 @@ const Layout = () => {
                 if (dashboardMatch) url = `/sites/${dashboardMatch[1]}`;
                 else if (productInsideSiteMatch) url = `/sites/${productInsideSiteMatch[1]}`;
                 else if (publicMatch) url = `/sites/${publicMatch[1]}${publicMatch[2] ? `/${publicMatch[2]}` : ''}`;
-
                 if (url) {
                     const response = await apiClient.get(url, { params });
                     setSiteData(response.data);
@@ -136,9 +137,10 @@ const Layout = () => {
     const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
     const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');
+    const isSiteDark = siteData?.site_theme_mode === 'dark';
     const themeStyle = isSiteThemeActive ? {
-        '--site-bg': '#ffffff',
-        '--site-text-primary': '#1a202c',
+        '--site-bg': isSiteDark ? '#1a202c' : '#ffffff',
+        '--site-text-primary': isSiteDark ? '#f7fafc' : '#1a202c',
         '--site-accent': siteAccent,
         '--site-accent-hover': adjustColor(siteAccent, -10),
         '--site-accent-text': isLightColor(siteAccent) ? '#000' : '#fff',
@@ -146,12 +148,27 @@ const Layout = () => {
         '--font-body': themeSettings.font_body || "'Inter', sans-serif",
         '--btn-radius': themeSettings.button_radius || '8px',
     } : {};
-    const scrollClass = isAppPage ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden';
-    const innerWrapperClass = isAppPage ? 'h-full overflow-hidden' : 'min-h-full';
+    const scrollClass = isAppPage 
+        ? 'overflow-hidden' 
+        : 'max-md:mobile-hide-scrollbar max-md:overflow-y-auto md:overflow-y-auto overflow-x-hidden';
+    const innerWrapperClass = isAppPage 
+        ? 'h-full overflow-hidden' 
+        : 'min-h-full max-md:h-full';
     const mainFlexClass = isAppPage ? 'flex-1 min-h-0' : 'flex-1';
     const paddingClass = (isAppPage || isSiteThemeActive) ? 'p-0' : 'p-8';
     return (
         <div className="layout-wrapper flex flex-col h-screen relative overflow-hidden bg-(--platform-bg)">
+            <style>{`
+                @media (max-width: 768px) {
+                    .mobile-hide-scrollbar::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .mobile-hide-scrollbar {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
+                }
+            `}</style>
             <TitleManager siteData={siteData} key={location.pathname} />
             <PlatformBackground />
             {announcementText && (
@@ -178,6 +195,7 @@ const Layout = () => {
                 <div 
                     className={`layout-content flex-1 min-w-0 ${isCollapsed ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''} ${scrollClass}`}
                     style={themeStyle}
+                    data-site-mode={isSiteThemeActive && isSiteDark ? 'dark' : 'light'}
                 >
                     <div className={`flex flex-col w-full ${innerWrapperClass}`}>
                         {siteData?.theme_settings && (
