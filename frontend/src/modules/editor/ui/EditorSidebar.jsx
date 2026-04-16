@@ -4,7 +4,7 @@ import AddBlocksTab from './tabs/AddBlocksTab';
 import LayersTab from './tabs/LayersTab';
 import SettingsTab from './tabs/SettingsTab';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import { Save, Plus, Layers, Settings, Star, File, Loader2, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { Plus, Layers, Settings, Star, File } from 'lucide-react';
 
 const EditorSidebar = ({
     blocks,
@@ -15,14 +15,11 @@ const EditorSidebar = ({
     onSelectBlock,
     onUpdateBlockData,
     onAddBlock,
-    onSave,
     allPages,
     currentPageId,
     onSelectPage,
     savedBlocksUpdateTrigger,
-    isSaving = false,
-    hasChanges = false,
-    onDiscardChanges
+    onOpenPagesManager
 }) => {
     const [activeTab, setActiveTab] = useState(() => {
         return localStorage.getItem('editorActiveTab') || 'add';
@@ -44,10 +41,6 @@ const EditorSidebar = ({
             setActiveTab('settings');
         }
     }, [selectedBlockPath]);
-    
-    const handleSave = () => {
-        onSave(blocks);
-    };
     
     const pageOptions = useMemo(() => {
         return (allPages || []).map(page => {
@@ -91,6 +84,7 @@ const EditorSidebar = ({
             </button>
         );
     };
+
     return (
         <div className="w-75 min-w-75 h-full flex flex-col bg-(--platform-sidebar-bg) border-l border-(--platform-border-color) shrink-0">
             <div className="p-3 border-b border-(--platform-border-color) bg-(--platform-card-bg) flex items-center gap-2 shrink-0">
@@ -107,35 +101,13 @@ const EditorSidebar = ({
                         style={{ width: '100%', margin: 0 }} 
                     />
                 </div>
-                <div className="flex items-center gap-1 h-9.5">
-                    {hasChanges ? (
-                        <>
-                            <button
-                                onClick={onDiscardChanges}
-                                title="Скинути до збереженого"
-                                className="h-full px-2.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors flex items-center justify-center border border-red-200 dark:border-red-500/20"
-                            >
-                                <RotateCcw size={16} />
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={isSaving}
-                                className="px-3 h-full bg-(--platform-accent) text-(--platform-accent-text) rounded-lg border-none text-[13px] font-semibold cursor-pointer hover:bg-(--platform-accent-hover) transition-all shadow-sm flex items-center gap-2"
-                            >
-                                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                <span>{isSaving ? 'Збереження...' : 'Зберегти'}</span>
-                            </button>
-                        </>
-                    ) : (
-                        <div 
-                            title="Всі зміни збережено"
-                            className="flex items-center justify-center w-9.5 h-full rounded-lg text-(--platform-accent) cursor-default"
-                            style={{ backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)' }}
-                        >
-                            <CheckCircle2 size={20} />
-                        </div>
-                    )}
-                </div>
+                <button
+                    title="Управління сторінками"
+                    className="w-9 h-9 p-0 flex items-center justify-center rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-secondary) hover:bg-(--platform-card-bg) hover:border-(--platform-accent) hover:text-(--platform-accent) transition-all duration-200 shrink-0 cursor-pointer"
+                    onClick={onOpenPagesManager}
+                >
+                    <Settings size={18} />
+                </button>
             </div>
             <nav className="flex border-b border-(--platform-border-color) bg-(--platform-sidebar-bg) shrink-0">
                 <TabButton id="add" label="Додати блок" icon={Plus} />

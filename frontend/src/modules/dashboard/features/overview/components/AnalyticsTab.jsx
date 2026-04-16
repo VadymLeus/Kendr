@@ -1,9 +1,9 @@
-// frontend/src/modules/dashboard/features/analytics/AnalyticsTab.jsx
+// frontend/src/modules/dashboard/features/overview/components/AnalyticsTab.jsx
 import React, { useState, useEffect } from 'react';
-import apiClient from '../../../../shared/api/api';
-import { Eye, Package, CheckCircle, DollarSign, Clock, XCircle, Ban, ArrowRight, TrendingUp } from 'lucide-react';
+import apiClient from '../../../../../shared/api/api';
 import { toast } from 'react-toastify';
-import LoadingState from '../../../../shared/ui/complex/LoadingState';
+import LoadingState from '../../../../../shared/ui/complex/LoadingState';
+import { Eye, Package, CheckCircle, DollarSign, Clock, Ban, ArrowRight, TrendingUp } from 'lucide-react';
 
 const STATUS_CONFIG = {
     pending: { label: 'В очікуванні', color: 'var(--platform-warning)', bg: 'color-mix(in srgb, var(--platform-warning), transparent 90%)', icon: Clock },
@@ -29,6 +29,7 @@ const Widget = ({ title, value, icon, colorClass }) => (
 const AnalyticsTab = ({ siteData, onGoToOrders }) => {
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         if (!siteData?.id) return;
         const fetchAnalytics = async () => {
@@ -47,18 +48,16 @@ const AnalyticsTab = ({ siteData, onGoToOrders }) => {
 
     if (isLoading) return <LoadingState title="Збираємо статистику..." />;
     if (!data) return null;
+
     const currencySymbol = currencyMap[data.currency] || data.currency;
     const formattedRevenue = new Intl.NumberFormat('uk-UA', { 
         minimumFractionDigits: 0, 
         maximumFractionDigits: 2 
     }).format(data.revenue);
+
     return (
         <div className="animate-in fade-in duration-300">
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2">Огляд ефективності</h2>
-                <p className="text-(--platform-text-secondary) m-0">Ключові показники вашого проєкту за весь час.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-10 mt-2">
                 <Widget 
                     title="Перегляди сайту" 
                     value={data.views} 
@@ -84,6 +83,7 @@ const AnalyticsTab = ({ siteData, onGoToOrders }) => {
                     colorClass="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" 
                 />
             </div>
+
             <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl shadow-sm overflow-hidden">
                 <div className="p-5 border-b border-(--platform-border-color) flex justify-between items-center">
                     <h3 className="text-lg font-bold text-(--platform-text-primary) m-0">Останні замовлення</h3>

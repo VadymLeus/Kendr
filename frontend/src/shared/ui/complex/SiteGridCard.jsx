@@ -251,8 +251,8 @@ const SiteGridCard = ({
                     }}
                     title={isOwner ? "Закріпити" : "В обране"}
                     style={{ 
-                        color: isPinnedOrFav ? '#FFD700' : 'white',
-                        borderColor: isPinnedOrFav ? '#FFD700' : 'rgba(255,255,255,0.1)'
+                        color: isPinnedOrFav ? 'var(--platform-accent)' : 'white',
+                        borderColor: isPinnedOrFav ? 'var(--platform-accent)' : 'rgba(255,255,255,0.1)'
                     }}
                 >
                     <Star size={16} fill={isPinnedOrFav ? "currentColor" : "none"} />
@@ -269,9 +269,10 @@ const SiteGridCard = ({
                 <Link 
                     to={isSuspended ? '#' : mainLink} 
                     className={`
-                        block w-full h-45 overflow-hidden border-b border-(--platform-border-color) relative
+                        block w-full overflow-hidden border-b border-(--platform-border-color) relative shrink-0
                         ${isSuspended ? 'cursor-not-allowed' : 'cursor-pointer'}
                     `}
+                    style={{ aspectRatio: '16 / 10' }}
                 >
                     <SiteCoverDisplay 
                         site={{

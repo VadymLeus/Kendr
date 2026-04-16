@@ -41,6 +41,7 @@ const EditableBlockWrapper = ({
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
     const [{ isDragging }, drag, preview] = useDrag({
         type: DND_TYPE_EXISTING,
         item: () => {
@@ -67,12 +68,14 @@ const EditableBlockWrapper = ({
         onAddBlock,
         isLastRootBlock
     });
+
     if (isEditorMode) {
         drag(drop(ref));
         preview(ref); 
     } else {
         ref.current = null;
     }
+
     const showDropIndicator = isEditorMode && dropPosition;
     const shouldShowTopLine = showDropIndicator && dropPosition === 'top';
     const shouldShowBottomLine = showDropIndicator && dropPosition === 'bottom' && !isLastRootBlock;
@@ -86,6 +89,7 @@ const EditableBlockWrapper = ({
         e.stopPropagation();
         onSelectBlock(path);
     };
+
     const handleDelete = async (e) => {
         e.stopPropagation();
         const msg = isGlobal 
@@ -123,6 +127,7 @@ const EditableBlockWrapper = ({
             toast.error('Помилка при збереженні');
         }
     };
+
     const originBlockInfo = block._library_origin_id ? { id: block._library_origin_id, name: block._library_name } : null;
     const baseBtnClass = `
         bg-transparent border border-(--platform-border-color) text-(--platform-text-secondary)
@@ -130,11 +135,13 @@ const EditableBlockWrapper = ({
         transition-all duration-200 text-xs font-medium gap-1.5
         hover:-translate-y-px hover:shadow-sm
     `;
+    
     const getBtnHoverClass = (type) => {
         if (type === 'danger') return 'hover:bg-(--platform-danger) hover:text-white hover:border-(--platform-danger)';
         if (type === 'primary') return 'hover:bg-(--platform-accent) hover:text-(--platform-accent-text) hover:border-(--platform-accent)';
         return 'hover:bg-(--platform-hover-bg) hover:text-(--platform-text-primary) hover:border-(--platform-accent)';
     };
+
     const gapSize = '3px';
     let borderClass = 'hidden';
     if (isEditorMode) {
@@ -144,11 +151,12 @@ const EditableBlockWrapper = ({
             borderClass = isGlobal ? 'block border-3 border-dashed border-purple-500' : 'block border-3 border-dashed border-(--platform-accent)';
         }
     }
+
     const dropZoneClass = (isEditorMode && !isSticky) ? 'py-3' : 'py-0';
     return (
         <div 
             ref={isEditorMode ? ref : null}
-            className={`relative w-full ${dropZoneClass}`}
+            className={`w-full ${dropZoneClass} ${isSticky ? 'sticky top-0 z-50' : 'relative'}`}
             data-handler-id={handlerId}
         >
             {shouldShowTopLine && (
@@ -158,10 +166,7 @@ const EditableBlockWrapper = ({
                 id={blockDomId}
                 onClick={handleSelect}
                 onContextMenu={(e) => onContextMenu && onContextMenu(e, path, block.block_id)}
-                className={`
-                    ${isSticky ? 'sticky top-0 z-85' : 'relative'} transition-all duration-200 outline-none group w-full
-                    ${!isSticky ? (isSelected ? 'z-10' : (isHovered ? 'z-5' : 'z-1')) : ''}
-                `}
+                className={`relative transition-all duration-200 outline-none group w-full ${!isSticky ? (isSelected ? 'z-10' : (isHovered ? 'z-5' : 'z-1')) : ''}`}
                 onMouseEnter={() => isEditorMode && setIsHovered(true)}
                 onMouseLeave={() => isEditorMode && setIsHovered(false)}
             >

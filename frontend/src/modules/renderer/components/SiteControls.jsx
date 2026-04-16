@@ -68,9 +68,8 @@ const SiteControls = ({ siteData }) => {
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
     const showAdminControls = isStaff && !isOwner;
     const iconBtnBaseClass = "flex items-center justify-center w-11 h-11 rounded-xl shadow-lg cursor-pointer transition-all duration-200 shrink-0 backdrop-blur-md border";
-    const normalStateClass = "bg-(--site-card-bg)/90 border-(--site-border-color) text-(--site-text-secondary)";
-    const hoverStateClass = "bg-(--site-bg) border-(--site-accent) text-(--site-accent) shadow-xl";
-    const adminHoverStateClass = "bg-(--platform-bg) border-(--platform-warning) text-(--platform-warning) shadow-xl";
+    const normalStateClass = "bg-(--site-card-bg)/90 border-(--site-border-color)";
+    const hoverStateClass = "bg-(--site-bg) border-(--site-accent) shadow-xl";
     return (
         <>
             <div className="fixed top-4 right-4 md:top-6 md:right-8 z-2000 flex gap-2">
@@ -78,6 +77,7 @@ const SiteControls = ({ siteData }) => {
                     <Link 
                         to={`/dashboard/${siteData.site_path}`}
                         className={`${iconBtnBaseClass} no-underline ${isBtnHovered ? hoverStateClass : normalStateClass}`}
+                        style={{ color: isBtnHovered ? 'var(--site-accent)' : 'var(--site-text-secondary)' }}
                         title="Налаштування сайту"
                         onMouseEnter={() => setIsBtnHovered(true)}
                         onMouseLeave={() => setIsBtnHovered(false)}
@@ -88,6 +88,7 @@ const SiteControls = ({ siteData }) => {
                 {!isOwner && !isStaff && (
                     <button 
                         className={`${iconBtnBaseClass} ${isBtnHovered || isFavorite ? hoverStateClass : normalStateClass}`}
+                        style={{ color: isBtnHovered || isFavorite ? 'var(--site-accent)' : 'var(--site-text-secondary)' }}
                         onClick={() => isFavorite ? removeFavorite(siteData.id) : addFavorite(siteData.id)}
                         title={isFavorite ? "Видалити з обраних" : "Додати в обрані"}
                         onMouseEnter={() => setIsBtnHovered(true)}
@@ -98,10 +99,13 @@ const SiteControls = ({ siteData }) => {
                 )}
                 {showAdminControls && (
                     <button 
-                        className={`${iconBtnBaseClass} ${isAdminBtnHovered || isAdminPanelOpen ? adminHoverStateClass : normalStateClass}`}
+                        className={`${iconBtnBaseClass} ${isAdminBtnHovered || isAdminPanelOpen ? hoverStateClass : normalStateClass}`}
                         onClick={() => setIsAdminPanelOpen(true)}
-                        title="Керування сайтом (Модерація)"
-                        style={{ marginLeft: '8px' }}
+                        title="Модерація сайту"
+                        style={{ 
+                            marginLeft: '8px', 
+                            color: isAdminBtnHovered || isAdminPanelOpen ? 'var(--site-accent)' : 'var(--site-text-secondary)' 
+                        }}
                         onMouseEnter={() => setIsAdminBtnHovered(true)}
                         onMouseLeave={() => setIsAdminBtnHovered(false)}
                     >

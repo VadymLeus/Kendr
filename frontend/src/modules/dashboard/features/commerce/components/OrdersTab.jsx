@@ -1,13 +1,13 @@
-// frontend/src/modules/features/shop/OrdersTab.jsx
+// frontend/src/modules/dashboard/features/commerce/components/OrdersTab.jsx
 import React, { useState, useEffect, useMemo } from 'react';
-import apiClient from '../../../../shared/api/api';
+import apiClient from '../../../../../shared/api/api';
 import { toast } from 'react-toastify';
-import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
-import { Input } from '../../../../shared/ui/elements/Input';
-import { Button } from '../../../../shared/ui/elements/Button';
-import DateRangePicker from '../../../../shared/ui/elements/DateRangePicker';
-import EmptyState from '../../../../shared/ui/complex/EmptyState';
-import LoadingState from '../../../../shared/ui/complex/LoadingState';
+import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
+import { Input } from '../../../../../shared/ui/elements/Input';
+import { Button } from '../../../../../shared/ui/elements/Button';
+import DateRangePicker from '../../../../../shared/ui/elements/DateRangePicker';
+import EmptyState from '../../../../../shared/ui/complex/EmptyState';
+import LoadingState from '../../../../../shared/ui/complex/LoadingState';
 import { Package, MapPin, User, Calendar, Search } from 'lucide-react';
 
 const STATUS_MAP = {
@@ -61,6 +61,7 @@ const OrdersTab = ({ site, siteData }) => {
         'USD': '$',
         'EUR': '€'
     };
+    
     const siteCurrency = currentSite?.currency || 'UAH';
     const currencySymbol = currencyMap[siteCurrency] || '₴';
     useEffect(() => {
@@ -188,16 +189,17 @@ const OrdersTab = ({ site, siteData }) => {
         return <LoadingState title="Завантаження замовлень..." />;
     }
 
+    const hasActiveFilters = search || statusFilter !== 'all' || typeFilter !== 'all' || startDate || endDate;
     return (
-        <div className="flex flex-col h-full bg-(--platform-bg) rounded-2xl border border-(--platform-border-color) overflow-hidden">
-            <div className="min-h-18 p-4 sm:px-5 border-b border-(--platform-border-color) flex items-center justify-between gap-3 flex-wrap bg-(--platform-card-bg) shadow-sm z-10 shrink-0">
-                <div className="flex gap-3 flex-1 items-center flex-wrap">
+        <div className="flex flex-col h-full bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) overflow-hidden">
+            <div className="min-h-18 p-3 sm:px-5 border-b border-(--platform-border-color) flex justify-between items-center gap-3 flex-wrap bg-(--platform-bg) shrink-0">
+                <div className="flex gap-2 flex-1 items-center flex-wrap">
                     <Input
                         leftIcon={<Search size={16} />}
                         placeholder="Пошук..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        wrapperStyle={{ margin: 0, flex: '1 1 200px' }}
+                        wrapperStyle={{ margin: 0, flex: '1 1 180px' }}
                     />
                     <DateRangePicker 
                         startDate={startDate}
@@ -220,36 +222,39 @@ const OrdersTab = ({ site, siteData }) => {
                             options={FILTER_TYPE_OPTIONS}
                         />
                     </div>
-                    <div className="w-40">
-                        <CustomSelect
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            options={SORT_FIELDS}
-                        />
+                    <div className="flex gap-1 items-center">
+                        <div className="w-40">
+                            <CustomSelect
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                options={SORT_FIELDS}
+                            />
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            onClick={toggleSortOrder} 
+                            className="w-10.5 h-10.5 p-0 flex items-center justify-center shrink-0"
+                            title={sortOrder === 'desc' ? "За спаданням" : "За зростанням"}
+                        >
+                            <span className="text-lg leading-none">{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                        </Button>
                     </div>
-                    <Button 
-                        variant="outline" 
-                        onClick={toggleSortOrder} 
-                        className="w-10.5 h-10.5 p-0 flex items-center justify-center shrink-0"
-                        title={sortOrder === 'desc' ? "За спаданням" : "За зростанням"}
-                    >
-                        <span className="text-lg leading-none">{sortOrder === 'desc' ? '↓' : '↑'}</span>
-                    </Button>
                 </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 {processedOrders.length === 0 ? (
-                    <div className="py-10">
+                    <div className="flex flex-col items-center justify-center h-full py-10">
                         <EmptyState 
                             title={orders.length === 0 ? "Замовлень поки немає" : "Замовлень не знайдено"}
-                            description={orders.length === 0 ? "Коли клієнти зроблять покупку, вони з'являться тут." : "За вашим запитом або фільтрами нічого не знайдено. Спробуйте змінити критерії пошуку."}
+                            description={
+                                orders.length === 0 
+                                ? "Коли клієнти зроблять покупку, вони з'являться тут." 
+                                : "За вашим запитом або фільтрами нічого не знайдено. Спробуйте змінити критерії пошуку."
+                            }
                             icon={orders.length === 0 ? Package : Search}
                             action={
-                                (search || statusFilter !== 'all' || typeFilter !== 'all' || startDate || endDate) && (
-                                    <Button 
-                                        variant="ghost" 
-                                        onClick={clearFilters}
-                                    >
+                                hasActiveFilters && (
+                                    <Button variant="ghost" onClick={clearFilters}>
                                         Очистити фільтри
                                     </Button>
                                 )
@@ -259,7 +264,7 @@ const OrdersTab = ({ site, siteData }) => {
                 ) : (
                     <div className="flex flex-col gap-5">
                         {processedOrders.map(order => (
-                            <div key={order.id} className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                            <div key={order.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:border-(--platform-text-secondary)/30">
                                 <div className="flex justify-between items-start border-b border-(--platform-border-color)/60 pb-5 mb-5 flex-wrap gap-4">
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-4 flex-wrap">
@@ -273,7 +278,7 @@ const OrdersTab = ({ site, siteData }) => {
                                             <span>{formatDate(order.created_at)}</span>
                                         </div>
                                     </div>
-                                    <div className="text-right bg-(--platform-hover-bg) border border-(--platform-border-color)/50 rounded-xl px-5 py-3">
+                                    <div className="text-right bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl px-5 py-3 shadow-sm">
                                         <div className="text-xs font-medium text-(--platform-text-secondary) mb-1 uppercase tracking-wide">Сума замовлення</div>
                                         <div className="text-2xl font-bold text-(--platform-accent)">
                                             {parseFloat(order.total_amount).toFixed(2)} {currencySymbol}
@@ -281,7 +286,7 @@ const OrdersTab = ({ site, siteData }) => {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-(--platform-hover-bg) border border-(--platform-border-color)/60 p-5 rounded-xl text-sm text-(--platform-text-primary)">
+                                    <div className="bg-(--platform-card-bg) border border-(--platform-border-color) p-5 rounded-xl text-sm text-(--platform-text-primary) shadow-sm">
                                         <h4 className="font-bold text-base mb-4 flex items-center gap-2 pb-3 border-b border-(--platform-border-color)/60">
                                             <User size={18} className="text-(--platform-text-secondary)"/> 
                                             Дані клієнта
@@ -303,13 +308,13 @@ const OrdersTab = ({ site, siteData }) => {
                                             </div>
                                             <div className="flex gap-3 mt-2 pt-3 border-t border-(--platform-border-color)/60">
                                                 <MapPin size={16} className="text-(--platform-text-secondary) shrink-0 mt-0.5"/> 
-                                                <span className={`${order.delivery_address === 'Цифрова доставка' ? 'text-blue-500 font-semibold bg-blue-500/10 px-2 py-0.5 rounded-md text-xs uppercase tracking-wide' : 'font-medium'}`}>
+                                                <span className={`${order.delivery_address === 'Цифрова доставка' ? 'text-blue-500 font-semibold bg-blue-500/10 px-2 py-0.5 rounded-md text-xs uppercase tracking-wide border border-blue-500/20' : 'font-medium'}`}>
                                                     {order.delivery_address || 'Не вказано'}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="bg-(--platform-hover-bg) border border-(--platform-border-color)/60 p-5 rounded-xl">
+                                    <div className="bg-(--platform-card-bg) border border-(--platform-border-color) p-5 rounded-xl shadow-sm">
                                         <h4 className="font-bold text-base mb-4 flex items-center gap-2 pb-3 border-b border-(--platform-border-color)/60 text-(--platform-text-primary)">
                                             <Package size={18} className="text-(--platform-text-secondary)"/>
                                             Товари ({order.items?.length || 0})
@@ -318,7 +323,7 @@ const OrdersTab = ({ site, siteData }) => {
                                             {order.items?.map(item => {
                                                 const opts = item.options ? (typeof item.options === 'string' ? JSON.parse(item.options) : item.options) : {};
                                                 return (
-                                                    <div key={item.id} className="flex justify-between items-start text-sm p-4 border border-(--platform-border-color) rounded-lg bg-(--platform-card-bg) shadow-sm">
+                                                    <div key={item.id} className="flex justify-between items-start text-sm p-4 border border-(--platform-border-color) rounded-lg bg-(--platform-bg)">
                                                         <div className="flex flex-col">
                                                             <span className="font-bold text-(--platform-text-primary) text-base flex items-center flex-wrap gap-2">
                                                                 {item.product_name}
@@ -327,7 +332,7 @@ const OrdersTab = ({ site, siteData }) => {
                                                                 )}
                                                             </span>
                                                             {Object.entries(opts).length > 0 && (
-                                                                <div className="text-xs text-(--platform-text-secondary) mt-1.5 font-medium bg-(--platform-bg) inline-block px-2 py-1 rounded">
+                                                                <div className="text-xs text-(--platform-text-secondary) mt-1.5 font-medium bg-(--platform-card-bg) inline-block px-2 py-1 rounded border border-(--platform-border-color)">
                                                                     {Object.entries(opts).map(([k,v]) => `${k}: ${v.label || v}`).join(', ')}
                                                                 </div>
                                                             )}
@@ -343,7 +348,6 @@ const OrdersTab = ({ site, siteData }) => {
                                             })}
                                         </div>
                                     </div>
-                                    
                                 </div>
                             </div>
                         ))}

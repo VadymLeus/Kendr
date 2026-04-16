@@ -47,7 +47,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     if (effectiveTitle === undefined || effectiveTitle === null) {
         if (siteData?.title) effectiveTitle = siteData.title || 'Site Title';
     }
-
     const { user } = useContext(AuthContext) || {};
     const favContext = useContext(FavoritesContext) || {};
     const favoriteSiteIds = favContext.favoriteSiteIds || new Set();
@@ -63,7 +62,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
         observer.observe(headerRef.current);
         return () => observer.disconnect();
     }, []);
-
     const IS_COMPACT_NAV = containerWidth < 850;
     const IS_COMPACT_BTN = containerWidth < 480;
     const getLogoHeight = () => {
@@ -73,7 +71,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
             case 'medium': default: return '50px';
         }
     };
-    
     const getButtonStyle = (isHovered) => {
         const { variant = 'solid', styleType = 'primary', borderRadius: btnRadius, size = 'medium' } = buttonSettings;
         const accentColor = 'var(--site-accent, #3b82f6)';
@@ -96,7 +93,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
             if (styleType === 'secondary') color = 'var(--site-bg)'; 
             border = '2px solid transparent';
         }
-        
         const safeRadius = btnRadius !== undefined ? parseInt(btnRadius) : 4;
         return {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -106,7 +102,6 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
             opacity: (isHovered && !isOutline) ? 0.9 : 1, transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
         };
     };
-
     const [hoveredNavId, setHoveredNavId] = useState(null);
     const [isBtnHovered, setIsBtnHovered] = useState(false);
     const [isMenuHovered, setIsMenuHovered] = useState(false);
@@ -118,10 +113,13 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const siteRoot = resolveSiteLink('/', siteData?.site_path);
     const homeLink = isEditorPreview ? '#' : siteRoot;
     const iconBtnBaseClass = "flex items-center justify-center w-10 h-10 rounded-lg border cursor-pointer transition-all duration-200 shrink-0";
+    const normalStateClass = "border-(--site-border-color) bg-(--site-card-bg)";
+    const hoverStateClass = "border-(--site-accent) bg-(--site-bg)";
+    const isStickyBlock = blockData.is_sticky && !isEditorPreview;
     return (
         <header 
-            ref={headerRef} 
-            className={`flex items-center justify-between w-full relative bg-(--site-header-bg,var(--site-bg)) text-(--site-text-primary) transition-all duration-300 gap-4 ${IS_COMPACT_BTN ? 'py-3 px-4' : 'py-4 px-8 gap-8'}`}
+            ref={headerRef}
+            className={`flex items-center justify-between w-full ${isStickyBlock ? 'sticky top-0 z-90' : 'relative'} bg-(--site-header-bg,var(--site-bg)) text-(--site-text-primary) transition-all duration-300 gap-4 ${IS_COMPACT_BTN ? 'py-3 px-4' : 'py-4 px-8 gap-8'}`}
             style={cssVariables}
         >
             <RenderFonts />
@@ -148,17 +146,39 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
                 </nav>
             )}
             <div className="flex items-center gap-2 shrink-0">
-                {IS_COMPACT_NAV && (
-                    <div className={`${iconBtnBaseClass} ${isMenuHovered ? 'border-(--site-accent) bg-(--site-bg) text-(--site-accent)' : 'border-(--site-border-color) bg-(--site-card-bg) text-(--site-text-primary)'}`} title="Меню" onMouseEnter={() => setIsMenuHovered(true)} onMouseLeave={() => setIsMenuHovered(false)} onClick={onMenuToggle}>
+                {IS_COMPACT_NAV && nav_items.length > 0 && (
+                    <div 
+                        className={`${iconBtnBaseClass} ${isMenuHovered ? hoverStateClass : normalStateClass}`} 
+                        style={{ color: isMenuHovered ? 'var(--site-accent)' : 'var(--site-text-secondary)' }}
+                        title="Меню" 
+                        onMouseEnter={() => setIsMenuHovered(true)} 
+                        onMouseLeave={() => setIsMenuHovered(false)} 
+                        onClick={onMenuToggle}
+                    >
                         <Menu size={20} />
                     </div>
                 )}
                 {isOwner ? (
-                    <ActionWrapper to={`/dashboard/${siteData?.site_path}`} className={`${iconBtnBaseClass} no-underline ${isBtnHovered ? 'border-(--site-accent) bg-(--site-bg) text-(--site-accent)' : 'border-(--site-border-color) bg-(--site-card-bg) text-(--site-text-secondary)'}`} title="Налаштування сайту" onClick={e => isEditorPreview && e.preventDefault()} onMouseEnter={() => setIsBtnHovered(true)} onMouseLeave={() => setIsBtnHovered(false)}>
+                    <ActionWrapper 
+                        to={`/dashboard/${siteData?.site_path}`} 
+                        className={`${iconBtnBaseClass} no-underline ${isBtnHovered ? hoverStateClass : normalStateClass}`} 
+                        style={{ color: isBtnHovered ? 'var(--site-accent)' : 'var(--site-text-secondary)' }}
+                        title="Налаштування сайту" 
+                        onClick={e => isEditorPreview && e.preventDefault()} 
+                        onMouseEnter={() => setIsBtnHovered(true)} 
+                        onMouseLeave={() => setIsBtnHovered(false)}
+                    >
                         <Settings size={20} />
                     </ActionWrapper>
                 ) : (
-                    <button className={`${iconBtnBaseClass} ${(isBtnHovered || (isFavorite && !isOwner)) ? 'border-(--site-accent) bg-(--site-bg) text-(--site-accent)' : 'border-(--site-border-color) bg-(--site-card-bg) text-(--site-text-secondary)'}`} onClick={() => !isEditorPreview && (isFavorite ? removeFavorite(siteData.id) : addFavorite(siteData.id))} title={isFavorite ? "Видалити з обраних" : "Додати в обрані"} onMouseEnter={() => setIsBtnHovered(true)} onMouseLeave={() => setIsBtnHovered(false)}>
+                    <button 
+                        className={`${iconBtnBaseClass} ${(isBtnHovered || (isFavorite && !isOwner)) ? hoverStateClass : normalStateClass}`} 
+                        style={{ color: (isBtnHovered || (isFavorite && !isOwner)) ? 'var(--site-accent)' : 'var(--site-text-secondary)' }}
+                        onClick={() => !isEditorPreview && (isFavorite ? removeFavorite(siteData.id) : addFavorite(siteData.id))} 
+                        title={isFavorite ? "Видалити з обраних" : "Додати в обрані"} 
+                        onMouseEnter={() => setIsBtnHovered(true)} 
+                        onMouseLeave={() => setIsBtnHovered(false)}
+                    >
                         <Star size={20} fill={isFavorite ? "currentColor" : "none"} />
                     </button>
                 )}

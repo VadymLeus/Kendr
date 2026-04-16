@@ -1,4 +1,4 @@
-// frontend/src/modules/features/shop/components/ProductManager.jsx
+// frontend/src/modules/dashboard/features/commerce/components/ProductManager.jsx
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -58,7 +58,6 @@ const useProducts = (siteId) => {
             setLoading(false);
         }
     }, [siteId]);
-
     useEffect(() => { fetchData(); }, [fetchData]);
     const handleDelete = useCallback(async (id, onSuccess) => {
         try {
@@ -221,11 +220,11 @@ const VariantEditor = memo(({ variant, onChange, onRemove }) => {
     );
 });
 
-    const ProductTable = memo(({ 
-        products, categories, loading, filters, setFilters, 
-        sortOrder, setSortOrder, sortFields, onSelect, 
-        onCreate, onDelete, selectedId, maxProducts 
-    }) => {
+const ProductTable = memo(({ 
+    products, categories, loading, filters, setFilters, 
+    sortOrder, setSortOrder, sortFields, onSelect, 
+    onCreate, onDelete, selectedId, maxProducts 
+}) => {
     const categoryOptions = [
         { value: 'all', label: 'Всі категорії' },
         ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
@@ -459,7 +458,6 @@ const ProductEditorPanel = ({
             }
             if (formData.id) await apiClient.put(`/products/${formData.id}`, payload);
             else await apiClient.post(`/products`, payload);
-            
             toast.success('Збережено');
             onSuccess();
         } catch (e) { 
@@ -504,27 +502,36 @@ const ProductEditorPanel = ({
                 <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 custom-scrollbar">
                     <div>
                         <label className="block mb-2 text-sm font-semibold text-(--platform-text-primary)">Тип товару</label>
-                        <div className="flex gap-2 p-1 bg-(--platform-input-bg) border border-(--platform-border-color) rounded-lg">
-                            <Button 
+                        <div className="flex bg-(--platform-bg) p-1 rounded-lg gap-1 border border-(--platform-border-color)">
+                            <button
                                 type="button"
-                                variant={formData.type === 'physical' ? 'primary' : 'ghost'} 
-                                className="flex-1 justify-center transition-all duration-300" 
                                 onClick={() => setFormData({...formData, type: 'physical'})}
-                                icon={<Package size={16} />}
+                                className={`
+                                    flex-1 py-2.5 px-3 text-sm font-medium rounded-md transition-all flex items-center justify-center gap-2 cursor-pointer border-none outline-none
+                                    ${formData.type === 'physical' 
+                                        ? 'bg-(--platform-card-bg) text-(--platform-accent) shadow-[0_1px_3px_rgba(0,0,0,0.1)] font-semibold' 
+                                        : 'text-(--platform-text-secondary) bg-transparent hover:text-(--platform-text-primary) hover:bg-(--platform-hover-bg)'}
+                                `}
                             >
+                                <Package size={16} />
                                 Фізичний
-                            </Button>
-                            <Button 
+                            </button>
+                            <button
                                 type="button"
-                                variant={formData.type === 'digital' ? 'primary' : 'ghost'} 
-                                className="flex-1 justify-center transition-all duration-300" 
                                 onClick={() => setFormData({...formData, type: 'digital'})}
-                                icon={<Download size={16} />}
+                                className={`
+                                    flex-1 py-2.5 px-3 text-sm font-medium rounded-md transition-all flex items-center justify-center gap-2 cursor-pointer border-none outline-none
+                                    ${formData.type === 'digital' 
+                                        ? 'bg-(--platform-card-bg) text-(--platform-accent) shadow-[0_1px_3px_rgba(0,0,0,0.1)] font-semibold' 
+                                        : 'text-(--platform-text-secondary) bg-transparent hover:text-(--platform-text-primary) hover:bg-(--platform-hover-bg)'}
+                                `}
                             >
+                                <Download size={16} />
                                 Цифровий
-                            </Button>
+                            </button>
                         </div>
                     </div>
+
                     <InputWithCounter 
                         label="Назва" 
                         value={formData.name} 
@@ -681,10 +688,8 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
         let result = products.filter(product => {
             const matchesSearch = filters.search === '' || 
                 product.name.toLowerCase().includes(filters.search.toLowerCase());
-            
             const matchesCategory = filters.category === 'all' || 
                 (product.category_ids && product.category_ids.includes(filters.category));
-                
             const matchesType = filters.type === 'all' || product.type === filters.type;
             return matchesSearch && matchesCategory && matchesType;
         });
@@ -731,9 +736,11 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
             setIsPanelOpen(false);
         }
     }, [setSearchParams]);
+    
     const handleRequestDelete = useCallback((product) => {
         setProductToDelete(product);
     }, []);
+    
     const handleConfirmDelete = useCallback(() => {
         if (productToDelete) {
             handleDelete(productToDelete.id, () => {
@@ -745,6 +752,7 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
             setProductToDelete(null);
         }
     }, [productToDelete, handleDelete, activeProduct, handleClosePanel]);
+    
     return (
         <>
             <SplitViewLayout

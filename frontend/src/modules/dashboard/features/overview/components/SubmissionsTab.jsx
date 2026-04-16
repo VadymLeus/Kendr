@@ -1,13 +1,13 @@
-// frontend/src/dashboard/modules/features/content/SubmissionsTab.jsx
+// frontend/src/modules/dashboard/features/overview/components/SubmissionsTab.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import apiClient from '../../../../shared/api/api';
+import apiClient from '../../../../../shared/api/api';
 import { toast } from 'react-toastify';
-import { useConfirm } from '../../../../shared/hooks/useConfirm';
-import { Input } from '../../../../shared/ui/elements/Input';
-import CustomSelect from '../../../../shared/ui/elements/CustomSelect'; 
-import LoadingState from '../../../../shared/ui/complex/LoadingState';
-import { Search, Trash, Check, Star, User, Mail, MessageCircle, Clock, MessageSquare } from 'lucide-react';
+import { useConfirm } from '../../../../../shared/hooks/useConfirm';
+import { Input } from '../../../../../shared/ui/elements/Input';
+import CustomSelect from '../../../../../shared/ui/elements/CustomSelect'; 
+import LoadingState from '../../../../../shared/ui/complex/LoadingState';
+import { Search, Trash, Check, Star, User, Mail, Clock, MessageSquare } from 'lucide-react';
 
 const statusConfig = {
     new: { label: 'Нова', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)', border: 'rgba(59, 130, 246, 0.2)' },
@@ -87,10 +87,12 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
             if (target) setSelectedSubmission(target);
         }
     }, [submissions, searchParams]);
+
     const handleSelectSubmission = (submission) => {
         setSelectedSubmission(submission);
         setSearchParams(prev => { prev.set('submissionId', submission.id); return prev; });
     };
+
     const handleTogglePin = async (id, e) => {
         e.stopPropagation();
         if (onSavingChange) onSavingChange(true);
@@ -101,6 +103,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
         } catch (error) { toast.error('Помилка'); } 
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
+
     const handleStatusChange = async (id, newStatus) => {
         if (onSavingChange) onSavingChange(true);
         try {
@@ -111,6 +114,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
         } catch (error) { toast.error('Помилка'); } 
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
+
     const handleDelete = async (id) => {
         if (!await confirm({ title: "Видалити?", message: "Це незворотно.", type: "danger", confirmLabel: "Видалити" })) return;
         if (onSavingChange) onSavingChange(true);
@@ -125,9 +129,11 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
         } catch (error) { toast.error('Помилка'); } 
         finally { setTimeout(() => onSavingChange && onSavingChange(false), 500); }
     };
+
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text).then(() => toast.success('Скопійовано')).catch(() => toast.error('Помилка'));
     };
+
     const filteredSubmissions = useMemo(() => {
         const filtered = submissions.filter(sub => {
             const matchesStatus = filterStatus === 'all' || sub.status === filterStatus;
@@ -144,19 +150,11 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
             return new Date(b.created_at) - new Date(a.created_at);
         });
     }, [submissions, filterStatus, searchTerm]);
+
     if (loading) return <LoadingState title="Завантаження звернень..." />;
     return (
-        <div className="w-full h-full flex flex-col px-6 box-border">
-            <div className="mb-6 shrink-0 flex flex-col items-center text-center">
-                <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
-                    <MessageCircle size={28} />
-                    Обробка звернень
-                </h2>
-                <p className="text-(--platform-text-secondary) m-0 text-sm">
-                    Перегляд та управління повідомленнями з контактних форм
-                </p>
-            </div>
-            <div className="bg-(--platform-card-bg) rounded-xl border border-(--platform-border-color) shadow-sm h-[calc(100vh-120px)] flex overflow-hidden">
+        <div className="w-full h-full flex flex-col box-border px-1">
+            <div className="bg-(--platform-card-bg) rounded-xl border border-(--platform-border-color) shadow-sm h-full flex overflow-hidden">
                 <div className="w-85 min-w-75 border-r border-(--platform-border-color) flex flex-col bg-(--platform-card-bg)">
                     <div className="h-17.5 px-4 border-b border-[#2d3748] bg-[#1a202c] flex items-center gap-3 text-white shrink-0">
                         <Input 
@@ -164,15 +162,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             leftIcon={<Search size={14} style={{color: '#a0aec0'}}/>}
-                            style={{
-                                margin: 0, 
-                                height: '36px', 
-                                fontSize: '0.9rem', 
-                                background: '#2d3748', 
-                                color: '#fff', 
-                                border: '1px solid #4a5568',
-                                boxShadow: 'none'
-                            }}
+                            className="submission-search-input"
                             wrapperStyle={{margin: 0, flex: 1}}
                         />
                         <div className="w-30">
@@ -343,6 +333,17 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                     )}
                 </div>
             </div>
+            <style>{`
+                .submission-search-input .input-wrapper {
+                    background-color: #2d3748 !important;
+                    border: 1px solid #4a5568 !important;
+                    height: 36px !important;
+                }
+                .submission-search-input input {
+                    color: #ffffff !important;
+                    font-size: 0.9rem !important;
+                }
+            `}</style>
         </div>
     );
 };

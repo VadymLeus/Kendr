@@ -85,19 +85,19 @@ const VideoSettings = ({ data, onChange }) => {
                     <ToggleSwitch 
                         checked={safeData.autoplay}
                         onChange={(val) => updateData({ autoplay: val, muted: val ? true : safeData.muted })}
-                        label="Автоплей (Autoplay)"
+                        label="Автоплей"
                         icon={<Play size={16}/>}
                     />
                     <ToggleSwitch 
                         checked={safeData.muted}
                         onChange={(val) => updateData({ muted: val })}
-                        label="Без звуку (Muted)"
+                        label="Без звуку"
                         icon={<VolumeX size={16}/>}
                     />
                     <ToggleSwitch 
                         checked={safeData.loop}
                         onChange={(val) => updateData({ loop: val })}
-                        label="Зациклити (Loop)"
+                        label="Зациклити"
                         icon={<Repeat size={16}/>}
                     />
                     <ToggleSwitch 

@@ -136,7 +136,6 @@ const BlockEditor = ({
             default: break;
         }
     };
-    
     const themeSettings = siteData?.theme_settings || {};
     const isSiteDark = siteData?.site_theme_mode === 'dark';
     const siteBg = isSiteDark ? '#1a202c' : '#f7fafc';
@@ -173,28 +172,40 @@ const BlockEditor = ({
                             </div>
                         ) : (
                             <AnimatePresence initial={false}>
-                                {blocks.map((block, index) => (
-                                    <motion.div key={block.block_id} layout initial={{ opacity: 0, y: -30, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, height: 0, overflow: 'hidden' }} transition={{ type: "spring", stiffness: 350, damping: 30, mass: 0.8 }}>
-                                        <EditableBlockWrapper
-                                            index={index}
-                                            block={block}
-                                            siteData={siteData}
-                                            path={[index]}
-                                            isLastRootBlock={index === blocks.length - 1}
-                                            onMoveBlock={onMoveBlock}
-                                            onDropBlock={onDropBlock}
-                                            onDeleteBlock={onDeleteBlock}
-                                            onAddBlock={onAddBlock}
-                                            onSelectBlock={onSelectBlock}
-                                            selectedBlockPath={selectedBlockPath}
-                                            isCollapsed={collapsedBlocks.includes(block.block_id)}
-                                            onToggleCollapse={onToggleCollapse}
-                                            onBlockSaved={onBlockSaved}
-                                            onContextMenu={handleContextMenu}
-                                            viewMode={viewMode}
-                                        />
-                                    </motion.div>
-                                ))}
+                                {blocks.map((block, index) => {
+                                    const isHeader = block.type === 'global-header' || block.type === 'header';
+                                    const isSticky = isHeader && block.data?.is_sticky && viewMode !== 'editor';
+                                    return (
+                                        <motion.div 
+                                            key={block.block_id} 
+                                            layout 
+                                            className={isSticky ? 'sticky top-0 z-85' : 'relative'}
+                                            initial={{ opacity: 0, y: -30, scale: 0.98 }} 
+                                            animate={{ opacity: 1, y: 0, scale: 1 }} 
+                                            exit={{ opacity: 0, height: 0, overflow: 'hidden' }} 
+                                            transition={{ type: "spring", stiffness: 350, damping: 30, mass: 0.8 }}
+                                        >
+                                            <EditableBlockWrapper
+                                                index={index}
+                                                block={block}
+                                                siteData={siteData}
+                                                path={[index]}
+                                                isLastRootBlock={index === blocks.length - 1}
+                                                onMoveBlock={onMoveBlock}
+                                                onDropBlock={onDropBlock}
+                                                onDeleteBlock={onDeleteBlock}
+                                                onAddBlock={onAddBlock}
+                                                onSelectBlock={onSelectBlock}
+                                                selectedBlockPath={selectedBlockPath}
+                                                isCollapsed={collapsedBlocks.includes(block.block_id)}
+                                                onToggleCollapse={onToggleCollapse}
+                                                onBlockSaved={onBlockSaved}
+                                                onContextMenu={handleContextMenu}
+                                                viewMode={viewMode}
+                                            />
+                                        </motion.div>
+                                    );
+                                })}
                             </AnimatePresence>
                         )}
                     </div>

@@ -1,4 +1,4 @@
-// frontend/src/modules/features/shop/components/CategoryManager.jsx
+// frontend/src/modules/dashboard/features/commerce/components/CategoryManager.jsx
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import apiClient from '../../../../../shared/api/api';
@@ -57,7 +57,15 @@ const CategoryList = memo(({
     activeCategoryId, onSelect, onCreate, onDelete, maxCategories 
 }) => {
     const getProductCount = useCallback((categoryId) => {
-        return products.filter(p => p.category_id === categoryId).length;
+        return products.filter(p => {
+            if (Array.isArray(p.categories)) {
+                return p.categories.some(c => String(c.id) === String(categoryId));
+            }
+            if (Array.isArray(p.category_ids)) {
+                return p.category_ids.includes(categoryId) || p.category_ids.includes(String(categoryId));
+            }
+            return String(p.category_id) === String(categoryId);
+        }).length;
     }, [products]);
     
     const processedCategories = useMemo(() => {

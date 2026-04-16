@@ -26,6 +26,7 @@ const logosModules = import.meta.glob('../../../shared/assets/CreateLogos/*.{png
     as: 'url' 
 });
 const LOCAL_DEFAULT_LOGOS = Object.values(logosModules);
+
 const CreateSitePage = () => {
     const navigate = useNavigate();
     const { isAdmin, plan, user } = useContext(AuthContext);
@@ -45,6 +46,7 @@ const CreateSitePage = () => {
     const [defaultRandomLogo, setDefaultRandomLogo] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentPreviewSlug, setCurrentPreviewSlug] = useState('home');
+
     useEffect(() => {
         const fetchMeta = async () => {
             try {
@@ -68,13 +70,19 @@ const CreateSitePage = () => {
 
     useEffect(() => {
         if (!isLoadingMeta && !manager.isLoading) {
-            setIsInitialLoad(false);
+            if (isInitialLoad) {
+                setIsInitialLoad(false);
+                if (!manager.selectedTemplateId) {
+                    manager.setSelectedTemplateId('blank');
+                }
+            }
         }
-    }, [isLoadingMeta, manager.isLoading]);
+    }, [isLoadingMeta, manager.isLoading, isInitialLoad, manager.selectedTemplateId, manager]);
 
     const isPlanAdmin = plan && String(plan).trim().toUpperCase() === 'ADMIN';
     const maxSitesDisplay = isPlanAdmin ? '∞' : (limits ? limits.maxSites : '...');
     const isLimitReached = !isPlanAdmin && limits && currentSiteCount >= limits.maxSites;
+
     useEffect(() => {
         const checkSlug = async () => {
             const currentSlug = formData.slug;
@@ -132,6 +140,7 @@ const CreateSitePage = () => {
     }, [previewData.pages, currentPreviewSlug]);
 
     const effectiveLogo = customLogo || defaultRandomLogo;
+
     const handleTitleChange = (e) => {
         const { val, error } = validateSiteTitle(e.target.value);
         setTitleError(error); setFormData(prev => ({ ...prev, title: val }));
@@ -181,8 +190,11 @@ const CreateSitePage = () => {
     };
 
     const containerStyle = { position: 'absolute', inset: 0, display: 'flex', overflow: 'hidden', background: 'var(--platform-bg)' };
+    
     if (isInitialLoad) return <div style={{...containerStyle, alignItems: 'center', justifyContent: 'center'}}><LoadingState title="Завантаження даних..." layout="page" /></div>;
+    
     const isFormReady = !isLimitReached && formData.title.trim().length >= 2 && !titleError && formData.slug && slugStatus === 'available' && !slugError;
+    
     return (
         <div style={containerStyle}>
             <ConfirmModal 
@@ -293,7 +305,7 @@ const CreateSitePage = () => {
                                                 getFullUrl={getFullUrl}
                                                 badge={<TemplateBadge template={tpl} user={user} isAdmin={isAdmin} sourceTab={manager.filters.templateSourceTab} />}
                                                 actions={(manager.filters.templateSourceTab === 'personal' || isAdmin) && (
-                                                    <div className="flex gap-2 w-full justify-end mt-2 pt-2 border-t border-(--platform-border-color)">
+                                                    <>
                                                         {isAdmin && manager.filters.templateSourceTab === 'system' && (
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'copy' }); }} 
@@ -305,7 +317,7 @@ const CreateSitePage = () => {
                                                         )}
                                                         <button onClick={(e) => { e.stopPropagation(); manager.modals.setEditingTemplate(tpl); manager.modals.setIsEditModalOpen(true); }} className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-(--platform-bg) rounded-md transition-colors border border-transparent hover:border-(--platform-accent)/30" title="Редагувати шаблон"><Edit size={14}/></button>
                                                         <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'delete' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors border border-transparent hover:border-red-500/30" title="Видалити шаблон"><Trash size={14}/></button>
-                                                    </div>
+                                                    </>
                                                 )}
                                             />
                                         );
@@ -314,13 +326,17 @@ const CreateSitePage = () => {
                             </div>
                         )}
                     </div>
+                    
                     <div className="p-6 bg-(--platform-card-bg) border-t border-(--platform-border-color) shrink-0">
-                        {panelTab === 'info' ? 
-                            <Button variant="primary" className="w-full py-3 justify-center" onClick={handleSubmit} disabled={!isFormReady || isSubmitting}>
-                                {isSubmitting ? <Loader size={18} className="animate-spin" /> : <>Створити сайт <ArrowLeft size={18} className="rotate-180 ml-2" /></>}
-                            </Button> 
-                            : <Button variant="outline" className="w-full justify-center" onClick={() => setPanelTab('info')}>Далі: Введіть назву <ArrowLeft size={16} className="rotate-180 ml-2" /></Button>
-                        }
+                        {panelTab === 'design' && !isFormReady ? (
+                            <Button variant="outline" className="w-full justify-center text-base py-3" onClick={() => setPanelTab('info')}>
+                                Далі: Заповніть інформацію <ArrowLeft size={18} className="rotate-180 ml-2" />
+                            </Button>
+                        ) : (
+                            <Button variant="primary" className="w-full py-3 justify-center text-base" onClick={handleSubmit} disabled={!isFormReady || isSubmitting}>
+                                {isSubmitting ? <Loader size={18} className="animate-spin" /> : <>Створити сайт <Check size={20} className="ml-2" /></>}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

@@ -188,7 +188,7 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
           <ToggleSwitch
             checked={normalizedData.showIconBackground}
             onChange={(val) => updateData({ showIconBackground: val })}
-            label="Фон для іконок (кружечок)"
+            label="Фон для іконок"
           />
         </div>
       </div>

@@ -12,7 +12,15 @@ import NotFoundPage from '../../pages/NotFoundPage';
 import CookieBanner from '../renderer/components/CookieBanner';
 import styles from './ProductDetailPage.module.css';
 import { BASE_URL } from '../../shared/config';
-import { Folder } from 'lucide-react';
+import { Folder, Grid, Tag, ShoppingBag, Package, Star, Heart, Home, Gift, Truck, Zap, Camera, Music, Smartphone, Coffee, Briefcase, MapPin, Image as ImageIcon, Video, User } from 'lucide-react';
+
+const ICON_MAP = {
+    folder: Folder, grid: Grid, tag: Tag, bag: ShoppingBag,
+    box: Package, star: Star, heart: Heart, home: Home,
+    gift: Gift, truck: Truck, zap: Zap, camera: Camera,
+    music: Music, phone: Smartphone, coffee: Coffee, briefcase: Briefcase,
+    map: MapPin, image: ImageIcon, video: Video, user: User
+};
 
 const safeParseFloat = (val) => {
     if (val === null || val === undefined || val === '') return 0;
@@ -82,7 +90,6 @@ const ProductDetailPage = () => {
                 const response = await apiClient.get(`/products/${productId}`);
                 const prod = response.data;
                 if (!prod || Object.keys(prod).length === 0) throw new Error("Empty product");
-                
                 ['variants', 'image_gallery'].forEach(key => {
                     if (prod[key] && typeof prod[key] === 'string') {
                         try { prod[key] = JSON.parse(prod[key]); } catch (e) { prod[key] = null; }
@@ -157,6 +164,7 @@ const ProductDetailPage = () => {
             finalPrice, originalPrice: basePrice, activeDiscount, isDiscounted: activeDiscount > 0
         });
     }, [selectedOptions, product]);
+
     const handleZoom = useCallback((direction) => {
         setImageScale(prev => {
             let newScale = direction === 'in' ? Math.min(prev + 0.25, 5) : Math.max(prev - 0.25, 0.5);
@@ -207,6 +215,7 @@ const ProductDetailPage = () => {
             finalPrice: priceData.finalPrice, originalPrice: priceData.originalPrice, discount: priceData.activeDiscount
         });
     };
+
     if (loading || isSiteLoading) return <div className={styles.loadingContainer}>⏳ Завантаження...</div>;
     if (isSiteHidden || isRestricted) {
         return (
@@ -221,19 +230,19 @@ const ProductDetailPage = () => {
     const galleryImages = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length > 0)
         ? product.image_gallery.map(img => img.startsWith('http') ? img : `${BASE_URL}${img}`)
         : ['https://placehold.co/600x600?text=No+Image'];
-        
     const faviconUrl = siteData?.favicon_url?.startsWith('http') ? siteData.favicon_url : `${BASE_URL}${siteData?.favicon_url || '/icon-light.webp'}`;
     const pageTitle = `${product.name || 'Товар'} | ${siteData?.site_title_seo || siteData?.title || 'Kendr Store'}`;
     const dynamicStyles = {
         '--zoom-controls-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
         '--zoom-controls-border': isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
         '--zoom-info-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
-        '--badge-instock-bg': 'color-mix(in srgb, var(--platform-success), transparent 90%)',
+        '--badge-instock-bg': 'color-mix(in srgb, var(--site-accent), transparent 85%)', // ТУТ ВІДБУЛАСЬ ЗМІНА
         '--badge-outofstock-bg': 'color-mix(in srgb, var(--platform-danger), transparent 90%)',
         '--footer-bg': 'var(--site-bg)',
         '--footer-border': 'var(--site-border-color)',
         color: 'var(--site-text-primary)',
     };
+
     return (
         <div 
             className={`${styles.pageWrapper} site-theme-context`} 
@@ -311,15 +320,21 @@ const ProductDetailPage = () => {
                         <div>
                             <h1 className={styles.productTitle}>{product.name || 'Товар'}</h1>
                             <div className={styles.statusRow}>
-                                <div className={`${styles.badge} ${isSoldOut ? styles.outOfStock : styles.inStock}`}>
+                                <div 
+                                    className={`${styles.badge} ${isSoldOut ? styles.outOfStock : styles.inStock}`}
+                                    style={!isSoldOut ? { color: 'var(--site-accent)' } : undefined}
+                                >
                                     {isSoldOut ? 'Закінчився' : 'В наявності'}
                                 </div>
-                                {product.categories && product.categories.length > 0 && (
-                                    <div className={styles.categoryTag}>
-                                        <Folder size={18} style={{color: 'var(--site-accent)'}} />
-                                        <span>{product.categories.map(c => c.name).join(', ')}</span>
-                                    </div>
-                                )}
+                                {product.categories && product.categories.length > 0 && product.categories.map(c => {
+                                    const CatIcon = ICON_MAP[c.icon] || Folder;
+                                    return (
+                                        <div key={c.id} className={styles.categoryTag}>
+                                            <CatIcon size={16} style={{color: 'var(--site-accent)'}} />
+                                            <span>{c.name}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                         <div className={styles.priceContainer}>
