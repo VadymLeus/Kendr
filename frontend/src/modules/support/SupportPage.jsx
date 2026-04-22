@@ -26,60 +26,60 @@ const SupportPage = () => {
     ];
 
     return (
-        <div className="max-w-250 mx-auto py-12 px-6">
+        <div className="w-full max-w-250 mx-auto py-8 sm:py-12 px-4 sm:px-6">
             <Helmet>
                 <title>Центр підтримки | Kendr</title>
             </Helmet>
-            <div className="text-center mb-12">
-                <h1 className="text-(--platform-text-primary) mb-4 text-[2.5rem] font-extrabold flex items-center justify-center gap-3">
-                    <HelpCircle size={40} className="text-(--platform-accent)" />
+            <div className="text-center mb-8 sm:mb-12">
+                <h1 className="text-(--platform-text-primary) mb-3 sm:mb-4 text-3xl sm:text-4xl md:text-[2.5rem] font-extrabold flex items-center justify-center gap-2.5 sm:gap-3">
+                    <HelpCircle className="w-8 h-8 sm:w-10 sm:h-10 text-(--platform-accent)" />
                     Центр підтримки
                 </h1>
-                <p className="text-(--platform-text-secondary) text-xl max-w-150 mx-auto">
+                <p className="text-(--platform-text-secondary) text-sm sm:text-lg md:text-xl max-w-150 mx-auto leading-relaxed">
                     Ми тут, щоб допомогти. Знайдіть відповіді на питання або зв'яжіться з нами.
                 </p>
             </div>
-            <div className="mb-10 p-8 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm">
-                <h2 className="text-(--platform-text-primary) mb-6 text-2xl font-bold">
-                    Часті запитання (FAQ)
+            <div className="mb-8 sm:mb-10 p-5 sm:p-8 bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) shadow-sm">
+                <h2 className="text-(--platform-text-primary) mb-5 sm:mb-6 text-xl sm:text-2xl font-bold">
+                    Часті запитання
                 </h2>
-                <div className="grid gap-4">
+                <div className="grid gap-3 sm:gap-4">
                     {faqItems.map((item, index) => (
                         <div 
                             key={index} 
-                            className="p-6 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)"
+                            className="p-4 sm:p-6 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)"
                         >
-                            <h3 className="text-(--platform-text-primary) mb-3 text-[1.1rem] font-semibold flex items-center gap-2">
-                                <ChevronRight size={18} className="text-(--platform-accent)" />
-                                {item.question}
+                            <h3 className="text-(--platform-text-primary) mb-2 sm:mb-3 text-base sm:text-[1.1rem] font-semibold flex items-start sm:items-center gap-2.5">
+                                <ChevronRight className="w-5 h-5 shrink-0 mt-0.5 sm:mt-0 text-(--platform-accent)" />
+                                <span>{item.question}</span>
                             </h3>
-                            <p className="text-(--platform-text-secondary) m-0 leading-relaxed text-[0.95rem] pl-6.5">
+                            <p className="text-(--platform-text-secondary) m-0 leading-relaxed text-sm sm:text-[0.95rem] pl-7.5 sm:pl-7.5">
                                 {item.answer}
                             </p>
                         </div>
                     ))}
                 </div>
             </div>
-            <div className="bg-linear-to-br from-(--platform-card-bg) to-(--platform-bg) rounded-2xl border border-(--platform-border-color) py-12 px-8 text-center shadow-lg">
-                <h3 className="text-(--platform-text-primary) mb-4 text-2xl font-bold">
+            <div className="bg-linear-to-br from-(--platform-card-bg) to-(--platform-bg) rounded-2xl border border-(--platform-border-color) py-8 sm:py-12 px-5 sm:px-8 text-center shadow-lg">
+                <h3 className="text-(--platform-text-primary) mb-3 sm:mb-4 text-xl sm:text-2xl font-bold">
                     Не знайшли відповідь?
                 </h3>
-                <p className="text-(--platform-text-secondary) mb-8 text-[1.1rem] max-w-125 mx-auto">
+                <p className="text-(--platform-text-secondary) mb-6 sm:mb-8 text-sm sm:text-[1.1rem] max-w-125 mx-auto leading-relaxed">
                     Створіть звернення, і наша команда підтримки допоможе вам вирішити проблему.
                 </p>
-                <div className="flex gap-4 justify-center flex-wrap">
-                    <Link to="/support/new-ticket" className="no-underline">
-                        <Button variant="primary" size="lg" icon={<Plus size={20}/>}>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full">
+                    <Link to="/support/new-ticket" className="no-underline w-full sm:w-auto">
+                        <Button variant="primary" size="lg" icon={<Plus size={20}/>} className="w-full">
                             Створити звернення
                         </Button>
                     </Link>
-                    <Link to="/support/my-tickets" className="no-underline">
-                        <Button variant="secondary" size="lg" icon={<MessageCircle size={20}/>}>
+                    <Link to="/support/my-tickets" className="no-underline w-full sm:w-auto">
+                        <Button variant="secondary" size="lg" icon={<MessageCircle size={20}/>} className="w-full">
                             Мої звернення
                         </Button>
                     </Link>
-                    <Link to="/support/appeal" className="no-underline">
-                         <Button variant="outline" size="lg" icon={<Gavel size={20}/>}>
+                    <Link to="/support/appeal" className="no-underline w-full sm:w-auto">
+                         <Button variant="outline" size="lg" icon={<Gavel size={20}/>} className="w-full">
                             Апеляції
                         </Button>
                     </Link>

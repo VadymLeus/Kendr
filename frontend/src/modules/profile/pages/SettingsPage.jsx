@@ -19,83 +19,73 @@ const SettingsPage = () => {
             
         return allowedTabs.includes(savedTab) ? savedTab : 'general';
     });
+
     useEffect(() => {
         localStorage.setItem('settings_active_tab', activeTab);
     }, [activeTab]);
+
     const tabs = [
-        { id: 'general', label: 'Загальні', icon: <User size={18} /> },
-        { id: 'security', label: 'Безпека', icon: <Shield size={18} /> },
-        ...(isStaff ? [] : [{ id: 'public', label: 'Публічність', icon: <Globe size={18} /> }]),
-        { id: 'appearance', label: 'Вигляд', icon: <Palette size={18} /> },
+        { id: 'general', label: 'Загальні', icon: <User size={18} className="md:w-4 md:h-4" /> },
+        { id: 'security', label: 'Безпека', icon: <Shield size={18} className="md:w-4 md:h-4" /> },
+        ...(isStaff ? [] : [{ id: 'public', label: 'Публічність', icon: <Globe size={18} className="md:w-4 md:h-4" /> }]),
+        { id: 'appearance', label: 'Вигляд', icon: <Palette size={18} className="md:w-4 md:h-4" /> },
     ];
 
     return (
-        <div 
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                margin: '-2rem',
-                minHeight: 'calc(100% + 4rem)' 
-            }}
-        >
-            <header style={{
-                flexShrink: 0,
-                height: '64px',
-                backgroundColor: 'var(--platform-card-bg)',
-                borderBottom: '1px solid var(--platform-border-color)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0 24px',
-                position: 'sticky',
-                top: 0,
-                zIndex: 20
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', minWidth: '150px' }}>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--platform-text-primary)', margin: 0 }}>
+        <div className="flex flex-col -m-6 md:-m-8 min-h-[calc(100%+3rem)] md:min-h-[calc(100%+4rem)]">
+            <header className="shrink-0 bg-(--platform-card-bg) border-b border-(--platform-border-color) sticky top-0 z-20 flex flex-col md:flex-row items-center justify-between px-4 md:px-6 py-3 md:py-0 min-h-18 md:min-h-16 gap-4 md:gap-0 shadow-sm md:shadow-none">
+                <div className="relative flex items-center justify-center w-full md:w-auto md:flex-1 md:justify-start min-h-11 md:min-h-auto">
+                    <h1 className="text-xl font-bold text-(--platform-text-primary) m-0 leading-none text-center w-full md:text-left md:w-auto">
                         Налаштування
                     </h1>
+                    {user && !isStaff && (
+                        <Link 
+                            to={`/profile/${user.slug}`} 
+                            target="_blank"
+                            className="md:hidden absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-xl bg-(--platform-accent) text-white no-underline shadow-sm transition-opacity hover:opacity-90"
+                        >
+                            <ExternalLink size={20} />
+                        </Link>
+                    )}
                 </div>
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, margin: '0 16px', overflowX: 'auto' }} className="hide-scrollbar">
-                    <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px', backgroundColor: 'var(--platform-bg)', borderRadius: '10px', border: '1px solid var(--platform-border-color)' }}>
+                <div className="w-full md:w-auto flex justify-start md:justify-center overflow-x-auto hide-scrollbar pb-1 md:pb-0">
+                    <nav className="flex items-center gap-1 md:gap-1.5 p-1.5 md:p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) min-w-max mx-auto shadow-inner">
                         {tabs.map(tab => {
                             const isActive = activeTab === tab.id;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`settings-tab-btn ${isActive ? 'active' : ''}`}
+                                    className={`flex items-center justify-center gap-2 md:gap-1.5 px-4 md:px-4 py-2.5 md:py-1.5 rounded-lg text-sm font-medium transition-all border-none cursor-pointer whitespace-nowrap min-h-11 md:min-h-9 ${
+                                        isActive 
+                                            ? 'bg-(--platform-card-bg) text-(--platform-accent) shadow-[0_1px_3px_rgba(0,0,0,0.1)]' 
+                                            : 'bg-transparent text-(--platform-text-secondary) hover:bg-(--platform-hover-bg) hover:text-(--platform-text-primary)'
+                                    }`}
                                     title={tab.label}
                                 >
-                                    <span className="settings-tab-icon">{tab.icon}</span>
-                                    <span className="settings-tab-text">{tab.label}</span>
+                                    <span className="flex items-center justify-center">{tab.icon}</span>
+                                    <span className="hidden sm:inline-block mt-px">{tab.label}</span>
                                 </button>
                             )
                         })}
                     </nav>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: '150px', gap: '12px' }}>
+                <div className="hidden md:flex items-center justify-end md:flex-1">
                     {user && !isStaff && (
                         <Link 
                             to={`/profile/${user.slug}`} 
                             target="_blank"
-                            className="btn btn-primary"
-                            style={{ 
-                                textDecoration: 'none', 
-                                height: '36px',
-                                fontSize: '0.875rem'
-                            }}
-                            title="Відкрити профіль у новій вкладці"
+                            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-(--platform-accent) hover:opacity-90 text-white text-sm font-medium no-underline transition-opacity shadow-sm"
                         >
-                            <span className="profile-btn-text">Мій профіль</span>
+                            <span className="hidden lg:inline-block">Мій профіль</span>
                             <ExternalLink size={16} />
                         </Link>
                     )}
                 </div>
             </header>
-            <div style={{ flex: 1, paddingBottom: '2rem' }}>
-                <div style={{ maxWidth: '896px', margin: '0 auto', padding: '24px 32px' }}>
-                    <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+            <div className="flex-1 pb-8">
+                <div className="max-w-4xl mx-auto px-4 py-6 md:px-8 md:py-8">
+                    <div className="animate-fade-in-up">
                         {activeTab === 'general' && <ProfileGeneralTab />}
                         {activeTab === 'security' && <ProfileSecurityTab />}
                         {activeTab === 'appearance' && <ProfileAppearanceTab />}
@@ -104,53 +94,19 @@ const SettingsPage = () => {
                 </div>
             </div>
             <style>{`
-                @keyframes fadeIn {
+                @keyframes fadeInUp {
                     from { opacity: 0; transform: translateY(10px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
-                .settings-tab-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 6px 16px;
-                    border-radius: 8px;
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    transition: all 0.2s ease;
-                    white-space: nowrap;
-                    border: none;
-                    cursor: pointer;
-                    background-color: transparent;
-                    color: var(--platform-text-secondary);
-                    min-height: 36px;
+                .animate-fade-in-up {
+                    animation: fadeInUp 0.3s ease-in-out;
                 }
-                .settings-tab-btn:hover {
-                    background-color: var(--platform-hover-bg);
-                    color: var(--platform-text-primary);
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none;
                 }
-                .settings-tab-btn.active {
-                    background-color: var(--platform-card-bg);
-                    color: var(--platform-accent);
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                }
-                .settings-tab-icon {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .profile-btn-text {
-                    display: inline;
-                }
-                @media (max-width: 1200px) {
-                    .settings-tab-text {
-                        display: none;
-                    }
-                    .settings-tab-btn {
-                        padding: 6px 10px;
-                    }
-                    .profile-btn-text {
-                        display: none;
-                    }
+                .hide-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
                 }
             `}</style>
         </div>

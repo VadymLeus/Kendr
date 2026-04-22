@@ -49,7 +49,7 @@ const ConfirmModal = ({
         switch (type) {
             case 'danger':
                 return {
-                    icon: <AlertCircle size={24} />,
+                    icon: <AlertCircle className="w-6 h-6 sm:w-7 sm:h-7" />,
                     iconColor: 'var(--platform-danger)',
                     iconBg: 'rgba(229, 62, 62, 0.1)',
                     confirmVariant: 'danger',
@@ -57,7 +57,7 @@ const ConfirmModal = ({
                 };
             case 'success':
                 return {
-                    icon: <CheckCircle size={24} />,
+                    icon: <CheckCircle className="w-6 h-6 sm:w-7 sm:h-7" />,
                     iconColor: 'var(--platform-success)',
                     iconBg: 'rgba(56, 161, 105, 0.1)',
                     confirmVariant: 'primary',
@@ -65,19 +65,15 @@ const ConfirmModal = ({
                 };
             case 'warning':
                 return {
-                    icon: <AlertCircle size={24} />,
+                    icon: <AlertCircle className="w-6 h-6 sm:w-7 sm:h-7" />,
                     iconColor: 'var(--platform-warning)',
                     iconBg: 'rgba(221, 107, 32, 0.1)',
                     confirmVariant: 'warning',
-                    confirmStyle: { 
-                        backgroundColor: 'var(--platform-warning)', 
-                        borderColor: 'var(--platform-warning)', 
-                        color: '#fff' 
-                    }
+                    confirmStyle: { backgroundColor: 'var(--platform-warning)', borderColor: 'var(--platform-warning)', color: '#fff' }
                 };
             default:
                 return {
-                    icon: <HelpCircle size={24} />,
+                    icon: <HelpCircle className="w-6 h-6 sm:w-7 sm:h-7" />,
                     iconColor: 'var(--platform-accent)',
                     iconBg: 'rgba(66, 153, 225, 0.1)',
                     confirmVariant: 'primary',
@@ -87,36 +83,38 @@ const ConfirmModal = ({
     };
 
     const config = getTypeConfig();
-    const isConfirmDisabled = 
-        (requireInput && inputValue !== expectedInput) || 
-        (requireReason && reasonValue.trim() === '');
+    const isConfirmDisabled = (requireInput && inputValue !== expectedInput) || (requireReason && reasonValue.trim() === '');
     return (
         <div 
             ref={overlayRef} 
             className={`
-                fixed inset-0 z-9999 flex items-center justify-center bg-black/50 backdrop-blur-[2px] transition-opacity duration-200
+                fixed inset-0 z-9999 flex items-center justify-center bg-black/50 backdrop-blur-[2px] transition-opacity duration-200 p-4
                 ${isOpen ? 'opacity-100' : 'opacity-0'}
             `}
             onClick={(e) => e.target === overlayRef.current && onCancel()}
         >
             <div 
                 className={`
-                    bg-(--platform-card-bg) text-(--platform-text-primary) border border-(--platform-border-color) rounded-2xl w-[90%] max-w-105 shadow-2xl overflow-hidden flex flex-col transition-all duration-200
-                    ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-2.5 opacity-0'}
+                    bg-(--platform-card-bg) text-(--platform-text-primary) border border-(--platform-border-color) rounded-2xl w-full max-w-105 shadow-2xl overflow-hidden flex flex-col transition-all duration-200
+                    ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}
                 `}
             >
-                <div className="p-6 flex-1">
-                    <div className="flex gap-4 items-start">
+                <div className="p-5 sm:p-6 flex-1">
+                    <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start text-center sm:text-left">
                         <div 
-                            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                            className="w-12 h-12 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0"
                             style={{ backgroundColor: config.iconBg, color: config.iconColor }}
                         >
                             {config.icon}
                         </div>
-                        <div className="pt-0.5 flex flex-col gap-1.5 w-full">
-                            <h3 className="text-lg font-semibold m-0 text-(--platform-text-primary) leading-tight">{title}</h3>
-                            <p className="m-0 mb-2 text-[0.95rem] leading-relaxed text-(--platform-text-secondary)">{message}</p>
-                            <div className="flex flex-col gap-3 mt-2 w-full">
+                        <div className="flex flex-col gap-2 w-full">
+                            <h3 className="text-lg sm:text-xl font-semibold m-0 leading-tight">
+                                {title}
+                            </h3>
+                            <p className="m-0 text-sm sm:text-[0.95rem] leading-relaxed text-(--platform-text-secondary)">
+                                {message}
+                            </p>
+                            <div className="flex flex-col gap-3 mt-3 w-full">
                                 {requireReason && (
                                     <Input 
                                         type="text"
@@ -124,6 +122,7 @@ const ConfirmModal = ({
                                         value={reasonValue}
                                         onChange={(e) => setReasonValue(e.target.value)}
                                         autoFocus={!requireInput}
+                                        className="w-full"
                                     />
                                 )}
                                 {requireInput && (
@@ -133,17 +132,18 @@ const ConfirmModal = ({
                                         value={inputValue}
                                         onChange={(e) => setInputValue(e.target.value)}
                                         autoFocus={requireInput}
+                                        className="w-full"
                                     />
                                 )}
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="px-6 py-4 flex justify-end items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color)">
+                <div className="px-5 py-4 sm:px-6 sm:py-5 flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color)">
                     <Button 
                         variant="outline" 
                         onClick={onCancel}
-                        className="min-w-22.5"
+                        className="w-full sm:w-auto min-h-11 sm:min-h-10 sm:min-w-25"
                     >
                         {cancelLabel}
                     </Button>
@@ -155,7 +155,7 @@ const ConfirmModal = ({
                         )} 
                         autoFocus={!requireInput && !requireReason}
                         disabled={isConfirmDisabled}
-                        className={`min-w-22.5 shadow-sm text-white transition-all ${isConfirmDisabled ? 'opacity-50 cursor-not-allowed grayscale-30' : ''}`}
+                        className={`w-full sm:w-auto min-h-11 sm:min-h-10 sm:min-w-30 shadow-sm text-white transition-all ${isConfirmDisabled ? 'opacity-50 cursor-not-allowed grayscale-30' : ''}`}
                         style={config.confirmStyle}
                     >
                         {confirmLabel}

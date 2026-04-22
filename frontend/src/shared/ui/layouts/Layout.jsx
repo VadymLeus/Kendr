@@ -45,6 +45,7 @@ const AnnouncementTimer = ({ targetTime }) => {
 const Layout = () => {
     const { user, isAdmin, isModerator, isLoading: isAuthLoading } = useContext(AuthContext);
     const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const location = useLocation();
     const [siteData, setSiteData] = useState(null);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
@@ -59,6 +60,10 @@ const Layout = () => {
             return newState;
         });
     };
+
+    useEffect(() => {
+        setIsMobileOpen(false);
+    }, [location.pathname]);
 
     useEffect(() => {
         if (!globalAnnouncement) {
@@ -148,6 +153,7 @@ const Layout = () => {
         '--font-body': themeSettings.font_body || "'Inter', sans-serif",
         '--btn-radius': themeSettings.button_radius || '8px',
     } : {};
+    
     const scrollClass = isAppPage 
         ? 'overflow-hidden' 
         : 'max-md:mobile-hide-scrollbar max-md:overflow-y-auto md:overflow-y-auto overflow-x-hidden';
@@ -155,7 +161,7 @@ const Layout = () => {
         ? 'h-full overflow-hidden' 
         : 'min-h-full max-md:h-full';
     const mainFlexClass = isAppPage ? 'flex-1 min-h-0' : 'flex-1';
-    const paddingClass = (isAppPage || isSiteThemeActive) ? 'p-0' : 'p-8';
+    const paddingClass = (isAppPage || isSiteThemeActive) ? 'p-0' : 'p-8 max-md:p-4';
     return (
         <div className="layout-wrapper flex flex-col h-screen relative overflow-hidden bg-(--platform-bg)">
             <style>{`
@@ -191,6 +197,9 @@ const Layout = () => {
                     isCollapsed={isCollapsed} 
                     onToggle={handleToggleSidebar} 
                     variant={isStaff ? 'admin' : 'user'}
+                    isMobileOpen={isMobileOpen}
+                    onMobileOpen={() => setIsMobileOpen(true)}
+                    onMobileClose={() => setIsMobileOpen(false)}
                 />
                 <div 
                     className={`layout-content flex-1 min-w-0 ${isCollapsed ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''} ${scrollClass}`}

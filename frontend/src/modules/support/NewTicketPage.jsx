@@ -86,11 +86,9 @@ const NewTicketPage = () => {
             formData.append('body', body);
             formData.append('type', isAppeal ? 'appeal' : category);
             if (appealSite?.id) formData.append('siteId', appealSite.id);
-            
             attachments.forEach(file => {
                 formData.append('attachments', file);
             });
-            
             await apiClient.post('/support', formData);
             toast.success('Тікет успішно створено! Очікуйте відповідь.');
             navigate('/support/my-tickets');
@@ -106,52 +104,36 @@ const NewTicketPage = () => {
         }
     };
 
-    const styles = {
-        pageWrapper: { position: 'relative', minHeight: '100%' },
-        container: { maxWidth: '800px', margin: '0 auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' },
-        header: { display: 'flex', flexDirection: 'column', gap: '8px' },
-        backBtn: { display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--platform-text-secondary)', fontSize: '14px', cursor: 'pointer', marginBottom: '8px', width: 'fit-content' },
-        titleRow: { display: 'flex', alignItems: 'center', gap: '12px' },
-        title: { fontSize: '28px', fontWeight: 'bold', color: 'var(--platform-text-primary)', margin: 0 },
-        card: { background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 24px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '24px' },
-        sectionTitle: { fontSize: '14px', fontWeight: '600', color: 'var(--platform-text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' },
-        inputWrapper: { display: 'flex', flexDirection: 'column', gap: '4px' },
-        input: { width: '100%', padding: '12px 16px', background: 'var(--platform-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '8px', color: 'var(--platform-text-primary)', fontSize: '14px', transition: 'all 0.2s', outline: 'none' },
-        appealBanner: { background: 'color-mix(in srgb, var(--platform-warning), transparent 95%)', border: '1px solid color-mix(in srgb, var(--platform-warning), transparent 80%)', borderRadius: '12px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' },
-        infoBanner: { background: 'color-mix(in srgb, var(--platform-accent), transparent 95%)', border: '1px solid color-mix(in srgb, var(--platform-accent), transparent 80%)', borderRadius: '12px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' },
-        previewContainer: { display: 'flex', gap: '8px', overflowX: 'auto', marginTop: '12px' },
-        previewBox: { position: 'relative', width: '60px', height: '60px', borderRadius: '8px', border: '1px solid var(--platform-border-color)', overflow: 'hidden', flexShrink: 0 },
-        removeBtn: { position: 'absolute', top: '2px', right: '2px', background: 'rgba(0,0,0,0.6)', color: 'white', borderRadius: '50%', padding: '2px', cursor: 'pointer', zIndex: 5 }
-    };
-
     return (
         <DragDropWrapper 
             onDropFiles={handleFileSelect}
-            style={styles.pageWrapper}
+            className="relative min-h-full"
         >
             <Helmet>
                 <title>{isAppeal ? 'Оскарження блокування' : 'Нове звернення'} | Kendr Support</title>
             </Helmet>
-            <div style={styles.container}>
-                <div style={styles.header}>
-                    <div style={styles.backBtn} onClick={() => navigate(-1)} onMouseEnter={e => e.target.style.color = 'var(--platform-text-primary)'} onMouseLeave={e => e.target.style.color = 'var(--platform-text-secondary)'}>
+            <div className="max-w-200 mx-auto p-4 sm:p-6 flex flex-col gap-5 sm:gap-6">
+                <div className="flex flex-col gap-2">
+                    <button 
+                        onClick={() => navigate(-1)} 
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors cursor-pointer w-fit bg-transparent border-none p-0 outline-none"
+                    >
                         <ArrowLeft size={16} />
                         <span>Повернутися назад</span>
-                    </div>
-                    <div style={styles.titleRow}>
-                        <div style={{
-                            width: '48px', height: '48px', borderRadius: '12px',
-                            background: isAppeal ? 'color-mix(in srgb, var(--platform-warning), transparent 90%)' : 'color-mix(in srgb, var(--platform-accent), transparent 90%)',
-                            color: isAppeal ? 'var(--platform-warning)' : 'var(--platform-accent)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                            {isAppeal ? <ShieldAlert size={24} /> : <FileText size={24} />}
+                    </button>
+                    <div className="flex items-center gap-3 sm:gap-4 mt-1">
+                        <div className={`
+                            w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0
+                            ${isAppeal ? 'bg-[color-mix(in_srgb,var(--platform-warning),transparent_90%)] text-(--platform-warning)' 
+                                       : 'bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)] text-(--platform-accent)'}
+                        `}>
+                            {isAppeal ? <ShieldAlert size={20} className="sm:w-6 sm:h-6" /> : <FileText size={20} className="sm:w-6 sm:h-6" />}
                         </div>
                         <div>
-                            <h1 style={styles.title}>
+                            <h1 className="text-xl sm:text-[28px] font-bold text-(--platform-text-primary) m-0 leading-tight">
                                 {isAppeal ? 'Оскарження рішення' : 'Створити тікет'}
                             </h1>
-                            <p style={{color: 'var(--platform-text-secondary)', marginTop: '4px'}}>
+                            <p className="text-sm sm:text-base text-(--platform-text-secondary) mt-1 m-0">
                                 {isAppeal 
                                     ? 'Заповніть форму для перегляду рішення модерації' 
                                     : 'Опишіть проблему, і команда підтримки допоможе вам'}
@@ -159,13 +141,13 @@ const NewTicketPage = () => {
                         </div>
                     </div>
                 </div>
-                <form onSubmit={handleSubmit} style={styles.card}>
+                <form onSubmit={handleSubmit} className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-8 shadow-sm flex flex-col gap-5 sm:gap-6">
                     {isAppeal ? (
-                        <div style={styles.appealBanner}>
-                            <AlertCircle size={20} style={{ color: 'var(--platform-warning)', marginTop: '2px' }} />
+                        <div className="bg-[color-mix(in_srgb,var(--platform-warning),transparent_95%)] border border-[color-mix(in_srgb,var(--platform-warning),transparent_80%)] rounded-xl p-3 sm:p-4 flex gap-2.5 sm:gap-3 items-start">
+                            <AlertCircle size={20} className="text-(--platform-warning) mt-0.5 shrink-0" />
                             <div>
-                                <div style={{fontWeight: '600', color: 'var(--platform-warning)', marginBottom: '4px'}}>Важлива інформація</div>
-                                <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', lineHeight: '1.5'}}>
+                                <div className="font-semibold text-(--platform-warning) mb-1 text-sm sm:text-base">Важлива інформація</div>
+                                <div className="text-xs sm:text-[13px] text-(--platform-text-secondary) leading-relaxed">
                                     Це звернення буде прив'язане до сайту <strong>/{appealSite.site_path}</strong>. 
                                     Адміністратор перегляне історію змін та причину блокування. 
                                     Надання неправдивої інформації може призвести до блокування акаунту.
@@ -173,83 +155,83 @@ const NewTicketPage = () => {
                             </div>
                         </div>
                     ) : (
-                        <div style={styles.infoBanner}>
-                            <Info size={20} style={{ color: 'var(--platform-accent)', marginTop: '2px' }} />
+                        <div className="bg-[color-mix(in_srgb,var(--platform-accent),transparent_95%)] border border-[color-mix(in_srgb,var(--platform-accent),transparent_80%)] rounded-xl p-3 sm:p-4 flex gap-2.5 sm:gap-3 items-start">
+                            <Info size={20} className="text-(--platform-accent) mt-0.5 shrink-0" />
                             <div>
-                                <div style={{fontWeight: '600', color: 'var(--platform-accent)', marginBottom: '4px'}}>Порада</div>
-                                <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', lineHeight: '1.5'}}>
+                                <div className="font-semibold text-(--platform-accent) mb-1 text-sm sm:text-base">Порада</div>
+                                <div className="text-xs sm:text-[13px] text-(--platform-text-secondary) leading-relaxed">
                                     Для швидшого вирішення питання додайте посилання на сторінку, де виникла помилка, 
                                     або детально опишіть кроки для її відтворення. Також можна додати скріншоти.
                                 </div>
                             </div>
                         </div>
                     )}
-                    <div style={{ display: 'grid', gridTemplateColumns: isAppeal ? '1fr' : '1fr 1fr', gap: '20px' }}>
+                    <div className={`grid gap-4 sm:gap-5 ${isAppeal ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                         {!isAppeal && (
-                            <div style={styles.inputWrapper}>
-                                <label style={styles.sectionTitle}><Tag size={16} /> Категорія питання</label>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-semibold text-(--platform-text-primary) flex items-center gap-2">
+                                    <Tag size={16} /> Категорія питання
+                                </label>
                                 <CustomSelect 
                                     value={category}
                                     onChange={(e) => setCategory(e.target.value)}
                                     options={TICKET_CATEGORIES}
                                     placeholder="Оберіть категорію"
-                                    style={{ 
-                                        background: 'var(--platform-bg)',
-                                        height: '42px'
-                                    }}
+                                    className="bg-(--platform-bg) h-10.5"
                                 />
                             </div>
                         )}
-                        <div style={{...styles.inputWrapper, gridColumn: isAppeal ? 'span 1' : 'auto'}}>
-                            <label style={styles.sectionTitle}><FileText size={16} /> Тема</label>
+                        <div className={`flex flex-col gap-1.5 ${isAppeal ? 'col-span-1' : ''}`}>
+                            <label className="text-sm font-semibold text-(--platform-text-primary) flex items-center gap-2">
+                                <FileText size={16} /> Тема
+                            </label>
                             <input 
                                 type="text"
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                                 placeholder={isAppeal ? "Причина апеляції" : "Коротко про суть проблеми"}
                                 required
-                                style={{...styles.input, height: '42px', boxSizing: 'border-box'}}
-                                onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'}
-                                onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'}
                                 readOnly={isAppeal}
+                                className="w-full px-4 h-10.5 bg-(--platform-bg) border border-(--platform-border-color) rounded-lg text-(--platform-text-primary) text-sm transition-colors focus:outline-none focus:border-(--platform-accent)"
                             />
                         </div>
                     </div>
-                    <div style={styles.inputWrapper}>
-                        <label style={styles.sectionTitle}><AlignLeft size={16} /> Детальний опис</label>
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-semibold text-(--platform-text-primary) flex items-center gap-2">
+                            <AlignLeft size={16} /> Детальний опис
+                        </label>
                         <textarea 
                             value={body}
                             onChange={(e) => setBody(e.target.value)}
                             placeholder="Опишіть ситуацію максимально детально..."
                             required={attachments.length === 0}
-                            style={{...styles.input, minHeight: '200px', resize: 'vertical', lineHeight: '1.6'}}
-                            onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'}
-                            onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'}
+                            className="w-full p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-lg text-(--platform-text-primary) text-sm transition-colors focus:outline-none focus:border-(--platform-accent) min-h-40 sm:min-h-50 resize-y leading-relaxed custom-scrollbar"
                         />
                         {attachments.length > 0 && (
-                            <div style={styles.previewContainer}>
+                            <div className="flex gap-2.5 overflow-x-auto mt-2 sm:mt-3 pb-1 hide-scrollbar">
                                 {attachments.map((file, index) => (
-                                    <div key={index} style={styles.previewBox}>
-                                        <img src={file.preview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        <div style={styles.removeBtn} onClick={() => removeAttachment(index)}>
+                                    <div key={index} className="relative w-12.5 h-12.5 sm:w-15 sm:h-15 rounded-lg border border-(--platform-border-color) overflow-hidden shrink-0">
+                                        <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
+                                        <button 
+                                            type="button"
+                                            onClick={() => removeAttachment(index)}
+                                            className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 cursor-pointer z-10 border-none hover:bg-black transition-colors"
+                                        >
                                             <X size={12} />
-                                        </div>
+                                        </button>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
-                    <div style={{ 
-                        display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between', 
-                        borderTop: '1px solid var(--platform-border-color)', paddingTop: '24px', marginTop: '8px' 
-                    }}>
-                        <div>
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 border-t border-(--platform-border-color) pt-5 sm:pt-6 mt-2">
+                        <div className="w-full md:w-auto">
                             <input 
                                 type="file" 
                                 multiple 
                                 accept="image/jpeg, image/png, image/webp"
                                 ref={fileInputRef} 
-                                style={{ display: 'none' }} 
+                                className="hidden" 
                                 onChange={(e) => handleFileSelect(e.target.files)}
                                 disabled={loading || attachments.length >= FILE_LIMITS.TICKET_ATTACHMENT.MAX_FILES}
                             />
@@ -259,16 +241,18 @@ const NewTicketPage = () => {
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={loading || attachments.length >= FILE_LIMITS.TICKET_ATTACHMENT.MAX_FILES}
                                 icon={<Paperclip size={18} />}
+                                className="w-full md:w-auto min-h-11"
                             >
                                 Прикріпити файл
                             </Button>
                         </div>
-                        <div style={{ display: 'flex', gap: '12px' }}>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                             <Button 
                                 type="button"
                                 variant="ghost"
                                 onClick={() => navigate(-1)}
                                 disabled={loading}
+                                className="w-full sm:w-auto min-h-11"
                             >
                                 Скасувати
                             </Button>
@@ -277,6 +261,7 @@ const NewTicketPage = () => {
                                 variant={isAppeal ? "danger" : "primary"}
                                 disabled={loading || (!subject.trim())}
                                 icon={!loading && <Send size={18} />}
+                                className="w-full sm:w-auto min-h-11"
                             >
                                 {loading ? 'Надсилання...' : (isAppeal ? 'Надіслати апеляцію' : 'Створити тікет')}
                             </Button>
@@ -284,6 +269,15 @@ const NewTicketPage = () => {
                     </div>
                 </form>
             </div>
+            <style>{`
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .hide-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+            `}</style>
         </DragDropWrapper>
     );
 };

@@ -236,7 +236,7 @@ const ProductDetailPage = () => {
         '--zoom-controls-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
         '--zoom-controls-border': isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
         '--zoom-info-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
-        '--badge-instock-bg': 'color-mix(in srgb, var(--site-accent), transparent 85%)', // ТУТ ВІДБУЛАСЬ ЗМІНА
+        '--badge-instock-bg': 'color-mix(in srgb, var(--site-accent), transparent 85%)',
         '--badge-outofstock-bg': 'color-mix(in srgb, var(--platform-danger), transparent 90%)',
         '--footer-bg': 'var(--site-bg)',
         '--footer-border': 'var(--site-border-color)',

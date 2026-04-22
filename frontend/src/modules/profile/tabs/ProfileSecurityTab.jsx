@@ -25,12 +25,10 @@ const ProfileSecurityTab = () => {
     useEffect(() => {
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     }, [hasPassword]);
-    
     const handleChange = (e) => {
         const { name, value } = e.target;
         setPasswords(prev => ({ ...prev, [name]: value }));
     };
-    
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (securityCooldown > 0) {
@@ -105,47 +103,16 @@ const ProfileSecurityTab = () => {
             }
         });
     };
-    const container = { maxWidth: '800px', margin: '0 auto', width: '100%' };
-    const card = { 
-        background: 'var(--platform-card-bg)', 
-        borderRadius: '16px', 
-        border: '1px solid var(--platform-border-color)', 
-        padding: '32px', 
-        marginBottom: '20px', 
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)' 
-    };
-    const cardTitle = { 
-        fontSize: '1.3rem', 
-        fontWeight: '600', 
-        color: 'var(--platform-text-primary)', 
-        margin: '0 0 8px 0', 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '10px' 
-    };
-    const subTitle = { 
-        color: 'var(--platform-text-secondary)', 
-        marginBottom: '24px', 
-        fontSize: '0.9rem', 
-        lineHeight: '1.5' 
-    };
-    const dangerCardStyle = {
-        ...card,
-        borderColor: 'var(--platform-danger)',
-        background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)',
-        marginBottom: 0,
-        padding: '32px'
-    };
     
     return (
-        <div style={container}>
-            <div style={card}>
-                <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <h3 style={{ ...cardTitle, justifyContent: 'center' }}>
-                        <Lock size={24} color="var(--platform-accent)" />
+        <div className="w-full max-w-200 mx-auto">
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-5 sm:mb-6 shadow-sm">
+                <div className="text-center mb-6 sm:mb-8">
+                    <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) flex items-center justify-center gap-2.5 mb-2 m-0">
+                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-(--platform-accent)" />
                         {hasPassword ? 'Зміна паролю' : 'Встановлення паролю'}
                     </h3>
-                    <p style={{ ...subTitle, marginBottom: '0' }}>
+                    <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
                         {hasPassword 
                             ? 'Введіть поточний пароль, щоб встановити новий.'
                             : 'У вас не встановлено пароль (вхід через Google). Створіть його для входу через Email.'
@@ -153,7 +120,7 @@ const ProfileSecurityTab = () => {
                     </p>
                 </div>
                 <form onSubmit={handleSubmit}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '400px', margin: '0 auto' }}>
+                    <div className="flex flex-col gap-4 sm:gap-5 w-full max-w-100 mx-auto">
                         {hasPassword && (
                             <Input 
                                 name="currentPassword" 
@@ -175,23 +142,25 @@ const ProfileSecurityTab = () => {
                                 onChange={handleChange} 
                                 required 
                             />
-                            <PasswordStrengthMeter password={passwords.newPassword} />
+                            <div className="mt-1 sm:mt-1.5">
+                                <PasswordStrengthMeter password={passwords.newPassword} />
+                            </div>
                         </div>
                         <Input 
                             name="confirmPassword" 
                             label="Підтвердження" 
                             type="password" 
-                             placeholder="••••••••" 
+                            placeholder="••••••••" 
                             value={passwords.confirmPassword} 
                             onChange={handleChange} 
                             required
                             error={passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword ? "Паролі не співпадають" : ""}
                         />
-                        <div style={{ marginTop: '8px' }}>
+                        <div className="mt-2">
                             <Button 
                                 type="submit" 
                                 disabled={isLoading || securityCooldown > 0} 
-                                style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                                className="w-full min-h-11 flex justify-center items-center gap-2"
                             >
                                 {isLoading 
                                     ? 'Збереження...' 
@@ -206,28 +175,22 @@ const ProfileSecurityTab = () => {
                 </form>
             </div>
             {!isAdmin && (
-                <div style={dangerCardStyle}>
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        flexWrap: 'wrap', 
-                        gap: '16px' 
-                    }}>
-                        <div style={{ flex: 1 }}>
-                            <h3 style={{ ...cardTitle, color: 'var(--platform-danger)', marginBottom: '4px' }}>
-                                <AlertCircle size={22} />
+                <div className="rounded-2xl border border-(--platform-danger) p-5 sm:p-8 shadow-sm bg-[color-mix(in_srgb,var(--platform-danger),transparent_95%)]">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
+                        <div className="flex-1">
+                            <h3 className="text-lg sm:text-xl font-semibold text-(--platform-danger) flex items-center gap-2.5 mb-1.5 m-0">
+                                <AlertCircle className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
                                 ВИДАЛЕННЯ АКАУНТУ
                             </h3>
-                            <p style={{ margin: 0, color: 'var(--platform-danger)', fontSize: '0.9rem', opacity: 0.8 }}>
-                                 Видалення акаунту призведе до <strong>незворотної</strong> втрати всіх ваших сайтів та даних.
+                            <p className="text-sm sm:text-[0.9rem] text-(--platform-danger) opacity-80 m-0 leading-relaxed">
+                                Видалення акаунту призведе до <strong>незворотної</strong> втрати всіх ваших сайтів та даних.
                             </p>
                         </div>
                         <Button 
                             variant="danger"
                             onClick={handleDeleteAccount}
                             icon={<Trash2 size={18} />}
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
+                            className="w-full sm:w-auto min-h-11 flex items-center justify-center shrink-0"
                         >
                             Видалити акаунт
                         </Button>

@@ -22,6 +22,7 @@ const PublicProfileTab = () => {
         const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
         setFormData({ ...formData, [e.target.name]: value });
     };
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (publicCooldown > 0) {
@@ -57,82 +58,98 @@ const PublicProfileTab = () => {
             setIsLoading(false); 
         }
     };
+    
     const profileUrl = `${window.location.origin}/profile/${user.slug}`;
     const copyLink = () => {
         navigator.clipboard.writeText(profileUrl);
         toast.info('Посилання скопійовано');
     };
+    
     const openLink = () => {
         window.open(profileUrl, '_blank');
     };
+    
     const hasChanges = 
         formData.bio !== (user.bio || '') ||
         formData.social_telegram !== (user.social_telegram || '') ||
         formData.social_instagram !== (user.social_instagram || '') ||
         formData.social_website !== (user.social_website || '') ||
         formData.is_profile_public !== Boolean(user.is_profile_public);
-
     return (
-        <div className="public-profile-container">
-            <style>{STYLES}</style>
-            <div className="profile-card">
-                <div className="status-header">
-                    <div className="status-text">
-                        <h3 className="section-title">
-                            {formData.is_profile_public ? <Eye size={20} className="accent-icon" /> : <EyeOff size={20} />}
+        <div className="w-full max-w-225 mx-auto">
+            <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 mb-5 sm:mb-6 flex flex-col shadow-sm">
+                <div className="flex justify-between items-center gap-4 sm:gap-5">
+                    <div>
+                        <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) mb-1.5 flex items-center gap-2 m-0">
+                            {formData.is_profile_public ? <Eye size={20} className="text-(--platform-accent)" /> : <EyeOff size={20} className="text-(--platform-text-secondary)" />}
                             Статус профілю
                         </h3>
-                        <p className="section-desc">
+                        <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
                             {formData.is_profile_public 
                                 ? 'Ваш профіль видимий для всіх користувачів.' 
                                 : 'Ваш профіль прихований. Його бачите лише ви.'}
                         </p>
                     </div>
-                    <label className="toggle-switch">
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
                         <input 
                             type="checkbox" 
-                            name="is_profile_public" 
+                            name="is_profile_public"
+                            className="sr-only peer" 
                             checked={formData.is_profile_public} 
                             onChange={handleChange} 
                         />
-                        <span className="slider"></span>
+                        <div className="w-11 h-6 bg-(--platform-border-color) peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--platform-accent) shadow-sm"></div>
                     </label>
                 </div>
                 {Boolean(formData.is_profile_public) && (
-                    <div className="link-box">
-                        <a href={profileUrl} target="_blank" rel="noreferrer" className="profile-link">
+                    <div className="bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-5 gap-3 sm:gap-4">
+                        <a 
+                            href={profileUrl} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="font-mono text-sm whitespace-nowrap overflow-hidden text-ellipsis text-(--platform-accent) no-underline flex-1 px-1 sm:px-0"
+                            title={profileUrl}
+                        >
                             {profileUrl}
                         </a>
-                        <div className="link-actions">
+                        <div className="flex gap-2 shrink-0">
                             <Button 
-                                variant="square-accent" 
+                                type="button"
+                                variant="secondary" 
                                 onClick={copyLink} 
                                 title="Копіювати посилання"
                                 icon={<Copy size={18} />}
+                                className="flex-1 sm:flex-none justify-center px-4"
                             />
                             <Button 
-                                variant="square-accent" 
+                                type="button"
+                                variant="secondary" 
                                 onClick={openLink} 
                                 title="Відкрити у новій вкладці"
                                 icon={<ExternalLink size={18} />}
+                                className="flex-1 sm:flex-none justify-center px-4"
                             />
                         </div>
                     </div>
                 )}
             </div>
-            <div className="profile-card">
-                <h3 className="section-title">
-                    <Globe size={20} className="accent-icon" />
-                    Соціальні мережі та Біо
-                </h3>
-                <p className="section-desc">
-                    Ця інформація буде відображена на вашій публічній сторінці.
-                </p>
-                <form onSubmit={handleSubmit} className="profile-form">
-                    <div className="input-group">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '4px' }}>
-                            <label className="input-label">Про себе (Bio)</label>
-                            <span style={{ fontSize: '0.8rem', color: formData.bio.length >= 300 ? 'var(--platform-danger)' : 'var(--platform-text-secondary)', fontWeight: formData.bio.length >= 300 ? 'bold' : 'normal' }}>
+            <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 shadow-sm">
+                <div className="mb-6">
+                    <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) mb-1.5 flex items-center gap-2 m-0">
+                        <Globe size={20} className="text-(--platform-accent)" />
+                        Соціальні мережі та Біо
+                    </h3>
+                    <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
+                        Ця інформація буде відображена на вашій публічній сторінці.
+                    </p>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-1.5 w-full">
+                        <div className="flex justify-between items-center pr-1">
+                            <label className="text-sm font-medium text-(--platform-text-primary) ml-1">
+                                Про себе
+                            </label>
+                            <span className={`text-xs ${formData.bio.length >= 300 ? 'text-(--platform-danger) font-bold' : 'text-(--platform-text-secondary)'}`}>
                                 {formData.bio.length}/300
                             </span>
                         </div>
@@ -141,17 +158,17 @@ const PublicProfileTab = () => {
                             value={formData.bio} 
                             onChange={handleChange}
                             maxLength={300}
-                            className="bio-textarea"
                             placeholder="Розкажіть трохи про себе, ваші навички та інтереси..."
+                            className="w-full p-3.5 sm:p-4 rounded-xl border border-(--platform-border-color) bg-(--platform-input-bg) text-(--platform-text-primary) text-sm sm:text-base resize-y min-h-30 max-h-75 outline-none transition-all duration-200 focus:border-(--platform-accent) focus:ring-[3px] focus:ring-(--platform-accent)/15 custom-scrollbar"
                         />
                     </div>
-                    <div className="social-grid">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                         <Input 
                             name="social_telegram" 
                             label="Telegram" 
                             value={formData.social_telegram} 
                             onChange={handleChange}
-                            icon={<Send size={18} />}
+                            leftIcon={<Send size={18} />}
                             placeholder="@username"
                         />
                         <Input 
@@ -159,7 +176,7 @@ const PublicProfileTab = () => {
                             label="Instagram" 
                             value={formData.social_instagram} 
                             onChange={handleChange}
-                            icon={<Instagram size={18} />}
+                            leftIcon={<Instagram size={18} />}
                             placeholder="@username"
                         />
                     </div>
@@ -168,15 +185,16 @@ const PublicProfileTab = () => {
                         label="Особистий сайт" 
                         value={formData.social_website} 
                         onChange={handleChange}
-                        icon={<Globe size={18} />}
+                        leftIcon={<Globe size={18} />}
                         placeholder="https://mysite.com"
                         helperText="Обов'язково має починатися з http:// або https://"
                     />
-                    <div className="form-footer">
+                    <div className="mt-2 pt-5 border-t border-(--platform-border-color) flex justify-center w-full">
                         <Button 
                             type="submit" 
                             disabled={isLoading || publicCooldown > 0 || !hasChanges} 
                             icon={isLoading ? null : (publicCooldown > 0 ? <Timer size={18} /> : <Check size={18} />)}
+                            className="w-full sm:w-auto min-h-11"
                         >
                             {isLoading ? 'Збереження...' : (publicCooldown > 0 ? `Зачекайте ${publicCooldown}с` : 'Зберегти зміни')}
                         </Button>
@@ -186,156 +204,5 @@ const PublicProfileTab = () => {
         </div>
     );
 };
-
-const STYLES = `
-    .public-profile-container {
-        max-width: 900px;
-        margin: 0 auto;
-        width: 100%;
-    }
-    .profile-card {
-        background: var(--platform-card-bg);
-        border: 1px solid var(--platform-border-color);
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 24px;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    }
-    .section-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--platform-text-primary);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .accent-icon {
-        color: var(--platform-accent);
-    }
-    .section-desc {
-        font-size: 0.9rem;
-        color: var(--platform-text-secondary);
-        margin-bottom: 1.5rem;
-        line-height: 1.5;
-    }
-    
-    .status-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 10px;
-    }
-    .status-text .section-desc {
-        margin-bottom: 0;
-    }
-
-    .link-box {
-        background: var(--platform-bg);
-        border: 1px solid var(--platform-border-color);
-        border-radius: 12px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 20px;
-        gap: 10px;
-    }
-    .profile-link {
-        font-family: monospace;
-        font-size: 0.9rem;
-        white-space: nowrap; 
-        overflow: hidden; 
-        text-overflow: ellipsis; 
-        color: var(--platform-accent);
-        text-decoration: none;
-        flex: 1;
-    }
-    .link-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .profile-form {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    .social-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-    }
-    .input-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        width: 100%;
-    }
-    .input-label {
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: var(--platform-text-primary);
-        margin-left: 4px;
-    }
-
-    .form-footer {
-        margin-top: 10px;
-        padding-top: 24px;
-        border-top: 1px solid var(--platform-border-color);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .bio-textarea {
-        width: 100%;
-        padding: 12px 16px;
-        border-radius: 12px;
-        border: 1px solid var(--platform-border-color);
-        background: var(--platform-input-bg);
-        color: var(--platform-text-primary);
-        font-size: 0.95rem;
-        resize: vertical;
-        min-height: 100px;
-        max-height: 300px;
-        outline: none;
-        font-family: inherit;
-        transition: border-color 0.2s;
-        overflow-y: auto;
-        scrollbar-gutter: stable;
-    }
-    .bio-textarea:focus {
-        border-color: var(--platform-accent);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--platform-accent), transparent 85%);
-    }
-    .bio-textarea::-webkit-scrollbar { width: 8px; height: 8px; }
-    .bio-textarea::-webkit-scrollbar-track { background: var(--platform-sidebar-bg); border-radius: 4px; }
-    .bio-textarea::-webkit-scrollbar-thumb {
-        background-color: var(--platform-text-secondary);
-        opacity: 0.5;
-        border-radius: 4px;
-        border: 2px solid var(--platform-sidebar-bg);
-    }
-    .bio-textarea::-webkit-scrollbar-thumb:hover { background-color: var(--platform-accent); }
-    .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: var(--platform-border-color); transition: .4s; border-radius: 24px;
-    }
-    .slider:before {
-        position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-        background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    input:checked + .slider { background-color: var(--platform-accent); }
-    input:checked + .slider:before { transform: translateX(20px); }
-    @media (max-width: 600px) {
-        .social-grid { grid-template-columns: 1fr; }
-    }
-`;
 
 export default PublicProfileTab;

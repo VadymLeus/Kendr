@@ -1,5 +1,6 @@
 // frontend/src/shared/ui/layouts/UserMenu.jsx
 import React, { useContext, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import Avatar from '../elements/Avatar';
@@ -57,15 +58,18 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
                     )}
                 </div>
             </div>
-            <ConfirmModal 
-                isOpen={showModal}
-                title="Вихід"
-                message="Ви впевнені, що хочете вийти?"
-                confirmLabel="Вийти"
-                onConfirm={() => { logout(); navigate('/login'); setShowModal(false); }}
-                onCancel={() => setShowModal(false)}
-                type="danger"
-            />
+            {typeof document !== 'undefined' && createPortal(
+                <ConfirmModal 
+                    isOpen={showModal}
+                    title="Вихід"
+                    message="Ви впевнені, що хочете вийти?"
+                    confirmLabel="Вийти"
+                    onConfirm={() => { logout(); navigate('/login'); setShowModal(false); }}
+                    onCancel={() => setShowModal(false)}
+                    type="danger"
+                />,
+                document.body
+            )}
         </>
     );
 };
