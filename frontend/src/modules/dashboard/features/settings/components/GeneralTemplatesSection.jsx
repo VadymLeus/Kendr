@@ -105,59 +105,75 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
     }
 
     if (isInitialLoad) return (
-        <div className="h-150 flex items-center justify-center rounded-2xl border" style={{ backgroundColor: 'var(--platform-card-bg)', borderColor: 'var(--platform-border-color)' }}>
+        <div className="h-150 flex items-center justify-center rounded-2xl border mb-6 shadow-sm" style={{ backgroundColor: 'var(--platform-card-bg)', borderColor: 'var(--platform-border-color)' }}>
             <LoadingState title="Завантаження шаблонів..." />
         </div>
     );
 
     return (
-        <div 
-            className="rounded-2xl border mb-6 shadow-sm overflow-hidden flex flex-col relative" 
-            style={{ 
-                height: 'calc(100vh - 120px)', 
-                minHeight: '700px', 
-                backgroundColor: 'var(--platform-card-bg)', 
-                borderColor: 'var(--platform-border-color)' 
-            }}
-        >
-            <TemplateModal isOpen={isSaveTemplateModalOpen} onClose={() => setIsSaveTemplateModalOpen(false)} onSave={handleSaveTemplate} />
-            <TemplateModal isOpen={manager.modals.isEditModalOpen} initialData={manager.modals.editingTemplate} onClose={() => { manager.modals.setIsEditModalOpen(false); manager.modals.setEditingTemplate(null); }} onSave={manager.actions.handleSaveTemplateChanges} />
-            <ConfirmModal 
-                isOpen={manager.modals.confirmModal.isOpen} 
-                title={modalConfig.title} 
-                message={modalConfig.message} 
-                onConfirm={handleConfirmAction} 
-                onCancel={() => manager.modals.setConfirmModal({ isOpen: false, template: null, actionType: null })} 
-                confirmLabel={modalConfig.confirmLabel} 
-                type={modalConfig.type} 
-            />
-            <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: 'var(--platform-bg)' }}>
-                <div style={{
-                    width: isSidebarOpen ? '45%' : '0px', 
-                    minWidth: isSidebarOpen ? '400px' : '0px', 
-                    opacity: isSidebarOpen ? 1 : 0,
-                    transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    borderRight: isSidebarOpen ? '1px solid var(--platform-border-color)' : 'none', 
-                    flexShrink: 0,
-                    backgroundColor: 'var(--platform-card-bg)',
-                    zIndex: 10,
-                    boxShadow: isSidebarOpen ? '10px 0 15px -3px rgba(0, 0, 0, 0.05)' : 'none'
-                }}>
-                    <div style={{ width: '100%', minWidth: '400px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        <div className="p-6 border-b border-(--platform-border-color) shrink-0 bg-(--platform-card-bg)">
+        <>
+            <style>{`
+                .templates-full-bleed {
+                    width: 100vw;
+                    margin-left: calc(50% - 50vw);
+                    margin-right: calc(50% - 50vw);
+                    border-radius: 0;
+                    border-left: none;
+                    border-right: none;
+                }
+                @media (min-width: 768px) {
+                    .templates-full-bleed {
+                        width: 100%;
+                        margin-left: 0;
+                        margin-right: 0;
+                        border-radius: 16px;
+                        border-left: 1px solid var(--platform-border-color);
+                        border-right: 1px solid var(--platform-border-color);
+                    }
+                }
+            `}</style>
+            
+            <div 
+                className="templates-full-bleed border-y md:border mb-6 shadow-sm flex relative overflow-hidden bg-(--platform-bg) border-(--platform-border-color)" 
+                style={{ height: 'calc(100vh - 120px)', minHeight: '700px' }}
+            >
+                <TemplateModal isOpen={isSaveTemplateModalOpen} onClose={() => setIsSaveTemplateModalOpen(false)} onSave={handleSaveTemplate} />
+                <TemplateModal isOpen={manager.modals.isEditModalOpen} initialData={manager.modals.editingTemplate} onClose={() => { manager.modals.setIsEditModalOpen(false); manager.modals.setEditingTemplate(null); }} onSave={manager.actions.handleSaveTemplateChanges} />
+                <ConfirmModal 
+                    isOpen={manager.modals.confirmModal.isOpen} 
+                    title={modalConfig.title} 
+                    message={modalConfig.message} 
+                    onConfirm={handleConfirmAction} 
+                    onCancel={() => manager.modals.setConfirmModal({ isOpen: false, template: null, actionType: null })} 
+                    confirmLabel={modalConfig.confirmLabel} 
+                    type={modalConfig.type} 
+                />
+                <div 
+                    className={`
+                        flex flex-col h-full bg-(--platform-card-bg) z-20 shrink-0 overflow-hidden
+                        transition-all duration-300 ease-in-out absolute md:relative
+                        ${isSidebarOpen 
+                            ? 'w-[calc(100%-28px)] md:w-112.5 opacity-100 border-r border-(--platform-border-color) shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)]' 
+                            : 'w-0 opacity-0 md:opacity-100 border-none pointer-events-none md:pointer-events-auto'}
+                    `}
+                >
+                    <div className="w-[calc(100vw-28px)] md:w-112.5 h-full flex flex-col shrink-0">
+                        <div className="p-4 md:p-6 border-b border-(--platform-border-color) shrink-0 bg-(--platform-card-bg)">
                             <div className="flex justify-between items-center m-0">
-                                <h3 className="text-xl font-bold m-0 flex items-center gap-2 text-(--platform-text-primary)">
-                                    <Palette size={20} className="text-(--platform-accent)" /> Бібліотека шаблонів
+                                <h3 className="text-lg md:text-xl font-bold m-0 flex items-center gap-2 text-(--platform-text-primary)">
+                                    <Palette size={20} className="text-(--platform-accent)" /> 
+                                    <span className="hidden sm:inline">Бібліотека шаблонів</span>
+                                    <span className="sm:hidden">Шаблони</span>
                                 </h3>
                                 <Button variant="primary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)}>
-                                    <Plus size={16} /> {isStaff ? "Новий шаблон" : "Зберегти свій"}
+                                    <Plus size={16} /> 
+                                    <span className="hidden sm:inline">{isStaff ? "Новий шаблон" : "Зберегти свій"}</span>
+                                    <span className="sm:hidden">{isStaff ? "Новий" : "Зберегти"}</span>
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6 pt-0 bg-(--platform-bg) min-h-0 [scrollbar-gutter:stable] relative">
-                            <div className="sticky top-0 -mx-6 px-6 pt-4 pb-2 bg-(--platform-bg)/95 z-20 mb-4 backdrop-blur-sm border-b border-transparent transition-all">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-6 pb-6 pt-0 bg-(--platform-bg) min-h-0 [scrollbar-gutter:stable] relative">
+                            <div className="sticky top-0 -mx-4 md:-mx-6 px-4 md:px-6 pt-4 pb-2 bg-(--platform-bg)/95 z-20 mb-4 backdrop-blur-sm border-b border-transparent transition-all">
                                 <TemplateFilters filters={manager.filters} isAdmin={isStaff} />
                             </div>
                             {manager.isLoading && (
@@ -165,7 +181,7 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                                     <Loader size={32} className="animate-spin text-(--platform-accent)" />
                                 </div>
                             )}
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pb-4 px-1 relative">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 pb-4 px-1 relative">
                                 {displayTemplates.length > 0 ? displayTemplates.map(tpl => {
                                     if (tpl.id === 'blank') {
                                         const isSelected = manager.selectedTemplateId === 'blank';
@@ -173,18 +189,18 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                                             <div 
                                                 key="blank"
                                                 onClick={() => manager.setSelectedTemplateId('blank')}
-                                                className={`relative flex flex-col items-center justify-center p-6 rounded-2xl cursor-pointer transition-all duration-200 h-full min-h-75 bg-(--platform-bg) hover:border-(--platform-accent) group ${isSelected ? 'border-2 border-(--platform-accent) ring-4 ring-(--platform-accent)/10' : 'border-2 border-dashed border-(--platform-border-color)'}`}
+                                                className={`relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl cursor-pointer transition-all duration-200 h-full min-h-60 bg-(--platform-bg) hover:border-(--platform-accent) group ${isSelected ? 'border-2 border-(--platform-accent) ring-4 ring-(--platform-accent)/10' : 'border-2 border-dashed border-(--platform-border-color)'}`}
                                             >
-                                                <div className={`w-16 h-16 rounded-full shadow-sm flex items-center justify-center mb-5 transition-all duration-300 ${isSelected ? 'bg-(--platform-accent) text-white scale-110' : 'bg-(--platform-card-bg) text-(--platform-text-secondary) group-hover:text-(--platform-accent) group-hover:scale-110'}`}>
-                                                    <Layout size={32} />
+                                                <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full shadow-sm flex items-center justify-center mb-4 md:mb-5 transition-all duration-300 ${isSelected ? 'bg-(--platform-accent) text-white scale-110' : 'bg-(--platform-card-bg) text-(--platform-text-secondary) group-hover:text-(--platform-accent) group-hover:scale-110'}`}>
+                                                    <Layout size={28} className="md:w-8 md:h-8" />
                                                 </div>
-                                                <h3 className="text-xl font-bold text-(--platform-text-primary) mb-3">Пустий сайт</h3>
-                                                <p className="text-sm text-(--platform-text-secondary) text-center max-w-[85%]">
+                                                <h3 className="text-lg md:text-xl font-bold text-(--platform-text-primary) mb-2 md:mb-3 text-center">Пустий сайт</h3>
+                                                <p className="text-xs md:text-sm text-(--platform-text-secondary) text-center max-w-[90%] md:max-w-[85%]">
                                                     Почніть з чистого аркуша і створіть свій ідеальний сайт.
                                                 </p>
                                                 {isSelected && (
-                                                    <div className="absolute top-4 right-4 w-7 h-7 bg-(--platform-accent) text-white rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
-                                                        <Check size={16} />
+                                                    <div className="absolute top-3 right-3 md:top-4 md:right-4 w-6 h-6 md:w-7 md:h-7 bg-(--platform-accent) text-white rounded-full flex items-center justify-center shadow-md animate-in zoom-in">
+                                                        <Check size={14} className="md:w-4 md:h-4" />
                                                     </div>
                                                 )}
                                             </div>
@@ -216,32 +232,41 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                                             )}
                                         />
                                     );
-                                }) : <div className="col-span-1 xl:col-span-2 mt-10"><EmptyState title="Не знайдено" description="Спробуйте змінити фільтри" icon={Layout}/></div>}
+                                }) : <div className="col-span-1 sm:col-span-2 mt-10"><EmptyState title="Не знайдено" description="Спробуйте змінити фільтри" icon={Layout}/></div>}
                             </div>
                         </div>
-                        <div className="p-6 bg-(--platform-card-bg) border-t border-(--platform-border-color) shrink-0">
+                        <div className="p-4 md:p-6 bg-(--platform-card-bg) border-t border-(--platform-border-color) shrink-0">
                             <Button 
                                 variant="primary" 
-                                className="w-full py-3 justify-center text-base" 
+                                className="w-full py-3 justify-center text-sm md:text-base h-11.5" 
                                 disabled={!manager.selectedTemplateId}
                                 onClick={() => {
                                     const templateObj = manager.selectedTemplateId === 'blank' ? { id: 'blank', name: 'Пустий сайт' } : manager.selectedTemplate;
                                     manager.modals.setConfirmModal({ isOpen: true, template: templateObj, actionType: 'apply' });
                                 }}
                             >
-                                <Check size={20} className="mr-2" /> Застосувати обраний шаблон
+                                <Check size={18} className="mr-2" /> Застосувати обраний шаблон
                             </Button>
                         </div>
                     </div>
                 </div>
-                <div style={{ width: '0px', position: 'relative', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? "Згорнути панель" : "Розгорнути панель"} className="group flex items-center justify-center w-7 h-28 bg-(--platform-card-bg) border border-(--platform-border-color) shadow-md cursor-pointer transition-all duration-200 focus:outline-none z-20" style={{ position: 'absolute', left: '0px', transform: 'translateY(-50%)', top: '50%', borderRadius: '0 12px 12px 0', borderLeft: isSidebarOpen ? 'none' : '1px solid var(--platform-border-color)', marginLeft: isSidebarOpen ? '-1px' : '0' }}>
+                <div 
+                    className={`
+                        flex absolute z-30 top-1/2 -translate-y-1/2 items-center justify-center transition-all duration-300 ease-in-out
+                        ${isSidebarOpen ? 'left-[calc(100%-28px)] md:left-112.5 md:-ml-px' : 'left-0'}
+                    `}
+                >
+                    <button 
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                        title={isSidebarOpen ? "Згорнути панель" : "Розгорнути панель"} 
+                        className={`group flex items-center justify-center w-7 h-28 bg-(--platform-card-bg) border border-(--platform-border-color) shadow-md cursor-pointer transition-all duration-200 focus:outline-none rounded-r-xl ${isSidebarOpen ? 'border-l-0' : ''}`}
+                    >
                         <div className="transition-transform duration-200 group-hover:scale-110 text-(--platform-text-secondary) group-hover:text-(--platform-accent)">
                             {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
                         </div>
                     </button>
                 </div>
-                <div className="flex-1 relative bg-(--platform-bg)" style={{ minWidth: 0 }}>
+                <div className="flex-1 min-w-0 h-full relative bg-(--platform-bg)">
                     <SitePreviewer 
                         viewMode={viewMode} 
                         setViewMode={setViewMode} 
@@ -249,14 +274,14 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
                         currentBlocks={previewData?.pages[0]?.blocks || []} 
                         isLoading={manager.isLoading}
                         emptyTitle="Оберіть шаблон" 
-                        emptyDescription="Виберіть шаблон зі списку ліворуч, щоб побачити як виглядатиме ваш сайт" 
+                        emptyDescription="Виберіть шаблон зі списку, щоб побачити як виглядатиме ваш сайт" 
                         url={manager.selectedTemplateId ? (manager.selectedTemplateId === 'blank' ? 'kendr.site/blank' : `kendr.site/templates/${manager.selectedTemplateId}`) : ''}
                         userTitle={siteData?.title || ""}
                         userLogo={siteData?.logo_url ? getFullUrl(siteData.logo_url) : ""}
                     />
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

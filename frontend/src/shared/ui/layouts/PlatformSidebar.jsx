@@ -19,10 +19,11 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
             navigate('/login');
         }
     };
-    const SidebarLink = ({ to, icon: Icon, label, protectedLink, count, isCreateButton }) => {
+    const renderLink = ({ to, icon: Icon, label, protectedLink, count, isCreateButton }) => {
         const baseClass = `sidebar-link ${isCreateButton ? 'create-btn' : ''}`;
         return (
             <NavLink 
+                key={to}
                 to={to} 
                 className={({ isActive }) => `${baseClass} ${isActive ? 'active' : ''}`}
                 onClick={(e) => {
@@ -80,48 +81,46 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
                 <div className="sidebar-nav custom-scrollbar">
                     {isAdminView ? (
                         <>
-                            <SidebarLink to="/create-site" icon={FileText} label="Створити сайт" isCreateButton />
+                            {renderLink({ to: "/create-site", icon: FileText, label: "Створити сайт", isCreateButton: true })}
                             <div className="nav-separator" />
-                            <SidebarLink to="/my-sites" icon={Layout} label="Мої сайти" />
-                            <SidebarLink to="/admin/templates" icon={Palette} label="Шаблони" />
-                            <SidebarLink to="/media-library" icon={FileText} label="Медіатека" />
+                            {renderLink({ to: "/my-sites", icon: Layout, label: "Мої сайти" })}
+                            {renderLink({ to: "/admin/templates", icon: Palette, label: "Шаблони" })}
+                            {renderLink({ to: "/media-library", icon: FileText, label: "Медіатека" })}
                             <div className="nav-separator" />
-                            <SidebarLink to="/admin/users-sites" icon={Users} label="Користувачі / Сайти" />
-                            <SidebarLink to="/admin/support-hub" icon={MessageSquare} label="Тікети / Скарги" />
-                            {isStrictAdmin && (
-                                <SidebarLink to="/admin/billing" icon={CreditCard} label="Білінг" />
-                            )}
-                            <SidebarLink to="/admin/dashboard" icon={LayoutDashboard} label="Дашборд" />
+                            {renderLink({ to: "/admin/users-sites", icon: Users, label: "Користувачі / Сайти" })}
+                            {renderLink({ to: "/admin/support-hub", icon: MessageSquare, label: "Тікети / Скарги" })}
+                            {isStrictAdmin && renderLink({ to: "/admin/billing", icon: CreditCard, label: "Білінг" })}
+                            {renderLink({ to: "/admin/dashboard", icon: LayoutDashboard, label: "Дашборд" })}
                             {isStrictAdmin && (
                                 <>
                                     <div className="nav-separator" />
-                                    <SidebarLink to="/admin/control" icon={Sliders} label="Управління" />
+                                    {renderLink({ to: "/admin/control", icon: Sliders, label: "Управління" })}
                                 </>
                             )}
                         </>
                     ) : (
                         <>
-                            <SidebarLink to="/create-site" icon={FileText} label="Створити сайт" protectedLink isCreateButton />
+                            {renderLink({ to: "/create-site", icon: FileText, label: "Створити сайт", protectedLink: true, isCreateButton: true })}
                             <div className="nav-separator" />
                             {user && (
                                 <>
-                                    <SidebarLink to="/my-sites" icon={Layout} label="Мої сайти" protectedLink />
-                                    <SidebarLink to="/media-library" icon={FileText} label="Медіатека" protectedLink />
+                                    {renderLink({ to: "/my-sites", icon: Layout, label: "Мої сайти", protectedLink: true })}
+                                    {renderLink({ to: "/media-library", icon: FileText, label: "Медіатека", protectedLink: true })}
                                     <div className="nav-separator" />
                                 </>
                             )}
-                            <SidebarLink to="/catalog" icon={Store} label="Каталог сайтів" />
+                            {renderLink({ to: "/catalog", icon: Store, label: "Каталог сайтів" })}
                             {user && (
                                 <>
-                                    <SidebarLink to="/my-orders" icon={Package} label="Мої замовлення" protectedLink />
-                                    <SidebarLink to="/cart" icon={ShoppingCart} label="Кошик" count={cartItems.length} />
+                                    {renderLink({ to: "/my-orders", icon: Package, label: "Мої замовлення", protectedLink: true })}
+                                    {renderLink({ to: "/cart", icon: ShoppingCart, label: "Кошик", count: cartItems.length })}
                                 </>
                             )}
                             <div className="nav-separator" />
                             {user ? (
-                                <SidebarLink to="/support" icon={HelpCircle} label="Підтримка" />
+                                renderLink({ to: "/support", icon: HelpCircle, label: "Підтримка" })
                             ) : (
-                                <SidebarLink to="/rules" icon={Shield} label="Правила" />
+                                renderLink({ to: "/rules", icon: Shield, label: "Правила" })
                             )}
                         </>
                     )}

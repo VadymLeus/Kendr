@@ -13,11 +13,13 @@ import OverviewTab from '../features/overview/OverviewTab';
 import DashboardHeader from '../components/DashboardHeader';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
+import { Button } from '../../../shared/ui/elements/Button';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
 import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, handleDrop } from '../../editor/core/blockUtils';
 import PagesManagerModal from '../features/settings/PagesManagerModal';
-import { Lock } from 'lucide-react';
+import { Lock, Monitor } from 'lucide-react';
+
 const useDragAutoScroll = (ref, isEnabled) => {
     useEffect(() => {
         const container = ref.current;
@@ -73,13 +75,34 @@ const SiteDashboardPage = () => {
         const saved = localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
         return saved === 'pages' ? 'editor' : saved;
     });
-    
     const [viewMode, setViewMode] = useState('editor');
     const [isReadOnly, setIsReadOnly] = useState(false);
     const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
     const pcScrollRef = useRef(null);
     useDragAutoScroll(pcScrollRef, activeTab === 'editor');
-    
+    const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth <= 768);
+    useEffect(() => {
+        let timeoutId;
+        const handleResize = () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                setIsMobileScreen(window.innerWidth <= 768);
+            }, 100);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            clearTimeout(timeoutId);
+        };
+    }, []);
+    useEffect(() => {
+        if (isMobileScreen) {
+            if (activeTab !== 'editor' && activeTab !== 'settings') {
+                setActiveTab('settings');
+            }
+        }
+    }, [isMobileScreen, activeTab]);
+
     useEffect(() => {
         if (siteData && siteData.site_path && siteData.site_path !== site_path) {
             navigate(`/dashboard/${siteData.site_path}`, { replace: true });
@@ -149,7 +172,6 @@ const SiteDashboardPage = () => {
             localStorage.setItem(key, JSON.stringify(collapsedBlocks));
         }
     }, [collapsedBlocks, site_path, currentPageId]);
-    
     const [isSaving, setIsSaving] = useState(false);
     const [isThemeSaving, setIsThemeSaving] = useState(false);
     const [componentsSaving, setComponentsSaving] = useState({
@@ -389,7 +411,6 @@ const SiteDashboardPage = () => {
         try {
             const updateData = {};
             const restrictedKeys = ['site_path', 'title', 'slug', 'status'];
-
             Object.keys(updatedData).forEach(key => {
                 if (updatedData[key] !== siteData[key] && !restrictedKeys.includes(key)) {
                     updateData[key] = updatedData[key];
@@ -487,54 +508,71 @@ const SiteDashboardPage = () => {
             />
             <div className="flex-1 flex overflow-hidden relative">
                 {activeTab === 'editor' && (
-                    <>
-                        <div 
-                            ref={pcScrollRef} 
-                            className={`flex-1 overflow-y-auto ${viewMode !== 'editor' ? 'bg-[#111827]' : 'bg-(--platform-bg)'} transition-colors duration-300`}
-                        >
-                            <div>
-                                {isPageLoading ? (
-                                    <LoadingState layout="component" title="Завантаження сторінки..." className="h-75" />
-                                ) : (
-                                    <div className={isReadOnly ? 'pointer-events-none opacity-80' : ''}>
-                                        <BlockEditor 
-                                            blocks={blocks} 
-                                            siteData={siteData}
-                                            onAddBlock={handleAddBlock}
-                                            onMoveBlock={handleMoveBlock}
-                                            onDropBlock={handleDropBlock}
-                                            onDeleteBlock={handleDeleteBlock}
-                                            onSelectBlock={setSelectedBlockPath}
-                                            selectedBlockPath={selectedBlockPath}
-                                            collapsedBlocks={collapsedBlocks}
-                                            onToggleCollapse={toggleBlockCollapse}
-                                            onBlockSaved={handleBlockSaved}
-                                            viewMode={viewMode}
-                                        />
-                                    </div>
-                                )}
+                    isMobileScreen ? (
+                        <div className="flex-1 flex flex-col items-center justify-center bg-(--platform-bg) p-6 text-center z-10 overflow-y-auto">
+                            <div className="max-w-md w-full flex flex-col items-center bg-(--platform-card-bg) p-8 rounded-2xl border border-(--platform-border-color) shadow-sm">
+                                <div className="w-16 h-16 bg-(--platform-bg) rounded-full flex items-center justify-center mb-6 shadow-inner border border-(--platform-border-color)">
+                                    <Monitor size={32} className="text-(--platform-text-secondary)" />
+                                </div>
+                                <h2 className="text-xl md:text-2xl font-bold text-(--platform-text-primary) mb-3">Редактор недоступний</h2>
+                                <p className="text-sm text-(--platform-text-secondary) mb-8 leading-relaxed">
+                                    Для доступу до візуального конструктора сайтів необхідний пристрій з більшим екраном. Будь ласка, відкрийте Kendr на комп'ютері або планшеті.
+                                </p>
+                                <Button variant="primary" onClick={() => setActiveTab('settings')} className="w-full justify-center">
+                                    Перейти до налаштувань
+                                </Button>
                             </div>
                         </div>
-                        {viewMode === 'editor' && (
-                            <div className={isReadOnly ? 'pointer-events-none opacity-50 grayscale' : ''}>
-                                <EditorSidebar
-                                    blocks={blocks}
-                                    siteData={siteData}
-                                    onMoveBlock={handleMoveBlock}
-                                    onDeleteBlock={handleDeleteBlock}
-                                    selectedBlockPath={selectedBlockPath}
-                                    onSelectBlock={setSelectedBlockPath}
-                                    onUpdateBlockData={handleUpdateBlockData}
-                                    onAddBlock={handleAddBlock}
-                                    allPages={allPages}
-                                    currentPageId={currentPageId}
-                                    onSelectPage={(id) => handleEditPage(id)}
-                                    savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
-                                    onOpenPagesManager={() => setIsPagesManagerOpen(true)}
-                                />
+                    ) : (
+                        <>
+                            <div 
+                                ref={pcScrollRef} 
+                                className={`flex-1 overflow-y-auto ${viewMode !== 'editor' ? 'bg-[#111827]' : 'bg-(--platform-bg)'} transition-colors duration-300`}
+                            >
+                                <div>
+                                    {isPageLoading ? (
+                                        <LoadingState layout="component" title="Завантаження сторінки..." className="h-75" />
+                                    ) : (
+                                        <div className={isReadOnly ? 'pointer-events-none opacity-80' : ''}>
+                                            <BlockEditor 
+                                                blocks={blocks} 
+                                                siteData={siteData}
+                                                onAddBlock={handleAddBlock}
+                                                onMoveBlock={handleMoveBlock}
+                                                onDropBlock={handleDropBlock}
+                                                onDeleteBlock={handleDeleteBlock}
+                                                onSelectBlock={setSelectedBlockPath}
+                                                selectedBlockPath={selectedBlockPath}
+                                                collapsedBlocks={collapsedBlocks}
+                                                onToggleCollapse={toggleBlockCollapse}
+                                                onBlockSaved={handleBlockSaved}
+                                                viewMode={viewMode}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </>
+                            {viewMode === 'editor' && (
+                                <div className={isReadOnly ? 'pointer-events-none opacity-50 grayscale' : ''}>
+                                    <EditorSidebar
+                                        blocks={blocks}
+                                        siteData={siteData}
+                                        onMoveBlock={handleMoveBlock}
+                                        onDeleteBlock={handleDeleteBlock}
+                                        selectedBlockPath={selectedBlockPath}
+                                        onSelectBlock={setSelectedBlockPath}
+                                        onUpdateBlockData={handleUpdateBlockData}
+                                        onAddBlock={handleAddBlock}
+                                        allPages={allPages}
+                                        currentPageId={currentPageId}
+                                        onSelectPage={(id) => handleEditPage(id)}
+                                        savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
+                                        onOpenPagesManager={() => setIsPagesManagerOpen(true)}
+                                    />
+                                </div>
+                            )}
+                        </>
+                    )
                 )}
                 {activeTab !== 'editor' && (
                     <div 

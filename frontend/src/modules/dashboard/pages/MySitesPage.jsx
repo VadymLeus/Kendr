@@ -41,6 +41,7 @@ const MySitesPage = () => {
         apiClient.get('/sites/catalog', { params: { scope: 'my' } })
             .then(res => setTotalSiteCount(Array.isArray(res.data) ? res.data.length : 0))
             .catch(console.error);
+            
         apiClient.get('/media/limits')
             .then(res => setLimits(res.data))
             .catch(console.error);
@@ -54,12 +55,10 @@ const MySitesPage = () => {
             if (Array.isArray(response.data)) {
                 setSites(response.data);
             } else {
-                console.error("API Error: Expected array of sites, got:", response.data);
                 setSites([]);
             }
             setVisibleCount(ITEMS_PER_PAGE);
         } catch (err) { 
-            console.error(err);
             toast.error('Не вдалося завантажити ваші сайти.'); 
             setSites([]);
         } finally { 
@@ -74,7 +73,11 @@ const MySitesPage = () => {
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm, selectedTag, sortOption, user]);
 
-    const handleSearchSubmit = () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); fetchMySites(); };
+    const handleSearchSubmit = () => { 
+        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); 
+        fetchMySites(); 
+    };
+    
     const handleLoadMore = () => setVisibleCount(prev => prev + ITEMS_PER_PAGE);
     const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const handleDeleteSite = async (e, sitePath, siteTitle) => {
@@ -98,7 +101,6 @@ const MySitesPage = () => {
             else if (newStatus === 'published') toast.success('Сайт опубліковано');
             else toast.success('Сайт переведено в режим обслуговування');
         } catch (err) { 
-            console.error(err);
             if (err.response && err.response.status === 403) {
                  toast.error(err.response.data.message);
             } else {
@@ -122,27 +124,40 @@ const MySitesPage = () => {
     const maxSites = isPlanAdmin ? '∞' : (limits ? limits.maxSites : '...');
     const isLimitReached = !isPlanAdmin && limits && totalSiteCount >= limits.maxSites;
     return (
-        <div className="-m-8 w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)">
-            <div className="sticky top-0 z-50 bg-(--platform-bg)">
-                <div className="px-6 py-3 flex justify-center items-center border-b border-(--platform-border-color) h-15 shrink-0 relative bg-(--platform-bg)">
-                    <div className="text-center flex items-center gap-3">
-                        <h1 className="text-xl font-bold m-0 text-(--platform-text-primary)">Мої Сайти</h1>
+        <div className="-m-4 sm:-m-8 w-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)">
+            <div className="sticky top-0 z-50 bg-(--platform-bg) shadow-sm border-b border-(--platform-border-color)">
+                <div className="p-4 sm:px-6 sm:py-3 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 border-b border-(--platform-border-color) bg-(--platform-bg)">
+                    <div className="w-full sm:w-1/3 flex justify-center sm:justify-start shrink-0">
                         <div 
-                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition-colors
+                            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors
                                 ${isLimitReached 
-                                    ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/10 dark:text-red-400 dark:border-red-800/30' 
-                                    : 'bg-(--platform-card-bg) text-(--platform-text-secondary) border-(--platform-border-color)'}`}
+                                    ? 'bg-[color-mix(in_srgb,var(--platform-danger),transparent_90%)] text-(--platform-danger) border-[color-mix(in_srgb,var(--platform-danger),transparent_70%)]' 
+                                    : 'bg-(--platform-card-bg) text-(--platform-text-secondary) border-(--platform-border-color)'
+                                }
+                            `}
                             title={isLimitReached ? "Ліміт сайтів вичерпано" : "Створені сайти"}
                         >
-                            <Globe size={12} />
-                            {totalSiteCount} / {maxSites}
+                            <Globe size={16} className="shrink-0" />
+                            <span>Сайти: {totalSiteCount} / {maxSites}</span>
                         </div>
                     </div>
-                    <Link to="/create-site" className="absolute right-6 no-underline" onClick={(e) => isLimitReached && e.preventDefault()}>
-                        <Button variant="primary" disabled={isLimitReached} title={isLimitReached ? "Ліміт сайтів вичерпано" : ""}>
-                            <Plus size={18} /> Створити новий
-                        </Button>
-                    </Link>
+                    <div className="w-full sm:w-1/3 flex justify-center shrink-0">
+                        <h1 className="text-lg sm:text-xl font-bold m-0 text-(--platform-text-primary)">
+                            Мої Сайти
+                        </h1>
+                    </div>
+                    <div className="w-full sm:w-1/3 flex justify-center sm:justify-end shrink-0">
+                        <Link to="/create-site" className="w-full sm:w-auto no-underline" onClick={(e) => isLimitReached && e.preventDefault()}>
+                            <Button 
+                                variant="primary" 
+                                disabled={isLimitReached} 
+                                title={isLimitReached ? "Ліміт сайтів вичерпано" : ""}
+                                className="w-full sm:w-auto h-10 shadow-sm"
+                            >
+                                <Plus size={18} className="shrink-0 mr-1.5" /> Створити новий
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
                 <SiteFilters 
                     searchTerm={searchTerm} 
@@ -160,7 +175,7 @@ const MySitesPage = () => {
                     starTitle="Тільки закріплені"
                 />
             </div>
-            <div className="flex-1 p-6 relative">
+            <div className="flex-1 p-4 sm:p-6 relative bg-(--platform-bg)">
                 {loading ? (
                     <LoadingState layout="page" />
                 ) : filteredSites.length === 0 ? (
@@ -174,15 +189,17 @@ const MySitesPage = () => {
                                     Очистити фільтри
                                 </Button>
                             ) : (
-                                <Link to="/create-site" className="no-underline" onClick={(e) => isLimitReached && e.preventDefault()}>
-                                    <Button variant="outline" disabled={isLimitReached}><Plus size={16} /> Створити сайт</Button>
+                                <Link to="/create-site" className="no-underline w-full sm:w-auto" onClick={(e) => isLimitReached && e.preventDefault()}>
+                                    <Button variant="outline" disabled={isLimitReached} className="w-full sm:w-auto">
+                                        <Plus size={16} className="mr-1.5" /> Створити сайт
+                                    </Button>
                                 </Link>
                             )
                         }
                     />
                 ) : (
                     <>
-                        <div className="grid gap-5 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+                        <div className="grid gap-4 sm:gap-5 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                             {visibleSites.map(site => (
                                 <SiteGridCard 
                                     key={site.id} site={site} variant="owner"
@@ -194,8 +211,8 @@ const MySitesPage = () => {
                             ))}
                         </div>
                         {filteredSites.length > visibleCount && (
-                            <div className="text-center mt-8">
-                                <Button variant="outline" onClick={handleLoadMore}>
+                            <div className="text-center mt-8 pb-6">
+                                <Button variant="outline" onClick={handleLoadMore} className="rounded-full px-6">
                                     Показати ще ({filteredSites.length - visibleCount})
                                 </Button>
                             </div>

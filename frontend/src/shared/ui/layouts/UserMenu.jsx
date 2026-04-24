@@ -18,17 +18,17 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
     return (
         <>
             <div className="w-full">
-                <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between gap-1'}`}>
+                <div className={`flex items-center w-full ${isCollapsed ? 'justify-center' : 'justify-between gap-1 sm:gap-2'}`}>
                     <Link 
                         to={profileLink} 
                         className={`flex items-center group rounded-lg hover:bg-(--platform-hover-bg) transition-colors ${
-                            isCollapsed ? 'justify-center p-2' : 'gap-3 flex-1 min-w-0 p-2'
+                            isCollapsed ? 'justify-center p-2' : 'justify-center sm:justify-start gap-3 flex-1 min-w-0 p-2'
                         }`} 
                         title={profileTitle}
                     >
                         <Avatar url={user.avatar_url} name={user.username} size={isCollapsed ? 36 : 38} />
                         {!isCollapsed && (
-                            <div className="flex flex-col truncate">
+                            <div className="hidden sm:flex flex-col truncate">
                                 <span className="text-sm font-medium text-(--platform-text-primary) truncate group-hover:text-(--platform-accent) transition-colors">
                                     {user.username}
                                 </span>
@@ -39,20 +39,20 @@ const UserMenu = ({ isCollapsed, customSubtitle = null }) => {
                         )}
                     </Link>
                     {!isCollapsed && (
-                        <div className="flex flex-col gap-1 pl-1 border-l border-(--platform-border-color)">
+                        <div className="flex flex-row sm:flex-col items-center gap-2 sm:gap-1 pr-2 sm:pr-0 sm:pl-1 sm:border-l sm:border-(--platform-border-color)">
                             <button 
                                 onClick={() => navigate('/settings')}
-                                className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-(--platform-hover-bg) rounded-md transition-all"
+                                className="flex items-center justify-center p-2.5 sm:p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) bg-(--platform-card-bg) sm:bg-transparent border border-(--platform-border-color) sm:border-transparent rounded-lg sm:rounded-md transition-all sm:hover:bg-(--platform-hover-bg)"
                                 title="Налаштування"
                             >
-                                <Settings size={16} />
+                                <Settings className="w-5 h-5 sm:w-4 sm:h-4" />
                             </button>
                             <button 
                                 onClick={() => setShowModal(true)}
-                                className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-danger) hover:bg-(--platform-hover-bg) rounded-md transition-all"
+                                className="flex items-center justify-center p-2.5 sm:p-1.5 text-(--platform-text-secondary) hover:text-(--platform-danger) bg-(--platform-card-bg) sm:bg-transparent border border-(--platform-border-color) sm:border-transparent rounded-lg sm:rounded-md transition-all sm:hover:bg-(--platform-hover-bg)"
                                 title="Вийти"
                             >
-                                <LogOut size={16} />
+                                <LogOut className="w-5 h-5 sm:w-4 sm:h-4" />
                             </button>
                         </div>
                     )}

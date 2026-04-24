@@ -25,60 +25,53 @@ const SettingsPage = () => {
     }, [activeTab]);
 
     const tabs = [
-        { id: 'general', label: 'Загальні', icon: <User size={18} className="md:w-4 md:h-4" /> },
-        { id: 'security', label: 'Безпека', icon: <Shield size={18} className="md:w-4 md:h-4" /> },
-        ...(isStaff ? [] : [{ id: 'public', label: 'Публічність', icon: <Globe size={18} className="md:w-4 md:h-4" /> }]),
-        { id: 'appearance', label: 'Вигляд', icon: <Palette size={18} className="md:w-4 md:h-4" /> },
+        { id: 'general', label: 'Загальні', icon: <User /> },
+        { id: 'security', label: 'Безпека', icon: <Shield /> },
+        ...(isStaff ? [] : [{ id: 'public', label: 'Публічність', icon: <Globe /> }]),
+        { id: 'appearance', label: 'Вигляд', icon: <Palette /> },
     ];
 
     return (
-        <div className="flex flex-col -m-6 md:-m-8 min-h-[calc(100%+3rem)] md:min-h-[calc(100%+4rem)]">
-            <header className="shrink-0 bg-(--platform-card-bg) border-b border-(--platform-border-color) sticky top-0 z-20 flex flex-col md:flex-row items-center justify-between px-4 md:px-6 py-3 md:py-0 min-h-18 md:min-h-16 gap-4 md:gap-0 shadow-sm md:shadow-none">
-                <div className="relative flex items-center justify-center w-full md:w-auto md:flex-1 md:justify-start min-h-11 md:min-h-auto">
-                    <h1 className="text-xl font-bold text-(--platform-text-primary) m-0 leading-none text-center w-full md:text-left md:w-auto">
-                        Налаштування
-                    </h1>
-                    {user && !isStaff && (
-                        <Link 
-                            to={`/profile/${user.slug}`} 
-                            target="_blank"
-                            className="md:hidden absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center w-11 h-11 rounded-xl bg-(--platform-accent) text-white no-underline shadow-sm transition-opacity hover:opacity-90"
-                        >
-                            <ExternalLink size={20} />
-                        </Link>
-                    )}
-                </div>
-                <div className="w-full md:w-auto flex justify-start md:justify-center overflow-x-auto hide-scrollbar pb-1 md:pb-0">
-                    <nav className="flex items-center gap-1 md:gap-1.5 p-1.5 md:p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) min-w-max mx-auto shadow-inner">
+        <div className="-m-4 sm:-m-8 w-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)"> 
+            <header className="sticky top-0 z-50 bg-(--platform-card-bg) border-b border-(--platform-border-color) h-(--header-height,60px) px-4 sm:px-6 flex items-center justify-between gap-4 transition-colors duration-300">
+                <div className="flex-1 min-w-0"></div>
+                <div className="flex-initial flex justify-center min-w-0">
+                    <nav className="flex bg-(--platform-bg) p-1 rounded-lg gap-1 border border-(--platform-border-color) overflow-hidden shadow-sm">
                         {tabs.map(tab => {
                             const isActive = activeTab === tab.id;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center justify-center gap-2 md:gap-1.5 px-4 md:px-4 py-2.5 md:py-1.5 rounded-lg text-sm font-medium transition-all border-none cursor-pointer whitespace-nowrap min-h-11 md:min-h-9 ${
-                                        isActive 
-                                            ? 'bg-(--platform-card-bg) text-(--platform-accent) shadow-[0_1px_3px_rgba(0,0,0,0.1)]' 
+                                    className={`
+                                        flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium border-none cursor-pointer transition-all duration-200 min-h-8 sm:min-h-9 whitespace-nowrap outline-none
+                                        ${isActive 
+                                            ? 'bg-(--platform-card-bg) text-(--platform-accent) shadow-[0_1px_3px_rgba(0,0,0,0.1)] font-semibold' 
                                             : 'bg-transparent text-(--platform-text-secondary) hover:bg-(--platform-hover-bg) hover:text-(--platform-text-primary)'
-                                    }`}
+                                        }
+                                    `}
                                     title={tab.label}
                                 >
-                                    <span className="flex items-center justify-center">{tab.icon}</span>
-                                    <span className="hidden sm:inline-block mt-px">{tab.label}</span>
+                                    <span className="flex items-center justify-center w-4 h-4 sm:w-4.5 sm:h-4.5 shrink-0">
+                                        {React.cloneElement(tab.icon, { 
+                                            className: 'w-full h-full fill-none stroke-current stroke-2' 
+                                        })}
+                                    </span>
+                                    <span className="hidden xl:inline-block mt-px">{tab.label}</span>
                                 </button>
-                            )
+                            );
                         })}
                     </nav>
                 </div>
-                <div className="hidden md:flex items-center justify-end md:flex-1">
+                <div className="flex-1 flex items-center justify-end min-w-0 gap-2">
                     {user && !isStaff && (
                         <Link 
                             to={`/profile/${user.slug}`} 
                             target="_blank"
-                            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-(--platform-accent) hover:opacity-90 text-white text-sm font-medium no-underline transition-opacity shadow-sm"
+                            title="Мій профіль"
+                            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-secondary) hover:bg-(--platform-card-bg) hover:text-(--platform-accent) hover:border-(--platform-accent) transition-all no-underline shrink-0"
                         >
-                            <span className="hidden lg:inline-block">Мій профіль</span>
-                            <ExternalLink size={16} />
+                            <ExternalLink className="w-4 h-4 sm:w-4.5 sm:h-4.5 shrink-0" />
                         </Link>
                     )}
                 </div>
@@ -101,12 +94,23 @@ const SettingsPage = () => {
                 .animate-fade-in-up {
                     animation: fadeInUp 0.3s ease-in-out;
                 }
-                .hide-scrollbar::-webkit-scrollbar {
-                    display: none;
+                @media (max-width: 1100px) {
+                    .xl\\:inline-block {
+                        display: none !important;
+                    }
                 }
-                .hide-scrollbar {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
+                @media (max-width: 768px) {
+                    .sticky {
+                        height: 56px;
+                        padding: 0 12px;
+                        gap: 8px;
+                    }
+                }
+                @media (max-width: 480px) {
+                    .sticky {
+                        padding: 0 8px;
+                        gap: 4px;
+                    }
                 }
             `}</style>
         </div>

@@ -230,9 +230,109 @@ const CartPage = () => {
         if (targetPath.startsWith('http')) return targetPath;
         return `${BASE_URL}${targetPath.startsWith('/') ? targetPath : `/${targetPath}`}`;
     };
+    const renderCheckoutForm = () => {
+        if (!activeGroup) return null;
+        return (
+            <form onSubmit={handleCheckout} className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-5 sm:p-6 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-(--platform-accent)" />
+                <h3 className="text-lg font-bold mb-1 text-(--platform-text-primary)">
+                    Оформлення замовлення
+                </h3>
+                <p className="text-sm text-(--platform-text-secondary) mb-5 pb-4 border-b border-(--platform-border-color)">
+                    Для магазину: <span className="font-semibold text-(--platform-text-primary)">{activeGroup.siteName}</span>
+                </p>
+                <div className="space-y-4 mb-6">
+                    <Input 
+                        label="ПІБ отримувача"
+                        leftIcon={<User size={18}/>}
+                        placeholder="Прізвище та ім'я"
+                        value={customerData.name}
+                        onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
+                        required
+                    />
+                    <Input 
+                        label="Email"
+                        leftIcon={<Mail size={18}/>}
+                        type="email"
+                        value={customerData.email}
+                        disabled={true} 
+                        helperText={activeGroup.isDigitalOnly ? "Сюди ми надішлемо доступ" : "Для отримання чеку"}
+                    />
+                    <Input 
+                        label="Телефон"
+                        leftIcon={<Phone size={18}/>}
+                        type="tel"
+                        placeholder="+380..."
+                        value={customerData.phone}
+                        onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
+                        required
+                    />
+                    {!activeGroup.isDigitalOnly && (
+                        <Input 
+                            label="Адреса доставки"
+                            leftIcon={<MapPin size={18}/>}
+                            placeholder="Місто, номер відділення НП"
+                            value={customerData.address}
+                            onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
+                            required
+                        />
+                    )}
+                </div>
+                <div className="space-y-3 pt-4 border-t border-(--platform-border-color)">
+                    <div className="flex justify-between text-sm text-(--platform-text-secondary)">
+                        <span>Товари ({activeGroup.items.length}):</span>
+                        <span>{activeGroup.totalOriginal.toFixed(0)} {activeGroup.currencySymbol}</span>
+                    </div>
+                    {activeGroup.totalDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-green-500 font-medium">
+                            <span>Знижка:</span>
+                            <span>-{activeGroup.totalDiscount.toFixed(0)} {activeGroup.currencySymbol}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between text-2xl font-bold text-(--platform-text-primary) pt-2">
+                        <span>До сплати:</span>
+                        <span>{activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</span>
+                    </div>
+                </div>
+                <div className={`mt-5 p-3 rounded-lg flex gap-3 text-xs leading-relaxed ${activeGroup.isDigitalOnly ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>
+                    <AlertCircle className="shrink-0 mt-0.5" size={16} />
+                    <span>
+                        {activeGroup.isDigitalOnly 
+                            ? "Доставка не потрібна. Товар цифровий." 
+                            : "Доставка здійснюється поштою. Оплата доставки при отриманні."}
+                    </span>
+                </div>
+                <Button 
+                    type="submit" 
+                    className="w-full mt-6 h-14 text-lg font-bold bg-orange-600 hover:bg-orange-700 text-white border-none shadow-md transition-colors"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <><Loader2 className="animate-spin mr-2" /> Обробка...</>
+                    ) : (
+                        <><CreditCard className="mr-2" /> Оплатити {activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</>
+                    )}
+                </Button>
+            </form>
+        );
+    };
+
+    const renderEmptyFormState = () => (
+        <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-8 text-center shadow-sm">
+            <Store size={48} className="mx-auto text-(--platform-text-secondary) opacity-30 mb-4" />
+            <h3 className="text-lg font-bold text-(--platform-text-primary) mb-2">
+                Виберіть магазин
+            </h3>
+            <p className="text-(--platform-text-secondary) text-sm">
+                Клацніть на блок з товарами ліворуч, щоб розпочати оформлення замовлення
+            </p>
+        </div>
+    );
+
     if (!isLoaded || isRedirecting) {
         return <LoadingState layout="page" />;
     }
+
     return (
         <>
             <div className="p-4 md:p-8 max-w-5xl mx-auto w-full h-full flex flex-col">
@@ -248,6 +348,7 @@ const CartPage = () => {
                         </p>
                     )}
                 </div>
+                
                 {cartItems.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center min-h-[60vh]">
                         <EmptyState 
@@ -257,7 +358,7 @@ const CartPage = () => {
                         />
                     </div>
                 ) : (
-                    <div className="grid lg:grid-cols-12 gap-8 items-start">
+                    <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
                         <div className="lg:col-span-8 space-y-6">
                             {groupedItems.map((group) => {
                                 const isActive = activeSiteId === group.siteId;
@@ -274,201 +375,118 @@ const CartPage = () => {
                                         {isActive && (
                                             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-(--platform-accent) z-10" />
                                         )}
-                                        <div className="px-6 py-4 border-b border-(--platform-border-color) flex items-center justify-between bg-black/5">
-                                            <div className="flex items-center gap-3">
-                                                <Store size={20} className={isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'} />
+                                        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-(--platform-border-color) flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 bg-black/5">
+                                            <div className="flex items-center gap-2 sm:gap-3">
+                                                <Store size={20} className={`shrink-0 ${isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'}`} />
                                                 <Link 
                                                     to={`/site/${group.sitePath}`}
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className={`text-base font-bold uppercase tracking-wider hover:underline ${isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-primary)'}`}
+                                                    className={`text-sm sm:text-base font-bold uppercase tracking-wider hover:underline truncate max-w-55 sm:max-w-75 ${isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-primary)'}`}
                                                     title="Перейти на сайт магазину"
                                                 >
                                                     {group.siteName}
                                                 </Link>
                                             </div>
                                             {isActive && (
-                                                <div className="flex items-center gap-1.5 text-xs font-semibold text-(--platform-accent) bg-(--platform-accent)/10 px-3 py-1 rounded-full">
+                                                <div className="self-start sm:self-auto flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-(--platform-accent) bg-(--platform-accent)/10 px-2.5 py-1 rounded-full">
                                                     <CheckCircle2 size={14} /> Вибрано для оплати
                                                 </div>
                                             )}
                                         </div>
                                         <div className="divide-y divide-(--platform-border-color)">
                                             {group.items.map((item) => (
-                                                <div key={item.cartItemId} className="p-6 flex flex-col sm:flex-row gap-5 items-center sm:items-start transition-colors">
-                                                    <div className="w-24 h-24 bg-(--platform-bg) rounded-lg border border-(--platform-border-color) overflow-hidden shrink-0 flex items-center justify-center">
-                                                        <img src={getImageUrl(item)} alt={item.name} className="w-full h-full object-contain p-2" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0 w-full">
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <Link 
-                                                                to={`/site/${group.sitePath}/product/${item.id}`} 
-                                                                onClick={(e) => e.stopPropagation()} 
-                                                                className="text-lg font-bold text-(--platform-text-primary) hover:text-(--platform-accent) transition-colors"
-                                                            >
-                                                                {item.name}
-                                                            </Link>
-                                                            {item.type === 'digital' && (
-                                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-(--platform-bg)/90 backdrop-blur-md rounded-lg text-[0.7rem] uppercase tracking-wider font-bold shadow-sm border border-(--platform-border-color) text-(--platform-accent) align-middle">
-                                                                    <Download size={12}/> Цифровий
-                                                                </span>
-                                                            )}
+                                                <div key={item.cartItemId} className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-5 items-start transition-colors">
+                                                    <div className="flex gap-4 w-full sm:w-auto sm:flex-1 min-w-0">
+                                                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--platform-bg) rounded-lg border border-(--platform-border-color) overflow-hidden shrink-0 flex items-center justify-center">
+                                                            <img src={getImageUrl(item)} alt={item.name} className="w-full h-full object-contain p-1.5 sm:p-2" />
                                                         </div>
-                                                        <div className="mt-2 flex flex-wrap gap-2">
-                                                            {item.type !== 'digital' && item.selectedOptions && Object.entries(item.selectedOptions).map(([k, v]) => (
-                                                                <span key={k} className="text-xs px-2 py-1 rounded bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary)">
-                                                                    {k}: <span className="font-semibold text-(--platform-text-primary)">{v}</span>
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                        <div className="mt-4 flex items-center">
-                                                            <div className="flex items-center bg-(--platform-bg) border border-(--platform-border-color) rounded-lg p-1" onClick={e => e.stopPropagation()}>
-                                                                <button 
-                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30 cursor-pointer"
-                                                                    onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity - 1); }}
-                                                                    disabled={item.quantity <= 1}
-                                                                    type="button"
+                                                        <div className="flex-1 min-w-0 flex flex-col justify-center sm:justify-start">
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <Link 
+                                                                    to={`/site/${group.sitePath}/product/${item.id}`} 
+                                                                    onClick={(e) => e.stopPropagation()} 
+                                                                    className="text-base sm:text-lg font-bold text-(--platform-text-primary) hover:text-(--platform-accent) transition-colors leading-tight"
                                                                 >
-                                                                    <Minus size={16} />
-                                                                </button>
-                                                                <span className="w-10 text-center font-bold text-(--platform-text-primary)">{item.quantity}</span>
-                                                                <button 
-                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30 cursor-pointer"
-                                                                    onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity + 1); }}
-                                                                    disabled={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity}
-                                                                    type="button"
-                                                                    title={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity ? "Досягнуто ліміту на складі" : ""}
-                                                                >
-                                                                    <Plus size={16} />
-                                                                </button>
+                                                                    {item.name}
+                                                                </Link>
+                                                                {item.type === 'digital' && (
+                                                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-(--platform-bg)/90 backdrop-blur-md rounded-lg text-[0.65rem] uppercase tracking-wider font-bold shadow-sm border border-(--platform-border-color) text-(--platform-accent)">
+                                                                        <Download size={10}/> Цифровий
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                                                {item.type !== 'digital' && item.selectedOptions && Object.entries(item.selectedOptions).map(([k, v]) => (
+                                                                    <span key={k} className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary)">
+                                                                        {k}: <span className="font-semibold text-(--platform-text-primary)">{v}</span>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                            <div className="mt-3 sm:mt-4 flex items-center">
+                                                                <div className="flex items-center bg-(--platform-bg) border border-(--platform-border-color) rounded-lg p-0.5 sm:p-1" onClick={e => e.stopPropagation()}>
+                                                                    <button 
+                                                                        className="p-1 sm:p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30 cursor-pointer"
+                                                                        onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity - 1); }}
+                                                                        disabled={item.quantity <= 1}
+                                                                        type="button"
+                                                                    >
+                                                                        <Minus size={14} className="sm:w-4 sm:h-4" />
+                                                                    </button>
+                                                                    <span className="w-8 sm:w-10 text-center font-bold text-sm sm:text-base text-(--platform-text-primary)">{item.quantity}</span>
+                                                                    <button 
+                                                                        className="p-1 sm:p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30 cursor-pointer"
+                                                                        onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity + 1); }}
+                                                                        disabled={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity}
+                                                                        type="button"
+                                                                        title={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity ? "Досягнуто ліміту на складі" : ""}
+                                                                    >
+                                                                        <Plus size={14} className="sm:w-4 sm:h-4" />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="shrink-0 min-w-28 w-full sm:w-auto border-t sm:border-t-0 pt-4 sm:pt-0 sm:pl-4 border-(--platform-border-color) flex flex-row sm:flex-col justify-between items-center sm:items-end gap-2 h-full">
+                                                    <div className="shrink-0 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 sm:pl-4 border-(--platform-border-color) flex flex-row sm:flex-col justify-between items-center sm:items-end gap-2 h-full mt-1 sm:mt-0">
                                                         <div className="text-left sm:text-right">
                                                             {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
-                                                                <p className="text-xs text-(--platform-text-secondary) line-through m-0">
+                                                                <p className="text-[10px] sm:text-xs text-(--platform-text-secondary) line-through m-0">
                                                                     {(item.originalPrice * item.quantity).toFixed(0)} {group.currencySymbol}
                                                                 </p>
                                                             )}
-                                                            <p className="text-xl font-bold text-(--platform-text-primary) m-0">
+                                                            <p className="text-lg sm:text-xl font-bold text-(--platform-text-primary) m-0">
                                                                 {(item.price * item.quantity).toFixed(0)} {group.currencySymbol}
                                                             </p>
                                                         </div>
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); promptRemoveItem(item); }}
-                                                            className="p-2 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors z-10 relative sm:mt-auto cursor-pointer"
+                                                            className="p-1.5 sm:p-2 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors z-10 cursor-pointer"
                                                             title="Видалити"
                                                             type="button"
                                                         >
-                                                            <Trash2 size={20} />
+                                                            <Trash2 size={18} className="sm:w-5 sm:h-5" />
                                                         </button>
                                                     </div>
+                                                    
                                                 </div>
                                             ))}
                                         </div>
+                                        {isActive && (
+                                            <div className="lg:hidden bg-black/5 border-t border-(--platform-border-color) p-4 sm:p-6">
+                                                {renderCheckoutForm()}
+                                            </div>
+                                        )}
+
                                     </div>
                                 );
                             })}
-                            <div className="pt-4 flex justify-end">
+                            <div className="pt-2 flex justify-end">
                                 <Button variant="ghost" onClick={promptClearCart} className="text-red-500 hover:bg-red-500/10">
                                     Очистити весь кошик
                                 </Button>
                             </div>
                         </div>
-                        <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-                            {activeGroup ? (
-                                <form onSubmit={handleCheckout} className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-6 shadow-lg relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 right-0 h-1 bg-(--platform-accent)" />
-                                    <h3 className="text-lg font-bold mb-1 text-(--platform-text-primary)">
-                                        Оформлення замовлення
-                                    </h3>
-                                    <p className="text-sm text-(--platform-text-secondary) mb-6 pb-4 border-b border-(--platform-border-color)">
-                                        Для магазину: <span className="font-semibold text-(--platform-text-primary)">{activeGroup.siteName}</span>
-                                    </p>
-                                    <div className="space-y-4 mb-6">
-                                        <Input 
-                                            label="ПІБ отримувача"
-                                            leftIcon={<User size={18}/>}
-                                            placeholder="Прізвище та ім'я"
-                                            value={customerData.name}
-                                            onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
-                                            required
-                                        />
-                                        <Input 
-                                            label="Email"
-                                            leftIcon={<Mail size={18}/>}
-                                            type="email"
-                                            value={customerData.email}
-                                            disabled={true} 
-                                            helperText={activeGroup.isDigitalOnly ? "Сюди ми надішлемо доступ" : "Для отримання чеку"}
-                                        />
-                                        <Input 
-                                            label="Телефон"
-                                            leftIcon={<Phone size={18}/>}
-                                            type="tel"
-                                            placeholder="+380..."
-                                            value={customerData.phone}
-                                            onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
-                                            required
-                                        />
-                                        {!activeGroup.isDigitalOnly && (
-                                            <Input 
-                                                label="Адреса доставки"
-                                                leftIcon={<MapPin size={18}/>}
-                                                placeholder="Місто, номер відділення НП"
-                                                value={customerData.address}
-                                                onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
-                                                required
-                                            />
-                                        )}
-                                    </div>
-                                    <div className="space-y-3 pt-4 border-t border-(--platform-border-color)">
-                                        <div className="flex justify-between text-sm text-(--platform-text-secondary)">
-                                            <span>Товари ({activeGroup.items.length}):</span>
-                                            <span>{activeGroup.totalOriginal.toFixed(0)} {activeGroup.currencySymbol}</span>
-                                        </div>
-                                        {activeGroup.totalDiscount > 0 && (
-                                            <div className="flex justify-between text-sm text-green-500 font-medium">
-                                                <span>Знижка:</span>
-                                                <span>-{activeGroup.totalDiscount.toFixed(0)} {activeGroup.currencySymbol}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between text-2xl font-bold text-(--platform-text-primary) pt-2">
-                                            <span>До сплати:</span>
-                                            <span>{activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</span>
-                                        </div>
-                                    </div>
-                                    <div className={`mt-5 p-3 rounded-lg flex gap-3 text-xs leading-relaxed ${activeGroup.isDigitalOnly ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>
-                                        <AlertCircle className="shrink-0 mt-0.5" size={16} />
-                                        <span>
-                                            {activeGroup.isDigitalOnly 
-                                                ? "Доставка не потрібна. Товар цифровий." 
-                                                : "Доставка здійснюється поштою. Оплата доставки при отриманні."}
-                                        </span>
-                                    </div>
-                                    <Button 
-                                        type="submit" 
-                                        className="w-full mt-6 h-14 text-lg font-bold bg-orange-600 hover:bg-orange-700 text-white border-none shadow-md transition-colors"
-                                        disabled={isSubmitting}
-                                    >
-                                        {isSubmitting ? (
-                                            <><Loader2 className="animate-spin mr-2" /> Обробка...</>
-                                        ) : (
-                                            <><CreditCard className="mr-2" /> Оплатити {activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</>
-                                        )}
-                                    </Button>
-                                </form>
-                            ) : (
-                                <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-8 text-center shadow-sm">
-                                    <Store size={48} className="mx-auto text-(--platform-text-secondary) opacity-30 mb-4" />
-                                    <h3 className="text-lg font-bold text-(--platform-text-primary) mb-2">
-                                        Виберіть магазин
-                                    </h3>
-                                    <p className="text-(--platform-text-secondary) text-sm">
-                                        Клацніть на блок з товарами ліворуч, щоб розпочати оформлення замовлення
-                                    </p>
-                                </div>
-                            )}
+                        <div className="hidden lg:block lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+                            {activeGroup ? renderCheckoutForm() : renderEmptyFormState()}
                         </div>
                     </div>
                 )}

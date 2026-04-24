@@ -39,16 +39,16 @@ const GeneralVisualsSection = ({
     const [isCoverHovered, setIsCoverHovered] = useState(false);
     return (
         <>
-            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
-                <div className="mb-6">
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-6 shadow-sm">
+                <div className="mb-5 sm:mb-6">
                     <div>
-                        <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <Tag size={22} className="text-(--platform-accent)" /> SEO та Теги
+                        <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                            <Tag size={20} className="text-(--platform-accent)" /> SEO та Теги
                         </h3>
                     </div>
                 </div>
-                <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2.5">
+                <div className="mb-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3">
                         <label className="font-medium text-(--platform-text-primary) text-sm m-0 flex items-center gap-1.5">
                             <Tag size={16} /> Категорії / Теги 
                             <span className={`text-xs px-1.5 py-0.5 rounded border border-(--platform-border-color) bg-(--platform-bg) ${selectedTags.length >= 5 ? 'text-(--platform-warning)' : 'text-(--platform-text-secondary)'}`}>
@@ -57,15 +57,15 @@ const GeneralVisualsSection = ({
                         </label>
                         <button 
                             type="button" 
-                            className="w-7 h-7 rounded-md border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-secondary) flex items-center justify-center cursor-pointer transition-colors hover:bg-(--platform-danger) hover:border-(--platform-danger) hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full sm:w-8 h-8 rounded-md border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-secondary) flex items-center justify-center cursor-pointer transition-colors hover:bg-(--platform-danger) hover:border-(--platform-danger) hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base gap-2"
                             onClick={() => { setSelectedTags([]); handleChange('tags', []); }} 
                             title="Очистити всі теги" 
                             disabled={selectedTags.length === 0}
                         >
-                            <X size={16} />
+                            <X size={16} /> <span className="sm:hidden">Очистити вибране</span>
                         </button>
                     </div>
-                    <div className="flex flex-wrap gap-2 p-4 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
+                    <div className="flex flex-wrap gap-2 p-3 sm:p-4 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
                         {availableTags.map(tag => {
                             const isActive = selectedTags.includes(tag.id);
                             return ( 
@@ -74,10 +74,10 @@ const GeneralVisualsSection = ({
                                     onClick={() => handleTagToggle(tag.id)} 
                                     type="button" 
                                     className={`
-                                        flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm font-medium cursor-pointer transition-all duration-200 h-8
+                                        flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm font-medium cursor-pointer transition-all duration-200 h-9 sm:h-8
                                         ${isActive 
                                             ? 'border-(--platform-accent) bg-(--platform-accent) text-white' 
-                                            : 'border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-text-primary)'
+                                            : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-text-primary)'
                                         }
                                     `}
                                 >
@@ -88,19 +88,19 @@ const GeneralVisualsSection = ({
                     </div>
                 </div>
             </div>
-            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-6 shadow-sm">
                 <div className="mb-6">
                     <div>
-                        <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <Image size={22} className="text-(--platform-accent)" /> Розумна Обкладинка
+                        <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                            <Image size={20} className="text-(--platform-accent)" /> Розумна Обкладинка
                         </h3>
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
                             Налаштуйте вигляд картки так, як вона виглядатиме в каталозі.
                         </p>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="flex items-center justify-center bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-8 bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat overflow-hidden min-h-75">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                    <div className="flex items-center justify-center bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 sm:p-8 bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat overflow-hidden min-h-62.5 sm:min-h-75">
                         <div className="relative group w-full max-w-110 mx-auto flex justify-center">
                             <div style={{ width: '100%', aspectRatio: '16 / 11', transition: 'all 0.3s' }} className="shadow-2xl rounded-lg overflow-hidden border border-(--platform-border-color) shrink-0">
                                 <UniversalMediaInput 
@@ -135,10 +135,10 @@ const GeneralVisualsSection = ({
                                             <button
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); handleChange('cover_image', ''); }}
-                                                className="absolute top-2 right-2 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center cursor-pointer z-20 transition-colors hover:bg-(--platform-danger) border-none"
+                                                className="absolute top-2 right-2 w-7 h-7 sm:w-6 sm:h-6 bg-black/60 text-white rounded-full flex items-center justify-center cursor-pointer z-20 transition-colors hover:bg-(--platform-danger) border-none"
                                                 title="Видалити зображення"
                                             >
-                                                <Trash size={12} />
+                                                <Trash size={14} className="sm:w-3 sm:h-3" />
                                             </button>
                                         )}
                                     </div>
@@ -178,8 +178,8 @@ const GeneralVisualsSection = ({
             <style>{`
                 input[type=range]::-webkit-slider-thumb {
                     appearance: none;
-                    width: 16px;
-                    height: 16px;
+                    width: 18px;
+                    height: 18px;
                     border-radius: 50%;
                     background: var(--platform-accent);
                     cursor: pointer;
@@ -187,13 +187,17 @@ const GeneralVisualsSection = ({
                     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
                 }
                 input[type=range]::-moz-range-thumb {
-                    width: 16px;
-                    height: 16px;
+                    width: 18px;
+                    height: 18px;
                     border-radius: 50%;
                     background: var(--platform-accent);
                     cursor: pointer;
                     border: 2px solid white;
                     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                }
+                @media (min-width: 640px) {
+                    input[type=range]::-webkit-slider-thumb { width: 16px; height: 16px; }
+                    input[type=range]::-moz-range-thumb { width: 16px; height: 16px; }
                 }
             `}</style>
         </>
