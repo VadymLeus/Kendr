@@ -4,6 +4,7 @@ import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 import { BASE_URL } from '../../../../shared/config';
 import { ArrowRight, ShoppingCart, Mail, Phone, Check, Star, MousePointer2, Download, FileText } from 'lucide-react';
+
 const ButtonIcon = ({ name, size, flip }) => {
     if (!name || name === 'none') return null;
     const s = size === 'large' ? 20 : 18;
@@ -45,6 +46,7 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         height = 'small',
         styles = {}
     } = blockData;
+
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         main: fontFamily
     }, siteData);
@@ -61,9 +63,9 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     };
 
     const sizeClasses = {
-        small: 'px-4 py-2 text-[0.85rem]',
-        medium: 'px-6 py-3 text-base',
-        large: 'px-8 py-4 text-lg'
+        small: 'px-4 py-2 text-sm',
+        medium: 'px-5 py-2.5 @2xl:px-6 @2xl:py-3 text-sm @2xl:text-base',
+        large: 'px-6 py-3 @2xl:px-8 @2xl:py-4 text-base @2xl:text-lg'
     };
 
     const justifyMap = {
@@ -74,15 +76,14 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     
     const justifyContentClass = width === 'full' ? 'justify-stretch' : (justifyMap[alignment] || 'justify-center');
     const safeRadius = parseInt(borderRadius) || 0;
-    const uniqueClass = `btn-scope-${blockData.id || 'preview'}`;
+    const uniqueClass = `btn-scope-${blockData.block_id || blockData.id || 'preview'}`;
     const heightMap = { 
-        small: 'auto', 
-        medium: '250px', 
-        large: '400px', 
-        full: 'calc(100vh - 60px)',
-        auto: 'auto'
+        small: 'min-h-auto', 
+        medium: 'min-h-[150px] @2xl:min-h-[250px]', 
+        large: 'min-h-[250px] @2xl:min-h-[400px]', 
+        full: 'min-h-[calc(100vh-60px)]',
+        auto: 'min-h-auto'
     };
-
     let hrefValue = '#';
     if (link) {
         if (isFile) {
@@ -96,12 +97,13 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     return (
         <div 
             className={`
-                flex w-full items-center bg-(--site-bg) text-(--site-text-primary)
+                flex w-full items-center bg-(--site-bg, transparent) text-(--site-text-primary)
+                px-4 @2xl:px-6 @3xl:px-8
                 ${justifyContentClass}
+                ${heightMap[height] || heightMap.small}
                 ${uniqueClass}
             `}
             style={{ 
-                minHeight: heightMap[height] || 'auto',
                 ...styles,
                 ...style,
                 ...cssVariables 
@@ -110,8 +112,8 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             <RenderFonts />
             <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
             <style>{`
-                .btn-${styleType}-${variant}:hover { opacity: 0.9; transform: translateY(-1px); }
-                .btn-${styleType}-${variant}:active { transform: translateY(0); }
+                .btn-${styleType}-${variant}:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                .btn-${styleType}-${variant}:active { transform: translateY(0); box-shadow: none; }
             `}</style>
             
             <a 
@@ -119,7 +121,7 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 className={`
                     btn-${styleType}-${variant}
                     inline-flex items-center justify-center gap-2 no-underline cursor-pointer font-semibold
-                    transition-all duration-200 ease-out leading-none
+                    transition-all duration-200 ease-out leading-none text-center
                     ${sizeClasses[size || 'medium']}
                 `}
                 target={(targetBlank || isFile) ? '_blank' : '_self'}
@@ -134,13 +136,15 @@ const ButtonBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 }}
             >
                 {iconPosition === 'left' && <ButtonIcon name={effectiveIcon} size={size} flip={iconFlip} />}
-                <span className="flex items-center">
-                    {text}
-                </span>
+                <span>{text}</span>
                 {iconPosition === 'right' && <ButtonIcon name={effectiveIcon} size={size} flip={iconFlip} />}
             </a>
         </div>
     );
 };
 
-export default ButtonBlock;
+export default React.memo(ButtonBlock, (prev, next) => {
+    return JSON.stringify(prev.blockData) === JSON.stringify(next.blockData) && 
+           prev.isEditorPreview === next.isEditorPreview &&
+           prev.siteData?.id === next.siteData?.id;
+});

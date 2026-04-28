@@ -14,7 +14,6 @@ const ButtonSettings = ({ data, onChange, siteData }) => {
             onChange({ ...data, isFile: true, link: '' });
         }
     };
-
     const handleFileChange = (path) => {
         onChange({
             ...data,
@@ -22,7 +21,6 @@ const ButtonSettings = ({ data, onChange, siteData }) => {
             isFile: true
         });
     };
-
     return (
         <div className="pb-5 flex flex-col gap-6">
             <div>
@@ -31,8 +29,8 @@ const ButtonSettings = ({ data, onChange, siteData }) => {
                     <label style={commonStyles.label}>Тип посилання</label>
                     <ToggleGroup 
                         options={[
-                            { value: 'url', label: 'URL / Сторінка', icon: <Link size={14}/> },
-                            { value: 'file', label: 'Файл', icon: <FileText size={14}/> }
+                            { value: 'url', label: 'Посилання', icon: <Link size={16}/> },
+                            { value: 'file', label: 'Файл', icon: <FileText size={16}/> }
                         ]}
                         value={currentMode}
                         onChange={handleModeChange}

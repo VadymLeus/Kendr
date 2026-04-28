@@ -113,6 +113,25 @@ const TextSettings = ({ data, onChange, siteData }) => {
                         siteFonts={currentSiteFonts}
                     />
                 </div>
+                <div className="form-group mt-5">
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="form-label mb-0">Відступ першого рядка</label>
+                        <span className="text-xs font-medium text-(--platform-text-secondary)">
+                            {data.textIndent || 0} px
+                        </span>
+                    </div>
+                    <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        step="1"
+                        value={data.textIndent || 0} 
+                        onChange={(e) => onChange({ ...data, textIndent: parseInt(e.target.value) }, false)}
+                        onMouseUp={(e) => onChange({ ...data, textIndent: parseInt(e.target.value) }, true)}
+                        onTouchEnd={(e) => onChange({ ...data, textIndent: parseInt(e.target.value) }, true)}
+                        className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-(--platform-accent)"
+                    />
+                </div>
             </div>
         </div>
     );

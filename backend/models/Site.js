@@ -17,6 +17,7 @@ class Site {
             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
             s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
             s.is_pinned, s.currency, s.cookie_banner_enabled, s.cookie_banner_text,
+            s.cookie_banner_size, s.cookie_banner_position, s.cookie_banner_blur,
             u.username AS author, u.slug AS author_slug, u.avatar_url AS author_avatar
         FROM sites s
         JOIN users u ON s.user_id = u.id
@@ -26,7 +27,6 @@ class Site {
     if (onlyFavorites && currentUserId) {
         query += ` JOIN user_favorites uf ON s.id = uf.site_id AND uf.user_id = ${db.escape(currentUserId)} `;
     }
-    
     const params = [];
     const conditions = [];
     if (!includeAllStatuses) {
@@ -113,7 +113,8 @@ class Site {
             s.cover_logo_radius,
             s.cover_title_size,
             s.liqpay_public_key, s.liqpay_private_key, s.currency,
-            s.cookie_banner_enabled, s.cookie_banner_text
+            s.cookie_banner_enabled, s.cookie_banner_text,
+            s.cookie_banner_size, s.cookie_banner_position, s.cookie_banner_blur
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
@@ -185,13 +186,16 @@ class Site {
       cover_image, cover_layout, logo_url,
       cover_logo_size, cover_logo_radius, cover_title_size,
       liqpay_public_key, liqpay_private_key, currency,
-      cookie_banner_enabled, cookie_banner_text
+      cookie_banner_enabled, cookie_banner_text,
+      cookie_banner_size, cookie_banner_position, cookie_banner_blur
     } = data;
+    
     const safeStringify = (obj) => {
       if (!obj) return null;
       try { return JSON.stringify(obj); } 
       catch (error) { return null; }
     };
+    
     let safeFaviconUrl = null;
     if (typeof favicon_url === 'string') safeFaviconUrl = favicon_url;
     const params = [
@@ -216,8 +220,12 @@ class Site {
         currency || 'UAH',
         cookie_banner_enabled ? 1 : 0,
         cookie_banner_text || null,
+        cookie_banner_size || 'medium',
+        cookie_banner_position || 'bottom-center',
+        cookie_banner_blur ? 1 : 0,
         siteId
     ];
+
     const query = `
         UPDATE sites 
         SET 
@@ -241,7 +249,10 @@ class Site {
             liqpay_private_key = ?,
             currency = ?,
             cookie_banner_enabled = ?,
-            cookie_banner_text = ?
+            cookie_banner_text = ?,
+            cookie_banner_size = ?,
+            cookie_banner_position = ?,
+            cookie_banner_blur = ?
         WHERE id = ?
     `;
     const [result] = await db.query(query, params);
@@ -308,7 +319,9 @@ class Site {
       SELECT s.id, s.site_path, s.title, s.logo_url, s.status, s.currency,
              s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
              s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
-             s.is_pinned, s.view_count, s.created_at, s.cookie_banner_enabled, s.cookie_banner_text
+             s.is_pinned, s.view_count, s.created_at, 
+             s.cookie_banner_enabled, s.cookie_banner_text,
+             s.cookie_banner_size, s.cookie_banner_position, s.cookie_banner_blur
       FROM sites s 
       WHERE s.user_id = ? 
       ORDER BY s.is_pinned DESC, s.updated_at DESC

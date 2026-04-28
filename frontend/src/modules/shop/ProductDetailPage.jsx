@@ -72,7 +72,6 @@ const ProductDetailPage = () => {
     const isSiteHidden = siteData && siteData.status === 'maintenance' && !isOwner;
     const isSoldOut = product ? product.stock_quantity === 0 : false;
     const headerBlocks = useMemo(() => getGlobalBlocks(siteData?.header_content, 'global-header'), [siteData?.header_content]);
-    const footerBlocks = useMemo(() => getGlobalBlocks(siteData?.footer_content, 'global-footer'), [siteData?.footer_content]);
     const currencyMap = { 'UAH': '₴', 'USD': '$', 'EUR': '€' };
     const siteCurrency = siteData?.currency || 'UAH';
     const currencySymbol = currencyMap[siteCurrency] || '₴';
@@ -89,7 +88,9 @@ const ProductDetailPage = () => {
                 if (!productId) throw new Error("No ID");
                 const response = await apiClient.get(`/products/${productId}`);
                 const prod = response.data;
+                
                 if (!prod || Object.keys(prod).length === 0) throw new Error("Empty product");
+                
                 ['variants', 'image_gallery'].forEach(key => {
                     if (prod[key] && typeof prod[key] === 'string') {
                         try { prod[key] = JSON.parse(prod[key]); } catch (e) { prod[key] = null; }
@@ -104,7 +105,6 @@ const ProductDetailPage = () => {
                     });
                     setSelectedOptions(defaults);
                 }
-                
                 const primaryCategoryId = (prod.categories && prod.categories.length > 0) ? prod.categories[0].id : null;
                 if (prod.site_id) fetchRecommendations(prod.site_id, primaryCategoryId, prod.id);
             } catch (err) {
@@ -178,7 +178,7 @@ const ProductDetailPage = () => {
         if (isDragging && imageScale > 1) {
             const newX = e.clientX - dragStart.x;
             const newY = e.clientY - dragStart.y;
-            const maxDrag = 200;
+            const maxDrag = 200 * imageScale;
             setImagePosition({
                 x: Math.max(Math.min(newX, maxDrag), -maxDrag),
                 y: Math.max(Math.min(newY, maxDrag), -maxDrag)
@@ -191,13 +191,34 @@ const ProductDetailPage = () => {
             const x = e.clientX - left;
             const y = e.clientY - top;
             const factor = imageScale - 1;
-            const maxMove = 150;
+            const maxMove = 150 * imageScale;
             setImagePosition({ 
                 x: Math.max(Math.min((width / 2 - x) * factor, maxMove), -maxMove), 
                 y: Math.max(Math.min((height / 2 - y) * factor, maxMove), -maxMove) 
             });
         }
     }, [isDragging, dragStart, imageScale]);
+
+    const handleTouchStart = (e) => {
+        if (imageScale > 1) {
+            setIsDragging(true);
+            const touch = e.touches[0];
+            setDragStart({ x: touch.clientX - imagePosition.x, y: touch.clientY - imagePosition.y });
+        }
+    };
+
+    const handleTouchMove = (e) => {
+        if (isDragging && imageScale > 1) {
+            const touch = e.touches[0];
+            const newX = touch.clientX - dragStart.x;
+            const newY = touch.clientY - dragStart.y;
+            const maxDrag = 200 * imageScale;
+            setImagePosition({
+                x: Math.max(Math.min(newX, maxDrag), -maxDrag),
+                y: Math.max(Math.min(newY, maxDrag), -maxDrag)
+            });
+        }
+    };
 
     const handleAddToCart = () => {
         if (isStaff) return;
@@ -226,6 +247,7 @@ const ProductDetailPage = () => {
             />
         );
     }
+    
     if (isNotFound || !product || Object.keys(product).length === 0) return <NotFoundPage />;
     const galleryImages = (product.image_gallery && Array.isArray(product.image_gallery) && product.image_gallery.length > 0)
         ? product.image_gallery.map(img => img.startsWith('http') ? img : `${BASE_URL}${img}`)
@@ -238,8 +260,6 @@ const ProductDetailPage = () => {
         '--zoom-info-bg': isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
         '--badge-instock-bg': 'color-mix(in srgb, var(--site-accent), transparent 85%)',
         '--badge-outofstock-bg': 'color-mix(in srgb, var(--platform-danger), transparent 90%)',
-        '--footer-bg': 'var(--site-bg)',
-        '--footer-border': 'var(--site-border-color)',
         color: 'var(--site-text-primary)',
     };
 
@@ -291,12 +311,16 @@ const ProductDetailPage = () => {
                         <div 
                             ref={imageContainerRef}
                             className={`${styles.mainImageBox} ${imageScale > 1 ? (isDragging ? styles.dragging : styles.draggable) : styles.zoomable}`}
+                            style={{ touchAction: imageScale > 1 ? 'none' : 'auto' }}
                             onMouseDown={(e) => { if (imageScale > 1) { setIsDragging(true); setDragStart({ x: e.clientX - imagePosition.x, y: e.clientY - imagePosition.y }); } e.preventDefault(); }}
                             onMouseMove={handleMouseMove}
                             onMouseUp={() => setIsDragging(false)}
-                            onMouseLeave={() => { setIsHovering(false); if(imageScale > 1) handleZoom('reset'); }}
+                            onMouseLeave={() => { setIsHovering(false); if(imageScale > 1) handleZoom('reset'); setIsDragging(false); }}
                             onMouseEnter={() => { setIsHovering(true); if(imageScale === 1) handleZoom('in'); }}
                             onClick={() => imageScale === 1 ? handleZoom('in') : handleZoom('reset')}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={() => setIsDragging(false)}
                         >
                             <img 
                                 src={galleryImages[activeImageIndex]} 
@@ -393,19 +417,13 @@ const ProductDetailPage = () => {
                     </div>
                 )}
             </div>
-            {footerBlocks.length > 0 && (
-                <div className="w-full shrink-0">
-                    <BlockRenderer 
-                        blocks={footerBlocks} 
-                        siteData={siteData} 
-                        isEditorPreview={false} 
-                    />
-                </div>
-            )}
             <CookieBanner 
                 enabled={siteData?.cookie_banner_enabled} 
                 text={siteData?.cookie_banner_text} 
                 siteId={siteData?.id} 
+                size={siteData?.cookie_banner_size}
+                position={siteData?.cookie_banner_position}
+                blur={siteData?.cookie_banner_blur}
             />
         </div>
     );

@@ -7,7 +7,7 @@ exports.saveAsTemplate = async (req, res, next) => {
     try {
         const { siteId, templateName, description, icon, category, thumbnail_url } = req.body;
         const userId = req.user.id;
-        console.log("Saving template:", { siteId, templateName, category, thumbnail_url });
+        
         if (!siteId || !templateName) {
             return res.status(400).json({ message: 'Необхідно вказати ID сайту та назву шаблону.' });
         }
@@ -112,7 +112,7 @@ exports.updateTemplate = async (req, res, next) => {
         const { id } = req.params;
         const { siteId, templateName, description, icon, category, thumbnail_url } = req.body;
         const userId = req.user.id;
-        console.log("Updating template:", { id, templateName, category, thumbnail_url });
+        
         if (!siteId) {
             const [result] = await db.query(
                 `UPDATE templates SET name = ?, description = ?, icon = ?, category = ?, thumbnail_url = ? WHERE id = ? AND user_id = ?`,

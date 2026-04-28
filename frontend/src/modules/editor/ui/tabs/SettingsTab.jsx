@@ -50,25 +50,28 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
             setActiveTab('content');
         }
     }, [isGlobalBlock, activeTab]);
+
     if (!selectedBlock) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-full p-5 text-center text-(--platform-text-secondary)">
+            <div className="flex flex-col items-center justify-center p-5 text-center text-(--platform-text-secondary) min-h-[60vh]">
                 <div className="w-18 h-18 rounded-full bg-(--platform-bg) flex items-center justify-center mb-5 border border-(--platform-border-color) shadow-sm">
                     <MousePointerClick size={32} className="text-(--platform-accent) opacity-90" />
                 </div>
                 <h3 className="text-[1.05rem] font-semibold text-(--platform-text-primary) mb-2">
                     Налаштування блоку
                 </h3>
-                <p className="text-[0.85rem] max-w-60 leading-relaxed">
+                <p className="text-[0.85rem] max-w-60 leading-relaxed mx-auto">
                     Оберіть будь-який блок у редакторі або в списку шарів, щоб змінити його вміст та вигляд.
                 </p>
             </div>
         );
     }
+
     const SettingsComponent = SettingsComponentMap[selectedBlock.type];
     const handleLiveUpdate = (newData, addToHistory = true) => {
         onUpdateBlockData(selectedBlockPath, newData, addToHistory);
     };
+
     const TabButton = ({ id, label, icon: Icon }) => {
         const isActive = activeTab === id;
         return (
@@ -86,8 +89,9 @@ const SettingsTab = ({ blocks, selectedBlockPath, onUpdateBlockData, siteData })
             </button>
         );
     };
+
     return (
-        <div className="min-h-full bg-(--platform-sidebar-bg) pb-20 relative">
+        <div className="min-h-full h-full bg-(--platform-sidebar-bg) pb-20 relative">
             <div className="sticky top-0 z-20 bg-(--platform-sidebar-bg) border-b border-(--platform-border-color)">
                 <div className="p-3 px-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">

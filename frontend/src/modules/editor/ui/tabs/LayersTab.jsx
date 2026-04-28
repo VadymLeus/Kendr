@@ -19,21 +19,23 @@ const LayersTab = ({
             </div>
         )
     }
+    
     if (!blocks || blocks.length === 0) {
         return (
-            <div className="h-full flex flex-col items-center justify-center p-5 text-center text-(--platform-text-secondary)">
+            <div className="flex flex-col items-center justify-center p-5 text-center text-(--platform-text-secondary) min-h-[60vh]">
                 <div className="w-18 h-18 rounded-full bg-(--platform-bg) flex items-center justify-center mb-5 border border-(--platform-border-color) shadow-sm">
                     <Layers size={32} className="text-(--platform-accent) opacity-90" />
                 </div>
                 <h4 className="text-[1.05rem] font-semibold text-(--platform-text-primary) mb-2">
                     Сторінка порожня
                 </h4>
-                <p className="text-sm leading-relaxed max-w-60">
+                <p className="text-sm leading-relaxed max-w-60 mx-auto">
                     Додайте перші блоки з меню "Додати", щоб побачити структуру сторінки.
                 </p>
             </div>
         );
     }
+    
     return (
         <div className="p-4">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-(--platform-border-color)">

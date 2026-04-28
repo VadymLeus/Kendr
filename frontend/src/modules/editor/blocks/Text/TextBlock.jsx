@@ -12,6 +12,7 @@ const TextBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         isItalic = false,
         isUnderline = false,
         height = 'small',
+        textIndent = 0,
         styles = {}
     } = blockData;
     
@@ -20,35 +21,34 @@ const TextBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     }, siteData);
 
     const ValidTag = ['p', 'h1', 'h2', 'h3'].includes(tag) ? tag : 'p';
-    const tagBaseStyles = {
-        h1: { fontSize: '2.5rem', fontWeight: '800', lineHeight: '1.2' },
-        h2: { fontSize: '2rem', fontWeight: '700', lineHeight: '1.3' },
-        h3: { fontSize: '1.5rem', fontWeight: '600', lineHeight: '1.4' },
-        p:  { fontSize: '1rem', fontWeight: '400', lineHeight: '1.6' }
+    const tagClasses = {
+        h1: 'text-4xl @2xl:text-5xl @3xl:text-6xl font-extrabold leading-[1.15] tracking-tight',
+        h2: 'text-3xl @2xl:text-4xl @3xl:text-5xl font-bold leading-[1.2] tracking-tight',
+        h3: 'text-2xl @2xl:text-3xl @3xl:text-4xl font-semibold leading-[1.3]',
+        p:  'text-base @2xl:text-lg @3xl:text-xl font-normal leading-relaxed'
+    };
+
+    const heightClasses = { 
+        small: 'min-h-auto', 
+        medium: 'min-h-[40vh] @3xl:min-h-[400px]', 
+        large: 'min-h-[60vh] @3xl:min-h-[600px]', 
+        full: 'min-h-[calc(100vh-60px)]' 
     };
 
     const paragraphs = content ? content.split('\n') : [];
-    const uniqueClass = `text-scope-${blockData.id || 'preview'}`;
-    const heightMap = { 
-        small: 'auto', 
-        medium: '400px', 
-        large: '600px', 
-        full: 'calc(100vh - 60px)' 
-    };
-
+    const uniqueClass = `text-scope-${blockData.block_id || blockData.id || 'preview'}`;
     return (
         <div 
-            className={uniqueClass}
+            className={`
+                ${uniqueClass}
+                w-full wrap-break-word flex flex-col justify-center 
+                px-4 sm:px-6 md:px-8
+                ${heightClasses[height] || heightClasses.small}
+            `}
             style={{ 
-                width: '100%',
-                overflowWrap: 'break-word',
                 textAlign: alignment,
-                backgroundColor: 'var(--site-bg)',
-                color: 'var(--site-text-primary)',
-                minHeight: heightMap[height] || 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
+                backgroundColor: 'var(--site-bg, transparent)',
+                color: 'var(--site-text-primary, inherit)',
                 ...styles,
                 ...style,
                 ...cssVariables
@@ -60,19 +60,21 @@ const TextBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 paragraphs.map((line, index) => (
                     <ValidTag 
                         key={index}
+                        className={`
+                            ${tagClasses[ValidTag]}
+                            ${isBold ? 'font-bold!' : ''} 
+                            ${isItalic ? 'italic' : 'not-italic'}
+                            ${isUnderline ? 'underline underline-offset-4' : 'no-underline'}
+                            ${index === paragraphs.length - 1 ? 'mb-0' : 'mb-[1em]'}
+                        `}
                         style={{
-                            ...tagBaseStyles[ValidTag],
                             fontFamily: fontStyles.main,
-                            fontWeight: isBold ? 'bold' : tagBaseStyles[ValidTag].fontWeight,
-                            fontStyle: isItalic ? 'italic' : 'normal',
-                            textDecoration: isUnderline ? 'underline' : 'none',
-                            
                             color: 'inherit',
                             display: 'block',
                             marginTop: 0,
-                            marginBottom: index === paragraphs.length - 1 ? '0' : '1em', 
                             whiteSpace: 'pre-wrap', 
-                            minHeight: line.trim() === '' ? '1em' : 'auto'
+                            minHeight: line.trim() === '' ? '1em' : 'auto',
+                            textIndent: textIndent ? `${textIndent}px` : '0'
                         }}
                     >
                         {line || <br/>} 
@@ -80,7 +82,7 @@ const TextBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 ))
             ) : (
                 isEditorPreview && (
-                    <div style={{ opacity: 0.5, fontStyle: 'italic', padding: '10px 0', color: 'var(--site-text-secondary)' }}>
+                    <div className="opacity-50 italic py-2.5 text-(--site-text-secondary)">
                         Натисніть, щоб додати текст...
                     </div>
                 )
@@ -89,4 +91,8 @@ const TextBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     );
 };
 
-export default TextBlock;
+export default React.memo(TextBlock, (prev, next) => {
+    return JSON.stringify(prev.blockData) === JSON.stringify(next.blockData) && 
+           prev.isEditorPreview === next.isEditorPreview &&
+           prev.siteData?.id === next.siteData?.id;
+});

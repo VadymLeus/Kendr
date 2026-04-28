@@ -1,5 +1,5 @@
 // frontend/src/shared/ui/layouts/Layout.jsx
-import React, { useState, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useContext, useEffect, useMemo } from 'react';
 import { useLocation, Outlet } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import PlatformSidebar from './PlatformSidebar';
@@ -53,18 +53,14 @@ const Layout = () => {
     const [globalAnnouncement, setGlobalAnnouncement] = useState(null);
     const [announcementText, setAnnouncementText] = useState('');
     const [announcementTargetTime, setAnnouncementTargetTime] = useState(null);
-    const contextTimeoutRef = useRef(null);
     const isStaff = isAdmin || isModerator;
     const handleToggleSidebar = () => {
         const newState = !isCollapsedUI;
         setIsCollapsedUI(newState);
         localStorage.setItem('sidebarCollapsed', newState.toString());
-        if (contextTimeoutRef.current) clearTimeout(contextTimeoutRef.current);
-        contextTimeoutRef.current = setTimeout(() => {
-            React.startTransition(() => {
-                setIsCollapsedContext(newState);
-            });
-        }, 300);
+        React.startTransition(() => {
+            setIsCollapsedContext(newState);
+        });
     };
 
     useEffect(() => {
@@ -109,8 +105,7 @@ const Layout = () => {
             window.removeEventListener('global_announcement_update', handleAnnouncementUpdate);
             clearInterval(intervalId);
         };
-    }, [user]);
-
+    }, [user, globalAnnouncement]);
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
@@ -143,7 +138,6 @@ const Layout = () => {
         if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
         else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
-
     const outletContextValue = useMemo(() => ({
         siteData, 
         setSiteData, 
@@ -152,7 +146,6 @@ const Layout = () => {
         globalAnnouncement, 
         setGlobalAnnouncement
     }), [siteData, isSiteLoading, isCollapsedContext, globalAnnouncement]);
-    
     if (isAuthLoading) return <div className="h-screen"><LoadingState title="Завантаження платформи..." layout="page" /></div>;
     const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
@@ -215,9 +208,9 @@ const Layout = () => {
                     onMobileOpen={() => setIsMobileOpen(true)}
                     onMobileClose={() => setIsMobileOpen(false)}
                 />
-                <div 
-                    className={`layout-content flex-1 min-w-0 ${isCollapsedUI ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''} ${scrollClass} transition-all duration-300 will-change-transform`}
-                    style={themeStyle}
+                <div
+                    className={`layout-content flex-1 min-w-0 ${isCollapsedUI ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''} ${scrollClass}`}
+                    style={{ ...themeStyle, transition: 'none' }}
                     data-site-mode={isSiteThemeActive && isSiteDark ? 'dark' : 'light'}
                 >
                     <div className={`flex flex-col w-full ${innerWrapperClass}`}>

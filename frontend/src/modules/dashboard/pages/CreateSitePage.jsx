@@ -184,7 +184,7 @@ const CreateSitePage = () => {
         return `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
     };
 
-    if (isInitialLoad) return <div className="absolute inset-0 flex items-center justify-center bg-(--platform-bg)"><LoadingState title="Завантаження даних..." layout="page" /></div>;
+    if (isInitialLoad) return <div className="absolute inset-0 flex items-center justify-center bg-(--platform-bg) z-50"><LoadingState title="Завантаження даних..." layout="page" /></div>;
     const isFormReady = !isLimitReached && formData.title.trim().length >= 2 && !titleError && formData.slug && slugStatus === 'available' && !slugError;
     return (
         <div className="relative flex w-full h-full overflow-hidden bg-(--platform-bg)">
@@ -206,10 +206,10 @@ const CreateSitePage = () => {
             />
             <div 
                 className={`
-                    flex flex-col h-full bg-(--platform-card-bg) z-20 shrink-0 overflow-hidden
+                    flex flex-col h-full bg-(--platform-card-bg) z-40 shrink-0 overflow-hidden
                     transition-all duration-300 ease-in-out absolute md:relative
                     ${isSidebarOpen 
-                        ? 'w-[calc(100%-28px)] md:w-105 lg:w-120 opacity-100 border-r border-(--platform-border-color) shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)]' 
+                        ? 'w-[calc(100%-28px)] md:w-105 lg:w-120 opacity-100 border-r border-(--platform-border-color) shadow-2xl md:shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)]' 
                         : 'w-0 opacity-0 border-none pointer-events-none'}
                 `}
             >
@@ -342,7 +342,7 @@ const CreateSitePage = () => {
                 </div>
             </div>
             <div 
-                className={`flex absolute z-30 top-1/2 -translate-y-1/2 items-center justify-center transition-all duration-300 ease-in-out ${
+                className={`flex absolute z-50 top-1/2 -translate-y-1/2 items-center justify-center transition-all duration-300 ease-in-out ${
                     isSidebarOpen 
                         ? 'left-[calc(100%-28px)] md:left-105 lg:left-120 md:-ml-px' 
                         : 'left-0'
@@ -358,7 +358,7 @@ const CreateSitePage = () => {
                     </div>
                 </button>
             </div>
-            <div className="flex-1 min-w-0 h-full relative bg-(--platform-bg)">
+            <div className="flex-1 min-w-0 h-full relative bg-(--platform-bg) z-10">
                 <SitePreviewer 
                     previewData={previewData} 
                     currentBlocks={currentBlocks} 

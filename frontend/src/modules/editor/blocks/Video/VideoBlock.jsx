@@ -24,6 +24,7 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
         controls = false,
         styles = {}
     } = blockData;
+    
     const videoRef = useRef(null);
     const safeOpacity = (overlay_opacity === undefined || isNaN(Number(overlay_opacity))) 
         ? 0.5 
@@ -51,26 +52,27 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
             }
         }
     }, [controls, autoplay, muted, fullVideoUrl, ytVideoId]);
-
-    const heightMap = { 
-        small: '300px', 
-        medium: '500px', 
-        large: '700px', 
-        full: 'calc(100vh - 60px)',
-        auto: 'auto'
+    const heightClasses = { 
+        small: 'min-h-[250px] @3xl:min-h-[300px]', 
+        medium: 'min-h-[300px] @3xl:min-h-[500px]', 
+        large: 'min-h-[400px] @3xl:min-h-[700px]', 
+        full: 'min-h-[calc(100vh-60px)]',
+        auto: 'aspect-video w-full' 
     };
-    const currentHeight = heightMap[height] || '500px';
+    
+    const currentHeightClass = heightClasses[height] || heightClasses.medium;
     const isTransparent = overlay_color === 'transparent';
     const Placeholder = () => (
-        <div className="absolute inset-0 w-full h-full p-12 text-center bg-(--site-card-bg) border border-dashed border-(--site-border-color) text-(--site-text-secondary) flex flex-col items-center justify-center gap-3 box-border">
+        <div className="absolute inset-0 w-full h-full p-8 @3xl:p-12 text-center bg-(--site-card-bg) border border-dashed border-(--site-border-color) text-(--site-text-secondary) flex flex-col items-center justify-center gap-3 box-border">
             <div className="opacity-40 text-(--site-text-primary)">
-                <VideoIcon size={64} />
+                <VideoIcon size={48} className="@3xl:w-16 @3xl:h-16" />
             </div>
-            <div className="text-sm font-medium">
+            <div className="text-sm @3xl:text-base font-medium">
                 Відео не вибрано
             </div>
         </div>
     );
+    
     const renderContent = () => {
         if (ytVideoId) {
             const ytParams = new URLSearchParams({
@@ -130,9 +132,11 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
 
     return (
         <div 
-            className={`block-theme-${block_theme} relative w-full overflow-hidden`}
+            className={`
+                block-theme-${block_theme} relative w-full overflow-hidden
+                ${currentHeightClass}
+            `}
             style={{
-                minHeight: currentHeight,
                 backgroundColor: 'var(--site-bg)',
                 ...styles,
                 ...style 
@@ -152,4 +156,7 @@ const VideoBlock = ({ blockData, isEditorPreview, style }) => {
     );
 };
 
-export default VideoBlock;
+export default React.memo(VideoBlock, (prev, next) => {
+    return JSON.stringify(prev.blockData) === JSON.stringify(next.blockData) && 
+           prev.isEditorPreview === next.isEditorPreview;
+});

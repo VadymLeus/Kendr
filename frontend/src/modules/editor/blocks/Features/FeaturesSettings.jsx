@@ -17,6 +17,7 @@ const CONFIG = {
     columns: 2,
     layout: 'cards',
     align: 'center',
+    blockAlign: 'center',
     borderRadius: '8px',
     showIconBackground: false,
     titleFontFamily: 'global',
@@ -146,12 +147,10 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
             />
         </div>
       </div>
-
       <div>
         <SectionTitle icon={<List size={16} />}>
           Макет та Вигляд
         </SectionTitle>
-        
         <div className="mb-5">
           <label style={commonStyles.label}>Стиль відображення</label>
           <ToggleGroup
@@ -160,7 +159,6 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
             onChange={(val) => updateData({ layout: val })}
           />
         </div>
-        
         <div className="mb-5">
           <label style={commonStyles.label}>Кількість колонок</label>
           <ToggleGroup
@@ -169,16 +167,23 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
             onChange={(val) => updateData({ columns: val })}
           />
         </div>
-        
-        {normalizedData.layout !== 'list' && (
+        <div className="mb-5">
            <AlignmentControl
-              label="Вирівнювання тексту"
-              value={normalizedData.align}
-              onChange={(val) => updateData({ align: val })}
+              label="Вирівнювання блоків"
+              value={normalizedData.blockAlign}
+              onChange={(val) => updateData({ blockAlign: val })}
            />
+        </div>
+        {normalizedData.layout !== 'list' && (
+           <div className="mb-5">
+              <AlignmentControl
+                 label="Вирівнювання тексту"
+                 value={normalizedData.align}
+                 onChange={(val) => updateData({ align: val })}
+              />
+           </div>
         )}
       </div>
-      
       <div>
         <SectionTitle icon={<Check size={16} />}>
           Стилізація
@@ -192,7 +197,6 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
           />
         </div>
       </div>
-      
       <div>
         <SectionTitle>
           Елементи ({normalizedData.items.length}/{CONFIG.MAX_ITEMS})
@@ -210,7 +214,6 @@ const FeaturesSettings = ({ data, onChange, siteData }) => {
             getIconComponent={getIconComponent}
           />
         ))}
-        
         <button
           type="button"
           onClick={handleAddFeature}
@@ -249,7 +252,6 @@ const FeatureItem = ({ item, index, isOpen, onToggle, onRemove, onChange, iconOp
             {item.title}
           </span>
         </div>
-        
         <Button
           variant="danger"
           size="sm"
@@ -260,7 +262,6 @@ const FeatureItem = ({ item, index, isOpen, onToggle, onRemove, onChange, iconOp
           <Trash2 size={14} />
         </Button>
       </div>
-      
       {isOpen && (
         <div className="p-4 border-t border-(--platform-border-color)">
           <div className="mb-5">
@@ -285,7 +286,6 @@ const FeatureItem = ({ item, index, isOpen, onToggle, onRemove, onChange, iconOp
               ))}
             </div>
           </div>
-          
           <Input
             label="Заголовок"
             value={item.title}

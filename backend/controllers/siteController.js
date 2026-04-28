@@ -316,13 +316,16 @@ exports.updateSiteSettings = async (req, res, next) => {
             cover_image, cover_layout, logo_url,
             cover_logo_size, cover_logo_radius, cover_title_size,
             liqpay_public_key, liqpay_private_key, currency,
-            cookie_banner_enabled, cookie_banner_text
+            cookie_banner_enabled, cookie_banner_text,
+            cookie_banner_size, cookie_banner_position, cookie_banner_blur
         } = req.body;
+        
         const safeParse = (data, fallback) => {
             if (!data) return fallback;
             if (typeof data === 'object') return data;
             try { return JSON.parse(data); } catch (e) { return fallback; }
         };
+        
         let processingHeaderContent = safeParse(header_content, null);
         let currentHeaderContent = processingHeaderContent || safeParse(site.header_content, []);
         let finalLogoUrl = logo_url !== undefined ? logo_url : site.logo_url;
@@ -337,6 +340,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             }
             finalTitle = trimmedTitle;
         }
+        
         if (processingHeaderContent && Array.isArray(processingHeaderContent)) {
             const incomingHeaderBlock = processingHeaderContent.find(b => b.type === 'header');
             if (incomingHeaderBlock && incomingHeaderBlock.data) {
@@ -348,6 +352,7 @@ exports.updateSiteSettings = async (req, res, next) => {
                 }
             }
         }
+        
         if (Array.isArray(currentHeaderContent)) {
             let headerFound = false;
             currentHeaderContent = currentHeaderContent.map(block => {
@@ -378,10 +383,12 @@ exports.updateSiteSettings = async (req, res, next) => {
                 });
             }
         }
+        
         let finalStatus = (status !== undefined) ? status : site.status;
         if (site.status === 'suspended' || site.status === 'probation') {
             finalStatus = site.status;
         }
+        
         const updateData = { 
             title: finalTitle,
             status: finalStatus,
@@ -403,7 +410,10 @@ exports.updateSiteSettings = async (req, res, next) => {
             liqpay_private_key: liqpay_private_key !== undefined ? liqpay_private_key : site.liqpay_private_key,
             currency: currency !== undefined ? currency : site.currency,
             cookie_banner_enabled: cookie_banner_enabled !== undefined ? cookie_banner_enabled : site.cookie_banner_enabled,
-            cookie_banner_text: cookie_banner_text !== undefined ? cookie_banner_text : site.cookie_banner_text
+            cookie_banner_text: cookie_banner_text !== undefined ? cookie_banner_text : site.cookie_banner_text,
+            cookie_banner_size: cookie_banner_size !== undefined ? cookie_banner_size : site.cookie_banner_size,
+            cookie_banner_position: cookie_banner_position !== undefined ? cookie_banner_position : site.cookie_banner_position,
+            cookie_banner_blur: cookie_banner_blur !== undefined ? cookie_banner_blur : site.cookie_banner_blur
         };
         await Site.updateSettings(site.id, updateData);
         if (Array.isArray(tags)) {
@@ -518,7 +528,6 @@ exports.resetSiteToTemplate = async (req, res, next) => {
                 data: { site_title: site.title, logo_src: site.logo_url || '/logos/logo1.png', show_title: true, nav_items: [{ id: uuidv4(), label: 'Головна', link: '/' }], show_profile_icon: true, show_cart_icon: true, block_theme: 'auto' }
             }];
         }
-
         await connection.beginTransaction(); 
         await connection.query('DELETE FROM pages WHERE site_id = ?', [siteId]); 
         const updateQuery = `UPDATE sites SET header_content = ?, footer_content = ?, site_theme_mode = ?, site_theme_accent = ?, theme_settings = ? WHERE id = ?`; 

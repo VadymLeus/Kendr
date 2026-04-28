@@ -109,7 +109,6 @@ const TicketDetailPage = () => {
         if (!ticket) return true;
         return ticket.status === 'closed' || isSpamBlocked;
     }, [ticket, isSpamBlocked]);
-
     const isCurrentUserAdmin = user?.role === 'admin';
     const closedByText = ticket?.closed_by === 'admin'
         ? (isCurrentUserAdmin ? 'Ви (Адміністратор) закрили це звернення.' : 'Це звернення було закрите адміністратором.')
@@ -259,7 +258,7 @@ const TicketDetailPage = () => {
                 <title>{`#${ticket.id} - Підтримка | Kendr`}</title>
             </Helmet>
             <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-            <div className="px-4 sm:px-6 h-15 sm:h-16 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex items-center justify-between shrink-0 z-10 shadow-sm">
+            <div className="px-4 sm:px-6 h-15 sm:h-16 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex items-center justify-between shrink-0 z-10 shadow-sm relative">
                 <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 pr-4">
                     <Button 
                         variant="ghost" 
@@ -300,113 +299,119 @@ const TicketDetailPage = () => {
                     )}
                 </div>
             </div>
-            <div 
-                className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 bg-(--platform-bg) relative custom-scrollbar"
-                ref={chatContainerRef}
-                onScroll={handleScroll}
-            >
-                <div className="text-center my-4 opacity-50 text-xs sm:text-[13px]">
-                    Початок діалогу
-                </div>
-                {allMessages.map((msg, index) => {
-                    const isMe = msg.user_id === user?.id; 
-                    const isAdmin = msg.role === 'admin';
-                    const avatarSrc = getAttachmentUrl(msg.avatar_url);
-                    let msgAttachments = [];
-                    try {
-                        if (msg.attachments) {
-                            let parsed = msg.attachments;
-                            if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-                            if (typeof parsed === 'string') parsed = JSON.parse(parsed); 
+            <div className="flex-1 relative flex flex-col min-h-0">
+                {(ticket.status === 'closed' || isSpamBlocked) && (
+                    <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center p-4">
+                        <div className="pointer-events-auto bg-(--platform-card-bg)/95 backdrop-blur-sm p-6 sm:p-8 rounded-2xl border border-(--platform-border-color) shadow-xl flex flex-col items-center text-center gap-4 w-[90%] max-w-md animate-[fadeIn_0.3s_ease]">
                             
-                            if (Array.isArray(parsed)) {
-                                msgAttachments = parsed;
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Помилка парсингу картинок:', e);
-                    }
-
-                    return (
-                        <div key={msg.id || index} className={`flex gap-2 sm:gap-3 mb-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            {!isMe && (
-                                <div 
-                                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden mt-5 sm:mt-5.5 ${isAdmin ? 'bg-(--platform-accent)' : 'bg-(--platform-border-color)'}`}
-                                    title={msg.username}
-                                >
-                                    {avatarSrc ? <img src={avatarSrc} alt="" className="w-full h-full object-cover" /> : (isAdmin ? <Shield size={16}/> : <User size={16}/>)}
-                                </div>
+                            {ticket.status === 'closed' ? (
+                                <>
+                                    <div className="w-14 h-14 rounded-full bg-black/5 text-(--platform-text-secondary) flex items-center justify-center mb-1">
+                                        <Lock size={28} />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-lg sm:text-xl text-(--platform-text-primary) mb-2">
+                                            Звернення закрито
+                                        </div>
+                                        <div className="text-(--platform-text-secondary) text-sm sm:text-base leading-relaxed">
+                                            {closedByText}<br/>
+                                            Можливість писати вимкнена.
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="w-14 h-14 rounded-full bg-[rgba(245,158,11,0.1)] text-(--platform-accent) flex items-center justify-center mb-1">
+                                        <Clock size={28} />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-lg sm:text-xl text-(--platform-text-primary) mb-2">
+                                            Очікуйте на відповідь
+                                        </div>
+                                        <div className="text-(--platform-text-secondary) text-sm sm:text-base leading-relaxed">
+                                            Ви надіслали декілька повідомлень поспіль.<br/>
+                                            Можливість писати тимчасово обмежена.
+                                        </div>
+                                    </div>
+                                </>
                             )}
-                            <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-150`}>
-                                <span className={`text-[11px] sm:text-xs font-semibold mb-1 ${isAdmin ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'} ${isMe ? 'mr-1' : 'ml-1'}`}>
-                                    {isMe ? 'Ви' : (isAdmin ? 'Підтримка' : (msg.username || 'Користувач'))}
-                                </span>
-                                <div 
-                                    className={`
-                                        p-3 sm:px-4 sm:py-3 rounded-2xl relative shadow-[0_1px_2px_rgba(0,0,0,0.05)]
-                                        ${isMe ? 'bg-(--platform-accent) text-white rounded-tr-sm' : (isAdmin ? 'bg-blue-500/10 text-(--platform-text-primary) rounded-tl-sm' : 'bg-(--platform-card-bg) text-(--platform-text-primary) rounded-tl-sm')}
-                                    `}
-                                >
-                                    {msg.body && (
-                                        <div className="whitespace-pre-wrap leading-relaxed text-[13px] sm:text-sm wrap-break-word">
-                                            {msg.body}
+                        </div>
+                    </div>
+                )}
+                <div 
+                    className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 bg-(--platform-bg) custom-scrollbar"
+                    ref={chatContainerRef}
+                    onScroll={handleScroll}
+                >
+                    <div className="text-center my-4 opacity-50 text-xs sm:text-[13px]">
+                        Початок діалогу
+                    </div>
+                    {allMessages.map((msg, index) => {
+                        const isMe = msg.user_id === user?.id; 
+                        const isAdmin = msg.role === 'admin';
+                        const avatarSrc = getAttachmentUrl(msg.avatar_url);
+                        let msgAttachments = [];
+                        try {
+                            if (msg.attachments) {
+                                let parsed = msg.attachments;
+                                if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                                if (typeof parsed === 'string') parsed = JSON.parse(parsed); 
+                                
+                                if (Array.isArray(parsed)) {
+                                    msgAttachments = parsed;
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Помилка парсингу картинок:', e);
+                        }
+                        return (
+                            <div key={msg.id || index} className={`flex gap-2 sm:gap-3 mb-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                {!isMe && (
+                                    <div 
+                                        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden mt-5 sm:mt-5.5 ${isAdmin ? 'bg-(--platform-accent)' : 'bg-(--platform-border-color)'}`}
+                                        title={msg.username}
+                                    >
+                                        {avatarSrc ? <img src={avatarSrc} alt="" className="w-full h-full object-cover" /> : (isAdmin ? <Shield size={16}/> : <User size={16}/>)}
+                                    </div>
+                                )}
+                                <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-150`}>
+                                    <span className={`text-[11px] sm:text-xs font-semibold mb-1 ${isAdmin ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'} ${isMe ? 'mr-1' : 'ml-1'}`}>
+                                        {isMe ? 'Ви' : (isAdmin ? 'Підтримка' : (msg.username || 'Користувач'))}
+                                    </span>
+                                    <div 
+                                        className={`
+                                            p-3 sm:px-4 sm:py-3 rounded-2xl relative shadow-[0_1px_2px_rgba(0,0,0,0.05)]
+                                            ${isMe ? 'bg-(--platform-accent) text-white rounded-tr-sm' : (isAdmin ? 'bg-blue-500/10 text-(--platform-text-primary) rounded-tl-sm' : 'bg-(--platform-card-bg) text-(--platform-text-primary) rounded-tl-sm')}
+                                        `}
+                                    >
+                                        {msg.body && (
+                                            <div className="whitespace-pre-wrap leading-relaxed text-[13px] sm:text-sm wrap-break-word">
+                                                {msg.body}
+                                            </div>
+                                        )}
+                                        {msgAttachments.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {msgAttachments.map((url, i) => (
+                                                    <img 
+                                                        key={i} 
+                                                        src={getAttachmentUrl(url)} 
+                                                        alt="attachment" 
+                                                        className="max-w-37.5 sm:max-w-50 max-h-37.5 sm:max-h-50 rounded-lg object-cover cursor-pointer border border-black/10" 
+                                                        onClick={() => window.open(getAttachmentUrl(url), '_blank')} 
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div className={`text-[10px] sm:text-[11px] mt-1.5 opacity-70 text-right whitespace-nowrap ${isMe ? 'text-white/90' : 'text-(--platform-text-secondary)'}`}>
+                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
-                                    )}
-                                    {msgAttachments.length > 0 && (
-                                        <div className="flex flex-wrap gap-2 mt-2">
-                                            {msgAttachments.map((url, i) => (
-                                                <img 
-                                                    key={i} 
-                                                    src={getAttachmentUrl(url)} 
-                                                    alt="attachment" 
-                                                    className="max-w-37.5 sm:max-w-50 max-h-37.5 sm:max-h-50 rounded-lg object-cover cursor-pointer border border-black/10" 
-                                                    onClick={() => window.open(getAttachmentUrl(url), '_blank')} 
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div className={`text-[10px] sm:text-[11px] mt-1.5 opacity-70 text-right whitespace-nowrap ${isMe ? 'text-white/90' : 'text-(--platform-text-secondary)'}`}>
-                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
-                {ticket.status === 'closed' ? (
-                    <div className="bg-(--platform-card-bg) p-5 sm:p-6 rounded-2xl border border-(--platform-border-color) flex flex-col items-center text-center gap-3 w-[90%] max-w-95 mx-auto mt-8 mb-4 shadow-sm animate-[fadeIn_0.3s_ease]">
-                        <div className="w-12 h-12 rounded-full bg-black/5 text-(--platform-text-secondary) flex items-center justify-center mb-1">
-                            <Lock size={24} />
-                        </div>
-                        <div>
-                            <div className="font-bold text-base sm:text-lg text-(--platform-text-primary) mb-1.5">
-                                Звернення закрито
-                            </div>
-                            <div className="text-(--platform-text-secondary) text-[13px] sm:text-sm leading-relaxed">
-                                {closedByText}<br/>
-                                Можливість писати вимкнена.
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    isSpamBlocked && (
-                        <div className="bg-(--platform-card-bg) p-5 sm:p-6 rounded-2xl border border-(--platform-border-color) flex flex-col items-center text-center gap-3 w-[90%] max-w-95 mx-auto mt-8 mb-4 shadow-sm animate-[fadeIn_0.3s_ease]">
-                            <div className="w-12 h-12 rounded-full bg-[rgba(245,158,11,0.1)] text-(--platform-accent) flex items-center justify-center mb-1">
-                                <Clock size={24} />
-                            </div>
-                            <div>
-                                <div className="font-bold text-base sm:text-lg text-(--platform-text-primary) mb-1.5">
-                                    Очікуйте на відповідь
-                                </div>
-                                <div className="text-(--platform-text-secondary) text-[13px] sm:text-sm leading-relaxed">
-                                    Ви надіслали декілька повідомлень поспіль.<br/>
-                                    Можливість писати тимчасово обмежена.
-                                </div>
-                            </div>
-                        </div>
-                    )
-                )}
-                <div ref={messagesEndRef} />
+                        );
+                    })}
+                    <div ref={messagesEndRef} className="h-4" />
+                </div>
             </div>
             <div className="px-3 sm:px-6 py-3 sm:py-4 bg-(--platform-bg) shrink-0 z-20 relative border-t border-(--platform-border-color) sm:border-none">
                 {showScrollButton && (

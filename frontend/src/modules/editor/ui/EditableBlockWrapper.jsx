@@ -1,5 +1,5 @@
 // frontend/src/modules/editor/ui/EditableBlockWrapper.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDrag } from 'react-dnd';
 import BlockRenderer from '../core/BlockRenderer';
 import apiClient from '../../../shared/api/api';
@@ -28,7 +28,6 @@ const EditableBlockWrapper = ({
     viewMode = 'editor'
 }) => {
     const ref = useRef(null);
-    const [isCompact, setIsCompact] = useState(window.innerWidth < 1024);
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const { confirm } = useConfirm();
@@ -36,12 +35,6 @@ const EditableBlockWrapper = ({
     const isGlobal = block.type.startsWith('global-');
     const isHeader = block.type === 'global-header' || block.type === 'header';
     const isSticky = isHeader && block.data?.is_sticky && !isEditorMode;
-    useEffect(() => {
-        const handleResize = () => setIsCompact(window.innerWidth < 1024);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
     const [{ isDragging }, drag, preview] = useDrag({
         type: DND_TYPE_EXISTING,
         item: () => {
@@ -131,7 +124,7 @@ const EditableBlockWrapper = ({
     const originBlockInfo = block._library_origin_id ? { id: block._library_origin_id, name: block._library_name } : null;
     const baseBtnClass = `
         bg-transparent border border-(--platform-border-color) text-(--platform-text-secondary)
-        ${isCompact ? 'p-1.5' : 'py-1.5 px-2.5'} rounded-md cursor-pointer flex items-center justify-center
+        p-1.5 lg:py-1.5 lg:px-2.5 rounded-md cursor-pointer flex items-center justify-center
         transition-all duration-200 text-xs font-medium gap-1.5
         hover:-translate-y-px hover:shadow-sm
     `;
@@ -146,9 +139,9 @@ const EditableBlockWrapper = ({
     let borderClass = 'hidden';
     if (isEditorMode) {
         if (isSelected) {
-            borderClass = isGlobal ? 'block border-3 border-solid border-purple-500' : 'block border-3 border-solid border-(--platform-accent)';
+            borderClass = isGlobal ? 'block border-3 border-solid border-indigo-500' : 'block border-3 border-solid border-(--platform-accent)';
         } else if (isHovered) {
-            borderClass = isGlobal ? 'block border-3 border-dashed border-purple-500' : 'block border-3 border-dashed border-(--platform-accent)';
+            borderClass = isGlobal ? 'block border-3 border-dashed border-indigo-500' : 'block border-3 border-dashed border-(--platform-accent)';
         }
     }
 
@@ -166,7 +159,7 @@ const EditableBlockWrapper = ({
                 id={blockDomId}
                 onClick={handleSelect}
                 onContextMenu={(e) => onContextMenu && onContextMenu(e, path, block.block_id)}
-                className={`relative transition-all duration-200 outline-none group w-full ${!isSticky ? (isSelected ? 'z-10' : (isHovered ? 'z-5' : 'z-1')) : ''}`}
+                className={`relative transition-colors duration-200 outline-none group w-full ${!isSticky ? (isSelected ? 'z-10' : (isHovered ? 'z-5' : 'z-1')) : ''}`}
                 onMouseEnter={() => isEditorMode && setIsHovered(true)}
                 onMouseLeave={() => isEditorMode && setIsHovered(false)}
             >
@@ -184,7 +177,7 @@ const EditableBlockWrapper = ({
                                 ? 'bg-(--platform-accent) text-white border-transparent' 
                                 : 'bg-(--platform-card-bg) border border-(--platform-border-color) text-(--platform-text-primary)'}
                         `}>
-                            <span className={showDropIndicator && dropPosition === 'center' ? 'text-white' : (isGlobal ? 'text-purple-500' : 'text-(--platform-accent)')}>
+                            <span className={showDropIndicator && dropPosition === 'center' ? 'text-white' : (isGlobal ? 'text-indigo-500' : 'text-(--platform-accent)')}>
                                 {blockIcon}
                             </span>
                             <span>Блок: {blockName}</span>
@@ -193,7 +186,7 @@ const EditableBlockWrapper = ({
                 )}
                 <div className={`transition-opacity duration-300 ${isVisualDragging ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                     {isEditorMode && (
-                        <div className={`absolute rounded-xl pointer-events-none z-2 transition-all duration-200 ${borderClass}`}
+                        <div className={`absolute rounded-xl pointer-events-none z-2 transition-colors duration-200 ${borderClass}`}
                             style={{ top: `-${gapSize}`, left: `-${gapSize}`, right: `-${gapSize}`, bottom: `-${gapSize}` }} 
                         />
                     )}
@@ -202,8 +195,8 @@ const EditableBlockWrapper = ({
                             <div className="flex justify-between items-center px-3 py-2 bg-(--platform-card-bg) border-b border-(--platform-border-color) gap-2.5 cursor-grab">
                                 <span className="text-sm font-medium text-(--platform-text-primary) flex items-center gap-2 flex-1 overflow-hidden whitespace-nowrap text-ellipsis" title={blockName}>
                                     <span className="flex items-center text-(--platform-text-secondary)"><GripVertical size={16} /></span>
-                                    <span className={`flex items-center ${isGlobal ? 'text-purple-500' : 'text-(--platform-accent)'}`}>{blockIcon}</span>
-                                    <span className={isGlobal ? 'text-purple-500 font-bold' : ''}>{blockName}</span>
+                                    <span className={`flex items-center ${isGlobal ? 'text-indigo-500' : 'text-(--platform-accent)'}`}>{blockIcon}</span>
+                                    <span className={isGlobal ? 'text-indigo-500 font-bold' : ''}>{blockName}</span>
                                 </span>
                                 <div className="flex gap-1 cursor-default" onClick={e => e.stopPropagation()}>
                                     {!isGlobal && (
@@ -213,7 +206,7 @@ const EditableBlockWrapper = ({
                                         {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                                     </button>
                                     <button onClick={handleSelect} className={`${baseBtnClass} ${getBtnHoverClass('primary')}`} title="Налаштування">
-                                        {isCompact ? <Settings size={16} /> : <><Settings size={16} /> Налаштування</>}
+                                        <Settings size={16} /> <span className="hidden lg:inline">Налаштування</span>
                                     </button>
                                     <button onClick={handleDelete} title="Видалити" className={`${baseBtnClass} ${getBtnHoverClass('danger')}`}><Trash2 size={16} /></button>
                                 </div>
@@ -239,4 +232,15 @@ const EditableBlockWrapper = ({
     );
 };
 
-export default EditableBlockWrapper;
+function arePropsEqual(prev, next) {
+    if (prev.block !== next.block) return false;
+    if (prev.isCollapsed !== next.isCollapsed) return false;
+    if (prev.viewMode !== next.viewMode) return false;
+    if (prev.siteData !== next.siteData) return false;
+    if (prev.isLastRootBlock !== next.isLastRootBlock) return false;
+    if (prev.path?.join(',') !== next.path?.join(',')) return false;
+    if (prev.selectedBlockPath?.join(',') !== next.selectedBlockPath?.join(',')) return false;
+    return true;
+}
+
+export default React.memo(EditableBlockWrapper, arePropsEqual);

@@ -16,7 +16,7 @@ const IconWrapper = ({ children, href, isEditorPreview, baseColor }) => (
         target="_blank"
         rel="noopener noreferrer"
         onClick={isEditorPreview ? (e) => e.preventDefault() : undefined}
-        className="inline-flex items-center justify-center w-10 h-10 mx-1 no-underline transition-all duration-200 rounded-full hover:text-(--site-accent) hover:bg-black/5 dark:hover:bg-white/5 hover:-translate-y-0.5"
+        className="inline-flex items-center justify-center w-10 h-10 @2xl:w-12 @2xl:h-12 mx-1.5 my-1.5 @2xl:mx-2 no-underline transition-all duration-200 rounded-full hover:text-(--site-accent) hover:bg-black/5 dark:hover:bg-white/5 hover:-translate-y-1"
         style={{
             color: baseColor, 
             opacity: isEditorPreview ? 0.8 : 1, 
@@ -41,6 +41,7 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
     let baseColor = 'var(--site-text-primary)';
     if (theme_mode === 'light') baseColor = '#1a202c';
     if (theme_mode === 'dark') baseColor = '#ffffff';
+    
     const socialLinks = [
         { key: 'facebook', href: facebook },
         { key: 'instagram', href: instagram },
@@ -48,13 +49,13 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
         { key: 'youtube', href: youtube },
         { key: 'tiktok', href: tiktok },
     ].filter(item => item.href); 
-
+    
     const heightClasses = {
-        small: 'min-h-[300px]',
-        medium: 'min-h-[500px]',
-        large: 'min-h-[700px]',
+        small: 'min-h-[150px] @2xl:min-h-[250px]',
+        medium: 'min-h-[250px] @2xl:min-h-[400px]',
+        large: 'min-h-[400px] @2xl:min-h-[600px]',
         full: 'min-h-[calc(100vh-60px)]',
-        auto: 'min-h-auto'
+        auto: 'min-h-auto py-8 @2xl:py-12' 
     };
 
     const currentHeightClass = heightClasses[height] || heightClasses.auto;
@@ -63,19 +64,19 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
         return (
             <div 
                 className={`
-                    w-full flex flex-col items-center justify-center gap-3 text-center p-8
+                    w-full flex flex-col items-center justify-center gap-3 text-center p-8 mx-auto max-w-300 rounded-xl
                     bg-(--site-card-bg) text-(--site-text-secondary)
-                    ${currentHeightClass === 'min-h-auto' ? 'min-h-37.5' : currentHeightClass}
+                    ${currentHeightClass}
                     border border-dashed border-(--site-border-color)
                 `}
                 style={style}
             >
                 <div className="text-(--site-accent) opacity-70">
-                    <Share2 size={48} />
+                    <Share2 size={40} className="@2xl:w-12 @2xl:h-12" />
                 </div>
                 <div>
-                    <p className="m-0 font-semibold text-(--site-text-primary) text-lg">Соцмережі</p>
-                    <small className="block mt-1 opacity-80">Додайте посилання в налаштуваннях.</small>
+                    <p className="m-0 font-semibold text-(--site-text-primary) text-base @2xl:text-lg">Соцмережі</p>
+                    <small className="block mt-1 opacity-80 text-sm">Додайте посилання в налаштуваннях.</small>
                 </div>
             </div>
         );
@@ -93,14 +94,16 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
             }}
         >
             <div 
-                className="w-full max-w-300 mx-auto px-5"
-                style={{ textAlign: alignment || 'center' }}
+                className="w-full max-w-300 mx-auto px-5 flex flex-wrap"
+                style={{ 
+                    justifyContent: alignment === 'left' ? 'flex-start' : (alignment === 'right' ? 'flex-end' : 'center') 
+                }}
             >
                 {socialLinks.map((net) => {
                     const IconComponent = IconsMap[net.key];
                     return (
                         <IconWrapper key={net.key} href={net.href} isEditorPreview={isEditorPreview} baseColor={baseColor}>
-                            <IconComponent size={24} />
+                            <IconComponent size={24} className="@2xl:w-7 @2xl:h-7" />
                         </IconWrapper>
                     );
                 })}
@@ -109,4 +112,7 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
     );
 };
 
-export default SocialIconsBlock;
+export default React.memo(SocialIconsBlock, (prev, next) => {
+    return JSON.stringify(prev.blockData) === JSON.stringify(next.blockData) && 
+           prev.isEditorPreview === next.isEditorPreview;
+});

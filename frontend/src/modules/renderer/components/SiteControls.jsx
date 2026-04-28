@@ -67,9 +67,9 @@ const SiteControls = ({ siteData }) => {
     const isFavorite = favoriteSiteIds.has(parseInt(siteData.id));
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
     const showAdminControls = isStaff && !isOwner;
-    const iconBtnBaseClass = "flex items-center justify-center w-11 h-11 rounded-xl shadow-lg cursor-pointer transition-all duration-200 shrink-0 backdrop-blur-md border";
+    const iconBtnBaseClass = "flex items-center justify-center w-11 h-11 rounded-xl cursor-pointer transition-all duration-200 shrink-0 backdrop-blur-md border";
     const normalStateClass = "bg-(--site-card-bg)/90 border-(--site-border-color)";
-    const hoverStateClass = "bg-(--site-bg) border-(--site-accent) shadow-xl";
+    const hoverStateClass = "bg-(--site-bg) border-(--site-accent)";
     return (
         <>
             <div className="fixed top-4 right-4 md:top-6 md:right-8 z-2000 flex gap-2">

@@ -4,7 +4,7 @@ import AddBlocksTab from './tabs/AddBlocksTab';
 import LayersTab from './tabs/LayersTab';
 import SettingsTab from './tabs/SettingsTab';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
-import { Plus, Layers, Settings, Star, File } from 'lucide-react';
+import { Plus, Layers, Settings, Star } from 'lucide-react';
 
 const EditorSidebar = ({
     blocks,
@@ -43,23 +43,27 @@ const EditorSidebar = ({
     }, [selectedBlockPath]);
     
     const pageOptions = useMemo(() => {
-        return (allPages || []).map(page => {
-            let icon = File;
-            let iconStyle = { flexShrink: 0 }; 
-            let iconProps = {};
-            let label = page.name;
-            if (page.is_homepage) {
-                icon = Star;
-                iconStyle = { ...iconStyle, color: 'var(--platform-accent)', fill: 'var(--platform-accent)' };
-                iconProps = { filled: true };
-            }
-            return {
+        const sortedPages = [...(allPages || [])].sort((a, b) => {
+            if (a.is_homepage && !b.is_homepage) return -1;
+            if (!a.is_homepage && b.is_homepage) return 1;
+            return 0;
+        });
+
+        return sortedPages.map(page => {
+            let label = page.name || page.title || page.slug || `Сторінка ${page.id}`;
+            
+            let result = {
                 value: page.id,
-                label: label,
-                icon: icon,
-                iconStyle: iconStyle,
-                iconProps: iconProps
+                label: label
             };
+
+            if (page.is_homepage) {
+                result.icon = Star;
+                result.iconStyle = { flexShrink: 0, color: 'var(--platform-accent)', fill: 'var(--platform-accent)' };
+                result.iconProps = { filled: true };
+            }
+            
+            return result;
         });
     }, [allPages]);
 
@@ -125,21 +129,25 @@ const EditorSidebar = ({
                     </div>
                 )}
                 {activeTab === 'layers' && (
-                    <LayersTab
-                        blocks={blocks}
-                        siteData={siteData}
-                        onMoveBlock={onMoveBlock}
-                        onSelectBlock={onSelectBlock}
-                        onDeleteBlock={onDeleteBlock}
-                    />
+                    <div className="p-4">
+                        <LayersTab
+                            blocks={blocks}
+                            siteData={siteData}
+                            onMoveBlock={onMoveBlock}
+                            onSelectBlock={onSelectBlock}
+                            onDeleteBlock={onDeleteBlock}
+                        />
+                    </div>
                 )}
                 {activeTab === 'settings' && (
-                    <SettingsTab 
-                        blocks={blocks}
-                        selectedBlockPath={selectedBlockPath}
-                        onUpdateBlockData={onUpdateBlockData}
-                        siteData={siteData}
-                    />
+                    <div className="p-4">
+                        <SettingsTab 
+                            blocks={blocks}
+                            selectedBlockPath={selectedBlockPath}
+                            onUpdateBlockData={onUpdateBlockData}
+                            siteData={siteData}
+                        />
+                    </div>
                 )}
             </div>
         </div>

@@ -90,7 +90,6 @@ const MySitesPage = () => {
             toast.error('Помилка при видаленні'); 
         }
     };
-
     const handleStatusChange = async (site, requestedStatus) => {
         try {
             const newStatus = requestedStatus || (site.status === 'published' ? 'maintenance' : 'published');
@@ -115,7 +114,6 @@ const MySitesPage = () => {
             setSites(prev => prev.map(s => s.id === siteId ? { ...s, is_pinned: res.data.is_pinned } : s));
         } catch (error) { toast.error('Помилка'); }
     };
-
     const safeSites = Array.isArray(sites) ? sites : [];
     const filteredSites = safeSites.filter(s => onlyPinned ? s.is_pinned : true)
         .sort((a, b) => (a.is_pinned === b.is_pinned ? 0 : a.is_pinned ? -1 : 1));
@@ -126,7 +124,7 @@ const MySitesPage = () => {
     return (
         <div className="-m-4 sm:-m-8 w-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)">
             <div className="sticky top-0 z-50 bg-(--platform-bg) shadow-sm border-b border-(--platform-border-color)">
-                <div className="p-4 sm:px-6 sm:py-3 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 border-b border-(--platform-border-color) bg-(--platform-bg)">
+                <div className="px-4 py-4 sm:px-8 lg:px-10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 border-b border-(--platform-border-color) bg-(--platform-bg)">
                     <div className="w-full sm:w-1/3 flex justify-center sm:justify-start shrink-0">
                         <div 
                             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors
@@ -175,7 +173,7 @@ const MySitesPage = () => {
                     starTitle="Тільки закріплені"
                 />
             </div>
-            <div className="flex-1 p-4 sm:p-6 relative bg-(--platform-bg)">
+            <div className="flex-1 p-4 sm:p-8 lg:p-10 relative bg-(--platform-bg)">
                 {loading ? (
                     <LoadingState layout="page" />
                 ) : filteredSites.length === 0 ? (

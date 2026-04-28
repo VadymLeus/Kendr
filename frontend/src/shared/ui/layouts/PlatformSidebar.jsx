@@ -47,18 +47,20 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
         <>
             {isMobileOpen && (
                 <div 
-                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-1250 md:hidden transition-opacity"
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm md:hidden transition-opacity"
+                    style={{ zIndex: 20000 }}
                     onClick={onMobileClose}
                 />
             )}
             <div 
                 className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''} custom-scrollbar relative`}
-                style={{ zIndex: 1300 }}
+                style={{ zIndex: 20001, transition: 'none' }}
             >
                 <button 
                     onClick={onToggle} 
                     title={isCollapsed ? "Розгорнути панель" : "Згорнути панель"} 
-                    className="group hidden md:flex absolute top-18.75 -right-4 w-4 h-24 bg-(--platform-sidebar-bg) border border-(--platform-border-color) shadow-sm cursor-pointer transition-all duration-200 focus:outline-none z-1310 items-center justify-center rounded-r-lg hover:border-(--platform-accent) hover:shadow-md"
+                    className="group hidden md:flex absolute top-18.75 -right-4 w-4 h-24 bg-(--platform-sidebar-bg) border border-(--platform-border-color) shadow-sm cursor-pointer transition-all duration-200 focus:outline-none items-center justify-center rounded-r-lg hover:border-(--platform-accent) hover:shadow-md"
+                    style={{ zIndex: 20002 }}
                 >
                     <div className="transition-transform duration-200 group-hover:scale-110 text-(--platform-text-secondary) group-hover:text-(--platform-accent) flex items-center justify-center -ml-0.5">
                         {isCollapsed ? <ChevronRight size={16} strokeWidth={2.5} /> : <ChevronLeft size={16} strokeWidth={2.5} />}
@@ -67,7 +69,8 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
                 <button 
                     onClick={isMobileOpen ? onMobileClose : onMobileOpen} 
                     title={isMobileOpen ? "Згорнути панель" : "Розгорнути панель"} 
-                    className="group md:hidden absolute top-18.75 -right-6 w-6 h-24 bg-(--platform-sidebar-bg) border border-(--platform-border-color) shadow-md cursor-pointer transition-all duration-200 focus:outline-none z-1310 flex items-center justify-center rounded-r-lg hover:border-(--platform-accent)"
+                    className="group md:hidden absolute top-18.75 -right-6 w-6 h-24 bg-(--platform-sidebar-bg) border border-(--platform-border-color) shadow-md cursor-pointer transition-all duration-200 focus:outline-none items-center justify-center rounded-r-lg hover:border-(--platform-accent)"
+                    style={{ zIndex: 20002 }}
                 >
                     <div className="transition-transform duration-200 group-hover:scale-110 text-(--platform-text-secondary) group-hover:text-(--platform-accent) flex items-center justify-center -ml-1">
                         {isMobileOpen ? <ChevronLeft size={18} strokeWidth={2.5} /> : <ChevronRight size={18} strokeWidth={2.5} />}

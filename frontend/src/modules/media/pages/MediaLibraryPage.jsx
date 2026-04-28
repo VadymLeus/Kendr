@@ -56,6 +56,7 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -375,7 +376,7 @@ const MediaLibraryPage = () => {
             className="flex flex-col flex-1 min-h-0 bg-(--platform-bg) relative"
         >
             <div className="shrink-0 bg-(--platform-bg) z-10 flex flex-col">
-                <div className="h-auto sm:h-16 px-4 sm:px-6 py-4 sm:py-0 border-b border-(--platform-border-color) flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                <div className="h-auto sm:h-16 px-4 py-4 sm:px-8 lg:px-10 sm:py-0 border-b border-(--platform-border-color) flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
                     <div className="w-full sm:w-1/3 flex justify-center sm:justify-start shrink-0">
                         {limits && (
                             <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-sm transition-colors ${(!limits.isUnlimited && limits.percentageUsed >= 90) ? 'text-(--platform-danger) border-[color-mix(in_srgb,var(--platform-danger),transparent_70%)] bg-[color-mix(in_srgb,var(--platform-danger),transparent_90%)]' : 'text-(--platform-text-secondary) bg-(--platform-card-bg) border-(--platform-border-color)'}`}>
@@ -427,7 +428,7 @@ const MediaLibraryPage = () => {
             </div>
             <div className="flex flex-1 min-h-0 overflow-hidden relative">
                 <div 
-                    className={`flex-1 p-4 sm:p-6 overflow-y-auto min-w-0 ${!loading && filteredFiles.length === 0 ? 'flex flex-col items-center justify-center' : ''}`}
+                    className={`flex-1 p-4 sm:p-8 lg:p-10 overflow-y-auto min-w-0 ${!loading && filteredFiles.length === 0 ? 'flex flex-col items-center justify-center' : ''}`}
                     onClick={handleGridBackgroundClick}
                 >
                     {loading ? (
@@ -481,7 +482,7 @@ const MediaLibraryPage = () => {
                     </div>
                 )}
             </div>
-            <div className="shrink-0 px-4 sm:px-6 py-3 sm:py-0 min-h-12 border-t border-(--platform-border-color) bg-(--platform-bg) flex flex-col sm:flex-row justify-between items-stretch sm:items-center text-xs sm:text-sm text-(--platform-text-secondary) z-10 gap-3 sm:gap-0">
+            <div className="shrink-0 px-4 sm:px-8 lg:px-10 py-3 sm:py-0 min-h-12 border-t border-(--platform-border-color) bg-(--platform-bg) flex flex-col sm:flex-row justify-between items-stretch sm:items-center text-xs sm:text-sm text-(--platform-text-secondary) z-10 gap-3 sm:gap-0">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <span className="whitespace-nowrap font-medium">Виділено: {checkedFiles.size} з {files.length}</span>
                     <div className="hidden sm:block w-px h-4 bg-(--platform-border-color)" />

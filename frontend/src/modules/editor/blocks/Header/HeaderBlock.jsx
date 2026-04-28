@@ -1,12 +1,12 @@
 // frontend/src/modules/editor/blocks/Header/HeaderBlock.jsx
-import React, { useContext, useState, useRef, useLayoutEffect } from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { FavoritesContext } from '../../../../app/providers/FavoritesContext';
 import { resolveSiteLink } from '../../../../shared/utils/linkUtils';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 import { BASE_URL } from '../../../../shared/config';
-import { Settings, Star, Menu, ArrowRight, ShoppingCart, Mail, Phone, Check, MousePointer2, Star as StarIcon} from 'lucide-react';
+import { Settings, Star, Menu, ArrowRight, ShoppingCart, Mail, Phone, Check, MousePointer2, Star as StarIcon } from 'lucide-react';
 
 const ICON_MAP = {
     arrowRight: ArrowRight, cart: ShoppingCart, mail: Mail, phone: Phone, check: Check, none: null, star: StarIcon, pointer: MousePointer2
@@ -30,7 +30,7 @@ const resolveUrl = (src) => {
     return null;
 };
 
-const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => {
+const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuToggle }) => {
     const { 
         show_title, nav_items = [], logo_size = 'medium', nav_alignment = 'right',
         nav_style = 'text', nav_fontFamily, buttonSettings = {}, logo_radius, borderRadius
@@ -39,6 +39,7 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         navText: nav_fontFamily, btnFont: buttonSettings.fontFamily 
     }, siteData);
+    
     let effectiveLogoSrc = blockData.logo_src;
     let effectiveTitle = blockData.site_title;
     if (effectiveLogoSrc === undefined || effectiveLogoSrc === null) {
@@ -47,64 +48,12 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     if (effectiveTitle === undefined || effectiveTitle === null) {
         if (siteData?.title) effectiveTitle = siteData.title || 'Site Title';
     }
+
     const { user } = useContext(AuthContext) || {};
     const favContext = useContext(FavoritesContext) || {};
     const favoriteSiteIds = favContext.favoriteSiteIds || new Set();
     const addFavorite = favContext.addFavorite || (() => console.warn('FavoritesProvider missing'));
     const removeFavorite = favContext.removeFavorite || (() => console.warn('FavoritesProvider missing'));
-    const headerRef = useRef(null);
-    const [containerWidth, setContainerWidth] = useState(1200);
-    useLayoutEffect(() => {
-        if (!headerRef.current) return;
-        const observer = new ResizeObserver((entries) => {
-            for (let entry of entries) setContainerWidth(entry.contentRect.width);
-        });
-        observer.observe(headerRef.current);
-        return () => observer.disconnect();
-    }, []);
-    const IS_COMPACT_NAV = containerWidth < 850;
-    const IS_COMPACT_BTN = containerWidth < 480;
-    const getLogoHeight = () => {
-        switch (logo_size) {
-            case 'small': return '30px';
-            case 'large': return '80px'; 
-            case 'medium': default: return '50px';
-        }
-    };
-    const getButtonStyle = (isHovered) => {
-        const { variant = 'solid', styleType = 'primary', borderRadius: btnRadius, size = 'medium' } = buttonSettings;
-        const accentColor = 'var(--site-accent, #3b82f6)';
-        const textColor = 'var(--site-text-primary, #111827)'; 
-        const whiteColor = '#ffffff';
-        const colorVar = styleType === 'secondary' ? textColor : accentColor;
-        const isOutline = variant === 'outline';
-        let padding = '8px 16px';
-        let fontSize = '0.95rem';
-        if (size === 'small') { padding = '6px 12px'; fontSize = '0.85rem'; }
-        if (size === 'large') { padding = '12px 24px'; fontSize = '1.05rem'; }
-        let background, color, border;
-        if (isOutline) {
-            background = isHovered ? `color-mix(in srgb, ${colorVar} 10%, transparent)` : 'transparent';
-            color = colorVar;
-            border = `2px solid ${colorVar}`;
-        } else {
-            background = colorVar;
-            color = whiteColor;
-            if (styleType === 'secondary') color = 'var(--site-bg)'; 
-            border = '2px solid transparent';
-        }
-        const safeRadius = btnRadius !== undefined ? parseInt(btnRadius) : 4;
-        return {
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-            borderRadius: `${safeRadius}px`, background, color, border, fontFamily: fontStyles.btnFont,
-            fontSize, fontWeight: '600', textDecoration: 'none', transition: 'all 0.2s ease',
-            cursor: isEditorPreview ? 'default' : 'pointer', padding, lineHeight: 1,
-            opacity: (isHovered && !isOutline) ? 0.9 : 1, transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
-        };
-    };
-    const [hoveredNavId, setHoveredNavId] = useState(null);
-    const [isBtnHovered, setIsBtnHovered] = useState(false);
-    const [isMenuHovered, setIsMenuHovered] = useState(false);
     const isOwner = user && siteData && user.id === siteData.user_id;
     const isFavorite = siteData && favoriteSiteIds.has(parseInt(siteData.id));
     const logoUrl = resolveUrl(effectiveLogoSrc);
@@ -112,79 +61,162 @@ const HeaderBlock = ({ blockData, siteData, isEditorPreview, onMenuToggle }) => 
     const ActionWrapper = isEditorPreview ? 'div' : Link;
     const siteRoot = resolveSiteLink('/', siteData?.site_path);
     const homeLink = isEditorPreview ? '#' : siteRoot;
-    const iconBtnBaseClass = "flex items-center justify-center w-10 h-10 rounded-lg border cursor-pointer transition-all duration-200 shrink-0";
-    const normalStateClass = "border-(--site-border-color) bg-(--site-card-bg)";
-    const hoverStateClass = "border-(--site-accent) bg-(--site-bg)";
     const isStickyBlock = blockData.is_sticky && !isEditorPreview;
+    const getLogoHeight = () => {
+        switch (logo_size) {
+            case 'small': return '30px';
+            case 'large': return '80px'; 
+            case 'medium': default: return '50px';
+        }
+    };
+
+    const btnVariant = buttonSettings.variant || 'solid';
+    const btnStyleType = buttonSettings.styleType || 'primary';
+    const btnRadius = buttonSettings.borderRadius !== undefined ? parseInt(buttonSettings.borderRadius) : 4;
+    const btnSize = buttonSettings.size || 'medium';
+    const colorVar = btnStyleType === 'secondary' ? 'var(--site-text-primary)' : 'var(--site-accent)';
+    const btnCssVars = {
+        '--nav-btn-bg': btnVariant === 'outline' ? 'transparent' : colorVar,
+        '--nav-btn-color': btnVariant === 'outline' ? colorVar : (btnStyleType === 'secondary' ? 'var(--site-bg)' : '#ffffff'),
+        '--nav-btn-border': btnVariant === 'outline' ? `2px solid ${colorVar}` : '2px solid transparent',
+        '--nav-btn-hover-bg': btnVariant === 'outline' ? `color-mix(in srgb, ${colorVar} 10%, transparent)` : colorVar,
+        '--nav-btn-hover-opacity': btnVariant === 'solid' ? '0.9' : '1',
+    };
+
+    let btnPadding = '8px 16px';
+    let btnFontSize = '0.95rem';
+    if (btnSize === 'small') { btnPadding = '6px 12px'; btnFontSize = '0.85rem'; }
+    if (btnSize === 'large') { btnPadding = '12px 24px'; btnFontSize = '1.05rem'; }
+    const iconBtnClass = `
+        header-action-btn flex items-center justify-center w-11 h-11 rounded-xl border cursor-pointer transition-all duration-200 shrink-0 backdrop-blur-md
+        border-(--site-border-color) bg-(--site-card-bg)/90
+    `;
+
     return (
         <header 
-            ref={headerRef}
-            className={`flex items-center justify-between w-full ${isStickyBlock ? 'sticky top-0 z-90' : 'relative'} bg-(--site-header-bg,var(--site-bg)) text-(--site-text-primary) transition-all duration-300 gap-4 ${IS_COMPACT_BTN ? 'py-3 px-4' : 'py-4 px-8 gap-8'}`}
+            className={`
+                flex items-center justify-between w-full transition-all duration-300
+                bg-(--site-header-bg,var(--site-bg)) text-(--site-text-primary)
+                ${isStickyBlock ? 'sticky top-0 z-90' : 'relative'}
+                py-3 px-4 @3xl:py-4 @3xl:px-8 gap-4 @3xl:gap-8
+            `}
             style={cssVariables}
         >
             <RenderFonts />
+            <style>{`
+                .nav-style-text:hover { color: var(--site-accent); }
+                .nav-style-button {
+                    background: var(--nav-btn-bg);
+                    color: var(--nav-btn-color);
+                    border: var(--nav-btn-border);
+                }
+                .nav-style-button:hover {
+                    background: var(--nav-btn-hover-bg);
+                    opacity: var(--nav-btn-hover-opacity);
+                    transform: translateY(-1px);
+                }
+                .header-action-btn {
+                    color: var(--site-text-secondary);
+                }
+                .header-action-btn:hover {
+                    color: var(--site-accent) !important;
+                    border-color: var(--site-accent) !important;
+                    background-color: var(--site-bg) !important;
+                }
+                
+                ${isFavorite && !isOwner ? `
+                    .favorite-btn-active {
+                        border-color: var(--site-accent) !important;
+                        background: var(--site-bg) !important;
+                        color: var(--site-accent) !important;
+                    }
+                ` : ''}
+            `}</style>
+
             <NavWrapper to={homeLink} className="flex items-center gap-3 no-underline text-inherit shrink-0 cursor-pointer" onClick={e => isEditorPreview && e.preventDefault()}>
-                {logoUrl && <img src={logoUrl} alt="Logo" className="w-auto object-contain transition-[height] duration-200 max-w-37.5" style={{ height: getLogoHeight(), borderRadius: formatRadius(effectiveLogoRadius) }} />}
-                {show_title && <span className="font-bold whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontFamily: fontStyles.navText, fontSize: IS_COMPACT_BTN ? '1rem' : '1.2rem', maxWidth: IS_COMPACT_NAV ? '150px' : '300px' }}>{effectiveTitle}</span>}
+                {logoUrl && (
+                    <img 
+                        src={logoUrl} 
+                        alt="Logo" 
+                        className="w-auto object-contain transition-[height] duration-200 max-w-37.5 @3xl:max-w-50 @5xl:max-w-75" 
+                        style={{ height: getLogoHeight(), borderRadius: formatRadius(effectiveLogoRadius) }} 
+                    />
+                )}
+                {show_title && (
+                    <span 
+                        className="font-bold whitespace-nowrap overflow-hidden text-ellipsis text-[1rem] @3xl:text-[1.2rem] max-w-35 @3xl:max-w-50 @5xl:max-w-75" 
+                        style={{ fontFamily: fontStyles.navText }}
+                    >
+                        {effectiveTitle}
+                    </span>
+                )}
             </NavWrapper>
-            {!IS_COMPACT_NAV && (
-                <nav className="flex gap-6 flex-1 px-5 items-center" style={{ justifyContent: nav_alignment === 'center' ? 'center' : (nav_alignment === 'left' ? 'flex-start' : 'flex-end') }}>
-                    {nav_items.map((item) => {
-                        const isHovered = hoveredNavId === item.id;
-                        let itemStyle = nav_style === 'button' ? getButtonStyle(isHovered) : { textDecoration: 'none', fontWeight: '500', fontSize: '0.95rem', transition: 'all 0.2s ease', cursor: isEditorPreview ? 'default' : 'pointer', padding: '4px 0', color: isHovered ? 'var(--site-accent)' : 'inherit', fontFamily: fontStyles.navText };
-                        const IconComp = (nav_style === 'button' && buttonSettings.icon && buttonSettings.icon !== 'none') ? ICON_MAP[buttonSettings.icon] : null;
-                        const iconPos = buttonSettings.iconPosition || 'right';
-                        const isFlipped = buttonSettings.iconFlip;
-                        return (
-                            <NavWrapper key={item.id} to={isEditorPreview ? '#' : resolveSiteLink(item.link, siteData?.site_path)} style={itemStyle} onClick={e => isEditorPreview && e.preventDefault()} onMouseEnter={() => setHoveredNavId(item.id)} onMouseLeave={() => setHoveredNavId(null)}>
-                                {nav_style === 'button' && IconComp && iconPos === 'left' && <IconComp size={16} style={{ transform: isFlipped ? 'scaleX(-1)' : 'none' }} />}
-                                <span>{item.label}</span>
-                                {nav_style === 'button' && IconComp && iconPos === 'right' && <IconComp size={16} style={{ transform: isFlipped ? 'scaleX(-1)' : 'none' }} />}
-                            </NavWrapper>
-                        );
-                    })}
-                </nav>
-            )}
+
+            <nav
+                className="hidden @5xl:flex gap-6 flex-1 px-5 items-center" 
+                style={{ justifyContent: nav_alignment === 'center' ? 'center' : (nav_alignment === 'left' ? 'flex-start' : 'flex-end') }}
+            >
+                {nav_items.map((item) => {
+                    const isBtnStyle = nav_style === 'button';
+                    const IconComp = (isBtnStyle && buttonSettings.icon && buttonSettings.icon !== 'none') ? ICON_MAP[buttonSettings.icon] : null;
+                    const iconPos = buttonSettings.iconPosition || 'right';
+                    const isFlipped = buttonSettings.iconFlip;
+                    return (
+                        <NavWrapper 
+                            key={item.id} 
+                            to={isEditorPreview ? '#' : resolveSiteLink(item.link, siteData?.site_path)} 
+                            onClick={e => isEditorPreview && e.preventDefault()} 
+                            className={`
+                                no-underline transition-all duration-200 cursor-pointer 
+                                ${isBtnStyle ? 'nav-style-button flex items-center justify-center gap-2 font-semibold' : 'nav-style-text font-medium text-[0.95rem] py-1 text-inherit'}
+                            `}
+                            style={isBtnStyle ? {
+                                ...btnCssVars,
+                                borderRadius: `${btnRadius}px`,
+                                fontFamily: fontStyles.btnFont,
+                                padding: btnPadding,
+                                fontSize: btnFontSize,
+                                lineHeight: 1
+                            } : { fontFamily: fontStyles.navText }}
+                        >
+                            {isBtnStyle && IconComp && iconPos === 'left' && <IconComp size={16} style={{ transform: isFlipped ? 'scaleX(-1)' : 'none' }} />}
+                            <span>{item.label}</span>
+                            {isBtnStyle && IconComp && iconPos === 'right' && <IconComp size={16} style={{ transform: isFlipped ? 'scaleX(-1)' : 'none' }} />}
+                        </NavWrapper>
+                    );
+                })}
+            </nav>
             <div className="flex items-center gap-2 shrink-0">
-                {IS_COMPACT_NAV && nav_items.length > 0 && (
+                {nav_items.length > 0 && (
                     <div 
-                        className={`${iconBtnBaseClass} ${isMenuHovered ? hoverStateClass : normalStateClass}`} 
-                        style={{ color: isMenuHovered ? 'var(--site-accent)' : 'var(--site-text-secondary)' }}
+                        className={`@5xl:hidden ${iconBtnClass}`}
                         title="Меню" 
-                        onMouseEnter={() => setIsMenuHovered(true)} 
-                        onMouseLeave={() => setIsMenuHovered(false)} 
                         onClick={onMenuToggle}
                     >
-                        <Menu size={20} />
+                        <Menu size={22} />
                     </div>
                 )}
                 {isOwner ? (
                     <ActionWrapper 
                         to={`/dashboard/${siteData?.site_path}`} 
-                        className={`${iconBtnBaseClass} no-underline ${isBtnHovered ? hoverStateClass : normalStateClass}`} 
-                        style={{ color: isBtnHovered ? 'var(--site-accent)' : 'var(--site-text-secondary)' }}
+                        className={`${iconBtnClass} no-underline`}
                         title="Налаштування сайту" 
                         onClick={e => isEditorPreview && e.preventDefault()} 
-                        onMouseEnter={() => setIsBtnHovered(true)} 
-                        onMouseLeave={() => setIsBtnHovered(false)}
                     >
-                        <Settings size={20} />
+                        <Settings size={22} />
                     </ActionWrapper>
                 ) : (
                     <button 
-                        className={`${iconBtnBaseClass} ${(isBtnHovered || (isFavorite && !isOwner)) ? hoverStateClass : normalStateClass}`} 
-                        style={{ color: (isBtnHovered || (isFavorite && !isOwner)) ? 'var(--site-accent)' : 'var(--site-text-secondary)' }}
+                        className={`${iconBtnClass} ${isFavorite ? 'favorite-btn-active' : ''}`}
                         onClick={() => !isEditorPreview && (isFavorite ? removeFavorite(siteData.id) : addFavorite(siteData.id))} 
                         title={isFavorite ? "Видалити з обраних" : "Додати в обрані"} 
-                        onMouseEnter={() => setIsBtnHovered(true)} 
-                        onMouseLeave={() => setIsBtnHovered(false)}
                     >
-                        <Star size={20} fill={isFavorite ? "currentColor" : "none"} />
+                        <Star size={22} fill={isFavorite ? "currentColor" : "none"} />
                     </button>
                 )}
             </div>
         </header>
     );
-};
+});
 
 export default HeaderBlock;

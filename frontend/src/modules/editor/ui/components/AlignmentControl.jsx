@@ -3,7 +3,7 @@ import React from 'react';
 import { ToggleGroup } from '../configuration/SettingsUI';
 import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
 
-const AlignmentControl = ({ value, onChange, label = "Вирівнювання", showJustify = false, gridMode = false }) => {
+const AlignmentControl = ({ value, onChange, label, showJustify = false, gridMode = false }) => {
     if (gridMode) {
         const normalizedValue = value === 'left' ? 'middle-left' :
                                 value === 'right' ? 'middle-right' :
@@ -16,7 +16,7 @@ const AlignmentControl = ({ value, onChange, label = "Вирівнювання",
         ];
         return (
             <div className="mb-4">
-                <label className="form-label block mb-3 text-center">{label}</label>
+                {label && <label className="form-label block mb-3 text-center">{label}</label>}
                 <div className="flex justify-center">
                     <div className="grid grid-cols-3 gap-1.5 w-24 h-24 p-2 bg-black/5 dark:bg-white/5 border border-(--platform-border-color) rounded-lg shadow-inner">
                         {positions.map(pos => (
@@ -49,7 +49,7 @@ const AlignmentControl = ({ value, onChange, label = "Вирівнювання",
 
     return (
         <div className="mb-4">
-            <label className="form-label block mb-2">{label}</label>
+            {label && <label className="form-label block mb-2">{label}</label>}
             <ToggleGroup 
                 options={options}
                 value={value || 'left'}

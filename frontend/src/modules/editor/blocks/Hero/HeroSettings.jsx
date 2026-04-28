@@ -251,8 +251,8 @@ const HeroSettings = ({ data, onChange, siteData }) => {
                     </div>
                 </div>
                 <div className="mb-5">
+                    <label style={commonStyles.label}>Вирівнювання контенту</label>
                     <AlignmentControl 
-                        label="Вирівнювання контенту"
                         value={safeData.alignment}
                         onChange={(val) => handleChange('alignment', val)}
                         gridMode={true}

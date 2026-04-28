@@ -8,6 +8,7 @@ import UniversalMediaInput from '../../../../../shared/ui/complex/UniversalMedia
 import { TEXT_LIMITS } from '../../../../../shared/config/limits';
 import { toast } from 'react-toastify';
 import { useCooldown } from '../../../../../shared/hooks/useCooldown';
+import AlignmentControl from '../../../../editor/ui/components/AlignmentControl';
 import { Image, Upload, Trash, Type, AlertCircle, Lock, Globe, Check, Timer, Loader, Cookie } from 'lucide-react';
 
 const GeneralIdentitySection = ({ 
@@ -170,7 +171,6 @@ const GeneralIdentitySection = ({
                     </div>
                 )}
             </div>
-            
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-6 shadow-sm">
                 <div className="flex flex-row justify-between items-center gap-4">
                     <div>
@@ -190,18 +190,55 @@ const GeneralIdentitySection = ({
                 </div>
                 {data.cookie_banner_enabled && (
                     <div className="mt-5 animate-in fade-in slide-in-from-top-2">
-                        <label className="block text-sm font-medium text-(--platform-text-primary) mb-2">
-                            Текст банера
-                        </label>
-                        <textarea
-                            className="w-full bg-(--platform-input-bg) border border-(--platform-border-color) rounded-lg p-3 sm:p-4 text-(--platform-text-primary) text-sm focus:border-(--platform-accent) focus:ring-1 focus:ring-(--platform-accent) transition-all outline-none resize-y min-h-25"
-                            value={data.cookie_banner_text}
-                            onChange={(e) => handleChange('cookie_banner_text', e.target.value)}
-                            placeholder="Введіть текст для Cookie банера..."
-                        />
+                        <div className="mb-5">
+                            <label className="block text-sm font-medium text-(--platform-text-primary) mb-2">
+                                Текст банера
+                            </label>
+                            <textarea
+                                className="w-full bg-(--platform-input-bg) border border-(--platform-border-color) rounded-lg p-3 sm:p-4 text-(--platform-text-primary) text-sm focus:border-(--platform-accent) focus:ring-1 focus:ring-(--platform-accent) transition-all outline-none resize-y min-h-25 custom-scrollbar"
+                                value={data.cookie_banner_text}
+                                onChange={(e) => handleChange('cookie_banner_text', e.target.value)}
+                                placeholder="Введіть текст для Cookie банера..."
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
+                            <div>
+                                <label className="block text-sm font-medium text-(--platform-text-primary) mb-2">
+                                    Розмір банера
+                                </label>
+                                <CustomSelect
+                                    value={data.cookie_banner_size || 'medium'}
+                                    onChange={(e) => handleChange('cookie_banner_size', e.target.value)}
+                                    options={[
+                                        { value: 'small', label: 'Компактний' },
+                                        { value: 'medium', label: 'Стандартний' },
+                                        { value: 'large', label: 'Великий' }
+                                    ]}
+                                />
+                            </div>
+                            <div>
+                                <AlignmentControl 
+                                    label="Розташування на екрані"
+                                    value={data.cookie_banner_position || 'bottom-center'}
+                                    onChange={(val) => handleChange('cookie_banner_position', val)}
+                                    gridMode={true}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-(--platform-bg) rounded-lg border border-(--platform-border-color)">
+                            <div>
+                                <div className="font-medium text-sm text-(--platform-text-primary)">Блокування фону</div>
+                                <div className="text-xs text-(--platform-text-secondary) mt-0.5">Розмиває сайт, поки користувач не прийме рішення</div>
+                            </div>
+                            <Switch 
+                                checked={data.cookie_banner_blur || false} 
+                                onChange={(val) => handleChange('cookie_banner_blur', typeof val === 'boolean' ? val : val.target.checked)} 
+                            />
+                        </div>
                     </div>
                 )}
             </div>
+
             {!isStaff && !isLocked && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-6 shadow-sm">
                     <div className="mb-5">
@@ -212,7 +249,7 @@ const GeneralIdentitySection = ({
                             Керування видимістю вашого сайту для відвідувачів
                         </p>
                     </div>
-                    <div className="max-w-md w-full">
+                    <div className="max-w-md w-full mx-auto">
                         <CustomSelect 
                             name="status"
                             value={localStatus} 

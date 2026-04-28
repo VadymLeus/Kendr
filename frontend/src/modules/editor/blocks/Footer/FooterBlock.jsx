@@ -21,7 +21,7 @@ const FooterBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const reactId = useId().replace(/:/g, '');
     const {
         variant = 'standard',
-        theme_mode = 'dark',
+        theme_mode = 'auto',
         bg_type = 'color',
         bg_color = '#111827',
         bg_opacity = 1,
@@ -38,24 +38,23 @@ const FooterBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         content: contentFontFamily
     }, siteData);
+    
     let rawOpacity = Number(overlay_opacity);
     if (isNaN(rawOpacity)) rawOpacity = 0.5;
     const safeOpacity = rawOpacity > 1 ? rawOpacity / 100 : rawOpacity;
     const fullImageUrl = bg_image 
         ? (bg_image.startsWith('http') ? bg_image : `${BASE_URL}${bg_image}`)
         : null;
-
     const getTextColor = () => {
         if (theme_mode === 'dark') return '#ffffff';
-        if (theme_mode === 'light') return 'var(--site-text-primary, #111827)';
-        return 'inherit';
+        if (theme_mode === 'light') return '#111827';
+        return 'var(--site-text-primary, inherit)';
     };
     const computedTextColor = getTextColor();
     const isTransparent = overlay_color === 'transparent';
-    const textHoverClass = theme_mode === 'dark' ? 'hover:text-white/80' : 'hover:text-black/70';
-    const uniqueClass = `footer-scope-${data.id || reactId}`;
+    const uniqueClass = `footer-scope-${data.block_id || data.id || reactId}`;
     const renderBackground = () => (
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             {bg_type === 'color' && (
                 <div className="absolute inset-0" style={{ backgroundColor: bg_color, opacity: bg_opacity }} />
             )}
@@ -78,7 +77,7 @@ const FooterBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         <footer 
             className={`
                 relative w-full flex flex-col overflow-hidden
-                ${variant === 'simple' ? 'py-8' : 'py-12'}
+                ${variant === 'simple' ? 'py-6 @2xl:py-8' : 'py-8 @2xl:py-12'}
                 ${uniqueClass}
             `}
             style={{ 
@@ -92,27 +91,27 @@ const FooterBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             <RenderFonts />
             <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
             {renderBackground()}
-            <div className="relative z-10 container mx-auto px-4 w-full">
+            <div className="relative z-10 mx-auto px-5 @2xl:px-8 max-w-300 w-full">
                 {variant === 'simple' ? (
                     <div className="text-center">
-                        <p className="text-sm m-0 opacity-80" style={{ fontFamily: fontStyles.content }}>
+                        <p className="text-sm @2xl:text-base m-0 opacity-80" style={{ fontFamily: fontStyles.content }}>
                             {copyright}
                         </p>
                     </div>
                 ) : (
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                        <div className="flex flex-col items-center md:items-start gap-3">
-                            <p className="text-sm m-0 opacity-80" style={{ fontFamily: fontStyles.content }}>
+                    <div className="flex flex-col @3xl:flex-row justify-between items-center gap-6 @2xl:gap-8">
+                        <div className="flex flex-col items-center @3xl:items-start gap-3 w-full @3xl:w-auto text-center @3xl:text-left">
+                            <p className="text-sm @2xl:text-base m-0 opacity-80" style={{ fontFamily: fontStyles.content }}>
                                 {copyright}
                             </p>
                         </div>
                         {links && links.length > 0 && (
-                            <div className="flex flex-wrap justify-center gap-6 text-sm font-medium">
+                            <div className="flex flex-wrap justify-center @3xl:justify-end gap-4 @2xl:gap-6 text-sm @2xl:text-base font-medium">
                                 {links.map((link, idx) => (
                                     <a 
                                         key={link.id || idx} 
-                                        href={link.link || '#'} 
-                                        className={`transition-colors no-underline text-inherit opacity-90 ${textHoverClass}`}
+                                        href={link.link || '#'}
+                                        className="transition-opacity duration-200 no-underline text-inherit opacity-80 hover:opacity-100"
                                         style={{ fontFamily: fontStyles.content }}
                                         onClick={(e) => isEditorPreview && e.preventDefault()}
                                     >
@@ -122,18 +121,18 @@ const FooterBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                             </div>
                         )}
                         {socials && socials.length > 0 && (
-                            <div className="flex gap-4">
+                            <div className="flex justify-center gap-4 @2xl:gap-5">
                                 {socials.map((social, idx) => {
                                     const IconComponent = IconsMap[social.platform] || IconsMap.default;
                                     return (
                                         <a 
                                             key={social.id || idx} 
                                             href={social.link || '#'} 
-                                            className={`transition-transform duration-200 no-underline text-inherit opacity-90 hover:opacity-100 hover:scale-110`}
+                                            className="transition-transform duration-200 no-underline text-inherit opacity-80 hover:opacity-100 hover:scale-110"
                                             title={social.platform}
                                             onClick={(e) => isEditorPreview && e.preventDefault()}
                                         >
-                                            <IconComponent size={20} />
+                                            <IconComponent size={20} className="@2xl:w-6 @2xl:h-6" />
                                         </a>
                                     );
                                 })}
@@ -146,4 +145,8 @@ const FooterBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     );
 };
 
-export default FooterBlock;
+export default React.memo(FooterBlock, (prev, next) => {
+    return JSON.stringify(prev.blockData) === JSON.stringify(next.blockData) && 
+           prev.isEditorPreview === next.isEditorPreview &&
+           prev.siteData?.id === next.siteData?.id;
+});

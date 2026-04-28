@@ -5,6 +5,15 @@ import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 import ProductCard from '../../ui/components/ProductCard';
 import { ShoppingBag } from 'lucide-react';
 
+const getGridColsClass = (cols) => {
+    const safeCols = parseInt(cols, 10) || 4;
+    if (safeCols === 1) return 'grid-cols-1';
+    if (safeCols === 2) return 'grid-cols-1 @2xl:grid-cols-2';
+    if (safeCols === 3) return 'grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-3';
+    if (safeCols >= 4) return 'grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-4';
+    return 'grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-4';
+};
+
 const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -17,7 +26,6 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
         titleFontFamily,
         styles = {} 
     } = blockData;
-
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         title: titleFontFamily
     }, siteData);
@@ -55,21 +63,19 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
                 setLoading(false);
             }
         };
-
         if (siteData?.id || source_type === 'manual') fetchProducts();
     }, [blockData.selected_product_ids, blockData.category_id, source_type, siteData?.id, siteData?.site_path, siteData?.title]);
-
     const heightClasses = {
         small: 'min-h-[300px]',
-        medium: 'min-h-[500px]',
-        large: 'min-h-[700px]',
+        medium: 'min-h-[400px] @3xl:min-h-[500px]',
+        large: 'min-h-[500px] @3xl:min-h-[700px]',
         full: 'min-h-[calc(100vh-80px)]',
         auto: 'min-h-auto'
     };
     
     const currentHeightClass = heightClasses[height] || 'min-h-auto';
     const isFixedHeight = height !== 'auto';
-    const uniqueClass = `showcase-${blockData.id || 'preview'}`;
+    const uniqueClass = `showcase-${blockData.block_id || blockData.id || 'preview'}`;
     const alignmentClasses = {
         center: 'justify-center',
         right: 'justify-end',
@@ -77,23 +83,58 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
     };
 
     const containerAlignmentClass = isFixedHeight ? 'justify-center' : 'justify-start';
-    if (products.length === 0 && !loading && isEditorPreview) {
+    if (products.length === 0 && !loading) {
         return (
             <div 
+                style={{ 
+                    ...styles,
+                    backgroundColor: 'var(--site-bg)',
+                    ...cssVariables
+                }} 
                 className={`
-                    flex flex-col items-center justify-center gap-3 text-center p-12 
-                    bg-(--site-card-bg) w-full
-                    ${currentHeightClass === 'min-h-auto' ? 'min-h-75' : currentHeightClass}
+                    py-10 @2xl:py-12 @3xl:py-16 w-full flex flex-col
+                    ${currentHeightClass}
+                    ${containerAlignmentClass}
+                    ${uniqueClass}
                 `}
-                style={styles}
             >
-                <div className="text-(--site-accent) opacity-70">
-                     <ShoppingBag size={48} />
+                <RenderFonts />
+                <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
+                <div className="px-4 @2xl:px-6 @3xl:px-8 w-full max-w-300 mx-auto">
+                    {title && (
+                        <h2 
+                            className="mb-8 @3xl:mb-12 text-(--site-text-primary) text-3xl @2xl:text-4xl @3xl:text-5xl font-bold leading-tight tracking-tight"
+                            style={{ 
+                                textAlign: alignment, 
+                                fontFamily: fontStyles.title,
+                            }}
+                        >
+                            {title}
+                        </h2>
+                    )}
+                    <div 
+                        className={`
+                            flex flex-col items-center justify-center text-center p-10 @3xl:p-14 
+                            w-full mx-auto rounded-2xl border-2 border-dashed
+                        `}
+                        style={{ 
+                            borderColor: 'color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
+                            backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 2%, transparent)',
+                            minHeight: currentHeightClass === 'min-h-auto' ? '300px' : 'auto'
+                        }}
+                    >
+                        <div 
+                            className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
+                            style={{ backgroundColor: 'color-mix(in srgb, var(--site-accent) 10%, transparent)' }}
+                        >
+                             <ShoppingBag size={36} style={{ color: 'var(--site-accent)' }} strokeWidth={1.5} />
+                        </div>
+                        <h4 className="m-0 mb-2 font-medium text-xl" style={{ color: 'var(--site-text-primary)' }}>Вітрина товарів</h4>
+                        <p className="m-0 max-w-md text-base leading-relaxed" style={{ color: 'var(--site-text-secondary)' }}>
+                             Тут будуть відображатись ваші товари.
+                        </p>
+                    </div>
                 </div>
-                 <h4 className="text-(--site-text-primary) m-0 font-medium text-lg">Вітрина товарів</h4>
-                <p className="text-(--site-text-secondary) m-0">
-                     Товарів не знайдено. Перевірте налаштування категорії або додайте товари вручну.
-                </p>
             </div>
         );
     }
@@ -103,20 +144,21 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
             style={{ 
                 ...styles,
                 backgroundColor: 'var(--site-bg)',
+                ...cssVariables
             }} 
             className={`
-                py-10 max-w-300 mx-auto flex flex-col w-full
+                py-10 @2xl:py-12 @3xl:py-16 w-full flex flex-col
                 ${currentHeightClass}
                 ${containerAlignmentClass}
                 ${uniqueClass}
             `}
         >
             <RenderFonts />
-            <style>{`.${uniqueClass} { ${Object.entries(cssVariables).map(([k,v]) => `${k}:${v}`).join(';')} }`}</style>
-            <div className="px-5 w-full">
+            <style>{`.${uniqueClass} { ${fontStyles.cssVars || ''} }`}</style>
+            <div className="px-4 @2xl:px-6 @3xl:px-8 w-full max-w-300 mx-auto">
                 {title && (
                     <h2 
-                        className={`mb-8 text-(--site-text-primary) text-[2rem] leading-[1.2]`}
+                        className="mb-8 @3xl:mb-12 text-(--site-text-primary) text-3xl @2xl:text-4xl @3xl:text-5xl font-bold leading-tight tracking-tight"
                         style={{ 
                             textAlign: alignment, 
                             fontFamily: fontStyles.title,
@@ -125,36 +167,15 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
                         {title}
                     </h2>
                 )}
+                
                 {loading ? (
-                    <div className="text-center p-10 text-(--site-text-secondary)">
-                        Завантаження товарів...
+                    <div className="flex justify-center items-center p-12 w-full">
+                        <div className="w-8 h-8 border-4 border-(--site-accent) border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : (
-                    <div 
-                        className={`grid gap-6 w-full ${alignmentClasses[alignment] || 'justify-center'}`}
-                        style={{
-                            gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
-                        }}
-                    >
-                        <style>{`
-                            @media (max-width: 1024px) {
-                                .${uniqueClass} .grid {
-                                    grid-template-columns: repeat(${Math.min(3, columns)}, minmax(0, 1fr)) !important;
-                                }
-                            }
-                            @media (max-width: 768px) {
-                                .${uniqueClass} .grid {
-                                    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                                }
-                            }
-                            @media (max-width: 480px) {
-                                .${uniqueClass} .grid {
-                                    grid-template-columns: minmax(0, 1fr) !important;
-                                }
-                            }
-                        `}</style>
+                    <div className={`grid gap-4 @2xl:gap-6 @5xl:gap-8 w-full ${alignmentClasses[alignment] || 'justify-center'} ${getGridColsClass(columns)}`}>
                         {products.map(product => (
-                            <div key={product.id} className="h-full">
+                            <div key={product.id} className="h-full w-full flex justify-center">
                                 <ProductCard 
                                     product={product} 
                                     isEditorPreview={isEditorPreview} 
@@ -170,4 +191,8 @@ const ShowCaseBlock = ({ blockData, siteData, isEditorPreview }) => {
     );
 };
 
-export default ShowCaseBlock;
+export default React.memo(ShowCaseBlock, (prev, next) => {
+    return JSON.stringify(prev.blockData) === JSON.stringify(next.blockData) && 
+           prev.isEditorPreview === next.isEditorPreview &&
+           prev.siteData?.id === next.siteData?.id;
+});

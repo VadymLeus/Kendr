@@ -47,7 +47,10 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             liqpay_private_key: siteData.liqpay_private_key || '',
             tags: [],
             cookie_banner_enabled: siteData.cookie_banner_enabled || false,
-            cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду."
+            cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду.",
+            cookie_banner_size: siteData.cookie_banner_size || 'medium',
+            cookie_banner_position: siteData.cookie_banner_position || 'bottom-center',
+            cookie_banner_blur: siteData.cookie_banner_blur || false
         }
     );
 
@@ -83,7 +86,10 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 liqpay_private_key: siteData.liqpay_private_key || '',
                 theme_settings: siteData.theme_settings || {},
                 cookie_banner_enabled: siteData.cookie_banner_enabled || false,
-                cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду."
+                cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду.",
+                cookie_banner_size: siteData.cookie_banner_size || 'medium',
+                cookie_banner_position: siteData.cookie_banner_position || 'bottom-center',
+                cookie_banner_blur: siteData.cookie_banner_blur || false
             }));
             if (siteData.tags) setSelectedTags(siteData.tags.map(t => t.id));
         }
@@ -204,7 +210,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     Керування основними параметрами вашого сайту
                 </p>
             </div>
-            <div className="max-w-4xl mx-auto w-full flex flex-col gap-5 sm:gap-6">
+            <div className="max-w-4xl mx-auto w-full flex flex-col gap-5 sm:gap-6 mb-6">
                 <GeneralIdentitySection 
                     data={data} handleChange={handleChange} identityData={identityData}
                     handleIdentityChange={handleIdentityChange} handleSaveIdentity={handleSaveIdentity}
@@ -218,7 +224,11 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     setSelectedTags={setSelectedTags} siteData={siteData} identityData={identityData}
                     getImageUrl={getImageUrl}
                 />
+            </div>
+            <div className="w-full max-w-[96%] 2xl:max-w-400 mx-auto mb-8">
                 <GeneralTemplatesSection siteData={siteData} isAdmin={isAdmin} />
+            </div>
+            <div className="max-w-4xl mx-auto w-full flex flex-col gap-5 sm:gap-6">
                 {!isAdmin && (
                     <div className="hidden sm:block bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 shadow-sm">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
