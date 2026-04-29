@@ -34,7 +34,13 @@ const ROLE_OPTIONS = [
 ];
 
 const ActionBadge = ({ type }) => { const s = ACTION_CONFIG[type] || ACTION_CONFIG['default']; return <GenericBadge bg={s.bg} color={s.color} icon={s.icon}>{s.label}</GenericBadge>; };
-const DetailItem = ({ label, value }) => value ? <div style={{ display: 'flex', gap: '4px', fontSize: '12px', color: 'var(--platform-text-secondary)' }}><span>{label}:</span><span style={{ fontWeight: '500', color: 'var(--platform-text-primary)' }}>{value}</span></div> : null;
+const DetailItem = ({ label, value }) => value ? (
+    <div className="flex gap-1.5 text-[12px] text-(--platform-text-secondary) break-all sm:wrap-break-word w-full">
+        <span className="shrink-0">{label}:</span>
+        <span className="font-medium text-(--platform-text-primary)">{String(value)}</span>
+    </div>
+) : null;
+
 const AdminLogsPage = () => {
     const [actionFilter, setActionFilter] = useState(() => sessionStorage.getItem('admin_logs_action_filter') || 'all');
     const [roleFilter, setRoleFilter] = useState(() => sessionStorage.getItem('admin_logs_role_filter') || 'all');
@@ -44,6 +50,7 @@ const AdminLogsPage = () => {
         const savedSort = sessionStorage.getItem('admin_logs_sort_config');
         return savedSort ? JSON.parse(savedSort) : { key: 'created_at', direction: 'desc' };
     });
+    
     const { filteredData: rawLogs, loading, searchQuery, setSearchQuery } = useDataList('/admin/logs', ['admin_name', 'action_type', 'target_type', 'admin_role']);
     useEffect(() => sessionStorage.setItem('admin_logs_action_filter', actionFilter), [actionFilter]);
     useEffect(() => sessionStorage.setItem('admin_logs_role_filter', roleFilter), [roleFilter]);
@@ -64,20 +71,13 @@ const AdminLogsPage = () => {
     
     const processedLogs = useMemo(() => {
         let res = [...rawLogs];
-        if (actionFilter !== 'all') {
-            res = res.filter(l => l.action_type === actionFilter);
-        }
-
-        if (roleFilter !== 'all') {
-            res = res.filter(l => l.admin_role === roleFilter);
-        }
-
+        if (actionFilter !== 'all') res = res.filter(l => l.action_type === actionFilter);
+        if (roleFilter !== 'all') res = res.filter(l => l.admin_role === roleFilter);
         if (startDate) {
             const start = new Date(startDate);
             start.setHours(0, 0, 0, 0);
             res = res.filter(l => new Date(l.created_at).getTime() >= start.getTime());
         }
-        
         if (endDate) {
             const end = new Date(endDate);
             end.setHours(23, 59, 59, 999);
@@ -95,55 +95,117 @@ const AdminLogsPage = () => {
             created_at: new Date(log.created_at).toLocaleString('uk-UA')
         })), { id: 'ID', admin: 'Адміністратор', role: 'Роль', ip: 'IP', action: 'Дія', target_type: 'Тип цілі', target_id: 'ID цілі', details: 'Деталі', created_at: 'Дата' }, `logs_${new Date().toLocaleDateString('uk-UA')}`);
     };
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
-                <FilterBar style={{ flexWrap: 'wrap' }}>
-                    <div style={{ width: '220px' }}>
-                        <CustomSelect value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} options={ACTION_OPTIONS} variant="minimal" style={{ height: '42px', background: 'var(--platform-card-bg)' }} placeholder="Всі дії" />
+        <div className="flex flex-col h-full w-full">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-4 gap-4 w-full">
+                <FilterBar className="w-full xl:w-auto grid grid-cols-1 sm:flex gap-3">
+                    <div className="w-full sm:w-56 shrink-0">
+                        <CustomSelect 
+                            value={actionFilter} 
+                            onChange={(e) => setActionFilter(e.target.value)} 
+                            options={ACTION_OPTIONS} 
+                            variant="minimal" 
+                            style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
+                            placeholder="Всі дії" 
+                        />
                     </div>
-                    <div style={{ width: '180px' }}>
-                        <CustomSelect value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} options={ROLE_OPTIONS} variant="minimal" style={{ height: '42px', background: 'var(--platform-card-bg)' }} placeholder="Всі ролі" />
+                    <div className="w-full sm:w-48 shrink-0">
+                        <CustomSelect 
+                            value={roleFilter} 
+                            onChange={(e) => setRoleFilter(e.target.value)} 
+                            options={ROLE_OPTIONS} 
+                            variant="minimal" 
+                            style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
+                            placeholder="Всі ролі" 
+                        />
                     </div>
-                    <DateRangePicker 
-                        startDate={startDate} 
-                        endDate={endDate} 
-                        onStartDateChange={setStartDate} 
-                        onEndDateChange={setEndDate} 
-                        onClear={() => { setStartDate(''); setEndDate(''); }} 
-                    />
+                    <div className="w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                        <DateRangePicker 
+                            startDate={startDate} 
+                            endDate={endDate} 
+                            onStartDateChange={setStartDate} 
+                            onEndDateChange={setEndDate} 
+                            onClear={() => { setStartDate(''); setEndDate(''); }} 
+                        />
+                    </div>
                 </FilterBar>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ width: '280px' }}>
-                        <Input placeholder="Пошук (ініціатор, дія, ID)..." leftIcon={<Search size={16}/>} value={searchQuery || ''} onChange={(e) => setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} />
+                <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full xl:w-auto">
+                    <div className="flex-1 w-full sm:w-72 min-w-50">
+                        <Input 
+                            placeholder="Пошук (ініціатор, дія, ID)..." 
+                            leftIcon={<Search size={16}/>} 
+                            value={searchQuery || ''} 
+                            onChange={(e) => setSearchQuery(e.target.value)} 
+                            wrapperStyle={{margin: 0}} 
+                        />
                     </div>
                     <CsvExportButton onClick={handleExport} disabled={loading || !processedLogs.length} />
                 </div>
             </div>
-
             <AdminTable>
-                <colgroup><col style={{width: '20%'}} /><col style={{width: '20%'}} /><col style={{width: '15%'}} /><col style={{width: '30%'}} /><col style={{width: '15%'}} /></colgroup>
-                <thead><tr><AdminTh label="Ініціатор" sortKey="admin_name" currentSort={sortConfig} onSort={handleSort} /><AdminTh label="Дія" sortKey="action_type" currentSort={sortConfig} onSort={handleSort} /><AdminTh label="Ціль" sortKey="target_type" currentSort={sortConfig} onSort={handleSort} /><AdminTh label="Деталі" /><AdminTh label="Дата" sortKey="created_at" currentSort={sortConfig} onSort={handleSort} align="right" /></tr></thead>
+                <colgroup>
+                    <col style={{width: '20%'}} />
+                    <col style={{width: '20%'}} />
+                    <col style={{width: '15%'}} />
+                    <col style={{width: '30%'}} />
+                    <col style={{width: '15%'}} />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <AdminTh label="Ініціатор" sortKey="admin_name" currentSort={sortConfig} onSort={handleSort} />
+                        <AdminTh label="Дія" sortKey="action_type" currentSort={sortConfig} onSort={handleSort} />
+                        <AdminTh label="Ціль" sortKey="target_type" currentSort={sortConfig} onSort={handleSort} />
+                        <AdminTh label="Деталі" />
+                        <AdminTh label="Дата" sortKey="created_at" currentSort={sortConfig} onSort={handleSort} align="right" />
+                    </tr>
+                </thead>
                 <tbody>
                     {loading ? <LoadingRow cols={5} /> : !processedLogs.length ? <EmptyRow cols={5} message="Записів немає" /> : processedLogs.map(log => (
                         <AdminRow key={log.id}>
                             <AdminCell>
-                                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                    <Avatar url={log.admin_avatar} name={log.admin_name} size={32} />
-                                    <div style={{display: 'flex', flexDirection: 'column'}}>
-                                        <span style={{fontWeight: '600'}}>
-                                            {log.admin_name}
-                                            {log.admin_role === 'admin' && <span style={{marginLeft:'4px', color:'var(--platform-danger)'}} title="Адміністратор">★</span>}
-                                            {log.admin_role === 'moderator' && <span style={{marginLeft:'4px', color:'var(--platform-warning)'}} title="Модератор">✦</span>}
-                                        </span>
-                                        <span style={{fontSize: '11px', opacity: 0.6}}>{log.ip_address}</span>
+                                <div className="flex items-center gap-2.5">
+                                    <div className="shrink-0">
+                                        <Avatar url={log.admin_avatar} name={log.admin_name} size={32} />
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                        <div className="font-semibold text-[14px] truncate flex items-center">
+                                            <span className="truncate">{log.admin_name}</span>
+                                            {log.admin_role === 'admin' && <span className="ml-1 text-(--platform-danger) shrink-0" title="Адміністратор">★</span>}
+                                            {log.admin_role === 'moderator' && <span className="ml-1 text-(--platform-warning) shrink-0" title="Модератор">✦</span>}
+                                        </div>
+                                        <span className="text-[11px] opacity-60 truncate">{log.ip_address}</span>
                                     </div>
                                 </div>
                             </AdminCell>
                             <AdminCell><ActionBadge type={log.action_type} /></AdminCell>
-                            <AdminCell><div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}><div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--platform-text-secondary)'}}>{log.target_type === 'site' && <Globe size={12}/>}{log.target_type === 'user' && <UserX size={12}/>}{log.target_type === 'report' && <ShieldAlert size={12}/>}{log.target_type === 'template' && <Layout size={12}/>}{log.target_type}</div>{log.target_id && <span style={{fontFamily: 'monospace', fontSize: '11px', background: 'var(--platform-bg)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--platform-border-color)'}}>ID: {log.target_id}</span>}</div></AdminCell>
-                            <AdminCell><div style={{display: 'flex', flexDirection: 'column', gap: '2px'}}>{log.details ? Object.entries(typeof log.details === 'string' ? JSON.parse(log.details) : log.details).map(([k, v]) => <DetailItem key={k} label={k} value={v} />) : <span style={{opacity: 0.4}}>—</span>}</div></AdminCell>
-                            <AdminCell align="right" style={{fontSize: '13px', color: 'var(--platform-text-secondary)'}}><div>{new Date(log.created_at).toLocaleDateString()}</div><div style={{fontSize: '11px', opacity: 0.6}}>{new Date(log.created_at).toLocaleTimeString()}</div></AdminCell>
+                            <AdminCell>
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-1.5 text-[12px] font-bold uppercase text-(--platform-text-secondary)">
+                                        {log.target_type === 'site' && <Globe size={12} className="shrink-0"/>}
+                                        {log.target_type === 'user' && <UserX size={12} className="shrink-0"/>}
+                                        {log.target_type === 'report' && <ShieldAlert size={12} className="shrink-0"/>}
+                                        {log.target_type === 'template' && <Layout size={12} className="shrink-0"/>}
+                                        <span className="truncate">{log.target_type}</span>
+                                    </div>
+                                    {log.target_id && (
+                                        <span className="font-mono text-[11px] bg-(--platform-bg) px-1.5 py-0.5 rounded border border-(--platform-border-color) truncate inline-block w-max max-w-full">
+                                            ID: {log.target_id}
+                                        </span>
+                                    )}
+                                </div>
+                            </AdminCell>
+                            <AdminCell>
+                                <div className="flex flex-col gap-0.5 w-full">
+                                    {log.details ? Object.entries(typeof log.details === 'string' ? JSON.parse(log.details) : log.details).map(([k, v]) => <DetailItem key={k} label={k} value={v} />) : <span className="opacity-40">—</span>}
+                                </div>
+                            </AdminCell>
+                            <AdminCell align="right">
+                                <div className="text-[13px] text-(--platform-text-secondary)">
+                                    <div>{new Date(log.created_at).toLocaleDateString()}</div>
+                                    <div className="text-[11px] opacity-60 mt-0.5">{new Date(log.created_at).toLocaleTimeString()}</div>
+                                </div>
+                            </AdminCell>
                         </AdminRow>
                     ))}
                 </tbody>
@@ -151,4 +213,5 @@ const AdminLogsPage = () => {
         </div>
     );
 };
+
 export default AdminLogsPage;

@@ -34,26 +34,25 @@ const RestoreAccountPage = () => {
             }
         });
     };
-
     return (
-        <div className="min-h-screen flex items-center justify-center bg-(--platform-bg) p-4">
-            <div className="max-w-md w-full bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl shadow-xl p-8 text-center">
-                <div className="w-16 h-16 bg-red-100/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <AlertTriangle size={32} />
+        <div className="min-h-dvh flex items-center justify-center bg-(--platform-bg) p-4 sm:p-6">
+            <div className="max-w-md w-full bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl shadow-xl p-6 sm:p-8 text-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-100/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+                    <AlertTriangle size={28} className="sm:w-8 sm:h-8" />
                 </div>
-                <h1 className="text-2xl font-bold text-(--platform-text-primary) mb-3">
+                <h1 className="text-xl sm:text-2xl font-bold text-(--platform-text-primary) mb-3">
                     Акаунт видаляється
                 </h1>
-                <p className="text-(--platform-text-secondary) mb-8 leading-relaxed text-sm">
+                <p className="text-(--platform-text-secondary) mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base">
                     Привіт, <strong className="text-(--platform-text-primary)">{user?.username || 'користувач'}</strong>! Ваш акаунт знаходиться в процесі видалення. 
                     У вас є 14 днів з моменту запиту, щоб передумати. Якщо ви відновите акаунт, всі ваші сайти та дані будуть повністю збережені та відновлені.
                 </p>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 sm:gap-4">
                     <Button 
                         variant="primary"
                         onClick={handleRestore} 
                         disabled={isLoading}
-                        className="w-full flex justify-center items-center gap-2 py-3 text-[15px] font-medium transition-all"
+                        className="w-full flex justify-center items-center gap-2 py-3 sm:py-3.5 text-[15px] font-medium transition-all"
                     >
                         {isLoading ? <RefreshCw className="animate-spin" size={20} /> : 'Скасувати видалення'}
                     </Button>
@@ -61,7 +60,7 @@ const RestoreAccountPage = () => {
                         variant="ghost" 
                         onClick={logout}
                         disabled={isLoading}
-                        className="w-full flex justify-center items-center gap-2 text-(--platform-text-secondary) hover:bg-black/5 dark:hover:bg-white/5 py-3"
+                        className="w-full flex justify-center items-center gap-2 text-(--platform-text-secondary) hover:bg-black/5 dark:hover:bg-white/5 py-3 sm:py-3.5"
                     >
                         <LogOut size={18} />
                         Вийти

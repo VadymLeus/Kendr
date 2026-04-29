@@ -81,15 +81,9 @@ const AdminUsersSitesPage = () => {
     const { confirm } = useConfirm();
     const processedUsers = useMemo(() => {
         let res = [...usersData.filteredData];
-        if (hideSuspendedUsers) {
-            res = res.filter(u => u.status !== 'suspended');
-        }
-        if (userRoleFilter !== 'all') {
-            res = res.filter(u => (u.role || 'user') === userRoleFilter);
-        }
-        if (userPlanFilter !== 'all') {
-            res = res.filter(u => (u.plan || 'FREE') === userPlanFilter);
-        }
+        if (hideSuspendedUsers) res = res.filter(u => u.status !== 'suspended');
+        if (userRoleFilter !== 'all') res = res.filter(u => (u.role || 'user') === userRoleFilter);
+        if (userPlanFilter !== 'all') res = res.filter(u => (u.plan || 'FREE') === userPlanFilter);
         if (userStartDate) {
             const start = new Date(`${userStartDate}T00:00:00`);
             res = res.filter(u => new Date(u.created_at) >= start);
@@ -180,6 +174,7 @@ const AdminUsersSitesPage = () => {
             warnings: 'Страйки', created: 'Дата реєстрації', last_login: 'Останній вхід' 
         }, `users_${new Date().toLocaleDateString('uk-UA')}`);
     };
+
     const [selectedSite, setSelectedSite] = useState(null);
     const [siteStatusFilter, setSiteStatusFilter] = useState('all');
     const [siteRoleFilter, setSiteRoleFilter] = useState('all');
@@ -189,9 +184,7 @@ const AdminUsersSitesPage = () => {
     const sitesData = useDataList('/admin/sites', ['title', 'site_path', 'author', 'author_email']);
     const processedSites = useMemo(() => {
         let res = siteStatusFilter !== 'all' ? sitesData.filteredData.filter(s => s.status === siteStatusFilter) : [...sitesData.filteredData];
-        if (siteRoleFilter !== 'all') {
-            res = res.filter(s => (s.owner_role || 'user') === siteRoleFilter);
-        }
+        if (siteRoleFilter !== 'all') res = res.filter(s => (s.owner_role || 'user') === siteRoleFilter);
         if (siteStartDate) {
             const start = new Date(`${siteStartDate}T00:00:00`);
             res = res.filter(s => new Date(s.created_at) >= start);
@@ -202,6 +195,7 @@ const AdminUsersSitesPage = () => {
         }
         return res.sort((a, b) => (a[siteSort.key] < b[siteSort.key] ? -1 : 1) * (siteSort.direction === 'asc' ? 1 : -1));
     }, [sitesData.filteredData, siteStatusFilter, siteRoleFilter, siteSort, siteStartDate, siteEndDate]);
+
     const handleSiteSort = (key) => setSiteSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const handleSiteAction = async (fn) => { 
         try { 
@@ -211,6 +205,7 @@ const AdminUsersSitesPage = () => {
             sitesData.refresh(); 
         } catch(error) { toast.error(error.response?.data?.message || 'Помилка'); } 
     };
+
     const siteActions = {
         suspend: (path) => {
             confirm({ 
@@ -288,15 +283,15 @@ const AdminUsersSitesPage = () => {
             onRefresh={currentDataRefresh} 
             loading={currentDataLoading}
         >
-            <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-fit mb-6">
+            <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-full sm:w-fit mb-4 sm:mb-6 overflow-x-auto">
                 <button
-                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'users' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                    className={`flex-1 sm:flex-none py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${activeTab === 'users' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
                     onClick={() => setActiveTab('users')}
                 >
                     <Users size={16} /> Користувачі
                 </button>
                 <button
-                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'sites' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                    className={`flex-1 sm:flex-none py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${activeTab === 'sites' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
                     onClick={() => setActiveTab('sites')}
                 >
                     <Globe size={16} /> Сайти
@@ -304,37 +299,39 @@ const AdminUsersSitesPage = () => {
             </div>
             {activeTab === 'users' && (
                 <>
-                    <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                        <FilterBar style={{ flexWrap: 'wrap' }}>
-                            <div style={{ width: '160px' }}>
+                    <div className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                        <FilterBar className="w-full xl:w-auto grid grid-cols-1 sm:flex gap-3">
+                            <div className="w-full sm:w-40 shrink-0">
                                 <CustomSelect 
                                     value={userRoleFilter} 
                                     onChange={(e) => setUserRoleFilter(e.target.value)} 
                                     options={ROLE_OPTIONS} 
                                     variant="minimal" 
                                     placeholder="Роль" 
-                                    style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                                    style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
                                 />
                             </div>
-                            <div style={{ width: '160px' }}>
+                            <div className="w-full sm:w-40 shrink-0">
                                 <CustomSelect 
                                     value={userPlanFilter} 
                                     onChange={(e) => setUserPlanFilter(e.target.value)} 
                                     options={PLAN_OPTIONS} 
                                     variant="minimal" 
                                     placeholder="Тариф" 
-                                    style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                                    style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
                                 />
                             </div>
-                            <DateRangePicker 
-                                startDate={userStartDate}
-                                endDate={userEndDate}
-                                onStartDateChange={setUserStartDate}
-                                onEndDateChange={setUserEndDate}
-                                onClear={() => { setUserStartDate(''); setUserEndDate(''); }}
-                            />
+                            <div className="w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                                <DateRangePicker 
+                                    startDate={userStartDate}
+                                    endDate={userEndDate}
+                                    onStartDateChange={setUserStartDate}
+                                    onEndDateChange={setUserEndDate}
+                                    onClear={() => { setUserStartDate(''); setUserEndDate(''); }}
+                                />
+                            </div>
                         </FilterBar>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full xl:w-auto">
                             <button 
                                 type="button"
                                 onClick={() => setHideSuspendedUsers(!hideSuspendedUsers)} 
@@ -347,7 +344,15 @@ const AdminUsersSitesPage = () => {
                             >
                                 <UserX size={20} strokeWidth={2.5} />
                             </button>
-                            <div style={{ width: '260px' }}><Input placeholder="Пошук користувачів..." leftIcon={<Search size={16}/>} value={usersData.searchQuery || ''} onChange={(e) => usersData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                            <div className="flex-1 w-full sm:w-64 min-w-50">
+                                <Input 
+                                    placeholder="Пошук користувачів..." 
+                                    leftIcon={<Search size={16}/>} 
+                                    value={usersData.searchQuery || ''} 
+                                    onChange={(e) => usersData.setSearchQuery(e.target.value)} 
+                                    wrapperStyle={{margin: 0}} 
+                                />
+                            </div>
                             <CsvExportButton onClick={handleExportUsers} disabled={usersData.loading || !processedUsers.length} />
                         </div>
                     </div>
@@ -472,40 +477,51 @@ const AdminUsersSitesPage = () => {
                     ) : <div style={{ padding: '40px', textAlign: 'center', color: 'var(--platform-text-secondary)' }}>Режим сітки в розробці</div>}
                 </>
             )}
+            
             {activeTab === 'sites' && (
                 <>
-                    <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                        <FilterBar>
-                            <div style={{ width: '180px' }}>
+                    <div className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                        <FilterBar className="w-full xl:w-auto grid grid-cols-1 sm:flex gap-3">
+                            <div className="w-full sm:w-44 shrink-0">
                                 <CustomSelect 
                                     value={siteStatusFilter} 
                                     onChange={(e) => setSiteStatusFilter(e.target.value)} 
                                     options={STATUS_OPTIONS} 
                                     variant="minimal" 
                                     placeholder="Статус" 
-                                    style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                                    style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
                                 />
                             </div>
-                            <div style={{ width: '180px' }}>
+                            <div className="w-full sm:w-44 shrink-0">
                                 <CustomSelect 
                                     value={siteRoleFilter} 
                                     onChange={(e) => setSiteRoleFilter(e.target.value)} 
                                     options={ROLE_OPTIONS} 
                                     variant="minimal" 
                                     placeholder="Роль власника" 
-                                    style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                                    style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
                                 />
                             </div>
-                            <DateRangePicker 
-                                startDate={siteStartDate}
-                                endDate={siteEndDate}
-                                onStartDateChange={setSiteStartDate}
-                                onEndDateChange={setSiteEndDate}
-                                onClear={() => { setSiteStartDate(''); setSiteEndDate(''); }}
-                            />
+                            <div className="w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                                <DateRangePicker 
+                                    startDate={siteStartDate}
+                                    endDate={siteEndDate}
+                                    onStartDateChange={setSiteStartDate}
+                                    onEndDateChange={setSiteEndDate}
+                                    onClear={() => { setSiteStartDate(''); setSiteEndDate(''); }}
+                                />
+                            </div>
                         </FilterBar>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{ width: '260px' }}><Input placeholder="Пошук сайтів..." leftIcon={<Search size={16}/>} value={sitesData.searchQuery || ''} onChange={(e) => sitesData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                        <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full xl:w-auto">
+                            <div className="flex-1 w-full sm:w-64 min-w-50">
+                                <Input 
+                                    placeholder="Пошук сайтів..." 
+                                    leftIcon={<Search size={16}/>} 
+                                    value={sitesData.searchQuery || ''} 
+                                    onChange={(e) => sitesData.setSearchQuery(e.target.value)} 
+                                    wrapperStyle={{margin: 0}} 
+                                />
+                            </div>
                             <CsvExportButton onClick={handleExportSites} disabled={sitesData.loading || !processedSites.length} />
                         </div>
                     </div>
@@ -522,9 +538,9 @@ const AdminUsersSitesPage = () => {
                                             <AdminCell>
                                                 <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
                                                     <Avatar url={site.logo_url} name={site.title} size={42} />
-                                                    <div>
-                                                        <div style={{fontSize: '15px', color: 'var(--platform-text-primary)', fontWeight: '500'}}>{site.title}</div>
-                                                        <div style={{fontSize: '13px', color: 'var(--platform-accent)', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px'}}><Globe size={12}/> /{site.site_path}</div>
+                                                    <div style={{minWidth: 0}}>
+                                                        <div style={{fontSize: '15px', color: 'var(--platform-text-primary)', fontWeight: '500', truncate: 'true'}}>{site.title}</div>
+                                                        <div style={{fontSize: '13px', color: 'var(--platform-accent)', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px'}}><Globe size={12} className="shrink-0"/> <span className="truncate">/{site.site_path}</span></div>
                                                     </div>
                                                 </div>
                                             </AdminCell>
@@ -553,7 +569,7 @@ const AdminUsersSitesPage = () => {
                                                             {site.owner_role === 'admin' && <span style={{marginLeft:'4px', color:'var(--platform-danger)'}} title="Адміністратор">★</span>}
                                                             {site.owner_role === 'moderator' && <span style={{marginLeft:'4px', color:'var(--platform-warning)'}} title="Модератор">✦</span>}
                                                         </div>
-                                                        <div style={{fontSize: '12px', opacity: 0.6}}>{site.author_email}</div>
+                                                        <div style={{fontSize: '12px', opacity: 0.6}} className="truncate">{site.author_email}</div>
                                                         {site.warning_count > 0 && <div style={{display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--platform-danger)', fontWeight: '600'}}><AlertTriangle size={10} /> {site.warning_count} страйк(ів)</div>}
                                                     </div>
                                                 </div>
