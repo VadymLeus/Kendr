@@ -1,5 +1,5 @@
 // frontend/src/modules/editor/blocks/Layout/LayoutBlock.jsx
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../../ui/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../../ui/DraggableBlockItem';
@@ -19,16 +19,17 @@ const getGridClasses = (direction = 'row', preset, verticalAlign = 'top') => {
     if (direction === 'column') {
         return `grid grid-cols-1 ${alignClass}`;
     }
-    let colsClass = 'grid-cols-2';
+    
+    let colsClass = 'grid-cols-1 @3xl:grid-cols-2';
     switch (preset) {
-        case '50-50': colsClass = 'grid-cols-2'; break;
-        case '75-25': colsClass = 'grid-cols-[3fr_1fr]'; break;
-        case '25-75': colsClass = 'grid-cols-[1fr_3fr]'; break;
-        case '33-33-33': colsClass = 'grid-cols-3'; break;
-        case '25-25-25-25': colsClass = 'grid-cols-4'; break;
-        default: colsClass = 'grid-cols-2';
+        case '50-50': colsClass = 'grid-cols-1 @3xl:grid-cols-2'; break;
+        case '75-25': colsClass = 'grid-cols-1 @3xl:grid-cols-[3fr_1fr]'; break;
+        case '25-75': colsClass = 'grid-cols-1 @3xl:grid-cols-[1fr_3fr]'; break;
+        case '33-33-33': colsClass = 'grid-cols-1 @3xl:grid-cols-3'; break;
+        case '25-25-25-25': colsClass = 'grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-4'; break; 
+        default: colsClass = 'grid-cols-1 @3xl:grid-cols-2';
     }
-    return `grid ${colsClass} ${alignClass}`;
+    return `grid w-full ${colsClass} ${alignClass}`;
 };
 
 const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock, viewMode = 'editor' }) => {
@@ -58,52 +59,17 @@ const ColumnDropZone = ({ children, onDrop, path, isEditorPreview, onAddBlock, v
         }),
     });
 
-    const columnRef = useRef(null);
-    const contentRef = useRef(null);
-    const [scale, setScale] = useState(1);
-    useEffect(() => {
-        if (!isActuallyEditing) return;
-        const calculateScale = () => {
-            if (columnRef.current) {
-                const columnWidth = columnRef.current.offsetWidth;
-                const MIN_COMFORTABLE_WIDTH = 250; 
-                if (columnWidth < MIN_COMFORTABLE_WIDTH && columnWidth > 0) {
-                    setScale(columnWidth / MIN_COMFORTABLE_WIDTH);
-                } else {
-                    setScale(1);
-                }
-            }
-        };
-        const observer = new ResizeObserver(calculateScale);
-        if (columnRef.current) observer.observe(columnRef.current);
-        return () => observer.disconnect();
-    }, [isActuallyEditing, children]);
-
-    const setRefs = useCallback((node) => {
-        drop(node);
-        columnRef.current = node;
-    }, [drop]);
-    
     const isActive = isOver && canDrop;
     return (
         <div 
-            ref={setRefs} 
+            ref={drop} 
             className={`
                 layout-drop-zone
-                min-h-25 p-2.5 rounded-lg w-full box-border overflow-hidden flex flex-col relative transition-all duration-200
+                min-h-25 p-2.5 rounded-lg w-full box-border flex flex-col relative transition-colors duration-200
                 ${isActive ? 'border-2 border-dashed border-(--platform-accent) bg-blue-500/5' : `border border-dashed ${isActuallyEditing ? 'border-(--platform-border-color)' : 'border-transparent'}`}
             `}
         >
-            <div 
-                ref={contentRef} 
-                style={{
-                    flex: 1,
-                    width: scale < 1 ? `${(1/scale) * 100}%` : '100%',
-                    transform: `scale(${scale})`,
-                    transformOrigin: 'top left',
-                    marginBottom: scale < 1 ? `-${(1 - scale) * 100}%` : '0',
-                }}
-            >
+            <div className="flex-1 w-full flex flex-col">
                 {children}
                 {isActuallyEditing && React.Children.count(children) === 0 && (
                     <div className="layout-empty-placeholder flex flex-col items-center justify-center h-25 text-(--platform-text-secondary) opacity-60 pointer-events-none">
@@ -151,10 +117,10 @@ const LayoutBlock = ({
 
     const videoRef = useRef(null);
     const heightClasses = { 
-        small: 'min-h-75',
-        medium: 'min-h-125',
-        large: 'min-h-175',
-        full: 'min-h-screen',
+        small: 'min-h-[300px]',
+        medium: 'min-h-[500px]',
+        large: 'min-h-[700px]',
+        full: 'min-h-[calc(100vh-60px)]',
         auto: 'min-h-auto'
     };
 
@@ -175,15 +141,17 @@ const LayoutBlock = ({
         ? (verticalAlign === 'middle' ? 'justify-center' : (verticalAlign === 'bottom' ? 'justify-end' : 'justify-start'))
         : 'justify-start';
     const isActuallyEditing = isEditorPreview && viewMode === 'editor';
+    const safePadding = legacyPadding === '20px' ? undefined : legacyPadding;
     return (
         <div 
             className={`
-                relative flex flex-col overflow-hidden
+                relative flex flex-col overflow-hidden w-full
+                ${safePadding === undefined ? 'px-4 py-8 @3xl:p-8' : ''}
                 ${activeMinHeightClass}
                 ${alignmentClass}
             `}
             style={{
-                padding: legacyPadding,
+                padding: safePadding,
                 ...styles, 
                 ...activeMinHeightStyle,
                 backgroundColor: bg_type === 'color' ? bg_color : 'var(--site-bg, #f7fafc)',
@@ -216,7 +184,7 @@ const LayoutBlock = ({
             )}
             <div 
                 className={`
-                    w-full relative z-2
+                    relative z-2 w-full max-w-300 mx-auto
                     ${getGridClasses(direction, preset, verticalAlign)}
                 `}
                 style={{ gap: `${gap}px` }}
@@ -226,7 +194,7 @@ const LayoutBlock = ({
                     const columnPath = [...safePath, 'data', 'columns', colIndex];
                     if (!isActuallyEditing) {
                         return (
-                            <div key={colIndex} className="min-w-0">
+                            <div key={colIndex} className="min-w-0 w-full">
                                 <BlockRenderer
                                     blocks={columnBlocks}
                                     siteData={siteData}
@@ -267,4 +235,14 @@ const LayoutBlock = ({
     );
 };
 
-export default LayoutBlock;
+function layoutPropsAreEqual(prev, next) {
+    if (prev.block !== next.block) return false;
+    if (prev.viewMode !== next.viewMode) return false;
+    if (prev.siteData !== next.siteData) return false;
+    if (prev.isEditorPreview !== next.isEditorPreview) return false;
+    if (prev.path?.join(',') !== next.path?.join(',')) return false;
+    if (prev.selectedBlockPath?.join(',') !== next.selectedBlockPath?.join(',')) return false;
+    return true;
+}
+
+export default React.memo(LayoutBlock, layoutPropsAreEqual);

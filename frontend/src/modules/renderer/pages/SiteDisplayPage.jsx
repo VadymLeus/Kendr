@@ -55,6 +55,7 @@ const SiteDisplayPage = () => {
     if (hex.length === 6) {
         siteIsolationStyles['--site-accent-rgb'] = `${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)}`;
     }
+    
     useEffect(() => {
         if (!isSiteLoading && siteData && siteData.page && siteData.page.is_homepage) {
             apiClient.get(`/sites/${site_path}`, { params: { increment_view: 'true' } })
@@ -72,6 +73,7 @@ const SiteDisplayPage = () => {
         }
         return () => clearTimeout(timer);
     }, [isSiteLoading, isMissingData]);
+    
     if (isSiteLoading || (isMissingData && !show404)) {
         return (
             <div style={{ padding: '2rem', textAlign: 'center', paddingTop: '20vh', color: 'var(--platform-text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -153,8 +155,8 @@ const SiteDisplayPage = () => {
     };
 
     return (
-        <div 
-            className="site-root relative site-theme-context site-theme-preview" 
+        <div
+            className="@container site-root relative site-theme-context site-theme-preview" 
             style={{ ...layoutStyle, ...siteIsolationStyles }}
         >
             <Helmet>
@@ -180,7 +182,6 @@ const SiteDisplayPage = () => {
             {siteData && siteData.theme_settings && (
                 <FontLoader fontHeading={siteData.theme_settings.font_heading} fontBody={siteData.theme_settings.font_body} />
             )}
-            
             <main 
                 className="site-wysiwyg-wrapper flex-1 flex flex-col" 
                 style={mainContentStyle}
@@ -218,7 +219,14 @@ const SiteDisplayPage = () => {
                     )}
                 </div>
             </footer>
-            <CookieBanner enabled={siteData.cookie_banner_enabled} text={siteData.cookie_banner_text} siteId={siteData.id} />
+            <CookieBanner 
+                enabled={siteData?.cookie_banner_enabled} 
+                text={siteData?.cookie_banner_text} 
+                siteId={siteData?.id} 
+                size={siteData?.cookie_banner_size}
+                position={siteData?.cookie_banner_position}
+                blur={siteData?.cookie_banner_blur}
+            />
             <ReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} siteId={siteData.id} />
         </div>
     );

@@ -4,7 +4,7 @@ import { commonStyles, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
 import { Button } from '../../../../shared/ui/elements/Button';
 import ButtonEditor from '../../ui/components/ButtonEditor';
-import { CheckCircle, Mail, Trash2, MessageSquare, MousePointerClick } from 'lucide-react';
+import { Mail, Trash2, MessageSquare, MousePointerClick } from 'lucide-react';
 
 const FormSettings = ({ data, onChange, siteData }) => {
     const DEFAULT_BUTTON_DATA = {
@@ -41,16 +41,11 @@ const FormSettings = ({ data, onChange, siteData }) => {
                 <div className="mb-5">
                     <label style={commonStyles.label}>Повідомлення про успіх</label>
                     <div className="relative">
-                        <div className="absolute top-3.5 left-3.5 text-(--platform-text-secondary) pointer-events-none">
-                            <CheckCircle size={16} />
-                        </div>
                         <textarea 
                             className="custom-scrollbar custom-input w-full resize-y shadow-none"
                             style={{ 
                                 minHeight: '80px', 
-                                paddingLeft: '40px',
-                                paddingTop: '12px',
-                                paddingBottom: '12px',
+                                padding: '12px',
                                 lineHeight: '1.5',
                                 transition: 'background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease'
                             }}

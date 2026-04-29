@@ -20,15 +20,18 @@ const CATEGORY_OPTIONS = [
     { value: 'technical', label: 'Технічні', icon: Wrench }, { value: 'billing', label: 'Оплата', icon: CreditCard },
     { value: 'complaint', label: 'Скарга', icon: MessageSquare }, { value: 'partnership', label: 'Співпраця', icon: Handshake }, { value: 'appeal', label: 'Апеляція', icon: Gavel }
 ];
+
 const TICKET_COLORS = { 
     general: 'var(--platform-accent)', technical: '#8b5cf6', billing: 'var(--platform-success)', 
     complaint: 'var(--platform-danger)', partnership: '#ec4899', appeal: 'var(--platform-warning)' 
 };
+
 const REASON_OPTIONS = [
     { value: 'all', label: 'Всі причини', icon: Inbox }, { value: 'spam', label: 'Спам', icon: Ban },
     { value: 'scam', label: 'Шахрайство', icon: ShieldAlert }, { value: 'inappropriate_content', label: 'Заборонений контент', icon: FileWarning },
     { value: 'copyright', label: 'Авторські права', icon: Copyright }, { value: 'other', label: 'Інше', icon: HelpCircle }
 ];
+
 const REPORT_STATUS_CONFIG = {
     new: { bg: 'color-mix(in srgb, var(--platform-danger), transparent 90%)', color: 'var(--platform-danger)', label: 'Нова', icon: AlertTriangle },
     dismissed: { bg: 'var(--platform-hover-bg)', color: 'var(--platform-text-secondary)', label: 'Відхилено', icon: X },
@@ -43,12 +46,14 @@ const AdminTicketsReportsPage = () => {
         const params = new URLSearchParams(location.search);
         return params.get('tab') === 'reports' ? 'reports' : 'tickets';
     });
+
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         if (params.get('tab') !== activeTab) {
             navigate({ search: `?tab=${activeTab}` }, { replace: true });
         }
     }, [activeTab, navigate, location.search]);
+
     const { confirm } = useConfirm();
     const handleAction = async (fn, msg, refreshFn) => { 
         try { 
@@ -59,6 +64,7 @@ const AdminTicketsReportsPage = () => {
             toast.error('Помилка виконання дії'); 
         } 
     };
+
     const [ticketStatus, setTicketStatus] = useState('active');
     const [ticketCategory, setTicketCategory] = useState('all');
     const [ticketStartDate, setTicketStartDate] = useState('');
@@ -120,6 +126,7 @@ const AdminTicketsReportsPage = () => {
         }
         return res.sort((a, b) => (a[reportSort.key] < b[reportSort.key] ? -1 : 1) * (reportSort.direction === 'asc' ? 1 : -1));
     }, [reportsData.filteredData, reportReason, reportSort, reportStartDate, reportEndDate]);
+    
     const handleReportSort = (key) => setReportSort(c => ({ key, direction: c.key === key && c.direction === 'desc' ? 'asc' : 'desc' }));
     const filterByUser = (email, e) => { e.stopPropagation(); reportsData.setSearchQuery(email); toast.info(`Фільтр: ${email}`); };
     const reportActions = {
@@ -169,6 +176,7 @@ const AdminTicketsReportsPage = () => {
             reporter: r.reporter_email || 'Анонім', status: REPORT_STATUS_CONFIG[r.status]?.label || r.status, created: new Date(r.created_at).toLocaleString('uk-UA'), desc: r.description
         })), { id: 'ID', site: 'Сайт', url: 'URL', reason: 'Причина', reporter: 'Скаржник', status: 'Статус', created: 'Дата', desc: 'Опис' }, `reports_${new Date().toLocaleDateString('uk-UA')}`);
     };
+
     const currentLoading = activeTab === 'tickets' ? ticketsData.loading : reportsData.loading;
     const currentRefresh = activeTab === 'tickets' ? ticketsData.refresh : reportsData.refresh;
     return (
@@ -178,40 +186,54 @@ const AdminTicketsReportsPage = () => {
             onRefresh={currentRefresh} 
             loading={currentLoading}
         >
-            <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-fit mb-6">
+            <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-full sm:w-fit mb-4 sm:mb-6 overflow-x-auto hide-scrollbar">
                 <button
-                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'tickets' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                    className={`flex-1 sm:flex-none py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all whitespace-nowrap ${activeTab === 'tickets' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
                     onClick={() => setActiveTab('tickets')}
                 >
                     <MessageSquare size={16} /> Тікети
                 </button>
                 <button
-                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'reports' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                    className={`flex-1 sm:flex-none py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all whitespace-nowrap ${activeTab === 'reports' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
                     onClick={() => setActiveTab('reports')}
                 >
                     <ShieldAlert size={16} /> Скарги
                 </button>
             </div>
+
             {activeTab === 'tickets' && (
                 <>
-                    <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                        <FilterBar>
-                            <div style={{ display: 'flex', background: 'var(--platform-card-bg)', padding: '2px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
-                                {['active', 'closed'].map(s => <Button key={s} variant="ghost" onClick={() => setTicketStatus(s)} style={{ padding: '4px 12px', height: '30px', fontSize: '13px', borderRadius: '6px', background: ticketStatus === s ? 'var(--platform-bg)' : 'transparent', color: ticketStatus === s ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)' }}>{s === 'active' ? 'Активні' : 'Архів'}</Button>)}
+                    <div className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                        <FilterBar className="w-full xl:w-auto grid grid-cols-1 sm:flex gap-3">
+                            <div className="flex overflow-x-auto hide-scrollbar bg-(--platform-card-bg) p-0.5 rounded-lg border border-(--platform-border-color) w-full sm:w-auto shrink-0">
+                                {['active', 'closed'].map(s => (
+                                    <Button 
+                                        key={s} 
+                                        variant="ghost" 
+                                        onClick={() => setTicketStatus(s)} 
+                                        className={`flex-1 sm:flex-none whitespace-nowrap px-3 sm:px-4 h-9 text-[13px] rounded-md transition-all ${ticketStatus === s ? 'bg-(--platform-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`}
+                                    >
+                                        {s === 'active' ? 'Активні' : 'Архів'}
+                                    </Button>
+                                ))}
                             </div>
-                            <div style={{ width: '180px' }}>
-                                <CustomSelect value={ticketCategory} onChange={(e) => setTicketCategory(e.target.value)} options={CATEGORY_OPTIONS} variant="minimal" style={{ height: '36px', background: 'var(--platform-card-bg)' }} />
+                            <div className="w-full sm:w-44 shrink-0">
+                                <CustomSelect value={ticketCategory} onChange={(e) => setTicketCategory(e.target.value)} options={CATEGORY_OPTIONS} variant="minimal" style={{ height: '40px', background: 'var(--platform-card-bg)' }} />
                             </div>
-                            <DateRangePicker 
-                                startDate={ticketStartDate}
-                                endDate={ticketEndDate}
-                                onStartDateChange={setTicketStartDate}
-                                onEndDateChange={setTicketEndDate}
-                                onClear={() => { setTicketStartDate(''); setTicketEndDate(''); }}
-                            />
+                            <div className="w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                                <DateRangePicker 
+                                    startDate={ticketStartDate}
+                                    endDate={ticketEndDate}
+                                    onStartDateChange={setTicketStartDate}
+                                    onEndDateChange={setTicketEndDate}
+                                    onClear={() => { setTicketStartDate(''); setTicketEndDate(''); }}
+                                />
+                            </div>
                         </FilterBar>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{ width: '260px' }}><Input placeholder="Пошук тікетів..." leftIcon={<Search size={16}/>} value={ticketsData.searchQuery || ''} onChange={(e) => ticketsData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                        <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full xl:w-auto">
+                            <div className="flex-1 w-full sm:w-64 min-w-50">
+                                <Input placeholder="Пошук тікетів..." leftIcon={<Search size={16}/>} value={ticketsData.searchQuery || ''} onChange={(e) => ticketsData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} />
+                            </div>
                             <CsvExportButton onClick={handleExportTickets} disabled={ticketsData.loading || !processedTickets.length} />
                         </div>
                     </div>
@@ -248,15 +270,33 @@ const AdminTicketsReportsPage = () => {
                                 return (
                                     <AdminRow key={t.id} onClick={(e) => {e.stopPropagation();navigate(`/support/ticket/${t.id}`)}} style={{ background: t.status!=='closed' ? 'color-mix(in srgb, var(--platform-accent), transparent 98%)' : 'transparent' }}>
                                         <AdminCell style={{opacity: 0.6, fontSize: '13px'}}>#{t.id}</AdminCell>
-                                        <AdminCell><div style={{fontWeight: '600', fontSize: '15px'}}>{t.subject}</div><div style={{fontSize: '13px', opacity: 0.7, maxWidth: '350px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{t.body}</div></AdminCell>
+                                        <AdminCell>
+                                            <div className="font-semibold text-[15px] truncate max-w-50 sm:max-w-75 lg:max-w-100" title={t.subject}>{t.subject}</div>
+                                            <div className="text-[13px] opacity-70 truncate max-w-50 sm:max-w-75 lg:max-w-100" title={t.body}>{t.body}</div>
+                                        </AdminCell>
                                         <AdminCell><GenericBadge color={categoryColor} bg={`color-mix(in srgb, ${categoryColor}, transparent 90%)`} icon={catOpt.icon}>{catOpt.label}</GenericBadge></AdminCell>
-                                        <AdminCell><div style={{display:'flex', alignItems:'center', gap:'10px'}}><Avatar url={t.user_avatar_url || t.avatar_url} name={t.username} size={32} /><div><div style={{fontWeight: '500'}}>{t.username}</div><div style={{fontSize: '12px', opacity: 0.6}}>{t.user_email}</div></div></div></AdminCell>
+                                        <AdminCell>
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="shrink-0">
+                                                    <Avatar url={t.user_avatar_url || t.avatar_url} name={t.username} size={32} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="font-medium truncate">{t.username}</div>
+                                                    <div className="text-[12px] opacity-60 truncate">{t.user_email}</div>
+                                                </div>
+                                            </div>
+                                        </AdminCell>
                                         <AdminCell><GenericBadge color={sProps.c} bg={sProps.bg} icon={sProps.i}>{sProps.l}</GenericBadge></AdminCell>
                                         <AdminCell>
                                             <div style={{fontSize: '13px'}}>{new Date(t.updated_at).toLocaleDateString()}</div>
                                             <div style={{fontSize: '11px', opacity: 0.6}}>{new Date(t.updated_at).toLocaleTimeString()}</div>
                                         </AdminCell>
-                                        <AdminCell align="right"><div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}><Button variant="ghost" style={{ color: 'var(--platform-accent)', padding: '6px' }} icon={<ExternalLink size={18} />} onClick={(e) => {e.stopPropagation();navigate(`/support/ticket/${t.id}`)}} /><Button variant="ghost" title={t.status==='closed'?"Відновити":"Закрити"} onClick={() => t.status==='closed' ? ticketActions.restoreTicket(t.id) : ticketActions.closeTicket(t.id)} style={{ color: t.status==='closed'?'var(--platform-success)':'var(--platform-danger)', padding: '6px' }} icon={t.status==='closed' ? <RotateCcw size={18} /> : <XCircle size={18} />} /></div></AdminCell>
+                                        <AdminCell align="right">
+                                            <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                                                <Button variant="ghost" className="text-(--platform-accent) p-1.5 h-auto w-auto" icon={<ExternalLink size={18} />} onClick={(e) => {e.stopPropagation();navigate(`/support/ticket/${t.id}`)}} />
+                                                <Button variant="ghost" title={t.status==='closed'?"Відновити":"Закрити"} onClick={() => t.status==='closed' ? ticketActions.restoreTicket(t.id) : ticketActions.closeTicket(t.id)} className={`p-1.5 h-auto w-auto ${t.status==='closed'?'text-(--platform-success)':'text-(--platform-danger)'}`} icon={t.status==='closed' ? <RotateCcw size={18} /> : <XCircle size={18} />} />
+                                            </div>
+                                        </AdminCell>
                                     </AdminRow>
                                 );
                             })}
@@ -264,28 +304,40 @@ const AdminTicketsReportsPage = () => {
                     </AdminTable>
                 </>
             )}
+
             {activeTab === 'reports' && (
                 <>
-                    <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                        <FilterBar>
-                            <div style={{ display: 'flex', background: 'var(--platform-card-bg)', padding: '2px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
+                    <div className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                        <FilterBar className="w-full xl:w-auto grid grid-cols-1 sm:flex gap-3">
+                            <div className="flex overflow-x-auto hide-scrollbar bg-(--platform-card-bg) p-0.5 rounded-lg border border-(--platform-border-color) w-full sm:w-auto shrink-0">
                                 {[{ id: 'new', l: 'Нові' }, { id: 'dismissed', l: 'Відхилені' }, { id: 'banned', l: 'Заблоковані' }, { id: 'all', l: 'Всі' }].map(f => (
-                                    <Button key={f.id} variant="ghost" onClick={() => setReportStatus(f.id)} style={{ padding: '4px 12px', height: '30px', fontSize: '13px', borderRadius: '6px', background: reportStatus === f.id ? 'var(--platform-bg)' : 'transparent', color: reportStatus === f.id ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)', boxShadow: reportStatus === f.id ? '0 1px 2px rgba(0,0,0,0.1)' : 'none' }}>{f.l}</Button>
+                                    <Button 
+                                        key={f.id} 
+                                        variant="ghost" 
+                                        onClick={() => setReportStatus(f.id)} 
+                                        className={`flex-1 sm:flex-none whitespace-nowrap px-3 sm:px-4 h-9 text-[13px] rounded-md transition-all ${reportStatus === f.id ? 'bg-(--platform-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`}
+                                    >
+                                        {f.l}
+                                    </Button>
                                 ))}
                             </div>
-                            <div style={{ width: '180px' }}>
-                                <CustomSelect value={reportReason} onChange={(e) => setReportReason(e.target.value)} options={REASON_OPTIONS} variant="minimal" style={{ height: '36px', background: 'var(--platform-card-bg)' }} />
+                            <div className="w-full sm:w-44 shrink-0">
+                                <CustomSelect value={reportReason} onChange={(e) => setReportReason(e.target.value)} options={REASON_OPTIONS} variant="minimal" style={{ height: '40px', background: 'var(--platform-card-bg)' }} />
                             </div>
-                            <DateRangePicker 
-                                startDate={reportStartDate}
-                                endDate={reportEndDate}
-                                onStartDateChange={setReportStartDate}
-                                onEndDateChange={setReportEndDate}
-                                onClear={() => { setReportStartDate(''); setReportEndDate(''); }}
-                            />
+                            <div className="w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                                <DateRangePicker 
+                                    startDate={reportStartDate}
+                                    endDate={reportEndDate}
+                                    onStartDateChange={setReportStartDate}
+                                    onEndDateChange={setReportEndDate}
+                                    onClear={() => { setReportStartDate(''); setReportEndDate(''); }}
+                                />
+                            </div>
                         </FilterBar>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{ width: '260px' }}><Input placeholder="Пошук скарг..." leftIcon={<Search size={16}/>} value={reportsData.searchQuery || ''} onChange={(e) => reportsData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} /></div>
+                        <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full xl:w-auto">
+                            <div className="flex-1 w-full sm:w-64 min-w-50">
+                                <Input placeholder="Пошук скарг..." leftIcon={<Search size={16}/>} value={reportsData.searchQuery || ''} onChange={(e) => reportsData.setSearchQuery(e.target.value)} wrapperStyle={{margin: 0}} />
+                            </div>
                             <CsvExportButton onClick={handleExportReports} disabled={reportsData.loading || !processedReports.length} />
                         </div>
                     </div>
@@ -299,14 +351,47 @@ const AdminTicketsReportsPage = () => {
                                 return (
                                     <AdminRow key={r.id} style={{ background: r.status === 'new' ? 'color-mix(in srgb, var(--platform-danger), transparent 98%)' : 'transparent' }}>
                                         <AdminCell style={{opacity: 0.6}}>#{r.id}</AdminCell>
-                                        <AdminCell><div style={{ fontWeight: '600', fontSize: '15px' }}>{r.site_title || 'N/A'}</div>{r.site_path && <a href={`/site/${r.site_path}`} target="_blank" onClick={e=>e.stopPropagation()}><Button variant="outline" icon={<ExternalLink size={12} />} style={{ height: '24px', fontSize: '11px', padding: '0 8px' }}>Перевірити</Button></a>}</AdminCell>
-                                        <AdminCell><GenericBadge bg="color-mix(in srgb, var(--platform-warning), transparent 90%)" color="var(--platform-warning)" icon={RIcon} style={{marginBottom:'4px'}}>{REASON_OPTIONS.find(o=>o.value===r.reason)?.label}</GenericBadge>{r.description && <div style={{ fontSize: '12px', opacity: 0.7, overflow: 'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis', maxWidth:'200px' }}>"{r.description}"</div>}</AdminCell>
-                                        <AdminCell><div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}><span title={r.reporter_email}>{r.reporter_email || 'Анонім'}</span>{r.reporter_email && <div onClick={(e)=>filterByUser(r.reporter_email, e)} style={{cursor:'pointer', opacity:0.5}}><User size={14}/></div>}</div></AdminCell>
-                                        <AdminCell><div style={{fontSize: '13px'}}>{new Date(r.created_at).toLocaleDateString()}</div><div style={{fontSize: '11px', opacity: 0.6}}>{new Date(r.created_at).toLocaleTimeString()}</div></AdminCell>
+                                        <AdminCell>
+                                            <div className="font-semibold text-[15px] truncate max-w-37.5 sm:max-w-50" title={r.site_title}>{r.site_title || 'N/A'}</div>
+                                            {r.site_path && (
+                                                <a href={`/site/${r.site_path}`} target="_blank" onClick={e=>e.stopPropagation()} className="inline-block mt-1">
+                                                    <Button variant="outline" icon={<ExternalLink size={12} />} className="h-6 text-[11px] px-2 py-0">Перевірити</Button>
+                                                </a>
+                                            )}
+                                        </AdminCell>
+                                        <AdminCell>
+                                            <GenericBadge bg="color-mix(in srgb, var(--platform-warning), transparent 90%)" color="var(--platform-warning)" icon={RIcon} style={{marginBottom:'4px'}}>
+                                                {REASON_OPTIONS.find(o=>o.value===r.reason)?.label}
+                                            </GenericBadge>
+                                            {r.description && <div className="text-[12px] opacity-70 truncate max-w-37.5 sm:max-w-50 lg:max-w-62.5" title={r.description}>"{r.description}"</div>}
+                                        </AdminCell>
+                                        <AdminCell>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="truncate max-w-30 sm:max-w-45" title={r.reporter_email}>{r.reporter_email || 'Анонім'}</span>
+                                                {r.reporter_email && (
+                                                    <div onClick={(e)=>filterByUser(r.reporter_email, e)} className="cursor-pointer opacity-50 hover:opacity-100 shrink-0 transition-opacity">
+                                                        <User size={14}/>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </AdminCell>
+                                        <AdminCell>
+                                            <div style={{fontSize: '13px'}}>{new Date(r.created_at).toLocaleDateString()}</div>
+                                            <div style={{fontSize: '11px', opacity: 0.6}}>{new Date(r.created_at).toLocaleTimeString()}</div>
+                                        </AdminCell>
                                         <AdminCell><GenericBadge color={sStyle.color} bg={sStyle.bg} icon={sStyle.icon}>{sStyle.label}</GenericBadge></AdminCell>
-                                        <AdminCell align="right"><div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
-                                            {r.status === 'new' ? <><Button variant="ghost" style={{ color: 'var(--platform-danger)', padding: '6px' }} title="Заблокувати" onClick={() => reportActions.ban(r.id)} icon={<Check size={18} />} /><Button variant="ghost" style={{ color: 'var(--platform-text-secondary)', padding: '6px' }} title="Відхилити" onClick={() => reportActions.dismiss(r.id)} icon={<X size={18} />} /></> : <Button variant="ghost" style={{ color: 'var(--platform-accent)', padding: '6px' }} title="Відновити" onClick={() => reportActions.reopen(r.id)} icon={<RotateCcw size={18} />} />}
-                                        </div></AdminCell>
+                                        <AdminCell align="right">
+                                            <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                                                {r.status === 'new' ? (
+                                                    <>
+                                                        <Button variant="ghost" className="text-(--platform-danger) p-1.5 h-auto w-auto" title="Заблокувати" onClick={() => reportActions.ban(r.id)} icon={<Check size={18} />} />
+                                                        <Button variant="ghost" className="text-(--platform-text-secondary) p-1.5 h-auto w-auto" title="Відхилити" onClick={() => reportActions.dismiss(r.id)} icon={<X size={18} />} />
+                                                    </>
+                                                ) : (
+                                                    <Button variant="ghost" className="text-(--platform-accent) p-1.5 h-auto w-auto" title="Відновити" onClick={() => reportActions.reopen(r.id)} icon={<RotateCcw size={18} />} />
+                                                )}
+                                            </div>
+                                        </AdminCell>
                                     </AdminRow>
                                 );
                             })}

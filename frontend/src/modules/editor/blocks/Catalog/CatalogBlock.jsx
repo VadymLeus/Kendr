@@ -28,8 +28,8 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
     const heightClasses = {
         small: 'min-h-[300px]',
-        medium: 'min-h-[500px]',
-        large: 'min-h-[700px]',
+        medium: 'min-h-[400px] @3xl:min-h-[500px]',
+        large: 'min-h-[500px] @3xl:min-h-[700px]',
         full: 'min-h-[calc(100vh-60px)]',
         auto: 'min-h-auto'
     };
@@ -37,9 +37,17 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         title: titleFontFamily
     }, siteData);
-
     const safeItemsPerPage = (parseInt(items_per_page, 10) > 0 && parseInt(items_per_page, 10) <= 100) ? parseInt(items_per_page, 10) : 12;
     const safeColumns = (parseInt(columns, 10) >= 1 && parseInt(columns, 10) <= 6) ? parseInt(columns, 10) : 3;
+    const gridCols = {
+        1: 'grid-cols-1',
+        2: 'grid-cols-1 @2xl:grid-cols-2',
+        3: 'grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-3',
+        4: 'grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-3 @7xl:grid-cols-4',
+        5: 'grid-cols-2 @2xl:grid-cols-3 @5xl:grid-cols-4 @7xl:grid-cols-5',
+        6: 'grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4 @7xl:grid-cols-6'
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             if (!siteData?.id) return;
@@ -47,7 +55,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             try {
                 const catRes = await apiClient.get(`/categories/site/${siteData.id}`);
                 setAvailableCategories(catRes.data);
-                
                 let params = { siteId: siteData.id, limit: 1000 }; 
                 if (source_type === 'category' && root_category_id) {
                     params.category = root_category_id;
@@ -126,6 +133,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             if(blockEl && !isEditorPreview) blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
+    
     const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
     const showFilters = show_search || show_category_filter || show_sorting;
     const paginationBtnClass = "h-[44px] min-w-[44px] px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 text-sm transition-all duration-200 hover:opacity-80 border-none";
@@ -138,6 +146,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         { label: "За назвою", value: "name" },
         { label: "За ціною", value: "price" }
     ];
+    
     const panelStyle = {
         backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 3%, transparent)',
         border: '1px solid color-mix(in srgb, var(--site-text-primary) 8%, transparent)'
@@ -150,11 +159,36 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         fontFamily: 'inherit'
     };
 
+    const selectThemeOverrides = {
+        '--platform-bg': 'var(--site-bg, transparent)',
+        '--platform-card-bg': 'var(--site-card-bg, #ffffff)',
+        '--platform-border-color': 'color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
+        '--platform-text-primary': 'var(--site-text-primary)',
+        '--platform-text-secondary': 'color-mix(in srgb, var(--site-text-primary) 60%, transparent)',
+        '--platform-accent': 'var(--site-accent)',
+        '--platform-hover-bg': 'color-mix(in srgb, var(--site-text-primary) 5%, transparent)',
+        '--platform-danger': '#ef4444',
+    };
+
+    const selectStyle = { 
+        height: '44px', 
+        borderRadius: '0.75rem',
+        fontSize: '0.875rem',
+        ...inputElementStyle,
+        ...selectThemeOverrides
+    };
+
+    const selectDropdownStyle = {
+        ...selectThemeOverrides,
+        backgroundColor: 'var(--site-card-bg, var(--site-bg, #ffffff))', 
+        fontFamily: 'var(--site-font-body, inherit)'
+    };
+
     return (
         <div 
             id={`catalog-${blockData.block_id || 'preview'}`} 
             className={`
-                py-10 w-full flex flex-col justify-start
+                py-8 @3xl:py-10 w-full flex flex-col justify-start
                 ${currentHeightClass}
                 ${uniqueClass}
             `}
@@ -169,22 +203,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             <RenderFonts />
             <style>{`.${uniqueClass} { ${Object.entries(cssVariables).map(([k,v]) => `${k}:${v}`).join(';')} }`}</style>
             <style>{`
-                .${uniqueClass} .catalog-grid {
-                    display: grid;
-                    grid-template-columns: repeat(${safeColumns}, minmax(0, 1fr));
-                    gap: 24px;
-                    margin-bottom: 3rem;
-                    width: 100%;
-                }
-                @media (max-width: 1024px) { 
-                    .${uniqueClass} .catalog-grid { grid-template-columns: repeat(${Math.min(3, safeColumns)}, minmax(0, 1fr)) !important; } 
-                }
-                @media (max-width: 768px) { 
-                    .${uniqueClass} .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } 
-                }
-                @media (max-width: 480px) { 
-                    .${uniqueClass} .catalog-grid { grid-template-columns: minmax(0, 1fr) !important; } 
-                }
                 .${uniqueClass} input, .${uniqueClass} select, .${uniqueClass} button {
                     font-family: inherit;
                 }
@@ -203,12 +221,12 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 )}
                 {showFilters && (
                     <div 
-                        className="z-10 mb-10 w-full rounded-2xl shadow-sm p-2 flex flex-col lg:flex-row items-stretch lg:items-center gap-2"
+                        className="z-10 mb-10 w-full rounded-2xl shadow-sm p-2 flex flex-col @5xl:flex-row items-stretch @5xl:items-center gap-2"
                         style={panelStyle}
                     >
                         {show_search && (
                             <div 
-                                className="flex-1 relative flex items-center rounded-xl px-4 h-11 transition-colors focus-within:ring-1 focus-within:ring-(--site-accent)"
+                                className="w-full @5xl:flex-1 relative flex items-center rounded-xl px-4 h-11 shrink-0 transition-colors focus-within:ring-1 focus-within:ring-(--site-accent)"
                                 style={inputElementStyle}
                             >
                                 <Search size={18} style={{ color: 'var(--site-text-secondary)' }} className="shrink-0" />
@@ -225,9 +243,9 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                 />
                             </div>
                         )}
-                        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 shrink-0">
+                        <div className="flex flex-col @2xl:flex-row items-stretch @2xl:items-center gap-2 shrink-0 w-full @5xl:w-auto">
                             {show_category_filter && availableCategories.length > 0 && (
-                                <div className="relative w-full md:w-auto md:min-w-45 flex-1 md:flex-none">
+                                <div className="relative w-full @2xl:w-auto @2xl:min-w-45 flex-1 @2xl:flex-none">
                                     <CustomSelect
                                         name="categoryFilter"
                                         value={filters.selectedCategoryId}
@@ -236,36 +254,28 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                             setFilters(prev => ({ ...prev, selectedCategoryId: e.target.value }));
                                             setCurrentPage(1);
                                         }}
-                                        style={{ 
-                                            height: '44px', 
-                                            borderRadius: '0.75rem',
-                                            fontSize: '0.875rem',
-                                            ...inputElementStyle
-                                        }}
+                                        style={selectStyle} 
+                                        dropdownStyle={selectDropdownStyle} 
                                     />
                                 </div>
                             )}
                             {show_sorting && (
-                                <div className="flex items-center gap-2 w-full md:w-auto flex-1 md:flex-none">
-                                    <div className="relative flex-1 md:min-w-40">
+                                <div className="flex items-center gap-2 w-full @2xl:w-auto flex-1 @2xl:flex-none">
+                                    <div className="relative flex-1 @2xl:min-w-40">
                                         <CustomSelect
                                             name="sortBy"
                                             value={filters.sortBy}
                                             options={sortOptions}
                                             onChange={(e) => handleSortFieldChange(e.target.value)}
-                                            style={{ 
-                                                height: '44px', 
-                                                borderRadius: '0.75rem',
-                                                fontSize: '0.875rem',
-                                                ...inputElementStyle
-                                            }}
+                                            style={selectStyle}
+                                            dropdownStyle={selectDropdownStyle}
                                         />
                                     </div>
                                     <button 
                                         onClick={toggleSortOrder}
                                         className="h-11 w-11 shrink-0 rounded-xl cursor-pointer flex items-center justify-center transition-all duration-200 border-none hover:opacity-80"
                                         title={filters.sortOrder === 'desc' ? "За спаданням" : "За зростанням"}
-                                        style={inputElementStyle}
+                                        style={{ ...inputElementStyle, ...selectThemeOverrides }}
                                     >
                                         {filters.sortOrder === 'asc' ? <ArrowUpAZ size={18}/> : <ArrowDownAZ size={18}/>}
                                     </button>
@@ -274,7 +284,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                             {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
                                 <button 
                                     onClick={handleClearAll}
-                                    className="h-11 px-4 shrink-0 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 border-none w-full md:w-auto hover:opacity-80"
+                                    className="h-11 px-4 shrink-0 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 border-none w-full @2xl:w-auto hover:opacity-80"
                                     title="Очистити фільтри"
                                     style={{ 
                                         backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -283,7 +293,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                     }}
                                 >
                                     <X size={16} />
-                                    <span className="text-sm font-medium md:hidden lg:inline">Очистити</span>
+                                    <span className="text-sm font-medium @2xl:hidden @7xl:inline">Очистити</span>
                                 </button>
                             )}
                         </div>
@@ -296,28 +306,42 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     </div>
                 ) : paginatedProducts.length === 0 ? (
                     <div 
-                        className="text-center p-12 rounded-2xl flex-1 flex flex-col items-center justify-center gap-3"
-                        style={panelStyle}
+                        className="flex-1 flex flex-col items-center justify-center text-center p-8 @3xl:p-14 w-full mx-auto rounded-2xl border-2 border-dashed"
+                        style={{ 
+                            borderColor: 'color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
+                            backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 2%, transparent)'
+                        }}
                     >
-                        <div style={{ color: 'var(--site-accent)' }} className="opacity-70">
-                            <ShoppingBag size={48} />
+                        <div 
+                            className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
+                            style={{ backgroundColor: 'color-mix(in srgb, var(--site-accent) 10%, transparent)' }}
+                        >
+                            <ShoppingBag size={36} style={{ color: 'var(--site-accent)' }} strokeWidth={1.5} />
                         </div>
-                        <h4 className="m-0 font-medium text-lg" style={{ fontFamily: 'inherit', color: 'var(--site-text-primary)' }}>Товарів не знайдено</h4>
-                        <p className="m-0" style={{ fontFamily: 'inherit', color: 'var(--site-text-secondary)' }}>
-                            {products.length === 0 ? "У цьому каталозі поки немає товарів." : "Немає товарів за вибраними фільтрами."}
+                        <h4 className="m-0 mb-2 font-medium text-xl" style={{ fontFamily: 'inherit', color: 'var(--site-text-primary)' }}>
+                            {products.length === 0 ? "Каталог товарів" : "Товарів не знайдено"}
+                        </h4>
+                        <p className="m-0 max-w-md text-base leading-relaxed" style={{ fontFamily: 'inherit', color: 'var(--site-text-secondary)' }}>
+                            {products.length === 0 
+                                ? "Тут будуть відображатись ваші товари." 
+                                : "За вибраними фільтрами немає результатів. Спробуйте змінити критерії пошуку."}
                         </p>
                         {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
                             <button 
                                 onClick={handleClearAll}
-                                className="mt-2 underline cursor-pointer hover:no-underline text-sm font-medium bg-transparent border-none p-0"
-                                style={{ fontFamily: 'inherit', color: 'var(--site-accent)' }}
+                                className="mt-6 h-11 px-6 rounded-xl cursor-pointer font-medium transition-all hover:opacity-80 border-none"
+                                style={{ 
+                                    backgroundColor: 'var(--site-accent)', 
+                                    color: 'var(--site-accent-text, #fff)',
+                                    fontFamily: 'inherit' 
+                                }}
                             >
                                 Скинути фільтри
                             </button>
                         )}
                     </div>
                 ) : (
-                    <div className="catalog-grid">
+                    <div className={`grid gap-6 mb-12 w-full ${gridCols[safeColumns] || gridCols[3]}`}>
                         {paginatedProducts.map(product => (
                             <ProductCard 
                                 key={product.id} 
@@ -386,5 +410,4 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         </div>
     );
 };
-
-export default CatalogBlock;
+export default React.memo(CatalogBlock);

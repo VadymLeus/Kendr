@@ -127,6 +127,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
         return 0;
     });
+
     if (!isOpen) return null;
     const overlayStyle = {
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -321,6 +322,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         { value: 'all', label: 'Всі категорії' },
         ...categories.map(cat => ({ value: cat.id, label: cat.name }))
     ];
+
     return (
         <div style={overlayStyle} onClick={onClose}>
             <div style={modalStyle} onClick={e => e.stopPropagation()}>
@@ -409,7 +411,19 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                     ) : (
                         sortedProducts.map(product => {
                             const isSelected = selectedIds.has(product.id);
-                            const imgUrl = product.image_gallery?.[0] ? `${BASE_URL}${product.image_gallery[0]}` : 'https://placehold.co/50x50/EFEFEF/31343C?text=📷';
+                            let imgUrl = 'https://placehold.co/50x50/EFEFEF/31343C?text=📷';
+                            if (product.image_gallery) {
+                                let gallery = [];
+                                if (typeof product.image_gallery === 'string') {
+                                    try { gallery = JSON.parse(product.image_gallery); } catch (e) {}
+                                } else if (Array.isArray(product.image_gallery)) {
+                                    gallery = product.image_gallery;
+                                }
+                                if (gallery.length > 0) {
+                                    imgUrl = gallery[0].startsWith('http') ? gallery[0] : `${BASE_URL}${gallery[0]}`;
+                                }
+                            }
+
                             const category = categories.find(c => c.id === product.category_id);
                             return (
                                 <div 

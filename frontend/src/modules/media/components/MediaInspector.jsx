@@ -13,22 +13,24 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         alt_text: '',
         description: ''
     });
+
     const getValidUrl = (path) => {
         if (!path) return '';
         return path.startsWith('http') ? path : `${API_URL}${path}`;
     };
+
     const hasChanges = file && (
         formData.display_name !== (file.display_name || '') ||
         formData.alt_text !== (file.alt_text || '') ||
         formData.description !== (file.description || '')
     );
+
     const isFont = file && (file.mime_type.includes('font') || /\.(ttf|otf|woff|woff2)$/i.test(file.original_file_name));
     useEffect(() => {
         if (isFont && file) {
             const fontUrl = getValidUrl(file.path_full);
             const fontName = `PreviewFont-${file.id}`;
             const fontFace = new FontFace(fontName, `url(${fontUrl})`);
-            
             fontFace.load().then((loadedFace) => {
                 document.fonts.add(loadedFace);
                 const previewEl = document.getElementById(`font-preview-${file.id}`);
@@ -40,6 +42,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             });
         }
     }, [file, isFont]);
+
     useEffect(() => {
         if (file) {
             setFormData({
@@ -62,6 +65,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             toast.error('Помилка збереження');
         }
     };
+
     const handleBlur = () => {
         if (hasChanges) saveChanges();
     };
@@ -101,252 +105,148 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         }
     };
 
-    const styles = {
-        container: {
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--platform-sidebar-bg)',
-            minHeight: '100%', 
-            borderLeft: '1px solid var(--platform-border-color)'
-        },
-        header: {
-            padding: '16px',
-            borderBottom: '1px solid var(--platform-border-color)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: 'var(--platform-bg)',
-            color: 'var(--platform-text-primary)',
-            flexShrink: 0
-        },
-        previewArea: {
-            padding: '20px',
-            background: 'var(--platform-bg)',
-            backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')",
-            backgroundRepeat: 'repeat',
-            borderBottom: '1px solid var(--platform-border-color)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '220px',
-            position: 'relative'
-        },
-        content: {
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-        },
-        label: {
-            fontSize: '0.75rem',
-            fontWeight: '600',
-            textTransform: 'uppercase',
-            color: 'var(--platform-text-secondary)',
-            marginBottom: '4px',
-            display: 'block',
-            letterSpacing: '0.5px'
-        },
-        input: {
-            width: '100%',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            border: '1px solid var(--platform-border-color)',
-            background: 'var(--platform-input-bg)',
-            color: 'var(--platform-text-primary)',
-            fontSize: '0.85rem',
-            boxSizing: 'border-box',
-            outline: 'none',
-            transition: 'border-color 0.2s'
-        },
-        metaGrid: {
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '10px',
-            padding: '10px',
-            background: 'var(--platform-bg)',
-            borderRadius: '8px',
-            border: '1px solid var(--platform-border-color)',
-            fontSize: '0.8rem',
-            color: 'var(--platform-text-secondary)'
-        },
-        metaItem: {
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1px',
-            overflow: 'hidden'
-        },
-        metaLabel: {
-            fontSize: '0.65rem',
-            color: 'var(--platform-text-secondary)',
-            opacity: 0.8
-        },
-        metaValue: {
-            color: 'var(--platform-text-primary)',
-            fontWeight: 500,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-        },
-        actionsGrid: {
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '10px',
-            marginTop: '16px',
-            paddingTop: '16px',
-            borderTop: '1px solid var(--platform-border-color)'
-        }
-    };
-
     const renderPreview = () => {
         if (isFont) {
             return (
-                <div style={{ textAlign: 'center', width: '100%' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-                        <Type size={48} color="var(--platform-accent)" />
+                <div className="text-center w-full">
+                    <div className="flex justify-center mb-3">
+                        <Type size={48} className="text-(--platform-accent) shrink-0" />
                     </div>
                     <div 
                         id={`font-preview-${file.id}`} 
-                        style={{
-                            fontSize: '1.5rem', 
-                            wordBreak: 'break-word', 
-                            padding: '10px',
-                            color: 'var(--platform-text-primary)'
-                        }}
+                        className="text-xl sm:text-2xl wrap-break-word p-3 text-(--platform-text-primary)"
                     >
                         Aa Bb Cc 123
                         <br/>
-                        <span style={{ fontSize: '1rem' }}>Привіт світ!</span>
+                        <span className="text-sm sm:text-base">Привіт світ!</span>
                     </div>
                 </div>
             );
         }
         return (
-            <div style={{ width: '100%', height: '220px' }}>
+            <div className="w-full h-full sm:h-55">
                 <MediaFilePreview 
                     file={file} 
                     showVideoControls={true} 
-                    style={{ borderRadius: '8px' }}
+                    className="rounded-lg object-contain w-full h-full"
                 />
             </div>
         );
     };
+
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
-                <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Властивості файлу</span>
+        <div className="flex flex-col w-full h-full min-h-screen sm:min-h-full bg-(--platform-sidebar-bg) sm:border-l sm:border-(--platform-border-color)">
+            <div className="p-4 border-b border-(--platform-border-color) flex justify-between items-center bg-(--platform-bg) text-(--platform-text-primary) shrink-0 sticky top-0 z-20">
+                <span className="font-bold text-base">Властивості файлу</span>
                 <Button 
                     variant="ghost" 
                     onClick={onClose} 
                     title="Закрити"
-                    style={{ padding: 0, width: '32px', height: '32px', borderRadius: '50%', minWidth: 'auto' }}
+                    className="p-0 w-8 h-8 rounded-full min-w-auto shrink-0 flex items-center justify-center hover:bg-black/5"
                 >
-                    <X size={20} />
+                    <X size={20} className="shrink-0" />
                 </Button>
             </div>
-            <div style={styles.previewArea}>
+            <div 
+                className="p-4 sm:p-5 bg-(--platform-bg) border-b border-(--platform-border-color) flex justify-center items-center min-h-55 relative"
+                style={{ backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')", backgroundRepeat: 'repeat' }}
+            >
                 {renderPreview()}
             </div>
-            <div style={styles.content}>
-                <div style={styles.metaGrid}>
-                    <div style={styles.metaItem}>
-                        <span style={styles.metaLabel}>Тип</span>
-                        <span style={styles.metaValue} title={file.mime_type}>
+            <div className="p-4 sm:p-5 flex flex-col gap-3.5 flex-1">
+                <div className="grid grid-cols-2 gap-2.5 p-3 bg-(--platform-bg) rounded-lg border border-(--platform-border-color) text-xs sm:text-[0.8rem] text-(--platform-text-secondary)">
+                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <span className="text-[10px] sm:text-[11px] opacity-80 uppercase tracking-wider">Тип</span>
+                        <span className="text-(--platform-text-primary) font-medium truncate" title={file.mime_type}>
                             {getFileExtension(file.original_file_name)}
                         </span>
                     </div>
-                    <div style={styles.metaItem}>
-                        <span style={styles.metaLabel}>Розмір</span>
-                        <span style={styles.metaValue}>{file.file_size_kb} KB</span>
+                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <span className="text-[10px] sm:text-[11px] opacity-80 uppercase tracking-wider">Розмір</span>
+                        <span className="text-(--platform-text-primary) font-medium truncate">{file.file_size_kb} KB</span>
                     </div>
-                    <div style={styles.metaItem}>
-                        <span style={styles.metaLabel}>Дата</span>
-                        <span style={styles.metaValue}>{new Date(file.created_at).toLocaleDateString()}</span>
+                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <span className="text-[10px] sm:text-[11px] opacity-80 uppercase tracking-wider">Дата</span>
+                        <span className="text-(--platform-text-primary) font-medium truncate">{new Date(file.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div style={styles.metaItem}>
-                        <span style={styles.metaLabel}>Розміри</span>
-                        <span style={styles.metaValue}>{file.width ? `${file.width}x${file.height}` : '-'}</span>
+                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <span className="text-[10px] sm:text-[11px] opacity-80 uppercase tracking-wider">Розміри</span>
+                        <span className="text-(--platform-text-primary) font-medium truncate">{file.width ? `${file.width}x${file.height}` : '-'}</span>
                     </div>
                 </div>
-                <div>
-                    <label style={styles.label}>Ім'я файлу</label>
+                <div className="flex flex-col gap-1">
+                    <label className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary)">Ім'я файлу</label>
                     <input 
                         type="text" 
                         value={formData.display_name} 
                         onChange={e => setFormData({...formData, display_name: e.target.value})}
                         onBlur={handleBlur}
-                        style={styles.input}
-                        onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
-                        onBlurCapture={(e) => { e.target.style.borderColor = 'var(--platform-border-color)'; handleBlur(); }}
+                        className="w-full p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-input-bg) text-(--platform-text-primary) text-sm focus:outline-none focus:border-(--platform-accent) transition-colors"
                     />
                 </div>
                 {!isFont && (
-                    <div>
-                        <label style={styles.label}>Alt текст (SEO)</label>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary)">Alt текст (SEO)</label>
                         <input 
                             type="text" 
                             value={formData.alt_text} 
                             onChange={e => setFormData({...formData, alt_text: e.target.value})}
                             onBlur={handleBlur}
-                            style={styles.input}
                             placeholder="Опис для пошуковиків"
-                            onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
-                            onBlurCapture={(e) => { e.target.style.borderColor = 'var(--platform-border-color)'; handleBlur(); }}
+                            className="w-full p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-input-bg) text-(--platform-text-primary) text-sm focus:outline-none focus:border-(--platform-accent) transition-colors"
                         />
                     </div>
                 )}
-                <div>
-                    <label style={styles.label}>Нотатки</label>
+                <div className="flex flex-col gap-1">
+                    <label className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-(--platform-text-secondary)">Нотатки</label>
                     <textarea 
                         value={formData.description} 
                         onChange={e => setFormData({...formData, description: e.target.value})}
                         onBlur={handleBlur}
-                        style={{...styles.input, resize: 'vertical', minHeight: '60px', fontFamily: 'inherit'}}
                         placeholder="Для внутрішнього користування..."
-                        onFocus={(e) => e.target.style.borderColor = 'var(--platform-accent)'}
-                        onBlurCapture={(e) => { e.target.style.borderColor = 'var(--platform-border-color)'; handleBlur(); }}
+                        className="w-full p-2.5 rounded-lg border border-(--platform-border-color) bg-(--platform-input-bg) text-(--platform-text-primary) text-sm focus:outline-none focus:border-(--platform-accent) transition-colors resize-y min-h-15 sm:min-h-20"
                     />
                 </div>
                 <Button 
                     variant="primary" 
                     onClick={handleSaveClick}
                     disabled={!hasChanges}
-                    style={{ width: '100%', marginTop: '4px' }}
+                    className="w-full mt-2 min-h-11 sm:min-h-10 shadow-sm"
                 >
-                    <Save size={16} /> Зберегти зміни
+                    <Save size={16} className="mr-2 shrink-0" /> Зберегти зміни
                 </Button>
-                <div style={styles.actionsGrid}>
+                <div className="grid grid-cols-2 gap-2.5 mt-3 pt-5 border-t border-(--platform-border-color) pb-6">
                     <Button 
                         variant="outline"
                         onClick={copyUrl} 
                         title="Копіювати посилання"
-                        style={{ width: '100%', justifyContent: 'center' }}
+                        className="w-full justify-center text-[13px] sm:text-sm min-h-10"
                     >
-                        <Copy size={16} /> Копіювати
+                        <Copy size={16} className="mr-1.5 shrink-0" /> Копіювати
                     </Button>
                     <Button 
                         variant="outline"
                         onClick={openInNewWindow} 
                         title="Відкрити в новій вкладці"
-                        style={{ width: '100%', justifyContent: 'center' }}
+                        className="w-full justify-center text-[13px] sm:text-sm min-h-10"
                     >
-                        <ExternalLink size={16} /> Відкрити
+                        <ExternalLink size={16} className="mr-1.5 shrink-0" /> Відкрити
                     </Button>
                     <Button 
                         variant="outline"
                         onClick={handleForceDownload} 
                         title="Завантажити файл на комп'ютер"
-                        style={{ width: '100%', justifyContent: 'center' }}
+                        className="w-full justify-center text-[13px] sm:text-sm min-h-10"
                     >
-                        <Download size={16} /> Завантажити
+                        <Download size={16} className="mr-1.5 shrink-0" /> Завантажити
                     </Button>
                     <Button 
                         variant="danger"
                         onClick={() => onDelete(file)} 
                         title="Видалити"
-                        style={{ width: '100%', justifyContent: 'center' }}
+                        className="w-full justify-center text-[13px] sm:text-sm min-h-10"
                     >
-                        <Trash2 size={16} /> Видалити
+                        <Trash2 size={16} className="mr-1.5 shrink-0" /> Видалити
                     </Button>
                 </div>
             </div>

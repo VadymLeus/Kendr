@@ -10,7 +10,7 @@ import ImageUploadTrigger from '../../../shared/ui/complex/ImageUploadTrigger';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { useCooldown } from '../../../shared/hooks/useCooldown';
-import { User, Mail, Phone, Trash2, Camera, LogOut, Check, Upload, BarChart2, Zap, LayoutTemplate, HardDrive, Timer, Eye, ShieldAlert } from 'lucide-react';
+import { User, Mail, Phone, Trash2, Camera, LogOut, Check, BarChart2, Zap, LayoutTemplate, HardDrive, Timer, Eye, ShieldAlert, Loader2 } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout } = useContext(AuthContext);
@@ -125,11 +125,6 @@ const ProfileGeneralTab = () => {
 
     if (!user) return null;
     const isStaff = user?.role === 'admin' || user?.role === 'moderator';
-    const containerStyle = { maxWidth: '900px', margin: '0 auto', width: '100%' };
-    const gridLayout = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px', alignItems: 'start' };
-    const cardStyle = { background: 'var(--platform-card-bg)', border: '1px solid var(--platform-border-color)', borderRadius: '16px', padding: '24px', height: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' };
-    const sectionTitleStyle = { fontSize: '1.25rem', fontWeight: '600', color: 'var(--platform-text-primary)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' };
-    const sectionDescStyle = { fontSize: '0.9rem', color: 'var(--platform-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5', margin: 0 };
     const isPlanAdmin = isStaff || (user.plan && String(user.plan).trim().toUpperCase() === 'ADMIN');
     const isPremium = isPlanAdmin || user.plan === 'PLUS';
     const maxSitesDisplay = isPlanAdmin ? '∞' : (statsData.limits ? statsData.limits.maxSites : '...');
@@ -137,92 +132,89 @@ const ProfileGeneralTab = () => {
     const isSiteLimitReached = !isPlanAdmin && statsData.limits && statsData.siteCount >= statsData.limits.maxSites;
     const isMediaLimitReached = !isPlanAdmin && statsData.limits && statsData.mediaCount >= statsData.limits.maxFiles;
     return (
-        <div style={containerStyle}>
-            <style>{`
-                .avatar-wrapper { position: relative; width: 160px; height: 160px; margin: 0 auto; }
-                .avatar-circle { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; position: relative; border: 1px solid var(--platform-border-color); }
-                .avatar-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; opacity: 0; transition: opacity 0.2s ease; backdrop-filter: blur(2px); cursor: pointer; }
-                .avatar-wrapper:hover .avatar-overlay { opacity: 1; }
-                .trash-btn { position: absolute; top: 0; right: 0; background: rgba(0, 0, 0, 0.6); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; transition: background 0.2s, opacity 0.2s; opacity: 0; transform: translate(10%, -10%); }
-                .avatar-wrapper:hover .trash-btn { opacity: 1; }
-                .trash-btn:hover { background: var(--platform-danger) !important; }
-                .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--platform-bg); border-radius: 12px; border: 1px solid var(--platform-border-color); margin-bottom: 12px; }
-                .stat-label { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--platform-text-primary); font-weight: 500; }
-                .stat-value { font-weight: 600; font-size: 0.95rem; }
-                .tariff-badge { background: ${isPremium ? 'var(--platform-accent)' : 'var(--platform-border-color)'}; color: ${isPremium ? '#fff' : 'var(--platform-text-primary)'}; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; }
-            `}</style>
-            <div style={gridLayout}>
-                <div style={cardStyle}>
-                    <div style={{ marginBottom: '24px' }}>
-                        <h3 style={sectionTitleStyle}>
-                            <Camera size={22} style={{ color: 'var(--platform-accent)' }} />
+        <div className="w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-start">
+                <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 flex flex-col h-full shadow-sm">
+                    <div className="mb-6 text-center sm:text-left">
+                        <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 flex items-center justify-center sm:justify-start gap-2.5 mb-1.5">
+                            <Camera className="w-5 h-5 text-(--platform-accent)" />
                             Фото профілю
                         </h3>
-                        <p style={{ ...sectionDescStyle, marginTop: '4px' }}>
+                        <p className="text-sm text-(--platform-text-secondary) m-0">
                             Формати: JPG, PNG, WEBP. Макс: 2 МБ.
                         </p>
                     </div>
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', padding: '10px 0' }}>
-                        <div className="avatar-wrapper">
-                            <div className="avatar-circle">
-                                <ImageUploadTrigger 
-                                    onUpload={handleAvatarUpload}
-                                    aspect={1}
-                                    circularCrop={true}
-                                    uploading={isAvatarUploading}
-                                    triggerStyle={{ width: '100%', height: '100%', display: 'block' }}
-                                    maxSizeMB={2}
-                                >
-                                    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-                                        <Avatar 
-                                            url={user.avatar_url} 
-                                            name={user.username} 
-                                            size={160}
-                                            fontSize="64px"
-                                            style={{ width: '100%', height: '100%' }}
-                                        />
-                                        
-                                        <div className="avatar-overlay">
-                                            <Upload size={32} style={{ marginBottom: '4px' }} />
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>Змінити</span>
-                                        </div>
-                                    </div>
-                                </ImageUploadTrigger>
+                    
+                    <div className="flex-1 flex flex-col items-center justify-center gap-5 py-2">
+                        <div className="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 mx-auto">
+                            <div className={`w-full h-full rounded-full overflow-hidden border border-(--platform-border-color) bg-(--platform-bg) shadow-sm flex items-center justify-center transition-opacity ${isAvatarUploading ? 'opacity-50' : 'opacity-100'}`}>
+                                <Avatar 
+                                    url={user.avatar_url} 
+                                    name={user.username} 
+                                    size={160}
+                                    fontSize="56px"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
                             </div>
-                            {user.avatar_url && (
-                                <button
-                                    type="button"
-                                    onClick={handleDeleteAvatar}
-                                    className="trash-btn"
-                                    title="Видалити фото"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
+                            {isAvatarUploading && (
+                                <div className="absolute inset-0 flex items-center justify-center z-10">
+                                    <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-(--platform-accent) animate-spin" />
+                                </div>
                             )}
                         </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--platform-text-primary)' }}>
+                        <div className="flex items-center justify-center gap-3 w-full mt-1">
+                            <ImageUploadTrigger 
+                                onUpload={handleAvatarUpload}
+                                aspect={1}
+                                circularCrop={true}
+                                uploading={isAvatarUploading}
+                                maxSizeMB={2}
+                            >
+                                <Button 
+                                    type="button" 
+                                    variant="secondary"
+                                    disabled={isAvatarUploading}
+                                    icon={<Camera size={18} />}
+                                    className="min-h-11 px-4 sm:px-6"
+                                >
+                                    Змінити фото
+                                </Button>
+                            </ImageUploadTrigger>
+                            {user.avatar_url && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleDeleteAvatar}
+                                    disabled={isAvatarUploading}
+                                    icon={<Trash2 size={18} />}
+                                    className="min-h-11 px-3 sm:px-4 text-(--platform-danger) border-red-200 hover:bg-red-50 hover:border-red-300"
+                                    title="Видалити фото"
+                                />
+                            )}
+                        </div>
+                        <div className="text-center mt-2">
+                            <div className="text-xl sm:text-2xl font-bold text-(--platform-text-primary) break-all px-2">
                                 {user.username}
                             </div>
                             {!isStaff && (
-                                <div style={{ fontSize: '1rem', color: 'var(--platform-text-secondary)' }}>
+                                <div className="text-sm sm:text-base text-(--platform-text-secondary) mt-1 break-all px-2">
                                     {user.email}
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-                <div style={cardStyle}>
-                    <div style={{ marginBottom: '24px' }}>
-                        <h3 style={sectionTitleStyle}>
-                            <User size={22} style={{ color: 'var(--platform-accent)' }} />
+                <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 flex flex-col h-full shadow-sm">
+                    <div className="mb-6">
+                        <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 flex items-center gap-2.5 mb-1.5">
+                            <User className="w-5 h-5 text-(--platform-accent)" />
                             Особисті дані
                         </h3>
-                        <p style={{ ...sectionDescStyle, marginTop: '4px' }}>
+                        <p className="text-sm text-(--platform-text-secondary) m-0">
                             Керуйте своїм публічним іменем та контактами.
                         </p>
                     </div>
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5 flex-1">
                         <Input 
                             name="username" 
                             label="Нікнейм" 
@@ -240,7 +232,7 @@ const ProfileGeneralTab = () => {
                                 value={user.email} 
                                 disabled 
                                 leftIcon={<Mail size={18} />}
-                                style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                                className="opacity-70 cursor-not-allowed"
                             />
                         )}
                         <Input 
@@ -252,95 +244,94 @@ const ProfileGeneralTab = () => {
                             placeholder="+380..."
                             maxLength={20}
                         />
-                        <div style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', justifyContent: 'center' }}>
+                        <div className="mt-auto pt-4 flex justify-center w-full">
                             <Button 
                                 type="submit" 
                                 disabled={isLoading || updateCooldown > 0} 
                                 icon={isLoading ? null : (updateCooldown > 0 ? <Timer size={18} /> : <Check size={18} />)}
+                                className="w-full sm:w-auto min-h-11"
                             >
                                 {isLoading ? 'Збереження...' : (updateCooldown > 0 ? `Зачекайте ${updateCooldown}с` : 'Зберегти зміни')}
                             </Button>
                         </div>
                     </form>
                 </div>
-                <div style={{ ...cardStyle, gridColumn: '1 / -1' }}>
-                    <div style={{ marginBottom: '20px' }}>
-                        <h3 style={sectionTitleStyle}>
-                            <BarChart2 size={22} style={{ color: 'var(--platform-accent)' }} />
+                <div className="md:col-span-2 bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 shadow-sm">
+                    <div className="mb-5 sm:mb-6">
+                        <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 flex items-center gap-2.5 mb-1.5">
+                            <BarChart2 className="w-5 h-5 text-(--platform-accent)" />
                             Статистика та Ліміти
                         </h3>
-                        <p style={{ ...sectionDescStyle, marginTop: '4px' }}>
+                        <p className="text-sm text-(--platform-text-secondary) m-0">
                             Поточний стан вашого акаунту та використання ресурсів.
                         </p>
                     </div>
-                    <div className="stat-row">
-                        <div className="stat-label">
-                            <Zap size={18} style={{ color: isPremium ? 'var(--platform-accent)' : 'var(--platform-text-secondary)' }} />
-                            Поточний тариф
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
+                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
+                                <Zap className={`w-4 h-4 sm:w-5 sm:h-5 ${isPremium ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'}`} />
+                                Поточний тариф
+                            </div>
+                            <div className="font-semibold">
+                                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${isPremium ? 'bg-(--platform-accent) text-white' : 'bg-(--platform-border-color) text-(--platform-text-primary)'}`}>
+                                    {user.plan || 'FREE'}
+                                </span>
+                            </div>
                         </div>
-                        <div className="stat-value">
-                            <span className="tariff-badge">{user.plan || 'FREE'}</span>
+                        <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
+                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
+                                <LayoutTemplate className="w-4 h-4 sm:w-5 sm:h-5 text-(--platform-text-secondary)" />
+                                Створено сайтів
+                            </div>
+                            <div className={`font-semibold text-sm sm:text-base ${isSiteLimitReached ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
+                                {statsData.siteCount} / {maxSitesDisplay}
+                            </div>
                         </div>
-                    </div>
-                    <div className="stat-row">
-                        <div className="stat-label">
-                            <LayoutTemplate size={18} style={{ color: 'var(--platform-text-secondary)' }} />
-                            Створено сайтів
+                        <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
+                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
+                                <HardDrive className="w-4 h-4 sm:w-5 sm:h-5 text-(--platform-text-secondary)" />
+                                Завантажено файлів
+                            </div>
+                            <div className={`font-semibold text-sm sm:text-base ${isMediaLimitReached ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
+                                {statsData.mediaCount} / {maxMediaDisplay}
+                            </div>
                         </div>
-                        <div className="stat-value" style={{ color: isSiteLimitReached ? 'var(--platform-danger)' : 'inherit' }}>
-                            {statsData.siteCount} / {maxSitesDisplay}
+                        <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
+                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
+                                <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-(--platform-text-secondary)" />
+                                Всього переглядів
+                            </div>
+                            <div className="font-semibold text-sm sm:text-base text-(--platform-text-primary)">
+                                {statsData.totalViews}
+                            </div>
                         </div>
-                    </div>
-                    <div className="stat-row">
-                        <div className="stat-label">
-                            <HardDrive size={18} style={{ color: 'var(--platform-text-secondary)' }} />
-                            Завантажено файлів
-                        </div>
-                        <div className="stat-value" style={{ color: isMediaLimitReached ? 'var(--platform-danger)' : 'inherit' }}>
-                            {statsData.mediaCount} / {maxMediaDisplay}
-                        </div>
-                    </div>
-                    <div className="stat-row">
-                        <div className="stat-label">
-                            <Eye size={18} style={{ color: 'var(--platform-text-secondary)' }} />
-                            Всього переглядів на активних сайтах 
-                        </div>
-                        <div className="stat-value">
-                            {statsData.totalViews}
-                        </div>
-                    </div>
-                    <div className="stat-row" style={{ marginBottom: 0 }}>
-                        <div className="stat-label">
-                            <ShieldAlert size={18} style={{ color: statsData.warningCount > 0 ? 'var(--platform-danger)' : 'var(--platform-text-secondary)' }} />
-                            Активні страйки
-                        </div>
-                        <div className="stat-value" style={{ color: statsData.warningCount > 0 ? 'var(--platform-danger)' : 'inherit' }}>
-                            {statsData.warningCount} / 3
+                        <div className="md:col-span-2 flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
+                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
+                                <ShieldAlert className={`w-4 h-4 sm:w-5 sm:h-5 ${statsData.warningCount > 0 ? 'text-(--platform-danger)' : 'text-(--platform-text-secondary)'}`} />
+                                Активні страйки
+                            </div>
+                            <div className={`font-semibold text-sm sm:text-base ${statsData.warningCount > 0 ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
+                                {statsData.warningCount} / 3
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div style={{ 
-                    ...cardStyle, 
-                    borderColor: 'var(--platform-border-color)', 
-                    background: 'var(--platform-card-bg)',
-                    gridColumn: '1 / -1',
-                    padding: '32px'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                        <div style={{ flex: 1 }}>
-                            <h3 style={{ ...sectionTitleStyle, marginBottom: '4px' }}>
-                                <LogOut size={22} style={{ color: 'var(--platform-text-secondary)' }} />
+                <div className="md:col-span-2 bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-8 shadow-sm">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
+                        <div className="flex-1">
+                            <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 flex items-center gap-2.5 mb-1.5">
+                                <LogOut className="w-5 h-5 text-(--platform-text-secondary)" />
                                 Вихід з акаунту
                             </h3>
-                            <p style={{ margin: 0, color: 'var(--platform-text-secondary)', fontSize: '0.9rem', opacity: 0.8 }}>
+                            <p className="text-sm text-(--platform-text-secondary) m-0">
                                 Це завершить вашу поточну сесію в цьому браузері.
                             </p>
                         </div>
                         <Button 
                             variant="secondary" 
                             onClick={() => setIsLogoutModalOpen(true)} 
-                            icon={<LogOut size={16} />}
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
+                            icon={<LogOut size={18} />}
+                            className="w-full sm:w-auto text-(--platform-danger) hover:bg-red-50 border-red-200 min-h-11"
                         >
                             Вийти з системи
                         </Button>

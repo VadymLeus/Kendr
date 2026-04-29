@@ -5,7 +5,8 @@ import { ChevronDown, Check } from 'lucide-react';
 
 const CustomSelect = ({ 
     name, value, onChange, options = [], placeholder = "Оберіть...", 
-    disabled, error, style, multiple = false, maxSelections 
+    disabled, error, style, multiple = false, maxSelections,
+    dropdownClassName = '', dropdownStyle = {}
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [menuStyle, setMenuStyle] = useState({});
@@ -83,6 +84,7 @@ const CustomSelect = ({
             setIsOpen(false);
         }
     };
+
     let displayLabel = placeholder;
     let SingleIcon = null;
     if (multiple) {
@@ -117,7 +119,11 @@ const CustomSelect = ({
                 <ChevronDown size={16} className={`text-(--platform-text-secondary) transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
             {isOpen && createPortal(
-                <div ref={menuRef} className="select-dropdown-menu custom-scrollbar" style={menuStyle}>
+                <div 
+                    ref={menuRef} 
+                    className={`select-dropdown-menu custom-scrollbar ${dropdownClassName}`} 
+                    style={{...menuStyle, ...dropdownStyle}}
+                >
                     {flatOptions.length ? flatOptions.map((opt, i) => {
                         if (opt.isGroup) {
                             return <div key={i} className="text-xs font-bold text-(--platform-text-secondary) uppercase px-3 py-1 mt-1">{opt.label}</div>;
@@ -138,9 +144,7 @@ const CustomSelect = ({
                                     </div>
                                 )}
                                 {!multiple && opt.icon && <opt.icon size={16} className={isSelected ? 'opacity-100' : 'opacity-70'} />}
-                                
                                 <span className="flex-1 truncate">{opt.label}</span>
-                                
                                 {!multiple && isSelected && <Check size={16} />}
                             </div>
                         );

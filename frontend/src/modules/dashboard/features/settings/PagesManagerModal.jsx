@@ -6,7 +6,7 @@ import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { Button as UIButton } from '../../../../shared/ui/elements/Button'; 
 import { Input } from '../../../../shared/ui/elements/Input'; 
 import LoadingState from '../../../../shared/ui/complex/LoadingState';
-import { FileText, Plus, Edit, Settings, Trash, Star, Search, X, Layout } from 'lucide-react';
+import { Plus, Edit, Settings, Trash, Star, Search, X, Layout } from 'lucide-react';
 
 const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavingChange }) => {
     const [name, setName] = useState('');
@@ -104,7 +104,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
                             </div>
                             <div className="mb-4">
                                 <Input 
-                                    label="URL (Slug)"
+                                    label="URL"
                                     value={slug}
                                     onChange={handleSlugChange}
                                     placeholder="about-us"
@@ -155,6 +155,7 @@ const PageModal = ({ isOpen, onClose, onSave, page, siteId, onPageUpdate, onSavi
         </div>
     );
 };
+
 const RESPONSIVE_GRID_CLASS = "grid grid-cols-[1fr_auto] md:grid-cols-[2fr_1.5fr_110px_180px] lg:grid-cols-[2fr_1.5fr_110px_220px] items-center gap-3 md:gap-4";
 const CustomActionButton = ({ onClick, title, children, variant = 'default', loading = false }) => {
     const variantClasses = {
@@ -178,7 +179,7 @@ const CustomActionButton = ({ onClick, title, children, variant = 'default', loa
     );
 };
 
-const ListRow = ({ icon, title, badges, actions }) => {
+const ListRow = ({ title, badges, actions }) => {
     return (
         <div className={`
             ${RESPONSIVE_GRID_CLASS}
@@ -186,9 +187,6 @@ const ListRow = ({ icon, title, badges, actions }) => {
             hover:border-(--platform-accent) hover:bg-white/5
         `}>
             <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
-                <div className="p-2 md:p-2.5 rounded-xl flex items-center justify-center shrink-0 bg-white/5 border border-(--platform-border-color) text-(--platform-text-secondary)">
-                    {icon}
-                </div>
                 <div className="min-w-0 flex-1">
                     <div className="font-bold text-sm md:text-base text-(--platform-text-primary) whitespace-nowrap overflow-hidden text-ellipsis">
                         {title}
@@ -205,7 +203,6 @@ const ListRow = ({ icon, title, badges, actions }) => {
             <div className="hidden md:block">
                 {badges.status}
             </div>
-            
             <div className="flex gap-1.5 md:gap-2 justify-end">
                 {actions}
             </div>
@@ -253,7 +250,6 @@ const PagesManagerModal = ({ isOpen, onClose, siteId, onEditPage, onPageUpdate, 
         fetchPages(); 
         if (onPageUpdate) onPageUpdate(); 
     };
-
     const handleDelete = async (page) => {
         if (page.is_homepage) return toast.warning('Неможливо видалити головну сторінку.');
         if (!await confirm({ title: "Видалити?", message: `Видалити сторінку "${page.name}"?`, type: "danger", confirmLabel: "Видалити" })) return;
@@ -303,7 +299,6 @@ const PagesManagerModal = ({ isOpen, onClose, siteId, onEditPage, onPageUpdate, 
                             <X size={20} className="md:w-6 md:h-6" />
                         </button>
                     </div>
-
                     <div className="px-4 md:px-6 pt-4 md:pt-5 pb-2">
                         <div className="flex justify-between items-center mb-4">
                             <h4 className="text-xs md:text-[0.85rem] font-bold uppercase text-(--platform-text-secondary) m-0 tracking-wider">
@@ -332,11 +327,10 @@ const PagesManagerModal = ({ isOpen, onClose, siteId, onEditPage, onPageUpdate, 
                                 {pages.map(page => (
                                     <ListRow 
                                         key={page.id}
-                                        icon={<FileText size={18} className="md:w-5 md:h-5" />}
                                         title={
                                             <span className="flex items-center gap-2">
+                                                {!!page.is_homepage && <Star size={16} className="text-(--platform-accent) fill-(--platform-accent) shrink-0" />}
                                                 {page.name}
-                                                {!!page.is_homepage && <Star size={14} className="md:w-4 md:h-4 text-amber-500 fill-amber-500 shrink-0" />}
                                             </span>
                                         }
                                         badges={{

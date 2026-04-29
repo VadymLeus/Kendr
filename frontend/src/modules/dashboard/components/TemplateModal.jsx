@@ -76,7 +76,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
             }
             return;
         }
-
         const duplicate = existingTemplates.find(t => t.name.toLowerCase() === name.trim().toLowerCase());
         if (duplicate) {
             const isConfirmed = await confirm({
@@ -108,7 +107,7 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
         color: 'var(--platform-text-primary)',
         border: '1px solid var(--platform-border-color)',
         borderRadius: '16px',
-        width: '90%', maxWidth: '480px',
+        width: '95%', maxWidth: '480px',
         boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
         overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
@@ -116,23 +115,6 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
         maxHeight: '90vh'
     };
 
-    const contentStyle = { padding: '24px 24px 8px 24px', overflowY: 'auto' };
-    const headerStyle = { display: 'flex', gap: '16px', alignItems: 'flex-start' };
-    const iconBoxStyle = {
-        width: '48px', height: '48px', borderRadius: '12px',
-        backgroundColor: isEditMode ? 'color-mix(in srgb, var(--platform-warning), transparent 90%)' : 'color-mix(in srgb, var(--platform-accent), transparent 90%)', 
-        color: isEditMode ? 'var(--platform-warning)' : 'var(--platform-accent)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        transition: 'all 0.2s'
-    };
-
-    const footerStyle = {
-        padding: '16px 24px',
-        display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px',
-        backgroundColor: 'var(--platform-bg)',
-        borderTop: '1px solid var(--platform-border-color)',
-        marginTop: '16px'
-    };
     const displayThumbnailUrl = thumbnailUrl ? getMediaUrl({ path_full: thumbnailUrl }) : '';
     const isValidThumbnail = thumbnailUrl && typeof thumbnailUrl === 'string' && thumbnailUrl !== 'null' && !thumbnailUrl.includes('empty');
     return (
@@ -145,11 +127,23 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes slideUp { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+                .template-modal-content { padding: 24px 24px 8px 24px; overflow-y: auto; }
+                .template-modal-footer { padding: 16px 24px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; background-color: var(--platform-bg); border-top: 1px solid var(--platform-border-color); margin-top: 16px; }
+                @media (max-width: 600px) {
+                    .template-modal-content { padding: 16px 16px 8px 16px; }
+                    .template-modal-footer { padding: 12px 16px; }
+                }
             `}</style>
             <div style={modalStyle}>
-                <div style={contentStyle}>
-                    <div style={headerStyle}>
-                        <div style={iconBoxStyle}>
+                <div className="template-modal-content">
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                        <div style={{
+                            width: '48px', height: '48px', borderRadius: '12px',
+                            backgroundColor: isEditMode ? 'color-mix(in srgb, var(--platform-warning), transparent 90%)' : 'color-mix(in srgb, var(--platform-accent), transparent 90%)', 
+                            color: isEditMode ? 'var(--platform-warning)' : 'var(--platform-accent)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                            transition: 'all 0.2s'
+                        }}>
                             <Layout size={24} />
                         </div>
                         <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '2px'}}>
@@ -180,7 +174,7 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                             </div>
                             <div style={{marginBottom: '16px'}}>
                                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500', color: 'var(--platform-text-secondary)' }}>
-                                    Категорія (Тег)
+                                    Категорія
                                 </label>
                                 <CustomSelect 
                                     name="category"
@@ -246,7 +240,7 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                             </div>
                             <div>
                                 <Input 
-                                    label="Опис (необов'язково)"
+                                    label="Опис"
                                     value={description}
                                     onChange={e => setDescription(e.target.value)}
                                     placeholder="Короткий опис призначення..."
@@ -267,7 +261,7 @@ const TemplateModal = ({ isOpen, onClose, onSave, initialData = null }) => {
                         </form>
                     </div>
                 </div>
-                <div style={footerStyle}>
+                <div className="template-modal-footer">
                     <Button variant="outline" onClick={onClose}>
                         Скасувати
                     </Button>

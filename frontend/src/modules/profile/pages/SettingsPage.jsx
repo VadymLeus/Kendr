@@ -19,83 +19,66 @@ const SettingsPage = () => {
             
         return allowedTabs.includes(savedTab) ? savedTab : 'general';
     });
+
     useEffect(() => {
         localStorage.setItem('settings_active_tab', activeTab);
     }, [activeTab]);
+
     const tabs = [
-        { id: 'general', label: 'Загальні', icon: <User size={18} /> },
-        { id: 'security', label: 'Безпека', icon: <Shield size={18} /> },
-        ...(isStaff ? [] : [{ id: 'public', label: 'Публічність', icon: <Globe size={18} /> }]),
-        { id: 'appearance', label: 'Вигляд', icon: <Palette size={18} /> },
+        { id: 'general', label: 'Загальні', icon: <User /> },
+        { id: 'security', label: 'Безпека', icon: <Shield /> },
+        ...(isStaff ? [] : [{ id: 'public', label: 'Публічність', icon: <Globe /> }]),
+        { id: 'appearance', label: 'Вигляд', icon: <Palette /> },
     ];
 
     return (
-        <div 
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                margin: '-2rem',
-                minHeight: 'calc(100% + 4rem)' 
-            }}
-        >
-            <header style={{
-                flexShrink: 0,
-                height: '64px',
-                backgroundColor: 'var(--platform-card-bg)',
-                borderBottom: '1px solid var(--platform-border-color)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0 24px',
-                position: 'sticky',
-                top: 0,
-                zIndex: 20
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', minWidth: '150px' }}>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--platform-text-primary)', margin: 0 }}>
-                        Налаштування
-                    </h1>
-                </div>
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 0, margin: '0 16px', overflowX: 'auto' }} className="hide-scrollbar">
-                    <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px', backgroundColor: 'var(--platform-bg)', borderRadius: '10px', border: '1px solid var(--platform-border-color)' }}>
+        <div className="-m-4 sm:-m-8 w-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)"> 
+            <header className="sticky top-0 z-50 bg-(--platform-card-bg) border-b border-(--platform-border-color) h-(--header-height,60px) px-4 sm:px-6 flex items-center justify-between gap-4 transition-colors duration-300">
+                <div className="flex-1 min-w-0"></div>
+                <div className="flex-initial flex justify-center min-w-0">
+                    <nav className="flex bg-(--platform-bg) p-1 rounded-lg gap-1 border border-(--platform-border-color) overflow-hidden shadow-sm">
                         {tabs.map(tab => {
                             const isActive = activeTab === tab.id;
                             return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`settings-tab-btn ${isActive ? 'active' : ''}`}
+                                    className={`
+                                        flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium border-none cursor-pointer transition-all duration-200 min-h-8 sm:min-h-9 whitespace-nowrap outline-none
+                                        ${isActive 
+                                            ? 'bg-(--platform-card-bg) text-(--platform-accent) shadow-[0_1px_3px_rgba(0,0,0,0.1)] font-semibold' 
+                                            : 'bg-transparent text-(--platform-text-secondary) hover:bg-(--platform-hover-bg) hover:text-(--platform-text-primary)'
+                                        }
+                                    `}
                                     title={tab.label}
                                 >
-                                    <span className="settings-tab-icon">{tab.icon}</span>
-                                    <span className="settings-tab-text">{tab.label}</span>
+                                    <span className="flex items-center justify-center w-4 h-4 sm:w-4.5 sm:h-4.5 shrink-0">
+                                        {React.cloneElement(tab.icon, { 
+                                            className: 'w-full h-full fill-none stroke-current stroke-2' 
+                                        })}
+                                    </span>
+                                    <span className="hidden xl:inline-block mt-px">{tab.label}</span>
                                 </button>
-                            )
+                            );
                         })}
                     </nav>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: '150px', gap: '12px' }}>
+                <div className="flex-1 flex items-center justify-end min-w-0 gap-2">
                     {user && !isStaff && (
                         <Link 
                             to={`/profile/${user.slug}`} 
                             target="_blank"
-                            className="btn btn-primary"
-                            style={{ 
-                                textDecoration: 'none', 
-                                height: '36px',
-                                fontSize: '0.875rem'
-                            }}
-                            title="Відкрити профіль у новій вкладці"
+                            title="Мій профіль"
+                            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-(--platform-border-color) bg-(--platform-bg) text-(--platform-text-secondary) hover:bg-(--platform-card-bg) hover:text-(--platform-accent) hover:border-(--platform-accent) transition-all no-underline shrink-0"
                         >
-                            <span className="profile-btn-text">Мій профіль</span>
-                            <ExternalLink size={16} />
+                            <ExternalLink className="w-4 h-4 sm:w-4.5 sm:h-4.5 shrink-0" />
                         </Link>
                     )}
                 </div>
             </header>
-            <div style={{ flex: 1, paddingBottom: '2rem' }}>
-                <div style={{ maxWidth: '896px', margin: '0 auto', padding: '24px 32px' }}>
-                    <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+            <div className="flex-1 pb-8">
+                <div className="max-w-4xl mx-auto px-4 py-6 md:px-8 md:py-8">
+                    <div className="animate-fade-in-up">
                         {activeTab === 'general' && <ProfileGeneralTab />}
                         {activeTab === 'security' && <ProfileSecurityTab />}
                         {activeTab === 'appearance' && <ProfileAppearanceTab />}
@@ -104,52 +87,29 @@ const SettingsPage = () => {
                 </div>
             </div>
             <style>{`
-                @keyframes fadeIn {
+                @keyframes fadeInUp {
                     from { opacity: 0; transform: translateY(10px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
-                .settings-tab-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 6px 16px;
-                    border-radius: 8px;
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    transition: all 0.2s ease;
-                    white-space: nowrap;
-                    border: none;
-                    cursor: pointer;
-                    background-color: transparent;
-                    color: var(--platform-text-secondary);
-                    min-height: 36px;
+                .animate-fade-in-up {
+                    animation: fadeInUp 0.3s ease-in-out;
                 }
-                .settings-tab-btn:hover {
-                    background-color: var(--platform-hover-bg);
-                    color: var(--platform-text-primary);
-                }
-                .settings-tab-btn.active {
-                    background-color: var(--platform-card-bg);
-                    color: var(--platform-accent);
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                }
-                .settings-tab-icon {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .profile-btn-text {
-                    display: inline;
-                }
-                @media (max-width: 1200px) {
-                    .settings-tab-text {
-                        display: none;
+                @media (max-width: 1100px) {
+                    .xl\\:inline-block {
+                        display: none !important;
                     }
-                    .settings-tab-btn {
-                        padding: 6px 10px;
+                }
+                @media (max-width: 768px) {
+                    .sticky {
+                        height: 56px;
+                        padding: 0 12px;
+                        gap: 8px;
                     }
-                    .profile-btn-text {
-                        display: none;
+                }
+                @media (max-width: 480px) {
+                    .sticky {
+                        padding: 0 8px;
+                        gap: 4px;
                     }
                 }
             `}</style>

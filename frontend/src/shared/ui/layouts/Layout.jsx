@@ -1,5 +1,5 @@
 // frontend/src/shared/ui/layouts/Layout.jsx
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useMemo } from 'react';
 import { useLocation, Outlet } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import PlatformSidebar from './PlatformSidebar';
@@ -44,7 +44,9 @@ const AnnouncementTimer = ({ targetTime }) => {
 
 const Layout = () => {
     const { user, isAdmin, isModerator, isLoading: isAuthLoading } = useContext(AuthContext);
-    const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+    const [isCollapsedUI, setIsCollapsedUI] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+    const [isCollapsedContext, setIsCollapsedContext] = useState(isCollapsedUI);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const location = useLocation();
     const [siteData, setSiteData] = useState(null);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
@@ -53,12 +55,17 @@ const Layout = () => {
     const [announcementTargetTime, setAnnouncementTargetTime] = useState(null);
     const isStaff = isAdmin || isModerator;
     const handleToggleSidebar = () => {
-        setIsCollapsed(prev => {
-            const newState = !prev;
-            localStorage.setItem('sidebarCollapsed', newState.toString());
-            return newState;
+        const newState = !isCollapsedUI;
+        setIsCollapsedUI(newState);
+        localStorage.setItem('sidebarCollapsed', newState.toString());
+        React.startTransition(() => {
+            setIsCollapsedContext(newState);
         });
     };
+
+    useEffect(() => {
+        setIsMobileOpen(false);
+    }, [location.pathname]);
 
     useEffect(() => {
         if (!globalAnnouncement) {
@@ -98,8 +105,7 @@ const Layout = () => {
             window.removeEventListener('global_announcement_update', handleAnnouncementUpdate);
             clearInterval(intervalId);
         };
-    }, [user]);
-
+    }, [user, globalAnnouncement]);
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
@@ -132,7 +138,14 @@ const Layout = () => {
         if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
         else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
-
+    const outletContextValue = useMemo(() => ({
+        siteData, 
+        setSiteData, 
+        isSiteLoading, 
+        isCollapsed: isCollapsedContext,
+        globalAnnouncement, 
+        setGlobalAnnouncement
+    }), [siteData, isSiteLoading, isCollapsedContext, globalAnnouncement]);
     if (isAuthLoading) return <div className="h-screen"><LoadingState title="Завантаження платформи..." layout="page" /></div>;
     const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
@@ -155,7 +168,7 @@ const Layout = () => {
         ? 'h-full overflow-hidden' 
         : 'min-h-full max-md:h-full';
     const mainFlexClass = isAppPage ? 'flex-1 min-h-0' : 'flex-1';
-    const paddingClass = (isAppPage || isSiteThemeActive) ? 'p-0' : 'p-8';
+    const paddingClass = (isAppPage || isSiteThemeActive) ? 'p-0' : 'p-8 max-md:p-4';
     return (
         <div className="layout-wrapper flex flex-col h-screen relative overflow-hidden bg-(--platform-bg)">
             <style>{`
@@ -188,13 +201,16 @@ const Layout = () => {
             )}
             <div className="flex flex-1 overflow-hidden h-full w-full">
                 <PlatformSidebar 
-                    isCollapsed={isCollapsed} 
+                    isCollapsed={isCollapsedUI}
                     onToggle={handleToggleSidebar} 
                     variant={isStaff ? 'admin' : 'user'}
+                    isMobileOpen={isMobileOpen}
+                    onMobileOpen={() => setIsMobileOpen(true)}
+                    onMobileClose={() => setIsMobileOpen(false)}
                 />
-                <div 
-                    className={`layout-content flex-1 min-w-0 ${isCollapsed ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''} ${scrollClass}`}
-                    style={themeStyle}
+                <div
+                    className={`layout-content flex-1 min-w-0 ${isCollapsedUI ? 'collapsed' : ''} ${isSiteThemeActive ? 'site-theme-context' : ''} ${scrollClass}`}
+                    style={{ ...themeStyle, transition: 'none' }}
                     data-site-mode={isSiteThemeActive && isSiteDark ? 'dark' : 'light'}
                 >
                     <div className={`flex flex-col w-full ${innerWrapperClass}`}>
@@ -205,7 +221,7 @@ const Layout = () => {
                             className={`flex flex-col w-full ${mainFlexClass} ${paddingClass}`}
                             style={isSiteThemeActive ? themeStyle : undefined} 
                         >
-                            <Outlet context={{ siteData, setSiteData, isSiteLoading, isCollapsed, globalAnnouncement, setGlobalAnnouncement }} />
+                            <Outlet context={outletContextValue} />
                         </main>
                         {shouldShowFooter && <Footer />}
                     </div>

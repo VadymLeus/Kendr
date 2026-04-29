@@ -19,7 +19,6 @@ const AuthSuccessPage = () => {
         }
         if (processing.current) return;
         processing.current = true;
-        
         const fetchUserData = async () => {
             try {
                 localStorage.setItem('token', token);
@@ -39,7 +38,7 @@ const AuthSuccessPage = () => {
         fetchUserData();
     }, [searchParams, navigate, login]);
     return (
-        <div className="h-screen flex flex-col justify-center items-center bg-(--platform-bg)">
+        <div className="min-h-dvh flex flex-col justify-center items-center bg-(--platform-bg) px-4">
             <LoadingState 
                 title="Вхід у систему..." 
                 layout="page" 

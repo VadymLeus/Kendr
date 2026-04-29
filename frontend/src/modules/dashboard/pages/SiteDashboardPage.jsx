@@ -1,5 +1,6 @@
 // frontend/src/modules/dashboard/pages/SiteDashboardPage.jsx
-import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useOutletContext, useNavigate } from 'react-router-dom';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
@@ -13,11 +14,75 @@ import OverviewTab from '../features/overview/OverviewTab';
 import DashboardHeader from '../components/DashboardHeader';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
+import { Button } from '../../../shared/ui/elements/Button';
 import useHistory from '../../../shared/hooks/useHistory';
 import { generateBlockId, getDefaultBlockData } from '../../editor/core/editorConfig';
 import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, handleDrop } from '../../editor/core/blockUtils';
 import PagesManagerModal from '../features/settings/PagesManagerModal';
-import { Lock } from 'lucide-react';
+import { resolveAccentColor } from '../../../shared/utils/themeUtils';
+import FontLoader from '../../renderer/components/FontLoader';
+import { Lock, Monitor } from 'lucide-react';
+
+const DeviceIframe = ({ children, className, style }) => {
+    const [iframeRef, setIframeRef] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false);
+    useEffect(() => {
+        if (!iframeRef) return;
+        const doc = iframeRef.contentDocument;
+        if (!doc) return;
+        const writeDoc = () => {
+            doc.open();
+            doc.write('<!DOCTYPE html><html><head></head><body><div id="iframe-root" style="height: 100%;"></div></body></html>');
+            doc.close();
+            const head = doc.head;
+            document.querySelectorAll('style, link[rel="stylesheet"]').forEach(el => {
+                head.appendChild(el.cloneNode(true));
+            });
+            const baseStyle = doc.createElement('style');
+            baseStyle.innerHTML = `
+                html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; background-color: transparent; }
+                * { box-sizing: border-box; }
+                ::-webkit-scrollbar { width: 0px; background: transparent; }
+                body { font-family: var(--site-font-main, inherit); color: var(--site-text-primary, inherit); }
+            `;
+            head.appendChild(baseStyle);
+
+            setIsLoaded(true);
+        };
+
+        const timer = setTimeout(writeDoc, 50);
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.tagName === 'STYLE' || (node.tagName === 'LINK' && node.rel === 'stylesheet')) {
+                        doc.head.appendChild(node.cloneNode(true));
+                    }
+                });
+            });
+        });
+        observer.observe(document.head, { childList: true });
+
+        return () => {
+            clearTimeout(timer);
+            observer.disconnect();
+        };
+    }, [iframeRef]);
+
+    return (
+        <iframe
+            ref={setIframeRef}
+            className={className}
+            style={style}
+            title="Mobile Preview"
+        >
+            {isLoaded && iframeRef.contentDocument && createPortal(
+                children,
+                iframeRef.contentDocument.getElementById('iframe-root')
+            )}
+        </iframe>
+    );
+};
+
 const useDragAutoScroll = (ref, isEnabled) => {
     useEffect(() => {
         const container = ref.current;
@@ -73,13 +138,49 @@ const SiteDashboardPage = () => {
         const saved = localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
         return saved === 'pages' ? 'editor' : saved;
     });
-    
     const [viewMode, setViewMode] = useState('editor');
     const [isReadOnly, setIsReadOnly] = useState(false);
     const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
     const pcScrollRef = useRef(null);
     useDragAutoScroll(pcScrollRef, activeTab === 'editor');
+    const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth <= 768);
+    const tabScrollPositions = useRef({});
+    const settingsContainerRef = useRef(null);
+    const handleSettingsScroll = (e) => {
+        if (activeTab !== 'editor') {
+            tabScrollPositions.current[activeTab] = e.target.scrollTop;
+        }
+    };
+
+    useEffect(() => {
+        if (settingsContainerRef.current && activeTab !== 'editor') {
+            settingsContainerRef.current.scrollTop = tabScrollPositions.current[activeTab] || 0;
+        }
+    }, [activeTab]);
+
+    useEffect(() => {
+        let timeoutId;
+        const handleResize = () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                setIsMobileScreen(window.innerWidth <= 768);
+            }, 100);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            clearTimeout(timeoutId);
+        };
+    }, []);
     
+    useEffect(() => {
+        if (isMobileScreen) {
+            if (activeTab !== 'editor' && activeTab !== 'settings') {
+                setActiveTab('settings');
+            }
+        }
+    }, [isMobileScreen, activeTab]);
+
     useEffect(() => {
         if (siteData && siteData.site_path && siteData.site_path !== site_path) {
             navigate(`/dashboard/${siteData.site_path}`, { replace: true });
@@ -143,6 +244,42 @@ const SiteDashboardPage = () => {
         return [];
     });
     
+    const themeSettings = useMemo(() => {
+        if (!siteData) return {};
+        let ts = siteData.theme_settings;
+        if (typeof ts === 'string') {
+            try { ts = JSON.parse(ts); } catch (e) { ts = {}; }
+        }
+        return ts || {};
+    }, [siteData]);
+
+    const siteIsolationStyles = useMemo(() => {
+        if (!siteData) return {};
+        const isSiteDark = siteData.site_theme_mode === 'dark';
+        const siteBg = isSiteDark ? '#1a202c' : '#f7fafc';
+        const siteText = isSiteDark ? '#f7fafc' : '#1a202c';
+        const siteCardBg = isSiteDark ? '#2d3748' : '#ffffff';
+        const siteBorder = isSiteDark ? '#4a5568' : '#e2e8f0';
+        const siteAccent = resolveAccentColor(siteData.site_theme_accent || 'orange');
+        const styles = {
+            '--site-bg': siteBg,
+            '--site-text-primary': siteText,
+            '--site-text-secondary': isSiteDark ? '#a0aec0' : '#718096',
+            '--site-card-bg': siteCardBg,
+            '--site-border-color': siteBorder,
+            '--site-accent': siteAccent,
+            '--site-font-main': themeSettings.font_body || "'Inter', sans-serif",
+            '--site-font-headings': themeSettings.font_heading || themeSettings.font_body || "'Inter', sans-serif"
+        };
+
+        let hex = siteAccent.replace('#', '');
+        if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+        if (hex.length === 6) {
+            styles['--site-accent-rgb'] = `${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)}`;
+        }
+        return styles;
+    }, [siteData, themeSettings]);
+
     useEffect(() => {
         if (site_path && currentPageId) {
             const key = `collapsed_blocks_${site_path}_${currentPageId}`;
@@ -389,7 +526,6 @@ const SiteDashboardPage = () => {
         try {
             const updateData = {};
             const restrictedKeys = ['site_path', 'title', 'slug', 'status'];
-
             Object.keys(updatedData).forEach(key => {
                 if (updatedData[key] !== siteData[key] && !restrictedKeys.includes(key)) {
                     updateData[key] = updatedData[key];
@@ -439,7 +575,20 @@ const SiteDashboardPage = () => {
     const isFullHeightTab = ['commerce', 'overview'].includes(activeTab);
     const hasUnsavedChanges = JSON.stringify(blocks) !== savedBlocksStr && savedBlocksStr !== '';
     return (
-        <div className="flex flex-col h-screen overflow-hidden">
+        <div className="flex flex-col h-screen overflow-hidden relative bg-(--platform-bg)">
+            {siteData && themeSettings && (
+                <FontLoader fontHeading={themeSettings.font_heading} fontBody={themeSettings.font_body} />
+            )}
+            <style>
+                {`
+                .editor-site-context {
+                    font-family: var(--site-font-main);
+                    background-color: var(--platform-bg); 
+                    color: var(--site-text-primary);
+                }
+                .editor-site-context * { box-sizing: border-box; }
+                `}
+            </style>
             <ConfirmModal 
                 isOpen={isDiscardModalOpen}
                 title="Скинути зміни?"
@@ -487,57 +636,102 @@ const SiteDashboardPage = () => {
             />
             <div className="flex-1 flex overflow-hidden relative">
                 {activeTab === 'editor' && (
-                    <>
-                        <div 
-                            ref={pcScrollRef} 
-                            className={`flex-1 overflow-y-auto ${viewMode !== 'editor' ? 'bg-[#111827]' : 'bg-(--platform-bg)'} transition-colors duration-300`}
-                        >
-                            <div>
+                    isMobileScreen ? (
+                        <div className="flex-1 flex flex-col items-center justify-center bg-(--platform-bg) p-6 text-center z-10 overflow-y-auto">
+                            <div className="max-w-md w-full flex flex-col items-center bg-(--platform-card-bg) p-8 rounded-2xl border border-(--platform-border-color) shadow-sm">
+                                <div className="w-16 h-16 bg-(--platform-bg) rounded-full flex items-center justify-center mb-6 shadow-inner border border-(--platform-border-color)">
+                                    <Monitor size={32} className="text-(--platform-text-secondary)" />
+                                </div>
+                                <h2 className="text-xl md:text-2xl font-bold text-(--platform-text-primary) mb-3">Редактор недоступний</h2>
+                                <p className="text-sm text-(--platform-text-secondary) mb-8 leading-relaxed">
+                                    Для доступу до візуального конструктора сайтів необхідний пристрій з більшим екраном. Будь ласка, відкрийте Kendr на комп'ютері або планшеті.
+                                </p>
+                                <Button variant="primary" onClick={() => setActiveTab('settings')} className="w-full justify-center">
+                                    Перейти до налаштувань
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div 
+                                className={`flex-1 overflow-hidden ${viewMode !== 'editor' ? 'bg-[#111827] flex items-center justify-center py-6' : 'bg-(--platform-bg)'} transition-colors duration-300`}
+                            >
                                 {isPageLoading ? (
                                     <LoadingState layout="component" title="Завантаження сторінки..." className="h-75" />
                                 ) : (
-                                    <div className={isReadOnly ? 'pointer-events-none opacity-80' : ''}>
-                                        <BlockEditor 
-                                            blocks={blocks} 
-                                            siteData={siteData}
-                                            onAddBlock={handleAddBlock}
-                                            onMoveBlock={handleMoveBlock}
-                                            onDropBlock={handleDropBlock}
-                                            onDeleteBlock={handleDeleteBlock}
-                                            onSelectBlock={setSelectedBlockPath}
-                                            selectedBlockPath={selectedBlockPath}
-                                            collapsedBlocks={collapsedBlocks}
-                                            onToggleCollapse={toggleBlockCollapse}
-                                            onBlockSaved={handleBlockSaved}
-                                            viewMode={viewMode}
-                                        />
-                                    </div>
+                                    viewMode === 'mobile' ? (
+                                        <DeviceIframe 
+                                            className="shadow-2xl transition-all duration-300 w-103.5 h-[calc(100vh-120px)] max-h-212.5 border-14 border-slate-900 rounded-[3rem] ring-1 ring-white/10 bg-(--site-bg)"
+                                        >
+                                            <div 
+                                                className={`@container editor-site-context flex flex-col w-full h-full overflow-y-auto ${isReadOnly ? 'pointer-events-none opacity-80' : ''}`}
+                                                style={siteIsolationStyles}
+                                            >
+                                                <BlockEditor 
+                                                    blocks={blocks} 
+                                                    siteData={siteData}
+                                                    onAddBlock={handleAddBlock}
+                                                    onMoveBlock={handleMoveBlock}
+                                                    onDropBlock={handleDropBlock}
+                                                    onDeleteBlock={handleDeleteBlock}
+                                                    onSelectBlock={setSelectedBlockPath}
+                                                    selectedBlockPath={selectedBlockPath}
+                                                    collapsedBlocks={collapsedBlocks}
+                                                    onToggleCollapse={toggleBlockCollapse}
+                                                    onBlockSaved={handleBlockSaved}
+                                                    viewMode={viewMode}
+                                                />
+                                            </div>
+                                        </DeviceIframe>
+                                    ) : (
+                                        <div 
+                                            className={`@container editor-site-context shadow-2xl transition-all duration-300 flex flex-col ${isReadOnly ? 'pointer-events-none opacity-80' : ''} w-full h-full overflow-hidden`}
+                                            style={siteIsolationStyles}
+                                        >
+                                            <BlockEditor 
+                                                blocks={blocks} 
+                                                siteData={siteData}
+                                                onAddBlock={handleAddBlock}
+                                                onMoveBlock={handleMoveBlock}
+                                                onDropBlock={handleDropBlock}
+                                                onDeleteBlock={handleDeleteBlock}
+                                                onSelectBlock={setSelectedBlockPath}
+                                                selectedBlockPath={selectedBlockPath}
+                                                collapsedBlocks={collapsedBlocks}
+                                                onToggleCollapse={toggleBlockCollapse}
+                                                onBlockSaved={handleBlockSaved}
+                                                viewMode={viewMode}
+                                            />
+                                        </div>
+                                    )
                                 )}
                             </div>
-                        </div>
-                        {viewMode === 'editor' && (
-                            <div className={isReadOnly ? 'pointer-events-none opacity-50 grayscale' : ''}>
-                                <EditorSidebar
-                                    blocks={blocks}
-                                    siteData={siteData}
-                                    onMoveBlock={handleMoveBlock}
-                                    onDeleteBlock={handleDeleteBlock}
-                                    selectedBlockPath={selectedBlockPath}
-                                    onSelectBlock={setSelectedBlockPath}
-                                    onUpdateBlockData={handleUpdateBlockData}
-                                    onAddBlock={handleAddBlock}
-                                    allPages={allPages}
-                                    currentPageId={currentPageId}
-                                    onSelectPage={(id) => handleEditPage(id)}
-                                    savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
-                                    onOpenPagesManager={() => setIsPagesManagerOpen(true)}
-                                />
-                            </div>
-                        )}
-                    </>
+                            {viewMode === 'editor' && (
+                                <div className={isReadOnly ? 'pointer-events-none opacity-50 grayscale' : ''}>
+                                    <EditorSidebar
+                                        blocks={blocks}
+                                        siteData={siteData}
+                                        onMoveBlock={handleMoveBlock}
+                                        onDeleteBlock={handleDeleteBlock}
+                                        selectedBlockPath={selectedBlockPath}
+                                        onSelectBlock={setSelectedBlockPath}
+                                        onUpdateBlockData={handleUpdateBlockData}
+                                        onAddBlock={handleAddBlock}
+                                        allPages={allPages}
+                                        currentPageId={currentPageId}
+                                        onSelectPage={(id) => handleEditPage(id)}
+                                        savedBlocksUpdateTrigger={savedBlocksUpdateTrigger}
+                                        onOpenPagesManager={() => setIsPagesManagerOpen(true)}
+                                    />
+                                </div>
+                            )}
+                        </>
+                    )
                 )}
                 {activeTab !== 'editor' && (
                     <div 
+                        ref={settingsContainerRef}
+                        onScroll={handleSettingsScroll}
                         className={`flex-1 bg-(--platform-bg) ${
                             isFullHeightTab
                                 ? 'overflow-hidden pl-6 pt-6 pr-6 pb-6' 

@@ -170,20 +170,20 @@ const AdminControlPage = () => {
 
     return (
         <div className="max-w-4xl mx-auto pb-20 relative">
-            <div className="sticky top-0 z-40 bg-(--platform-bg) border-b border-(--platform-border-color) px-4 sm:px-6 py-4 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
-                <div>
-                    <h2 className="text-2xl font-semibold mb-1 text-(--platform-text-primary) flex items-center gap-2.5">
-                        <Settings size={28} /> Центр управління
+            <div className="sticky top-0 z-40 bg-(--platform-bg)/90 backdrop-blur-md border-b border-(--platform-border-color) px-4 sm:px-6 py-3 sm:py-4 mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 shadow-sm">
+                <div className="w-full sm:w-auto">
+                    <h2 className="text-xl sm:text-2xl font-semibold mb-0.5 sm:mb-1 text-(--platform-text-primary) flex items-center gap-2 sm:gap-2.5">
+                        <Settings className="w-6 h-6 sm:w-7 sm:h-7" /> Центр управління
                     </h2>
-                    <p className="text-(--platform-text-secondary) text-sm m-0 sm:pl-10">
+                    <p className="text-(--platform-text-secondary) text-[13px] sm:text-sm m-0 sm:pl-9">
                         Глобальні налаштування платформи та аварійні режими
                     </p>
                 </div>
-                <div className="shrink-0 min-h-11 flex items-center">
+                <div className="shrink-0 w-full sm:w-auto min-h-11 flex items-center">
                     <Button 
                         onClick={handleSave} 
                         disabled={isSaving || !hasChanges}
-                        className={`px-8 min-w-40 transition-all duration-300 transform ${!hasChanges ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100 hover:shadow-md'}`}
+                        className={`w-full sm:w-auto px-6 sm:px-8 min-w-40 transition-all duration-300 transform ${!hasChanges ? 'opacity-0 scale-95 pointer-events-none hidden sm:flex' : 'opacity-100 scale-100 hover:shadow-md flex'}`}
                         size="md"
                         icon={<Save size={18} />}
                     >
@@ -191,160 +191,171 @@ const AdminControlPage = () => {
                     </Button>
                 </div>
             </div>
-            <div className="px-4 sm:px-6 space-y-6">
+            <div className="px-4 sm:px-6 space-y-4 sm:space-y-6">
                 {settings.maintenance_mode && (
-                    <div className="flex items-center justify-center gap-3 bg-(--platform-danger)/10 text-(--platform-danger) px-4 py-3 rounded-lg border border-(--platform-danger)/20 w-full text-center">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 bg-(--platform-danger)/10 text-(--platform-danger) px-4 py-3 rounded-lg border border-(--platform-danger)/20 w-full text-center">
                         <AlertTriangle size={20} className="shrink-0" />
-                        <span className="text-sm font-medium">Увага! Платформа в режимі обслуговування.</span>
+                        <span className="text-[13px] sm:text-sm font-medium">Увага! Платформа в режимі обслуговування.</span>
                     </div>
                 )}
                 <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl overflow-hidden shadow-sm transition-colors duration-200">
-                    <div className="p-6 border-b border-(--platform-border-color) bg-(--platform-bg) flex items-start gap-4">
-                        <div className="p-3 bg-(--platform-danger)/10 text-(--platform-danger) rounded-lg shrink-0">
-                            <Power size={24} />
+                    <div className="p-4 sm:p-6 border-b border-(--platform-border-color) bg-(--platform-bg) flex items-start gap-3 sm:gap-4">
+                        <div className="p-2.5 sm:p-3 bg-(--platform-danger)/10 text-(--platform-danger) rounded-lg shrink-0">
+                            <Power className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-(--platform-text-primary)">Аварійний режим</h3>
-                            <p className="text-sm text-(--platform-text-secondary) mt-1">
+                            <h3 className="text-base sm:text-lg font-bold text-(--platform-text-primary) leading-tight mt-0.5">Аварійний режим</h3>
+                            <p className="text-[13px] sm:text-sm text-(--platform-text-secondary) mt-1 leading-snug">
                                 Керування доступом до платформи у критичних ситуаціях.
                             </p>
                         </div>
                     </div>
-                    <div className="p-6 space-y-6">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 font-semibold text-(--platform-text-primary)">
-                                    <AlertOctagon size={16} className={settings.maintenance_mode ? "text-(--platform-danger)" : "text-(--platform-text-secondary)"} />
-                                    Технічні роботи
-                                    {settings.maintenance_mode && <span className="px-2 py-0.5 bg-(--platform-danger)/10 text-(--platform-danger) text-xs rounded-full">Active</span>}
+                    <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+                        <div className="flex items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-semibold text-(--platform-text-primary) text-[14px] sm:text-base">
+                                    <AlertOctagon size={16} className={`shrink-0 ${settings.maintenance_mode ? "text-(--platform-danger)" : "text-(--platform-text-secondary)"}`} />
+                                    <span>Технічні роботи</span>
+                                    {settings.maintenance_mode && <span className="px-1.5 py-0.5 bg-(--platform-danger)/10 text-(--platform-danger) text-[10px] sm:text-xs rounded-full uppercase tracking-wide">Active</span>}
                                 </div>
-                                <p className="text-sm text-(--platform-text-secondary) mt-1 ml-6">
+                                <p className="text-[12px] sm:text-sm text-(--platform-text-secondary) mt-1 sm:mt-1 sm:ml-6 leading-tight">
                                     Повністю закриває доступ до сайту для користувачів.
                                 </p>
                             </div>
-                            <Switch 
-                                checked={settings.maintenance_mode} 
-                                onChange={(checked) => handleChange('maintenance_mode', checked)} 
-                            />
+                            <div className="shrink-0">
+                                <Switch 
+                                    checked={settings.maintenance_mode} 
+                                    onChange={(checked) => handleChange('maintenance_mode', checked)} 
+                                />
+                            </div>
                         </div>
                         <div className="h-px bg-(--platform-border-color)" />
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 font-semibold text-(--platform-text-primary)">
-                                    <Lock size={16} className={settings.editor_locked ? "text-(--platform-warning)" : "text-(--platform-text-secondary)"} />
-                                    Блокування редактора
-                                    {settings.editor_locked && <span className="px-2 py-0.5 bg-(--platform-warning)/10 text-(--platform-warning) text-xs rounded-full">Locked</span>}
+                        <div className="flex items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-semibold text-(--platform-text-primary) text-[14px] sm:text-base">
+                                    <Lock size={16} className={`shrink-0 ${settings.editor_locked ? "text-(--platform-warning)" : "text-(--platform-text-secondary)"}`} />
+                                    <span>Блокування редактора</span>
+                                    {settings.editor_locked && <span className="px-1.5 py-0.5 bg-(--platform-warning)/10 text-(--platform-warning) text-[10px] sm:text-xs rounded-full uppercase tracking-wide">Locked</span>}
                                 </div>
-                                <p className="text-sm text-(--platform-text-secondary) mt-1 ml-6">
+                                <p className="text-[12px] sm:text-sm text-(--platform-text-secondary) mt-1 sm:mt-1 sm:ml-6 leading-tight">
                                     Забороняє зберігання будь-яких змін на існуючих сайтах.
                                 </p>
                             </div>
-                            <Switch 
-                                checked={settings.editor_locked} 
-                                onChange={(checked) => handleChange('editor_locked', checked)} 
-                            />
+                            <div className="shrink-0">
+                                <Switch 
+                                    checked={settings.editor_locked} 
+                                    onChange={(checked) => handleChange('editor_locked', checked)} 
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl overflow-hidden shadow-sm transition-colors duration-200">
-                    <div className="p-6 border-b border-(--platform-border-color) bg-(--platform-bg) flex items-start gap-4">
-                        <div className="p-3 bg-blue-500/10 text-blue-500 rounded-lg shrink-0">
-                            <ShieldAlert size={24} />
+                    <div className="p-4 sm:p-6 border-b border-(--platform-border-color) bg-(--platform-bg) flex items-start gap-3 sm:gap-4">
+                        <div className="p-2.5 sm:p-3 bg-blue-500/10 text-blue-500 rounded-lg shrink-0">
+                            <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-(--platform-text-primary)">Управління модулями</h3>
-                            <p className="text-sm text-(--platform-text-secondary) mt-1">
+                            <h3 className="text-base sm:text-lg font-bold text-(--platform-text-primary) leading-tight mt-0.5">Управління модулями</h3>
+                            <p className="text-[13px] sm:text-sm text-(--platform-text-secondary) mt-1 leading-snug">
                                 Точкове відключення функціоналу платформи.
                             </p>
                         </div>
                     </div>
-                    <div className="p-6 space-y-6">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 font-semibold text-(--platform-text-primary)">
-                                    <UserPlus size={16} className={!settings.registration_enabled ? "text-(--platform-warning)" : "text-(--platform-text-secondary)"} />
-                                    Реєстрація нових акаунтів
-                                    {!settings.registration_enabled && <span className="px-2 py-0.5 bg-(--platform-warning)/10 text-(--platform-warning) text-xs rounded-full">Вимкнено</span>}
+                    <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+                        <div className="flex items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-semibold text-(--platform-text-primary) text-[14px] sm:text-base">
+                                    <UserPlus size={16} className={`shrink-0 ${!settings.registration_enabled ? "text-(--platform-warning)" : "text-(--platform-text-secondary)"}`} />
+                                    <span>Реєстрація нових акаунтів</span>
+                                    {!settings.registration_enabled && <span className="px-1.5 py-0.5 bg-(--platform-warning)/10 text-(--platform-warning) text-[10px] sm:text-xs rounded-full uppercase tracking-wide">Вимкнено</span>}
                                 </div>
-                                <p className="text-sm text-(--platform-text-secondary) mt-1 ml-6">
+                                <p className="text-[12px] sm:text-sm text-(--platform-text-secondary) mt-1 sm:mt-1 sm:ml-6 leading-tight">
                                     Дозволяє реєстрацію нових користувачів.
                                 </p>
                             </div>
-                            <Switch 
-                                checked={settings.registration_enabled} 
-                                onChange={(checked) => handleChange('registration_enabled', checked)} 
-                            />
+                            <div className="shrink-0">
+                                <Switch 
+                                    checked={settings.registration_enabled} 
+                                    onChange={(checked) => handleChange('registration_enabled', checked)} 
+                                />
+                            </div>
                         </div>
                         <div className="h-px bg-(--platform-border-color)" />
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 font-semibold text-(--platform-text-primary)">
-                                    <LogIn size={16} className={!settings.auth_enabled ? "text-(--platform-danger)" : "text-(--platform-text-secondary)"} />
-                                    Авторизація користувачів
-                                    {!settings.auth_enabled && <span className="px-2 py-0.5 bg-(--platform-danger)/10 text-(--platform-danger) text-xs rounded-full">Вимкнено</span>}
+                        <div className="flex items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-semibold text-(--platform-text-primary) text-[14px] sm:text-base">
+                                    <LogIn size={16} className={`shrink-0 ${!settings.auth_enabled ? "text-(--platform-danger)" : "text-(--platform-text-secondary)"}`} />
+                                    <span>Авторизація користувачів</span>
+                                    {!settings.auth_enabled && <span className="px-1.5 py-0.5 bg-(--platform-danger)/10 text-(--platform-danger) text-[10px] sm:text-xs rounded-full uppercase tracking-wide">Вимкнено</span>}
                                 </div>
-                                <p className="text-sm text-(--platform-text-secondary) mt-1 ml-6">
+                                <p className="text-[12px] sm:text-sm text-(--platform-text-secondary) mt-1 sm:mt-1 sm:ml-6 leading-tight">
                                     Дозволяє вхід у систему.
                                 </p>
                             </div>
-                            <Switch 
-                                checked={settings.auth_enabled} 
-                                onChange={(checked) => handleChange('auth_enabled', checked)} 
-                            />
+                            <div className="shrink-0">
+                                <Switch 
+                                    checked={settings.auth_enabled} 
+                                    onChange={(checked) => handleChange('auth_enabled', checked)} 
+                                />
+                            </div>
                         </div>
                         <div className="h-px bg-(--platform-border-color)" />
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 font-semibold text-(--platform-text-primary)">
-                                    <MonitorUp size={16} className={!settings.site_creation_enabled ? "text-(--platform-warning)" : "text-(--platform-text-secondary)"} />
-                                    Створення нових сайтів
-                                    {!settings.site_creation_enabled && <span className="px-2 py-0.5 bg-(--platform-warning)/10 text-(--platform-warning) text-xs rounded-full">Вимкнено</span>}
+                        <div className="flex items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-semibold text-(--platform-text-primary) text-[14px] sm:text-base">
+                                    <MonitorUp size={16} className={`shrink-0 ${!settings.site_creation_enabled ? "text-(--platform-warning)" : "text-(--platform-text-secondary)"}`} />
+                                    <span>Створення нових сайтів</span>
+                                    {!settings.site_creation_enabled && <span className="px-1.5 py-0.5 bg-(--platform-warning)/10 text-(--platform-warning) text-[10px] sm:text-xs rounded-full uppercase tracking-wide">Вимкнено</span>}
                                 </div>
-                                <p className="text-sm text-(--platform-text-secondary) mt-1 ml-6">
+                                <p className="text-[12px] sm:text-sm text-(--platform-text-secondary) mt-1 sm:mt-1 sm:ml-6 leading-tight">
                                     Забороняє створювати нові сайти.
                                 </p>
                             </div>
-                            <Switch 
-                                checked={settings.site_creation_enabled} 
-                                onChange={(checked) => handleChange('site_creation_enabled', checked)} 
-                            />
+                            <div className="shrink-0">
+                                <Switch 
+                                    checked={settings.site_creation_enabled} 
+                                    onChange={(checked) => handleChange('site_creation_enabled', checked)} 
+                                />
+                            </div>
                         </div>
                         <div className="h-px bg-(--platform-border-color)" />
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 font-semibold text-(--platform-text-primary)">
-                                    <CreditCard size={16} className={!settings.billing_enabled ? "text-(--platform-danger)" : "text-(--platform-text-secondary)"} />
-                                    Прийом платежів (Billing)
-                                    {!settings.billing_enabled && <span className="px-2 py-0.5 bg-(--platform-danger)/10 text-(--platform-danger) text-xs rounded-full">Вимкнено</span>}
+                        <div className="flex items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-semibold text-(--platform-text-primary) text-[14px] sm:text-base">
+                                    <CreditCard size={16} className={`shrink-0 ${!settings.billing_enabled ? "text-(--platform-danger)" : "text-(--platform-text-secondary)"}`} />
+                                    <span>Прийом платежів (Billing)</span>
+                                    {!settings.billing_enabled && <span className="px-1.5 py-0.5 bg-(--platform-danger)/10 text-(--platform-danger) text-[10px] sm:text-xs rounded-full uppercase tracking-wide">Вимкнено</span>}
                                 </div>
-                                <p className="text-sm text-(--platform-text-secondary) mt-1 ml-6">
+                                <p className="text-[12px] sm:text-sm text-(--platform-text-secondary) mt-1 sm:mt-1 sm:ml-6 leading-tight">
                                     Призупиняє всі фінансові транзакції.
                                 </p>
                             </div>
-                            <Switch 
-                                checked={settings.billing_enabled} 
-                                onChange={(checked) => handleChange('billing_enabled', checked)} 
-                            />
+                            <div className="shrink-0">
+                                <Switch 
+                                    checked={settings.billing_enabled} 
+                                    onChange={(checked) => handleChange('billing_enabled', checked)} 
+                                />
+                            </div>
                         </div>
-
                     </div>
                 </div>
                 <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl overflow-hidden shadow-sm transition-colors duration-200">
-                    <div className="p-6 border-b border-(--platform-border-color) bg-(--platform-accent)/5 flex items-start gap-4">
-                        <div className="p-3 bg-(--platform-accent)/10 text-(--platform-accent) rounded-lg shrink-0">
-                            <Megaphone size={24} />
+                    <div className="p-4 sm:p-6 border-b border-(--platform-border-color) bg-(--platform-accent)/5 flex items-start gap-3 sm:gap-4">
+                        <div className="p-2.5 sm:p-3 bg-(--platform-accent)/10 text-(--platform-accent) rounded-lg shrink-0">
+                            <Megaphone className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-(--platform-text-primary)">Глобальне оголошення</h3>
-                            <p className="text-sm text-(--platform-text-secondary) mt-1">
+                            <h3 className="text-base sm:text-lg font-bold text-(--platform-text-primary) leading-tight mt-0.5">Глобальне оголошення</h3>
+                            <p className="text-[13px] sm:text-sm text-(--platform-text-secondary) mt-1 leading-snug">
                                 Інформаційний банер з можливістю таймера.
                             </p>
                         </div>
                     </div>
-                    <div className="p-6 space-y-6">
-                        <div className="flex items-center justify-between">
-                            <label className="flex items-center gap-2 text-sm font-medium text-(--platform-text-primary)">
-                                <Eye size={16} /> Показувати банер
+                    <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+                        <div className="flex items-center justify-between gap-4">
+                            <label className="flex items-center gap-2 text-[14px] sm:text-sm font-semibold sm:font-medium text-(--platform-text-primary)">
+                                <Eye size={16} className="shrink-0" /> Показувати банер
                             </label>
                             <Switch 
                                 checked={isAnnouncementActive} 
@@ -353,8 +364,8 @@ const AdminControlPage = () => {
                         </div>
                         <div className={`transition-all duration-300 space-y-4 ${isAnnouncementActive ? 'opacity-100' : 'opacity-50 pointer-events-none grayscale'}`}>
                             <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-(--platform-text-primary) mb-2">
-                                    <MessageSquare size={16} /> Текст оголошення
+                                <label className="flex items-center gap-2 text-[13px] sm:text-sm font-medium text-(--platform-text-primary) mb-2">
+                                    <MessageSquare size={16} className="shrink-0" /> Текст оголошення
                                 </label>
                                 <Input
                                     value={settings.maintenance_message}
@@ -363,8 +374,8 @@ const AdminControlPage = () => {
                                 />
                             </div>
                             <div className="w-full">
-                                <label className="flex text-sm font-medium text-(--platform-text-primary) mb-2 items-center gap-2 select-none">
-                                    <Clock size={16} /> Додати таймер
+                                <label className="flex text-[13px] sm:text-sm font-medium text-(--platform-text-primary) mb-2 items-center gap-2 select-none">
+                                    <Clock size={16} className="shrink-0" /> Додати таймер
                                 </label>
                                 <Input
                                     type="number"
@@ -376,21 +387,21 @@ const AdminControlPage = () => {
                             </div>
                         </div>
                         {isAnnouncementActive && (
-                            <div className="bg-(--platform-bg) p-4 rounded-lg border border-dashed border-(--platform-border-color)">
-                                <p className="text-xs text-(--platform-text-secondary) mb-2 uppercase tracking-wider font-semibold">Попередній перегляд:</p>
-                                <div className="bg-(--platform-accent) text-(--platform-accent-text) px-4 py-2.5 text-sm font-medium text-center flex items-center justify-center gap-2 rounded shadow-sm">
-                                    <Megaphone size={16} />
-                                    <span>
-                                        {settings.maintenance_message} 
-                                        {(activeTimerEnd || timerMinutes) && (
-                                            <>
-                                                {timerMinutes ? 
-                                                    ` - ${timerMinutes}:00` : 
-                                                    (activeTimerEnd && <AdminTimerPreview targetTime={activeTimerEnd} />)
-                                                }
-                                            </>
-                                        )}
-                                    </span>
+                            <div className="bg-(--platform-bg) p-3 sm:p-4 rounded-lg border border-dashed border-(--platform-border-color)">
+                                <p className="text-[11px] sm:text-xs text-(--platform-text-secondary) mb-2 uppercase tracking-wider font-semibold">Попередній перегляд:</p>
+                                <div className="bg-(--platform-accent) text-(--platform-accent-text) px-3 sm:px-4 py-2.5 text-[13px] sm:text-sm font-medium text-center flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 rounded shadow-sm">
+                                    <div className="flex items-center gap-1.5">
+                                        <Megaphone size={16} className="shrink-0" />
+                                        <span>{settings.maintenance_message}</span>
+                                    </div>
+                                    {(activeTimerEnd || timerMinutes) && (
+                                        <span className="font-mono whitespace-nowrap">
+                                            {timerMinutes ? 
+                                                ` - ${timerMinutes}:00` : 
+                                                (activeTimerEnd && <AdminTimerPreview targetTime={activeTimerEnd} />)
+                                            }
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}

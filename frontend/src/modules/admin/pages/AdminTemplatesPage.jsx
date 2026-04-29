@@ -23,6 +23,7 @@ const AdminTemplatesPage = () => {
         await manager.actions.handleAction(actionType, template);
         manager.modals.setConfirmModal({ isOpen: false, template: null, actionType: null });
     };
+    
     const previewData = useMemo(() => getTemplatePreviewData(manager.selectedTemplate), [manager.selectedTemplate]);
     let modalTitle = "", modalMessage = "", confirmLabel = "", modalType = "primary";
     if (manager.modals.confirmModal.actionType === 'togglePublish') {
@@ -53,10 +54,16 @@ const AdminTemplatesPage = () => {
         modalType = "primary";
     }
 
-    const containerStyle = { position: 'absolute', inset: 0, display: 'flex', overflow: 'hidden', background: 'var(--platform-bg)' };
-    if (manager.isLoading) return <div style={{...containerStyle, alignItems: 'center', justifyContent: 'center'}}><LoadingState title="Завантаження шаблонів..." layout="page" /></div>;
+    if (manager.isLoading) {
+        return (
+            <div className="absolute inset-0 flex items-center justify-center bg-(--platform-bg) z-50">
+                <LoadingState title="Завантаження шаблонів..." layout="page" />
+            </div>
+        );
+    }
+
     return (
-        <div style={containerStyle}>
+        <div className="relative flex w-full h-full overflow-hidden bg-(--platform-bg)">
             <TemplateModal 
                 isOpen={manager.modals.isEditModalOpen} 
                 initialData={manager.modals.editingTemplate} 
@@ -74,25 +81,32 @@ const AdminTemplatesPage = () => {
                 type={modalType} 
             />
             
-            <div style={{
-                width: isSidebarOpen ? '50%' : '0px', minWidth: isSidebarOpen ? '50%' : '0px', opacity: isSidebarOpen ? 1 : 0,
-                transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                background: 'var(--platform-card-bg)', borderRight: isSidebarOpen ? '1px solid var(--platform-border-color)' : 'none',
-                boxShadow: '10px 0 15px -3px rgba(0, 0, 0, 0.05)', zIndex: 10, flexShrink: 0
-            }}>
-                <div style={{ width: '100%', minWidth: '400px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <div style={{ padding: '24px', flexShrink: 0, borderBottom: '1px solid var(--platform-border-color)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                            <div style={{ padding: '8px', background: 'var(--platform-accent)', borderRadius: '8px', color: 'white' }}><Layout size={20} /></div>
-                            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--platform-text-primary)' }}>Шаблони</h1>
+            <div 
+                className={`
+                    flex flex-col h-full bg-(--platform-card-bg) z-40 shrink-0 overflow-hidden
+                    transition-all duration-300 ease-in-out absolute md:relative
+                    ${isSidebarOpen 
+                        ? 'w-[calc(100%-28px)] md:w-105 lg:w-125 xl:w-150 opacity-100 border-r border-(--platform-border-color) shadow-2xl md:shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)]' 
+                        : 'w-0 opacity-0 border-none pointer-events-none'}
+                `}
+            >
+                <div className="w-[calc(100vw-28px)] md:w-105 lg:w-125 xl:w-150 h-full flex flex-col shrink-0">
+                    <div className="p-4 md:p-6 border-b border-(--platform-border-color) shrink-0 bg-(--platform-card-bg)">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-(--platform-accent) rounded-lg text-white">
+                                <Layout size={20} />
+                            </div>
+                            <h1 className="text-xl font-bold text-(--platform-text-primary) m-0">Шаблони</h1>
                         </div>
                         <TemplateFilters filters={manager.filters} isAdmin={true} hideSourceTabs={true} />
                     </div>
-                    <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '24px', background: 'var(--platform-bg)' }}>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 bg-(--platform-bg) min-h-0 [scrollbar-gutter:stable]">
                         {manager.templates.length === 0 ? (
-                            <div style={{ marginTop: '32px' }}><EmptyState title="Порожньо" description="Шаблонів не знайдено" icon={Layout} /></div>
+                            <div className="mt-8">
+                                <EmptyState title="Порожньо" description="Шаблонів не знайдено" icon={Layout} />
+                            </div>
                         ) : (
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-5">
                                 {manager.templates.map(tpl => {
                                     const isPublic = tpl.access_level === 'public';
                                     const isDraft = !tpl.is_ready;
@@ -104,7 +118,7 @@ const AdminTemplatesPage = () => {
                                             onClick={() => manager.setSelectedTemplateId(tpl.id)}
                                             badge={<TemplateBadge template={tpl} user={user} isAdmin={true} sourceTab="system" />}
                                             actions={
-                                                <div className="flex gap-2 w-full justify-end mt-2 pt-2 border-t border-(--platform-border-color)">
+                                                <div className="flex flex-wrap gap-2 w-full justify-end mt-2 pt-2 border-t border-(--platform-border-color)">
                                                     {isDraft ? (
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'markReady' }); }} 
@@ -171,15 +185,34 @@ const AdminTemplatesPage = () => {
                     </div>
                 </div>
             </div>
-            <div style={{ width: '0px', position: 'relative', zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? "Згорнути панель" : "Розгорнути панель"} className="group flex items-center justify-center w-7 h-28 bg-(--platform-card-bg) border border-(--platform-border-color) shadow-md cursor-pointer transition-all duration-200 focus:outline-none z-20" style={{ position: 'absolute', left: '0px', transform: 'translateY(-50%)', top: '50%', borderRadius: '0 12px 12px 0', borderLeft: isSidebarOpen ? 'none' : '1px solid var(--platform-border-color)', marginLeft: isSidebarOpen ? '-1px' : '0' }}>
+            <div 
+                className={`flex absolute z-50 top-1/2 -translate-y-1/2 items-center justify-center transition-all duration-300 ease-in-out ${
+                    isSidebarOpen 
+                        ? 'left-[calc(100%-28px)] md:left-105 lg:left-125 xl:left-150 md:-ml-px' 
+                        : 'left-0'
+                }`}
+            >
+                <button 
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                    title={isSidebarOpen ? "Згорнути панель" : "Розгорнути панель"} 
+                    className={`group flex items-center justify-center w-7 h-28 bg-(--platform-card-bg) border border-(--platform-border-color) shadow-md cursor-pointer transition-all duration-200 focus:outline-none rounded-r-xl ${isSidebarOpen ? 'border-l-0' : ''} hover:border-(--platform-accent)`}
+                >
                     <div className="transition-transform duration-200 group-hover:scale-110 text-(--platform-text-secondary) group-hover:text-(--platform-accent)">
                         {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
                     </div>
                 </button>
             </div>
-            <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', background: 'var(--platform-bg)' }}>
-                <SitePreviewer viewMode={viewMode} setViewMode={setViewMode} previewData={previewData} currentBlocks={previewData?.pages?.[0]?.blocks || []} isLoading={false} emptyTitle="Оберіть шаблон" emptyDescription="Виберіть шаблон зі списку ліворуч для попереднього перегляду" url={manager.selectedTemplate ? `kendr.site/templates/${manager.selectedTemplate.id}` : ''} />
+            <div className="flex-1 min-w-0 h-full relative bg-(--platform-bg) z-10">
+                <SitePreviewer 
+                    viewMode={viewMode} 
+                    setViewMode={setViewMode} 
+                    previewData={previewData} 
+                    currentBlocks={previewData?.pages?.[0]?.blocks || []} 
+                    isLoading={false} 
+                    emptyTitle="Оберіть шаблон" 
+                    emptyDescription="Виберіть шаблон зі списку ліворуч для попереднього перегляду" 
+                    url={manager.selectedTemplate ? `kendr.site/templates/${manager.selectedTemplate.id}` : ''} 
+                />
             </div>
         </div>
     );

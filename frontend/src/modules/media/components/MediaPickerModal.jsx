@@ -7,6 +7,7 @@ import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
 import { getMediaUrl } from '../../../shared/utils/mediaUtils';
 import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
 import DragDropWrapper from '../../../shared/ui/complex/DragDropWrapper';
+import LoadingState from '../../../shared/ui/complex/LoadingState'; // <-- Додано імпорт
 import { Button } from '../../../shared/ui/elements/Button';
 import { Search, X, Upload, Check, Image, Calendar, FileText, Clock, HardDrive } from 'lucide-react';
 
@@ -41,6 +42,7 @@ const MediaPickerModal = ({
         }
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
+
     useEffect(() => {
         setVideoDuration(null);
     }, [activeFile]);
@@ -88,12 +90,9 @@ const MediaPickerModal = ({
                 const res = await apiClient.post('/media/upload', formData);
                 if (res.data && res.data.error) {
                     failedFiles.push({ name: file.name, reason: res.data.message });
-                    if (res.data.code === 'MAX_FILES_REACHED') {
-                        break;
-                    }
+                    if (res.data.code === 'MAX_FILES_REACHED') break;
                     continue; 
                 }
-                
                 if (res && res.data && res.data.id) {
                     successCount++;
                 }
@@ -105,11 +104,13 @@ const MediaPickerModal = ({
                 });
             }
         }
+        
         toast.dismiss(toastId);
         if (successCount > 0) {
             toast.success(`Успішно завантажено: ${successCount} файлів`);
             await fetchMedia(); 
         }
+        
         if (failedFiles.length > 0) {
             const limit = 3; 
             const errorList = failedFiles.slice(0, limit)
@@ -126,6 +127,7 @@ const MediaPickerModal = ({
                 { autoClose: 7000 } 
             );
         }
+        
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -144,6 +146,7 @@ const MediaPickerModal = ({
                 newSelectedIds.add(file.id); 
             }
         }
+        
         setSelectedIds(newSelectedIds);
         if (!multiple) {
             setActiveFile(newSelectedIds.has(file.id) ? file : null);
@@ -198,6 +201,7 @@ const MediaPickerModal = ({
                 toast.error(res.data.message);
                 return;
             }
+            
             const uploadedFile = res.data;
             setFiles(prev => [uploadedFile, ...prev]);
             onSelect(uploadedFile);
@@ -226,84 +230,44 @@ const MediaPickerModal = ({
 
     const isLimitReached = limits && !limits.isUnlimited && limits.currentFiles >= limits.maxFiles;
     const isCropMode = aspect && !multiple && selectedIds.size === 1 && activeFile?.file_type === 'image';
-    const overlayStyle = {
-        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '20px'
-    };
-
-    const modalStyle = {
-        position: 'relative',
-        backgroundColor: 'var(--platform-bg)', width: '100%', maxWidth: '1024px', height: '85vh',
-        borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
-        border: '1px solid var(--platform-border-color)', overflow: 'hidden', animation: 'popIn 0.2s ease-out'
-    };
-
-    const headerStyle = {
-        padding: '16px 24px', backgroundColor: 'var(--platform-card-bg)', borderBottom: '1px solid var(--platform-border-color)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0
-    };
-
-    const searchBarStyle = {
-        padding: '12px 24px', display: 'flex', gap: '16px', backgroundColor: 'var(--platform-bg)', 
-        borderBottom: '1px solid var(--platform-border-color)', flexShrink: 0, alignItems: 'center'
-    };
-
-    const searchInputStyle = {
-        width: '100%', height: '40px', paddingLeft: '40px', paddingRight: '12px', borderRadius: '8px',
-        border: '1px solid var(--platform-border-color)', backgroundColor: 'var(--platform-input-bg)',
-        color: 'var(--platform-text-primary)', fontSize: '0.9rem', outline: 'none'
-    };
-
-    const footerStyle = {
-        padding: '16px 24px', borderTop: '1px solid var(--platform-border-color)', backgroundColor: 'var(--platform-card-bg)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0
-    };
-
-    const limitBadgeStyle = {
-        display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 12px',
-        backgroundColor: 'var(--platform-hover-bg)', borderRadius: '16px', fontSize: '0.8rem',
-        color: 'var(--platform-text-secondary)', border: '1px solid var(--platform-border-color)',
-        transition: 'all 0.3s'
-    };
-
-    const limitWarningStyle = {
-        color: 'var(--platform-danger)', borderColor: 'color-mix(in srgb, var(--platform-danger), transparent 70%)',
-        backgroundColor: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' 
-    };
-
     return ReactDOM.createPortal(
         <>
-            <div style={overlayStyle}>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-3000 p-4 sm:p-6">
                 <DragDropWrapper 
                     onDropFiles={handleUpload}
                     isError={isLimitReached}
                     errorText="Ліміт файлів вичерпано!"
-                    style={modalStyle}
+                    className="relative bg-(--platform-bg) w-full max-w-5xl h-[90vh] sm:h-[85vh] rounded-2xl flex flex-col shadow-2xl border border-(--platform-border-color) overflow-hidden animate-in zoom-in-95 duration-200"
                 >
-                    <div style={headerStyle}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, color: 'var(--platform-text-primary)' }}>
-                            <Image size={20} color="var(--platform-accent)" />
-                            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>{title}</h3>
+                    <div className="p-4 sm:px-6 sm:py-4 bg-(--platform-card-bg) border-b border-(--platform-border-color) flex justify-between items-center shrink-0">
+                        <div className="flex items-center gap-3 font-semibold text-(--platform-text-primary)">
+                            <Image size={24} className="text-(--platform-accent) hidden sm:block" />
+                            <h3 className="m-0 text-lg sm:text-xl">{title}</h3>
                         </div>
-                        {limits && (
-                            <div style={{ ...limitBadgeStyle, ...((!limits.isUnlimited && limits.percentageUsed >= 90) ? limitWarningStyle : {}) }}>
-                                <HardDrive size={14} />
-                                <span>Сховище: {limits.isUnlimited ? `${limits.currentFiles} / ∞` : `${limits.currentFiles} / ${limits.maxFiles}`}</span>
-                            </div>
-                        )}
-                        <Button 
-                            variant="outline" 
-                            className="btn-icon-square"
-                            style={{ width: '36px', height: '36px' }}
-                            onClick={onClose}
-                            title="Закрити"
-                        >
-                            <X size={20}/>
-                        </Button>
+                        <div className="flex items-center gap-3">
+                            {limits && (
+                                <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all
+                                    ${(!limits.isUnlimited && limits.percentageUsed >= 90) 
+                                        ? 'text-(--platform-danger) border-[color-mix(in_srgb,var(--platform-danger),transparent_70%)] bg-[color-mix(in_srgb,var(--platform-danger),transparent_90%)]' 
+                                        : 'text-(--platform-text-secondary) bg-(--platform-hover-bg) border-(--platform-border-color)'
+                                    }
+                                `}>
+                                    <HardDrive size={14} className="shrink-0" />
+                                    <span>Сховище: {limits.isUnlimited ? `${limits.currentFiles} / ∞` : `${limits.currentFiles} / ${limits.maxFiles}`}</span>
+                                </div>
+                            )}
+                            <button 
+                                className="w-8 h-8 rounded-full flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 border-none text-(--platform-text-secondary) transition-colors cursor-pointer"
+                                onClick={onClose}
+                                title="Закрити"
+                            >
+                                <X size={20}/>
+                            </button>
+                        </div>
                     </div>
-                    <div style={searchBarStyle}>
-                        <div style={{ position: 'relative', flex: 1 }}>
-                            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--platform-text-secondary)', pointerEvents: 'none' }}>
+                    <div className="p-3 sm:px-6 sm:py-3 flex flex-col sm:flex-row gap-3 bg-(--platform-bg) border-b border-(--platform-border-color) shrink-0 items-stretch sm:items-center">
+                        <div className="relative flex-1">
+                            <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-(--platform-text-secondary) pointer-events-none">
                                 <Search size={18} />
                             </div>
                             <input 
@@ -311,15 +275,13 @@ const MediaPickerModal = ({
                                 placeholder="Пошук у медіатеці..." 
                                 value={searchQuery} 
                                 onChange={e => setSearchQuery(e.target.value)} 
-                                style={searchInputStyle} 
-                                onFocus={e => e.target.style.borderColor = 'var(--platform-accent)'} 
-                                onBlur={e => e.target.style.borderColor = 'var(--platform-border-color)'} 
+                                className="w-full h-10 pl-10 pr-3 rounded-lg border border-(--platform-border-color) bg-(--platform-input-bg) text-(--platform-text-primary) text-sm focus:outline-none focus:border-(--platform-accent) transition-colors"
                             />
                         </div>
                         <Button 
                             variant="primary"
-                            icon={<Upload size={16} />}
-                            style={{ height: '40px', whiteSpace: 'nowrap' }}
+                            icon={<Upload size={16} className="mr-1.5 shrink-0" />}
+                            className="h-10 whitespace-nowrap justify-center w-full sm:w-auto"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isLimitReached}
                             title={isLimitReached ? "Ліміт файлів вичерпано" : ""}
@@ -330,58 +292,46 @@ const MediaPickerModal = ({
                             type="file" 
                             multiple 
                             ref={fileInputRef} 
-                            style={{display: 'none'}} 
+                            className="hidden"
                             onChange={handleUpload} 
                             accept={limits ? limits.allowedExtensions.join(',') : undefined} 
                         />
                     </div>
-                    <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }} className="custom-scrollbar">
+                    <div className="flex flex-col sm:flex-row flex-1 overflow-hidden relative">
+                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 hide-scrollbar relative">
                             {loading ? (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px', color: 'var(--platform-text-secondary)', fontStyle: 'italic' }}>
-                                    Завантаження...
+                                <div className="flex items-center justify-center h-full min-h-50 text-(--platform-text-secondary) italic">
+                                    <LoadingState />
                                 </div>
                             ) : filteredFiles.length === 0 ? (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px', textAlign: 'center', color: 'var(--platform-text-secondary)', fontStyle: 'italic', padding: '24px' }}>
+                                <div className="flex items-center justify-center h-full min-h-50 text-center text-(--platform-text-secondary) italic px-4">
                                     {files.length === 0 
                                         ? `Немає файлів типу: ${allowedTypes.join(', ')}` 
                                         : 'Нічого не знайдено за запитом'}
                                 </div>
                             ) : (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '20px' }}>
+                                <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 sm:gap-4 pb-20 sm:pb-0">
                                     {filteredFiles.map(file => {
                                         const isSelected = selectedIds.has(file.id);
                                         const isActive = activeFile?.id === file.id;
                                         return (
                                             <div 
                                                 key={file.id} 
-                                                style={{
-                                                    aspectRatio: '1/1', borderRadius: '12px', backgroundColor: 'var(--platform-card-bg)',
-                                                    border: isSelected ? '2px solid var(--platform-accent)' : '2px solid transparent',
-                                                    overflow: 'hidden', position: 'relative', cursor: 'pointer',
-                                                    boxShadow: isActive ? '0 0 0 2px var(--platform-accent), 0 10px 15px -3px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
-                                                    transition: 'all 0.2s',
-                                                    backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')",
-                                                    backgroundRepeat: 'repeat'
-                                                }}
+                                                className={`
+                                                    relative aspect-square rounded-xl bg-(--platform-card-bg) overflow-hidden cursor-pointer transition-all duration-200
+                                                    ${isSelected ? 'border-2 border-(--platform-accent) scale-95 shadow-md' : 'border border-transparent shadow-sm'}
+                                                    ${isActive && !isSelected ? 'ring-2 ring-(--platform-accent)/50 shadow-lg' : ''}
+                                                `}
+                                                style={{ backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')", backgroundRepeat: 'repeat' }}
                                                 onClick={() => handleFileClick(file)}
                                             >
-                                                <MediaFilePreview file={file} />
+                                                <MediaFilePreview file={file} className="w-full h-full object-cover" />
                                                 {isSelected && (
-                                                    <div style={{ 
-                                                        position: 'absolute', top: '8px', right: '8px', width: '24px', height: '24px',
-                                                        borderRadius: '50%', backgroundColor: 'var(--platform-accent)', color: 'white',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10
-                                                    }}>
-                                                        <Check size={14} />
+                                                    <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-6 h-6 rounded-full bg-(--platform-accent) text-white flex items-center justify-center z-10 shadow-sm animate-in zoom-in">
+                                                        <Check size={14} className="shrink-0" />
                                                     </div>
                                                 )}
-                                                <div style={{ 
-                                                    position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 10px',
-                                                    background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                                                    paddingTop: '24px', color: 'white', fontSize: '0.75rem', whiteSpace: 'nowrap',
-                                                    overflow: 'hidden', textOverflow: 'ellipsis'
-                                                }}>
+                                                <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/85 to-transparent p-2 pt-6 text-white text-[11px] sm:text-xs whitespace-nowrap overflow-hidden text-ellipsis pointer-events-none">
                                                     {file.original_file_name}
                                                 </div>
                                             </div>
@@ -391,39 +341,29 @@ const MediaPickerModal = ({
                             )}
                         </div>
                         {activeFile && (
-                            <div style={{ 
-                                width: '320px', flexShrink: 0, borderLeft: '1px solid var(--platform-border-color)',
-                                backgroundColor: 'var(--platform-card-bg)', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px',
-                                overflowY: 'auto' 
-                            }} className="custom-scrollbar">
-                                <div style={{ 
-                                    width: '100%', aspectRatio: '16/10', borderRadius: '12px', overflow: 'hidden',
-                                    border: '1px solid var(--platform-border-color)', display: 'flex', alignItems: 'center',
-                                    justifyContent: 'center', flexShrink: 0, position: 'relative', 
-                                    backgroundColor: 'var(--platform-bg)',
-                                    backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')",
-                                    backgroundRepeat: 'repeat'
-                                }}>
+                            <div className="absolute bottom-0 left-0 right-0 sm:relative sm:w-[320px] shrink-0 sm:border-l border-t sm:border-t-0 border-(--platform-border-color) bg-(--platform-sidebar-bg) p-4 sm:p-6 flex flex-row sm:flex-col gap-4 overflow-y-auto hide-scrollbar z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.1)] sm:shadow-none max-h-[40vh] sm:max-h-none">
+                                <div className="w-24 h-24 sm:w-full sm:h-auto sm:aspect-16/10 rounded-lg overflow-hidden border border-(--platform-border-color) flex items-center justify-center shrink-0 relative bg-(--platform-bg)" style={{ backgroundImage: "url('https://transparenttextures.com/patterns/cubes.png')" }}>
                                     <MediaFilePreview 
                                         file={activeFile} 
                                         showVideoControls={true} 
                                         onVideoMetadata={(e) => setVideoDuration(e.target.duration)} 
+                                        className="w-full h-full object-cover"
                                     />
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    <p style={{ fontWeight: 600, margin: 0, wordBreak: 'break-all', color: 'var(--platform-text-primary)' }}>
+                                <div className="flex flex-col gap-2 overflow-hidden flex-1">
+                                    <p className="font-semibold m-0 break-all text-(--platform-text-primary) text-sm sm:text-base leading-tight">
                                         {activeFile.original_file_name}
                                     </p>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem', color: 'var(--platform-text-secondary)' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <FileText size={14} style={{ opacity: 0.7 }}/> {activeFile.file_size_kb} KB
+                                    <div className="flex flex-col gap-1.5 text-xs sm:text-sm text-(--platform-text-secondary) mt-1">
+                                        <span className="flex items-center gap-2 truncate">
+                                            <FileText size={14} className="opacity-70 shrink-0" /> {activeFile.file_size_kb} KB
                                         </span>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <Calendar size={14} style={{ opacity: 0.7 }}/> {new Date(activeFile.created_at).toLocaleDateString()}
+                                        <span className="flex items-center gap-2 truncate">
+                                            <Calendar size={14} className="opacity-70 shrink-0" /> {new Date(activeFile.created_at).toLocaleDateString()}
                                         </span>
                                         {activeFile.file_type === 'video' && videoDuration && (
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--platform-accent)' }}>
-                                                <Clock size={14} /> Тривалість: {formatDuration(videoDuration)}
+                                            <span className="flex items-center gap-2 text-(--platform-accent) truncate">
+                                                <Clock size={14} className="shrink-0" /> Тривалість: {formatDuration(videoDuration)}
                                             </span>
                                         )}
                                     </div>
@@ -431,27 +371,26 @@ const MediaPickerModal = ({
                             </div>
                         )}
                     </div>
-                    <div style={footerStyle}>
-                        <div style={{ color: 'var(--platform-text-primary)', fontSize: '0.9rem' }}>
-                            Вибрано: <b style={{ color: 'var(--platform-accent)' }}>{selectedIds.size}</b> {multiple ? 'файлів' : 'файл'}
+                    <div className="p-4 sm:px-6 sm:py-4 border-t border-(--platform-border-color) bg-(--platform-card-bg) flex flex-row justify-between items-center shrink-0 z-30">
+                        <div className="text-sm font-medium text-(--platform-text-primary) whitespace-nowrap">
+                            Вибрано: <span className="text-(--platform-accent) font-bold">{selectedIds.size}</span>
+                            <span className="hidden sm:inline"> {multiple ? 'файлів' : 'файл'}</span>
                         </div>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <Button variant="outline" onClick={onClose}>
+                        <div className="flex gap-2 sm:gap-3">
+                            <Button variant="outline" onClick={onClose} className="h-10 px-3 sm:px-4">
                                 Скасувати
                             </Button>
                             <Button 
                                 variant="primary" 
                                 onClick={handleSubmit} 
                                 disabled={selectedIds.size === 0}
+                                className="h-10 px-4 sm:px-6 min-w-25 justify-center"
                             >
                                 {isCropMode ? 'Далі' : 'Підтвердити'}
                             </Button>
                         </div>
                     </div>
                 </DragDropWrapper>
-                <style>{`
-                    @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-                `}</style>
             </div>
             <ImageCropperModal
                 isOpen={cropModalOpen}
@@ -460,6 +399,10 @@ const MediaPickerModal = ({
                 onClose={() => setCropModalOpen(false)}
                 onCropComplete={handleCropFinished}
             />
+            <style>{`
+                .hide-scrollbar::-webkit-scrollbar { display: none; }
+                .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
         </>,
         document.body
     );

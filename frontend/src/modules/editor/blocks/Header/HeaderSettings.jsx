@@ -51,6 +51,7 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
     };
 
     const currentLogoRadius = data.logo_radius !== undefined ? data.logo_radius : (data.borderRadius || 0);
+    const navStyle = data.nav_style || 'text';
     return (
         <div className="flex flex-col gap-6">
             <ConfirmModal 
@@ -121,14 +122,8 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                         checked={data.aspectRatio === 1}
                         onChange={(val) => updateData({ aspectRatio: val ? 1 : null })}
                       />
-                      <div className="text-xs text-(--platform-text-secondary) mt-1.5 leading-snug">
-                        {data.aspectRatio === 1 
-                            ? "При завантаженні буде запропоновано обрізати логотип під квадрат." 
-                            : "Логотип відображатиметься в оригінальних пропорціях."}
-                      </div>
                 </div>
             </div>
-            
             <div>
                 <SectionTitle icon={<LayoutTemplate size={18}/>}>Розміщення та Стиль</SectionTitle>
                 <div className="mb-5">
@@ -152,13 +147,13 @@ const HeaderSettings = ({ data, onChange, siteData }) => {
                             { value: 'text', label: 'Текст' },
                             { value: 'button', label: 'Кнопки' },
                         ]}
-                        value={data.nav_style || 'text'}
+                        value={navStyle}
                         onChange={(val) => updateData({ nav_style: val })}
                     />
                 </div>
-                {data.nav_style === 'button' ? (
-                    <div className="mt-4 p-4 bg-(--platform-bg) rounded-lg border border-(--platform-border-color)">
-                        <div className="mb-3 font-semibold text-sm">Стиль кнопок меню</div>
+                {navStyle === 'button' ? (
+                    <div className="mb-5">
+                        <label style={commonStyles.label}>Стиль кнопок меню</label>
                         <ButtonEditor 
                             data={data.buttonSettings || {}}
                             onChange={(val) => updateData({ buttonSettings: val })}

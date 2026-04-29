@@ -28,6 +28,7 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
     useEffect(() => {
         if (onSavingChange) onSavingChange(isCommerceSaving);
     }, [isCommerceSaving, onSavingChange]);
+
     const handleTabChange = (tabName) => {
         setSearchParams(prev => {
             prev.set('commerceTab', tabName);
@@ -36,6 +37,18 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
             return prev;
         });
     };
+
+    const tabs = [
+        { key: 'products', icon: <Grid />, text: 'Товари' },
+        { key: 'categories', icon: <Folder />, text: 'Категорії' },
+    ];
+
+    if (!isStaff) {
+        tabs.push(
+            { key: 'orders', icon: <Package />, text: 'Замовлення' },
+            { key: 'settings', icon: <Settings />, text: 'Налаштування' }
+        );
+    }
 
     return (
         <div className="h-full flex flex-col gap-6 overflow-hidden pb-5 box-border">
@@ -48,39 +61,18 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                     </h2>
                 </div>
                 <div className="commerce-header-right">
-                    <nav className="editor-tabs custom-scrollbar">
-                        <button
-                            className={`tab-btn ${activeSubTab === 'products' ? 'active' : ''}`}
-                            onClick={() => handleTabChange('products')}
-                        >
-                            <span className="tab-icon"><Grid size={16} /></span>
-                            <span className="tab-text">Товари</span>
-                        </button>
-                        <button
-                            className={`tab-btn ${activeSubTab === 'categories' ? 'active' : ''}`}
-                            onClick={() => handleTabChange('categories')}
-                        >
-                            <span className="tab-icon"><Folder size={16} /></span>
-                            <span className="tab-text">Категорії</span>
-                        </button>
-                        {!isStaff && (
-                            <>
-                                <button
-                                    className={`tab-btn ${activeSubTab === 'orders' ? 'active' : ''}`}
-                                    onClick={() => handleTabChange('orders')}
-                                >
-                                    <span className="tab-icon"><Package size={16} /></span>
-                                    <span className="tab-text">Замовлення</span>
-                                </button>
-                                <button
-                                    className={`tab-btn ${activeSubTab === 'settings' ? 'active' : ''}`}
-                                    onClick={() => handleTabChange('settings')}
-                                >
-                                    <span className="tab-icon"><Settings size={16} /></span>
-                                    <span className="tab-text">Налаштування</span>
-                                </button>
-                            </>
-                        )}
+                    <nav className="commerce-tabs">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.key}
+                                className={`commerce-tab-btn ${activeSubTab === tab.key ? 'active' : ''}`}
+                                onClick={() => handleTabChange(tab.key)}
+                                title={tab.text}
+                            >
+                                <span className="commerce-tab-icon">{tab.icon}</span>
+                                <span className="commerce-tab-text">{tab.text}</span>
+                            </button>
+                        ))}
                     </nav>
                 </div>
             </div>
@@ -111,7 +103,6 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                     />
                 )}
             </div>
-
             <style>{`
                 .commerce-header-container {
                     display: flex;
@@ -138,17 +129,16 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                     justify-content: flex-end;
                     min-width: 0;
                 }
-                .editor-tabs { 
+                .commerce-tabs { 
                     display: flex; 
                     background: var(--platform-bg); 
                     padding: 4px; 
                     border-radius: 8px; 
                     gap: 4px; 
                     border: 1px solid var(--platform-border-color); 
-                    overflow-x: auto;
-                    max-width: 100%;
+                    overflow: hidden; 
                 }
-                .tab-btn { 
+                .commerce-tab-btn { 
                     padding: 8px 16px; 
                     font-size: 14px; 
                     font-weight: 500; 
@@ -165,24 +155,24 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                     gap: 8px; 
                     min-height: 36px; 
                 }
-                .tab-btn:hover { 
+                .commerce-tab-btn:hover { 
                     color: var(--platform-text-primary); 
                     background: var(--platform-hover-bg); 
                 }
-                .tab-btn.active { 
+                .commerce-tab-btn.active { 
                     background: var(--platform-card-bg); 
                     color: var(--platform-accent); 
                     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
                     font-weight: 600; 
                 }
-                .tab-icon { 
+                .commerce-tab-icon { 
                     display: flex; 
                     align-items: center; 
                     justify-content: center; 
                     width: 18px; 
                     height: 18px; 
                 }
-                .tab-icon svg { 
+                .commerce-tab-icon svg { 
                     width: 100%; 
                     height: 100%; 
                     fill: none; 
@@ -191,7 +181,7 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                     stroke-linecap: round; 
                     stroke-linejoin: round; 
                 }
-                .tab-text { 
+                .commerce-tab-text { 
                     font-weight: 500; 
                 }
                 @media (max-width: 1150px) {
@@ -206,27 +196,25 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                         width: 100%;
                         justify-content: center;
                     }
-                    .editor-tabs {
+                    .commerce-tabs {
                         width: max-content;
                         justify-content: center;
                     }
                 }
-
                 @media (max-width: 768px) { 
-                    .tab-btn { padding: 6px 10px; font-size: 13px; } 
+                    .commerce-tab-btn { padding: 6px 10px; font-size: 13px; } 
+                    .commerce-tab-text { display: none; } 
                 }
-
                 @media (max-width: 600px) {
                     .commerce-header-container { gap: 12px; }
-                    .editor-tabs {
+                    .commerce-tabs {
                         width: 100%;
-                        justify-content: flex-start;
+                        justify-content: center; 
                     }
                 }
-
                 @media (max-width: 480px) { 
-                    .tab-btn { padding: 4px 8px; font-size: 12px; } 
-                    .tab-icon { width: 16px; height: 16px; } 
+                    .commerce-tab-btn { padding: 4px 8px; } 
+                    .commerce-tab-icon { width: 16px; height: 16px; } 
                 }
             `}</style>
         </div>

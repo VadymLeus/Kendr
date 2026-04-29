@@ -9,7 +9,7 @@ import OverlayControl from '../../ui/components/OverlayControl';
 import UniversalMediaInput from '../../../../shared/ui/complex/UniversalMediaInput';
 import FontSelector from '../../ui/components/FontSelector';
 import { BASE_URL } from '../../../../shared/config';
-import { Palette, Image as ImageIcon, Type, FileText, Link as LinkIcon, Share2, Trash2, Plus, Moon, Sun } from 'lucide-react';
+import { Palette, Image as ImageIcon, Type, FileText, Link as LinkIcon, Share2, Trash2, Plus, Moon, Sun, Monitor } from 'lucide-react';
 
 const SOCIAL_PLATFORMS = [
     { value: 'facebook', label: 'Facebook' },
@@ -29,6 +29,9 @@ const FooterSettings = ({ data, onChange, siteData }) => {
         heading: themeSettings.font_heading,
         body: themeSettings.font_body
     };
+    const currentVariant = data.variant || 'standard';
+    const currentThemeMode = data.theme_mode || 'auto';
+    const currentBgType = data.bg_type || 'color';
     const handleImageChange = (val) => {
         let finalUrl = val?.target?.value || val || '';
         updateData({ bg_image: finalUrl.replace(BASE_URL, '') });
@@ -82,18 +85,19 @@ const FooterSettings = ({ data, onChange, siteData }) => {
                             { value: 'standard', label: 'Стандартний' },
                             { value: 'simple', label: 'Мінімалізм' },
                         ]}
-                        value={data.variant || 'standard'}
+                        value={currentVariant}
                         onChange={(val) => updateData({ variant: val })}
                     />
                 </div>
                 <div className="mb-5">
-                    <label style={commonStyles.label}>Тема тексту</label>
+                    <label style={commonStyles.label}>Тема</label>
                     <ToggleGroup 
                         options={[
-                            { value: 'dark', label: <div className="flex gap-1.5"><Moon size={16}/> Світлий текст</div> },
-                            { value: 'light', label: <div className="flex gap-1.5"><Sun size={16}/> Темний текст</div> },
+                            { value: 'auto', label: <div className="flex gap-1.5 items-center"><Monitor size={16}/> Авто</div> },
+                            { value: 'light', label: <div className="flex gap-1.5 items-center"><Sun size={16}/> Світла</div> },
+                            { value: 'dark', label: <div className="flex gap-1.5 items-center"><Moon size={16}/> Темна</div> },
                         ]}
-                        value={data.theme_mode || 'dark'}
+                        value={currentThemeMode}
                         onChange={(val) => updateData({ theme_mode: val })}
                     />
                 </div>
@@ -101,11 +105,11 @@ const FooterSettings = ({ data, onChange, siteData }) => {
                     <label style={commonStyles.label}>Тип фону</label>
                     <ToggleGroup 
                         options={bgTypeOptions}
-                        value={data.bg_type || 'color'}
+                        value={currentBgType}
                         onChange={(val) => updateData({ bg_type: val })}
                     />
                 </div>
-                {data.bg_type === 'color' && (
+                {currentBgType === 'color' && (
                     <OverlayControl 
                         color={data.bg_color || '#111827'}
                         opacity={data.bg_opacity !== undefined ? data.bg_opacity : 1} 
@@ -113,7 +117,7 @@ const FooterSettings = ({ data, onChange, siteData }) => {
                         onOpacityChange={(val) => updateData({ bg_opacity: val })} 
                     />
                 )}
-                {data.bg_type === 'image' && (
+                {currentBgType === 'image' && (
                     <div className="mb-5">
                         <label style={commonStyles.label}>Фонове зображення</label>
                         <div className="h-40">
@@ -126,7 +130,7 @@ const FooterSettings = ({ data, onChange, siteData }) => {
                         </div>
                     </div>
                 )}
-                {data.bg_type === 'image' && (
+                {currentBgType === 'image' && (
                     <OverlayControl 
                         color={data.overlay_color || '#000000'}
                         opacity={data.overlay_opacity !== undefined ? data.overlay_opacity : 0.5}
@@ -153,7 +157,7 @@ const FooterSettings = ({ data, onChange, siteData }) => {
                         siteFonts={currentSiteFonts}
                     />
                 </div>
-                {data.variant !== 'simple' && (
+                {currentVariant !== 'simple' && (
                     <div className="mb-5">
                         <Input 
                             label="Текст логотипу" 
@@ -173,9 +177,9 @@ const FooterSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
             </div>
-            {data.variant !== 'simple' && (
+            {currentVariant !== 'simple' && (
                 <>
-                    <div>
+                    <div className="border-t border-(--platform-border-color) pt-6">
                         <SectionTitle icon={<LinkIcon size={18}/>}>Навігація / Посилання</SectionTitle>
                         <div className="flex flex-col gap-3">
                             {(data.links || []).map((link, idx) => (
@@ -202,7 +206,8 @@ const FooterSettings = ({ data, onChange, siteData }) => {
                             </Button>
                         </div>
                     </div>
-                    <div>
+
+                    <div className="border-t border-(--platform-border-color) pt-6">
                         <SectionTitle icon={<Share2 size={18}/>}>Соціальні мережі</SectionTitle>
                         <div className="flex flex-col gap-3">
                             {(data.socials || []).map((social, idx) => (

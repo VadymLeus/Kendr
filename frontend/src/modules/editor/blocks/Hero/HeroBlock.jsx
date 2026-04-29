@@ -41,27 +41,24 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
         if (theme_mode === 'light') return 'var(--site-text-primary, #000000)';
         return 'var(--site-text-primary)'; 
     };
-
     const computedTextColor = getTextColor();
-    const computedTextShadow = theme_mode === 'dark' ? '0 2px 4px rgba(0,0,0,0.5)' : 'none';
+    const computedTextShadow = theme_mode === 'dark' ? '0 2px 8px rgba(0,0,0,0.6)' : 'none';
     const fullImageUrl = bg_image 
         ? (bg_image.startsWith('http') ? bg_image : `${BASE_URL}${bg_image}`)
         : null;
     const fullVideoUrl = bg_video 
         ? (bg_video.startsWith('http') ? bg_video : `${BASE_URL}${bg_video}`)
         : null;
-
     useEffect(() => {
         const video = videoRef.current;
         if (video && bg_type === 'video') {
             video.play().catch(e => console.error("Autoplay failed", e));
         }
     }, [bg_type, fullVideoUrl]);
-
     const heightClasses = { 
-        small: 'min-h-75',
-        medium: 'min-h-125',
-        large: 'min-h-175',
+        small: 'min-h-[300px]',
+        medium: 'min-h-[400px] @3xl:min-h-[500px]',
+        large: 'min-h-[600px] @3xl:min-h-[700px]',
         full: 'min-h-[calc(100vh-60px)]'
     };
 
@@ -111,17 +108,23 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
             }}
             className={`
                 relative w-full flex box-border overflow-hidden
-                ${heightClasses[height] || 'min-h-125'}
+                ${heightClasses[height] || heightClasses.medium}
                 ${currentAlign.outer}
                 ${uniqueClass}
             `}
             id={blockData.anchorId}
         >
             <RenderFonts />
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 bg-(--site-bg)">
                 {bg_type === 'video' && fullVideoUrl ? (
-                    <video ref={videoRef} src={fullVideoUrl} poster={fullImageUrl}
-                        autoPlay muted loop playsInline
+                    <video 
+                        ref={videoRef} 
+                        src={fullVideoUrl} 
+                        poster={fullImageUrl}
+                        autoPlay 
+                        muted 
+                        loop 
+                        playsInline
                         className="w-full h-full object-cover"
                     />
                 ) : fullImageUrl ? (
@@ -131,24 +134,26 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
                     />
                 ) : null}
             </div>
+            
             {!isTransparent && (
                 <div
-                    className="absolute inset-0 z-1 transition-all duration-300"
+                    className="absolute inset-0 z-1 transition-all duration-300 pointer-events-none"
                     style={{ backgroundColor: overlay_color, opacity: safeOpacity }}
                 ></div>
             )}
+            
             <div
                 className={`
-                    relative z-2 max-w-200 w-full px-5 py-12 text-inherit flex flex-col
+                    relative z-2 w-full text-inherit flex flex-col max-w-300 mx-auto
+                    px-6 py-12 @2xl:px-8 @2xl:py-16 @3xl:px-12 @3xl:py-24
                     ${currentAlign.inner}
                 `}
             >
                 {show_title && title && (
                     <h1 
-                        className="m-0 mb-4 font-extrabold leading-[1.1] text-inherit"
+                        className="m-0 mb-4 @2xl:mb-6 font-extrabold leading-[1.15] tracking-tight text-inherit w-full text-4xl @2xl:text-5xl @3xl:text-6xl @5xl:text-7xl"
                         style={{ 
                             fontFamily: fontStyles.title, 
-                            fontSize: isEditorPreview ? '2rem' : 'clamp(2rem, 5vw, 3.5rem)',
                             textShadow: computedTextShadow
                         }}
                     >
@@ -157,10 +162,9 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
                 )}
                 {show_subtitle && subtitle && (
                     <p 
-                        className="m-0 mb-8 opacity-90 leading-[1.6] text-inherit max-w-150 whitespace-pre-wrap"
+                        className="m-0 mb-8 @2xl:mb-10 opacity-90 leading-[1.6] text-inherit w-full max-w-3xl whitespace-pre-wrap text-base @2xl:text-lg @3xl:text-xl"
                         style={{ 
                             fontFamily: fontStyles.content,
-                            fontSize: isEditorPreview ? '1rem' : 'clamp(1rem, 2vw, 1.25rem)',
                             textShadow: computedTextShadow, 
                         }}
                     >
@@ -168,7 +172,7 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
                     </p>
                 )}
                 {show_button && resolvedButtonData.text && (
-                    <div className={`mt-2 w-full flex ${currentAlign.btn}`}>
+                    <div className={`w-full flex mt-2 @2xl:mt-4 ${currentAlign.btn}`}>
                         <ButtonBlock 
                             blockData={resolvedButtonData} 
                             siteData={siteData} 
@@ -187,4 +191,8 @@ const HeroBlock = ({ blockData = {}, siteData, isEditorPreview, style }) => {
     );
 };
 
-export default HeroBlock;
+export default React.memo(HeroBlock, (prev, next) => {
+    return JSON.stringify(prev.blockData) === JSON.stringify(next.blockData) && 
+           prev.isEditorPreview === next.isEditorPreview &&
+           prev.siteData?.id === next.siteData?.id;
+});

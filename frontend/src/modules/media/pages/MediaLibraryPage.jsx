@@ -56,6 +56,7 @@ const MediaLibraryPage = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -134,6 +135,7 @@ const MediaLibraryPage = () => {
         });
         return result;
     }, [files, searchTerm, activeType, activeFormat, sortOption, onlyFavorites]);
+
     const visibleFiles = filteredFiles.slice(0, visibleCount);
     const remainingCount = filteredFiles.length - visibleFiles.length;
     const handleUpload = async (eOrFiles) => {
@@ -345,106 +347,20 @@ const MediaLibraryPage = () => {
         }
     };
 
-    const styles = {
-        pageWrapper: {
-            flex: 1,
-            minHeight: 0,
-            display: 'flex', 
-            flexDirection: 'column', 
-            backgroundColor: 'var(--platform-bg)', 
-            position: 'relative',
-        },
-        headerBlock: {
-            flexShrink: 0,
-            backgroundColor: 'var(--platform-bg)',
-            borderBottom: '1px solid var(--platform-border-color)',
-            zIndex: 10,
-        },
-        headerContent: {
-            padding: '12px 24px', 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            height: '60px', 
-            borderBottom: '1px solid var(--platform-border-color)',
-            color: 'var(--platform-text-primary)',
-            position: 'relative'
-        },
-        mainContent: {
-            display: 'flex',
-            flex: 1, 
-            minHeight: 0,
-            overflow: 'hidden',
-            position: 'relative',
-        },
-        gridArea: { 
-            flex: 1, 
-            padding: '24px', 
-            overflowY: 'auto',
-            minWidth: 0, 
-        },
-        grid: { 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
-            gap: '16px', 
-            paddingBottom: '24px' 
-        },
-        inspectorPanel: {
-            width: '360px',
-            borderLeft: '1px solid var(--platform-border-color)',
-            overflowY: 'auto',
-            flexShrink: 0,
-            backgroundColor: 'var(--platform-bg)',
-            zIndex: 5
-        },
-        stickyFooter: {
-            flexShrink: 0,
-            padding: '0 24px', 
-            height: '48px', 
-            borderTop: '1px solid var(--platform-border-color)',
-            backgroundColor: 'var(--platform-bg)', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            fontSize: '0.8rem', 
-            color: 'var(--platform-text-secondary)', 
-            zIndex: 10
-        },
-        formatChip: (isActive) => ({
-            padding: '0 12px', borderRadius: '20px', fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer',
-            border: `1px solid ${isActive ? 'var(--platform-accent)' : 'var(--platform-border-color)'}`,
-            color: isActive ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
-            background: isActive ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent',
-            transition: 'all 0.2s',
-            height: '28px',
-            display: 'flex',
-            alignItems: 'center',
-            fontWeight: 500
-        }),
-        limitBadge: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 12px',
-            backgroundColor: 'var(--platform-hover-bg)',
-            borderRadius: '16px',
-            fontSize: '0.8rem',
-            color: 'var(--platform-text-secondary)',
-            border: '1px solid var(--platform-border-color)',
-            transition: 'all 0.3s'
-        },
-        limitWarning: {
-            color: 'var(--platform-danger)',
-            borderColor: 'color-mix(in srgb, var(--platform-danger), transparent 70%)',
-            backgroundColor: 'color-mix(in srgb, var(--platform-danger), transparent 90%)' 
-        }
-    };
-    
     const formatButtons = (activeType && FORMATS_BY_TYPE[activeType]?.length > 0) ? (
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <button style={styles.formatChip(!activeFormat)} onClick={() => setActiveFormat(null)}>Всі формати</button>
+        <div className="flex gap-2 items-center shrink-0">
+            <button 
+                className={`h-8 px-3 rounded-full text-xs font-medium uppercase transition-colors whitespace-nowrap border shrink-0 ${!activeFormat ? 'border-(--platform-accent) text-(--platform-accent) bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)]' : 'border-(--platform-border-color) text-(--platform-text-secondary) bg-transparent hover:bg-(--platform-hover-bg)'}`} 
+                onClick={() => setActiveFormat(null)}
+            >
+                Всі формати
+            </button>
             {FORMATS_BY_TYPE[activeType].map(fmt => (
-                <button key={fmt} style={styles.formatChip(activeFormat === fmt)} onClick={() => setActiveFormat(activeFormat === fmt ? null : fmt)}>
+                <button 
+                    key={fmt} 
+                    className={`h-8 px-3 rounded-full text-xs font-medium uppercase transition-colors whitespace-nowrap border shrink-0 ${activeFormat === fmt ? 'border-(--platform-accent) text-(--platform-accent) bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)]' : 'border-(--platform-border-color) text-(--platform-text-secondary) bg-transparent hover:bg-(--platform-hover-bg)'}`} 
+                    onClick={() => setActiveFormat(activeFormat === fmt ? null : fmt)}
+                >
                     {fmt}
                 </button>
             ))}
@@ -457,34 +373,39 @@ const MediaLibraryPage = () => {
             onDropFiles={handleUpload}
             isError={isLimitReached}
             errorText="Ліміт файлів вичерпано!"
-            style={styles.pageWrapper}
+            className="flex flex-col flex-1 min-h-0 bg-(--platform-bg) relative"
         >
-            <div style={styles.headerBlock}>
-                <div style={styles.headerContent}>
-                    {limits && (
-                        <div style={{ position: 'absolute', left: '24px', display: 'flex', alignItems: 'center' }}>
-                            <div style={{ ...styles.limitBadge, ...((!limits.isUnlimited && limits.percentageUsed >= 90) ? styles.limitWarning : {}) }}>
-                                <HardDrive size={14} />
+            <div className="shrink-0 bg-(--platform-bg) z-10 flex flex-col">
+                <div className="h-auto sm:h-16 px-4 py-4 sm:px-8 lg:px-10 sm:py-0 border-b border-(--platform-border-color) flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                    <div className="w-full sm:w-1/3 flex justify-center sm:justify-start shrink-0">
+                        {limits && (
+                            <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-sm transition-colors ${(!limits.isUnlimited && limits.percentageUsed >= 90) ? 'text-(--platform-danger) border-[color-mix(in_srgb,var(--platform-danger),transparent_70%)] bg-[color-mix(in_srgb,var(--platform-danger),transparent_90%)]' : 'text-(--platform-text-secondary) bg-(--platform-card-bg) border-(--platform-border-color)'}`}>
+                                <HardDrive size={16} className="shrink-0" />
                                 <span>Сховище: {limits.isUnlimited ? `${limits.currentFiles} / ∞` : `${limits.currentFiles} / ${limits.maxFiles}`}</span>
                             </div>
-                        </div>
-                    )}
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>Медіатека</h1>
-                    <div style={{ position: 'absolute', right: '24px', display: 'flex', gap: '10px' }}>
+                        )}
+                    </div>
+                    <div className="w-full sm:w-1/3 flex justify-center shrink-0">
+                        <h1 className="text-xl font-bold m-0 text-(--platform-text-primary)">
+                            Медіатека
+                        </h1>
+                    </div>
+                    <div className="w-full sm:w-1/3 flex justify-center sm:justify-end shrink-0">
                         <Button 
                             variant="primary" 
                             type="button" 
                             onClick={() => fileInputRef.current.click()}
                             disabled={isLimitReached}
+                            className="w-full sm:w-auto h-10 shadow-sm"
                         >
-                            <Upload size={18} /> 
+                            <Upload size={18} className="shrink-0 mr-1.5" /> 
                             <span>{isLimitReached ? 'Ліміт вичерпано' : 'Завантажити'}</span>
                         </Button>
                         <input 
                             type="file" 
                             multiple 
                             ref={fileInputRef} 
-                            style={{ display: 'none' }} 
+                            className="hidden" 
                             onChange={handleUpload}
                             accept={limits ? limits.allowedExtensions.join(',') : undefined} 
                         />
@@ -505,17 +426,9 @@ const MediaLibraryPage = () => {
                     afterTags={formatButtons}
                 />
             </div>
-            <div style={styles.mainContent}>
+            <div className="flex flex-1 min-h-0 overflow-hidden relative">
                 <div 
-                    style={{
-                        ...styles.gridArea,
-                        ...(!loading && filteredFiles.length === 0 ? { 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                        } : {})
-                    }} 
+                    className={`flex-1 p-4 sm:p-8 lg:p-10 overflow-y-auto min-w-0 ${!loading && filteredFiles.length === 0 ? 'flex flex-col items-center justify-center' : ''}`}
                     onClick={handleGridBackgroundClick}
                 >
                     {loading ? (
@@ -535,7 +448,7 @@ const MediaLibraryPage = () => {
                         />
                     ) : (
                         <>
-                            <div style={styles.grid}>
+                            <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 sm:gap-4 pb-6">
                                 {visibleFiles.map((file, index) => (
                                     <MediaGridItem 
                                         key={file.id} 
@@ -549,8 +462,8 @@ const MediaLibraryPage = () => {
                                 ))}
                             </div>
                             {remainingCount > 0 && (
-                                <div style={{ textAlign: 'center', marginTop: '30px', paddingBottom: '20px' }}>
-                                    <Button variant="outline" onClick={() => setVisibleCount(p => p + 48)} style={{ borderRadius: '30px' }}>
+                                <div className="text-center mt-6 pb-6">
+                                    <Button variant="outline" onClick={() => setVisibleCount(p => p + 48)} className="rounded-full px-6">
                                         Показати ще ({remainingCount})
                                     </Button>
                                 </div>
@@ -559,11 +472,7 @@ const MediaLibraryPage = () => {
                     )}
                 </div>
                 {selectedFile && (
-                    <div style={styles.inspectorPanel} className="hide-scrollbar">
-                        <style>{`
-                            .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-                            .hide-scrollbar::-webkit-scrollbar { display: none; }
-                        `}</style>
+                    <div className="fixed inset-0 z-100 sm:relative sm:inset-auto w-full sm:w-90 border-l border-(--platform-border-color) bg-(--platform-sidebar-bg) overflow-y-auto shrink-0 hide-scrollbar transition-transform duration-300">
                         <MediaInspector 
                             file={selectedFile} 
                             onUpdate={handleUpdateFile}
@@ -573,43 +482,47 @@ const MediaLibraryPage = () => {
                     </div>
                 )}
             </div>
-            <div style={styles.stickyFooter}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span>Виділено: {checkedFiles.size} з {files.length}</span>
-                    <div style={{ width: '1px', height: '16px', background: 'var(--platform-border-color)' }} />
-                    <Button variant="ghost" onClick={handleSelectAll} style={{ fontSize: '0.8rem', padding: '4px' }}>
-                        <Check size={14} /> Вибрати все
+            <div className="shrink-0 px-4 sm:px-8 lg:px-10 py-3 sm:py-0 min-h-12 border-t border-(--platform-border-color) bg-(--platform-bg) flex flex-col sm:flex-row justify-between items-stretch sm:items-center text-xs sm:text-sm text-(--platform-text-secondary) z-10 gap-3 sm:gap-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <span className="whitespace-nowrap font-medium">Виділено: {checkedFiles.size} з {files.length}</span>
+                    <div className="hidden sm:block w-px h-4 bg-(--platform-border-color)" />
+                    <Button variant="ghost" onClick={handleSelectAll} className="h-8 px-2.5">
+                        <Check size={14} className="mr-1.5" /> Вибрати все
                     </Button>
                     {checkedFiles.size > 0 && (
                         <Button 
                             variant="ghost" 
                             onClick={handleDeselectAll} 
-                            style={{ fontSize: '0.8rem', padding: '4px', color: 'var(--platform-text-secondary)' }}
+                            className="h-8 px-2.5 text-(--platform-text-secondary)"
                             title="Скинути виділення"
                         >
-                            <XIcon size={14} /> Скинути ({checkedFiles.size})
+                            <XIcon size={14} className="mr-1.5" /> Скинути ({checkedFiles.size})
                         </Button>
                     )}
                 </div>
                 {checkedFiles.size > 0 ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Button variant="ghost" onClick={handleBulkDownload} style={{ fontSize: '0.8rem', padding: '4px 8px' }}>
-                            <Download size={14} /> Завантажити
+                    <div className="flex flex-wrap items-center gap-2 justify-end border-t sm:border-none border-(--platform-border-color) pt-2 sm:pt-0">
+                        <Button variant="ghost" onClick={handleBulkDownload} className="h-8 px-3 text-(--platform-text-primary)">
+                            <Download size={14} className="mr-1.5" /> Завантажити
                         </Button>
                         <Button 
                             variant="ghost"
                             onClick={handleBulkDelete} 
-                            style={{ fontSize: '0.8rem', padding: '4px 8px', color: 'var(--platform-danger)' }}
+                            className="h-8 px-3 text-(--platform-danger) hover:bg-red-50"
                         >
-                            <Trash2 size={14} /> Видалити
+                            <Trash2 size={14} className="mr-1.5" /> Видалити
                         </Button>
                     </div>
                 ) : (
-                    <div style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div className="max-w-50 sm:max-w-75 truncate text-right hidden sm:block font-medium">
                         {selectedFile ? (selectedFile.original_file_name || selectedFile.display_name) : 'Файл не обрано'}
                     </div>
                 )}
             </div>
+            <style>{`
+                .hide-scrollbar::-webkit-scrollbar { display: none; }
+                .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
         </DragDropWrapper>
     );
 };

@@ -47,7 +47,10 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
             liqpay_private_key: siteData.liqpay_private_key || '',
             tags: [],
             cookie_banner_enabled: siteData.cookie_banner_enabled || false,
-            cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду."
+            cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду.",
+            cookie_banner_size: siteData.cookie_banner_size || 'medium',
+            cookie_banner_position: siteData.cookie_banner_position || 'bottom-center',
+            cookie_banner_blur: siteData.cookie_banner_blur || false
         }
     );
 
@@ -83,7 +86,10 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 liqpay_private_key: siteData.liqpay_private_key || '',
                 theme_settings: siteData.theme_settings || {},
                 cookie_banner_enabled: siteData.cookie_banner_enabled || false,
-                cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду."
+                cookie_banner_text: siteData.cookie_banner_text || "Цей сайт використовує файли cookie для покращення користувацького досвіду.",
+                cookie_banner_size: siteData.cookie_banner_size || 'medium',
+                cookie_banner_position: siteData.cookie_banner_position || 'bottom-center',
+                cookie_banner_blur: siteData.cookie_banner_blur || false
             }));
             if (siteData.tags) setSelectedTags(siteData.tags.map(t => t.id));
         }
@@ -195,16 +201,16 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     
     const hasIdentityChanges = identityData.title !== siteData.title || identityData.slug !== siteData.site_path;
     return (
-        <div className="w-full mx-auto px-4 pb-20 relative">
-            <div className="max-w-4xl mx-auto mb-8 shrink-0 flex flex-col items-center text-center">
-                <h2 className="text-2xl font-semibold m-0 mb-1 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
-                    <Settings size={28} /> Глобальні налаштування
+        <div className="w-full mx-auto px-4 sm:px-6 pb-20 relative">
+            <div className="max-w-4xl mx-auto mb-6 sm:mb-8 shrink-0 flex flex-col items-center text-center">
+                <h2 className="text-xl sm:text-2xl font-semibold m-0 mb-2 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
+                    <Settings size={26} className="text-(--platform-accent)" /> Глобальні налаштування
                 </h2>
                 <p className="text-(--platform-text-secondary) m-0 text-sm">
                     Керування основними параметрами вашого сайту
                 </p>
             </div>
-            <div className="max-w-4xl mx-auto w-full">
+            <div className="max-w-4xl mx-auto w-full flex flex-col gap-5 sm:gap-6 mb-6">
                 <GeneralIdentitySection 
                     data={data} handleChange={handleChange} identityData={identityData}
                     handleIdentityChange={handleIdentityChange} handleSaveIdentity={handleSaveIdentity}
@@ -219,22 +225,26 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     getImageUrl={getImageUrl}
                 />
             </div>
-            <div className="max-w-337.5 mx-auto w-full">
+            <div className="w-full max-w-[96%] 2xl:max-w-400 mx-auto mb-8">
                 <GeneralTemplatesSection siteData={siteData} isAdmin={isAdmin} />
             </div>
-            <div className="max-w-4xl mx-auto w-full">
+            <div className="max-w-4xl mx-auto w-full flex flex-col gap-5 sm:gap-6">
                 {!isAdmin && (
-                    <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 mb-6 shadow-sm">
-                        <div className="flex justify-between items-center flex-wrap gap-4">
-                             <div>
-                                <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                                    <Download size={22} className="text-(--platform-accent)" /> Експорт сайту
+                    <div className="hidden sm:block bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 shadow-sm">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
+                                    <Download size={20} className="text-(--platform-accent)" /> Експорт сайту
                                 </h3>
                                  <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed max-w-2xl">
                                     Завантажте вихідний код вашого сайту (HTML/CSS) одним архівом. 
                                 </p>
                             </div>
-                            <Button onClick={handleExportSite} disabled={isExporting} style={{ height: '46px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Button 
+                                onClick={handleExportSite} 
+                                disabled={isExporting} 
+                                className="w-full sm:w-auto h-11.5 flex items-center justify-center gap-2 shrink-0"
+                            >
                                 {isExporting ? <Loader size={18} className="animate-spin" /> : <FileDown size={18} />}
                                 {isExporting ? `Генерація...` : 'Завантажити .ZIP'}
                             </Button>
@@ -242,17 +252,21 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     </div>
                 )}
                 {(!isLocked || isAdmin) && (
-                    <div className="rounded-2xl border border-(--platform-danger) p-8 mb-6 shadow-sm" style={{ background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)' }}>
-                         <div className="flex justify-between items-center flex-wrap gap-4">
+                    <div className="rounded-2xl border border-(--platform-danger) p-5 sm:p-8 shadow-sm" style={{ background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)' }}>
+                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div className="flex-1">
-                                <h3 className="text-xl font-semibold text-(--platform-danger) m-0 mb-1 flex items-center gap-2.5">
-                                    <AlertCircle size={22} /> ВИДАЛЕННЯ САЙТУ
+                                <h3 className="text-lg sm:text-xl font-semibold text-(--platform-danger) m-0 mb-1 flex items-center gap-2.5">
+                                    <AlertCircle size={20} /> ВИДАЛЕННЯ САЙТУ
                                 </h3>
                                 <p className="text-sm text-(--platform-danger) m-0 opacity-80">
                                     Видалення сайту є <strong>незворотним</strong>. Всі дані будуть втрачені.
                                 </p>
                             </div>
-                            <Button variant="danger" onClick={handleDeleteSite} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                            <Button 
+                                variant="danger" 
+                                onClick={handleDeleteSite} 
+                                className="w-full sm:w-auto h-11.5 flex items-center justify-center gap-2 shrink-0"
+                            >
                                 <Trash size={18} /> Видалити сайт
                             </Button>
                         </div>

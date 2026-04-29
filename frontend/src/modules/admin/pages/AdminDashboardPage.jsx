@@ -67,8 +67,8 @@ const StatusBadge = ({ label, icon: Icon, colorVar }) => {
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors duration-300" 
             style={style}
         >
-            {Icon && <Icon size={10} style={{ color: `var(${colorVar})` }} />}
-            {label}
+            {Icon && <Icon size={10} style={{ color: `var(${colorVar})` }} className="shrink-0" />}
+            <span className="truncate max-w-15 sm:max-w-none">{label}</span>
         </span>
     );
 };
@@ -77,53 +77,37 @@ const renderStatusBadge = (type, statusInfo) => {
     if (type === 'site_create') {
         const status = statusInfo || 'maintenance';
         switch (status) {
-            case 'published':
-                return <StatusBadge label="Published" icon={Globe} colorVar="--platform-success" />;
-            case 'suspended':
-                return <StatusBadge label="Suspended" icon={Ban} colorVar="--platform-danger" />;
-            case 'probation':
-                return <StatusBadge label="Probation" icon={Shield} colorVar="--platform-warning" />;
-            case 'private':
-                return <StatusBadge label="Private" icon={Lock} colorVar="--platform-text-secondary" />;
+            case 'published': return <StatusBadge label="Published" icon={Globe} colorVar="--platform-success" />;
+            case 'suspended': return <StatusBadge label="Suspended" icon={Ban} colorVar="--platform-danger" />;
+            case 'probation': return <StatusBadge label="Probation" icon={Shield} colorVar="--platform-warning" />;
+            case 'private':   return <StatusBadge label="Private" icon={Lock} colorVar="--platform-text-secondary" />;
             case 'maintenance':
-            default:
-                return <StatusBadge label="Maintenance" icon={EyeOff} colorVar="--platform-text-secondary" />;
+            default:          return <StatusBadge label="Maintenance" icon={EyeOff} colorVar="--platform-text-secondary" />;
         }
     }
     if (type === 'user_register') {
         const strikes = statusInfo || 0;
-        if (strikes === 0) {
-            return <StatusBadge label="Clean" icon={CheckCircle} colorVar="--platform-success" />;
-        } else if (strikes === 1) {
-            return <StatusBadge label="1 Strike" icon={Zap} colorVar="--platform-warning" />;
-        } else {
-            return <StatusBadge label={`${strikes}/3 Strikes`} icon={AlertTriangle} colorVar="--platform-danger" />;
-        }
+        if (strikes === 0) return <StatusBadge label="Clean" icon={CheckCircle} colorVar="--platform-success" />;
+        else if (strikes === 1) return <StatusBadge label="1 Strike" icon={Zap} colorVar="--platform-warning" />;
+        else return <StatusBadge label={`${strikes}/3 Strikes`} icon={AlertTriangle} colorVar="--platform-danger" />;
     }
     if (type === 'ticket') {
         const status = statusInfo || 'open';
         switch (status) {
-            case 'answered':
-                return <StatusBadge label="Answered" icon={MessageSquare} colorVar="--platform-success" />;
-            case 'closed':
-                return <StatusBadge label="Closed" icon={Archive} colorVar="--platform-text-secondary" />;
+            case 'answered': return <StatusBadge label="Answered" icon={MessageSquare} colorVar="--platform-success" />;
+            case 'closed':   return <StatusBadge label="Closed" icon={Archive} colorVar="--platform-text-secondary" />;
             case 'open':
-            default:
-                return <StatusBadge label="Open" icon={Activity} colorVar="--platform-accent" />;
+            default:         return <StatusBadge label="Open" icon={Activity} colorVar="--platform-accent" />;
         }
     }
     if (type === 'report') {
         const status = statusInfo || 'new';
         switch (status) {
-            case 'reviewed':
-                return <StatusBadge label="Reviewed" icon={Check} colorVar="--platform-success" />;
-            case 'dismissed':
-                return <StatusBadge label="Dismissed" icon={Archive} colorVar="--platform-text-secondary" />;
-            case 'banned':
-                return <StatusBadge label="Banned" icon={Ban} colorVar="--platform-text-primary" />;
+            case 'reviewed':  return <StatusBadge label="Reviewed" icon={Check} colorVar="--platform-success" />;
+            case 'dismissed': return <StatusBadge label="Dismissed" icon={Archive} colorVar="--platform-text-secondary" />;
+            case 'banned':    return <StatusBadge label="Banned" icon={Ban} colorVar="--platform-text-primary" />;
             case 'new':
-            default:
-                return <StatusBadge label="New" icon={AlertTriangle} colorVar="--platform-danger" />;
+            default:          return <StatusBadge label="New" icon={AlertTriangle} colorVar="--platform-danger" />;
         }
     }
     return null;
@@ -133,65 +117,37 @@ const StatCard = ({ title, value, type, trend, trendValue, loading }) => {
     const styleConfig = ENTITY_STYLES[type] || ENTITY_STYLES.default;
     const Icon = styleConfig.icon;
     const colorVar = styleConfig.var;
-    const styles = {
-        card: {
-            background: 'var(--platform-card-bg)',
-            border: '1px solid var(--platform-border-color)',
-            borderRadius: '16px',
-            padding: '20px', 
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px', 
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-            height: '100%',
-            alignItems: 'center', 
-            textAlign: 'center',
-            justifyContent: 'center'
-        },
-        iconBox: {
-            width: '42px', height: '42px', borderRadius: '10px', 
-            background: `color-mix(in srgb, var(${colorVar}), transparent 90%)`, 
-            color: `var(${colorVar})`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: '4px' 
-        },
-        value: { 
-            fontSize: '28px', 
-            fontWeight: 'bold', 
-            color: 'var(--platform-text-primary)',
-            lineHeight: 1.2
-        },
-        label: { 
-            fontSize: '13px', 
-            fontWeight: '600', 
-            color: 'var(--platform-text-secondary)' 
-        },
-        trend: { 
-            fontSize: '11px', fontWeight: '600', 
-            color: trend === 'up' ? 'var(--platform-success)' : trend === 'down' ? 'var(--platform-danger)' : 'var(--platform-text-secondary)',
-            display: 'flex', alignItems: 'center', gap: '4px',
-            justifyContent: 'center',
-            marginTop: '4px',
-            padding: '4px 8px',
-            borderRadius: '20px',
-            background: trend === 'up' 
-                ? 'color-mix(in srgb, var(--platform-success), transparent 90%)' 
-                : trend === 'down' 
-                    ? 'color-mix(in srgb, var(--platform-danger), transparent 90%)' 
-                    : 'var(--platform-hover-bg)'
-        }
-    };
     return (
-        <div style={styles.card}>
-            <div style={styles.iconBox}><Icon size={22} /></div>
-            <div style={styles.value}>{loading ? '...' : value}</div>
-            <div style={styles.label}>{title}</div>
+        <div className="flex flex-col relative overflow-hidden items-center text-center justify-center h-full bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-3 sm:p-5 gap-1.5 sm:gap-2 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+            <div 
+                className="flex items-center justify-center shrink-0 rounded-lg sm:rounded-xl mb-0.5 sm:mb-1 w-8 h-8 sm:w-10.5 sm:h-10.5"
+                style={{
+                    background: `color-mix(in srgb, var(${colorVar}), transparent 90%)`, 
+                    color: `var(${colorVar})`
+                }}
+            >
+                <Icon className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
+            </div>
+            <div className="text-xl sm:text-[28px] font-bold text-(--platform-text-primary) leading-tight">
+                {loading ? '...' : value}
+            </div>
+            <div className="text-[11px] sm:text-[13px] font-semibold text-(--platform-text-secondary) leading-tight">
+                {title}
+            </div>
             {trendValue && (
-                <div style={styles.trend}>
-                    {trend === 'up' ? <ArrowUpRight size={12}/> : trend === 'down' ? <ArrowDownRight size={12}/> : null}
-                    {trendValue}
+                <div 
+                    className="flex items-center justify-center gap-1 mt-0.5 sm:mt-1 px-2 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-semibold"
+                    style={{
+                        color: trend === 'up' ? 'var(--platform-success)' : trend === 'down' ? 'var(--platform-danger)' : 'var(--platform-text-secondary)',
+                        background: trend === 'up' 
+                            ? 'color-mix(in srgb, var(--platform-success), transparent 90%)' 
+                            : trend === 'down' 
+                                ? 'color-mix(in srgb, var(--platform-danger), transparent 90%)' 
+                                : 'var(--platform-hover-bg)'
+                    }}
+                >
+                    {trend === 'up' ? <ArrowUpRight size={10} className="shrink-0 sm:w-3 sm:h-3"/> : trend === 'down' ? <ArrowDownRight size={10} className="shrink-0 sm:w-3 sm:h-3"/> : null}
+                    <span className="truncate">{trendValue}</span>
                 </div>
             )}
         </div>
@@ -204,44 +160,46 @@ const ModernChart = ({ data, period, setPeriod, type, setType }) => {
         return (
             <div style={{height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px', color: 'var(--platform-text-secondary)'}}>
                 <BarChart2 size={48} opacity={0.2} />
-                <span>Немає даних для відображення</span>
+                <span className="text-center px-4">Немає даних для відображення</span>
             </div>
         );
     }
     const maxVal = Math.max(...data.map(d => Number(d.count || 0)), 5);
     return (
-        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px'}}>
-                <div style={{fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--platform-text-primary)'}}>
-                    <BarChart2 size={18} color="var(--platform-accent)" />
+        <div className="flex flex-col h-full w-full">
+            <div className="flex flex-wrap justify-between items-center mb-6 gap-3 w-full">
+                <div className="text-[16px] font-bold flex items-center gap-2 text-(--platform-text-primary) shrink-0">
+                    <BarChart2 size={18} color="var(--platform-accent)" className="shrink-0" />
                     Динаміка активності
                 </div>
-                <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-                    <div style={{ width: '160px' }}>
+                <div className="flex gap-2 flex-1 min-w-60 justify-start sm:justify-end">
+                    <div className="flex-1 sm:flex-none sm:w-40">
                         <CustomSelect 
                             value={type}
                             onChange={(e) => setType(e.target.value)}
                             options={GRAPH_TYPE_OPTIONS}
                             variant="minimal"
+                            style={{ height: '36px', background: 'var(--platform-bg)' }}
                         />
                     </div>
-                    <div style={{ width: '160px' }}>
+                    <div className="flex-1 sm:flex-none sm:w-40">
                         <CustomSelect 
                             value={period}
                             onChange={(e) => setPeriod(e.target.value)}
                             options={PERIOD_OPTIONS}
                             variant="minimal"
+                            style={{ height: '36px', background: 'var(--platform-bg)' }}
                         />
                     </div>
                 </div>
             </div>
-            <div style={{flex: 1, position: 'relative', minHeight: '250px', display: 'flex', alignItems: 'flex-end', gap: '8px', paddingBottom: '24px', borderBottom: '1px solid var(--platform-border-color)'}}>
+            <div className="flex-1 relative min-h-50 sm:min-h-62.5 flex items-end gap-1 sm:gap-2 pb-6 border-b border-(--platform-border-color) w-full overflow-x-auto hide-scrollbar">
                 {data.map((item, index) => {
                     const count = Number(item.count || 0);
                     const height = (count / maxVal) * 100;
                     const isZero = count === 0;
                     return (
-                        <div key={index} style={{flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', position: 'relative', zIndex: 1}} className="group">
+                        <div key={index} className="flex-1 h-full flex flex-col justify-end items-center relative z-10 group min-w-2 sm:min-w-0">
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-(--platform-text-primary) text-(--platform-bg) text-[11px] py-1 px-2 rounded pointer-events-none whitespace-nowrap z-20 shadow-lg">
                                 {item.date}: <strong>{count}</strong>
                             </div>
@@ -278,14 +236,8 @@ const LogItem = ({ log }) => {
     const Icon = styleConfig.icon;
     const colorVar = styleConfig.var;
     return (
-        <div style={{ 
-            display: 'flex', alignItems: 'center', gap: '12px', 
-            padding: '12px 0', 
-            borderBottom: '1px solid var(--platform-border-color)',
-            transition: 'background 0.2s'
-        }} className="hover:bg-(--platform-hover-bg)">
+        <div className="flex items-center gap-3 py-3 border-b border-(--platform-border-color) transition-colors hover:bg-(--platform-hover-bg)">
             <div style={{
-                marginTop: '0px', 
                 display: 'flex', alignItems: 'center', justifyContent: 'center', 
                 width: '32px', height: '32px', borderRadius: '8px',
                 background: `color-mix(in srgb, var(${colorVar}), transparent 90%)`, 
@@ -294,19 +246,19 @@ const LogItem = ({ log }) => {
             }}>
                 <Icon size={18} />
             </div>
-            <div style={{flex: 1, minWidth: 0}}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px'}}>
-                    <div style={{fontSize: '13px', fontWeight: '500', color: 'var(--platform-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '8px'}}>
-                        {log.type === 'user_register' && <>Новий користувач <span style={{fontWeight: 'bold'}}>{log.title}</span></>}
-                        {log.type === 'site_create' && <>Створено сайт <span style={{fontWeight: 'bold'}}>{log.title}</span></>}
-                        {log.type === 'report' && <>Скарга на сайт <span style={{fontWeight: 'bold'}}>{log.title}</span></>}
-                        {log.type === 'ticket' && <>Новий тікет <span style={{fontWeight: 'bold'}}>{log.title || `#${log.id}`}</span></>}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-start sm:items-center justify-between gap-2 mb-0.5 flex-col sm:flex-row">
+                    <div className="text-[13px] font-medium text-(--platform-text-primary) truncate pr-2 max-w-full">
+                        {log.type === 'user_register' && <>Новий користувач <span className="font-bold">{log.title}</span></>}
+                        {log.type === 'site_create' && <>Створено сайт <span className="font-bold">{log.title}</span></>}
+                        {log.type === 'report' && <>Скарга на сайт <span className="font-bold">{log.title}</span></>}
+                        {log.type === 'ticket' && <>Новий тікет <span className="font-bold">{log.title || `#${log.id}`}</span></>}
                     </div>
                     <div className="shrink-0">
                         {renderStatusBadge(log.type, log.status_info)}
                     </div>
                 </div>
-                <div style={{fontSize: '11px', color: 'var(--platform-text-secondary)'}}>
+                <div className="text-[11px] text-(--platform-text-secondary)">
                     {formatDate(log.created_at)}
                 </div>
             </div>
@@ -352,9 +304,11 @@ const AdminDashboardPage = () => {
             setLoading(false);
         }
     }, [period, graphType, activeTab]);
+    
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+    
     const stats = data?.stats || { users: 0, usersGrowth: 0, sites: 0, reports: 0, tickets: 0 };
     const processedLogs = useMemo(() => {
         if (!data?.activityLog) return [];
@@ -375,6 +329,7 @@ const AdminDashboardPage = () => {
         });
         return logs;
     }, [data, logTypeFilter, logSortOrder]);
+
     return (
         <AdminPageLayout 
             title="Дашборд" 
@@ -390,37 +345,26 @@ const AdminDashboardPage = () => {
             loading={loading && activeTab === 'overview'}
         >
             {isAdmin && (
-                <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-fit mb-6">
+                <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-full sm:w-fit mb-4 sm:mb-6 overflow-x-auto hide-scrollbar shrink-0">
                     <button
-                        className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'overview' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                        className={`flex-1 sm:flex-none h-9 sm:h-10 px-4 rounded-lg text-[13px] sm:text-sm font-medium flex items-center justify-center gap-2 transition-all whitespace-nowrap ${activeTab === 'overview' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
                         onClick={() => setActiveTab('overview')}
                     >
                         <LayoutDashboard size={16} /> Огляд
                     </button>
-                    
                     <button
-                        className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'logs' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                        className={`flex-1 sm:flex-none h-9 sm:h-10 px-4 rounded-lg text-[13px] sm:text-sm font-medium flex items-center justify-center gap-2 transition-all whitespace-nowrap ${activeTab === 'logs' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
                         onClick={() => setActiveTab('logs')}
                     >
                         <Shield size={16} /> Логи дій
                     </button>
                 </div>
             )}
-            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+            
+            <div className="flex-1 relative overflow-hidden flex flex-col h-full w-full">
                 {activeTab === 'overview' ? (
-                    <div 
-                        style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            gap: '16px', 
-                            width: '100%', 
-                            height: '100%', 
-                            overflowY: 'auto',
-                            paddingBottom: '24px' 
-                        }} 
-                        className="custom-scrollbar"
-                    >
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', flexShrink: 0 }}>
+                    <div className="flex flex-col gap-4 w-full h-full overflow-y-auto pb-6 custom-scrollbar pr-1 sm:pr-2">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 shrink-0">
                             <StatCard 
                                 title="Всього користувачів" value={stats.users} type="users"
                                 trend="up" trendValue={`+${stats.usersGrowth} за місяць`} loading={loading}
@@ -438,11 +382,8 @@ const AdminDashboardPage = () => {
                                 trendValue="В черзі" loading={loading}
                             />
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', flex: 1, minHeight: '400px' }}>
-                            <div style={{ 
-                                background: 'var(--platform-card-bg)', borderRadius: '16px', padding: '24px', 
-                                border: '1px solid var(--platform-border-color)', display: 'flex', flexDirection: 'column', overflow: 'hidden'
-                            }}>
+                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 flex-1 min-h-100">
+                            <div className="xl:col-span-2 bg-(--platform-card-bg) rounded-2xl p-4 sm:p-6 border border-(--platform-border-color) flex flex-col overflow-hidden min-h-87.5">
                                 {loading ? (
                                     <LoadingState title="Завантаження графіка..." layout="section" iconSize={40} />
                                 ) : (
@@ -453,41 +394,41 @@ const AdminDashboardPage = () => {
                                     />
                                 )}
                             </div>
-                            <div style={{ 
-                                background: 'var(--platform-card-bg)', borderRadius: '16px', padding: '20px', 
-                                border: '1px solid var(--platform-border-color)', display: 'flex', flexDirection: 'column', overflow: 'hidden'
-                            }}>
-                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px'}}>
-                                    <div style={{fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--platform-text-primary)'}}>
-                                        <TrendingUp size={18} color="var(--platform-accent)" />
+                            <div className="xl:col-span-1 bg-(--platform-card-bg) rounded-2xl p-4 sm:p-5 border border-(--platform-border-color) flex flex-col overflow-hidden min-h-87.5">
+                                
+                                <div className="flex flex-col sm:flex-row xl:flex-col 2xl:flex-row justify-between items-start sm:items-center xl:items-start 2xl:items-center gap-3 mb-4">
+                                    <div className="text-[16px] font-bold flex items-center gap-2 text-(--platform-text-primary) shrink-0">
+                                        <TrendingUp size={18} color="var(--platform-accent)" className="shrink-0" />
                                         Останні події
                                     </div>
-                                    <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                                        <div style={{ width: '150px' }}>
+                                    <div className="flex flex-col sm:flex-row xl:flex-col 2xl:flex-row gap-2 w-full sm:w-auto xl:w-full 2xl:w-auto">
+                                        <div className="w-full sm:w-32 xl:w-full 2xl:w-32 shrink-0">
                                             <CustomSelect
                                                 value={logTypeFilter}
                                                 onChange={(e) => setLogTypeFilter(e.target.value)}
                                                 options={LOG_TYPE_OPTIONS}
                                                 variant="minimal"
+                                                style={{ height: '36px', background: 'var(--platform-bg)' }}
                                             />
                                         </div>
-                                        <div style={{ width: '160px' }}>
+                                        <div className="w-full sm:w-36 xl:w-full 2xl:w-36 shrink-0">
                                             <CustomSelect
                                                 value={logSortOrder}
                                                 onChange={(e) => setLogSortOrder(e.target.value)}
                                                 options={SORT_OPTIONS}
                                                 variant="minimal"
+                                                style={{ height: '36px', background: 'var(--platform-bg)' }}
                                             />
                                         </div>
                                     </div>
                                 </div>
-                                <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+                                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-50">
                                     {loading ? (
                                         <LoadingState title="Завантаження подій..." layout="section" iconSize={32} />
                                     ) : processedLogs.length > 0 ? (
                                         processedLogs.map((log, index) => <LogItem key={index} log={log} />)
                                     ) : (
-                                        <div style={{textAlign: 'center', padding: '40px 20px', opacity: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--platform-text-secondary)'}}>
+                                        <div className="text-center p-10 opacity-50 flex flex-col items-center gap-2 text-(--platform-text-secondary)">
                                             <Activity size={32} opacity={0.5} />
                                             <span>Подій немає</span>
                                         </div>
@@ -497,12 +438,7 @@ const AdminDashboardPage = () => {
                         </div>
                     </div>
                 ) : activeTab === 'logs' && isAdmin ? (
-                    <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        height: '100%', 
-                        paddingBottom: '24px' 
-                    }}>
+                    <div className="flex flex-col h-full pb-6 w-full">
                         <AdminLogsPage key={logsRefreshCounter} />
                     </div>
                 ) : null}

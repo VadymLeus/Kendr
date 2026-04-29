@@ -16,19 +16,21 @@ const UserDetailsPanel = ({ currentUser, user, onClose, onDelete, onSuspend, onR
         hero: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', position: 'relative' },
         section: { marginBottom: '28px' },
         sectionTitle: { fontSize: '12px', textTransform: 'uppercase', color: 'var(--platform-text-secondary)', marginBottom: '12px', fontWeight: '700', letterSpacing: '0.5px' },
-        row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', fontSize: '14px' },
-        rowLabel: { color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' },
-        rowValue: { fontWeight: '500', color: 'var(--platform-text-primary)', textAlign: 'right' },
+        row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', fontSize: '14px', gap: '16px' },
+        rowLabel: { color: 'var(--platform-text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 },
+        rowValue: { fontWeight: '500', color: 'var(--platform-text-primary)', textAlign: 'right', wordBreak: 'break-all' },
         statGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' },
         statCard: { background: 'var(--platform-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--platform-border-color)', display: 'flex', flexDirection: 'column', gap: '8px' },
         avatarWrapper: { position: 'relative', cursor: isProfileClickable ? 'pointer' : 'default', transition: 'transform 0.2s' },
         bannedBanner: { background: 'var(--platform-danger-light, #fee2e2)', color: 'var(--platform-danger, #ef4444)', padding: '12px 16px', borderRadius: '8px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600', border: '1px solid #fca5a5' }
     }), [user, isProfileClickable]);
+
     if (!user) return null;
     const canModify = currentUser?.role === 'admin' || (currentUser?.role === 'moderator' && user.role === 'user');
     const handleVisitProfile = () => {
         if (isProfileClickable) navigate(`/profile/${user.slug}`);
     };
+    
     return (
         <BaseDetailsPanel 
             title="Деталі користувача" 
@@ -40,8 +42,8 @@ const UserDetailsPanel = ({ currentUser, user, onClose, onDelete, onSuspend, onR
         >
             {user.status === 'suspended' && (
                 <div style={styles.bannedBanner}>
-                    <Ban size={18} />
-                    Акаунт заблоковано
+                    <Ban size={18} className="shrink-0" />
+                    <span>Акаунт заблоковано</span>
                 </div>
             )}
             <div style={styles.hero}>
@@ -59,7 +61,9 @@ const UserDetailsPanel = ({ currentUser, user, onClose, onDelete, onSuspend, onR
                         marginBottom: '4px', 
                         cursor: isProfileClickable ? 'pointer' : 'default', 
                         color: user.status === 'suspended' ? 'var(--platform-danger)' : 'var(--platform-text-primary)', 
-                        transition: 'color 0.2s'
+                        transition: 'color 0.2s',
+                        textAlign: 'center',
+                        wordBreak: 'break-word'
                      }}
                      onMouseEnter={e => { if(isProfileClickable) e.currentTarget.style.color = 'var(--platform-accent)' }}
                      onMouseLeave={e => { if(isProfileClickable) e.currentTarget.style.color = 'var(--platform-text-primary)' }}

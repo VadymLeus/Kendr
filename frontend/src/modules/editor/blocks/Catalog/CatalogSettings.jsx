@@ -37,8 +37,8 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
     };
 
     const sourceTypeOptions = [
-        { value: 'all', label: 'Весь магазин' },
-        { value: 'category', label: 'Певна категорія' }
+        { value: 'all', label: 'Все' },
+        { value: 'category', label: 'Категорія' }
     ];
 
     const categoryOptions = [
@@ -110,11 +110,10 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
             </div>
-
             <div>
                 <SectionTitle icon={<LayoutGrid size={16} />}>Налаштування відображення</SectionTitle>
                 <div className="mb-5">
-                    <label style={commonStyles.label}>Кількість колонок (Desktop)</label>
+                    <label style={commonStyles.label}>Кількість колонок</label>
                     <ToggleGroup 
                         options={[
                             { value: 2, label: '2' },
@@ -126,7 +125,6 @@ const CatalogSettings = ({ data, onChange, siteData }) => {
                         onChange={(val) => updateData({ columns: val })}
                     />
                 </div>
-
                 <div className="mb-5">
                     <RangeSlider 
                         label="Товарів на одній сторінці"

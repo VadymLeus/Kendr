@@ -1,52 +1,40 @@
 // frontend/src/modules/admin/components/BaseDetailsPanel.jsx
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Button } from '../../../shared/ui/elements/Button';
 import { X, Trash } from 'lucide-react';
 
 const BaseDetailsPanel = ({ title, onClose, onDelete, deleteLabel = "Видалити", deleteDisabled = false, deleteTitle, children }) => {
-    const styles = useMemo(() => ({
-        overlay: {
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.3)', zIndex: 49, backdropFilter: 'blur(2px)'
-        },
-        panel: {
-            position: 'fixed', top: 0, right: 0, bottom: 0, width: '450px',
-            background: 'var(--platform-card-bg)', borderLeft: '1px solid var(--platform-border-color)',
-            boxShadow: '-4px 0 20px rgba(0,0,0,0.1)', zIndex: 50,
-            display: 'flex', flexDirection: 'column', animation: 'slideInRight 0.3s ease'
-        },
-        header: {
-            padding: '20px 24px', borderBottom: '1px solid var(--platform-border-color)',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            background: 'var(--platform-bg)'
-        },
-        title: { fontSize: '18px', fontWeight: 'bold', color: 'var(--platform-text-primary)' },
-        content: { padding: '24px', flex: 1, overflowY: 'auto' },
-        footer: {
-            padding: '24px', borderTop: '1px solid var(--platform-border-color)',
-            background: 'var(--platform-bg)', display: 'flex', flexDirection: 'column', gap: '12px'
-        }
-    }), []);
     return (
         <>
-            <div style={styles.overlay} onClick={onClose} />
-            <div style={styles.panel}>
-                <div style={styles.header}>
-                    <h2 style={styles.title}>{title}</h2>
-                    <Button variant="ghost" onClick={onClose} icon={<X size={20} />} style={{width: '32px', height: '32px', padding: 0, justifyContent: 'center'}} />
+            <div 
+                className="fixed inset-0 bg-black/30 z-49 backdrop-blur-sm" 
+                onClick={onClose} 
+            />
+            <div 
+                className="fixed top-0 right-0 bottom-0 w-full sm:w-112.5 bg-(--platform-card-bg) border-l border-(--platform-border-color) shadow-2xl z-50 flex flex-col"
+                style={{ animation: 'slideInRight 0.3s ease' }}
+            >
+                <div className="p-5 sm:px-6 border-b border-(--platform-border-color) flex justify-between items-center bg-(--platform-bg)">
+                    <h2 className="text-lg font-bold text-(--platform-text-primary) m-0">{title}</h2>
+                    <Button 
+                        variant="ghost" 
+                        onClick={onClose} 
+                        icon={<X size={20} />} 
+                        className="w-8 h-8 p-0 flex justify-center items-center text-(--platform-text-secondary) hover:text-(--platform-text-primary)" 
+                    />
                 </div>
-                <div style={styles.content} className="custom-scrollbar">
+                <div className="p-5 sm:p-6 flex-1 overflow-y-auto custom-scrollbar">
                     {children}
                 </div>
                 {onDelete && (
-                    <div style={styles.footer}>
+                    <div className="p-5 sm:p-6 border-t border-(--platform-border-color) bg-(--platform-bg) flex flex-col gap-3">
                         <Button 
                             variant="danger" 
                             onClick={onDelete}
                             icon={<Trash size={18} />}
                             disabled={deleteDisabled}
                             title={deleteTitle}
-                            style={{ width: '100%', justifyContent: 'center' }}
+                            className="w-full justify-center"
                         >
                             {deleteLabel}
                         </Button>

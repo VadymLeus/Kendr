@@ -19,7 +19,6 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
         heading: themeSettings.font_heading,
         body: themeSettings.font_body
     };
-    
     const normalizedData = {
         title: '',
         columns: 4,
@@ -68,7 +67,6 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                 initialSelectedIds={normalizedData.selected_product_ids || []}
                 siteId={siteData?.id}
             />
-
             <div>
                 <SectionTitle icon={<Type size={18}/>}>Заголовок</SectionTitle>
                 <div className="mb-5">
@@ -78,7 +76,6 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                         placeholder="Наприклад: Новинки"
                     />
                 </div>
-                
                 <div className="mb-5">
                     <FontSelector 
                         value={normalizedData.titleFontFamily}
@@ -88,22 +85,19 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                     />
                 </div>
             </div>
-
             <div>
                 <SectionTitle icon={<Layers size={18}/>}>Джерело товарів</SectionTitle>
-                
                 <div className="mb-5">
                     <label style={commonStyles.label}>Режим відображення</label>
                     <ToggleGroup 
                         options={[
                             { value: 'category', label: 'Категорія' },
-                            { value: 'manual', label: 'Вибрані вручну' },
+                            { value: 'manual', label: 'Вручну' },
                         ]}
                         value={normalizedData.source_type}
                         onChange={(val) => updateData({ source_type: val })}
                     />
                 </div>
-
                 {normalizedData.source_type === 'manual' ? (
                     <div className="mb-5">
                         <div className="mb-3">
@@ -134,15 +128,12 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                         />
                     </div>
                 )}
-                
                 <div className="text-[0.8rem] text-(--platform-text-secondary) mt-2 p-3 bg-(--platform-bg) rounded-md border border-(--platform-border-color)">
                     * У блоці будуть відображатися перші <strong>20 товарів</strong> з вибраної категорії.
                 </div>
             </div>
-
             <div>
                 <SectionTitle icon={<LayoutGrid size={18}/>}>Вигляд сітки</SectionTitle>
-                
                 <div className="mb-5">
                     <AlignmentControl 
                         value={normalizedData.alignment}
@@ -151,9 +142,8 @@ const ShowCaseSettings = ({ data, onChange, siteData }) => {
                         showJustify={false}
                     />
                 </div>
-
                 <div className="mb-5">
-                    <label style={commonStyles.label}>Кількість колонок (ПК)</label>
+                    <label style={commonStyles.label}>Кількість колонок</label>
                     <ToggleGroup 
                         options={[
                             { value: 2, label: '2' },

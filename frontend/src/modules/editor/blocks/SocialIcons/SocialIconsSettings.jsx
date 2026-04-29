@@ -2,7 +2,7 @@
 import React from 'react';
 import { commonStyles, ToggleGroup, SectionTitle } from '../../ui/configuration/SettingsUI';
 import { Input } from '../../../../shared/ui/elements/Input';
-import { AlignLeft, AlignCenter, AlignRight, Sun, Moon, LayoutTemplate, Share2, Facebook, Instagram, Send, Youtube, Music } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Sun, Moon, Monitor, LayoutTemplate, Share2, Facebook, Instagram, Send, Youtube, Music } from 'lucide-react';
 
 const socialNetworks = [
     { key: 'facebook', name: 'Facebook', icon: <Facebook size={16}/>, placeholder: 'https://facebook.com/page' },
@@ -32,12 +32,12 @@ const SocialIconsSettings = ({ data, onChange }) => {
                 </div>
 
                 <div className="mb-5">
-                    <label style={commonStyles.label}>Колір іконок (Тема)</label>
+                    <label style={commonStyles.label}>Тема</label>
                     <ToggleGroup 
                         options={[
-                            { value: 'auto', label: 'Авто' },
-                            { value: 'light', label: <div className="flex gap-1.5"><Sun size={16}/> Темні</div> },
-                            { value: 'dark', label: <div className="flex gap-1.5"><Moon size={16}/> Світлі</div> },
+                            { value: 'auto', label: <div className="flex gap-1.5 items-center"><Monitor size={16}/> Авто</div> },
+                            { value: 'light', label: <div className="flex gap-1.5 items-center"><Sun size={16}/> Світла</div> },
+                            { value: 'dark', label: <div className="flex gap-1.5 items-center"><Moon size={16}/> Темна</div> },
                         ]}
                         value={data.theme_mode || 'auto'}
                         onChange={(val) => updateData({ theme_mode: val })}

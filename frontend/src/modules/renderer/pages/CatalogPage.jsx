@@ -40,6 +40,7 @@ const CatalogPage = () => {
         apiClient.get('/tags').then(res => setTags(res.data)).catch(console.error);
         fetchSites();
     }, []);
+
     const fetchSites = async () => {
         setLoading(true);
         try {
@@ -47,14 +48,19 @@ const CatalogPage = () => {
             const response = await apiClient.get('/sites/catalog', { params });
             setSites(response.data);
             setVisibleCount(ITEMS_PER_PAGE);
-        } catch (err) { console.error(err); } 
-        finally { setLoading(false); }
+        } catch (err) { 
+            console.error(err); 
+        } finally { 
+            setLoading(false); 
+        }
     };
+
     useEffect(() => {
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
         searchTimeoutRef.current = setTimeout(() => { fetchSites(); }, 500);
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm, selectedTag, sortOption, onlyFavorites]);
+
     const handleToggleFavorite = async (siteId) => {
         if (!user) { toast.info("Увійдіть для додавання в обране"); return; }
         if (favoriteSiteIds.has(siteId)) {
@@ -69,47 +75,13 @@ const CatalogPage = () => {
     const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const filteredSites = sites.filter(s => hideMySites && user ? s.author !== user.username : true);
     const visibleSites = filteredSites.slice(0, visibleCount);
-    const styles = {
-        pageWrapper: {
-            margin: '-2rem', 
-            width: 'calc(100% + 4rem)', 
-            minHeight: 'calc(100vh - 64px + 4rem)',
-            display: 'flex', 
-            flexDirection: 'column', 
-            backgroundColor: 'var(--platform-bg)', 
-        },
-        stickyContainer: {
-            position: 'sticky',
-            top: 0,
-            zIndex: 50,
-            backgroundColor: 'var(--platform-bg)',
-            borderBottom: '1px solid var(--platform-border-color)', 
-        },
-        header: {
-            padding: '12px 24px', 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            borderBottom: '1px solid var(--platform-border-color)', 
-            height: '60px', 
-            flexShrink: 0,
-            position: 'relative',
-            backgroundColor: 'var(--platform-bg)'
-        },
-        gridArea: { 
-            flex: 1, 
-            padding: '24px', 
-            position: 'relative' 
-        },
-        grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }
-    };
     return (
-        <div style={styles.pageWrapper}>
-            <div style={styles.stickyContainer}>
-                <div style={styles.header}>
-                    <div style={{ textAlign: 'center' }}>
-                        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, color: 'var(--platform-text-primary)' }}>Каталог Сайтiв</h1>
-                    </div>
+        <div className="-m-4 sm:-m-8 w-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] min-h-[calc(100vh-64px+4rem)] flex flex-col bg-(--platform-bg)">
+            <div className="sticky top-0 z-50 bg-(--platform-bg) shadow-sm border-b border-(--platform-border-color)">
+                <div className="p-4 sm:px-6 sm:py-3 flex flex-col sm:flex-row justify-center items-center border-b border-(--platform-border-color) bg-(--platform-bg) min-h-15">
+                    <h1 className="text-lg sm:text-xl font-bold m-0 text-center text-(--platform-text-primary)">
+                        Каталог Сайтів
+                    </h1>
                 </div>
                 <SiteFilters 
                     searchTerm={searchTerm} 
@@ -130,10 +102,10 @@ const CatalogPage = () => {
                             type="button"
                             onClick={() => setHideMySites(!hideMySites)} 
                             title={hideMySites ? "Показати мої сайти" : "Приховати мої сайти"} 
-                            className={`h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border transition-all cursor-pointer ${
+                            className={`h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border transition-all cursor-pointer shadow-sm ${
                                 hideMySites 
                                     ? 'border-red-500 text-red-500 bg-red-500/10' 
-                                    : 'border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-red-500 hover:text-red-500'
+                                    : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary) hover:border-red-500 hover:text-red-500'
                             }`}
                         >
                             <UserX size={20} strokeWidth={2.5} />
@@ -141,17 +113,17 @@ const CatalogPage = () => {
                     )}
                 />
             </div>
-            <div style={styles.gridArea}>
+            <div className="flex-1 p-4 sm:p-6 relative bg-(--platform-bg)">
                 {loading ? (
-                    <LoadingState /> 
+                    <LoadingState layout="page" /> 
                 ) : filteredSites.length === 0 ? (
                     <EmptyState 
                         title="Нічого не знайдено"
                         description="Спробуйте змінити умови пошуку"
                         icon={Search}
                         action={
-                            (searchTerm || selectedTag || onlyFavorites) && (
-                                <Button variant="ghost" onClick={() => { setSearchTerm(''); setSelectedTag(null); setOnlyFavorites(false); }}>
+                            (searchTerm || selectedTag || onlyFavorites || hideMySites) && (
+                                <Button variant="ghost" onClick={() => { setSearchTerm(''); setSelectedTag(null); setOnlyFavorites(false); setHideMySites(false); }}>
                                     Очистити фільтри
                                 </Button>
                             )
@@ -159,7 +131,7 @@ const CatalogPage = () => {
                     />
                 ) : (
                     <>
-                        <div style={styles.grid}>
+                        <div className="grid gap-4 sm:gap-5 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                             {visibleSites.map(site => (
                                 <SiteGridCard 
                                     key={site.id} site={site} variant="public"
@@ -170,8 +142,8 @@ const CatalogPage = () => {
                             ))}
                         </div>
                         {filteredSites.length > visibleCount && (
-                            <div style={{ textAlign: 'center', marginTop: '30px' }}>
-                                <Button variant="outline" onClick={() => setVisibleCount(p => p + ITEMS_PER_PAGE)}>
+                            <div className="text-center mt-8 pb-6">
+                                <Button variant="outline" onClick={() => setVisibleCount(p => p + ITEMS_PER_PAGE)} className="rounded-full px-6">
                                     Більше ({filteredSites.length - visibleCount})
                                 </Button>
                             </div>

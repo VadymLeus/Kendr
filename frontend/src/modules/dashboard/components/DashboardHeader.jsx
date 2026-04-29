@@ -247,14 +247,22 @@ const DashboardHeader = ({
                     .action-btn, .preview-site-btn { width: 32px !important; height: 32px !important; min-width: 32px !important; min-height: 32px !important; } 
                     .editor-actions-group { gap: 4px; margin: 0 6px; padding-right: 6px; border-right: none; } 
                     .view-mode-toggle { display: none; }
-                    .site-title { font-size: 14px; max-width: 100px; }
-                    .saving-state, .saved-state { font-size: 10.5px; height: 22px; padding: 0 6px; }
+                    .site-title { display: none !important; }
+                    .indicator-text { display: none !important; }
+                    .saving-state, .saved-state { height: 32px; width: 32px; padding: 0; justify-content: center; border-radius: 8px; }
+                    .check-icon, .animate-spin { font-size: 16px; }
+                    .main-header-tab-btn-editor,
+                    .main-header-tab-btn-theme,
+                    .main-header-tab-btn-commerce,
+                    .main-header-tab-btn-overview {
+                        display: none !important;
+                    }
+                    .editor-tools-wrapper { display: none !important; }
                 } 
                 @media (max-width: 650px) { .main-header-tab-btn-theme { display: none !important; } }
                 @media (max-width: 480px) { 
                     .editor-header { padding: 0 8px; gap: 4px; } 
                     .site-info-wrapper { gap: 6px; }
-                    .site-title { max-width: 80px; font-size: 13px; }
                     .main-header-tab-btn { padding: 4px 8px; } 
                     .main-header-tab-icon { width: 16px; height: 16px; } 
                     .action-btn svg, .preview-site-btn svg { width: 16px !important; height: 16px !important; } 

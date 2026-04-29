@@ -172,72 +172,74 @@ const AdminBillingPage = () => {
     };
 
     const Widget = ({ title, value, icon, colorClass }) => (
-        <div className="bg-(--platform-card-bg) p-5 rounded-xl border border-(--platform-border-color) shadow-sm flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${colorClass}`}>{icon}</div>
-            <div>
-                <p className="text-sm text-(--platform-text-secondary) font-medium">{title}</p>
-                <h4 className="text-2xl font-bold text-(--platform-text-primary) m-0">{value}</h4>
+        <div className="bg-(--platform-card-bg) p-3 sm:p-5 rounded-xl border border-(--platform-border-color) shadow-sm flex items-center gap-3 sm:gap-4">
+            <div className={`p-2.5 sm:p-3 rounded-lg flex items-center justify-center ${colorClass}`}>
+                {icon}
+            </div>
+            <div className="min-w-0">
+                <p className="text-[11px] sm:text-sm text-(--platform-text-secondary) font-medium truncate leading-tight mb-0.5">{title}</p>
+                <h4 className="text-lg sm:text-2xl font-bold text-(--platform-text-primary) m-0 truncate leading-tight">{value}</h4>
             </div>
         </div>
     );
 
     return (
         <AdminPageLayout 
-            title="Фінансовий моніторинг" 
+            title={<span className="text-[1.2rem] sm:text-[1.5rem] tracking-tight whitespace-nowrap">Фінансовий моніторинг</span>} 
             icon={CreditCard} 
             viewMode={viewMode} 
             setViewMode={setViewMode} 
             onRefresh={fetchData} 
             loading={isLoading}
         >
-            <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-fit mb-6">
+            <div className="flex p-1 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) w-full sm:w-fit mb-5 sm:mb-6">
                 <button
-                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'platform' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                    className={`flex-1 sm:flex-none h-9 sm:h-10 px-4 rounded-lg text-[13px] sm:text-sm font-medium flex items-center justify-center gap-2 transition-all whitespace-nowrap ${activeTab === 'platform' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
                     onClick={() => handleTabChange('platform')}
                 >
-                    <CreditCard size={16} /> Доходи платформи
+                    <CreditCard size={16} className="shrink-0" /> Платформа
                 </button>
                 <button
-                    className={`py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === 'users' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
+                    className={`flex-1 sm:flex-none h-9 sm:h-10 px-4 rounded-lg text-[13px] sm:text-sm font-medium flex items-center justify-center gap-2 transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-(--platform-card-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary) hover:text-(--platform-text-primary)'}`}
                     onClick={() => handleTabChange('users')}
                 >
-                    <Store size={16} /> Продажі користувачів
+                    <Store size={16} className="shrink-0" /> Користувачі
                 </button>
             </div>
             {summary && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 mb-6">
                     <Widget 
                         title="Оборот" 
                         value={`${summary.totalEarned} ${currencyMap[summary.currency] || summary.currency || '₴'}`} 
-                        icon={<DollarSign size={24} />} 
+                        icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />} 
                         colorClass="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" 
                     />
                     <Widget 
                         title="Успішні" 
                         value={summary.successfulThisMonth} 
-                        icon={<TrendingUp size={24} />} 
+                        icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />} 
                         colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" 
                     />
                     <Widget 
                         title="Всього" 
                         value={totalCount} 
-                        icon={<Activity size={24} />} 
+                        icon={<Activity className="w-5 h-5 sm:w-6 sm:h-6" />} 
                         colorClass="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" 
                     />
                 </div>
             )}
-            <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                <FilterBar>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <div style={{ width: '180px' }}>
-                            <CustomSelect 
-                                value={statusFilter} 
-                                onChange={(e) => setStatusFilter(e.target.value)} 
-                                options={activeTab === 'platform' ? PLATFORM_STATUS_OPTIONS : USER_STATUS_OPTIONS} 
-                                placeholder="Статус" 
-                                style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
-                            />
-                        </div>
+            <div className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                <FilterBar className="w-full xl:w-auto grid grid-cols-1 sm:flex gap-3">
+                    <div className="w-full sm:w-48 shrink-0">
+                        <CustomSelect 
+                            value={statusFilter} 
+                            onChange={(e) => setStatusFilter(e.target.value)} 
+                            options={activeTab === 'platform' ? PLATFORM_STATUS_OPTIONS : USER_STATUS_OPTIONS} 
+                            placeholder="Статус" 
+                            style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
+                        />
+                    </div>
+                    <div className="w-full sm:w-auto overflow-x-auto hide-scrollbar">
                         <DateRangePicker 
                             startDate={startDate}
                             endDate={endDate}
@@ -247,8 +249,8 @@ const AdminBillingPage = () => {
                         />
                     </div>
                 </FilterBar>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ width: '300px' }}>
+                <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center w-full xl:w-auto">
+                    <div className="flex-1 w-full sm:w-72 min-w-50">
                         <Input 
                             placeholder={activeTab === 'platform' ? "Пошук за ID або Email..." : "Пошук за ID, Email або Сайтом..."} 
                             leftIcon={<Search size={16}/>} 
@@ -286,50 +288,44 @@ const AdminBillingPage = () => {
                                 const st = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
                                 return (
                                     <AdminRow key={item.id} onClick={() => setSelectedItem(item)} isSelected={selectedItem?.id === item.id}>
-                                        <AdminCell style={{opacity: 0.6, fontFamily: 'monospace', fontSize: '13px', wordBreak: 'break-all'}}>
+                                        <AdminCell className="opacity-60 font-mono text-[13px] break-all">
                                             {item.id}
                                         </AdminCell>
                                         <AdminCell>
                                             {activeTab === 'platform' ? (
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <div className="flex flex-col min-w-0">
                                                     <div 
                                                         onClick={(e) => { e.stopPropagation(); navigate(`/profile/${item.user_slug || item.user_name}`); }}
-                                                        style={{ fontWeight: '600', color: 'var(--platform-text-primary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', transition: 'color 0.2s' }}
-                                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--platform-accent)'}
-                                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--platform-text-primary)'}
+                                                        className="font-semibold text-(--platform-text-primary) cursor-pointer inline-flex items-center gap-1 transition-colors hover:text-(--platform-accent) truncate"
                                                     >
-                                                        {item.user_name} <ExternalLink size={12} style={{ opacity: 0.5 }} />
+                                                        <span className="truncate">{item.user_name}</span> <ExternalLink size={12} className="opacity-50 shrink-0" />
                                                     </div>
-                                                    <div style={{fontSize: '12px', color: 'var(--platform-text-secondary)'}}>{item.user_email}</div>
+                                                    <div className="text-[12px] text-(--platform-text-secondary) truncate">{item.user_email}</div>
                                                 </div>
                                             ) : (
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <div style={{fontWeight: '600', color: 'var(--platform-text-primary)'}}>{item.customer_name}</div>
-                                                    <div style={{fontSize: '12px', color: 'var(--platform-text-secondary)'}}>{item.customer_email}</div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <div className="font-semibold text-(--platform-text-primary) truncate">{item.customer_name}</div>
+                                                    <div className="text-[12px] text-(--platform-text-secondary) truncate">{item.customer_email}</div>
                                                 </div>
                                             )}
                                         </AdminCell>
                                         <AdminCell>
                                             {activeTab === 'platform' ? (
-                                                <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)'}} title={item.description}>
+                                                <div className="text-[13px] text-(--platform-text-secondary) truncate max-w-50 xl:max-w-75" title={item.description}>
                                                     {item.description}
                                                 </div>
                                             ) : (
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <div className="flex flex-col min-w-0">
                                                     <div 
                                                         onClick={(e) => { e.stopPropagation(); window.open(`/site/${item.site_path}`, '_blank'); }}
-                                                        style={{ fontWeight: '600', color: 'var(--platform-text-primary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', transition: 'color 0.2s' }}
-                                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--platform-accent)'}
-                                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--platform-text-primary)'}
+                                                        className="font-semibold text-(--platform-text-primary) cursor-pointer inline-flex items-center gap-1 transition-colors hover:text-(--platform-accent) truncate"
                                                     >
-                                                        <Globe size={12} style={{ opacity: 0.5 }} /> {item.site_title}
+                                                        <Globe size={12} className="opacity-50 shrink-0" /> <span className="truncate">{item.site_title}</span>
                                                     </div>
                                                     <div 
                                                         onClick={(e) => { e.stopPropagation(); navigate(`/profile/${item.owner_slug || item.owner_name}`); }}
-                                                        style={{fontSize: '12px', color: 'var(--platform-accent)', cursor: 'pointer', display: 'inline-block'}}
+                                                        className="text-[12px] text-(--platform-accent) cursor-pointer inline-block truncate hover:underline"
                                                         title={`Продавець: ${item.owner_email}`}
-                                                        onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                                                        onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
                                                     >
                                                         @{item.owner_email.split('@')[0]}
                                                     </div>
@@ -337,16 +333,16 @@ const AdminBillingPage = () => {
                                             )}
                                         </AdminCell>
                                         <AdminCell>
-                                            <div style={{fontSize: '13px', color: 'var(--platform-text-primary)'}}>
+                                            <div className="text-[13px] text-(--platform-text-primary)">
                                                 {new Date(item.created_at).toLocaleDateString('uk-UA')}
                                             </div>
-                                            <div style={{fontSize: '11px', color: 'var(--platform-text-secondary)'}}>
+                                            <div className="text-[11px] text-(--platform-text-secondary)">
                                                 {new Date(item.created_at).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </AdminCell>
                                         <AdminCell>
-                                            <div style={{fontWeight: 'bold', color: 'var(--platform-text-primary)'}}>
-                                                {Number(item.amount).toFixed(2)} <span style={{fontSize: '12px', opacity: 0.7}}>{item.currency || 'UAH'}</span>
+                                            <div className="font-bold text-(--platform-text-primary) flex items-baseline gap-1">
+                                                {Number(item.amount).toFixed(2)} <span className="text-[12px] opacity-70">{item.currency || 'UAH'}</span>
                                             </div>
                                         </AdminCell>
                                         <AdminCell align="right">
@@ -384,16 +380,16 @@ const AdminBillingPage = () => {
                     )}
                 </div>
             ) : (
-                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--platform-text-secondary)' }}>
+                <div className="p-10 text-center text-(--platform-text-secondary)">
                     Режим сітки для транзакцій недоступний
                 </div>
             )}
+            
             <BillingDetailsPanel 
                 item={selectedItem} 
                 type={activeTab} 
                 onClose={() => setSelectedItem(null)} 
             />
-            
         </AdminPageLayout>
     );
 };

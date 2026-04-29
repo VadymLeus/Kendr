@@ -110,67 +110,73 @@ const MyTicketsPage = () => {
             return 0;
         });
     }, [tickets, statusFilter, categoryFilter, searchQuery, sortConfig]);
+
     if (error) return (
-        <div className="m-8 p-4 text-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-500">
+        <div className="m-4 sm:m-8 p-4 text-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-600">
             {error}
         </div>
     );
+
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full flex flex-col">
             <Helmet>
                 <title>Мої звернення | Kendr</title>
             </Helmet>
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 shrink-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 shrink-0">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold mb-1 text-(--platform-text-primary) m-0">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 text-(--platform-text-primary) m-0">
                         Мої звернення
                     </h1>
-                    <p className="text-(--platform-text-secondary) text-base md:text-lg m-0">
+                    <p className="text-(--platform-text-secondary) text-sm sm:text-base md:text-lg m-0">
                         Історія вашої комунікації з підтримкою
                     </p>
                 </div>
-                <Button variant="primary" icon={<Plus size={18}/>} onClick={() => navigate('/support/new-ticket')}>
+                <Button 
+                    variant="primary" 
+                    icon={<Plus size={18}/>} 
+                    onClick={() => navigate('/support/new-ticket')}
+                    className="w-full sm:w-auto min-h-11 sm:min-h-10"
+                >
                     Нове звернення
                 </Button>
             </div>
-            <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-                <FilterBar>
-                    <div style={{ display: 'flex', background: 'var(--platform-card-bg)', padding: '2px', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
+            <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <div className="flex bg-(--platform-card-bg) p-1 rounded-xl border border-(--platform-border-color) w-full sm:w-auto shrink-0">
                         {['active', 'closed'].map(s => (
                             <Button 
                                 key={s} 
                                 variant="ghost" 
                                 onClick={() => setStatusFilter(s)} 
-                                style={{ 
-                                    padding: '4px 12px', height: '30px', fontSize: '13px', borderRadius: '6px', 
-                                    background: statusFilter === s ? 'var(--platform-bg)' : 'transparent', 
-                                    color: statusFilter === s ? 'var(--platform-text-primary)' : 'var(--platform-text-secondary)' 
-                                }}
+                                className={`flex-1 sm:flex-none min-h-10 sm:min-h-8 px-4 text-sm rounded-lg transition-colors border-none ${
+                                    statusFilter === s 
+                                        ? 'bg-(--platform-bg) text-(--platform-text-primary) shadow-sm' 
+                                        : 'bg-transparent text-(--platform-text-secondary) hover:text-(--platform-text-primary)'
+                                }`}
                             >
                                 {s === 'active' ? 'Активні' : 'Архів'}
                             </Button>
                         ))}
                     </div>
-                    <div style={{ width: '220px' }}>
+                    <div className="w-full sm:w-55 shrink-0">
                         <CustomSelect 
                             value={categoryFilter} 
                             onChange={(e) => setCategoryFilter(e.target.value)} 
                             options={CATEGORY_OPTIONS} 
                             variant="minimal" 
-                            style={{ height: '36px', background: 'var(--platform-card-bg)' }} 
+                            className="h-11 sm:h-10 bg-(--platform-card-bg)" 
                         />
                     </div>
-                </FilterBar>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ width: '300px' }}>
-                        <Input 
-                            placeholder="Пошук за темою або ID..." 
-                            leftIcon={<Search size={16}/>} 
-                            value={searchQuery} 
-                            onChange={(e) => setSearchQuery(e.target.value)} 
-                            wrapperStyle={{margin: 0}} 
-                        />
-                    </div>
+                </div>
+                <div className="w-full lg:w-75 shrink-0">
+                    <Input 
+                        placeholder="Пошук за темою або ID..." 
+                        leftIcon={<Search size={16}/>} 
+                        value={searchQuery} 
+                        onChange={(e) => setSearchQuery(e.target.value)} 
+                        wrapperStyle={{ margin: 0 }} 
+                        className="h-11 sm:h-10"
+                    />
                 </div>
             </div>
             <AdminTable>
@@ -210,13 +216,13 @@ const MyTicketsPage = () => {
                                 <AdminRow 
                                     key={t.id} 
                                     onClick={(e) => { e.stopPropagation(); navigate(`/support/ticket/${t.id}`) }} 
-                                    style={{ background: t.status !== 'closed' ? 'color-mix(in srgb, var(--platform-accent), transparent 98%)' : 'transparent' }}
+                                    className={`cursor-pointer transition-colors ${t.status !== 'closed' ? 'bg-[color-mix(in_srgb,var(--platform-accent),transparent_98%)]' : 'bg-transparent'}`}
                                 >
-                                    <AdminCell style={{opacity: 0.6, fontSize: '13px'}}>#{t.id}</AdminCell>
+                                    <AdminCell className="opacity-60 text-xs sm:text-[13px]">#{t.id}</AdminCell>
                                     <AdminCell>
-                                        <div style={{fontWeight: '600', fontSize: '15px'}}>{t.subject}</div>
+                                        <div className="font-semibold text-sm sm:text-[15px] text-(--platform-text-primary)">{t.subject}</div>
                                         {t.body && (
-                                            <div style={{fontSize: '13px', opacity: 0.7, maxWidth: '400px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
+                                            <div className="text-xs sm:text-[13px] text-(--platform-text-secondary) opacity-70 max-w-37.5 sm:max-w-75 md:max-w-100 truncate">
                                                 {t.body}
                                             </div>
                                         )}
@@ -231,14 +237,14 @@ const MyTicketsPage = () => {
                                             {sProps.l}
                                         </GenericBadge>
                                     </AdminCell>
-                                    <AdminCell align="right" style={{fontFamily: 'monospace', opacity: 0.7}}>
+                                    <AdminCell align="right" className="font-mono opacity-70 text-xs sm:text-[13px]">
                                         {new Date(t.updated_at).toLocaleString('uk-UA')}
                                     </AdminCell>
                                     <AdminCell align="right">
-                                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
                                             <Button 
                                                 variant="ghost" 
-                                                style={{ color: 'var(--platform-accent)', padding: '6px' }} 
+                                                className="text-(--platform-accent) p-1.5 sm:p-2 min-h-9 sm:min-h-8" 
                                                 icon={<ExternalLink size={18} />} 
                                                 onClick={(e) => { e.stopPropagation(); navigate(`/support/ticket/${t.id}`) }} 
                                             />
@@ -247,7 +253,7 @@ const MyTicketsPage = () => {
                                                     variant="ghost" 
                                                     title="Закрити звернення" 
                                                     onClick={() => confirmClose(t.id)} 
-                                                    style={{ color: 'var(--platform-danger)', padding: '6px' }} 
+                                                    className="text-(--platform-danger) hover:bg-red-50 p-1.5 sm:p-2 min-h-9 sm:min-h-8" 
                                                     icon={<XCircle size={18} />} 
                                                 />
                                             )}

@@ -3,31 +3,19 @@ import React, { useContext } from 'react';
 import { ThemeContext } from '../../../app/providers/ThemeContext';
 import ThemeModeSelector from '../../../shared/ui/complex/ThemeModeSelector';
 import AccentColorSelector from '../../../shared/ui/complex/AccentColorSelector';
+import { Palette } from 'lucide-react';
 
 const ProfileAppearanceTab = () => {
     const { platformMode, setPlatformMode, platformAccent, setPlatformAccent } = useContext(ThemeContext);
-    const container = { maxWidth: '800px', margin: '0 auto', width: '100%' };
-    const card = { 
-        background: 'var(--platform-card-bg)', 
-        borderRadius: '16px', 
-        border: '1px solid var(--platform-border-color)', 
-        padding: '32px', 
-        marginBottom: '24px', 
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' 
-    };
-    const cardTitle = { 
-        fontSize: '1.3rem', 
-        fontWeight: '600', 
-        color: 'var(--platform-text-primary)', 
-        margin: '0 0 8px 0' 
-    };
-    const section = { marginBottom: '28px' };
     return (
-        <div style={container}>
-            <div style={card}>
-                <div style={section}>
-                    <h3 style={cardTitle}>Тема інтерфейсу</h3>
-                    <p style={{ color: 'var(--platform-text-secondary)', marginBottom: '16px', fontSize: '0.9rem' }}>
+        <div className="w-full max-w-200 mx-auto">
+            <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-8 mb-6 shadow-sm">
+                <div className="mb-8">
+                    <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) flex items-center gap-2.5 m-0 mb-1.5">
+                        <Palette className="w-5 h-5 sm:w-6 sm:h-6 text-(--platform-accent)" />
+                        Тема інтерфейсу
+                    </h3>
+                    <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed mb-5 sm:mb-6">
                         Оберіть між світлою та темною темою для вашого дашборду.
                     </p>
                     <ThemeModeSelector 
@@ -36,13 +24,14 @@ const ProfileAppearanceTab = () => {
                         onChange={setPlatformMode}
                     />
                 </div>
-                <div style={{ marginBottom: 0 }}>
+                <div className="pt-6 sm:pt-8 border-t border-(--platform-border-color)">
                      <AccentColorSelector 
                         value={platformAccent}
                         onChange={setPlatformAccent}
                         enableCustom={false}
                     />
                 </div>
+
             </div>
         </div>
     );

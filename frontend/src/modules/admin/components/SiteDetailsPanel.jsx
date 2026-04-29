@@ -69,6 +69,7 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
             navigate(`/profile/${targetIdentifier}`);
         }
     };
+    
     return (
         <BaseDetailsPanel 
             title="Керування сайтом" 
@@ -82,9 +83,9 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
                 <div style={styles.label}>Сайт</div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px', marginBottom: '16px'}}>
                     <Avatar url={site.logo_url} name={site.title} size={42} />
-                    <div>
-                        <div style={{...styles.value, fontSize: '18px', fontWeight: 'bold'}}>{site.title}</div>
-                        <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', fontFamily: 'monospace'}}>/{site.site_path}</div>
+                    <div style={{minWidth: 0}}>
+                        <div style={{...styles.value, fontSize: '18px', fontWeight: 'bold'}} className="truncate">{site.title}</div>
+                        <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', fontFamily: 'monospace', wordBreak: 'break-all'}}>/{site.site_path}</div>
                     </div>
                 </div>
                 <a href={`/site/${site.site_path}`} target="_blank" rel="noreferrer" style={{textDecoration: 'none'}}>
@@ -114,13 +115,13 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
                     <div 
                         onClick={handleVisitProfile} 
-                        style={{ cursor: isAuthorClickable ? 'pointer' : 'default', transition: 'transform 0.2s' }}
+                        style={{ cursor: isAuthorClickable ? 'pointer' : 'default', transition: 'transform 0.2s', flexShrink: 0 }}
                         onMouseEnter={e => { if(isAuthorClickable) e.currentTarget.style.transform = 'scale(1.05)' }}
                         onMouseLeave={e => { if(isAuthorClickable) e.currentTarget.style.transform = 'scale(1)' }}
                     >
                         <Avatar url={site.author_avatar_url} name={site.author} size={42} />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                         <div 
                             onClick={handleVisitProfile}
                             style={{
@@ -136,12 +137,12 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
                             onMouseLeave={e => { if(isAuthorClickable) e.currentTarget.style.color = 'var(--platform-text-primary)' }}
                             title={isAuthorClickable ? "Відкрити профіль користувача" : ""}
                         >
-                            {site.author}
+                            <span className="truncate">{site.author}</span>
                             {site.owner_role === 'admin' && <span style={{color:'var(--platform-danger)', fontSize: '12px'}}>(Адмін)</span>}
                             {site.owner_role === 'moderator' && <span style={{color:'var(--platform-warning)', fontSize: '12px'}}>(Модератор)</span>}
-                            {isAuthorClickable && <ExternalLink size={14} style={{ opacity: 0.5 }} />}
+                            {isAuthorClickable && <ExternalLink size={14} style={{ opacity: 0.5, flexShrink: 0 }} />}
                         </div>
-                        <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', opacity: 0.8}}>{site.author_email}</div>
+                        <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', opacity: 0.8, wordBreak: 'break-all'}}>{site.author_email}</div>
                     </div>
                 </div>
             </div>
@@ -164,7 +165,7 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
             {isSuspended && (
                 <div style={styles.infoBox('error')}>
                     <Clock size={20} style={{ shrink: 0, marginTop: '2px' }} />
-                    <div style={{ width: '100%' }}>
+                    <div style={{ width: '100%', minWidth: 0 }}>
                         <div style={{fontWeight: 'bold', marginBottom: '4px'}}>Сайт призупинено</div>
                         <div style={{fontSize: '13px'}}>До видалення: <strong>{timeLeftString}</strong></div>
                         {siteReason && (
@@ -178,17 +179,16 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
                                 color: 'var(--platform-danger)'
                             }}>
                                 <strong style={{display: 'block', marginBottom: '4px'}}>Причина блокування:</strong>
-                                <span style={{opacity: 0.9, lineHeight: '1.4'}}>{siteReason}</span>
+                                <span style={{opacity: 0.9, lineHeight: '1.4', wordBreak: 'break-word'}}>{siteReason}</span>
                             </div>
                         )}
-                        
                         {isExpired && <div style={{fontSize: '13px', marginTop: '8px', fontWeight: 'bold'}}>Можна видаляти.</div>}
                     </div>
                 </div>
             )}
             {isProbation && (
                 <div style={styles.infoBox('warning')}>
-                    <Eye size={20} />
+                    <Eye size={20} className="shrink-0" />
                     <div>
                         <div style={{fontWeight: 'bold', marginBottom: '4px'}}>Випробувальний термін</div>
                         <div style={{fontSize: '13px'}}>Доступ для редагування відкрито, публікація закрита.</div>
@@ -197,7 +197,7 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
             )}
             {site.appeal_status === 'pending' && (
                 <div style={styles.infoBox('info')}>
-                    <ShieldCheck size={20} />
+                    <ShieldCheck size={20} className="shrink-0" />
                     <div>
                         <div style={{fontWeight: 'bold', marginBottom: '4px'}}>Є активна апеляція</div>
                         <div style={{fontSize: '13px'}}>Дата: {new Date(site.appeal_date).toLocaleDateString()}</div>

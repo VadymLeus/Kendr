@@ -12,13 +12,12 @@ const MapBlock = ({ blockData, isEditorPreview, style }) => {
     const { embed_code, height = 'medium' } = blockData;
     const mapSrc = parseSrcFromIframe(embed_code);
     const heightClasses = {
-        small: 'h-[300px]',
-        medium: 'h-[500px]',
-        large: 'h-[700px]',
+        small: 'h-[250px] @3xl:h-[300px]',
+        medium: 'h-[350px] @3xl:h-[500px]',
+        large: 'h-[400px] @3xl:h-[700px]',
         full: 'h-[calc(100vh-60px)]',
-        auto: 'h-[500px]'
+        auto: 'h-[350px] @3xl:h-[500px]'
     };
-
     const currentHeightClass = heightClasses[height] || heightClasses.medium;
     if (!mapSrc) {
         return (
@@ -30,15 +29,15 @@ const MapBlock = ({ blockData, isEditorPreview, style }) => {
                 `}
                 style={style}
             >
-                <div className="text-(--site-accent) opacity-70">
-                    <MapPin size={48} />
+                <div className="text-(--site-accent) opacity-70 mb-2">
+                    <MapPin size={40} className="@3xl:w-12 @3xl:h-12" />
                 </div>
-                <div className="text-center">
-                    <p className="m-0 font-semibold text-(--site-text-primary) text-lg">
+                <div className="text-center px-4">
+                    <p className="m-0 font-semibold text-(--site-text-primary) text-base @3xl:text-lg">
                         Карту не додано
                     </p> 
                     {isEditorPreview && (
-                        <small className="block mt-1 opacity-80">
+                        <small className="block mt-2 opacity-80 text-sm">
                             Вставте код iframe у налаштуваннях блоку
                         </small>
                     )}
@@ -67,4 +66,8 @@ const MapBlock = ({ blockData, isEditorPreview, style }) => {
     );
 };
 
-export default MapBlock;
+export default React.memo(MapBlock, (prev, next) => {
+    return prev.blockData.embed_code === next.blockData.embed_code && 
+           prev.blockData.height === next.blockData.height &&
+           prev.isEditorPreview === next.isEditorPreview;
+});

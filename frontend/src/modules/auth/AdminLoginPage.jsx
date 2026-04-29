@@ -25,10 +25,12 @@ const AdminLoginPage = () => {
         setTurnstileToken('');
         turnstileRef.current?.reset();
     };
+    
     const handleError = (error, fallback) => {
         const message = error.response?.data?.message || fallback;
         toast.error(message, { toastId: message });
     };
+    
     const handleLogin = async (e) => {
         e.preventDefault();
         if (!turnstileToken) return toast.warning('Security clearance required.', { toastId: 'admin-captcha-warn' });
@@ -68,24 +70,24 @@ const AdminLoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center p-5 bg-(--platform-bg) transition-colors duration-300">
+        <div className="min-h-dvh w-full flex items-center justify-center p-4 sm:p-6 bg-(--platform-bg) transition-colors duration-300">
             <Helmet><title>Admin Gateway | Kendr</title></Helmet>
-            <div className="w-full max-w-105 bg-(--platform-card-bg) p-8 md:p-10 rounded-3xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] relative transition-colors duration-300">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 bg-red-100/50 text-red-600 dark:bg-red-500/10 dark:text-red-500 border border-red-500/20 shadow-sm">
-                        {view === 'login' ? <ShieldAlert size={32} /> : <ShieldCheck size={32} />}
+            <div className="w-full max-w-105 bg-(--platform-card-bg) p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] relative transition-colors duration-300 mt-12 sm:mt-0">
+                <div className="flex flex-col items-center mb-6 sm:mb-8">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 bg-red-100/50 text-red-600 dark:bg-red-500/10 dark:text-red-500 border border-red-500/20 shadow-sm">
+                        {view === 'login' ? <ShieldAlert size={28} className="sm:w-8 sm:h-8" /> : <ShieldCheck size={28} className="sm:w-8 sm:h-8" />}
                     </div>
-                    <h1 className="text-2xl font-bold text-(--platform-text-primary) text-center">
+                    <h1 className="text-xl sm:text-2xl font-bold text-(--platform-text-primary) text-center">
                         {view === 'login' ? 'Доступ адміністратора' : 'Перевірка 2FA'}
                     </h1>
-                    <p className="text-(--platform-text-secondary) text-sm mt-2 text-center">
+                    <p className="text-(--platform-text-secondary) text-xs sm:text-sm mt-2 text-center">
                         {view === 'login' 
                             ? 'Захищена зона системи Kendr' 
                             : 'Введіть токен безпеки для підтвердження'}
                     </p>
                 </div>
                 {view === 'login' ? (
-                    <form onSubmit={handleLogin} className="flex flex-col gap-5">
+                    <form onSubmit={handleLogin} className="flex flex-col gap-4 sm:gap-5">
                         <Input 
                             name="loginInput" 
                             label="Ідентифікатор" 
@@ -104,7 +106,7 @@ const AdminLoginPage = () => {
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
                             required 
                         />
-                        <div className="flex justify-center mt-2">
+                        <div className="flex justify-center mt-2 max-w-full overflow-hidden">
                             <Turnstile 
                                 siteKey={SITE_KEY} 
                                 onSuccess={setTurnstileToken} 
@@ -114,7 +116,7 @@ const AdminLoginPage = () => {
                         <Button 
                             type="submit" 
                             disabled={isLoading || !turnstileToken}
-                            className="w-full py-3.5 mt-2 text-base rounded-xl font-semibold transition-all"
+                            className="w-full py-3 sm:py-3.5 mt-2 text-sm sm:text-base rounded-xl font-semibold transition-all"
                         >
                             {isLoading ? 'Автентифікація...' : 'Увійти в панель'}
                         </Button>
@@ -123,12 +125,12 @@ const AdminLoginPage = () => {
                     <div className="flex flex-col items-center relative">
                         <button 
                             onClick={() => { setView('login'); resetTurnstile(); }} 
-                            className="absolute -top-16 left-0 bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors p-2 -ml-2 rounded-lg hover:bg-(--platform-hover-bg)"
+                            className="absolute -top-12 sm:-top-16 left-0 bg-transparent border-none cursor-pointer text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors p-2 -ml-2 rounded-lg hover:bg-(--platform-hover-bg)"
                             title="Повернутися"
                         >
-                            <ArrowLeft size={24} />
+                            <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
                         </button>
-                        <form onSubmit={handleVerifyOtp} className="w-full flex flex-col gap-6">
+                        <form onSubmit={handleVerifyOtp} className="w-full flex flex-col gap-5 sm:gap-6">
                             <div className="admin-otp-wrapper w-full">
                                 <style>{`
                                     .admin-otp-wrapper input {
@@ -136,12 +138,22 @@ const AdminLoginPage = () => {
                                         color: var(--platform-text-primary) !important;
                                         border-color: var(--platform-border-color) !important;
                                         font-family: var(--font-body, 'Inter', sans-serif);
-                                        font-size: 1.25rem;
+                                        font-size: 1.1rem;
                                         font-weight: 600;
+                                        width: 100% !important;
+                                    }
+                                    @media (min-width: 640px) {
+                                        .admin-otp-wrapper input {
+                                            font-size: 1.25rem;
+                                        }
                                     }
                                     .admin-otp-wrapper input:focus {
                                         border-color: var(--platform-accent) !important;
                                         box-shadow: 0 0 0 3px color-mix(in srgb, var(--platform-accent), transparent 85%) !important;
+                                    }
+                                    .admin-otp-wrapper > div {
+                                        gap: 0.5rem;
+                                        justify-content: space-between;
                                     }
                                 `}</style>
                                 <OtpInput length={6} value={otpCode} onChange={setOtpCode} disabled={isLoading} />
@@ -149,7 +161,7 @@ const AdminLoginPage = () => {
                             <Button 
                                 type="submit" 
                                 disabled={isLoading || otpCode.length !== 6}
-                                className="w-full py-3.5 mt-2 text-base rounded-xl font-semibold transition-all"
+                                className="w-full py-3 sm:py-3.5 mt-2 text-sm sm:text-base rounded-xl font-semibold transition-all"
                             >
                                 {isLoading ? 'Перевірка...' : 'Підтвердити токен'}
                             </Button>

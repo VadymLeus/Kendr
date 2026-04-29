@@ -26,6 +26,7 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         height = 'small', 
         buttonText 
     } = blockData;
+    
     const buttonConfig = {
         ...DEFAULT_BUTTON_CONFIG,
         ...((blockData && blockData.button) || {}),
@@ -71,9 +72,9 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     };
 
     const sizeClasses = {
-        small: 'px-6 py-2.5 text-[0.95rem]',
-        medium: 'px-8 py-3.5 text-base',
-        large: 'px-12 py-4 text-[1.15rem]'
+        small: 'px-5 py-2 @2xl:px-6 @2xl:py-2.5 text-sm @2xl:text-[0.95rem]',
+        medium: 'px-6 py-2.5 @2xl:px-8 @2xl:py-3.5 text-sm @2xl:text-base',
+        large: 'px-8 py-3 @2xl:px-12 @2xl:py-4 text-base @2xl:text-[1.15rem]'
     };
     
     const alignMap = {
@@ -84,15 +85,16 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
     const heightClasses = { 
         small: 'min-h-auto',
-        medium: 'min-h-[500px]',
-        large: 'min-h-[700px]',
+        medium: 'min-h-[400px] @3xl:min-h-[500px]',
+        large: 'min-h-[500px] @3xl:min-h-[700px]',
         full: 'min-h-[calc(100vh-60px)]' 
     };
-    const scopeClass = `form-scope-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
-    const btnClass = `form-btn-${(blockData && blockData.id) ? blockData.id : 'preview'}`;
-    const labelClasses = "block text-[0.95rem] font-medium text-(--site-text-primary) mb-2.5 ml-0.5";
+    
+    const scopeClass = `form-scope-${blockData?.block_id || blockData?.id || 'preview'}`;
+    const btnClass = `form-btn-${blockData?.block_id || blockData?.id || 'preview'}`;
+    const labelClasses = "block text-sm @2xl:text-[0.95rem] font-medium text-(--site-text-primary) mb-1.5 @2xl:mb-2.5 ml-0.5";
     const inputClasses = `
-        peer w-full pl-12 pr-4 py-3.5 
+        peer w-full pl-10 @2xl:pl-12 pr-3 @2xl:pr-4 py-3 @2xl:py-3.5 
         bg-black/[0.02] dark:bg-white/[0.02] 
         border-2 border-(--site-border-color)
         text-(--site-text-primary) font-medium
@@ -102,14 +104,15 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         focus:border-(--site-accent) focus:ring-4 focus:ring-(--site-accent)/15 
         hover:border-(--site-text-secondary)
     `;
-    const iconClasses = "absolute left-4 top-1/2 -translate-y-1/2 text-(--site-text-secondary) opacity-60 pointer-events-none transition-all duration-300 peer-focus:text-(--site-accent) peer-focus:opacity-100";
-    const textareaIconClasses = "absolute left-4 top-4 text-(--site-text-secondary) opacity-60 pointer-events-none transition-all duration-300 peer-focus:text-(--site-accent) peer-focus:opacity-100";
+    
+    const iconClasses = "absolute left-3 @2xl:left-4 top-1/2 -translate-y-1/2 text-(--site-text-secondary) opacity-60 pointer-events-none transition-all duration-300 peer-focus:text-(--site-accent) peer-focus:opacity-100";
+    const textareaIconClasses = "absolute left-3 @2xl:left-4 top-3 @2xl:top-4 text-(--site-text-secondary) opacity-60 pointer-events-none transition-all duration-300 peer-focus:text-(--site-accent) peer-focus:opacity-100";
     return (
         <div 
             className={`
-                p-8 md:p-12 bg-(--site-card-bg) text-(--site-text-primary) 
-                border border-(--site-border-color) shadow-2xl shadow-black/5
-                max-w-150 w-full mx-auto rounded-3xl flex flex-col justify-center
+                p-5 @2xl:p-8 @3xl:p-12 bg-(--site-card-bg) text-(--site-text-primary) 
+                border border-(--site-border-color) shadow-xl @2xl:shadow-2xl shadow-black/5
+                max-w-full @2xl:max-w-150 @3xl:max-w-175 w-full mx-auto rounded-2xl @2xl:rounded-3xl flex flex-col justify-center
                 ${heightClasses[height]}
                 ${scopeClass}
             `}
@@ -130,14 +133,30 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     opacity: 0.6;
                     font-weight: 400;
                 }
+                .${scopeClass} textarea {
+                    scrollbar-width: thin;
+                    scrollbar-color: var(--site-accent) transparent;
+                }
+                .${scopeClass} textarea::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .${scopeClass} textarea::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .${scopeClass} textarea::-webkit-scrollbar-thumb {
+                    background-color: var(--site-accent);
+                    border-radius: 10px;
+                }
             `}</style>
-            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-7">
+            
+            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5 @2xl:gap-7">
                 {status.error && (
-                    <div className="p-4 border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl mb-2 text-sm text-center font-medium shadow-sm">
+                    <div className="p-3 @2xl:p-4 border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl mb-2 text-sm text-center font-medium shadow-sm">
                         {status.error}
                     </div>
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+                
+                <div className="grid grid-cols-1 @3xl:grid-cols-2 gap-5 @2xl:gap-7">
                     <div>
                         <label className={labelClasses}>Ваше ім'я *</label>
                         <div className="relative">
@@ -170,7 +189,7 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     </div>
                 </div>
                 <div>
-                    <label className={labelClasses}>Тема (необов'язково)</label>
+                    <label className={labelClasses}>Тема</label>
                     <div className="relative">
                         <input 
                             type="text" 
@@ -192,14 +211,14 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                             onChange={handleChange} 
                             placeholder="Напишіть ваше повідомлення тут..." 
                             required 
-                            className={`custom-scrollbar min-h-32 md:min-h-40 resize-y ${inputClasses}`}
+                            className={`custom-scrollbar min-h-30 @2xl:min-h-40 resize-y ${inputClasses}`}
                         />
                         <MessageSquare size={18} strokeWidth={2.5} className={textareaIconClasses} />
                     </div>
                 </div>
                 <div 
                     className={`
-                        flex w-full mt-4
+                        flex w-full mt-2 @2xl:mt-4
                         ${buttonConfig.width === 'full' ? 'text-center justify-stretch' : (alignMap[buttonConfig.alignment] || 'justify-center')}
                     `}
                     style={{ textAlign: buttonConfig.width === 'full' ? 'center' : (buttonConfig.alignment || 'center') }}
@@ -208,7 +227,7 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                         type="submit" 
                         className={`
                             ${btnClass}
-                            inline-flex items-center justify-center gap-2.5 font-semibold transition-all duration-300 appearance-none shadow-sm
+                            inline-flex items-center justify-center gap-2 @2xl:gap-2.5 font-semibold transition-all duration-300 appearance-none shadow-sm
                             ${(isEditorPreview || status.loading) ? 'cursor-default' : 'cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:shadow-(--site-accent)/20'}
                             ${sizeClasses[buttonConfig.size || 'medium']}
                         `}
@@ -237,7 +256,7 @@ const FormBlock = ({ blockData, siteData, isEditorPreview, style }) => {
 
 const ButtonIcon = ({ name, size, flip }) => {
     if (!name || name === 'none') return null;
-    const s = size === 'large' ? 22 : 18;
+    const s = size === 'large' ? 20 : 18; 
     const style = { transform: flip ? 'scaleX(-1)' : 'none', flexShrink: 0 };
     const icons = {
         arrowRight: <ArrowRight size={s} strokeWidth={2.5} style={style} />,
@@ -251,4 +270,8 @@ const ButtonIcon = ({ name, size, flip }) => {
     return icons[name] || null;
 };
 
-export default FormBlock;
+export default React.memo(FormBlock, (prev, next) => {
+    return JSON.stringify(prev.blockData) === JSON.stringify(next.blockData) && 
+           prev.isEditorPreview === next.isEditorPreview &&
+           prev.siteData?.id === next.siteData?.id;
+});

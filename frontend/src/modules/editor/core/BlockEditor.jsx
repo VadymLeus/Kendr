@@ -4,7 +4,6 @@ import { useDrop } from 'react-dnd';
 import EditableBlockWrapper from '../ui/EditableBlockWrapper';
 import { DND_TYPE_NEW_BLOCK } from '../ui/DraggableBlockItem';
 import { DND_TYPE_EXISTING } from './useBlockDrop';
-import { resolveAccentColor, adjustColor, isLightColor } from '../../../shared/utils/themeUtils';
 import ContextMenu from '../ui/ContextMenu';
 import { findBlockByPath } from './blockUtils';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
@@ -74,7 +73,7 @@ const BlockEditor = ({
     const { confirm } = useConfirm();
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, path: null, blockId: null });
     const mobileScrollRef = useRef(null);
-    useDragAutoScroll(mobileScrollRef, viewMode === 'mobile');
+    useDragAutoScroll(mobileScrollRef, true);
     const [{ isOverBottom }, bottomDropRef] = useDrop(() => ({
         accept: [DND_TYPE_NEW_BLOCK, DND_TYPE_EXISTING],
         collect: (monitor) => ({ isOverBottom: monitor.isOver({ shallow: true }) }),
@@ -136,32 +135,31 @@ const BlockEditor = ({
             default: break;
         }
     };
-    const themeSettings = siteData?.theme_settings || {};
-    const isSiteDark = siteData?.site_theme_mode === 'dark';
-    const siteBg = isSiteDark ? '#1a202c' : '#f7fafc';
-    const siteText = isSiteDark ? '#f7fafc' : '#1a202c';
-    const siteCardBg = isSiteDark ? '#2d3748' : '#ffffff';
-    const siteBorder = isSiteDark ? '#4a5568' : '#e2e8f0';
-    const siteAccent = resolveAccentColor(siteData?.site_theme_accent || 'orange');
-    const siteIsolationStyles = { '--site-bg': siteBg, '--site-text-primary': siteText, '--site-text-secondary': isSiteDark ? '#a0aec0' : '#718096', '--site-card-bg': siteCardBg, '--site-border-color': siteBorder, '--site-accent': siteAccent, '--site-font-main': themeSettings.font_body || "'Inter', sans-serif" };
-    let containerClass = viewMode === 'mobile' ? 'px-8 pb-8 pt-10 flex flex-col' : 'px-8 pb-8 pt-3 flex flex-col flex-1';
+    
+    let containerClass = viewMode === 'mobile' 
+        ? '@container flex flex-col flex-1 h-full overflow-hidden' 
+        : '@container pb-8 pt-3 flex flex-col flex-1 h-full overflow-hidden';
+        
     const isEmptyPreview = blocks.length === 0 && viewMode !== 'editor';
-    const blocksContainerClass = `blocks-container ${viewMode === 'mobile' ? 'mobile-preview-device hide-scrollbar' : 'w-full flex-none'} ${isEmptyPreview ? 'flex flex-col' : 'flow-root'}`;
+    const blocksContainerClass = `blocks-container w-full flex-1 overflow-y-auto site-scrollbar ${viewMode === 'mobile' ? 'px-[2px]' : 'px-8'} ${isEmptyPreview ? 'flex flex-col' : 'flow-root'}`;
     return (
         <div className={containerClass}>
             {blocks.length === 0 && viewMode === 'editor' ? (
-                <div className="flex flex-col items-center justify-center w-full min-h-[calc(100vh-150px)] p-4">
-                    <div ref={emptyDropRef} className={`flex flex-col items-center justify-center w-full max-w-4xl p-16 text-center border-4 border-dashed rounded-[2.5rem] transition-all duration-300 cursor-pointer h-full min-h-100 ${isOverEmpty ? 'border-(--platform-accent) bg-black/5 text-(--platform-accent) scale-[1.02] shadow-xl' : 'border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-accent)'}`}>
+                <div className="flex flex-col items-center justify-center w-full h-full p-4">
+                    <div 
+                        ref={viewMode === 'editor' ? emptyDropRef : null} 
+                        className={`flex flex-col items-center justify-center w-full max-w-4xl p-16 text-center border-4 border-dashed rounded-[2.5rem] transition-all duration-300 cursor-pointer h-full min-h-100 ${isOverEmpty ? 'border-(--platform-accent) bg-black/5 text-(--platform-accent) scale-[1.02] shadow-xl' : 'border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-accent)'}`}
+                    >
                         <div className={`mb-6 transition-transform duration-300 ${isOverEmpty ? 'scale-110 animate-pulse' : ''}`}><PackageOpen size={80} strokeWidth={1.5} /></div>
                         <h3 className="mb-4 text-3xl font-bold tracking-tight">{isOverEmpty ? 'Відпустіть блок тут!' : 'Початок роботи'}</h3>
                         <p className="m-0 text-lg opacity-80 max-w-md mx-auto leading-relaxed">Перетягніть ваш перший блок з бібліотеки праворуч</p>
                     </div>
                 </div>
             ) : (
-                <div className="site-theme-preview w-full flex-1 p-0 relative bg-transparent flex flex-col" style={siteIsolationStyles}>
+                <div className="w-full flex-1 p-0 relative bg-transparent flex flex-col min-h-0">
                     <div ref={mobileScrollRef} className={blocksContainerClass}>
                         {isEmptyPreview ? (
-                            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh] w-full" style={{ backgroundColor: 'var(--site-bg)' }}>
+                            <div className="flex-1 flex flex-col items-center justify-center p-8 w-full bg-transparent text-center min-h-[60vh]">
                                 <div className="mb-6 opacity-40">
                                     <Layers size={64} style={{ color: 'var(--site-text-primary)' }} />
                                 </div>
@@ -178,7 +176,6 @@ const BlockEditor = ({
                                     return (
                                         <motion.div 
                                             key={block.block_id} 
-                                            layout 
                                             className={isSticky ? 'sticky top-0 z-85' : 'relative'}
                                             initial={{ opacity: 0, y: -30, scale: 0.98 }} 
                                             animate={{ opacity: 1, y: 0, scale: 1 }} 
@@ -208,36 +205,25 @@ const BlockEditor = ({
                                 })}
                             </AnimatePresence>
                         )}
-                    </div>
-                    {blocks.length > 0 && !isHeaderMode && viewMode === 'editor' && (
-                        <div ref={bottomDropRef} className="flex-1 w-full relative z-1 pt-6 pb-[30vh] flex flex-col cursor-pointer">
-                            <div className={`
-                                w-full h-32 shrink-0 rounded-2xl border-2 border-dashed transition-all duration-300 flex items-center justify-center
-                                ${isOverBottom 
-                                    ? 'border-(--platform-accent) bg-(--platform-accent)/10 scale-[1.01] shadow-sm' 
-                                    : 'border-(--platform-border-color) hover:border-(--platform-accent)/40 bg-transparent'}
-                            `}>
-                                <div className={`transition-all duration-300 flex items-center gap-2 font-medium ${isOverBottom ? 'text-(--platform-accent) scale-110 opacity-100' : 'text-(--platform-text-secondary) opacity-60'}`}>
-                                    <ArrowDownToLine size={20} />
-                                    <span>Додати в кінець сторінки</span>
+                        {blocks.length > 0 && !isHeaderMode && viewMode === 'editor' && (
+                            <div ref={bottomDropRef} className="w-full relative z-1 pt-6 pb-[30vh] flex flex-col cursor-pointer">
+                                <div className={`
+                                    w-full h-32 shrink-0 rounded-2xl border-2 border-dashed transition-all duration-300 flex items-center justify-center
+                                    ${isOverBottom 
+                                        ? 'border-(--platform-accent) bg-(--platform-accent)/10 scale-[1.01] shadow-sm' 
+                                        : 'border-(--platform-border-color) hover:border-(--platform-accent)/40 bg-transparent'}
+                                `}>
+                                    <div className={`transition-all duration-300 flex items-center gap-2 font-medium ${isOverBottom ? 'text-(--platform-accent) scale-110 opacity-100' : 'text-(--platform-text-secondary) opacity-60'}`}>
+                                        <ArrowDownToLine size={20} />
+                                        <span>Додати в кінець сторінки</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             )}
             <ContextMenu visible={contextMenu.visible} x={contextMenu.x} y={contextMenu.y} onClose={handleCloseContextMenu} onAction={handleContextMenuAction} />
-            <style>
-                {`
-                .site-theme-preview { font-family: var(--site-font-main); }
-                .site-theme-preview * { box-sizing: border-box; }
-                .mobile-preview-device { max-width: 400px; margin: 0 auto; border: 12px solid #222; border-radius: 36px; overflow-y: auto; overflow-x: hidden; height: 80vh; background-color: var(--site-bg); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; }
-                .mobile-preview-device .layout-drop-zone { border-color: transparent !important; padding: 0 !important; min-height: auto !important; }
-                .mobile-preview-device .layout-empty-placeholder { display: none !important; }
-                .site-theme-preview .site-block { background: var(--site-bg); color: var(--site-text-primary); font-family: var(--site-font-main); }
-                .site-theme-preview .site-heading { font-family: var(--site-font-headings); color: var(--site-text-primary); }
-                `}
-            </style>
         </div>
     );
 };

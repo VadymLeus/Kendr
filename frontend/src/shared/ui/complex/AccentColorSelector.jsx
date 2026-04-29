@@ -31,26 +31,24 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
     const displayHex = localColor;
     return (
         <div>
-            <div className="flex justify-between items-center mb-5">
-                <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0">Акцентний колір</h3>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+                <h3 className="text-base sm:text-lg font-semibold text-(--platform-text-primary) m-0">Акцентний колір</h3>
                 <div 
-                    className="text-sm font-semibold flex items-center gap-2"
+                    className="text-xs sm:text-sm font-semibold flex items-center gap-2 bg-(--platform-bg) px-3 py-1.5 rounded-lg border border-(--platform-border-color)"
                     style={{ color: displayHex }}
                 >
                     <div 
-                        className="w-4 h-4 rounded bg-current border border-(--platform-border-color)"
+                        className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-current shadow-sm"
                         style={{ backgroundColor: displayHex }}
                     ></div>
-                    {isPreset ? currentPresetName : (enableCustom ? 'Власний колір' : 'Обраний колір')}
-                    {!isPreset && <span className="text-(--platform-text-secondary) text-xs font-normal">({displayHex})</span>}
+                    <span>{isPreset ? currentPresetName : (enableCustom ? 'Власний колір' : 'Обраний колір')}</span>
+                    {!isPreset && <span className="text-(--platform-text-secondary) font-normal">({displayHex})</span>}
                 </div>
             </div>
-
-            <div className="flex gap-3 flex-wrap py-2 justify-center">
+            <div className="flex gap-3 sm:gap-4 flex-wrap py-2 justify-center">
                 {visiblePresets.map(preset => {
                     const isSelected = value === preset.id;
                     const isHovered = hoveredValue === preset.id;
-                    
                     return (
                         <button 
                             key={preset.id}
@@ -59,7 +57,7 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
                             onMouseLeave={() => setHoveredValue(null)}
                             title={preset.name}
                             className={`
-                                w-10.5 h-10.5 rounded-[10px] cursor-pointer flex items-center justify-center p-0 transition-transform duration-200 ease-in-out
+                                w-10 h-10 sm:w-11 sm:h-11 rounded-[10px] cursor-pointer flex items-center justify-center p-0 transition-transform duration-200 ease-in-out
                                 ${isSelected || isHovered ? 'scale-110' : 'scale-100'}
                             `}
                             style={{
@@ -78,7 +76,7 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
                 {enableCustom && (
                     <label 
                         className={`
-                            w-10.5 h-10.5 rounded-[10px] cursor-pointer flex items-center justify-center relative transition-transform duration-200 ease-in-out
+                            w-10 h-10 sm:w-11 sm:h-11 rounded-[10px] cursor-pointer flex items-center justify-center relative transition-transform duration-200 ease-in-out
                             ${(!isPreset || hoveredValue === 'custom') ? 'scale-110' : 'scale-100'}
                         `}
                         style={{
@@ -101,17 +99,16 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
                             className="absolute opacity-0 w-full h-full cursor-pointer top-0 left-0"
                         />
                         {!isPreset ? (
-                            <Edit size={18} color={isLightColor(displayHex) ? '#000' : '#fff'} />
+                            <Edit size={16} className="sm:w-4.5 sm:h-4.5" color={isLightColor(displayHex) ? '#000' : '#fff'} />
                         ) : (
-                            <Plus size={20} className="text-(--platform-text-secondary)" />
+                            <Plus size={18} className="sm:w-5 sm:h-5 text-(--platform-text-secondary)" />
                         )}
                     </label>
                 )}
             </div>
-
-            <div className="mt-6 flex gap-3 flex-wrap items-center justify-center p-6 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-center p-4 sm:p-6 bg-(--platform-bg) rounded-xl border border-(--platform-border-color)">
                 <button 
-                    className="py-2.5 px-5 rounded-lg border-none cursor-default font-medium text-sm shadow-sm"
+                    className="w-full sm:w-auto py-3 sm:py-2.5 px-5 rounded-lg border-none cursor-default font-medium text-sm shadow-sm transition-opacity hover:opacity-90"
                     style={{
                         background: displayHex,
                         color: isLightColor(displayHex) ? '#000' : '#fff'
@@ -120,7 +117,7 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
                     Основна кнопка
                 </button>
                 <button 
-                    className="py-2.5 px-5 rounded-lg cursor-default font-medium text-sm bg-transparent"
+                    className="w-full sm:w-auto py-3 sm:py-2.5 px-5 rounded-lg cursor-default font-medium text-sm bg-transparent transition-colors hover:bg-black/5"
                     style={{
                         border: `1px solid ${displayHex}`,
                         color: displayHex
@@ -129,7 +126,7 @@ const AccentColorSelector = ({ value, onChange, enableCustom = false }) => {
                     Другорядна кнопка
                 </button>
                 <div 
-                    className="py-2 px-3 rounded-lg text-xs font-semibold"
+                    className="w-full sm:w-auto text-center py-2 px-3 rounded-lg text-xs font-semibold"
                     style={{ background: displayHex + '20', color: displayHex }}
                 >
                     Активний елемент
