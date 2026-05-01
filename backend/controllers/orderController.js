@@ -25,6 +25,9 @@ const getGlobalSettings = async () => {
 };
 
 const generateLiqPayData = (orderId, amount, publicKey, privateKey) => {
+    const callbackUrl = process.env.NGROK_URL 
+        ? `${process.env.NGROK_URL}/api/orders/liqpay-callback`
+        : `${BACKEND_URL}/api/orders/liqpay-callback`;
     const liqpayParams = {
         public_key: publicKey,
         version: '3',
@@ -33,9 +36,9 @@ const generateLiqPayData = (orderId, amount, publicKey, privateKey) => {
         currency: 'UAH',
         description: `Замовлення #${orderId} на суму ${amount} UAH`,
         order_id: `${orderId}_${Date.now()}`,
-        server_url: `${BACKEND_URL}/api/orders/liqpay-callback`,
-        // server_url: `https://townless-cruciferous-hildegarde.ngrok-free.dev/api/orders/liqpay-callback`,
+        server_url: callbackUrl, 
         result_url: `${FRONTEND_URL}/my-orders`,
+        sandbox: 1
     };
     const jsonString = JSON.stringify(liqpayParams);
     const dataStr = Buffer.from(jsonString).toString('base64');
@@ -181,15 +184,18 @@ exports.generatePaymentForOrder = async (req, res) => {
 
 exports.liqpayCallback = async (req, res) => {
     const { data, signature } = req.body;
-    if (!data || !signature) return res.status(400).send('Missing data or signature');
-    
+    if (!data || !signature) {
+        return res.status(400).send('Missing data or signature');
+    }
     try {
         const decodedData = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
         const { order_id: liqpayOrderId, status } = decodedData;
         const realOrderId = liqpayOrderId.split('_')[0];
         const [orders] = await db.query(`SELECT * FROM orders WHERE id = ?`, [realOrderId]);
         const order = orders[0];
-        if (!order) return res.status(404).send('Order not found');
+        if (!order) {
+            return res.status(404).send('Order not found');
+        }
         const [sites] = await db.query('SELECT liqpay_private_key, site_theme_accent FROM sites WHERE id = ?', [order.site_id]);
         if (!sites[0] || !sites[0].liqpay_private_key) {
             return res.status(400).send('Private key missing for site');
@@ -198,10 +204,10 @@ exports.liqpayCallback = async (req, res) => {
         const siteAccentColor = sites[0].site_theme_accent || 'blue';
         const expectedSignature = crypto.createHash('sha1').update(sitePrivateKey + data + sitePrivateKey).digest('base64');
         if (signature !== expectedSignature) {
-            console.error('Невірний підпис LiqPay для замовлення', realOrderId);
             return res.status(403).send('Invalid signature');
         }
-        if (status === 'success' || status === 'wait_accept') {
+
+        if (status === 'success' || status === 'wait_accept' || status === 'sandbox') {
             if (order.status === 'pending') {
                 const [items] = await db.query(`SELECT * FROM order_items WHERE order_id = ?`, [realOrderId]);
                 const isDigitalOnly = items.length > 0 && items.every(item => item.type === 'digital');
@@ -270,7 +276,6 @@ exports.getMyOrders = async (req, res) => {
                 LEFT JOIN products p ON oi.product_id = p.id
                 WHERE oi.order_id = ?
             `, [order.id]);
-            
             if (order.status !== 'paid' && order.status !== 'completed') {
                 items.forEach(item => { item.digital_file_url = null; });
             }

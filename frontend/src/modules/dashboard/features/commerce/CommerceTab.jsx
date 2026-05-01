@@ -7,7 +7,7 @@ import OrdersTab from './components/OrdersTab';
 import CommerceSettingsTab from './components/CommerceSettingsTab';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import apiClient from '../../../../shared/api/api';
-import { Grid, Folder, Package, ShoppingBag, Settings } from 'lucide-react';
+import { Grid, Folder, Package, Settings } from 'lucide-react';
 
 const CommerceTab = ({ siteData, onSavingChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -53,28 +53,19 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
     return (
         <div className="h-full flex flex-col gap-6 overflow-hidden pb-5 box-border">
             <div className="commerce-header-container px-1">
-                <div className="commerce-header-left"></div>
-                <div className="commerce-header-center">
-                    <h2 className="text-2xl font-semibold m-0 text-(--platform-text-primary) flex items-center justify-center gap-2.5">
-                        <ShoppingBag size={28} />
-                        Комерція
-                    </h2>
-                </div>
-                <div className="commerce-header-right">
-                    <nav className="commerce-tabs">
-                        {tabs.map(tab => (
-                            <button
-                                key={tab.key}
-                                className={`commerce-tab-btn ${activeSubTab === tab.key ? 'active' : ''}`}
-                                onClick={() => handleTabChange(tab.key)}
-                                title={tab.text}
-                            >
-                                <span className="commerce-tab-icon">{tab.icon}</span>
-                                <span className="commerce-tab-text">{tab.text}</span>
-                            </button>
-                        ))}
-                    </nav>
-                </div>
+                <nav className="commerce-tabs">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.key}
+                            className={`commerce-tab-btn ${activeSubTab === tab.key ? 'active' : ''}`}
+                            onClick={() => handleTabChange(tab.key)}
+                            title={tab.text}
+                        >
+                            <span className="commerce-tab-icon">{tab.icon}</span>
+                            <span className="commerce-tab-text">{tab.text}</span>
+                        </button>
+                    ))}
+                </nav>
             </div>
             <div className="flex-1 min-h-0 relative">
                 {activeSubTab === 'products' && (
@@ -106,28 +97,10 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
             <style>{`
                 .commerce-header-container {
                     display: flex;
-                    flex-direction: row;
                     align-items: center;
-                    justify-content: space-between;
-                    gap: 16px;
-                    flex-shrink: 0;
-                    width: 100%;
-                }
-                .commerce-header-left {
-                    flex: 1 1 0%;
-                    min-width: 0;
-                }
-                .commerce-header-center {
-                    flex: 0 1 auto;
-                    display: flex;
                     justify-content: center;
-                    min-width: 0;
-                }
-                .commerce-header-right {
-                    flex: 1 1 0%;
-                    display: flex;
-                    justify-content: flex-end;
-                    min-width: 0;
+                    width: 100%;
+                    flex-shrink: 0;
                 }
                 .commerce-tabs { 
                     display: flex; 
@@ -184,29 +157,11 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                 .commerce-tab-text { 
                     font-weight: 500; 
                 }
-                @media (max-width: 1150px) {
-                    .commerce-header-container {
-                        flex-direction: column;
-                        gap: 16px;
-                    }
-                    .commerce-header-left {
-                        display: none;
-                    }
-                    .commerce-header-right {
-                        width: 100%;
-                        justify-content: center;
-                    }
-                    .commerce-tabs {
-                        width: max-content;
-                        justify-content: center;
-                    }
-                }
                 @media (max-width: 768px) { 
                     .commerce-tab-btn { padding: 6px 10px; font-size: 13px; } 
                     .commerce-tab-text { display: none; } 
                 }
                 @media (max-width: 600px) {
-                    .commerce-header-container { gap: 12px; }
                     .commerce-tabs {
                         width: 100%;
                         justify-content: center; 

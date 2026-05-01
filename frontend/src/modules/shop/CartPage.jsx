@@ -11,32 +11,24 @@ import { Button } from '../../shared/ui/elements/Button';
 import EmptyState from '../../shared/ui/complex/EmptyState';
 import ConfirmModal from '../../shared/ui/complex/ConfirmModal';
 import LoadingState from '../../shared/ui/complex/LoadingState';
-import { Trash2, Minus, Plus, Store, CreditCard, AlertCircle, PackageOpen, User, Mail, Phone, MapPin, Loader2, ShoppingBag, CheckCircle2, Download } from 'lucide-react';
+import NovaPoshtaMapModal from '../../shared/ui/complex/NovaPoshtaMapModal';
+import { Trash2, Minus, Plus, Store, CreditCard, AlertCircle, PackageOpen, User, Mail, Phone, Loader2, ShoppingBag, CheckCircle2, Download, MapPin, Map, Wallet } from 'lucide-react';
 
 const CartPage = () => {
     const { cartItems, removeFromCart, clearCart, updateQuantity, isLoaded } = useContext(CartContext);
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-    const [customerData, setCustomerData] = useState({
-        name: '', email: '', phone: '', address: ''
-    });
+    const [customerData, setCustomerData] = useState({ name: '', email: '', phone: '', address: '' });
+    const [paymentMethod, setPaymentMethod] = useState('online');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
     const [activeSiteId, setActiveSiteId] = useState(null);
     const [resolvedPaths, setResolvedPaths] = useState({});
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
     const [confirmModal, setConfirmModal] = useState({
-        isOpen: false,
-        actionType: null,
-        targetId: null,
-        title: '',
-        message: ''
+        isOpen: false, actionType: null, targetId: null, title: '', message: ''
     });
-    const currencyMap = {
-        'UAH': '₴',
-        'USD': '$',
-        'EUR': '€'
-    };
-
+    const currencyMap = { 'UAH': '₴', 'USD': '$', 'EUR': '€' };
     useEffect(() => {
         if (user) {
             setCustomerData(prev => ({
@@ -49,9 +41,7 @@ const CartPage = () => {
 
     useEffect(() => {
         const fetchPaths = async () => {
-            const missingIds = cartItems
-                .map(item => item.site_id)
-                .filter(id => id && !resolvedPaths[id]);
+            const missingIds = cartItems.map(item => item.site_id).filter(id => id && !resolvedPaths[id]);
             const uniqueMissingIds = [...new Set(missingIds)];
             if (uniqueMissingIds.length === 0) return;
             const newPaths = { ...resolvedPaths };
@@ -63,9 +53,7 @@ const CartPage = () => {
                 }
                 try {
                     const res = await apiClient.get(`/site/info/${id}`);
-                    if (res.data && res.data.site_path) {
-                        newPaths[id] = res.data.site_path;
-                    }
+                    if (res.data && res.data.site_path) newPaths[id] = res.data.site_path;
                 } catch (e) {
                     console.error("Помилка завантаження site_path для id:", id);
                 }
@@ -84,14 +72,9 @@ const CartPage = () => {
             if (!groups[siteId]) {
                 groups[siteId] = {
                     siteName: item.site_name || `Магазин #${siteId}`,
-                    siteId: siteId,
-                    sitePath: sitePath,
-                    currency: itemCurrency,
-                    currencySymbol: currencyMap[itemCurrency] || '₴',
-                    items: [],
-                    total: 0,
-                    totalOriginal: 0,
-                    isDigitalOnly: true
+                    siteId: siteId, sitePath: sitePath,
+                    currency: itemCurrency, currencySymbol: currencyMap[itemCurrency] || '₴',
+                    items: [], total: 0, totalOriginal: 0, isDigitalOnly: true
                 };
             }
             groups[siteId].items.push(item);
@@ -100,31 +83,26 @@ const CartPage = () => {
             const origPrice = item.originalPrice ? parseFloat(item.originalPrice) : price;
             groups[siteId].total += price * quantity;
             groups[siteId].totalOriginal += origPrice * quantity;
-            if (item.type !== 'digital') {
-                groups[siteId].isDigitalOnly = false;
-            }
+            if (item.type !== 'digital') groups[siteId].isDigitalOnly = false;
         });
+        
         return Object.values(groups).map(group => ({
-            ...group,
-            totalDiscount: group.totalOriginal - group.total
+            ...group, totalDiscount: group.totalOriginal - group.total
         }));
     }, [cartItems, resolvedPaths]);
-
     useEffect(() => {
         if (groupedItems.length > 0) {
             const isCurrentValid = groupedItems.some(g => g.siteId === activeSiteId);
-            if (!isCurrentValid) {
-                setActiveSiteId(groupedItems[0].siteId);
+            if (!isCurrentValid) setActiveSiteId(groupedItems[0].siteId);
+            const currentGroup = groupedItems.find(g => g.siteId === (isCurrentValid ? activeSiteId : groupedItems[0].siteId));
+            if (currentGroup && currentGroup.isDigitalOnly) {
+                setPaymentMethod('online');
             }
         } else {
             setActiveSiteId(null);
         }
     }, [groupedItems, activeSiteId]);
-
-    const activeGroup = useMemo(() => {
-        return groupedItems.find(g => g.siteId === activeSiteId) || null;
-    }, [groupedItems, activeSiteId]);
-
+    const activeGroup = useMemo(() => groupedItems.find(g => g.siteId === activeSiteId) || null, [groupedItems, activeSiteId]);
     const clearCartForSite = (siteId) => {
         const itemsToRemove = cartItems.filter(item => item.site_id === siteId);
         itemsToRemove.forEach(item => removeFromCart(item.cartItemId));
@@ -132,21 +110,15 @@ const CartPage = () => {
 
     const promptRemoveItem = (item) => {
         setConfirmModal({
-            isOpen: true,
-            actionType: 'remove',
-            targetId: item.cartItemId,
-            title: 'Видалити товар',
-            message: `Ви впевнені, що хочете видалити "${item.name}" з кошика?`
+            isOpen: true, actionType: 'remove', targetId: item.cartItemId,
+            title: 'Видалити товар', message: `Ви впевнені, що хочете видалити "${item.name}" з кошика?`
         });
     };
 
     const promptClearCart = () => {
         setConfirmModal({
-            isOpen: true,
-            actionType: 'clear',
-            targetId: null,
-            title: 'Очистити кошик',
-            message: 'Ви впевнені, що хочете повністю очистити кошик? Цю дію неможливо скасувати.'
+            isOpen: true, actionType: 'clear', targetId: null,
+            title: 'Очистити кошик', message: 'Ви впевнені, що хочете повністю очистити кошик? Цю дію неможливо скасувати.'
         });
     };
 
@@ -166,26 +138,26 @@ const CartPage = () => {
             return toast.error('Будь ласка, заповніть всі обов\'язкові поля');
         }
         if (!activeGroup.isDigitalOnly && !customerData.address.trim()) {
-            return toast.error('Адреса доставки обов\'язкова для фізичних товарів');
+            return toast.error('Будь ласка, оберіть відділення доставки');
         }
+        
         const outOfStockItem = activeGroup.items.find(item => item.type !== 'digital' && item.stock_quantity != null && item.quantity > item.stock_quantity);
-        if (outOfStockItem) {
-            return toast.error(`Товару "${outOfStockItem.name}" недостатньо на складі.`);
-        }
+        if (outOfStockItem) return toast.error(`Товару "${outOfStockItem.name}" недостатньо на складі.`);
         setIsSubmitting(true);
         try {
             const formattedItems = activeGroup.items.map(item => ({
-                id: item.id,
-                quantity: item.quantity,
-                options: item.selectedOptions
+                id: item.id, quantity: item.quantity, options: item.selectedOptions
             }));
-            const payload = {
-                siteId: activeGroup.siteId,
-                items: formattedItems,
-                customerData
+            
+            const payload = { 
+                siteId: activeGroup.siteId, 
+                items: formattedItems, 
+                customerData,
+                paymentMethod 
             };
+            
             const response = await apiClient.post('/orders/checkout', payload, { suppressToast: true });
-            if (response.data && response.data.data && response.data.signature) {
+            if (paymentMethod === 'online' && response.data && response.data.data && response.data.signature) {
                 setIsRedirecting(true);
                 const { data, signature, orderId } = response.data;
                 toast.success(`Перенаправлення на оплату замовлення #${orderId || ''}`);
@@ -194,19 +166,15 @@ const CartPage = () => {
                 form.method = "POST";
                 form.action = "https://www.liqpay.ua/api/3/checkout";
                 const dataInput = document.createElement("input");
-                dataInput.type = "hidden";
-                dataInput.name = "data";
-                dataInput.value = data;
+                dataInput.type = "hidden"; dataInput.name = "data"; dataInput.value = data;
                 const signatureInput = document.createElement("input");
-                signatureInput.type = "hidden";
-                signatureInput.name = "signature";
-                signatureInput.value = signature;
+                signatureInput.type = "hidden"; signatureInput.name = "signature"; signatureInput.value = signature;
                 form.appendChild(dataInput);
                 form.appendChild(signatureInput);
                 document.body.appendChild(form);
                 form.submit();
             } else {
-                toast.success(`Замовлення #${response.data.orderId || ''} оформлено!`);
+                toast.success(`Замовлення #${response.data.orderId || ''} успішно оформлено!`);
                 clearCartForSite(activeGroup.siteId);
                 navigate('/my-orders');
             }
@@ -221,285 +189,328 @@ const CartPage = () => {
         let targetPath = null;
         if (Array.isArray(gallery) && gallery.length > 0) targetPath = gallery[0];
         else if (typeof gallery === 'string') {
-            try {
-                if (gallery.startsWith('[')) targetPath = JSON.parse(gallery)[0];
-                else targetPath = gallery;
-            } catch (e) { targetPath = gallery; }
+            try { targetPath = gallery.startsWith('[') ? JSON.parse(gallery)[0] : gallery; } 
+            catch (e) { targetPath = gallery; }
         }
         if (!targetPath) return 'https://placehold.co/120x120?text=No+Image';
         if (targetPath.startsWith('http')) return targetPath;
         return `${BASE_URL}${targetPath.startsWith('/') ? targetPath : `/${targetPath}`}`;
     };
+
     const renderCheckoutForm = () => {
         if (!activeGroup) return null;
         return (
-            <form onSubmit={handleCheckout} className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-5 sm:p-6 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-(--platform-accent)" />
-                <h3 className="text-lg font-bold mb-1 text-(--platform-text-primary)">
-                    Оформлення замовлення
-                </h3>
-                <p className="text-sm text-(--platform-text-secondary) mb-5 pb-4 border-b border-(--platform-border-color)">
-                    Для магазину: <span className="font-semibold text-(--platform-text-primary)">{activeGroup.siteName}</span>
-                </p>
-                <div className="space-y-4 mb-6">
-                    <Input 
-                        label="ПІБ отримувача"
-                        leftIcon={<User size={18}/>}
-                        placeholder="Прізвище та ім'я"
-                        value={customerData.name}
-                        onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
-                        required
-                    />
-                    <Input 
-                        label="Email"
-                        leftIcon={<Mail size={18}/>}
-                        type="email"
-                        value={customerData.email}
-                        disabled={true} 
-                        helperText={activeGroup.isDigitalOnly ? "Сюди ми надішлемо доступ" : "Для отримання чеку"}
-                    />
-                    <Input 
-                        label="Телефон"
-                        leftIcon={<Phone size={18}/>}
-                        type="tel"
-                        placeholder="+380..."
-                        value={customerData.phone}
-                        onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
-                        required
-                    />
-                    {!activeGroup.isDigitalOnly && (
+            <form onSubmit={handleCheckout} className="space-y-6">
+                <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4 text-(--platform-text-primary) flex items-center gap-2">
+                        <User className="text-(--platform-accent)" size={20}/> 1. Ваші дані
+                    </h3>
+                    <div className="space-y-4">
                         <Input 
-                            label="Адреса доставки"
-                            leftIcon={<MapPin size={18}/>}
-                            placeholder="Місто, номер відділення НП"
-                            value={customerData.address}
-                            onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
+                            label="ПІБ отримувача" placeholder="Прізвище та ім'я"
+                            value={customerData.name}
+                            onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
                             required
                         />
-                    )}
-                </div>
-                <div className="space-y-3 pt-4 border-t border-(--platform-border-color)">
-                    <div className="flex justify-between text-sm text-(--platform-text-secondary)">
-                        <span>Товари ({activeGroup.items.length}):</span>
-                        <span>{activeGroup.totalOriginal.toFixed(0)} {activeGroup.currencySymbol}</span>
-                    </div>
-                    {activeGroup.totalDiscount > 0 && (
-                        <div className="flex justify-between text-sm text-green-500 font-medium">
-                            <span>Знижка:</span>
-                            <span>-{activeGroup.totalDiscount.toFixed(0)} {activeGroup.currencySymbol}</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input 
+                                label="Телефон" type="tel" placeholder="+380..."
+                                value={customerData.phone}
+                                onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
+                                required
+                            />
+                            <Input 
+                                label="Email" type="email"
+                                value={customerData.email} disabled={true} 
+                                helperText={activeGroup.isDigitalOnly ? "Сюди ми надішлемо доступ" : "Для чеку"}
+                            />
                         </div>
-                    )}
-                    <div className="flex justify-between text-2xl font-bold text-(--platform-text-primary) pt-2">
-                        <span>До сплати:</span>
-                        <span>{activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</span>
                     </div>
                 </div>
-                <div className={`mt-5 p-3 rounded-lg flex gap-3 text-xs leading-relaxed ${activeGroup.isDigitalOnly ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>
-                    <AlertCircle className="shrink-0 mt-0.5" size={16} />
-                    <span>
-                        {activeGroup.isDigitalOnly 
-                            ? "Доставка не потрібна. Товар цифровий." 
-                            : "Доставка здійснюється поштою. Оплата доставки при отриманні."}
-                    </span>
+                {!activeGroup.isDigitalOnly && (
+                    <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 shadow-sm">
+                        <h3 className="text-lg font-bold mb-4 text-(--platform-text-primary) flex items-center gap-2">
+                            <MapPin className="text-(--platform-accent)" size={20}/> 2. Доставка
+                        </h3>
+                        
+                        <div className="border border-(--platform-border-color) rounded-xl overflow-hidden relative">
+                            {customerData.address ? (
+                                <div className="p-4 bg-(--platform-accent)/5 relative">
+                                    <div className="flex items-start gap-3 pr-20">
+                                        <div className="p-2 bg-(--platform-accent)/20 text-(--platform-accent) rounded-lg shrink-0">
+                                            <MapPin size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-semibold text-(--platform-text-secondary) uppercase tracking-wider mb-1">Вибране відділення Нової Пошти</p>
+                                            <p className="font-medium text-(--platform-text-primary) leading-snug">{customerData.address}</p>
+                                        </div>
+                                    </div>
+                                    <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => setIsMapModalOpen(true)} 
+                                        className="absolute top-4 right-4 text-(--platform-accent) hover:bg-(--platform-accent)/10 shadow-none bg-transparent"
+                                    >
+                                        Змінити
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="p-6 text-center flex flex-col items-center">
+                                    <Map size={40} className="text-(--platform-text-secondary) opacity-50 mb-3" />
+                                    <p className="text-(--platform-text-secondary) mb-4 text-sm">Оберіть зручне відділення для доставки вашого замовлення.</p>
+                                    <Button type="button" onClick={() => setIsMapModalOpen(true)} className="bg-(--platform-accent) text-white hover:opacity-90 transition-all border-none w-full sm:w-auto">
+                                        <MapPin size={18} className="mr-2" /> Вибрати на карті
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+                <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 shadow-sm sticky top-24">
+                    <h3 className="text-lg font-bold mb-4 text-(--platform-text-primary) flex items-center gap-2">
+                        <CreditCard className="text-(--platform-accent)" size={20}/> {activeGroup.isDigitalOnly ? '2.' : '3.'} Оплата
+                    </h3>
+                    <div className="mb-6 space-y-3">
+                        <h4 className="text-sm font-semibold text-(--platform-text-secondary) uppercase tracking-wider">Спосіб оплати</h4>
+                        <div className="grid grid-cols-1 gap-3">
+                            <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-(--platform-accent) bg-(--platform-accent)/5' : 'border-(--platform-border-color) hover:bg-(--platform-hover-bg)'}`}>
+                                <input 
+                                    type="radio" 
+                                    name="paymentMethod" 
+                                    value="online"
+                                    checked={paymentMethod === 'online'}
+                                    onChange={() => setPaymentMethod('online')}
+                                    className="hidden"
+                                />
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${paymentMethod === 'online' ? 'border-(--platform-accent)' : 'border-gray-400'}`}>
+                                    {paymentMethod === 'online' && <div className="w-2.5 h-2.5 bg-(--platform-accent) rounded-full"></div>}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <CreditCard size={18} className="text-(--platform-text-primary)" />
+                                    <span className="font-medium text-(--platform-text-primary)">Оплата карткою онлайн</span>
+                                </div>
+                            </label>
+                            {!activeGroup.isDigitalOnly && (
+                                <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-(--platform-accent) bg-(--platform-accent)/5' : 'border-(--platform-border-color) hover:bg-(--platform-hover-bg)'}`}>
+                                    <input 
+                                        type="radio" 
+                                        name="paymentMethod" 
+                                        value="cod"
+                                        checked={paymentMethod === 'cod'}
+                                        onChange={() => setPaymentMethod('cod')}
+                                        className="hidden"
+                                    />
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${paymentMethod === 'cod' ? 'border-(--platform-accent)' : 'border-gray-400'}`}>
+                                        {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 bg-(--platform-accent) rounded-full"></div>}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Wallet size={18} className="text-(--platform-text-primary)" />
+                                        <span className="font-medium text-(--platform-text-primary)">Оплата при отриманні</span>
+                                    </div>
+                                </label>
+                            )}
+                        </div>
+                    </div>
+                    <div className="space-y-3 mb-6 bg-black/5 dark:bg-white/5 p-4 rounded-xl">
+                        <div className="flex justify-between text-sm text-(--platform-text-secondary)">
+                            <span>Вартість товарів:</span>
+                            <span>{activeGroup.totalOriginal.toFixed(0)} {activeGroup.currencySymbol}</span>
+                        </div>
+                        {activeGroup.totalDiscount > 0 && (
+                            <div className="flex justify-between text-sm text-green-500 font-medium">
+                                <span>Знижка:</span>
+                                <span>-{activeGroup.totalDiscount.toFixed(0)} {activeGroup.currencySymbol}</span>
+                            </div>
+                        )}
+                        {!activeGroup.isDigitalOnly && (
+                            <div className="flex justify-between text-sm text-(--platform-text-secondary)">
+                                <span>{paymentMethod === 'cod' ? 'Доставка та комісія НП:' : 'Доставка (Нова Пошта):'}</span>
+                                <span>За тарифами перевізника</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between text-2xl font-bold text-(--platform-text-primary) pt-4 border-t border-(--platform-border-color)">
+                            <span>Разом:</span>
+                            <span>{activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</span>
+                        </div>
+                    </div>
+                    <Button 
+                        type="submit" 
+                        className="w-full h-14 text-lg font-bold bg-(--platform-accent) hover:opacity-90 text-white border-none shadow-md transition-all"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <><Loader2 className="animate-spin mr-2" /> Обробка...</>
+                        ) : (
+                            <>{paymentMethod === 'online' ? 'Перейти до оплати' : 'Підтвердити замовлення'}</>
+                        )}
+                    </Button>
                 </div>
-                <Button 
-                    type="submit" 
-                    className="w-full mt-6 h-14 text-lg font-bold bg-orange-600 hover:bg-orange-700 text-white border-none shadow-md transition-colors"
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting ? (
-                        <><Loader2 className="animate-spin mr-2" /> Обробка...</>
-                    ) : (
-                        <><CreditCard className="mr-2" /> Оплатити {activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</>
-                    )}
-                </Button>
             </form>
         );
     };
 
     const renderEmptyFormState = () => (
-        <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl p-8 text-center shadow-sm">
-            <Store size={48} className="mx-auto text-(--platform-text-secondary) opacity-30 mb-4" />
-            <h3 className="text-lg font-bold text-(--platform-text-primary) mb-2">
-                Виберіть магазин
+        <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-8 text-center shadow-sm h-full flex flex-col items-center justify-center min-h-100">
+            <Store size={64} className="text-(--platform-text-secondary) opacity-20 mb-6" />
+            <h3 className="text-xl font-bold text-(--platform-text-primary) mb-2">
+                Оформлення замовлення
             </h3>
-            <p className="text-(--platform-text-secondary) text-sm">
-                Клацніть на блок з товарами ліворуч, щоб розпочати оформлення замовлення
+            <p className="text-(--platform-text-secondary) text-sm max-w-xs mx-auto">
+                Виберіть магазин у списку ліворуч, щоб переглянути деталі та оформити замовлення.
             </p>
         </div>
     );
 
-    if (!isLoaded || isRedirecting) {
-        return <LoadingState layout="page" />;
-    }
-
+    if (!isLoaded || isRedirecting) return <LoadingState layout="page" />;
     return (
         <>
-            <div className="p-4 md:p-8 max-w-5xl mx-auto w-full h-full flex flex-col">
+            <div className="p-4 md:p-8 max-w-360 mx-auto w-full h-full flex flex-col">
                 <div className="shrink-0 mb-6">
-                    <h1 className="text-2xl font-bold text-(--platform-text-primary) flex items-center gap-3">
-                        <ShoppingBag className="text-(--platform-accent)" /> Кошик
+                    <h1 className="text-3xl font-extrabold text-(--platform-text-primary) tracking-tight flex items-center gap-3">
+                        <ShoppingBag className="text-(--platform-accent)" size={32}/> Кошик
                     </h1>
-                    {cartItems.length > 0 && (
-                        <p className="text-(--platform-text-secondary) mt-1 text-sm">
-                            {groupedItems.length > 1 
-                                ? "Виберіть магазин ліворуч для оформлення відповідного замовлення." 
-                                : "Оформлення ваших замовлень"}
-                        </p>
-                    )}
                 </div>
-                
                 {cartItems.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center min-h-[60vh]">
                         <EmptyState 
-                            icon={PackageOpen}
-                            title="Ваш кошик порожній"
-                            description="Знайдіть товари в каталозі та додайте їх сюди."
+                            icon={PackageOpen} 
+                            title="Ваш кошик порожній" 
+                            description="Знайдіть товари в каталозі та додайте їх сюди." 
                         />
                     </div>
                 ) : (
-                    <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-                        <div className="lg:col-span-8 space-y-6">
+                    <div className="grid lg:grid-cols-12 gap-8 items-start">
+                        <div className="lg:col-span-7 xl:col-span-7 space-y-6">
                             {groupedItems.map((group) => {
                                 const isActive = activeSiteId === group.siteId;
                                 return (
                                     <div 
                                         key={group.siteId} 
                                         onClick={() => setActiveSiteId(group.siteId)}
-                                        className={`bg-(--platform-card-bg) border rounded-xl overflow-hidden shadow-sm cursor-pointer transition-all duration-300 relative ${
+                                        className={`bg-(--platform-card-bg) border-2 rounded-2xl overflow-hidden shadow-sm cursor-pointer transition-all duration-300 ${
                                             isActive 
-                                                ? 'border-(--platform-accent) ring-1 ring-(--platform-accent)' 
-                                                : 'border-(--platform-border-color) hover:border-(--platform-accent)/50 hover:bg-(--platform-hover-bg)'
+                                                ? 'border-(--platform-accent) shadow-md' 
+                                                : 'border-(--platform-border-color) hover:border-(--platform-accent)/50'
                                         }`}
                                     >
-                                        {isActive && (
-                                            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-(--platform-accent) z-10" />
-                                        )}
-                                        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-(--platform-border-color) flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 bg-black/5">
-                                            <div className="flex items-center gap-2 sm:gap-3">
-                                                <Store size={20} className={`shrink-0 ${isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'}`} />
+                                        <div className="px-5 py-4 border-b border-(--platform-border-color) flex items-center justify-between bg-black/5">
+                                            <div className="flex items-center gap-3">
+                                                <Store size={22} className={isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'} />
                                                 <Link 
-                                                    to={`/site/${group.sitePath}`}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className={`text-sm sm:text-base font-bold uppercase tracking-wider hover:underline truncate max-w-55 sm:max-w-75 ${isActive ? 'text-(--platform-accent)' : 'text-(--platform-text-primary)'}`}
-                                                    title="Перейти на сайт магазину"
+                                                    to={`/site/${group.sitePath}`} onClick={(e) => e.stopPropagation()}
+                                                    className={`text-lg font-bold uppercase tracking-wide hover:underline ${isActive ? 'text-(--platform-text-primary)' : 'text-(--platform-text-secondary)'}`}
                                                 >
                                                     {group.siteName}
                                                 </Link>
                                             </div>
                                             {isActive && (
-                                                <div className="self-start sm:self-auto flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-(--platform-accent) bg-(--platform-accent)/10 px-2.5 py-1 rounded-full">
-                                                    <CheckCircle2 size={14} /> Вибрано для оплати
+                                                <div className="flex items-center gap-1.5 text-sm font-bold text-(--platform-accent)">
+                                                    <CheckCircle2 size={18} /> Оформлюємо
                                                 </div>
                                             )}
                                         </div>
                                         <div className="divide-y divide-(--platform-border-color)">
                                             {group.items.map((item) => (
-                                                <div key={item.cartItemId} className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-5 items-start transition-colors">
-                                                    <div className="flex gap-4 w-full sm:w-auto sm:flex-1 min-w-0">
-                                                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--platform-bg) rounded-lg border border-(--platform-border-color) overflow-hidden shrink-0 flex items-center justify-center">
-                                                            <img src={getImageUrl(item)} alt={item.name} className="w-full h-full object-contain p-1.5 sm:p-2" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0 flex flex-col justify-center sm:justify-start">
-                                                            <div className="flex flex-wrap items-center gap-2">
+                                                <div key={item.cartItemId} className="p-5 flex flex-col sm:flex-row gap-5 items-start">
+                                                    <div className="w-24 h-24 bg-(--platform-bg) rounded-xl border border-(--platform-border-color) overflow-hidden shrink-0 flex items-center justify-center p-2">
+                                                        <img src={getImageUrl(item)} alt={item.name} className="w-full h-full object-contain" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0 w-full flex flex-col">
+                                                        <div className="flex justify-between items-start gap-4">
+                                                            <div>
                                                                 <Link 
-                                                                    to={`/site/${group.sitePath}/product/${item.id}`} 
-                                                                    onClick={(e) => e.stopPropagation()} 
-                                                                    className="text-base sm:text-lg font-bold text-(--platform-text-primary) hover:text-(--platform-accent) transition-colors leading-tight"
+                                                                    to={`/site/${group.sitePath}/product/${item.id}`} onClick={(e) => e.stopPropagation()} 
+                                                                    className="text-lg font-bold text-(--platform-text-primary) hover:text-(--platform-accent) leading-tight block mb-1"
                                                                 >
                                                                     {item.name}
                                                                 </Link>
                                                                 {item.type === 'digital' && (
-                                                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-(--platform-bg)/90 backdrop-blur-md rounded-lg text-[0.65rem] uppercase tracking-wider font-bold shadow-sm border border-(--platform-border-color) text-(--platform-accent)">
-                                                                        <Download size={10}/> Цифровий
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded text-xs font-bold uppercase">
+                                                                        <Download size={12}/> Цифровий
                                                                     </span>
                                                                 )}
-                                                            </div>
-                                                            <div className="mt-1.5 flex flex-wrap gap-1.5">
-                                                                {item.type !== 'digital' && item.selectedOptions && Object.entries(item.selectedOptions).map(([k, v]) => (
-                                                                    <span key={k} className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary)">
-                                                                        {k}: <span className="font-semibold text-(--platform-text-primary)">{v}</span>
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                            <div className="mt-3 sm:mt-4 flex items-center">
-                                                                <div className="flex items-center bg-(--platform-bg) border border-(--platform-border-color) rounded-lg p-0.5 sm:p-1" onClick={e => e.stopPropagation()}>
-                                                                    <button 
-                                                                        className="p-1 sm:p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30 cursor-pointer"
-                                                                        onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity - 1); }}
-                                                                        disabled={item.quantity <= 1}
-                                                                        type="button"
-                                                                    >
-                                                                        <Minus size={14} className="sm:w-4 sm:h-4" />
-                                                                    </button>
-                                                                    <span className="w-8 sm:w-10 text-center font-bold text-sm sm:text-base text-(--platform-text-primary)">{item.quantity}</span>
-                                                                    <button 
-                                                                        className="p-1 sm:p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30 cursor-pointer"
-                                                                        onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity + 1); }}
-                                                                        disabled={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity}
-                                                                        type="button"
-                                                                        title={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity ? "Досягнуто ліміту на складі" : ""}
-                                                                    >
-                                                                        <Plus size={14} className="sm:w-4 sm:h-4" />
-                                                                    </button>
+                                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                                    {item.type !== 'digital' && item.selectedOptions && Object.entries(item.selectedOptions).map(([k, v]) => (
+                                                                        <span key={k} className="text-xs px-2 py-1 rounded-md bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary)">
+                                                                            {k}: <span className="font-semibold text-(--platform-text-primary)">{v}</span>
+                                                                        </span>
+                                                                    ))}
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="shrink-0 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 sm:pl-4 border-(--platform-border-color) flex flex-row sm:flex-col justify-between items-center sm:items-end gap-2 h-full mt-1 sm:mt-0">
-                                                        <div className="text-left sm:text-right">
-                                                            {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
-                                                                <p className="text-[10px] sm:text-xs text-(--platform-text-secondary) line-through m-0">
-                                                                    {(item.originalPrice * item.quantity).toFixed(0)} {group.currencySymbol}
+                                                            <div className="text-right shrink-0">
+                                                                {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
+                                                                    <p className="text-xs text-(--platform-text-secondary) line-through m-0">
+                                                                        {(item.originalPrice * item.quantity).toFixed(0)} {group.currencySymbol}
+                                                                    </p>
+                                                                )}
+                                                                <p className="text-xl font-bold text-(--platform-text-primary) m-0">
+                                                                    {(item.price * item.quantity).toFixed(0)} {group.currencySymbol}
                                                                 </p>
-                                                            )}
-                                                            <p className="text-lg sm:text-xl font-bold text-(--platform-text-primary) m-0">
-                                                                {(item.price * item.quantity).toFixed(0)} {group.currencySymbol}
-                                                            </p>
+                                                            </div>
                                                         </div>
-                                                        <button 
-                                                            onClick={(e) => { e.stopPropagation(); promptRemoveItem(item); }}
-                                                            className="p-1.5 sm:p-2 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors z-10 cursor-pointer"
-                                                            title="Видалити"
-                                                            type="button"
-                                                        >
-                                                            <Trash2 size={18} className="sm:w-5 sm:h-5" />
-                                                        </button>
+                                                        <div className="mt-4 flex items-center justify-between">
+                                                            <div className="flex items-center bg-(--platform-bg) border border-(--platform-border-color) rounded-lg p-1" onClick={e => e.stopPropagation()}>
+                                                                <button 
+                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30"
+                                                                    onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity - 1); }}
+                                                                    disabled={item.quantity <= 1} type="button"
+                                                                >
+                                                                    <Minus size={16} />
+                                                                </button>
+                                                                <span className="w-10 text-center font-bold text-(--platform-text-primary)">{item.quantity}</span>
+                                                                <button 
+                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) disabled:opacity-30"
+                                                                    onClick={(e) => { e.stopPropagation(); updateQuantity(item.cartItemId, item.quantity + 1); }}
+                                                                    disabled={item.type !== 'digital' && item.stock_quantity != null && item.quantity >= item.stock_quantity}
+                                                                    type="button"
+                                                                >
+                                                                    <Plus size={16} />
+                                                                </button>
+                                                            </div>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); promptRemoveItem(item); }}
+                                                                className="text-sm flex items-center gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors"
+                                                                type="button"
+                                                            >
+                                                                <Trash2 size={16} /> Видалити
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    
                                                 </div>
                                             ))}
                                         </div>
                                         {isActive && (
-                                            <div className="lg:hidden bg-black/5 border-t border-(--platform-border-color) p-4 sm:p-6">
+                                            <div className="lg:hidden bg-(--platform-bg) border-t-2 border-(--platform-accent) p-4 sm:p-6">
                                                 {renderCheckoutForm()}
                                             </div>
                                         )}
-
                                     </div>
                                 );
                             })}
                             <div className="pt-2 flex justify-end">
                                 <Button variant="ghost" onClick={promptClearCart} className="text-red-500 hover:bg-red-500/10">
-                                    Очистити весь кошик
+                                    <Trash2 size={16} className="mr-2" /> Очистити весь кошик
                                 </Button>
                             </div>
                         </div>
-                        <div className="hidden lg:block lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+                        <div className="hidden lg:block lg:col-span-5 xl:col-span-5 h-full relative">
                             {activeGroup ? renderCheckoutForm() : renderEmptyFormState()}
                         </div>
                     </div>
                 )}
             </div>
             <ConfirmModal
-                isOpen={confirmModal.isOpen}
-                title={confirmModal.title}
-                message={confirmModal.message}
-                confirmLabel="Видалити"
-                cancelLabel="Скасувати"
-                type="danger"
-                onConfirm={handleConfirmAction}
-                onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                isOpen={confirmModal.isOpen} title={confirmModal.title} message={confirmModal.message}
+                confirmLabel="Видалити" cancelLabel="Скасувати" type="danger"
+                onConfirm={handleConfirmAction} onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+            />
+            <NovaPoshtaMapModal 
+                isOpen={isMapModalOpen}
+                onClose={() => setIsMapModalOpen(false)}
+                onSelect={(addressString) => {
+                    setCustomerData({...customerData, address: addressString});
+                }}
             />
         </>
     );

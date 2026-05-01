@@ -1,4 +1,4 @@
-/* frontend/src/modules/shop/pages/ProductDetailPage.module.css */
+/* frontend/src/modules/shop/ProductDetailPage.module.css */
 .pageWrapper {
     background-color: var(--site-bg);
     min-height: 100vh; 
@@ -90,7 +90,6 @@
     object-fit: contain;
     transition: transform 0.2s ease;
 }
-
 .mainImageBox.dragging .mainImage {
     transition: none;
 }
@@ -298,18 +297,17 @@
 .finalPrice { font-size: clamp(2rem, 6vw, 2.8rem); font-weight: bold; color: var(--site-text-primary); line-height: 1; }
 .originalPrice { text-decoration: line-through; color: var(--site-text-secondary); font-size: clamp(1.2rem, 3.5vw, 1.4rem); margin-bottom: clamp(2px, 0.5vw, 8px); }
 .loadingContainer, .errorContainer { padding: 50px; text-align: center; color: var(--site-text-secondary); }
+
 @media (max-width: 1200px) {
     .productsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
     .productGrid { grid-template-columns: 1fr; }
-    
     .galleryContainer { 
         height: auto; 
         flex-direction: column-reverse; 
     }
-    
     .thumbnailsCol { 
         flex-direction: row; 
         width: 100%; 
@@ -341,7 +339,6 @@
 @media (max-width: 600px) {
     .mainContent { padding: 15px 15px; }
     .productsGrid { grid-template-columns: 1fr; }
-    
     .zoomControls { 
         bottom: 10px; 
         right: 10px; 

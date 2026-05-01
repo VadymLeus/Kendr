@@ -46,7 +46,7 @@ const getGlobalBlocks = (content, blockType) => {
 const ProductDetailPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
-    const { addToCart } = useContext(CartContext);
+    const { addToCart, cartItems } = useContext(CartContext);
     const { user } = useContext(AuthContext);
     const outletContext = useOutletContext() || {};
     const { siteData = null, isSiteLoading = false } = outletContext;
@@ -55,7 +55,8 @@ const ProductDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [isNotFound, setIsNotFound] = useState(false);
     const [isRestricted, setIsRestricted] = useState(false);
-    const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [activeImageIndex, useState_setActiveImageIndex] = useState(0);
+    const setActiveImageIndex = useState_setActiveImageIndex;
     const [imageScale, setImageScale] = useState(1);
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -75,6 +76,8 @@ const ProductDetailPage = () => {
     const currencyMap = { 'UAH': '₴', 'USD': '$', 'EUR': '€' };
     const siteCurrency = siteData?.currency || 'UAH';
     const currencySymbol = currencyMap[siteCurrency] || '₴';
+    const currentCartItemId = product ? `${product.id}-${JSON.stringify(selectedOptions, Object.keys(selectedOptions).sort())}` : null;
+    const isInCart = cartItems?.some(item => item.cartItemId === currentCartItemId);
     useEffect(() => {
         if (isSiteHidden) {
             setLoading(false);
@@ -88,9 +91,7 @@ const ProductDetailPage = () => {
                 if (!productId) throw new Error("No ID");
                 const response = await apiClient.get(`/products/${productId}`);
                 const prod = response.data;
-                
                 if (!prod || Object.keys(prod).length === 0) throw new Error("Empty product");
-                
                 ['variants', 'image_gallery'].forEach(key => {
                     if (prod[key] && typeof prod[key] === 'string') {
                         try { prod[key] = JSON.parse(prod[key]); } catch (e) { prod[key] = null; }
@@ -220,8 +221,13 @@ const ProductDetailPage = () => {
         }
     };
 
-    const handleAddToCart = () => {
+    const handlePrimaryAction = () => {
         if (isStaff) return;
+        if (isInCart) {
+            navigate('/cart');
+            return;
+        }
+
         if (!user) {
             if (window.confirm("Щоб додати товар до кошика, необхідно увійти. Перейти на сторінку входу?")) navigate('/login');
             return;
@@ -232,6 +238,7 @@ const ProductDetailPage = () => {
             site_name: siteData?.title,
             currency: siteCurrency
         };
+        
         addToCart(productForCart, selectedOptions, {
             finalPrice: priceData.finalPrice, originalPrice: priceData.originalPrice, discount: priceData.activeDiscount
         });
@@ -262,7 +269,6 @@ const ProductDetailPage = () => {
         '--badge-outofstock-bg': 'color-mix(in srgb, var(--platform-danger), transparent 90%)',
         color: 'var(--site-text-primary)',
     };
-
     return (
         <div 
             className={`${styles.pageWrapper} site-theme-context`} 
@@ -389,11 +395,15 @@ const ProductDetailPage = () => {
                         ))}
                         <div style={{marginTop: '20px'}}>
                             <button
-                                onClick={handleAddToCart}
-                                disabled={isOwner || isSoldOut || isStaff}
-                                className={`${styles.addToCartButton} ${(isOwner || isSoldOut || isStaff) ? styles.disabled : styles.available}`}
+                                onClick={handlePrimaryAction}
+                                disabled={isOwner || (isSoldOut && !isInCart) || isStaff}
+                                className={`${styles.addToCartButton} ${(isOwner || (isSoldOut && !isInCart) || isStaff) ? styles.disabled : styles.available}`}
                             >
-                                {isStaff ? 'Купівля недоступна для персоналу' : isOwner ? 'Ви власник цього товару' : (isSoldOut ? 'Немає в наявності' : 'Додати в кошик')}
+                                {isStaff ? 'Купівля недоступна для персоналу' : 
+                                 isOwner ? 'Ви власник цього товару' : 
+                                 isInCart ? 'Перейти до кошику' : 
+                                 isSoldOut ? 'Немає в наявності' : 
+                                 'Додати в кошик'}
                             </button>
                         </div>
                     </div>
