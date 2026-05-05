@@ -8,7 +8,7 @@ import { Button } from '../../../../../shared/ui/elements/Button';
 import DateRangePicker from '../../../../../shared/ui/elements/DateRangePicker';
 import EmptyState from '../../../../../shared/ui/complex/EmptyState';
 import LoadingState from '../../../../../shared/ui/complex/LoadingState';
-import { Package, MapPin, User, Calendar, Search } from 'lucide-react';
+import { Package, MapPin, User, Calendar, Search, CreditCard, Wallet } from 'lucide-react';
 
 const STATUS_MAP = {
     'pending': { label: 'Очікує оплати', color: 'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-500' },
@@ -16,6 +16,11 @@ const STATUS_MAP = {
     'shipped': { label: 'Відправлено', color: 'bg-purple-500/10 text-purple-600 border-purple-500/20 dark:text-purple-500' },
     'completed': { label: 'Виконано', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-500' },
     'cancelled': { label: 'Скасовано', color: 'bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-500' }
+};
+
+const PAYMENT_METHOD_MAP = {
+    online: { label: 'Оплата картою (LiqPay)', icon: CreditCard, color: 'text-blue-600 dark:text-blue-400' },
+    cod: { label: 'Оплата при отриманні', icon: Wallet, color: 'text-amber-600 dark:text-amber-500' }
 };
 
 const STATUS_OPTIONS = Object.entries(STATUS_MAP)
@@ -56,12 +61,7 @@ const OrdersTab = ({ site, siteData }) => {
     const [sortOrder, setSortOrder] = useState('desc');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-    const currencyMap = {
-        'UAH': '₴',
-        'USD': '$',
-        'EUR': '€'
-    };
-    
+    const currencyMap = { 'UAH': '₴', 'USD': '$', 'EUR': '€' };
     const siteCurrency = currentSite?.currency || 'UAH';
     const currencySymbol = currencyMap[siteCurrency] || '₴';
     useEffect(() => {
@@ -116,8 +116,12 @@ const OrdersTab = ({ site, siteData }) => {
     const getStatusControl = (order) => {
         const hasItems = order.items && order.items.length > 0;
         const isDigitalOnly = hasItems && order.items.every(item => item.type === 'digital');
-        const isDisabled = order.status === 'pending' || isDigitalOnly;
-        const config = STATUS_MAP[order.status] || STATUS_MAP['pending'];
+        const isDisabled = (order.status === 'pending' && order.payment_method === 'online') || isDigitalOnly;
+        let config = STATUS_MAP[order.status] || STATUS_MAP['pending'];
+        if (order.status === 'pending' && order.payment_method === 'cod') {
+            config = { label: 'Нове замовлення (Наложка)', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' };
+        }
+
         if (isDisabled) {
             return (
                 <span className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 ${config.color} shadow-sm`}>
@@ -134,7 +138,7 @@ const OrdersTab = ({ site, siteData }) => {
                     name="status"
                     value={order.status}
                     onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                    options={STATUS_OPTIONS}
+                    options={order.status === 'pending' ? [{ value: 'pending', label: 'Нове замовлення' }, ...STATUS_OPTIONS] : STATUS_OPTIONS}
                 />
             </div>
         );
@@ -263,94 +267,107 @@ const OrdersTab = ({ site, siteData }) => {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-5">
-                        {processedOrders.map(order => (
-                            <div key={order.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:border-(--platform-text-secondary)/30">
-                                <div className="flex justify-between items-start border-b border-(--platform-border-color)/60 pb-5 mb-5 flex-wrap gap-4">
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex items-center gap-4 flex-wrap">
-                                            <span className="font-bold text-xl text-(--platform-text-primary)">
-                                                Замовлення #{order.id}
-                                            </span>
-                                            {getStatusControl(order)}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-(--platform-text-secondary) font-medium">
-                                            <Calendar size={14} className="text-(--platform-text-secondary)"/>
-                                            <span>{formatDate(order.created_at)}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl px-5 py-3 shadow-sm">
-                                        <div className="text-xs font-medium text-(--platform-text-secondary) mb-1 uppercase tracking-wide">Сума замовлення</div>
-                                        <div className="text-2xl font-bold text-(--platform-accent)">
-                                            {parseFloat(order.total_amount).toFixed(2)} {currencySymbol}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-(--platform-card-bg) border border-(--platform-border-color) p-5 rounded-xl text-sm text-(--platform-text-primary) shadow-sm">
-                                        <h4 className="font-bold text-base mb-4 flex items-center gap-2 pb-3 border-b border-(--platform-border-color)/60">
-                                            <User size={18} className="text-(--platform-text-secondary)"/> 
-                                            Дані клієнта
-                                        </h4>
-                                        <div className="flex flex-col gap-3">
-                                            <div className="flex gap-3 items-center">
-                                                <span className="text-(--platform-text-secondary) w-20 font-medium">Ім'я:</span> 
-                                                <span className="font-semibold">{order.customer_name}</span>
-                                            </div>
-                                            <div className="flex gap-3 items-center">
-                                                <span className="text-(--platform-text-secondary) w-20 font-medium">Email:</span> 
-                                                <a href={`mailto:${order.customer_email}`} className="text-(--platform-accent) hover:underline font-medium">
-                                                    {order.customer_email}
-                                                </a>
-                                            </div>
-                                            <div className="flex gap-3 items-center">
-                                                <span className="text-(--platform-text-secondary) w-20 font-medium">Телефон:</span> 
-                                                <span className="font-medium">{order.customer_phone || '—'}</span>
-                                            </div>
-                                            <div className="flex gap-3 mt-2 pt-3 border-t border-(--platform-border-color)/60">
-                                                <MapPin size={16} className="text-(--platform-text-secondary) shrink-0 mt-0.5"/> 
-                                                <span className={`${order.delivery_address === 'Цифрова доставка' ? 'text-blue-500 font-semibold bg-blue-500/10 px-2 py-0.5 rounded-md text-xs uppercase tracking-wide border border-blue-500/20' : 'font-medium'}`}>
-                                                    {order.delivery_address || 'Не вказано'}
+                        {processedOrders.map(order => {
+                            const paymentConfig = PAYMENT_METHOD_MAP[order.payment_method] || PAYMENT_METHOD_MAP.online;
+                            const PaymentIcon = paymentConfig.icon;
+                            return (
+                                <div key={order.id} className="bg-(--platform-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:border-(--platform-text-secondary)/30">
+                                    <div className="flex justify-between items-start border-b border-(--platform-border-color)/60 pb-5 mb-5 flex-wrap gap-4">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-4 flex-wrap">
+                                                <span className="font-bold text-xl text-(--platform-text-primary)">
+                                                    Замовлення #{order.id}
                                                 </span>
+                                                {getStatusControl(order)}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-(--platform-text-secondary) font-medium">
+                                                <Calendar size={14} className="text-(--platform-text-secondary)"/>
+                                                <span>{formatDate(order.created_at)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 flex-wrap justify-end">
+                                            <div className="text-right bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl px-4 py-3 shadow-sm flex flex-col justify-center">
+                                                <div className="text-xs font-medium text-(--platform-text-secondary) mb-1 uppercase tracking-wide">Спосіб оплати</div>
+                                                <div className={`text-sm font-bold flex items-center justify-end gap-1.5 ${paymentConfig.color}`}>
+                                                    <PaymentIcon size={16} />
+                                                    {paymentConfig.label}
+                                                </div>
+                                            </div>
+                                            <div className="text-right bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl px-5 py-3 shadow-sm">
+                                                <div className="text-xs font-medium text-(--platform-text-secondary) mb-1 uppercase tracking-wide">Сума замовлення</div>
+                                                <div className="text-2xl font-bold text-(--platform-accent)">
+                                                    {parseFloat(order.total_amount).toFixed(2)} {currencySymbol}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="bg-(--platform-card-bg) border border-(--platform-border-color) p-5 rounded-xl shadow-sm">
-                                        <h4 className="font-bold text-base mb-4 flex items-center gap-2 pb-3 border-b border-(--platform-border-color)/60 text-(--platform-text-primary)">
-                                            <Package size={18} className="text-(--platform-text-secondary)"/>
-                                            Товари ({order.items?.length || 0})
-                                        </h4>
-                                        <div className="flex flex-col gap-3">
-                                            {order.items?.map(item => {
-                                                const opts = item.options ? (typeof item.options === 'string' ? JSON.parse(item.options) : item.options) : {};
-                                                return (
-                                                    <div key={item.id} className="flex justify-between items-start text-sm p-4 border border-(--platform-border-color) rounded-lg bg-(--platform-bg)">
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold text-(--platform-text-primary) text-base flex items-center flex-wrap gap-2">
-                                                                {item.product_name}
-                                                                {item.type === 'digital' && (
-                                                                    <span className="text-[10px] bg-blue-500/10 text-blue-600 border border-blue-500/20 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Цифр.</span>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-(--platform-card-bg) border border-(--platform-border-color) p-5 rounded-xl text-sm text-(--platform-text-primary) shadow-sm">
+                                            <h4 className="font-bold text-base mb-4 flex items-center gap-2 pb-3 border-b border-(--platform-border-color)/60">
+                                                <User size={18} className="text-(--platform-text-secondary)"/> 
+                                                Дані клієнта
+                                            </h4>
+                                            <div className="flex flex-col gap-3">
+                                                <div className="flex gap-3 items-center">
+                                                    <span className="text-(--platform-text-secondary) w-20 font-medium">Ім'я:</span> 
+                                                    <span className="font-semibold">{order.customer_name}</span>
+                                                </div>
+                                                <div className="flex gap-3 items-center">
+                                                    <span className="text-(--platform-text-secondary) w-20 font-medium">Email:</span> 
+                                                    <a href={`mailto:${order.customer_email}`} className="text-(--platform-accent) hover:underline font-medium">
+                                                        {order.customer_email}
+                                                    </a>
+                                                </div>
+                                                <div className="flex gap-3 items-center">
+                                                    <span className="text-(--platform-text-secondary) w-20 font-medium">Телефон:</span> 
+                                                    <span className="font-medium">{order.customer_phone || '—'}</span>
+                                                </div>
+                                                <div className="flex gap-3 mt-2 pt-3 border-t border-(--platform-border-color)/60">
+                                                    <MapPin size={16} className="text-(--platform-text-secondary) shrink-0 mt-0.5"/> 
+                                                    <span className={`${order.delivery_address === 'Цифрова доставка' ? 'text-blue-500 font-semibold bg-blue-500/10 px-2 py-0.5 rounded-md text-xs uppercase tracking-wide border border-blue-500/20' : 'font-medium'}`}>
+                                                        {order.delivery_address || 'Не вказано'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-(--platform-card-bg) border border-(--platform-border-color) p-5 rounded-xl shadow-sm">
+                                            <h4 className="font-bold text-base mb-4 flex items-center gap-2 pb-3 border-b border-(--platform-border-color)/60 text-(--platform-text-primary)">
+                                                <Package size={18} className="text-(--platform-text-secondary)"/>
+                                                Товари ({order.items?.length || 0})
+                                            </h4>
+                                            <div className="flex flex-col gap-3">
+                                                {order.items?.map(item => {
+                                                    const opts = item.options ? (typeof item.options === 'string' ? JSON.parse(item.options) : item.options) : {};
+                                                    return (
+                                                        <div key={item.id} className="flex justify-between items-start text-sm p-4 border border-(--platform-border-color) rounded-lg bg-(--platform-bg)">
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-(--platform-text-primary) text-base flex items-center flex-wrap gap-2">
+                                                                    {item.product_name}
+                                                                    {item.type === 'digital' && (
+                                                                        <span className="text-[10px] bg-blue-500/10 text-blue-600 border border-blue-500/20 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Цифр.</span>
+                                                                    )}
+                                                                </span>
+                                                                {Object.entries(opts).length > 0 && (
+                                                                    <div className="text-xs text-(--platform-text-secondary) mt-1.5 font-medium bg-(--platform-card-bg) inline-block px-2 py-1 rounded border border-(--platform-border-color)">
+                                                                        {Object.entries(opts).map(([k,v]) => `${k}: ${v.label || v}`).join(', ')}
+                                                                    </div>
                                                                 )}
-                                                            </span>
-                                                            {Object.entries(opts).length > 0 && (
-                                                                <div className="text-xs text-(--platform-text-secondary) mt-1.5 font-medium bg-(--platform-card-bg) inline-block px-2 py-1 rounded border border-(--platform-border-color)">
-                                                                    {Object.entries(opts).map(([k,v]) => `${k}: ${v.label || v}`).join(', ')}
+                                                            </div>
+                                                            <div className="text-right ml-4 shrink-0 flex flex-col justify-center">
+                                                                <div className="font-bold text-(--platform-text-primary) text-base">{item.quantity} шт.</div>
+                                                                <div className="text-(--platform-text-secondary) text-xs font-medium mt-0.5">
+                                                                    {parseFloat(item.price).toFixed(0)} {currencySymbol}/шт.
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-right ml-4 shrink-0 flex flex-col justify-center">
-                                                            <div className="font-bold text-(--platform-text-primary) text-base">{item.quantity} шт.</div>
-                                                            <div className="text-(--platform-text-secondary) text-xs font-medium mt-0.5">
-                                                                {parseFloat(item.price).toFixed(0)} {currencySymbol}/шт.
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            })}
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

@@ -30,7 +30,6 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
             setIsInitialLoad(false);
         }
     }, [manager.isLoading]);
-
     const handleSaveTemplate = async (name, description, thumbnailUrl, category, overwriteId) => {
         if (!siteData?.id) return toast.error("Помилка: Не знайдено ID сайту");
         if (!name) return toast.error("Вкажіть назву шаблону");
@@ -80,7 +79,7 @@ const GeneralTemplatesSection = ({ siteData, isAdmin }) => {
     const previewData = useMemo(() => {
         if (manager.selectedTemplateId === 'blank') {
             return { 
-                pages: [{ slug: 'home', name: 'Головна', blocks: [] }], 
+                pages: [{ slug: 'home', name: 'Головныа', blocks: [] }], 
                 theme: { mode: 'light', accent: 'blue' }, 
                 header: [], 
                 footer: [], 

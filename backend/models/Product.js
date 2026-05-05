@@ -53,7 +53,9 @@ class Product {
                         FROM product_categories pc
                         JOIN categories c ON pc.category_id = c.id
                         WHERE pc.product_id = p.id
-                    ) AS categories
+                    ) AS categories,
+                    (SELECT AVG(rating) FROM product_reviews WHERE product_id = p.id) as average_rating,
+                    (SELECT COUNT(*) FROM product_reviews WHERE product_id = p.id) as review_count
              FROM products p
              JOIN sites s ON p.site_id = s.id
              WHERE p.id = ?`,
@@ -63,6 +65,7 @@ class Product {
         rows[0].image_gallery = safeParseGallery(rows[0].image_gallery);
         rows[0].variants = safeParseVariants(rows[0].variants);
         rows[0].categories = safeParseCategories(rows[0].categories);
+        rows[0].average_rating = parseFloat(rows[0].average_rating) || 0;
         return rows[0];
     }
 
@@ -76,7 +79,9 @@ class Product {
                     FROM product_categories pc
                     JOIN categories c ON pc.category_id = c.id
                     WHERE pc.product_id = p.id
-                ) AS categories
+                ) AS categories,
+                (SELECT AVG(rating) FROM product_reviews WHERE product_id = p.id) as average_rating,
+                (SELECT COUNT(*) FROM product_reviews WHERE product_id = p.id) as review_count
             FROM products p
             WHERE p.site_id = ?
             ORDER BY p.created_at DESC
@@ -85,6 +90,7 @@ class Product {
             product.image_gallery = safeParseGallery(product.image_gallery);
             product.variants = safeParseVariants(product.variants);
             product.categories = safeParseCategories(product.categories);
+            product.average_rating = parseFloat(product.average_rating) || 0;
             return product;
         });
     }
@@ -148,7 +154,9 @@ class Product {
                     FROM product_categories pc
                     JOIN categories c ON pc.category_id = c.id
                     WHERE pc.product_id = p.id
-                ) AS categories
+                ) AS categories,
+                (SELECT AVG(rating) FROM product_reviews WHERE product_id = p.id) as average_rating,
+                (SELECT COUNT(*) FROM product_reviews WHERE product_id = p.id) as review_count
             FROM products p
             WHERE 1=1
         `;
@@ -176,8 +184,52 @@ class Product {
             product.image_gallery = safeParseGallery(product.image_gallery);
             product.variants = safeParseVariants(product.variants);
             product.categories = safeParseCategories(product.categories);
+            product.average_rating = parseFloat(product.average_rating) || 0;
             return product;
         });
+    }
+
+    static async getReviews(productId) {
+        const [rows] = await db.query(`
+            SELECT pr.*, u.username, u.avatar_url 
+            FROM product_reviews pr
+            JOIN users u ON pr.user_id = u.id
+            WHERE pr.product_id = ?
+            ORDER BY pr.created_at DESC
+        `, [productId]);
+        return rows;
+    }
+
+    static async addReview(productId, userId, rating, comment) {
+        const [result] = await db.query(
+            'INSERT INTO product_reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating = VALUES(rating), comment = VALUES(comment)',
+            [productId, userId, rating, comment]
+        );
+        return result;
+    }
+
+    static async getReviewByUser(productId, userId) {
+         const [rows] = await db.query(
+            'SELECT * FROM product_reviews WHERE product_id = ? AND user_id = ?',
+            [productId, userId]
+        );
+        return rows[0] || null;
+    }
+
+    static async updateReviewReply(reviewId, replyText) {
+        const [result] = await db.query(
+            'UPDATE product_reviews SET owner_reply = ? WHERE id = ?',
+            [replyText, reviewId]
+        );
+        return result;
+    }
+
+    static async deleteReview(reviewId) {
+        const [result] = await db.query(
+            'DELETE FROM product_reviews WHERE id = ?',
+            [reviewId]
+        );
+        return result;
     }
 }
 

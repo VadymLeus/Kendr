@@ -5,9 +5,10 @@ import CategoryManager from './components/CategoryManager';
 import ProductManager from './components/ProductManager'; 
 import OrdersTab from './components/OrdersTab';
 import CommerceSettingsTab from './components/CommerceSettingsTab';
+import ReviewsTab from './components/ReviewsTab';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import apiClient from '../../../../shared/api/api';
-import { Grid, Folder, Package, Settings } from 'lucide-react';
+import { Grid, Folder, Package, Settings, Star } from 'lucide-react';
 
 const CommerceTab = ({ siteData, onSavingChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -21,14 +22,12 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
             .then(res => setLimits(res.data))
             .catch(err => console.error("Помилка завантаження лімітів:", err));
     }, []);
-
     const isPlanAdmin = plan && String(plan).trim().toUpperCase() === 'ADMIN';
     const maxProducts = isPlanAdmin ? Infinity : (limits ? limits.maxProducts : 50);
     const maxCategories = isPlanAdmin ? Infinity : (limits ? limits.maxCategories : 20);
     useEffect(() => {
         if (onSavingChange) onSavingChange(isCommerceSaving);
     }, [isCommerceSaving, onSavingChange]);
-
     const handleTabChange = (tabName) => {
         setSearchParams(prev => {
             prev.set('commerceTab', tabName);
@@ -46,6 +45,7 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
     if (!isStaff) {
         tabs.push(
             { key: 'orders', icon: <Package />, text: 'Замовлення' },
+            { key: 'reviews', icon: <Star />, text: 'Відгуки' },
             { key: 'settings', icon: <Settings />, text: 'Налаштування' }
         );
     }
@@ -84,6 +84,11 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                 )}
                 {activeSubTab === 'orders' && !isStaff && (
                     <OrdersTab 
+                        siteData={siteData} 
+                    />
+                )}
+                {activeSubTab === 'reviews' && !isStaff && (
+                    <ReviewsTab 
                         siteData={siteData} 
                     />
                 )}

@@ -5,6 +5,7 @@ const db = require('../config/db');
 const fs = require('fs').promises;
 const path = require('path');
 const { deleteFile } = require('../utils/fileUtils');
+const { encrypt } = require('../utils/encryption');
 const { v4: uuidv4 } = require('uuid');
 const regenerateBlockIds = (blocks) => {
     if (!blocks) return [];
@@ -48,7 +49,7 @@ const validateSlugOnly = (slug) => {
     if (RESERVED_SLUGS.includes(trimmedSlug)) return 'Цей URL зарезервовано системою';
     const isRepetitive = /(.)\1{4,}/.test(trimmedSlug);
     if (isRepetitive || BAD_SEQUENCES.some(seq => trimmedSlug.includes(seq))) {
-        return 'Адреса містить занадто просту/сміттєву послідовність';
+        return 'Ця адреса містить заборонену або занадто просту послідовність символів';
     }
     return null;
 };
@@ -64,11 +65,16 @@ const validateSiteCreation = (title, slug) => {
 exports.getSiteInfoById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const [sites] = await db.query('SELECT site_path, title FROM sites WHERE id = ?', [id]);
+        const [sites] = await db.query('SELECT site_path, title, is_online_payment_enabled, is_cod_enabled FROM sites WHERE id = ?', [id]);
         if (sites.length === 0) {
             return res.status(404).json({ message: 'Сайт не знайдено' });
         }
-        res.json({ site_path: sites[0].site_path, title: sites[0].title });
+        res.json({ 
+            site_path: sites[0].site_path, 
+            title: sites[0].title,
+            is_online_payment_enabled: sites[0].is_online_payment_enabled,
+            is_cod_enabled: sites[0].is_cod_enabled
+        });
     } catch (error) {
         console.error('Помилка в getSiteInfoById:', error);
         next(error);
@@ -147,7 +153,6 @@ exports.createSite = async (req, res, next) => {
                 pagesToCreate = [{ title: 'Головна', slug: 'home', blocks: templateData }];
             }
         }
-
         let logoUrl = selected_logo_url || '/logos/logo1.png'; 
         const relativeLogoUrl = logoUrl.replace(/^http:\/\/localhost:5000/, '');
         if (headerToSave.length > 0) {
@@ -316,6 +321,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             cover_image, cover_layout, logo_url,
             cover_logo_size, cover_logo_radius, cover_title_size,
             liqpay_public_key, liqpay_private_key, currency,
+            is_online_payment_enabled, is_cod_enabled,
             cookie_banner_enabled, cookie_banner_text,
             cookie_banner_size, cookie_banner_position, cookie_banner_blur
         } = req.body;
@@ -407,7 +413,9 @@ exports.updateSiteSettings = async (req, res, next) => {
             cover_logo_radius: cover_logo_radius !== undefined ? parseInt(cover_logo_radius) : site.cover_logo_radius,
             cover_title_size: cover_title_size !== undefined ? parseInt(cover_title_size) : site.cover_title_size,
             liqpay_public_key: liqpay_public_key !== undefined ? liqpay_public_key : site.liqpay_public_key,
-            liqpay_private_key: liqpay_private_key !== undefined ? liqpay_private_key : site.liqpay_private_key,
+            liqpay_private_key: liqpay_private_key !== undefined ? encrypt(liqpay_private_key) : site.liqpay_private_key,
+            is_online_payment_enabled: is_online_payment_enabled !== undefined ? is_online_payment_enabled : site.is_online_payment_enabled,
+            is_cod_enabled: is_cod_enabled !== undefined ? is_cod_enabled : site.is_cod_enabled,
             currency: currency !== undefined ? currency : site.currency,
             cookie_banner_enabled: cookie_banner_enabled !== undefined ? cookie_banner_enabled : site.cookie_banner_enabled,
             cookie_banner_text: cookie_banner_text !== undefined ? cookie_banner_text : site.cookie_banner_text,

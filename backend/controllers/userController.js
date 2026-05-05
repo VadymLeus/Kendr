@@ -52,9 +52,6 @@ const sanitizeUser = (user, stats = null) => {
         plan: user.plan || 'FREE',
         platform_theme_mode: user.platform_theme_mode,
         platform_theme_accent: user.platform_theme_accent,
-        platform_bg_url: user.platform_bg_url,
-        platform_bg_blur: user.platform_bg_blur,
-        platform_bg_brightness: user.platform_bg_brightness,
         bio: user.bio,
         social_telegram: user.social_telegram,
         social_instagram: user.social_instagram,
@@ -131,7 +128,6 @@ exports.updateProfile = async (req, res, next) => {
         const allowedFields = [
             'username', 'phone_number', 
             'platform_theme_mode', 'platform_theme_accent', 
-            'platform_bg_url', 'platform_bg_blur', 'platform_bg_brightness',
             'bio', 'social_telegram', 'social_instagram', 'social_website', 
             'is_profile_public'
         ];

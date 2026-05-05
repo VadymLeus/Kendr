@@ -88,9 +88,10 @@ const ConfirmModal = ({
         <div 
             ref={overlayRef} 
             className={`
-                fixed inset-0 z-9999 flex items-center justify-center bg-black/50 backdrop-blur-[2px] transition-opacity duration-200 p-4
+                fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px] transition-opacity duration-200 p-4
                 ${isOpen ? 'opacity-100' : 'opacity-0'}
             `}
+            style={{ zIndex: 30000 }} 
             onClick={(e) => e.target === overlayRef.current && onCancel()}
         >
             <div 

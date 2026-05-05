@@ -1,9 +1,10 @@
 // frontend/src/modules/editor/ui/components/ProductCard.jsx
 import React, { useState, useMemo, useContext, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { BASE_URL } from '../../../../shared/config';
+import { useConfirm } from '../../../../shared/hooks/useConfirm';
 import { ShoppingCart, User, Settings, Shield, Download } from 'lucide-react';
 
 const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
@@ -12,6 +13,8 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const addToCart = cartContext?.addToCart || (() => console.warn('Cart Context is missing'));
     const user = authContext?.user || null;
     const navigate = useNavigate();
+    const location = useLocation();
+    const { confirm } = useConfirm();
     const [activeImgIndex, setActiveImgIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false);
     const intervalRef = useRef(null);
@@ -74,7 +77,7 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
         setActiveImgIndex(0);
     };
 
-    const handleAction = (e) => {
+    const handleAction = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (isEditorPreview) return;
@@ -84,11 +87,20 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
         }
         if (isStaff) return;
         if (!user) {
-            if (typeof window !== 'undefined' && window.confirm("Щоб купити, потрібно увійти. Перейти на сторінку входу?")) {
-                navigate('/login');
+            const isConfirmed = await confirm({
+                title: 'Потрібна авторизація',
+                message: 'Щоб купити, потрібно увійти. Перейти на сторінку входу?',
+                confirmLabel: 'Увійти',
+                cancelLabel: 'Скасувати',
+                type: 'warning'
+            });
+            
+            if (isConfirmed) {
+                navigate('/login', { state: { from: location.pathname + location.search } });
             }
             return;
         }
+        
         if (addToCart) {
             const productForCart = {
                 ...product,

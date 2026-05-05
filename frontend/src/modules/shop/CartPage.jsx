@@ -23,7 +23,7 @@ const CartPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
     const [activeSiteId, setActiveSiteId] = useState(null);
-    const [resolvedPaths, setResolvedPaths] = useState({});
+    const [resolvedSettings, setResolvedSettings] = useState({});
     const [isMapModalOpen, setIsMapModalOpen] = useState(false);
     const [confirmModal, setConfirmModal] = useState({
         isOpen: false, actionType: null, targetId: null, title: '', message: ''
@@ -38,42 +38,48 @@ const CartPage = () => {
             }));
         }
     }, [user]);
-
     useEffect(() => {
-        const fetchPaths = async () => {
-            const missingIds = cartItems.map(item => item.site_id).filter(id => id && !resolvedPaths[id]);
+        const fetchSettings = async () => {
+            const missingIds = cartItems.map(item => item.site_id).filter(id => id && !resolvedSettings[id]);
             const uniqueMissingIds = [...new Set(missingIds)];
             if (uniqueMissingIds.length === 0) return;
-            const newPaths = { ...resolvedPaths };
+            const newSettings = { ...resolvedSettings };
             for (const id of uniqueMissingIds) {
-                const itemWithPath = cartItems.find(i => i.site_id === id && i.site_path);
-                if (itemWithPath) {
-                    newPaths[id] = itemWithPath.site_path;
-                    continue;
-                }
                 try {
-                    const res = await apiClient.get(`/site/info/${id}`);
-                    if (res.data && res.data.site_path) newPaths[id] = res.data.site_path;
+                    const res = await apiClient.get(`/sites/info/${id}`);
+                    if (res.data) {
+                        newSettings[id] = {
+                            path: res.data.site_path || '',
+                            isOnlineEnabled: Boolean(res.data.is_online_payment_enabled ?? true),
+                            isCodEnabled: Boolean(res.data.is_cod_enabled ?? true)
+                        };
+                    }
                 } catch (e) {
-                    console.error("Помилка завантаження site_path для id:", id);
+                    console.error("Помилка завантаження налаштувань для id:", id);
+                    newSettings[id] = { path: null, isOnlineEnabled: true, isCodEnabled: true };
                 }
             }
-            setResolvedPaths(newPaths);
+            setResolvedSettings(newSettings);
         };
-        fetchPaths();
-    }, [cartItems, resolvedPaths]);
+        fetchSettings();
+    }, [cartItems, resolvedSettings]);
 
     const groupedItems = useMemo(() => {
         const groups = {};
         cartItems.forEach(item => {
             const siteId = item.site_id || 'unknown';
-            const sitePath = item.site_path || resolvedPaths[siteId] || siteId; 
+            const siteSettings = resolvedSettings[siteId] || { path: null, isOnlineEnabled: true, isCodEnabled: true };
+            const sitePath = item.site_path || siteSettings.path || siteId; 
             const itemCurrency = item.currency || 'UAH';
             if (!groups[siteId]) {
                 groups[siteId] = {
                     siteName: item.site_name || `Магазин #${siteId}`,
-                    siteId: siteId, sitePath: sitePath,
-                    currency: itemCurrency, currencySymbol: currencyMap[itemCurrency] || '₴',
+                    siteId: siteId, 
+                    sitePath: sitePath,
+                    currency: itemCurrency, 
+                    currencySymbol: currencyMap[itemCurrency] || '₴',
+                    isOnlineEnabled: Boolean(siteSettings.isOnlineEnabled),
+                    isCodEnabled: Boolean(siteSettings.isCodEnabled),
                     items: [], total: 0, totalOriginal: 0, isDigitalOnly: true
                 };
             }
@@ -89,19 +95,29 @@ const CartPage = () => {
         return Object.values(groups).map(group => ({
             ...group, totalDiscount: group.totalOriginal - group.total
         }));
-    }, [cartItems, resolvedPaths]);
+    }, [cartItems, resolvedSettings]);
+    
     useEffect(() => {
         if (groupedItems.length > 0) {
             const isCurrentValid = groupedItems.some(g => g.siteId === activeSiteId);
             if (!isCurrentValid) setActiveSiteId(groupedItems[0].siteId);
             const currentGroup = groupedItems.find(g => g.siteId === (isCurrentValid ? activeSiteId : groupedItems[0].siteId));
-            if (currentGroup && currentGroup.isDigitalOnly) {
-                setPaymentMethod('online');
+            if (currentGroup) {
+                if (currentGroup.isDigitalOnly) {
+                    setPaymentMethod('online');
+                } else if (!currentGroup.isOnlineEnabled && currentGroup.isCodEnabled) {
+                    setPaymentMethod('cod');
+                } else if (currentGroup.isOnlineEnabled && !currentGroup.isCodEnabled) {
+                    setPaymentMethod('online');
+                } else if (!['online', 'cod'].includes(paymentMethod)) {
+                    setPaymentMethod('online');
+                }
             }
         } else {
             setActiveSiteId(null);
         }
     }, [groupedItems, activeSiteId]);
+    
     const activeGroup = useMemo(() => groupedItems.find(g => g.siteId === activeSiteId) || null, [groupedItems, activeSiteId]);
     const clearCartForSite = (siteId) => {
         const itemsToRemove = cartItems.filter(item => item.site_id === siteId);
@@ -134,9 +150,25 @@ const CartPage = () => {
     const handleCheckout = async (e) => {
         e.preventDefault();
         if (!activeGroup) return;
+        if (paymentMethod === 'online' && !activeGroup.isOnlineEnabled) {
+            return toast.error('Продавець тимчасово не приймає онлайн оплату.');
+        }
+        if (paymentMethod === 'cod' && !activeGroup.isCodEnabled) {
+            return toast.error('Продавець не відправляє товари післяплатою.');
+        }
+        if (paymentMethod === 'cod' && activeGroup.isDigitalOnly) {
+            return toast.error('Цифрові товари доступні тільки за умови онлайн оплати.');
+        }
+
         if (!customerData.name.trim() || !customerData.email.trim() || !customerData.phone.trim()) {
             return toast.error('Будь ласка, заповніть всі обов\'язкові поля');
         }
+
+        const phoneRegex = /^[0-9+\-\(\)\s]*$/;
+        if (customerData.phone && !phoneRegex.test(customerData.phone)) {
+            return toast.error('Некоректний формат телефону. Використовуйте лише цифри та символи + ( ) -');
+        }
+
         if (!activeGroup.isDigitalOnly && !customerData.address.trim()) {
             return toast.error('Будь ласка, оберіть відділення доставки');
         }
@@ -148,7 +180,6 @@ const CartPage = () => {
             const formattedItems = activeGroup.items.map(item => ({
                 id: item.id, quantity: item.quantity, options: item.selectedOptions
             }));
-            
             const payload = { 
                 siteId: activeGroup.siteId, 
                 items: formattedItems, 
@@ -199,6 +230,8 @@ const CartPage = () => {
 
     const renderCheckoutForm = () => {
         if (!activeGroup) return null;
+        const noPaymentAvailable = (!activeGroup.isOnlineEnabled && !activeGroup.isCodEnabled) || 
+                                   (activeGroup.isDigitalOnly && !activeGroup.isOnlineEnabled);
         return (
             <form onSubmit={handleCheckout} className="space-y-6">
                 <div className="bg-(--platform-card-bg) border border-(--platform-border-color) rounded-2xl p-5 sm:p-6 shadow-sm">
@@ -232,7 +265,6 @@ const CartPage = () => {
                         <h3 className="text-lg font-bold mb-4 text-(--platform-text-primary) flex items-center gap-2">
                             <MapPin className="text-(--platform-accent)" size={20}/> 2. Доставка
                         </h3>
-                        
                         <div className="border border-(--platform-border-color) rounded-xl overflow-hidden relative">
                             {customerData.address ? (
                                 <div className="p-4 bg-(--platform-accent)/5 relative">
@@ -273,71 +305,78 @@ const CartPage = () => {
                     </h3>
                     <div className="mb-6 space-y-3">
                         <h4 className="text-sm font-semibold text-(--platform-text-secondary) uppercase tracking-wider">Спосіб оплати</h4>
-                        <div className="grid grid-cols-1 gap-3">
-                            <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-(--platform-accent) bg-(--platform-accent)/5' : 'border-(--platform-border-color) hover:bg-(--platform-hover-bg)'}`}>
-                                <input 
-                                    type="radio" 
-                                    name="paymentMethod" 
-                                    value="online"
-                                    checked={paymentMethod === 'online'}
-                                    onChange={() => setPaymentMethod('online')}
-                                    className="hidden"
-                                />
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${paymentMethod === 'online' ? 'border-(--platform-accent)' : 'border-gray-400'}`}>
-                                    {paymentMethod === 'online' && <div className="w-2.5 h-2.5 bg-(--platform-accent) rounded-full"></div>}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <CreditCard size={18} className="text-(--platform-text-primary)" />
-                                    <span className="font-medium text-(--platform-text-primary)">Оплата карткою онлайн</span>
-                                </div>
-                            </label>
-                            {!activeGroup.isDigitalOnly && (
-                                <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-(--platform-accent) bg-(--platform-accent)/5' : 'border-(--platform-border-color) hover:bg-(--platform-hover-bg)'}`}>
-                                    <input 
-                                        type="radio" 
-                                        name="paymentMethod" 
-                                        value="cod"
-                                        checked={paymentMethod === 'cod'}
-                                        onChange={() => setPaymentMethod('cod')}
-                                        className="hidden"
-                                    />
-                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${paymentMethod === 'cod' ? 'border-(--platform-accent)' : 'border-gray-400'}`}>
-                                        {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 bg-(--platform-accent) rounded-full"></div>}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Wallet size={18} className="text-(--platform-text-primary)" />
-                                        <span className="font-medium text-(--platform-text-primary)">Оплата при отриманні</span>
-                                    </div>
-                                </label>
-                            )}
-                        </div>
+                        {noPaymentAvailable ? (
+                            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 flex items-center gap-3">
+                                <AlertCircle size={20} className="shrink-0" />
+                                <span className="text-sm font-medium">Цей магазин тимчасово не має доступних способів оплати для цих товарів.</span>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                {Boolean(activeGroup.isOnlineEnabled) && (
+                                    <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-(--platform-accent) bg-(--platform-accent)/5' : 'border-(--platform-border-color) hover:bg-(--platform-hover-bg)'}`}>
+                                        <input 
+                                            type="radio" 
+                                            name="paymentMethod" 
+                                            value="online"
+                                            checked={paymentMethod === 'online'}
+                                            onChange={() => setPaymentMethod('online')}
+                                            className="hidden"
+                                        />
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${paymentMethod === 'online' ? 'border-(--platform-accent)' : 'border-gray-400'}`}>
+                                            {paymentMethod === 'online' && <div className="w-2.5 h-2.5 bg-(--platform-accent) rounded-full"></div>}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <CreditCard size={18} className="text-(--platform-text-primary)" />
+                                            <span className="font-medium text-(--platform-text-primary)">Оплата карткою онлайн</span>
+                                        </div>
+                                    </label>
+                                )}
+                                {!activeGroup.isDigitalOnly && Boolean(activeGroup.isCodEnabled) && (
+                                    <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-(--platform-accent) bg-(--platform-accent)/5' : 'border-(--platform-border-color) hover:bg-(--platform-hover-bg)'}`}>
+                                        <input 
+                                            type="radio" 
+                                            name="paymentMethod" 
+                                            value="cod"
+                                            checked={paymentMethod === 'cod'}
+                                            onChange={() => setPaymentMethod('cod')}
+                                            className="hidden"
+                                        />
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${paymentMethod === 'cod' ? 'border-(--platform-accent)' : 'border-gray-400'}`}>
+                                            {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 bg-(--platform-accent) rounded-full"></div>}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Wallet size={18} className="text-(--platform-text-primary)" />
+                                            <span className="font-medium text-(--platform-text-primary)">Оплата при отриманні</span>
+                                        </div>
+                                    </label>
+                                )}
+                            </div>
+                        )}
                     </div>
                     <div className="space-y-3 mb-6 bg-black/5 dark:bg-white/5 p-4 rounded-xl">
-                        <div className="flex justify-between text-sm text-(--platform-text-secondary)">
-                            <span>Вартість товарів:</span>
-                            <span>{activeGroup.totalOriginal.toFixed(0)} {activeGroup.currencySymbol}</span>
+                        <div className="flex justify-between items-center">
+                            <span className="text-lg font-bold text-(--platform-text-primary)">Вартість товарів:</span>
+                            <span className="text-2xl font-bold text-(--platform-text-primary)">
+                                {activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}
+                            </span>
                         </div>
                         {activeGroup.totalDiscount > 0 && (
-                            <div className="flex justify-between text-sm text-green-500 font-medium">
-                                <span>Знижка:</span>
+                            <div className="flex justify-between text-sm text-green-500 font-medium pt-2 border-t border-(--platform-border-color)/50">
+                                <span>Економія (знижка):</span>
                                 <span>-{activeGroup.totalDiscount.toFixed(0)} {activeGroup.currencySymbol}</span>
                             </div>
                         )}
                         {!activeGroup.isDigitalOnly && (
-                            <div className="flex justify-between text-sm text-(--platform-text-secondary)">
+                            <div className="flex justify-between text-sm text-(--platform-text-secondary) pt-2 border-t border-(--platform-border-color)/50">
                                 <span>{paymentMethod === 'cod' ? 'Доставка та комісія НП:' : 'Доставка (Нова Пошта):'}</span>
-                                <span>За тарифами перевізника</span>
+                                <span>Оплачується при отриманні</span>
                             </div>
                         )}
-                        <div className="flex justify-between text-2xl font-bold text-(--platform-text-primary) pt-4 border-t border-(--platform-border-color)">
-                            <span>Разом:</span>
-                            <span>{activeGroup.total.toFixed(0)} {activeGroup.currencySymbol}</span>
-                        </div>
                     </div>
                     <Button 
                         type="submit" 
-                        className="w-full h-14 text-lg font-bold bg-(--platform-accent) hover:opacity-90 text-white border-none shadow-md transition-all"
-                        disabled={isSubmitting}
+                        className="w-full h-14 text-lg font-bold bg-(--platform-accent) hover:opacity-90 text-white border-none shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isSubmitting || noPaymentAvailable}
                     >
                         {isSubmitting ? (
                             <><Loader2 className="animate-spin mr-2" /> Обробка...</>

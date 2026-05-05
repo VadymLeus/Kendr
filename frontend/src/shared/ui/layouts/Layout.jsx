@@ -8,7 +8,6 @@ import TitleManager from './TitleManager';
 import apiClient from '../../api/api';
 import { resolveAccentColor, isLightColor, adjustColor } from '../../utils/themeUtils';
 import FontLoader from '../../../modules/renderer/components/FontLoader';
-import PlatformBackground from './PlatformBackground';
 import LoadingState from '../complex/LoadingState';
 import { Megaphone } from 'lucide-react';
 
@@ -106,6 +105,7 @@ const Layout = () => {
             clearInterval(intervalId);
         };
     }, [user, globalAnnouncement]);
+    
     const dashboardMatch = location.pathname.match(/^\/dashboard\/([^/]+)/);
     const productInsideSiteMatch = location.pathname.match(/^\/site\/([^/]+)\/product\/([^/]+)/);
     const publicMatch = location.pathname.match(/^\/site\/([^/]+)(?:\/([^/]+))?/);
@@ -138,6 +138,7 @@ const Layout = () => {
         if (dashboardMatch || publicMatch || productInsideSiteMatch) fetchSiteData();
         else { setIsSiteLoading(false); setSiteData(null); }
     }, [location.pathname]);
+    
     const outletContextValue = useMemo(() => ({
         siteData, 
         setSiteData, 
@@ -146,6 +147,7 @@ const Layout = () => {
         globalAnnouncement, 
         setGlobalAnnouncement
     }), [siteData, isSiteLoading, isCollapsedContext, globalAnnouncement]);
+    
     if (isAuthLoading) return <div className="h-screen"><LoadingState title="Завантаження платформи..." layout="page" /></div>;
     const isSiteThemeActive = (!!(publicMatch || productInsideSiteMatch)) && !isSiteLoading && siteData && !isMaintenanceMode;
     const themeSettings = siteData?.theme_settings || {};
@@ -183,7 +185,6 @@ const Layout = () => {
                 }
             `}</style>
             <TitleManager siteData={siteData} key={location.pathname} />
-            <PlatformBackground />
             {announcementText && (
                 <div className="bg-(--platform-accent) text-(--platform-accent-text) w-full z-50 shadow-md animate-in slide-in-from-top-2 shrink-0">
                     <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">

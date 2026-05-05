@@ -10,7 +10,7 @@ import DateRangePicker from '../../shared/ui/elements/DateRangePicker';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { BASE_URL } from '../../shared/config';
-import { Package, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, AlertCircle, ExternalLink, Loader2, Store, Search } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, CreditCard, Wallet, ChevronDown, ChevronUp, AlertCircle, ExternalLink, Loader2, Store, Search } from 'lucide-react';
 
 const STATUS_MAP = {
     pending: { label: 'Очікує оплати', color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: Clock },
@@ -18,6 +18,11 @@ const STATUS_MAP = {
     shipped: { label: 'Відправлено', color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: Package },
     completed: { label: 'Виконано', color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: CheckCircle },
     cancelled: { label: 'Скасовано', color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: XCircle }
+};
+
+const PAYMENT_METHOD_MAP = {
+    online: { label: 'Карткою онлайн', icon: CreditCard },
+    cod: { label: 'Оплата при отриманні', icon: Wallet }
 };
 
 const FILTER_STATUS_OPTIONS = [
@@ -52,10 +57,15 @@ const getImageUrl = (item) => {
 const OrderCard = ({ order, onPay, resolvedPaths }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isPaying, setIsPaying] = useState(false);
-    const statusConfig = STATUS_MAP[order.status] || STATUS_MAP.pending;
+    const isCodPending = order.status === 'pending' && order.payment_method === 'cod';
+    const statusConfig = isCodPending 
+        ? { label: 'Очікує відправки', color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: Package }
+        : (STATUS_MAP[order.status] || STATUS_MAP.pending);
     const StatusIcon = statusConfig.icon;
     const siteLogin = resolvedPaths[order.site_id];
     const siteLinkBase = siteLogin ? `/site/${siteLogin}` : null;
+    const paymentMethodConfig = PAYMENT_METHOD_MAP[order.payment_method] || PAYMENT_METHOD_MAP.online;
+    const PaymentIcon = paymentMethodConfig.icon;
     const currencyMap = {
         'UAH': '₴',
         'USD': '$',
@@ -128,7 +138,7 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                         </p>
                     </div>
                     <div className="flex items-center gap-3 sm:gap-4 ml-auto md:ml-0">
-                        {order.status === 'pending' && (
+                        {order.status === 'pending' && order.payment_method === 'online' && (
                             <Button 
                                 onClick={handlePayClick} 
                                 disabled={isPaying}
@@ -146,7 +156,7 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
             </div>
             {isExpanded && (
                 <div className="border-t border-(--platform-border-color) bg-(--platform-bg) p-4 sm:p-5 animate-in slide-in-from-top-2 duration-200">
-                    {order.status === 'pending' && order.items.some(i => i.type === 'digital') && (
+                    {order.status === 'pending' && order.payment_method === 'online' && order.items.some(i => i.type === 'digital') && (
                         <div className="mb-5 sm:mb-6 p-3 sm:p-4 rounded-lg flex gap-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500">
                             <AlertCircle className="shrink-0 mt-0.5" size={18} />
                             <div className="text-xs sm:text-sm">
@@ -239,7 +249,6 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                                                     </p>
                                                 </div>
                                             </div>
-                                            
                                         </div>
                                     );
                                 })}
@@ -247,7 +256,7 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                         </div>
                         <div>
                             <h4 className="font-semibold text-(--platform-text-primary) mb-3 text-xs sm:text-sm uppercase tracking-wider opacity-80">
-                                Деталі доставки
+                                Деталі замовлення
                             </h4>
                             <div className="bg-(--platform-card-bg) rounded-xl p-4 sm:p-5 border border-(--platform-border-color) text-xs sm:text-sm space-y-2 sm:space-y-3 shadow-sm">
                                 <p className="m-0 flex flex-col gap-0.5">
@@ -256,11 +265,19 @@ const OrderCard = ({ order, onPay, resolvedPaths }) => {
                                 </p>
                                 <p className="m-0 flex flex-col gap-0.5">
                                     <span className="text-[10px] sm:text-xs text-(--platform-text-secondary) uppercase tracking-wider font-semibold">Телефон:</span> 
-                                    <span className="font-medium text-(--platform-text-primary)">{order.customer_phone}</span>
+                                    <span className="font-medium text-(--platform-text-primary)">{order.customer_phone || '—'}</span>
                                 </p>
                                 <p className="m-0 flex flex-col gap-0.5">
                                     <span className="text-[10px] sm:text-xs text-(--platform-text-secondary) uppercase tracking-wider font-semibold">Email:</span> 
                                     <span className="font-medium text-(--platform-text-primary)">{order.customer_email}</span>
+                                </p>
+                                <hr className="my-2.5 sm:my-3 border-(--platform-border-color)" />
+                                <p className="m-0 flex flex-col gap-0.5">
+                                    <span className="text-[10px] sm:text-xs text-(--platform-text-secondary) uppercase tracking-wider font-semibold">Спосіб оплати:</span> 
+                                    <span className="font-medium text-(--platform-text-primary) flex items-center gap-1.5">
+                                        <PaymentIcon size={14} className="text-(--platform-accent)" />
+                                        {paymentMethodConfig.label}
+                                    </span>
                                 </p>
                                 <hr className="my-2.5 sm:my-3 border-(--platform-border-color)" />
                                 <p className="m-0 flex flex-col gap-0.5">
@@ -421,7 +438,6 @@ const MyOrdersPage = () => {
             ) : (
                 <>
                     <div className="mb-6 p-4 sm:p-5 bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl flex flex-col gap-3 sm:gap-4 shadow-sm">
-                        
                         <div className="w-full">
                             <Input
                                 leftIcon={<Search size={16} />}

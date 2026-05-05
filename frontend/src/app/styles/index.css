@@ -27,6 +27,7 @@
   --site-accent: #dd6b20;
   --site-accent-hover: #c05621;
   --site-accent-text: #ffffff;
+  --site-border-color: #e2e8f0;
 }
 
 body[data-platform-mode="dark"] {
@@ -56,6 +57,7 @@ body[data-platform-accent="gray"] { --platform-accent: #718096; --platform-accen
   font-family: var(--font-body, 'Inter', sans-serif);
   transition: background-color 0.3s, color 0.3s;
 }
+
 .site-theme-context[data-site-mode="dark"] {
   --site-bg: #1a202c;
   --site-text-primary: #f7fafc;
@@ -85,7 +87,6 @@ body {
 #root { height: 100%; display: flex; flex-direction: column; }
 a { text-decoration: none; color: inherit; }
 button { font-family: inherit; }
-
 * { scrollbar-width: thin; scrollbar-color: var(--platform-accent) transparent; }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
 *::-webkit-scrollbar-track { background: transparent; }
@@ -221,11 +222,11 @@ button { font-family: inherit; }
 .switch-thumb { width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 .switch-input:checked + .switch-track { background: var(--platform-accent); border-color: var(--platform-accent); }
 .switch-input:checked + .switch-track .switch-thumb { transform: translateX(20px); }
-.platform-footer { background: var(--platform-card-bg); border-top: 1px solid var(--platform-border-color); padding: 1.5rem 2rem; margin-top: auto; flex-shrink: 0; color: var(--platform-text-secondary); font-size: 0.9rem; }
-.avatar-container { border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-weight: 600; text-transform: uppercase; user-select: none; }
 body[data-platform-mode="dark"] .custom-date-input { color-scheme: dark;}
 .custom-date-input { position: relative; }
 .custom-date-input::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.platform-footer { background: var(--platform-card-bg); border-top: 1px solid var(--platform-border-color); padding: 1.5rem 2rem; margin-top: auto; flex-shrink: 0; color: var(--platform-text-secondary); font-size: 0.9rem; }
+.avatar-container { border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-weight: 600; text-transform: uppercase; user-select: none; }
 .hide-scrollbar {
   -ms-overflow-style: none !important; 
   scrollbar-width: none !important;
@@ -238,6 +239,49 @@ body[data-platform-mode="dark"] .custom-date-input { color-scheme: dark;}
 
 textarea {
   transition-property: color, background-color, border-color, box-shadow, opacity !important;
+}
+
+.site-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
+  border-radius: 8px; font-weight: 600; cursor: pointer; 
+  transition: all 0.3s; border: none; outline: none;
+}
+.site-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.site-btn-primary { background: var(--site-accent); color: var(--site-accent-text); }
+.site-btn-primary:hover:not(:disabled) { 
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--site-accent), transparent 70%);
+}
+
+.site-badge {
+  display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 6px; 
+  font-weight: 600; font-size: 0.85rem;
+}
+.site-badge-instock { 
+  background: color-mix(in srgb, var(--site-accent), transparent 85%); 
+  color: var(--platform-success); 
+}
+.site-badge-outofstock { 
+  background: color-mix(in srgb, var(--platform-danger), transparent 90%); 
+  color: var(--platform-danger); 
+}
+
+.gallery-zoomable { cursor: zoom-in; }
+.gallery-draggable { cursor: grab; }
+.gallery-dragging { cursor: grabbing; }
+.gallery-dragging img { transition: none !important; }
+.gallery-image-main { 
+  max-width: 100%; max-height: 100%; width: auto; height: auto; 
+  object-fit: contain; transition: transform 0.2s ease; 
+}
+
+.site-review-card {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.site-review-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  border-color: color-mix(in srgb, var(--site-accent), transparent 60%) !important;
 }
 
 @media (max-width: 768px) {

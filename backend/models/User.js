@@ -39,11 +39,10 @@ class User {
         return rows[0];
     }
 
-static async findById(id) {
+    static async findById(id) {
         const [rows] = await db.query(
             `SELECT id, username, slug, email, phone_number, role, status, plan, deleted_at,
             platform_theme_mode, platform_theme_accent, 
-            platform_bg_url, platform_bg_blur, platform_bg_brightness,
             bio, social_telegram, social_instagram, social_website, is_profile_public,
             created_at, avatar_url, last_login_at 
             FROM users WHERE id = ?`,
@@ -94,7 +93,6 @@ static async findById(id) {
             username, slug, password, password_hash,
             avatar_url, phone_number,
             platform_theme_mode, platform_theme_accent,
-            platform_bg_url, platform_bg_blur, platform_bg_brightness,
             bio, social_telegram, social_instagram, social_website, is_profile_public
         } = data;
         let queryParts = [];
@@ -113,9 +111,6 @@ static async findById(id) {
         if (phone_number !== undefined) { queryParts.push('phone_number = ?'); params.push(phone_number); }
         if (platform_theme_mode !== undefined) { queryParts.push('platform_theme_mode = ?'); params.push(platform_theme_mode); }
         if (platform_theme_accent !== undefined) { queryParts.push('platform_theme_accent = ?'); params.push(platform_theme_accent); }
-        if (platform_bg_url !== undefined) { queryParts.push('platform_bg_url = ?'); params.push(platform_bg_url); }
-        if (platform_bg_blur !== undefined) { queryParts.push('platform_bg_blur = ?'); params.push(platform_bg_blur); }
-        if (platform_bg_brightness !== undefined) { queryParts.push('platform_bg_brightness = ?'); params.push(platform_bg_brightness); }
         if (bio !== undefined) { queryParts.push('bio = ?'); params.push(bio); }
         if (social_telegram !== undefined) { queryParts.push('social_telegram = ?'); params.push(social_telegram); }
         if (social_instagram !== undefined) { queryParts.push('social_instagram = ?'); params.push(social_instagram); }

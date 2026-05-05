@@ -54,7 +54,7 @@ export const validateSiteSlug = (slug) => {
     if (RESERVED_SLUGS.includes(slug)) return { isValid: false, status: 'invalid', error: "Це ім'я зарезервовано системою. Будь ласка, оберіть інше." };
     const isRepetitive = /(.)\1{4,}/.test(slug);
     if (isRepetitive || BAD_SEQUENCES.some(seq => slug.includes(seq))) {
-        return { isValid: false, status: 'invalid', error: 'Адреса містить занадто просту/сміттєву послідовність' };
+        return { isValid: false, status: 'invalid', error: 'Ця адреса містить заборонену або занадто просту послідовність символів' };
     }
     return { isValid: true, status: 'checking', error: null };
 };

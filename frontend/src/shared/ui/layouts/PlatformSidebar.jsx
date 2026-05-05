@@ -16,9 +16,10 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
     const handleProtectedLink = (e, path) => {
         if (!user) {
             e.preventDefault();
-            navigate('/login');
+            navigate('/login', { state: { from: path } });
         }
     };
+    
     const renderLink = ({ to, icon: Icon, label, protectedLink, count, isCreateButton }) => {
         const baseClass = `sidebar-link ${isCreateButton ? 'create-btn' : ''}`;
         return (

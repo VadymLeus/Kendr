@@ -1,6 +1,6 @@
 // frontend/src/modules/auth/AuthPage.jsx
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { AuthContext } from '../../app/providers/AuthContext';
 import apiClient from '../../shared/api/api';
@@ -45,7 +45,6 @@ const AuthPage = () => {
         setTurnstileToken('');
         turnstileRef.current?.reset();
     };
-
     const setView = (newView) => {
         setSearchParams({ view: newView });
         setViewInternal(newView);
@@ -64,9 +63,10 @@ const AuthPage = () => {
         searchParams.delete('error');
         setSearchParams(searchParams);
     }
-
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from || '/';
     const [isLoading, setIsLoading] = useState(false);
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
     const [resendCooldown, startResendCooldown] = useCooldown('kendr_resend_cooldown');
@@ -79,7 +79,6 @@ const AuthPage = () => {
             setView('login');
         }
     }, [view, targetEmail]);
-
     const [formData, setFormData] = useState({
         loginInput: '', email: '', username: '', password: '', confirmPassword: '', newPassword: ''
     });
@@ -93,8 +92,12 @@ const AuthPage = () => {
         return 'Вхід до системи | Kendr';
     };
 
-    const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    const handleGoogleAuth = () => { window.location.href = GOOGLE_AUTH_URL; };
+    const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    const handleGoogleAuth = () => {
+        localStorage.setItem('redirectAfterLogin', from);
+        window.location.href = GOOGLE_AUTH_URL; 
+    };
+    
     const handleAvatarUpload = (file) => {
         setIsAvatarUploading(true);
         setAvatarData({ file: file, url: null, preview: URL.createObjectURL(file) });
@@ -127,7 +130,7 @@ const AuthPage = () => {
                 toast.warning(res.data.message || 'Акаунт знаходиться в процесі видалення.', { toastId: 'restore-warn' });
             } else {
                 toast.success(`З поверненням, ${res.data.user?.username || ''}!`, { toastId: 'login-success' });
-                navigate('/');
+                navigate(from, { replace: true });
             }
         } catch (error) {
             resetTurnstile();

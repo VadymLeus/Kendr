@@ -117,6 +117,7 @@ exports.login = async (req, res, next) => {
         }
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) return res.status(401).json({ message: 'Невірний логін або пароль.' });
+        
         await User.updateLastLogin(user.id);
         const token = jwt.sign(
             { id: user.id, role: user.role, plan: user.plan || 'FREE', token_version: user.token_version }, 
@@ -163,7 +164,6 @@ exports.getMe = async (req, res, next) => {
         res.json({
             id: user.id, username: user.username, slug: user.slug, email: user.email, avatar_url: user.avatar_url, role: user.role,
             plan: user.plan || 'FREE', platform_theme_mode: user.platform_theme_mode, platform_theme_accent: user.platform_theme_accent,
-            platform_bg_url: user.platform_bg_url, platform_bg_blur: user.platform_bg_blur, platform_bg_brightness: user.platform_bg_brightness,
             bio: user.bio, social_telegram: user.social_telegram, social_instagram: user.social_instagram, social_website: user.social_website,
             is_profile_public: user.is_profile_public, phone_number: user.phone_number, created_at: user.created_at, 
             last_login_at: user.last_login_at, has_password: hasPassword,

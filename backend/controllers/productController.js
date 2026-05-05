@@ -2,6 +2,7 @@
 const Product = require('../models/Product');
 const Site = require('../models/Site');
 const { deleteFile } = require('../utils/fileUtils');
+const db = require('../config/db');
 const parseDecimal = (value) => {
     if (value === '' || value === undefined || value === null) return 0;
     const parsed = parseFloat(value);
@@ -205,6 +206,112 @@ exports.removeFromGallery = async (req, res, next) => {
         res.json({ 
             message: 'Зображення видалено з галереї.',
             image_gallery: updatedGallery 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getProductReviews = async (req, res, next) => {
+    try {
+        const reviews = await Product.getReviews(req.params.productId);
+        res.json(reviews);
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.addProductReview = async (req, res, next) => {
+    const { productId } = req.params;
+    const { rating, comment } = req.body;
+    const userId = req.user.id;
+    try {
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ message: 'Рейтинг має бути від 1 до 5.' });
+        }
+        if (!comment || comment.trim() === '') {
+            return res.status(400).json({ message: 'Коментар не може бути порожнім.' });
+        }
+        const product = await Product.findById(productId);
+        if (!product) return res.status(404).json({ message: 'Товар не знайдено.' });
+        const [orders] = await db.query(`
+            SELECT o.id 
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.customer_id = ? AND oi.product_id = ? AND o.status IN ('paid', 'shipped', 'completed')
+            LIMIT 1
+        `, [userId, productId]);
+
+        if (orders.length === 0) {
+            return res.status(403).json({ message: 'Ви можете залишити відгук лише на товар, який ви придбали.' });
+        }
+        await Product.addReview(productId, userId, rating, comment);
+        res.status(201).json({ message: 'Відгук успішно додано.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.replyToReview = async (req, res, next) => {
+    const { productId, reviewId } = req.params;
+    const { owner_reply } = req.body;
+    const userId = req.user.id;
+    try {
+        const product = await Product.findById(productId);
+        if (!product) return res.status(404).json({ message: 'Товар не знайдено.' });
+        const site = await Site.findByIdAndUserId(product.site_id, userId);
+        if (!site) return res.status(403).json({ message: 'Тільки власник магазину може відповідати на відгуки.' });
+        await Product.updateReviewReply(reviewId, owner_reply || null);
+        res.json({ message: 'Відповідь збережено.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.deleteReview = async (req, res, next) => {
+    const { productId, reviewId } = req.params;
+    const userId = req.user.id;
+    try {
+        const [reviews] = await db.query('SELECT user_id FROM product_reviews WHERE id = ?', [reviewId]);
+        if (reviews.length === 0) return res.status(404).json({ message: 'Відгук не знайдено.' });
+        const reviewAuthorId = reviews[0].user_id;
+        const isAuthor = reviewAuthorId === userId;
+        const isPlatformStaff = req.user.role === 'admin' || req.user.role === 'moderator';
+        let isSiteOwner = false;
+        if (!isAuthor && !isPlatformStaff) {
+             const product = await Product.findById(productId);
+             if (product) {
+                 const site = await Site.findByIdAndUserId(product.site_id, userId);
+                 if (site) isSiteOwner = true;
+             }
+        }
+        if (!isAuthor && !isSiteOwner && !isPlatformStaff) {
+            return res.status(403).json({ message: 'У вас немає прав для видалення цього відгуку.' });
+        }
+        await Product.deleteReview(reviewId);
+        res.json({ message: 'Відгук видалено.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.checkPurchaseStatus = async (req, res, next) => {
+    const { productId } = req.params;
+    const userId = req.user.id;
+    try {
+        const existingReview = await Product.getReviewByUser(productId, userId);
+        const [orders] = await db.query(`
+            SELECT o.id 
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.customer_id = ? AND oi.product_id = ? AND o.status IN ('paid', 'shipped', 'completed')
+            LIMIT 1
+        `, [userId, productId]);
+        const hasPurchased = orders.length > 0;
+        res.json({ 
+            hasPurchased, 
+            hasReviewed: !!existingReview,
+            existingReview: existingReview || null
         });
     } catch (error) {
         next(error);

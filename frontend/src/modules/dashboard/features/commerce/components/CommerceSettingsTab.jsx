@@ -1,10 +1,10 @@
 // frontend/src/modules/dashboard/features/commerce/components/CommerceSettingsTab.jsx
 import React, { useState, useEffect } from 'react';
-import { Button, Input } from '../../../../../shared/ui/elements';
+import { Button, Input, Switch } from '../../../../../shared/ui/elements';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
-import { CreditCard, Key, Lock, AlertCircle, Check, Banknote } from 'lucide-react';
 import apiClient from '../../../../../shared/api/api';
 import { toast } from 'react-toastify';
+import { CreditCard, Key, Lock, AlertCircle, Banknote, Wallet, Info } from 'lucide-react';
 
 const CURRENCY_OPTIONS = [
     { value: 'UAH', label: 'Гривня – ₴', icon: Banknote },
@@ -14,17 +14,30 @@ const CURRENCY_OPTIONS = [
 
 const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
     const [currency, setCurrency] = useState(siteData?.currency || 'UAH');
-    const [localLiqpay, setLocalLiqpay] = useState({
+    const [localPayment, setLocalPayment] = useState({
         public: siteData?.liqpay_public_key || '',
-        private: siteData?.liqpay_private_key || ''
+        private: siteData?.liqpay_private_key || '',
+        isOnlineEnabled: siteData?.is_online_payment_enabled ?? true,
+        isCodEnabled: siteData?.is_cod_enabled ?? true
+    });
+
+    const [savedPayment, setSavedPayment] = useState({
+        public: siteData?.liqpay_public_key || '',
+        private: siteData?.liqpay_private_key || '',
+        isOnlineEnabled: siteData?.is_online_payment_enabled ?? true,
+        isCodEnabled: siteData?.is_cod_enabled ?? true
     });
 
     useEffect(() => {
-        setLocalLiqpay({
+        const newData = {
             public: siteData?.liqpay_public_key || '',
-            private: siteData?.liqpay_private_key || ''
-        });
-    }, [siteData?.liqpay_public_key, siteData?.liqpay_private_key]);
+            private: siteData?.liqpay_private_key || '',
+            isOnlineEnabled: siteData?.is_online_payment_enabled ?? true,
+            isCodEnabled: siteData?.is_cod_enabled ?? true
+        };
+        setLocalPayment(newData);
+        setSavedPayment(newData);
+    }, [siteData]);
 
     const handleCurrencyChange = async (e) => {
         const newCurrency = e.target.value;
@@ -42,14 +55,28 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
         }
     };
 
-    const handleLiqpaySave = async () => {
+    const handlePaymentToggle = (field) => {
+        setLocalPayment(prev => {
+            const newState = { ...prev, [field]: !prev[field] };
+            if (!newState.isOnlineEnabled && !newState.isCodEnabled) {
+                toast.warning('Має бути увімкнений хоча б один спосіб оплати!');
+                return prev;
+            }
+            return newState;
+        });
+    };
+
+    const handlePaymentSave = async () => {
         onSavingChange(true);
         try {
             await apiClient.put(`/sites/${siteData.site_path}/settings`, {
-                liqpay_public_key: localLiqpay.public,
-                liqpay_private_key: localLiqpay.private
+                liqpay_public_key: localPayment.public,
+                liqpay_private_key: localPayment.private,
+                is_online_payment_enabled: localPayment.isOnlineEnabled ? 1 : 0,
+                is_cod_enabled: localPayment.isCodEnabled ? 1 : 0
             });
-            toast.success('Налаштування LiqPay успішно збережено!');
+            setSavedPayment({ ...localPayment });
+            toast.success('Налаштування оплати успішно збережено!');
         } catch (error) {
             console.error(error);
             toast.error('Не вдалося зберегти налаштування оплати.');
@@ -58,6 +85,11 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
         }
     };
 
+    const isPaymentDirty = 
+        localPayment.public !== savedPayment.public || 
+        localPayment.private !== savedPayment.private ||
+        localPayment.isOnlineEnabled !== savedPayment.isOnlineEnabled ||
+        localPayment.isCodEnabled !== savedPayment.isCodEnabled;
     return (
         <div className="h-full overflow-y-auto custom-scrollbar p-1 flex flex-col gap-6">
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 shadow-sm w-full max-w-3xl mx-auto">
@@ -86,46 +118,83 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
                 <div className="mb-6 flex items-center justify-between gap-3">
                     <div>
                         <h3 className="text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
-                            <CreditCard size={22} className="text-(--platform-accent)" /> Налаштування оплати
+                            <CreditCard size={22} className="text-(--platform-accent)" /> Варіанти оплати
                         </h3>
                         <p className="text-sm text-(--platform-text-secondary) m-0 leading-relaxed">
-                            Додайте ваші ключі LiqPay, щоб почати приймати платежі на сайті.
+                            Налаштуйте, як клієнти зможуть розраховуватися за ваші товари.
                         </p>
                     </div>
                 </div>
-                <div className="flex flex-col gap-4 max-w-md mx-auto w-full">
-                    <div>
-                        <Input
-                            label={<div className="text-center w-full">Public Key</div>}
-                            value={localLiqpay.public}
-                            onChange={(e) => setLocalLiqpay(prev => ({ ...prev, public: e.target.value }))}
-                            placeholder="sandbox_..."
-                            leftIcon={<Key size={16}/>}
-                        />
-                    </div>
-                    <div>
-                        <Input
-                            label={<div className="text-center w-full">Private Key</div>}
-                            value={localLiqpay.private}
-                            onChange={(e) => setLocalLiqpay(prev => ({ ...prev, private: e.target.value }))}
-                            placeholder="sandbox_..."
-                            leftIcon={<Lock size={16}/>}
-                            type="password"
-                        />
-                    </div>
-                    {(!siteData?.liqpay_public_key || !siteData?.liqpay_private_key) && (
-                        <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', fontSize: '0.85rem', color: '#ef4444', display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                            <AlertCircle size={16} style={{flexShrink: 0}} />
-                            <span>Ключі не налаштовані. Клієнти не зможуть оплачувати замовлення.</span>
+                <div className="flex flex-col gap-6 max-w-xl mx-auto w-full">
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-(--platform-border-color) bg-(--platform-bg)">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
+                                <Wallet size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-(--platform-text-primary) text-sm m-0">Оплата при отриманні</h4>
+                                <p className="text-xs text-(--platform-text-secondary) m-0 mt-0.5">Клієнт платить на пошті (Накладений платіж).</p>
+                            </div>
                         </div>
-                    )}
-                    <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+                        <Switch 
+                            checked={localPayment.isCodEnabled} 
+                            onChange={() => handlePaymentToggle('isCodEnabled')} 
+                        />
+                    </div>
+                    <div className={`flex flex-col rounded-xl border transition-colors ${localPayment.isOnlineEnabled ? 'border-blue-500/30 bg-blue-500/5' : 'border-(--platform-border-color) bg-(--platform-bg)'}`}>
+                        <div className="flex items-center justify-between p-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${localPayment.isOnlineEnabled ? 'bg-blue-500/10 text-blue-500' : 'bg-(--platform-border-color) text-(--platform-text-secondary)'}`}>
+                                    <CreditCard size={20} />
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-(--platform-text-primary) text-sm m-0">Онлайн оплата (LiqPay)</h4>
+                                    <p className="text-xs text-(--platform-text-secondary) m-0 mt-0.5">Прийом платежів карткою прямо на сайті.</p>
+                                </div>
+                            </div>
+                            <Switch 
+                                checked={localPayment.isOnlineEnabled} 
+                                onChange={() => handlePaymentToggle('isOnlineEnabled')} 
+                            />
+                        </div>
+                        {localPayment.isOnlineEnabled && (
+                            <div className="p-4 border-t border-blue-500/20 flex flex-col gap-4 bg-(--platform-bg) rounded-b-xl">
+                                <div>
+                                    <Input
+                                        label="Public Key"
+                                        value={localPayment.public}
+                                        onChange={(e) => setLocalPayment(prev => ({ ...prev, public: e.target.value }))}
+                                        placeholder="sandbox_..."
+                                        leftIcon={<Key size={16}/>}
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        label="Private Key"
+                                        value={localPayment.private}
+                                        onChange={(e) => setLocalPayment(prev => ({ ...prev, private: e.target.value }))}
+                                        placeholder="sandbox_..."
+                                        leftIcon={<Lock size={16}/>}
+                                        type="password"
+                                    />
+                                </div>
+                                {(!savedPayment.public || !savedPayment.private) && (
+                                    <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-500 flex gap-2 items-center justify-center text-center">
+                                        <AlertCircle size={16} className="shrink-0" />
+                                        <span>Ключі не налаштовані. Онлайн оплата не працюватиме.</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex justify-center mt-2">
                         <Button 
                             type="button" 
-                            onClick={handleLiqpaySave}
-                            icon={<Check size={18} />}
+                            onClick={handlePaymentSave}
+                            disabled={!isPaymentDirty}
+                            className="px-8"
                         >
-                            Зберегти зміни
+                            Зберегти налаштування оплати
                         </Button>
                     </div>
                 </div>

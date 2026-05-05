@@ -103,7 +103,10 @@ const NovaPoshtaMapModal = ({ isOpen, onClose, onSelect }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm">
+        <div 
+            className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm"
+            style={{ zIndex: 30000 }}
+        >
             <div className="bg-(--platform-bg) w-full max-w-5xl h-[85vh] rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
                 <div className="w-full md:w-1/3 h-1/2 md:h-full flex flex-col border-r border-(--platform-border-color) bg-(--platform-card-bg)">
                     <div className="p-4 border-b border-(--platform-border-color) flex items-center justify-between">
@@ -198,7 +201,6 @@ const NovaPoshtaMapModal = ({ isOpen, onClose, onSelect }) => {
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
                         <MapUpdater center={mapCenter} />
-                        
                         {warehouses.map((w) => (
                             <Marker key={w.ref} position={[parseFloat(w.latitude), parseFloat(w.longitude)]}>
                                 <Popup className="custom-popup">

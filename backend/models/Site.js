@@ -16,7 +16,9 @@ class Site {
             s.id, s.site_path, s.title, s.logo_url, s.status, s.view_count, s.created_at,
             s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
             s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
-            s.is_pinned, s.currency, s.cookie_banner_enabled, s.cookie_banner_text,
+            s.is_pinned, s.currency, 
+            s.is_online_payment_enabled, s.is_cod_enabled,
+            s.cookie_banner_enabled, s.cookie_banner_text,
             s.cookie_banner_size, s.cookie_banner_position, s.cookie_banner_blur,
             u.username AS author, u.slug AS author_slug, u.avatar_url AS author_avatar
         FROM sites s
@@ -113,6 +115,7 @@ class Site {
             s.cover_logo_radius,
             s.cover_title_size,
             s.liqpay_public_key, s.liqpay_private_key, s.currency,
+            s.is_online_payment_enabled, s.is_cod_enabled,
             s.cookie_banner_enabled, s.cookie_banner_text,
             s.cookie_banner_size, s.cookie_banner_position, s.cookie_banner_blur
         FROM sites s
@@ -186,6 +189,7 @@ class Site {
       cover_image, cover_layout, logo_url,
       cover_logo_size, cover_logo_radius, cover_title_size,
       liqpay_public_key, liqpay_private_key, currency,
+      is_online_payment_enabled, is_cod_enabled,
       cookie_banner_enabled, cookie_banner_text,
       cookie_banner_size, cookie_banner_position, cookie_banner_blur
     } = data;
@@ -217,6 +221,8 @@ class Site {
         cover_title_size !== undefined ? cover_title_size : 24,
         liqpay_public_key || null,
         liqpay_private_key || null,
+        is_online_payment_enabled !== undefined ? is_online_payment_enabled : 1,
+        is_cod_enabled !== undefined ? is_cod_enabled : 1,
         currency || 'UAH',
         cookie_banner_enabled ? 1 : 0,
         cookie_banner_text || null,
@@ -247,6 +253,8 @@ class Site {
             cover_title_size = ?,
             liqpay_public_key = ?,
             liqpay_private_key = ?,
+            is_online_payment_enabled = ?,
+            is_cod_enabled = ?,
             currency = ?,
             cookie_banner_enabled = ?,
             cookie_banner_text = ?,
@@ -320,6 +328,7 @@ class Site {
              s.cover_image, s.cover_layout, s.site_theme_accent, s.site_theme_mode,
              s.cover_logo_size, s.cover_logo_radius, s.cover_title_size,
              s.is_pinned, s.view_count, s.created_at, 
+             s.is_online_payment_enabled, s.is_cod_enabled,
              s.cookie_banner_enabled, s.cookie_banner_text,
              s.cookie_banner_size, s.cookie_banner_position, s.cookie_banner_blur
       FROM sites s 

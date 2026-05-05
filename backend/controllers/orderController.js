@@ -2,6 +2,7 @@
 const db = require('../config/db');
 const crypto = require('crypto');
 const emailService = require('../utils/emailService');
+const { decrypt } = require('../utils/encryption');
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const generateOrderNumber = (size = 12) => {
@@ -51,17 +52,36 @@ exports.processCheckout = async (req, res, next) => {
     if (!settings.billing_enabled) {
         return res.status(403).json({ message: 'Прийом платежів тимчасово призупинено адміністрацією платформи.' });
     }
-    const { siteId, items, customerData } = req.body;
+    const { siteId, items, customerData, paymentMethod } = req.body;
     const userId = req.user.id;
+    const method = paymentMethod === 'cod' ? 'cod' : 'online';
     if (!siteId) {
         return res.status(400).json({ message: 'Не вказано магазин для оформлення.' });
     }
     if (!items || items.length === 0) {
         return res.status(400).json({ message: 'Список товарів порожній.' });
     }
+    
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
+        const [sites] = await connection.query('SELECT liqpay_public_key, liqpay_private_key, is_online_payment_enabled, is_cod_enabled FROM sites WHERE id = ?', [siteId]);
+        if (!sites[0]) {
+            const error = new Error('Магазин не знайдено.');
+            error.status = 404;
+            throw error;
+        }
+        if (method === 'online' && !sites[0].is_online_payment_enabled) {
+            const error = new Error('Продавець тимчасово не приймає онлайн оплату.');
+            error.status = 400;
+            throw error;
+        }
+        if (method === 'cod' && !sites[0].is_cod_enabled) {
+            const error = new Error('Продавець не відправляє товари післяплатою.');
+            error.status = 400;
+            throw error;
+        }
+
         const [users] = await connection.query('SELECT username, email FROM users WHERE id = ?', [userId]);
         if (!users[0]) throw new Error('Користувача не знайдено');
         const realUserEmail = users[0].email;
@@ -80,14 +100,22 @@ exports.processCheckout = async (req, res, next) => {
             error.status = 429;
             throw error;
         }
-        const [sites] = await connection.query('SELECT liqpay_public_key, liqpay_private_key FROM sites WHERE id = ?', [siteId]);
-        if (!sites[0] || !sites[0].liqpay_public_key || !sites[0].liqpay_private_key) {
-            const error = new Error('Вибачте, продавець ще не налаштував прийом платежів на своєму сайті.');
-            error.status = 400;
-            throw error;
+        let sitePublicKey = null;
+        let sitePrivateKey = null;
+        if (method === 'online') {
+            if (!sites[0].liqpay_public_key || !sites[0].liqpay_private_key) {
+                const error = new Error('Вибачте, продавець ще не налаштував прийом онлайн-платежів на своєму сайті.');
+                error.status = 400;
+                throw error;
+            }
+            sitePublicKey = sites[0].liqpay_public_key;
+            sitePrivateKey = decrypt(sites[0].liqpay_private_key);
+            if (!sitePrivateKey) {
+                const error = new Error('Помилка дешифрування ключа оплати.');
+                error.status = 500;
+                throw error;
+            }
         }
-        const sitePublicKey = sites[0].liqpay_public_key;
-        const sitePrivateKey = sites[0].liqpay_private_key;
         let total = 0;
         let isDigitalOnly = true;
         const validatedItems = [];
@@ -115,15 +143,21 @@ exports.processCheckout = async (req, res, next) => {
                 options: reqItem.options || {}
             });
         }
+        
         if (!isDigitalOnly && (!customerData || !customerData.address || !customerData.address.trim())) {
             throw new Error('Адреса доставки обов\'язкова для фізичних товарів.');
         }
+        if (isDigitalOnly && method === 'cod') {
+            throw new Error('Цифрові товари не можна замовити післяплатою.');
+        }
+
         const orderId = generateOrderNumber();
         await connection.query(
-            `INSERT INTO orders (id, site_id, customer_id, customer_name, customer_email, customer_phone, delivery_address, total_amount, status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-            [orderId, siteId, userId, deliveryName, realUserEmail, deliveryPhone, isDigitalOnly ? 'Цифрова доставка' : customerData.address, total]
+            `INSERT INTO orders (id, site_id, customer_id, customer_name, customer_email, customer_phone, delivery_address, total_amount, status, payment_method) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+            [orderId, siteId, userId, deliveryName, realUserEmail, deliveryPhone, isDigitalOnly ? 'Цифрова доставка' : customerData.address, total, method]
         );
+        
         for (const item of validatedItems) {
             await connection.query(
                 `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, type, digital_file_url, options) 
@@ -131,10 +165,14 @@ exports.processCheckout = async (req, res, next) => {
                 [orderId, item.id, item.name, item.quantity, item.price, item.type || 'physical', item.digital_file_url || null, JSON.stringify(item.options)]
             );
         }
-        await connection.commit();
-        const paymentData = generateLiqPayData(orderId, total, sitePublicKey, sitePrivateKey);
-        res.status(200).json({ ...paymentData, orderId });
         
+        await connection.commit();
+        if (method === 'online') {
+            const paymentData = generateLiqPayData(orderId, total, sitePublicKey, sitePrivateKey);
+            res.status(200).json({ ...paymentData, orderId, paymentMethod: method });
+        } else {
+            res.status(200).json({ orderId, paymentMethod: method });
+        }
     } catch (error) {
         await connection.rollback();
         const status = error.status || 400;
@@ -161,6 +199,9 @@ exports.generatePaymentForOrder = async (req, res) => {
         if (order.status !== 'pending') {
             return res.status(400).json({ message: 'Це замовлення вже оплачено або скасовано.' });
         }
+        if (order.payment_method === 'cod') {
+            return res.status(400).json({ message: 'Це замовлення оформлено з оплатою при отриманні. Онлайн оплата недоступна.' });
+        }
         const [items] = await db.query('SELECT product_id, quantity, type FROM order_items WHERE order_id = ?', [orderId]);
         for (const item of items) {
             if (item.type !== 'digital') {
@@ -170,11 +211,13 @@ exports.generatePaymentForOrder = async (req, res) => {
                 }
             }
         }
-        const [sites] = await db.query('SELECT liqpay_public_key, liqpay_private_key FROM sites WHERE id = ?', [order.site_id]);
-        if (!sites[0] || !sites[0].liqpay_public_key || !sites[0].liqpay_private_key) {
-            return res.status(400).json({ message: 'Магазин тимчасово не може приймати оплату.' });
+        const [sites] = await db.query('SELECT liqpay_public_key, liqpay_private_key, is_online_payment_enabled FROM sites WHERE id = ?', [order.site_id]);
+        if (!sites[0] || !sites[0].is_online_payment_enabled || !sites[0].liqpay_public_key || !sites[0].liqpay_private_key) {
+            return res.status(400).json({ message: 'Магазин тимчасово не може приймати онлайн оплату.' });
         }
-        const paymentData = generateLiqPayData(order.id, order.total_amount, sites[0].liqpay_public_key, sites[0].liqpay_private_key);
+        const sitePrivateKey = decrypt(sites[0].liqpay_private_key);
+        if (!sitePrivateKey) return res.status(500).json({ message: 'Помилка конфігурації ключів оплати продавця.' });
+        const paymentData = generateLiqPayData(order.id, order.total_amount, sites[0].liqpay_public_key, sitePrivateKey);
         res.status(200).json(paymentData);
     } catch (error) {
         console.error("Помилка генерації оплати:", error);
@@ -200,13 +243,13 @@ exports.liqpayCallback = async (req, res) => {
         if (!sites[0] || !sites[0].liqpay_private_key) {
             return res.status(400).send('Private key missing for site');
         }
-        const sitePrivateKey = sites[0].liqpay_private_key;
+        const sitePrivateKey = decrypt(sites[0].liqpay_private_key);
+        if (!sitePrivateKey) return res.status(500).send('Private key decryption failed');
         const siteAccentColor = sites[0].site_theme_accent || 'blue';
         const expectedSignature = crypto.createHash('sha1').update(sitePrivateKey + data + sitePrivateKey).digest('base64');
         if (signature !== expectedSignature) {
             return res.status(403).send('Invalid signature');
         }
-
         if (status === 'success' || status === 'wait_accept' || status === 'sandbox') {
             if (order.status === 'pending') {
                 const [items] = await db.query(`SELECT * FROM order_items WHERE order_id = ?`, [realOrderId]);
