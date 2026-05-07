@@ -13,7 +13,7 @@ import { useCooldown } from '../../../shared/hooks/useCooldown';
 import { User, Mail, Phone, Trash2, Camera, LogOut, Check, BarChart2, Zap, LayoutTemplate, HardDrive, Timer, Eye, ShieldAlert, Loader2 } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
-    const { user, updateUser, logout } = useContext(AuthContext);
+    const { user, updateUser, logout, refreshUserToken } = useContext(AuthContext);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         username: '',
@@ -30,6 +30,7 @@ const ProfileGeneralTab = () => {
         warningCount: 0,
         limits: null
     });
+
     useEffect(() => {
         if (user) {
             setFormData({
@@ -43,6 +44,10 @@ const ProfileGeneralTab = () => {
                         apiClient.get('/media/limits'),
                         apiClient.get(`/users/${user.slug || user.username}`)
                     ]);
+                    if (profileRes.data && profileRes.data.plan && profileRes.data.plan !== user.plan) {
+                        await refreshUserToken();
+                        toast.success('Ваш тариф успішно оновлено до PLUS! 🚀');
+                    }
                     const sites = Array.isArray(sitesRes.data) ? sitesRes.data : [];
                     const calculatedViews = sites.reduce((sum, site) => sum + (site.view_count || 0), 0);
                     setStatsData({
@@ -58,7 +63,7 @@ const ProfileGeneralTab = () => {
             };
             fetchStats();
         }
-    }, [user]);
+    }, [user, refreshUserToken]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleSubmit = async (e) => {
