@@ -13,7 +13,7 @@ import { useCooldown } from '../../../shared/hooks/useCooldown';
 import { User, Mail, Phone, Trash2, Camera, LogOut, Check, BarChart2, Zap, LayoutTemplate, HardDrive, Timer, Eye, ShieldAlert, Loader2 } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
-    const { user, updateUser, logout } = useContext(AuthContext);
+    const { user, updateUser, logout, refreshUserToken } = useContext(AuthContext);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         username: '',
@@ -30,6 +30,7 @@ const ProfileGeneralTab = () => {
         warningCount: 0,
         limits: null
     });
+
     useEffect(() => {
         if (user) {
             setFormData({
@@ -43,6 +44,10 @@ const ProfileGeneralTab = () => {
                         apiClient.get('/media/limits'),
                         apiClient.get(`/users/${user.slug || user.username}`)
                     ]);
+                    if (profileRes.data && profileRes.data.plan && profileRes.data.plan !== user.plan) {
+                        await refreshUserToken();
+                        toast.success('Ваш тариф успішно оновлено до PLUS! 🚀');
+                    }
                     const sites = Array.isArray(sitesRes.data) ? sitesRes.data : [];
                     const calculatedViews = sites.reduce((sum, site) => sum + (site.view_count || 0), 0);
                     setStatsData({
@@ -58,7 +63,7 @@ const ProfileGeneralTab = () => {
             };
             fetchStats();
         }
-    }, [user]);
+    }, [user, refreshUserToken]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleSubmit = async (e) => {
@@ -144,7 +149,6 @@ const ProfileGeneralTab = () => {
                             Формати: JPG, PNG, WEBP. Макс: 2 МБ.
                         </p>
                     </div>
-                    
                     <div className="flex-1 flex flex-col items-center justify-center gap-5 py-2">
                         <div className="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 mx-auto">
                             <div className={`w-full h-full rounded-full overflow-hidden border border-(--platform-border-color) bg-(--platform-bg) shadow-sm flex items-center justify-center transition-opacity ${isAvatarUploading ? 'opacity-50' : 'opacity-100'}`}>
@@ -272,10 +276,21 @@ const ProfileGeneralTab = () => {
                                 <Zap className={`w-4 h-4 sm:w-5 sm:h-5 ${isPremium ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'}`} />
                                 Поточний тариф
                             </div>
-                            <div className="font-semibold">
+                            <div className="flex items-center gap-3">
                                 <span className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${isPremium ? 'bg-(--platform-accent) text-white' : 'bg-(--platform-border-color) text-(--platform-text-primary)'}`}>
                                     {user.plan || 'FREE'}
                                 </span>
+                                {!isPremium && (
+                                    <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => navigate('/upgrade')}
+                                        className="text-(--platform-accent) hover:bg-(--platform-accent)/10 h-auto py-1 px-3 text-xs border border-(--platform-accent)/30"
+                                    >
+                                        Покращити
+                                    </Button>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">

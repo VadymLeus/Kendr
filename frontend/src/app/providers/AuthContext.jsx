@@ -16,7 +16,6 @@ export const AuthProvider = ({ children }) => {
     setIsRestorePending(false);
     setUser(null);
   }, []);
-
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -96,6 +95,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUserToken = async () => {
+    try {
+        const response = await apiClient.post('/auth/refresh');
+        if (response.data && response.data.token && response.data.user) {
+            login(response.data.user, response.data.token, false);
+            return response.data.user;
+        }
+    } catch (error) {
+        console.error("Помилка оновлення токена:", error);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -105,6 +116,7 @@ export const AuthProvider = ({ children }) => {
       logout, 
       updateUser, 
       restoreAccount,
+      refreshUserToken,
       isAdmin: user?.role === 'admin',
       isModerator: user?.role === 'moderator',
       plan: user?.plan || 'FREE',

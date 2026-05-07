@@ -15,6 +15,7 @@ export const STATIC_TITLES = {
     '/cart': 'Кошик',
     '/my-orders': 'Мої замовлення',
     '/rules': 'Правила платформи',
+    '/upgrade': 'Покращення тарифу',
     '/admin-gate': 'Доступ адміністратора',
     '/admin': 'Адмін-панель',
     '/admin/dashboard': 'Дашборд',

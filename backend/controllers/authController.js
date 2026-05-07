@@ -117,7 +117,6 @@ exports.login = async (req, res, next) => {
         }
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) return res.status(401).json({ message: 'Невірний логін або пароль.' });
-        
         await User.updateLastLogin(user.id);
         const token = jwt.sign(
             { id: user.id, role: user.role, plan: user.plan || 'FREE', token_version: user.token_version }, 
@@ -355,4 +354,33 @@ exports.googleCallback = async (req, res) => {
         { expiresIn: '24h' }
     );
     res.redirect(`${clientUrl}/auth/success?token=${token}`);
+};
+
+exports.refreshToken = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
+        if (user.status === 'suspended' || user.status === 'deleted') {
+            return res.status(403).json({ message: 'Ваш акаунт заблоковано або видалено.' });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, role: user.role, plan: user.plan || 'FREE', token_version: user.token_version }, 
+            process.env.JWT_SECRET || 'secret_key', 
+            { expiresIn: '24h' }
+        );
+        
+        const hasPassword = await User.hasPassword(user.id);
+        res.json({
+            token,
+            user: { 
+                id: user.id, username: user.username, slug: user.slug, email: user.email, avatar_url: user.avatar_url,
+                role: user.role, plan: user.plan || 'FREE', platform_theme_mode: user.platform_theme_mode,
+                platform_theme_accent: user.platform_theme_accent, created_at: user.created_at, has_password: hasPassword,
+                status: user.status
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
 };

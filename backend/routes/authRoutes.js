@@ -74,5 +74,6 @@ router.get(
     authController.googleCallback
 );
 router.get('/me', verifyToken, authController.getMe);
+router.post('/refresh', verifyToken, authController.refreshToken);
 
 module.exports = router;
