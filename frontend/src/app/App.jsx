@@ -20,6 +20,7 @@ import SiteDashboardPage from '../modules/dashboard/pages/SiteDashboardPage';
 import CreateSitePage from '../modules/dashboard/pages/CreateSitePage';
 import MySitesPage from '../modules/dashboard/pages/MySitesPage';
 import MediaLibraryPage from '../modules/media/pages/MediaLibraryPage';
+import UpgradePage from '../pages/UpgradePage';
 import CatalogPage from '../modules/renderer/pages/CatalogPage';
 import SiteDisplayPage from '../modules/renderer/pages/SiteDisplayPage';
 import CartPage from '../modules/shop/CartPage';
@@ -48,9 +49,11 @@ function App() {
         window.addEventListener('maintenance_mode_active', handleMaintenance);
         return () => window.removeEventListener('maintenance_mode_active', handleMaintenance);
     }, []);
+
     if (maintenanceInfo.active && !isAdmin && !isLoading) {
         return <MaintenanceScreen message={maintenanceInfo.message} />;
     }
+
     return (
         <>
             {isRestorePending ? (
@@ -83,7 +86,9 @@ function App() {
                             <Route path="/create-site" element={<CreateSitePage />} />
                             <Route path="/media-library" element={<MediaLibraryPage />} />
                             <Route path="/my-orders" element={<MyOrdersPage />} />
+                            <Route path="/upgrade" element={<UpgradePage />} />
                         </Route>
+                        
                         <Route element={<ProtectedRoute excludeAdmin={true} />}>
                             <Route path="/cart" element={<CartPage />} />
                             <Route path="/support" element={<SupportPage />} />
@@ -91,6 +96,7 @@ function App() {
                             <Route path="/support/appeal" element={<AppealPage />} />
                             <Route path="/support/my-tickets" element={<MyTicketsPage />} />
                         </Route>
+                        
                         <Route element={<ProtectedRoute requireAdmin={true} />}>
                             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -107,6 +113,7 @@ function App() {
                                 <Route path="/admin/control" element={<AdminControlPage />} />
                             </Route>
                         </Route>
+                        
                         <Route path="*" element={<NotFoundPage />} />
                     </Route>
                 </Routes>

@@ -144,7 +144,6 @@ const ProfileGeneralTab = () => {
                             Формати: JPG, PNG, WEBP. Макс: 2 МБ.
                         </p>
                     </div>
-                    
                     <div className="flex-1 flex flex-col items-center justify-center gap-5 py-2">
                         <div className="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 mx-auto">
                             <div className={`w-full h-full rounded-full overflow-hidden border border-(--platform-border-color) bg-(--platform-bg) shadow-sm flex items-center justify-center transition-opacity ${isAvatarUploading ? 'opacity-50' : 'opacity-100'}`}>
@@ -272,10 +271,21 @@ const ProfileGeneralTab = () => {
                                 <Zap className={`w-4 h-4 sm:w-5 sm:h-5 ${isPremium ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'}`} />
                                 Поточний тариф
                             </div>
-                            <div className="font-semibold">
+                            <div className="flex items-center gap-3">
                                 <span className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${isPremium ? 'bg-(--platform-accent) text-white' : 'bg-(--platform-border-color) text-(--platform-text-primary)'}`}>
                                     {user.plan || 'FREE'}
                                 </span>
+                                {!isPremium && (
+                                    <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => navigate('/upgrade')}
+                                        className="text-(--platform-accent) hover:bg-(--platform-accent)/10 h-auto py-1 px-3 text-xs border border-(--platform-accent)/30"
+                                    >
+                                        Покращити
+                                    </Button>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
