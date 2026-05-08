@@ -74,6 +74,11 @@ const replaceStringsInObject = (obj, mapOriginalToLocal) => {
     return obj;
 };
 
+const sanitizeCssValue = (val) => {
+    if (!val || typeof val !== 'string') return val;
+    return val.replace(/[;{}]/g, '').trim();
+};
+
 export const exportSiteToZip = async (initialSiteData) => {
     console.log("[Exporter] Starting export process...");
     try {
@@ -81,7 +86,7 @@ export const exportSiteToZip = async (initialSiteData) => {
         const siteId = initialSiteData.id;
         const pagesRes = await apiClient.get(`/sites/${siteId}/pages`);
         const allPagesMeta = pagesRes.data; 
-        const pagesContentMap = {}; 
+        const pagesContentMap = {};
         for (const page of allPagesMeta) {
             try {
                 const res = await apiClient.get(`/pages/${page.id}`);
@@ -123,7 +128,6 @@ export const exportSiteToZip = async (initialSiteData) => {
                     else if (blob.type.includes('png')) ext = 'png';
                     else if (blob.type.includes('svg')) ext = 'svg';
                 }
-                
                 const filename = `media_${index}.${ext}`;
                 assetsFolder.file(filename, blob);
                 mapOriginalToLocal.set(originalString, `assets/${filename}`);
@@ -133,14 +137,17 @@ export const exportSiteToZip = async (initialSiteData) => {
         const localizedSiteData = replaceStringsInObject(initialSiteData, mapOriginalToLocal);
         const isDark = localizedSiteData.site_theme_mode === 'dark';
         const theme = localizedSiteData.theme_settings || {};
+        const safeAccent = sanitizeCssValue(theme.accentColor) || '#3b82f6';
+        const safeBg = sanitizeCssValue(theme.backgroundColor) || (isDark ? '#1a202c' : '#ffffff');
+        const safeText = sanitizeCssValue(theme.textColor) || (isDark ? '#f7fafc' : '#1a202c');
         const cssContent = `
             :root {
-                --site-accent: ${theme.accentColor || '#3b82f6'};
-                --site-bg: ${theme.backgroundColor || (isDark ? '#1a202c' : '#ffffff')};
-                --site-text-primary: ${theme.textColor || (isDark ? '#f7fafc' : '#1a202c')};
+                --site-accent: ${safeAccent};
+                --site-bg: ${safeBg};
+                --site-text-primary: ${safeText};
                 --site-text-secondary: ${isDark ? '#a0aec0' : '#4a5568'};
                 --site-card-bg: ${isDark ? '#2d3748' : '#ffffff'};
-                --site-header-bg: ${theme.backgroundColor || (isDark ? '#1a202c' : '#ffffff')};
+                --site-header-bg: ${safeBg};
                 --site-border-color: ${isDark ? '#4a5568' : '#e2e8f0'};
             }
             body { 
@@ -177,6 +184,7 @@ export const exportSiteToZip = async (initialSiteData) => {
             const html = generateFullHTML(localizedSiteData, localizedBlocks, page.title);
             zip.file(filename, html);
         }
+        
         zip.file("README.txt", "Exported from Kendr Website Builder.\n\nTo view your site, open index.html in any browser.");
         const content = await zip.generateAsync({ type: "blob" });
         saveAs(content, `${initialSiteData.site_path || 'website'}_export.zip`);

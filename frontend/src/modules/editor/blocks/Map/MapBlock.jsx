@@ -5,7 +5,14 @@ import { MapPin } from 'lucide-react';
 const parseSrcFromIframe = (embedCode) => {
     if (!embedCode || typeof embedCode !== 'string') return null;
     const match = embedCode.match(/src="([^"]+)"/);
-    return (match && match[1]) ? match[1] : null;
+    const extractedUrl = match && match[1] ? match[1] : null;
+    if (extractedUrl) {
+        if (extractedUrl.startsWith('https://www.google.com/maps/embed') || 
+            extractedUrl.startsWith('https://maps.google.com/')) {
+            return extractedUrl;
+        }
+    }
+    return null;
 };
 
 const MapBlock = ({ blockData, isEditorPreview, style }) => {
@@ -34,18 +41,17 @@ const MapBlock = ({ blockData, isEditorPreview, style }) => {
                 </div>
                 <div className="text-center px-4">
                     <p className="m-0 font-semibold text-(--site-text-primary) text-base @3xl:text-lg">
-                        Карту не додано
+                        Карту не додано або код невірний
                     </p> 
                     {isEditorPreview && (
                         <small className="block mt-2 opacity-80 text-sm">
-                            Вставте код iframe у налаштуваннях блоку
+                            Вставте безпечний код iframe від Google Maps у налаштуваннях
                         </small>
                     )}
                 </div>
             </div>
         );
     }
-    
     return (
         <div 
             className={`relative w-full overflow-hidden ${currentHeightClass}`}
