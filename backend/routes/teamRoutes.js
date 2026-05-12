@@ -13,5 +13,6 @@ router.get('/:id/collaborators', teamController.getCollaborators);
 router.delete('/:id/collaborators/:userId', teamController.removeCollaborator);
 router.post('/:id/transfer/verify', teamController.verifyTransfer);
 router.post('/:id/transfer', teamController.transferSite);
+router.put('/:id/collaborators/:userId/permissions', teamController.updatePermissions);
 
 module.exports = router;

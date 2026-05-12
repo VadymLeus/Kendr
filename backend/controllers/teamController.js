@@ -117,9 +117,10 @@ exports.acceptInvite = async (req, res, next) => {
         if (sites[0].user_id === userId) {
             return res.status(400).json({ message: 'Ви вже є власником цього сайту.' });
         }
+        const defaultPermissions = JSON.stringify(['editor', 'theme', 'commerce', 'overview']);
         await db.query(
-            'INSERT IGNORE INTO site_collaborators (site_id, user_id, role) VALUES (?, ?, ?)',
-            [invite.site_id, userId, invite.role || 'editor']
+            'INSERT IGNORE INTO site_collaborators (site_id, user_id, role, permissions) VALUES (?, ?, ?, ?)',
+            [invite.site_id, userId, invite.role || 'editor', defaultPermissions]
         );
         await db.query('DELETE FROM site_invites WHERE token = ?', [token]);
         res.json({ message: 'Ви успішно приєдналися до проєкту!', siteId: invite.site_id });
@@ -133,12 +134,17 @@ exports.getCollaborators = async (req, res, next) => {
     try {
         const { id: siteId } = req.params;
         const [collabs] = await db.query(`
-            SELECT u.id, u.username, u.email, u.avatar_url, sc.role, sc.created_at
+            SELECT u.id, u.username, u.email, u.avatar_url, sc.role, sc.permissions, sc.created_at
             FROM site_collaborators sc
             JOIN users u ON sc.user_id = u.id
             WHERE sc.site_id = ?
         `, [siteId]);
-        res.json(collabs);
+        const formattedCollabs = collabs.map(c => ({
+            ...c,
+            permissions: typeof c.permissions === 'string' ? JSON.parse(c.permissions) : (c.permissions || [])
+        }));
+        
+        res.json(formattedCollabs);
     } catch (error) {
         next(error);
     }
@@ -156,6 +162,26 @@ exports.removeCollaborator = async (req, res, next) => {
         }
         await db.query('DELETE FROM site_collaborators WHERE site_id = ? AND user_id = ?', [siteId, targetUserId]);
         res.json({ message: 'Користувача видалено з команди.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.updatePermissions = async (req, res, next) => {
+    try {
+        const { id: siteId, userId: targetUserId } = req.params;
+        const { permissions } = req.body;
+        const currentUserId = req.user.id;
+        const [sites] = await db.query('SELECT user_id FROM sites WHERE id = ?', [siteId]);
+        if (!sites.length || sites[0].user_id !== currentUserId) {
+            return res.status(403).json({ message: 'Тільки власник може змінювати права.' });
+        }
+        
+        await db.query(
+            'UPDATE site_collaborators SET permissions = ? WHERE site_id = ? AND user_id = ?', 
+            [JSON.stringify(permissions || []), siteId, targetUserId]
+        );
+        res.json({ message: 'Права доступу успішно оновлено.' });
     } catch (error) {
         next(error);
     }

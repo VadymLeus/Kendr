@@ -37,7 +37,6 @@ const RESERVED_SLUGS = [
     'billing', 'orders', 'dashboard', 'sites', 'media', 'settings', 
     'auth', 'user', 'users', 'system', 'root', 'static', 'assets', 'create'
 ];
-
 const BAD_SEQUENCES = ['12345', 'qwerty', 'asdfgh', 'zxcvbn', 'password', '123123', 'qweqwe', 'йцукен'];
 const validateSlugOnly = (slug) => {
     if (!slug || typeof slug !== 'string') return 'URL сайту обов\'язковий';
@@ -258,14 +257,21 @@ exports.getSiteByPath = async (req, res, next) => {
             site.author_email = ownerInfo[0].email;
             site.author_avatar = ownerInfo[0].avatar_url;
         }
+        
         let isStaff = false;
         let isCollaborator = false;
+        let myPermissions = [];
         if (req.user) {
             const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
             if (currentUser[0]?.role === 'admin' || currentUser[0]?.role === 'moderator') isStaff = true;
-            const [collabs] = await db.query('SELECT role FROM site_collaborators WHERE site_id = ? AND user_id = ?', [site.id, req.user.id]);
-            if (collabs.length > 0) isCollaborator = true;
+            const [collabs] = await db.query('SELECT role, permissions FROM site_collaborators WHERE site_id = ? AND user_id = ?', [site.id, req.user.id]);
+            if (collabs.length > 0) {
+                isCollaborator = true;
+                let perms = collabs[0].permissions;
+                myPermissions = typeof perms === 'string' ? JSON.parse(perms) : (perms || []);
+            }
         }
+        
         const isOwner = req.user && req.user.id === site.user_id;
         if (site.status === 'suspended') {
             if (!isStaff) return res.status(403).json({ message: 'Цей сайт заблоковано за порушення правил платформи.', isSuspended: true });
@@ -276,7 +282,6 @@ exports.getSiteByPath = async (req, res, next) => {
         if (site.status === 'private') {
             if (!isOwner && !isStaff && !isCollaborator) return res.status(200).json(null);
         }
-        
         let page;
         if (slug) page = await Page.findBySiteIdAndSlug(site.id, slug);
         else page = await Page.findHomepageBySiteId(site.id);
@@ -285,6 +290,7 @@ exports.getSiteByPath = async (req, res, next) => {
         res.json({ 
             ...site, 
             is_collaborator: isCollaborator,
+            my_permissions: myPermissions,
             page_content: page.block_content, 
             page_id: page.id, 
             page: page, 
@@ -313,7 +319,6 @@ exports.updateSiteSettings = async (req, res, next) => {
         if (currentLock.locked_by_user_id && currentLock.locked_by_user_id !== userId && new Date(currentLock.locked_until) > new Date()) {
              return res.status(423).json({ message: 'Сайт зараз редагується іншим користувачем. Зміни не збережено для уникнення конфліктів.' });
         }
-
         const { status: requestedStatus } = req.body;
         if (requestedStatus && requestedStatus !== site.status) {
             if (site.status === 'suspended' || site.status === 'probation') {
@@ -331,7 +336,6 @@ exports.updateSiteSettings = async (req, res, next) => {
             cookie_banner_enabled, cookie_banner_text,
             cookie_banner_size, cookie_banner_position, cookie_banner_blur
         } = req.body;
-        
         const safeParse = (data, fallback) => {
             if (!data) return fallback;
             if (typeof data === 'object') return data;
@@ -347,7 +351,6 @@ exports.updateSiteSettings = async (req, res, next) => {
             if (/[<>]/.test(trimmedTitle)) return res.status(400).json({ message: 'Назва сайту містить недопустимі символи (<, >)' });
             finalTitle = trimmedTitle;
         }
-        
         if (processingHeaderContent && Array.isArray(processingHeaderContent)) {
             const incomingHeaderBlock = processingHeaderContent.find(b => b.type === 'header');
             if (incomingHeaderBlock && incomingHeaderBlock.data) {
@@ -359,7 +362,6 @@ exports.updateSiteSettings = async (req, res, next) => {
                 }
             }
         }
-        
         if (Array.isArray(currentHeaderContent)) {
             let headerFound = false;
             currentHeaderContent = currentHeaderContent.map(block => {
@@ -376,7 +378,6 @@ exports.updateSiteSettings = async (req, res, next) => {
                 });
             }
         }
-        
         let finalStatus = (status !== undefined) ? status : site.status;
         if (site.status === 'suspended' || site.status === 'probation') finalStatus = site.status;
         const updateData = { 
@@ -405,7 +406,6 @@ exports.updateSiteSettings = async (req, res, next) => {
             cookie_banner_position: cookie_banner_position !== undefined ? cookie_banner_position : site.cookie_banner_position,
             cookie_banner_blur: cookie_banner_blur !== undefined ? cookie_banner_blur : site.cookie_banner_blur
         };
-        
         await Site.updateSettings(site.id, updateData);
         if (Array.isArray(tags)) await Site.updateTags(site.id, tags);
         res.json({ 

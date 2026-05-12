@@ -21,7 +21,7 @@ import { updateBlockDataByPath, removeBlockByPath, addBlockByPath, moveBlock, ha
 import PagesManagerModal from '../features/settings/PagesManagerModal';
 import { resolveAccentColor } from '../../../shared/utils/themeUtils';
 import FontLoader from '../../renderer/components/FontLoader';
-import { Lock, Monitor } from 'lucide-react';
+import { Lock, Monitor, ShieldAlert } from 'lucide-react';
 
 const DeviceIframe = ({ children, className, style }) => {
     const [iframeRef, setIframeRef] = useState(null);
@@ -125,11 +125,33 @@ const useDragAutoScroll = (ref, isEnabled) => {
     }, [isEnabled]);
 };
 
+const NoAccessScreen = () => (
+    <div className="flex flex-col items-center justify-center h-full text-center px-4 w-full">
+        <div 
+            className="w-20 h-20 rounded-full flex items-center justify-center mb-6 border border-(--platform-accent) shadow-sm"
+            style={{ background: 'color-mix(in srgb, var(--platform-accent), transparent 90%)', borderColor: 'color-mix(in srgb, var(--platform-accent), transparent 70%)' }}
+        >
+            <ShieldAlert size={40} className="text-(--platform-accent)" />
+        </div>
+        <h2 className="text-2xl font-bold text-(--platform-text-primary) mb-2">Немає доступу</h2>
+        <p className="text-(--platform-text-secondary) max-w-md">
+            Власник сайту не надав вам прав для перегляду жодного з розділів панелі керування. 
+            Зверніться до адміністратора сайту для отримання доступу.
+        </p>
+        <button 
+            onClick={() => window.location.href = '/my-sites'}
+            className="mt-8 px-6 py-2.5 bg-(--platform-card-bg) border border-(--platform-border-color) rounded-xl text-sm font-medium text-(--platform-text-primary) hover:border-(--platform-accent) hover:text-(--platform-accent) transition-all cursor-pointer shadow-sm"
+        >
+            Повернутися до моїх сайтів
+        </button>
+    </div>
+);
+
 const SiteDashboardPage = () => {
     const { site_path } = useParams();
     const navigate = useNavigate();
     const { siteData, setSiteData, isSiteLoading } = useOutletContext();
-    const { isAdmin } = useContext(AuthContext);
+    const { user, isAdmin } = useContext(AuthContext);
     const [isPagesManagerOpen, setIsPagesManagerOpen] = useState(false);
     const [activeTab, setActiveTab] = useState(() => {
         const saved = localStorage.getItem(`editor_active_tab_${site_path}`) || 'editor';
@@ -146,6 +168,17 @@ const SiteDashboardPage = () => {
     const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth <= 768);
     const tabScrollPositions = useRef({});
     const settingsContainerRef = useRef(null);
+    const isOwner = user?.id === siteData?.user_id;
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator';
+    const hasNoAccess = siteData && !isOwner && !isStaff && (!siteData.my_permissions || siteData.my_permissions.length === 0);
+    const checkAccess = useCallback((tabKey) => {
+        if (!siteData) return false;
+        if (isOwner || isStaff) return true;
+        if (siteData.my_permissions && Array.isArray(siteData.my_permissions)) {
+            return siteData.my_permissions.includes(tabKey);
+        }
+        return true; 
+    }, [isOwner, isStaff, siteData]);
     const handleViewModeChange = useCallback((mode) => {
         setViewMode(prev => {
             if (prev === mode) return prev;
@@ -154,6 +187,7 @@ const SiteDashboardPage = () => {
             return mode;
         });
     }, []);
+
     const handleSettingsScroll = (e) => {
         if (activeTab !== 'editor') {
             tabScrollPositions.current[activeTab] = e.target.scrollTop;
@@ -165,6 +199,7 @@ const SiteDashboardPage = () => {
             settingsContainerRef.current.scrollTop = tabScrollPositions.current[activeTab] || 0;
         }
     }, [activeTab]);
+
     useEffect(() => {
         let timeoutId;
         const handleResize = () => {
@@ -181,12 +216,12 @@ const SiteDashboardPage = () => {
     }, []);
     
     useEffect(() => {
-        if (isMobileScreen) {
+        if (isMobileScreen && !hasNoAccess) {
             if (activeTab !== 'editor' && activeTab !== 'settings') {
-                setActiveTab('settings');
+                setActiveTab(checkAccess('settings') ? 'settings' : 'editor');
             }
         }
-    }, [isMobileScreen, activeTab]);
+    }, [isMobileScreen, activeTab, checkAccess, hasNoAccess]);
 
     useEffect(() => {
         if (siteData && siteData.site_path && siteData.site_path !== site_path) {
@@ -195,11 +230,24 @@ const SiteDashboardPage = () => {
     }, [siteData?.site_path, site_path, navigate]);
 
     useEffect(() => {
-        const hiddenTabs = siteData?.dashboard_config?.hiddenTabs || [];
-        if (hiddenTabs.includes(activeTab)) {
-            setActiveTab('editor');
+        if (!siteData || hasNoAccess) return;
+        const hiddenTabs = siteData.dashboard_config?.hiddenTabs || [];
+        const hasAccessToCurrent = checkAccess(activeTab);
+        const isCurrentHidden = !['editor', 'settings'].includes(activeTab) && hiddenTabs.includes(activeTab);
+        if (isCurrentHidden || !hasAccessToCurrent) {
+            const allTabs = ['editor', 'theme', 'commerce', 'overview', 'settings'];
+            const availableTabs = allTabs.filter(tab => {
+                const isUnhideable = tab === 'editor' || tab === 'settings';
+                const isHidden = !isUnhideable && hiddenTabs.includes(tab);
+                return !isHidden && checkAccess(tab);
+            });
+
+            if (availableTabs.length > 0) {
+                setActiveTab(availableTabs[0]);
+            }
         }
-    }, [siteData?.dashboard_config?.hiddenTabs, activeTab]);
+    }, [siteData, activeTab, checkAccess, hasNoAccess]);
+
     useEffect(() => {
         const handleLockStatus = (e) => {
             const serverLocked = e.detail;
@@ -212,18 +260,21 @@ const SiteDashboardPage = () => {
         window.addEventListener('editor_locked_status', handleLockStatus);
         return () => window.removeEventListener('editor_locked_status', handleLockStatus);
     }, [isAdmin]);
+
     useEffect(() => {
         if (siteData && siteData.status === 'suspended') {
             toast.error('Доступ до редагування заблоковано. Сайт заблоковано.');
             navigate('/dashboard');
         }
     }, [siteData, navigate]);
+
     useEffect(() => {
-        if (site_path) {
+        if (site_path && !hasNoAccess) {
             localStorage.setItem(`editor_active_tab_${site_path}`, activeTab);
             localStorage.setItem(`editor_view_mode_${site_path}`, viewMode);
         }
-    }, [activeTab, viewMode, site_path]);
+    }, [activeTab, viewMode, site_path, hasNoAccess]);
+
     const [blocks, setBlocks, undo, redo, { canUndo, canRedo }] = useHistory([]);
     const [savedBlocksStr, setSavedBlocksStr] = useState('');
     const [currentPageId, setCurrentPageId] = useState(() => {
@@ -306,9 +357,11 @@ const SiteDashboardPage = () => {
             localStorage.removeItem(draftKey);
         }
     }, [blocks, savedBlocksStr, currentPageId, siteData?.id, isPageLoading, isReadOnly]);
+
     const handleDiscardChanges = useCallback(() => {
         setIsDiscardModalOpen(true);
     }, []);
+
     const executeDiscardChanges = useCallback(() => {
         setIsDiscardModalOpen(false);
         const draftKey = `draft_${siteData.id}_${currentPageId}`;
@@ -340,7 +393,7 @@ const SiteDashboardPage = () => {
         const handleKeyDown = (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
             if (document.querySelector('.ReactModal__Content') || isPagesManagerOpen) return;
-            if (isReadOnly) return;
+            if (isReadOnly || hasNoAccess) return;
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
                 if (e.shiftKey) { e.preventDefault(); redo(); }
                 else { e.preventDefault(); undo(); }
@@ -351,7 +404,7 @@ const SiteDashboardPage = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, redo, isReadOnly, isPagesManagerOpen]);
+    }, [undo, redo, isReadOnly, isPagesManagerOpen, hasNoAccess]);
 
     const fetchPageContent = async (pageId) => {
         setIsPageLoading(true);
@@ -414,7 +467,7 @@ const SiteDashboardPage = () => {
     };
     
     useEffect(() => {
-        if (siteData && !allPages.length) {
+        if (siteData && !allPages.length && !hasNoAccess) {
             apiClient.get(`/sites/${siteData.id}/pages`)
                 .then(res => {
                     const pages = res.data;
@@ -431,7 +484,7 @@ const SiteDashboardPage = () => {
                 })
                 .catch(console.error);
         }
-    }, [siteData]);
+    }, [siteData, hasNoAccess]);
     
     const handleMoveBlock = (drag, hover) => !isReadOnly && setBlocks(prev => moveBlock(prev, drag, hover));
     const handleDropBlock = (item, path) => !isReadOnly && setBlocks(prev => handleDrop(prev, item, path));
@@ -548,7 +601,6 @@ const SiteDashboardPage = () => {
         setSiteData(prev => ({ ...prev, ...newData }));
         saveThemeSettings(newData);
     };
-
     const refreshPageList = () => {
         apiClient.get(`/sites/${siteData.id}/pages`)
             .then(response => {
@@ -570,6 +622,13 @@ const SiteDashboardPage = () => {
     }, [activeTab, setComponentSaving]);
     if (isSiteLoading || !siteData) {
         return <LoadingState title="Завантаження редактора..." />;
+    }
+    if (hasNoAccess) {
+        return (
+            <div className="flex flex-col h-screen overflow-hidden relative bg-(--platform-bg)">
+                <NoAccessScreen />
+            </div>
+        );
     }
     const isFullHeightTab = ['commerce', 'overview'].includes(activeTab);
     const hasUnsavedChanges = JSON.stringify(blocks) !== savedBlocksStr && savedBlocksStr !== '';
@@ -638,7 +697,7 @@ const SiteDashboardPage = () => {
                 onDiscardChanges={handleDiscardChanges}
             />
             <div className="flex-1 flex overflow-hidden relative">
-                {activeTab === 'editor' && (
+                {activeTab === 'editor' && checkAccess('editor') && (
                     isMobileScreen ? (
                         <div className="flex-1 flex flex-col items-center justify-center bg-(--platform-bg) p-6 text-center z-10 overflow-y-auto">
                             <div className="max-w-md w-full flex flex-col items-center bg-(--platform-card-bg) p-8 rounded-2xl border border-(--platform-border-color) shadow-sm">
@@ -742,7 +801,7 @@ const SiteDashboardPage = () => {
                         </>
                     )
                 )}
-                {activeTab !== 'editor' && (
+                {activeTab !== 'editor' && checkAccess(activeTab) && (
                     <div 
                         ref={settingsContainerRef}
                         onScroll={handleSettingsScroll}
