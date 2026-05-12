@@ -17,6 +17,7 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
     const { plan, user } = useContext(AuthContext);
     const [limits, setLimits] = useState(null);
     const isStaff = user?.role === 'admin' || user?.role === 'moderator';
+    const isOwner = user?.id === siteData?.user_id;
     useEffect(() => {
         apiClient.get('/media/limits')
             .then(res => setLimits(res.data))
@@ -36,7 +37,6 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
             return prev;
         });
     };
-
     const tabs = [
         { key: 'products', icon: <Grid />, text: 'Товари' },
         { key: 'categories', icon: <Folder />, text: 'Категорії' },
@@ -44,10 +44,14 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
 
     if (!isStaff) {
         tabs.push(
-            { key: 'orders', icon: <Package />, text: 'Замовлення' },
-            { key: 'reviews', icon: <Star />, text: 'Відгуки' },
-            { key: 'settings', icon: <Settings />, text: 'Налаштування' }
+            { key: 'reviews', icon: <Star />, text: 'Відгуки' }
         );
+        if (isOwner) {
+            tabs.push(
+                { key: 'orders', icon: <Package />, text: 'Замовлення' },
+                { key: 'settings', icon: <Settings />, text: 'Налаштування' }
+            );
+        }
     }
 
     return (
@@ -82,7 +86,7 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                         maxCategories={maxCategories}
                     />
                 )}
-                {activeSubTab === 'orders' && !isStaff && (
+                {activeSubTab === 'orders' && !isStaff && isOwner && (
                     <OrdersTab 
                         siteData={siteData} 
                     />
@@ -92,7 +96,7 @@ const CommerceTab = ({ siteData, onSavingChange }) => {
                         siteData={siteData} 
                     />
                 )}
-                {activeSubTab === 'settings' && !isStaff && (
+                {activeSubTab === 'settings' && !isStaff && isOwner && (
                     <CommerceSettingsTab 
                         siteData={siteData} 
                         onSavingChange={setIsCommerceSaving}

@@ -37,6 +37,7 @@ import AdminTicketsReportsPage from '../modules/admin/pages/AdminTicketsReportsP
 import AdminTemplatesPage from '../modules/admin/pages/AdminTemplatesPage';
 import AdminControlPage from '../modules/admin/pages/AdminControlPage';
 import AdminBillingPage from '../modules/admin/pages/AdminBillingPage';
+import InvitePage from '../pages/InvitePage';
 
 function App() {
     const { isAdmin, isLoading, isRestorePending } = useContext(AuthContext);
@@ -49,11 +50,9 @@ function App() {
         window.addEventListener('maintenance_mode_active', handleMaintenance);
         return () => window.removeEventListener('maintenance_mode_active', handleMaintenance);
     }, []);
-
     if (maintenanceInfo.active && !isAdmin && !isLoading) {
         return <MaintenanceScreen message={maintenanceInfo.message} />;
     }
-
     return (
         <>
             {isRestorePending ? (
@@ -78,6 +77,7 @@ function App() {
                         <Route path="/site/:site_path/:slug" element={<SiteDisplayPage />} />
                         <Route path="/rules" element={<RulesPage />} />
                         <Route path="/auth/success" element={<AuthSuccessPage />} />
+                        <Route path="/invite/:token" element={<InvitePage />} />
                         <Route element={<ProtectedRoute />}>
                             <Route path="/settings" element={<SettingsPage />} />
                             <Route path="/support/ticket/:ticketId" element={<TicketDetailPage />} />
@@ -88,7 +88,6 @@ function App() {
                             <Route path="/my-orders" element={<MyOrdersPage />} />
                             <Route path="/upgrade" element={<UpgradePage />} />
                         </Route>
-                        
                         <Route element={<ProtectedRoute excludeAdmin={true} />}>
                             <Route path="/cart" element={<CartPage />} />
                             <Route path="/support" element={<SupportPage />} />
@@ -96,7 +95,6 @@ function App() {
                             <Route path="/support/appeal" element={<AppealPage />} />
                             <Route path="/support/my-tickets" element={<MyTicketsPage />} />
                         </Route>
-                        
                         <Route element={<ProtectedRoute requireAdmin={true} />}>
                             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
@@ -113,7 +111,6 @@ function App() {
                                 <Route path="/admin/control" element={<AdminControlPage />} />
                             </Route>
                         </Route>
-                        
                         <Route path="*" element={<NotFoundPage />} />
                     </Route>
                 </Routes>

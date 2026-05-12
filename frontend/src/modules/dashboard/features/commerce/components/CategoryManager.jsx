@@ -217,7 +217,7 @@ const CategoryEditor = memo(({
         onSubmit(e);
     };
     return (
-        <div className={`flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) overflow-hidden ${isMobile ? 'border-0' : 'rounded-2xl'}`}>
+        <div className={`flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) overflow-hidden ${isMobile ? 'rounded-xl' : 'rounded-2xl'}`}>
             <div className="h-18 px-6 border-b border-(--platform-border-color) flex items-center justify-between bg-(--platform-bg) shrink-0">
                 <h3 className="m-0 text-lg font-bold text-(--platform-text-primary) flex items-center gap-2.5">
                     {isMobile && (

@@ -25,7 +25,8 @@ const GeneralIdentitySection = ({
     onUpdate, 
     getImageUrl, 
     isAdmin,
-    isLocked 
+    isLocked,
+    isOwner 
 }) => {
     const { user } = useContext(AuthContext);
     const [isLogoHovered, setIsLogoHovered] = useState(false);
@@ -158,18 +159,16 @@ const GeneralIdentitySection = ({
                         {slugError && <div className="text-[#e53e3e] text-xs flex items-center gap-1"><AlertCircle size={14} /> {slugError}</div>}
                     </div>
                 </div>
-                {hasIdentityChanges && (
-                    <div className="mt-6 pt-5 border-t border-(--platform-border-color) flex justify-end animate-in fade-in slide-in-from-bottom-2">
-                        <Button 
-                            onClick={handleSaveIdentity} 
-                            disabled={!canSaveIdentity}
-                            className="w-full sm:w-auto h-11.5 flex justify-center items-center gap-2"
-                        >
-                            {isSavingIdentity ? <Loader size={18} className="animate-spin" /> : <SaveIcon />}
-                            {isSavingIdentity ? 'Збереження...' : 'Зберегти зміни'}
-                        </Button>
-                    </div>
-                )}
+                <div className="mt-8 flex justify-center">
+                    <Button 
+                        onClick={handleSaveIdentity} 
+                        disabled={!canSaveIdentity}
+                        className="w-full sm:w-auto min-w-50 h-11.5 flex justify-center items-center gap-2"
+                    >
+                        {isSavingIdentity ? <Loader size={18} className="animate-spin" /> : <SaveIcon />}
+                        {isSavingIdentity ? 'Збереження...' : 'Зберегти зміни'}
+                    </Button>
+                </div>
             </div>
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-6 shadow-sm">
                 <div className="flex flex-row justify-between items-center gap-4">
@@ -238,8 +237,7 @@ const GeneralIdentitySection = ({
                     </div>
                 )}
             </div>
-
-            {!isStaff && !isLocked && (
+            {!isStaff && !isLocked && isOwner && (
                 <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-6 shadow-sm">
                     <div className="mb-5">
                         <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">

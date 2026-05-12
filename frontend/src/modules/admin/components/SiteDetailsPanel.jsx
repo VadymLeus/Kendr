@@ -1,10 +1,11 @@
 // frontend/src/modules/admin/components/SiteDetailsPanel.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../../../shared/api/api';
 import { Button } from '../../../shared/ui/elements/Button';
 import Avatar from '../../../shared/ui/elements/Avatar';
 import BaseDetailsPanel from './BaseDetailsPanel';
-import { ExternalLink, Clock, ShieldCheck, RefreshCw, Ban, FileEdit, Eye, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
+import { ExternalLink, Clock, ShieldCheck, RefreshCw, Ban, FileEdit, Eye, AlertTriangle, CheckCircle, ShieldAlert, Users } from 'lucide-react';
 
 const calculateTimeLeft = (dateString) => {
     if (!dateString) return { expired: false, text: null };
@@ -20,6 +21,18 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
     const [isSuspendHovered, setIsSuspendHovered] = useState(false);
     const [isRestoreHovered, setIsRestoreHovered] = useState(false);
     const [isProbationHovered, setIsProbationHovered] = useState(false);
+    const [collaborators, setCollaborators] = useState([]);
+    const [isLoadingCollaborators, setIsLoadingCollaborators] = useState(false);
+    useEffect(() => {
+        if (site?.id) {
+            setIsLoadingCollaborators(true);
+            apiClient.get(`/team/${site.id}/collaborators`)
+                .then(res => setCollaborators(res.data))
+                .catch(err => console.error('Помилка завантаження співавторів:', err))
+                .finally(() => setIsLoadingCollaborators(false));
+        }
+    }, [site?.id]);
+
     const statusConfig = {
         published: { bg: 'rgba(56, 161, 105, 0.1)', color: '#38a169', label: 'Активний', icon: CheckCircle },
         suspended: { bg: 'rgba(229, 62, 62, 0.1)', color: '#e53e3e', label: 'Заблоковано', icon: Ban },
@@ -57,16 +70,19 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
             gap: '6px'
         }
     }), [currentStatus]);
+
     if (!site) return null;
     const canModify = currentUser?.role === 'admin' || (currentUser?.role === 'moderator' && site.owner_role === 'user');
     const isSuspended = site.status === 'suspended';
     const isProbation = site.status === 'probation';
     const { expired: isExpired, text: timeLeftString } = calculateTimeLeft(site.deletion_scheduled_for);
     const siteReason = site.suspension_reason || site.reason;
+    const handleVisitProfileTarget = (identifier) => {
+        navigate(`/profile/${identifier}`);
+    };
     const handleVisitProfile = () => {
         if (isAuthorClickable) {
-            const targetIdentifier = site.author_slug || site.author;
-            navigate(`/profile/${targetIdentifier}`);
+            handleVisitProfileTarget(site.author_slug || site.author);
         }
     };
     
@@ -145,6 +161,57 @@ const SiteDetailsPanel = ({ currentUser, site, onClose, actions }) => {
                         <div style={{fontSize: '13px', color: 'var(--platform-text-secondary)', opacity: 0.8, wordBreak: 'break-all'}}>{site.author_email}</div>
                     </div>
                 </div>
+            </div>
+            <div style={styles.section}>
+                <div style={{...styles.label, display: 'flex', alignItems: 'center', gap: '6px'}}>
+                    Співавтори <Users size={14} />
+                </div>
+                {isLoadingCollaborators ? (
+                    <div style={{ fontSize: '13px', color: 'var(--platform-text-secondary)', marginTop: '8px' }}>Завантаження...</div>
+                ) : collaborators.length === 0 ? (
+                    <div style={{ fontSize: '13px', color: 'var(--platform-text-secondary)', marginTop: '8px', padding: '12px', background: 'var(--platform-bg)', borderRadius: '8px', border: '1px dashed var(--platform-border-color)', textAlign: 'center' }}>
+                        У цього сайту немає співавторів
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                        {collaborators.map(collab => (
+                            <div key={collab.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: 'var(--platform-bg)', borderRadius: '8px', border: '1px solid var(--platform-border-color)' }}>
+                                <div 
+                                    onClick={() => handleVisitProfileTarget(collab.username)}
+                                    style={{ cursor: 'pointer', transition: 'transform 0.2s', flexShrink: 0 }}
+                                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                >
+                                    <Avatar url={collab.avatar_url} name={collab.username} size={36} />
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                                    <div 
+                                        onClick={() => handleVisitProfileTarget(collab.username)}
+                                        style={{
+                                            ...styles.value, 
+                                            cursor: 'pointer', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '6px',
+                                            transition: 'color 0.2s',
+                                            fontWeight: '600',
+                                            fontSize: '14px'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--platform-accent)'}
+                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--platform-text-primary)'}
+                                        title="Відкрити профіль користувача"
+                                    >
+                                        <span className="truncate">{collab.username}</span>
+                                        <ExternalLink size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                                    </div>
+                                    <div style={{fontSize: '12px', color: 'var(--platform-text-secondary)', opacity: 0.8, wordBreak: 'break-all'}}>
+                                        {collab.email}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
             <div style={styles.section}>
                 <div style={styles.label}>Статус</div>

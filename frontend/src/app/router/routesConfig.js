@@ -45,5 +45,8 @@ export const getTitleForPath = (pathname) => {
         }
         return 'Сайт'; 
     }
+    if (cleanPath.startsWith('/invite/')) {
+        return 'Запрошення до команди';
+    }
     return null;
 };

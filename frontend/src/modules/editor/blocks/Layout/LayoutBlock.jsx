@@ -19,7 +19,6 @@ const getGridClasses = (direction = 'row', preset, verticalAlign = 'top') => {
     if (direction === 'column') {
         return `grid grid-cols-1 ${alignClass}`;
     }
-    
     let colsClass = 'grid-cols-1 @3xl:grid-cols-2';
     switch (preset) {
         case '50-50': colsClass = 'grid-cols-1 @3xl:grid-cols-2'; break;
@@ -114,7 +113,6 @@ const LayoutBlock = ({
         overlay_color = '#000000',
         overlay_opacity = 0
     } = block.data;
-
     const videoRef = useRef(null);
     const heightClasses = { 
         small: 'min-h-[300px]',
@@ -123,7 +121,6 @@ const LayoutBlock = ({
         full: 'min-h-[calc(100vh-60px)]',
         auto: 'min-h-auto'
     };
-
     const activeMinHeightClass = heightClasses[height] || (legacyMinHeight === 'screen' ? 'min-h-screen' : '') || 'min-h-auto';
     const activeMinHeightStyle = (!heightClasses[height] && legacyMinHeight !== 'screen' && legacyMinHeight) ? { minHeight: legacyMinHeight } : {};
     const fullImageUrl = bg_image 
@@ -140,6 +137,7 @@ const LayoutBlock = ({
     const alignmentClass = activeMinHeightClass !== 'min-h-auto' 
         ? (verticalAlign === 'middle' ? 'justify-center' : (verticalAlign === 'bottom' ? 'justify-end' : 'justify-start'))
         : 'justify-start';
+        
     const isActuallyEditing = isEditorPreview && viewMode === 'editor';
     const safePadding = legacyPadding === '20px' ? undefined : legacyPadding;
     return (
@@ -194,11 +192,14 @@ const LayoutBlock = ({
                     const columnPath = [...safePath, 'data', 'columns', colIndex];
                     if (!isActuallyEditing) {
                         return (
-                            <div key={colIndex} className="min-w-0 w-full">
+                            <div key={colIndex} className="min-w-0 w-full flex flex-col h-full">
                                 <BlockRenderer
                                     blocks={columnBlocks}
                                     siteData={siteData}
                                     isEditorPreview={false}
+                                    isLayoutColumn={true}
+                                    emptyTitle="Блок порожнійі"
+                                    emptyDescription="Додайте блок"
                                 />
                             </div>
                         );

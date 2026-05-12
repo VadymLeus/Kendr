@@ -12,7 +12,6 @@ export const SplitViewLayout = ({
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-
     const isMobile = windowWidth < breakPoint;
     const effectiveIsOpen = isOpen;
     return (
@@ -24,7 +23,7 @@ export const SplitViewLayout = ({
                 flexDirection: 'column',
                 opacity: (isMobile && effectiveIsOpen) ? 0.3 : 1,
                 pointerEvents: (isMobile && effectiveIsOpen) ? 'none' : 'auto',
-                transition: 'opacity 0.3s'
+                transition: isMobile ? 'opacity 0.3s' : 'none'
             }}>
                 {sidebar}
             </div>
@@ -64,12 +63,12 @@ export const SplitViewLayout = ({
                 right: 0, top: 0, bottom: 0, zIndex: 50,
                 transform: isMobile ? (effectiveIsOpen ? 'translateX(0)' : 'translateX(100%)') : 'none',
                 opacity: isMobile ? 1 : (effectiveIsOpen ? 1 : 0),
-                transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)', 
+                transition: isMobile ? 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)' : 'none', 
                 display: 'flex', 
                 flexDirection: 'column', 
                 overflow: 'hidden',
                 boxShadow: isMobile && effectiveIsOpen ? '-5px 0 25px rgba(0,0,0,0.1)' : 'none',
-                paddingLeft: isMobile ? 0 : 0 
+                paddingLeft: 0 
             }}>
                 {React.isValidElement(content) 
                     ? React.cloneElement(content, { isMobile }) 

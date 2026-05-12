@@ -20,10 +20,12 @@ class Site {
             s.is_online_payment_enabled, s.is_cod_enabled,
             s.cookie_banner_enabled, s.cookie_banner_text,
             s.cookie_banner_size, s.cookie_banner_position, s.cookie_banner_blur,
+            s.user_id,
             u.username AS author, u.slug AS author_slug, u.avatar_url AS author_avatar
         FROM sites s
         JOIN users u ON s.user_id = u.id
         LEFT JOIN site_tags st ON s.id = st.site_id 
+        LEFT JOIN site_collaborators sc ON s.id = sc.site_id
     `;
     
     if (onlyFavorites && currentUserId) {
@@ -36,8 +38,8 @@ class Site {
     }
 
     if (userId) {
-        conditions.push('s.user_id = ?');
-        params.push(userId);
+        conditions.push('(s.user_id = ? OR sc.user_id = ?)');
+        params.push(userId, userId);
     }
 
     if (searchTerm) {
@@ -121,6 +123,7 @@ class Site {
         FROM sites s
         WHERE s.site_path = ?
     `, [sitePath]);
+    
     if (!sites[0]) return null;
     const site = sites[0];
     try {
@@ -148,16 +151,20 @@ class Site {
         WHERE p.site_id = ?
         ORDER BY p.created_at DESC
     `, [site.id]);
-
     productRows.forEach(product => {
         product.categories = safeParseCategories(product.categories);
     });
-
     return { ...site, products: productRows };
   }
 
   static async findByIdAndUserId(siteId, userId) {
-    const [rows] = await db.query('SELECT * FROM sites WHERE id = ? AND user_id = ?', [siteId, userId]);
+    const [rows] = await db.query(`
+        SELECT s.* 
+        FROM sites s
+        LEFT JOIN site_collaborators sc ON s.id = sc.site_id
+        WHERE s.id = ? AND (s.user_id = ? OR sc.user_id = ?)
+    `, [siteId, userId, userId]);
+    
     return rows[0] || null;
   }
 
@@ -199,7 +206,6 @@ class Site {
       try { return JSON.stringify(obj); } 
       catch (error) { return null; }
     };
-    
     let safeFaviconUrl = null;
     if (typeof favicon_url === 'string') safeFaviconUrl = favicon_url;
     const params = [
@@ -346,7 +352,6 @@ class Site {
     }
     return rows;
   }
-
   static async findSuspendedForUser(userId) {
     const [rows] = await db.query(
       "SELECT id, site_path, title, deletion_scheduled_for FROM sites WHERE user_id = ? AND status = 'suspended'",
@@ -354,13 +359,11 @@ class Site {
     );
     return rows;
   }
-
   static async togglePin(siteId) {
     await db.query('UPDATE sites SET is_pinned = NOT is_pinned WHERE id = ?', [siteId]);
     const [rows] = await db.query('SELECT is_pinned FROM sites WHERE id = ?', [siteId]);
     return rows[0] ? !!rows[0].is_pinned : false;
   }
-
   static async setAllUserSitesToMaintenance(userId) {
       const [result] = await db.query("UPDATE sites SET status = 'maintenance' WHERE user_id = ?", [userId]);
       return result;

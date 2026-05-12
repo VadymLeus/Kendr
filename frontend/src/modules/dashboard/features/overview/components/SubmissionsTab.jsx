@@ -7,6 +7,7 @@ import { useConfirm } from '../../../../../shared/hooks/useConfirm';
 import { Input } from '../../../../../shared/ui/elements/Input';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect'; 
 import LoadingState from '../../../../../shared/ui/complex/LoadingState';
+import EmptyState from '../../../../../shared/ui/complex/EmptyState';
 import { Search, Trash, Check, Star, User, Mail, Clock, MessageSquare } from 'lucide-react';
 
 const statusConfig = {
@@ -64,6 +65,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
     const [selectedSubmission, setSelectedSubmission] = useState(null);
     const { confirm } = useConfirm();
     const [searchParams, setSearchParams] = useSearchParams();
+    
     const fetchSubmissions = async () => {
         try {
             const res = await apiClient.get(`/form/${siteId}`);
@@ -80,6 +82,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
     };
 
     useEffect(() => { fetchSubmissions(); }, [siteId]);
+    
     useEffect(() => {
         const idFromUrl = searchParams.get('submissionId');
         if (idFromUrl && submissions.length > 0 && (!selectedSubmission || selectedSubmission.id.toString() !== idFromUrl)) {
@@ -152,6 +155,7 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
     }, [submissions, filterStatus, searchTerm]);
 
     if (loading) return <LoadingState title="Завантаження звернень..." />;
+    
     return (
         <div className="w-full h-full flex flex-col box-border px-1">
             <div className="bg-(--platform-card-bg) rounded-xl border border-(--platform-border-color) shadow-sm h-full flex overflow-hidden">
@@ -182,16 +186,16 @@ const SubmissionsTab = ({ siteId, onSavingChange }) => {
                     </div>
                     <div className="flex-1 overflow-y-auto p-2.5 bg-(--platform-card-bg) custom-scrollbar">
                         {filteredSubmissions.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full min-h-40 p-5 text-center text-(--platform-text-secondary)">
-                                <div className="w-14 h-14 rounded-full bg-(--platform-bg) flex items-center justify-center mb-4 border border-(--platform-border-color) shadow-sm">
-                                    <MessageSquare size={24} className="text-(--platform-accent) opacity-90" />
-                                </div>
-                                <h3 className="text-[0.95rem] font-semibold text-(--platform-text-primary) mb-1.5">
-                                    Звернень не знайдено
-                               </h3>
-                                <p className="text-[0.8rem] max-w-50 leading-relaxed m-0 opacity-80">
-                                    Змініть критерії пошуку або зачекайте на нові повідомлення.
-                                </p>
+                            <div className="flex flex-col items-center justify-center h-full py-10">
+                                <EmptyState 
+                                    title={submissions.length === 0 ? "Звернень поки немає" : "Нічого не знайдено"}
+                                    description={
+                                        submissions.length === 0 
+                                        ? "Коли клієнти залишать повідомлення, вони з'являться тут." 
+                                        : "Змініть критерії пошуку або фільтри."
+                                    }
+                                    icon={MessageSquare}
+                                />
                             </div>
                         ) : (
                             filteredSubmissions.map(sub => {

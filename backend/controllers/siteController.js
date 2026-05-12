@@ -65,7 +65,13 @@ const validateSiteCreation = (title, slug) => {
 exports.getSiteInfoById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const [sites] = await db.query('SELECT site_path, title, is_online_payment_enabled, is_cod_enabled FROM sites WHERE id = ?', [id]);
+        const [sites] = await db.query(`
+            SELECT s.site_path, s.title, s.is_online_payment_enabled, s.is_cod_enabled,
+                   u.username as author, u.email as author_email, u.avatar_url as author_avatar
+            FROM sites s
+            LEFT JOIN users u ON s.user_id = u.id
+            WHERE s.id = ?
+        `, [id]);
         if (sites.length === 0) {
             return res.status(404).json({ message: 'Сайт не знайдено' });
         }
@@ -73,7 +79,10 @@ exports.getSiteInfoById = async (req, res, next) => {
             site_path: sites[0].site_path, 
             title: sites[0].title,
             is_online_payment_enabled: sites[0].is_online_payment_enabled,
-            is_cod_enabled: sites[0].is_cod_enabled
+            is_cod_enabled: sites[0].is_cod_enabled,
+            author: sites[0].author,
+            author_email: sites[0].author_email,
+            author_avatar: sites[0].author_avatar
         });
     } catch (error) {
         console.error('Помилка в getSiteInfoById:', error);
@@ -123,11 +132,7 @@ exports.createSite = async (req, res, next) => {
         if (!templateId && !isBlank) throw new Error('ID шаблону не було надано.');
         const [existing] = await connection.query('SELECT id FROM sites WHERE site_path = ?', [cleanSitePath]);
         if (existing.length > 0) throw new Error('Ця адреса сайту вже зайнята.');
-        let siteThemeConfig = {
-            theme_settings: {},
-            site_theme_mode: 'light',
-            site_theme_accent: 'blue'
-        };
+        let siteThemeConfig = { theme_settings: {}, site_theme_mode: 'light', site_theme_accent: 'blue' };
         let pagesToCreate = [];
         let footerToSave = [];
         let headerToSave = [];
@@ -165,7 +170,6 @@ exports.createSite = async (req, res, next) => {
                 data: { site_title: cleanTitle, logo_src: relativeLogoUrl, show_title: true, nav_items: [{ id: uuidv4(), label: 'Головна', link: '/' }], show_profile_icon: true, show_cart_icon: true, block_theme: 'auto' }
             }];
         }
-        
         const [siteResult] = await connection.query(
             `INSERT INTO sites (user_id, site_path, title, logo_url, status, currency) VALUES (?, ?, ?, ?, 'private', 'UAH')`,
             [userId, cleanSitePath, cleanTitle, relativeLogoUrl]
@@ -222,13 +226,9 @@ exports.getSites = async (req, res, next) => {
             targetUserId = userId;
         } else if (username) {
             const [users] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
-            if (users.length > 0) {
-                targetUserId = users[0].id;
-            }
+            if (users.length > 0) targetUserId = users[0].id;
         }
-        if (isStaff && targetUserId) {
-            includeAllStatuses = true;
-        }
+        if (isStaff && targetUserId) includeAllStatuses = true;
         const sites = await Site.getPublic({ 
             searchTerm: search, 
             userId: targetUserId, 
@@ -239,55 +239,52 @@ exports.getSites = async (req, res, next) => {
             includeAllStatuses: includeAllStatuses
         });
         res.json(sites);
-    } catch (error) { 
-        next(error); 
-    }
+    } catch (error) { next(error); }
 };
 
 exports.getDefaultLogos = async (req, res, next) => {
-    try {
-        res.json(['/logos/logo1.png', '/logos/logo2.png', '/logos/logo3.png']);
-    } catch (error) { next(error); }
+    try { res.json(['/logos/logo1.png', '/logos/logo2.png', '/logos/logo3.png']); } 
+    catch (error) { next(error); }
 };
 
 exports.getSiteByPath = async (req, res, next) => {
     try {
         const { site_path, slug } = req.params;
         const site = await Site.findByPath(site_path);
-        if (!site) {
-            return res.status(200).json(null); 
+        if (!site) return res.status(200).json(null);
+        const [ownerInfo] = await db.query('SELECT username, email, avatar_url FROM users WHERE id = ?', [site.user_id]);
+        if (ownerInfo.length > 0) {
+            site.author = ownerInfo[0].username;
+            site.author_email = ownerInfo[0].email;
+            site.author_avatar = ownerInfo[0].avatar_url;
         }
         let isStaff = false;
+        let isCollaborator = false;
         if (req.user) {
             const [currentUser] = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
-            if (currentUser[0]?.role === 'admin' || currentUser[0]?.role === 'moderator') {
-                isStaff = true;
-            }
+            if (currentUser[0]?.role === 'admin' || currentUser[0]?.role === 'moderator') isStaff = true;
+            const [collabs] = await db.query('SELECT role FROM site_collaborators WHERE site_id = ? AND user_id = ?', [site.id, req.user.id]);
+            if (collabs.length > 0) isCollaborator = true;
         }
         const isOwner = req.user && req.user.id === site.user_id;
         if (site.status === 'suspended') {
-            if (!isStaff) { 
-                return res.status(403).json({ 
-                    message: 'Цей сайт заблоковано за порушення правил платформи.',
-                    isSuspended: true 
-                });
-            }
+            if (!isStaff) return res.status(403).json({ message: 'Цей сайт заблоковано за порушення правил платформи.', isSuspended: true });
         }
         if (site.status === 'probation') {
-            if (!isOwner && !isStaff) { 
-                return res.status(403).json({ message: 'Сайт знаходиться на модерації.' });
-            }
+            if (!isOwner && !isStaff && !isCollaborator) return res.status(403).json({ message: 'Сайт знаходиться на модерації.' });
         }
+        if (site.status === 'private') {
+            if (!isOwner && !isStaff && !isCollaborator) return res.status(200).json(null);
+        }
+        
         let page;
         if (slug) page = await Page.findBySiteIdAndSlug(site.id, slug);
         else page = await Page.findHomepageBySiteId(site.id);
-        if (!page) {
-            if (slug) return res.status(200).json(null); 
-            return res.status(200).json(null);
-        }
+        if (!page) return res.status(200).json(null);
         const [tags] = await db.query(`SELECT t.id, t.name FROM tags t JOIN site_tags st ON t.id = st.tag_id WHERE st.site_id = ?`, [site.id]);
         res.json({ 
             ...site, 
+            is_collaborator: isCollaborator,
             page_content: page.block_content, 
             page_id: page.id, 
             page: page, 
@@ -304,17 +301,26 @@ exports.updateSiteSettings = async (req, res, next) => {
         const { site_path } = req.params;
         const userId = req.user.id;
         const site = await Site.findByPath(site_path);
-        if (!site || site.user_id !== userId) {
-            return res.status(403).json({ message: 'У вас немає прав.' });
+        if (!site) return res.status(404).json({ message: 'Сайт не знайдено.' });
+        const isOwner = site.user_id === userId;
+        const [collabs] = await db.query('SELECT role FROM site_collaborators WHERE site_id = ? AND user_id = ?', [site.id, userId]);
+        const isEditor = collabs.length > 0 && collabs[0].role === 'editor';
+        if (!isOwner && !isEditor) {
+            return res.status(403).json({ message: 'У вас немає прав редагувати цей сайт.' });
         }
+        const [lockCheck] = await db.query('SELECT locked_by_user_id, locked_until FROM sites WHERE id = ?', [site.id]);
+        const currentLock = lockCheck[0];
+        if (currentLock.locked_by_user_id && currentLock.locked_by_user_id !== userId && new Date(currentLock.locked_until) > new Date()) {
+             return res.status(423).json({ message: 'Сайт зараз редагується іншим користувачем. Зміни не збережено для уникнення конфліктів.' });
+        }
+
         const { status: requestedStatus } = req.body;
         if (requestedStatus && requestedStatus !== site.status) {
             if (site.status === 'suspended' || site.status === 'probation') {
-                return res.status(403).json({ 
-                    message: 'Ви не можете змінювати статус сайту, поки він заблокований або на випробувальному терміні. Зверніться до підтримки.' 
-                });
+                return res.status(403).json({ message: 'Ви не можете змінювати статус сайту, поки він заблокований або на модерації.' });
             }
         }
+        
         const { 
             title, status, tags, site_theme_mode, site_theme_accent, theme_settings, dashboard_config,
             header_content, footer_content, favicon_url, site_title_seo, 
@@ -331,19 +337,14 @@ exports.updateSiteSettings = async (req, res, next) => {
             if (typeof data === 'object') return data;
             try { return JSON.parse(data); } catch (e) { return fallback; }
         };
-        
         let processingHeaderContent = safeParse(header_content, null);
         let currentHeaderContent = processingHeaderContent || safeParse(site.header_content, []);
         let finalLogoUrl = logo_url !== undefined ? logo_url : site.logo_url;
         let finalTitle = site.title;
         if (title !== undefined) {
             const trimmedTitle = title.trim();
-            if (trimmedTitle.length < 2 || trimmedTitle.length > 60) {
-                return res.status(400).json({ message: 'Назва сайту має бути від 2 до 60 символів' });
-            }
-            if (/[<>]/.test(trimmedTitle)) {
-                return res.status(400).json({ message: 'Назва сайту містить недопустимі символи (<, >)' });
-            }
+            if (trimmedTitle.length < 2 || trimmedTitle.length > 60) return res.status(400).json({ message: 'Назва сайту має бути від 2 до 60 символів' });
+            if (/[<>]/.test(trimmedTitle)) return res.status(400).json({ message: 'Назва сайту містить недопустимі символи (<, >)' });
             finalTitle = trimmedTitle;
         }
         
@@ -353,7 +354,7 @@ exports.updateSiteSettings = async (req, res, next) => {
                 if (incomingHeaderBlock.data.logo_src !== undefined) finalLogoUrl = incomingHeaderBlock.data.logo_src;
                 if (incomingHeaderBlock.data.site_title !== undefined) {
                     const blockTitle = incomingHeaderBlock.data.site_title.trim();
-                    if (/[<>]/.test(blockTitle)) return res.status(400).json({ message: 'Назва сайту містить недопустимі символи' });
+                    if (/[<>]/.test(blockTitle)) return res.status(400).json({ message: 'Назва містить недопустимі символи' });
                     finalTitle = blockTitle;
                 }
             }
@@ -364,41 +365,22 @@ exports.updateSiteSettings = async (req, res, next) => {
             currentHeaderContent = currentHeaderContent.map(block => {
                 if (block.type === 'header') {
                     headerFound = true;
-                    return {
-                        ...block,
-                        data: {
-                            ...block.data,
-                            logo_src: finalLogoUrl,
-                            site_title: finalTitle
-                        }
-                    };
+                    return { ...block, data: { ...block.data, logo_src: finalLogoUrl, site_title: finalTitle } };
                 }
                 return block;
             });
             if (!headerFound) {
                 currentHeaderContent.push({
-                    block_id: uuidv4(),
-                    type: 'header',
-                    data: {
-                        site_title: finalTitle,
-                        logo_src: finalLogoUrl,
-                        show_title: true,
-                        nav_items: [],
-                        block_theme: 'auto'
-                    }
+                    block_id: uuidv4(), type: 'header',
+                    data: { site_title: finalTitle, logo_src: finalLogoUrl, show_title: true, nav_items: [], block_theme: 'auto' }
                 });
             }
         }
         
         let finalStatus = (status !== undefined) ? status : site.status;
-        if (site.status === 'suspended' || site.status === 'probation') {
-            finalStatus = site.status;
-        }
-        
+        if (site.status === 'suspended' || site.status === 'probation') finalStatus = site.status;
         const updateData = { 
-            title: finalTitle,
-            status: finalStatus,
-            logo_url: finalLogoUrl,
+            title: finalTitle, status: finalStatus, logo_url: finalLogoUrl,
             site_theme_mode: site_theme_mode !== undefined ? site_theme_mode : site.site_theme_mode,
             site_theme_accent: site_theme_accent !== undefined ? site_theme_accent : site.site_theme_accent,
             theme_settings: safeParse(theme_settings, site.theme_settings),
@@ -423,19 +405,12 @@ exports.updateSiteSettings = async (req, res, next) => {
             cookie_banner_position: cookie_banner_position !== undefined ? cookie_banner_position : site.cookie_banner_position,
             cookie_banner_blur: cookie_banner_blur !== undefined ? cookie_banner_blur : site.cookie_banner_blur
         };
+        
         await Site.updateSettings(site.id, updateData);
-        if (Array.isArray(tags)) {
-            await Site.updateTags(site.id, tags);
-        }
+        if (Array.isArray(tags)) await Site.updateTags(site.id, tags);
         res.json({ 
             message: 'Налаштування оновлено',
-            updated: {
-                logo_url: finalLogoUrl,
-                title: finalTitle,
-                header_content: currentHeaderContent,
-                status: finalStatus,
-                currency: updateData.currency
-            }
+            updated: { logo_url: finalLogoUrl, title: finalTitle, header_content: currentHeaderContent, status: finalStatus, currency: updateData.currency }
         });
     } catch (error) {
         console.error('Помилка updateSiteSettings:', error);
@@ -449,20 +424,17 @@ exports.renameSite = async (req, res, next) => {
         const { newPath } = req.body; 
         const userId = req.user.id;
         const slugError = validateSlugOnly(newPath);
-        if (slugError) {
-            return res.status(400).json({ message: slugError });
-        }
+        if (slugError) return res.status(400).json({ message: slugError });
         const sanitizedNewPath = newPath.toLowerCase().trim();
         const existingSite = await Site.findByPath(sanitizedNewPath); 
-        if (existingSite) return res.status(409).json({ message: 'Ця адреса вже зайнята. Спробуйте іншу.' }); 
+        if (existingSite) return res.status(409).json({ message: 'Ця адреса вже зайнята. Спробуйте іншу.' });
         const currentSite = await Site.findByPath(oldPath); 
-        if (!currentSite || currentSite.user_id !== userId) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
+        if (!currentSite || currentSite.user_id !== userId) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав (тільки власник).' });
         const [result] = await db.query('UPDATE sites SET site_path = ? WHERE site_path = ? AND user_id = ?', [sanitizedNewPath, oldPath, userId]); 
-        if (result.affectedRows === 0) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' }); 
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'Сайт не знайдено або недостатньо прав.' });
         res.status(200).json({ message: 'Адресу сайту успішно змінено.', newPath: sanitizedNewPath }); 
     } catch (error) { 
-        console.error('Помилка при перейменуванні сайту:', error); 
-        res.status(500).json({ message: 'Помилка сервера при зміні адреси.' }); 
+        next(error); 
     } 
 };
 
@@ -470,12 +442,9 @@ exports.getMySuspendedSites = async (req, res, next) => {
     try { 
         const userId = req.user.id;
         const query = `
-            SELECT 
-                s.id, s.site_path, s.title, s.logo_url, s.deletion_scheduled_for,
-                sa.status as appeal_status,
-                sa.ticket_id,
-                st.status as ticket_status,
-                (SELECT reason_note FROM user_warnings WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as suspension_reason
+            SELECT s.id, s.site_path, s.title, s.logo_url, s.deletion_scheduled_for,
+                   sa.status as appeal_status, sa.ticket_id, st.status as ticket_status,
+                   (SELECT reason_note FROM user_warnings WHERE site_id = s.id ORDER BY created_at DESC LIMIT 1) as suspension_reason
             FROM sites s
             LEFT JOIN site_appeals sa ON s.id = sa.site_id
             LEFT JOIN support_tickets st ON sa.ticket_id = st.id
@@ -483,9 +452,7 @@ exports.getMySuspendedSites = async (req, res, next) => {
         `;
         const [sites] = await db.query(query, [userId]);
         res.json(sites); 
-    } catch (error) { 
-        next(error); 
-    } 
+    } catch (error) { next(error); } 
 };
 
 exports.deleteSite = async (req, res, next) => { 
@@ -506,20 +473,14 @@ exports.resetSiteToTemplate = async (req, res, next) => {
     const connection = await db.getConnection();
     try { 
         const site = await Site.findByIdAndUserId(siteId, userId); 
-        if (!site) return res.status(403).json({ message: 'Сайт не знайдено або у вас немає прав.' });
-        let headerToSave = [];
-        let footerToSave = [];
-        let pagesToCreate = [];
-        let siteThemeMode = 'light';
-        let siteThemeAccent = 'blue';
-        let themeSettings = {};
+        if (!site) return res.status(403).json({ message: 'Сайт не знайдено або у вас немає прав (тільки власник).' });
+        let headerToSave = [], footerToSave = [], pagesToCreate = [];
+        let siteThemeMode = 'light', siteThemeAccent = 'blue', themeSettings = {};
         if (!isBlank) {
             const [templates] = await connection.query('SELECT * FROM templates WHERE id = ?', [templateId]); 
             if (!templates[0]) throw new Error('Шаблон не знайдено.'); 
             const template = templates[0];
-            if (template.type === 'personal' && template.user_id !== userId) {
-                 throw new Error('У вас немає доступу до цього шаблону.');
-            }
+            if (template.type === 'personal' && template.user_id !== userId) throw new Error('У вас немає доступу до цього шаблону.');
             const rawContent = template.default_block_content; 
             const templateData = (typeof rawContent === 'string') ? JSON.parse(rawContent) : rawContent; 
             headerToSave = regenerateBlockIds(templateData.header_content || []); 
@@ -558,7 +519,17 @@ exports.resetSiteToTemplate = async (req, res, next) => {
 
 exports.getUserSites = async (req, res, next) => { 
     try { 
-        const sites = await Site.getUserSites(req.user.id); 
+        const userId = req.user.id;
+        const [sites] = await db.query(`
+            SELECT DISTINCT s.*, 
+                   u.username as author, u.email as author_email, u.avatar_url as author_avatar,
+                   IF(s.user_id = ?, 'owner', sc.role) as user_access_role
+            FROM sites s
+            LEFT JOIN site_collaborators sc ON s.id = sc.site_id
+            LEFT JOIN users u ON s.user_id = u.id
+            WHERE s.user_id = ? OR sc.user_id = ?
+            ORDER BY s.created_at DESC
+        `, [userId, userId, userId]);
         res.json(sites); 
     } catch (error) { next(error); } 
 };
@@ -568,7 +539,7 @@ exports.toggleSitePin = async (req, res, next) => {
         const { siteId } = req.params; 
         const userId = req.user.id; 
         const site = await Site.findByIdAndUserId(siteId, userId); 
-        if (!site) return res.status(404).json({ message: 'Сайт не знайдено або у вас немає прав.' }); 
+        if (!site) return res.status(404).json({ message: 'Сайт не знайдено або у вас немає прав (тільки власник).' }); 
         const newState = await Site.togglePin(siteId); 
         res.json({ message: newState ? 'Сайт закріплено' : 'Сайт відкріплено', is_pinned: newState }); 
     } catch (error) { next(error); } 
@@ -578,18 +549,12 @@ exports.checkSlug = async (req, res, next) => {
     try {
         const { slug } = req.query;
         const slugError = validateSlugOnly(slug);
-        if (slugError) {
-            return res.json({ isAvailable: false, message: slugError });
-        }
+        if (slugError) return res.json({ isAvailable: false, message: slugError });
         const sanitizedSlug = slug.toLowerCase().trim();
         const existingSite = await Site.findByPath(sanitizedSlug);
-        if (existingSite) {
-            return res.json({ isAvailable: false, message: 'Ця адреса вже зайнята.' });
-        }
+        if (existingSite) return res.json({ isAvailable: false, message: 'Ця адреса вже зайнята.' });
         res.json({ isAvailable: true });
-    } catch (error) {
-        next(error);
-    }
+    } catch (error) { next(error); }
 };
 
 exports.getSiteAnalytics = async (req, res, next) => {
@@ -597,10 +562,10 @@ exports.getSiteAnalytics = async (req, res, next) => {
         const siteId = req.params.id;
         const userId = req.user.id;
         const [sites] = await db.query('SELECT user_id, view_count, currency FROM sites WHERE id = ?', [siteId]);
-        if (sites.length === 0) {
-            return res.status(404).json({ message: 'Сайт не знайдено' });
-        }
-        if (sites[0].user_id !== userId) {
+        if (sites.length === 0) return res.status(404).json({ message: 'Сайт не знайдено' });
+        const isOwner = sites[0].user_id === userId;
+        const [collabs] = await db.query('SELECT role FROM site_collaborators WHERE site_id = ? AND user_id = ?', [siteId, userId]);
+        if (!isOwner && collabs.length === 0) {
             return res.status(403).json({ message: 'У вас немає прав доступу до аналітики цього сайту' });
         }
         const { view_count: views, currency } = sites[0];

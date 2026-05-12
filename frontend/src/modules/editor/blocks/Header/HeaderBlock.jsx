@@ -39,7 +39,6 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
     const { styles: fontStyles, RenderFonts, cssVariables } = useBlockFonts({
         navText: nav_fontFamily, btnFont: buttonSettings.fontFamily 
     }, siteData);
-    
     let effectiveLogoSrc = blockData.logo_src;
     let effectiveTitle = blockData.site_title;
     if (effectiveLogoSrc === undefined || effectiveLogoSrc === null) {
@@ -48,13 +47,19 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
     if (effectiveTitle === undefined || effectiveTitle === null) {
         if (siteData?.title) effectiveTitle = siteData.title || 'Site Title';
     }
-
     const { user } = useContext(AuthContext) || {};
     const favContext = useContext(FavoritesContext) || {};
     const favoriteSiteIds = favContext.favoriteSiteIds || new Set();
     const addFavorite = favContext.addFavorite || (() => console.warn('FavoritesProvider missing'));
     const removeFavorite = favContext.removeFavorite || (() => console.warn('FavoritesProvider missing'));
     const isOwner = user && siteData && user.id === siteData.user_id;
+    const isCollaborator = user && siteData && (
+        siteData.user_access_role === 'editor' || 
+        siteData.user_access_role === 'collaborator' ||
+        siteData.is_collaborator === true ||
+        siteData.isCollaborator === true
+    );
+    const canManageSite = isOwner || isCollaborator;
     const isFavorite = siteData && favoriteSiteIds.has(parseInt(siteData.id));
     const logoUrl = resolveUrl(effectiveLogoSrc);
     const NavWrapper = isEditorPreview ? 'div' : Link;
@@ -69,7 +74,6 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
             case 'medium': default: return '50px';
         }
     };
-
     const btnVariant = buttonSettings.variant || 'solid';
     const btnStyleType = buttonSettings.styleType || 'primary';
     const btnRadius = buttonSettings.borderRadius !== undefined ? parseInt(buttonSettings.borderRadius) : 4;
@@ -82,7 +86,6 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
         '--nav-btn-hover-bg': btnVariant === 'outline' ? `color-mix(in srgb, ${colorVar} 10%, transparent)` : colorVar,
         '--nav-btn-hover-opacity': btnVariant === 'solid' ? '0.9' : '1',
     };
-
     let btnPadding = '8px 16px';
     let btnFontSize = '0.95rem';
     if (btnSize === 'small') { btnPadding = '6px 12px'; btnFontSize = '0.85rem'; }
@@ -91,7 +94,6 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
         header-action-btn flex items-center justify-center w-11 h-11 rounded-xl border cursor-pointer transition-all duration-200 shrink-0 backdrop-blur-md
         border-(--site-border-color) bg-(--site-card-bg)/90
     `;
-
     return (
         <header 
             className={`
@@ -123,8 +125,7 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
                     border-color: var(--site-accent) !important;
                     background-color: var(--site-bg) !important;
                 }
-                
-                ${isFavorite && !isOwner ? `
+                ${isFavorite && !canManageSite ? `
                     .favorite-btn-active {
                         border-color: var(--site-accent) !important;
                         background: var(--site-bg) !important;
@@ -132,7 +133,6 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
                     }
                 ` : ''}
             `}</style>
-
             <NavWrapper to={homeLink} className="flex items-center gap-3 no-underline text-inherit shrink-0 cursor-pointer" onClick={e => isEditorPreview && e.preventDefault()}>
                 {logoUrl && (
                     <img 
@@ -151,7 +151,6 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
                     </span>
                 )}
             </NavWrapper>
-
             <nav
                 className="hidden @5xl:flex gap-6 flex-1 px-5 items-center" 
                 style={{ justifyContent: nav_alignment === 'center' ? 'center' : (nav_alignment === 'left' ? 'flex-start' : 'flex-end') }}
@@ -196,7 +195,7 @@ const HeaderBlock = React.memo(({ blockData, siteData, isEditorPreview, onMenuTo
                         <Menu size={22} />
                     </div>
                 )}
-                {isOwner ? (
+                {canManageSite ? (
                     <ActionWrapper 
                         to={`/dashboard/${siteData?.site_path}`} 
                         className={`${iconBtnClass} no-underline`}

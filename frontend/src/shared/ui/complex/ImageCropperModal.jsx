@@ -42,14 +42,12 @@ const ImageCropperModal = ({
             setCompletedCrop(undefined);
         }
     }, [isOpen]);
-
     const onImageLoad = (e) => {
         const { width, height } = e.currentTarget;
         const initCrop = centerAspectCrop(width, height, aspect);
         setCrop(initCrop);
         setCompletedCrop(initCrop);
     };
-
     const handleConfirm = async () => {
         if (!completedCrop || !imgRef.current) {
             toast.warning('Виділіть область для обрізки.');
@@ -71,7 +69,7 @@ const ImageCropperModal = ({
 
     if (!isOpen || !imageSrc) return null;
     return ReactDOM.createPortal(
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-[5px] z-9999 flex items-center justify-center p-5 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-[5px] z-30000 flex items-center justify-center p-5 animate-in fade-in duration-200">
             <div className="bg-(--platform-card-bg) rounded-2xl w-full max-w-150 max-h-[90vh] flex flex-col border border-(--platform-border-color) shadow-2xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-(--platform-border-color) flex justify-between items-center shrink-0">
                     <h3 className="m-0 text-(--platform-text-primary) text-lg flex gap-2.5 items-center font-semibold">

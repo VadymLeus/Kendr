@@ -18,8 +18,17 @@ const CartPage = () => {
     const { cartItems, removeFromCart, clearCart, updateQuantity, isLoaded } = useContext(CartContext);
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-    const [customerData, setCustomerData] = useState({ name: '', email: '', phone: '', address: '' });
-    const [paymentMethod, setPaymentMethod] = useState('online');
+    const [customerData, setCustomerData] = useState(() => {
+        const savedData = localStorage.getItem('cartCustomerData');
+        if (savedData) {
+            try { return JSON.parse(savedData); } catch (e) { console.error('Error parsing customer data', e); }
+        }
+        return { name: '', email: '', phone: '', address: '' };
+    });
+    const [paymentMethod, setPaymentMethod] = useState(() => {
+        return localStorage.getItem('cartPaymentMethod') || 'online';
+    });
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
     const [activeSiteId, setActiveSiteId] = useState(null);
@@ -30,14 +39,21 @@ const CartPage = () => {
     });
     const currencyMap = { 'UAH': '₴', 'USD': '$', 'EUR': '€' };
     useEffect(() => {
+        localStorage.setItem('cartCustomerData', JSON.stringify(customerData));
+    }, [customerData]);
+    useEffect(() => {
+        localStorage.setItem('cartPaymentMethod', paymentMethod);
+    }, [paymentMethod]);
+    useEffect(() => {
         if (user) {
             setCustomerData(prev => ({
                 ...prev,
                 name: prev.name || user.username || '',
-                email: user.email || ''
+                email: prev.email || user.email || '' 
             }));
         }
     }, [user]);
+
     useEffect(() => {
         const fetchSettings = async () => {
             const missingIds = cartItems.map(item => item.site_id).filter(id => id && !resolvedSettings[id]);
@@ -51,12 +67,15 @@ const CartPage = () => {
                         newSettings[id] = {
                             path: res.data.site_path || '',
                             isOnlineEnabled: Boolean(res.data.is_online_payment_enabled ?? true),
-                            isCodEnabled: Boolean(res.data.is_cod_enabled ?? true)
+                            isCodEnabled: Boolean(res.data.is_cod_enabled ?? true),
+                            siteOwnerId: res.data.user_id,
+                            team: res.data.collaborators || res.data.team || [],
+                            isCollaboratorFlag: res.data.is_collaborator === true || res.data.role === 'collaborator' || res.data.role === 'editor'
                         };
                     }
                 } catch (e) {
                     console.error("Помилка завантаження налаштувань для id:", id);
-                    newSettings[id] = { path: null, isOnlineEnabled: true, isCodEnabled: true };
+                    newSettings[id] = { path: null, isOnlineEnabled: true, isCodEnabled: true, team: [] };
                 }
             }
             setResolvedSettings(newSettings);
@@ -68,10 +87,16 @@ const CartPage = () => {
         const groups = {};
         cartItems.forEach(item => {
             const siteId = item.site_id || 'unknown';
-            const siteSettings = resolvedSettings[siteId] || { path: null, isOnlineEnabled: true, isCodEnabled: true };
+            const siteSettings = resolvedSettings[siteId] || { path: null, isOnlineEnabled: true, isCodEnabled: true, team: [] };
             const sitePath = item.site_path || siteSettings.path || siteId; 
             const itemCurrency = item.currency || 'UAH';
             if (!groups[siteId]) {
+                const isOwner = user && siteSettings.siteOwnerId && String(user.id) === String(siteSettings.siteOwnerId);
+                const isCollaborator = user && (
+                    siteSettings.isCollaboratorFlag || 
+                    (Array.isArray(siteSettings.team) && siteSettings.team.some(c => String(c.id) === String(user.id) || String(c.user_id) === String(user.id)))
+                );
+                const isForbidden = isOwner || isCollaborator;
                 groups[siteId] = {
                     siteName: item.site_name || `Магазин #${siteId}`,
                     siteId: siteId, 
@@ -80,6 +105,8 @@ const CartPage = () => {
                     currencySymbol: currencyMap[itemCurrency] || '₴',
                     isOnlineEnabled: Boolean(siteSettings.isOnlineEnabled),
                     isCodEnabled: Boolean(siteSettings.isCodEnabled),
+                    isForbidden: Boolean(isForbidden),
+                    isOwner: Boolean(isOwner),
                     items: [], total: 0, totalOriginal: 0, isDigitalOnly: true
                 };
             }
@@ -91,11 +118,10 @@ const CartPage = () => {
             groups[siteId].totalOriginal += origPrice * quantity;
             if (item.type !== 'digital') groups[siteId].isDigitalOnly = false;
         });
-        
         return Object.values(groups).map(group => ({
             ...group, totalDiscount: group.totalOriginal - group.total
         }));
-    }, [cartItems, resolvedSettings]);
+    }, [cartItems, resolvedSettings, user]);
     
     useEffect(() => {
         if (groupedItems.length > 0) {
@@ -108,8 +134,6 @@ const CartPage = () => {
                 } else if (!currentGroup.isOnlineEnabled && currentGroup.isCodEnabled) {
                     setPaymentMethod('cod');
                 } else if (currentGroup.isOnlineEnabled && !currentGroup.isCodEnabled) {
-                    setPaymentMethod('online');
-                } else if (!['online', 'cod'].includes(paymentMethod)) {
                     setPaymentMethod('online');
                 }
             }
@@ -147,9 +171,18 @@ const CartPage = () => {
         setConfirmModal({ ...confirmModal, isOpen: false });
     };
 
+    const clearSavedCheckoutData = () => {
+        localStorage.removeItem('cartCustomerData');
+        localStorage.removeItem('cartPaymentMethod');
+    };
+
     const handleCheckout = async (e) => {
         e.preventDefault();
         if (!activeGroup) return;
+        if (activeGroup.isForbidden) {
+            return toast.error("Ви не можете оформлювати замовлення у власному магазині або як співавтор.");
+        }
+
         if (paymentMethod === 'online' && !activeGroup.isOnlineEnabled) {
             return toast.error('Продавець тимчасово не приймає онлайн оплату.');
         }
@@ -168,11 +201,9 @@ const CartPage = () => {
         if (customerData.phone && !phoneRegex.test(customerData.phone)) {
             return toast.error('Некоректний формат телефону. Використовуйте лише цифри та символи + ( ) -');
         }
-
         if (!activeGroup.isDigitalOnly && !customerData.address.trim()) {
             return toast.error('Будь ласка, оберіть відділення доставки');
         }
-        
         const outOfStockItem = activeGroup.items.find(item => item.type !== 'digital' && item.stock_quantity != null && item.quantity > item.stock_quantity);
         if (outOfStockItem) return toast.error(`Товару "${outOfStockItem.name}" недостатньо на складі.`);
         setIsSubmitting(true);
@@ -193,6 +224,7 @@ const CartPage = () => {
                 const { data, signature, orderId } = response.data;
                 toast.success(`Перенаправлення на оплату замовлення #${orderId || ''}`);
                 clearCartForSite(activeGroup.siteId);
+                clearSavedCheckoutData();
                 const form = document.createElement("form");
                 form.method = "POST";
                 form.action = "https://www.liqpay.ua/api/3/checkout";
@@ -207,6 +239,7 @@ const CartPage = () => {
             } else {
                 toast.success(`Замовлення #${response.data.orderId || ''} успішно оформлено!`);
                 clearCartForSite(activeGroup.siteId);
+                clearSavedCheckoutData();
                 navigate('/my-orders');
             }
         } catch (error) {
@@ -267,25 +300,26 @@ const CartPage = () => {
                         </h3>
                         <div className="border border-(--platform-border-color) rounded-xl overflow-hidden relative">
                             {customerData.address ? (
-                                <div className="p-4 bg-(--platform-accent)/5 relative">
-                                    <div className="flex items-start gap-3 pr-20">
-                                        <div className="p-2 bg-(--platform-accent)/20 text-(--platform-accent) rounded-lg shrink-0">
-                                            <MapPin size={24} />
+                                <div className="p-4 sm:p-5 bg-(--platform-accent)/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="p-2.5 bg-white dark:bg-black/20 text-(--platform-accent) rounded-xl shrink-0 shadow-sm border border-(--platform-accent)/20">
+                                            <MapPin size={22} />
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-semibold text-(--platform-text-secondary) uppercase tracking-wider mb-1">Вибране відділення Нової Пошти</p>
-                                            <p className="font-medium text-(--platform-text-primary) leading-snug">{customerData.address}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[11px] font-bold text-(--platform-text-secondary) uppercase tracking-wider mb-0.5">Відділення Нової Пошти</p>
+                                            <p className="text-sm font-semibold text-(--platform-text-primary) leading-snug truncate whitespace-normal line-clamp-2">
+                                                {customerData.address.replace('Нова Пошта: ', '')}
+                                            </p>
                                         </div>
                                     </div>
-                                    <Button 
+                                    <button 
                                         type="button" 
-                                        variant="ghost" 
-                                        size="sm" 
                                         onClick={() => setIsMapModalOpen(true)} 
-                                        className="absolute top-4 right-4 text-(--platform-accent) hover:bg-(--platform-accent)/10 shadow-none bg-transparent"
+                                        className="shrink-0 w-full sm:w-auto px-4 py-2 bg-(--platform-card-bg) border border-(--platform-border-color) hover:border-(--platform-accent) text-(--platform-text-primary) hover:text-(--platform-accent) text-sm font-semibold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 group"
                                     >
+                                        <Map size={16} className="text-(--platform-text-secondary) group-hover:text-(--platform-accent) transition-colors" />
                                         Змінити
-                                    </Button>
+                                    </button>
                                 </div>
                             ) : (
                                 <div className="p-6 text-center flex flex-col items-center">
@@ -373,10 +407,18 @@ const CartPage = () => {
                             </div>
                         )}
                     </div>
+                    {activeGroup.isForbidden && (
+                        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 flex items-center gap-3 shadow-sm">
+                            <AlertCircle size={24} className="shrink-0" />
+                            <span className="text-sm font-semibold">
+                                Ви не можете оформити замовлення {activeGroup.isOwner ? 'у власному магазині' : 'на сайті, де ви є співавтором'}.
+                            </span>
+                        </div>
+                    )}
                     <Button 
                         type="submit" 
                         className="w-full h-14 text-lg font-bold bg-(--platform-accent) hover:opacity-90 text-white border-none shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isSubmitting || noPaymentAvailable}
+                        disabled={isSubmitting || noPaymentAvailable || activeGroup.isForbidden}
                     >
                         {isSubmitting ? (
                             <><Loader2 className="animate-spin mr-2" /> Обробка...</>

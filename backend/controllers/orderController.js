@@ -55,22 +55,31 @@ exports.processCheckout = async (req, res, next) => {
     const { siteId, items, customerData, paymentMethod } = req.body;
     const userId = req.user.id;
     const method = paymentMethod === 'cod' ? 'cod' : 'online';
-    if (!siteId) {
-        return res.status(400).json({ message: 'Не вказано магазин для оформлення.' });
-    }
-    if (!items || items.length === 0) {
-        return res.status(400).json({ message: 'Список товарів порожній.' });
-    }
-    
+    if (!siteId) return res.status(400).json({ message: 'Не вказано магазин для оформлення.' });
+    if (!items || items.length === 0) return res.status(400).json({ message: 'Список товарів порожній.' });
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
-        const [sites] = await connection.query('SELECT liqpay_public_key, liqpay_private_key, is_online_payment_enabled, is_cod_enabled FROM sites WHERE id = ?', [siteId]);
+        const [sites] = await connection.query('SELECT user_id, liqpay_public_key, liqpay_private_key, is_online_payment_enabled, is_cod_enabled FROM sites WHERE id = ?', [siteId]);
         if (!sites[0]) {
             const error = new Error('Магазин не знайдено.');
             error.status = 404;
             throw error;
         }
+
+        if (String(sites[0].user_id) === String(userId)) {
+            const error = new Error('Ви не можете купувати товари у власному магазині.');
+            error.status = 403;
+            throw error;
+        }
+
+        const [collaborators] = await connection.query('SELECT site_id FROM site_collaborators WHERE site_id = ? AND user_id = ?', [siteId, userId]);
+        if (collaborators.length > 0) {
+            const error = new Error('Співавтори не можуть оформлювати замовлення на цьому сайті.');
+            error.status = 403;
+            throw error;
+        }
+
         if (method === 'online' && !sites[0].is_online_payment_enabled) {
             const error = new Error('Продавець тимчасово не приймає онлайн оплату.');
             error.status = 400;
@@ -81,7 +90,6 @@ exports.processCheckout = async (req, res, next) => {
             error.status = 400;
             throw error;
         }
-
         const [users] = await connection.query('SELECT username, email FROM users WHERE id = ?', [userId]);
         if (!users[0]) throw new Error('Користувача не знайдено');
         const realUserEmail = users[0].email;
@@ -125,9 +133,8 @@ exports.processCheckout = async (req, res, next) => {
                 [reqItem.id, siteId]
             );
             const product = dbProducts[0];
-            if (!product) {
-                throw new Error(`Деякі товари недоступні або не належать цьому магазину.`);
-            }
+            if (!product) throw new Error(`Деякі товари недоступні або не належать цьому магазину.`);
+            
             if (product.type !== 'digital' && product.stock_quantity !== null) {
                 if (reqItem.quantity > product.stock_quantity) {
                     throw new Error(`Недостатньо товару "${product.name}" на складі.`);
@@ -143,21 +150,18 @@ exports.processCheckout = async (req, res, next) => {
                 options: reqItem.options || {}
             });
         }
-        
         if (!isDigitalOnly && (!customerData || !customerData.address || !customerData.address.trim())) {
             throw new Error('Адреса доставки обов\'язкова для фізичних товарів.');
         }
         if (isDigitalOnly && method === 'cod') {
             throw new Error('Цифрові товари не можна замовити післяплатою.');
         }
-
         const orderId = generateOrderNumber();
         await connection.query(
             `INSERT INTO orders (id, site_id, customer_id, customer_name, customer_email, customer_phone, delivery_address, total_amount, status, payment_method) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
             [orderId, siteId, userId, deliveryName, realUserEmail, deliveryPhone, isDigitalOnly ? 'Цифрова доставка' : customerData.address, total, method]
         );
-        
         for (const item of validatedItems) {
             await connection.query(
                 `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, type, digital_file_url, options) 
@@ -165,7 +169,6 @@ exports.processCheckout = async (req, res, next) => {
                 [orderId, item.id, item.name, item.quantity, item.price, item.type || 'physical', item.digital_file_url || null, JSON.stringify(item.options)]
             );
         }
-        
         await connection.commit();
         if (method === 'online') {
             const paymentData = generateLiqPayData(orderId, total, sitePublicKey, sitePrivateKey);
@@ -196,6 +199,16 @@ exports.generatePaymentForOrder = async (req, res) => {
         const [orders] = await db.query('SELECT * FROM orders WHERE id = ? AND customer_id = ?', [orderId, userId]);
         if (!orders[0]) return res.status(404).json({ message: 'Замовлення не знайдено' });
         const order = orders[0];
+        const [sites] = await db.query('SELECT user_id, liqpay_public_key, liqpay_private_key, is_online_payment_enabled FROM sites WHERE id = ?', [order.site_id]);
+        if (sites[0] && String(sites[0].user_id) === String(userId)) {
+            return res.status(403).json({ message: 'Ви не можете оплачувати власні товари.' });
+        }
+        
+        const [collaborators] = await db.query('SELECT site_id FROM site_collaborators WHERE site_id = ? AND user_id = ?', [order.site_id, userId]);
+        if (collaborators.length > 0) {
+            return res.status(403).json({ message: 'Співавтори не можуть оплачувати товари на цьому сайті.' });
+        }
+
         if (order.status !== 'pending') {
             return res.status(400).json({ message: 'Це замовлення вже оплачено або скасовано.' });
         }
@@ -211,7 +224,7 @@ exports.generatePaymentForOrder = async (req, res) => {
                 }
             }
         }
-        const [sites] = await db.query('SELECT liqpay_public_key, liqpay_private_key, is_online_payment_enabled FROM sites WHERE id = ?', [order.site_id]);
+        
         if (!sites[0] || !sites[0].is_online_payment_enabled || !sites[0].liqpay_public_key || !sites[0].liqpay_private_key) {
             return res.status(400).json({ message: 'Магазин тимчасово не може приймати онлайн оплату.' });
         }
@@ -329,4 +342,4 @@ exports.getMyOrders = async (req, res) => {
         console.error("Помилка отримання моїх замовлень:", error);
         res.status(500).json({ message: 'Помилка отримання замовлень' });
     }
-};
+};  
