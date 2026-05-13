@@ -10,7 +10,7 @@ import ConfirmModal from '../../shared/ui/complex/ConfirmModal';
 import { useConfirmDialog } from '../../shared/hooks/useConfirmDialog';
 import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
-import { Plus, MessageSquare, CheckCircle, Gavel, Clock, Inbox, HelpCircle, Wrench, CreditCard, Handshake, Search, ExternalLink, XCircle } from 'lucide-react';
+import { Plus, MessageSquare, CheckCircle, Gavel, Clock, Inbox, HelpCircle, Wrench, CreditCard, Handshake, Search, ExternalLink, XCircle, Archive } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
     { value: 'all', label: 'Всі', icon: Inbox }, 
@@ -30,6 +30,11 @@ const COLORS = {
     partnership: '#ec4899', 
     appeal: 'var(--platform-warning)' 
 };
+
+const STATUS_TABS = [
+    { key: 'active', icon: <Inbox />, text: 'Активні' },
+    { key: 'closed', icon: <Archive />, text: 'Архів' }
+];
 
 const MyTicketsPage = () => {
     const navigate = useNavigate();
@@ -116,7 +121,6 @@ const MyTicketsPage = () => {
             {error}
         </div>
     );
-
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full flex flex-col">
             <Helmet>
@@ -142,21 +146,20 @@ const MyTicketsPage = () => {
             </div>
             <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                    <div className="flex bg-(--platform-card-bg) p-1 rounded-xl border border-(--platform-border-color) w-full sm:w-auto shrink-0">
-                        {['active', 'closed'].map(s => (
-                            <Button 
-                                key={s} 
-                                variant="ghost" 
-                                onClick={() => setStatusFilter(s)} 
-                                className={`flex-1 sm:flex-none min-h-10 sm:min-h-8 px-4 text-sm rounded-lg transition-colors border-none ${
-                                    statusFilter === s 
-                                        ? 'bg-(--platform-bg) text-(--platform-text-primary) shadow-sm' 
-                                        : 'bg-transparent text-(--platform-text-secondary) hover:text-(--platform-text-primary)'
-                                }`}
-                            >
-                                {s === 'active' ? 'Активні' : 'Архів'}
-                            </Button>
-                        ))}
+                    <div className="w-full sm:w-auto shrink-0">
+                        <nav className="ticket-tabs w-full sm:w-auto">
+                            {STATUS_TABS.map(tab => (
+                                <button
+                                    key={tab.key}
+                                    className={`ticket-tab-btn flex-1 sm:flex-none ${statusFilter === tab.key ? 'active' : ''}`}
+                                    onClick={() => setStatusFilter(tab.key)}
+                                    title={tab.text}
+                                >
+                                    <span className="ticket-tab-icon">{tab.icon}</span>
+                                    <span className="ticket-tab-text">{tab.text}</span>
+                                </button>
+                            ))}
+                        </nav>
                     </div>
                     <div className="w-full sm:w-55 shrink-0">
                         <CustomSelect 
@@ -266,6 +269,71 @@ const MyTicketsPage = () => {
                 </tbody>
             </AdminTable>
             <ConfirmModal isOpen={isOpen} {...config} onCancel={close} />
+            <style>{`
+                .ticket-tabs { 
+                    display: flex; 
+                    background: var(--platform-bg); 
+                    padding: 4px; 
+                    border-radius: 8px; 
+                    gap: 4px; 
+                    border: 1px solid var(--platform-border-color); 
+                    overflow: hidden; 
+                }
+                .ticket-tab-btn { 
+                    padding: 8px 16px; 
+                    font-size: 14px; 
+                    font-weight: 500; 
+                    border-radius: 6px; 
+                    color: var(--platform-text-secondary); 
+                    border: none; 
+                    background: transparent; 
+                    cursor: pointer; 
+                    transition: all 0.2s ease; 
+                    white-space: nowrap; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    gap: 8px; 
+                    min-height: 36px; 
+                }
+                .ticket-tab-btn:hover { 
+                    color: var(--platform-text-primary); 
+                    background: var(--platform-hover-bg); 
+                }
+                .ticket-tab-btn.active { 
+                    background: var(--platform-card-bg); 
+                    color: var(--platform-accent); 
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
+                    font-weight: 600; 
+                }
+                .ticket-tab-icon { 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    width: 18px; 
+                    height: 18px; 
+                }
+                .ticket-tab-icon svg { 
+                    width: 100%; 
+                    height: 100%; 
+                    fill: none; 
+                    stroke: currentColor; 
+                    stroke-width: 2; 
+                    stroke-linecap: round; 
+                    stroke-linejoin: round; 
+                }
+                .ticket-tab-text { 
+                    font-weight: 500; 
+                }
+                @media (max-width: 768px) { 
+                    .ticket-tab-btn { padding: 6px 12px; font-size: 13px; } 
+                }
+                @media (max-width: 480px) { 
+                    .ticket-tab-btn { padding: 6px 8px; gap: 6px; } 
+                    .ticket-tab-icon { width: 16px; height: 16px; } 
+                    .ticket-tab-text { font-size: 13px; }
+                }
+            `}</style>
         </div>
     );
 };

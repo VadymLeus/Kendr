@@ -12,7 +12,8 @@ import EmptyState from '../../shared/ui/complex/EmptyState';
 import ConfirmModal from '../../shared/ui/complex/ConfirmModal';
 import LoadingState from '../../shared/ui/complex/LoadingState';
 import NovaPoshtaMapModal from '../../shared/ui/complex/NovaPoshtaMapModal';
-import { Trash2, Minus, Plus, Store, CreditCard, AlertCircle, PackageOpen, User, Mail, Phone, Loader2, ShoppingBag, CheckCircle2, Download, MapPin, Map, Wallet } from 'lucide-react';
+import PaymentMethodModal from '../../shared/ui/complex/PaymentMethodModal';
+import { Trash2, Minus, Plus, Store, CreditCard, AlertCircle, PackageOpen, User, MapPin, Map, Wallet, CheckCircle2, Loader2, ShoppingBag, Download } from 'lucide-react';
 
 const CartPage = () => {
     const { cartItems, removeFromCart, clearCart, updateQuantity, isLoaded } = useContext(CartContext);
@@ -34,6 +35,7 @@ const CartPage = () => {
     const [activeSiteId, setActiveSiteId] = useState(null);
     const [resolvedSettings, setResolvedSettings] = useState({});
     const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+    const [pendingPaymentOrder, setPendingPaymentOrder] = useState(null);
     const [confirmModal, setConfirmModal] = useState({
         isOpen: false, actionType: null, targetId: null, title: '', message: ''
     });
@@ -53,7 +55,6 @@ const CartPage = () => {
             }));
         }
     }, [user]);
-
     useEffect(() => {
         const fetchSettings = async () => {
             const missingIds = cartItems.map(item => item.site_id).filter(id => id && !resolvedSettings[id]);
@@ -74,7 +75,6 @@ const CartPage = () => {
                         };
                     }
                 } catch (e) {
-                    console.error("Помилка завантаження налаштувань для id:", id);
                     newSettings[id] = { path: null, isOnlineEnabled: true, isCodEnabled: true, team: [] };
                 }
             }
@@ -179,31 +179,14 @@ const CartPage = () => {
     const handleCheckout = async (e) => {
         e.preventDefault();
         if (!activeGroup) return;
-        if (activeGroup.isForbidden) {
-            return toast.error("Ви не можете оформлювати замовлення у власному магазині або як співавтор.");
-        }
-
-        if (paymentMethod === 'online' && !activeGroup.isOnlineEnabled) {
-            return toast.error('Продавець тимчасово не приймає онлайн оплату.');
-        }
-        if (paymentMethod === 'cod' && !activeGroup.isCodEnabled) {
-            return toast.error('Продавець не відправляє товари післяплатою.');
-        }
-        if (paymentMethod === 'cod' && activeGroup.isDigitalOnly) {
-            return toast.error('Цифрові товари доступні тільки за умови онлайн оплати.');
-        }
-
-        if (!customerData.name.trim() || !customerData.email.trim() || !customerData.phone.trim()) {
-            return toast.error('Будь ласка, заповніть всі обов\'язкові поля');
-        }
-
+        if (activeGroup.isForbidden) return toast.error("Ви не можете оформлювати замовлення у власному магазині або як співавтор.");
+        if (paymentMethod === 'online' && !activeGroup.isOnlineEnabled) return toast.error('Продавець тимчасово не приймає онлайн оплату.');
+        if (paymentMethod === 'cod' && !activeGroup.isCodEnabled) return toast.error('Продавець не відправляє товари післяплатою.');
+        if (paymentMethod === 'cod' && activeGroup.isDigitalOnly) return toast.error('Цифрові товари доступні тільки за умови онлайн оплати.');
+        if (!customerData.name.trim() || !customerData.email.trim() || !customerData.phone.trim()) return toast.error('Будь ласка, заповніть всі обов\'язкові поля');
         const phoneRegex = /^[0-9+\-\(\)\s]*$/;
-        if (customerData.phone && !phoneRegex.test(customerData.phone)) {
-            return toast.error('Некоректний формат телефону. Використовуйте лише цифри та символи + ( ) -');
-        }
-        if (!activeGroup.isDigitalOnly && !customerData.address.trim()) {
-            return toast.error('Будь ласка, оберіть відділення доставки');
-        }
+        if (customerData.phone && !phoneRegex.test(customerData.phone)) return toast.error('Некоректний формат телефону.');
+        if (!activeGroup.isDigitalOnly && !customerData.address.trim()) return toast.error('Будь ласка, оберіть відділення доставки');
         const outOfStockItem = activeGroup.items.find(item => item.type !== 'digital' && item.stock_quantity != null && item.quantity > item.stock_quantity);
         if (outOfStockItem) return toast.error(`Товару "${outOfStockItem.name}" недостатньо на складі.`);
         setIsSubmitting(true);
@@ -211,31 +194,20 @@ const CartPage = () => {
             const formattedItems = activeGroup.items.map(item => ({
                 id: item.id, quantity: item.quantity, options: item.selectedOptions
             }));
-            const payload = { 
-                siteId: activeGroup.siteId, 
-                items: formattedItems, 
-                customerData,
-                paymentMethod 
-            };
-            
+            const payload = { siteId: activeGroup.siteId, items: formattedItems, customerData, paymentMethod };
             const response = await apiClient.post('/orders/checkout', payload, { suppressToast: true });
-            if (paymentMethod === 'online' && response.data && response.data.data && response.data.signature) {
-                setIsRedirecting(true);
-                const { data, signature, orderId } = response.data;
-                toast.success(`Перенаправлення на оплату замовлення #${orderId || ''}`);
+            if (paymentMethod === 'online') {
+                setPendingPaymentOrder({
+                    orderId: response.data.orderId,
+                    totalAmount: activeGroup.total.toFixed(2).toString(),
+                    siteTitle: activeGroup.siteName || 'Kendr Store',
+                    currencySymbol: activeGroup.currencySymbol,
+                    liqpayData: response.data.liqpayData,
+                    liqpaySignature: response.data.liqpaySignature
+                });
                 clearCartForSite(activeGroup.siteId);
                 clearSavedCheckoutData();
-                const form = document.createElement("form");
-                form.method = "POST";
-                form.action = "https://www.liqpay.ua/api/3/checkout";
-                const dataInput = document.createElement("input");
-                dataInput.type = "hidden"; dataInput.name = "data"; dataInput.value = data;
-                const signatureInput = document.createElement("input");
-                signatureInput.type = "hidden"; signatureInput.name = "signature"; signatureInput.value = signature;
-                form.appendChild(dataInput);
-                form.appendChild(signatureInput);
-                document.body.appendChild(form);
-                form.submit();
+                setIsSubmitting(false); 
             } else {
                 toast.success(`Замовлення #${response.data.orderId || ''} успішно оформлено!`);
                 clearCartForSite(activeGroup.siteId);
@@ -246,6 +218,58 @@ const CartPage = () => {
             toast.error(error.response?.data?.message || 'Помилка оформлення замовлення');
             setIsSubmitting(false);
         }
+    };
+
+    const handleLiqPaySelect = () => {
+        if (!pendingPaymentOrder?.liqpayData || !pendingPaymentOrder?.liqpaySignature) {
+            toast.error("Продавець ще не налаштував LiqPay для цього магазину.");
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://www.liqpay.ua/api/3/checkout';
+            form.style.display = 'none';
+            const dataInput = document.createElement('input');
+            dataInput.name = 'data';
+            dataInput.value = pendingPaymentOrder.liqpayData;
+            form.appendChild(dataInput);
+            const signatureInput = document.createElement('input');
+            signatureInput.name = 'signature';
+            signatureInput.value = pendingPaymentOrder.liqpaySignature;
+            form.appendChild(signatureInput);
+            document.body.appendChild(form);
+            form.submit();
+        } catch (error) {
+            console.error("LiqPay Form Error:", error);
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleGooglePaySuccess = async (paymentRequest) => {
+        setIsSubmitting(true);
+        try {
+            await apiClient.post(`/orders/${pendingPaymentOrder.orderId}/pay/gpay`, {
+                paymentData: paymentRequest
+            });
+            toast.success('Оплата успішно пройшла!');
+            setPendingPaymentOrder(null);
+            navigate('/my-orders');
+        } catch (error) {
+            console.error(error);
+            toast.error('Помилка при збереженні статусу оплати');
+            setPendingPaymentOrder(null);
+            navigate('/my-orders'); 
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleClosePaymentModal = () => {
+        toast.info('Ви зможете оплатити замовлення пізніше в розділі "Мої замовлення".');
+        setPendingPaymentOrder(null);
+        navigate('/my-orders');
     };
 
     const getImageUrl = (item) => {
@@ -361,7 +385,7 @@ const CartPage = () => {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <CreditCard size={18} className="text-(--platform-text-primary)" />
-                                            <span className="font-medium text-(--platform-text-primary)">Оплата карткою онлайн</span>
+                                            <span className="font-medium text-(--platform-text-primary)">Оплата онлайн</span>
                                         </div>
                                     </label>
                                 )}
@@ -423,7 +447,7 @@ const CartPage = () => {
                         {isSubmitting ? (
                             <><Loader2 className="animate-spin mr-2" /> Обробка...</>
                         ) : (
-                            <>{paymentMethod === 'online' ? 'Перейти до оплати' : 'Підтвердити замовлення'}</>
+                            <>{paymentMethod === 'online' ? 'Створити та оплатити' : 'Підтвердити замовлення'}</>
                         )}
                     </Button>
                 </div>
@@ -511,13 +535,6 @@ const CartPage = () => {
                                                                         <Download size={12}/> Цифровий
                                                                     </span>
                                                                 )}
-                                                                <div className="mt-2 flex flex-wrap gap-2">
-                                                                    {item.type !== 'digital' && item.selectedOptions && Object.entries(item.selectedOptions).map(([k, v]) => (
-                                                                        <span key={k} className="text-xs px-2 py-1 rounded-md bg-(--platform-bg) border border-(--platform-border-color) text-(--platform-text-secondary)">
-                                                                            {k}: <span className="font-semibold text-(--platform-text-primary)">{v}</span>
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
                                                             </div>
                                                             <div className="text-right shrink-0">
                                                                 {item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price) && (
@@ -576,7 +593,7 @@ const CartPage = () => {
                             </div>
                         </div>
                         <div className="hidden lg:block lg:col-span-5 xl:col-span-5 h-full relative">
-                            {activeGroup ? renderCheckoutForm() : renderEmptyFormState()}
+                            {renderCheckoutForm()}
                         </div>
                     </div>
                 )}
@@ -592,6 +609,19 @@ const CartPage = () => {
                 onSelect={(addressString) => {
                     setCustomerData({...customerData, address: addressString});
                 }}
+            />
+            <PaymentMethodModal 
+                isOpen={!!pendingPaymentOrder}
+                onClose={handleClosePaymentModal}
+                amount={pendingPaymentOrder?.totalAmount}
+                currencySymbol={pendingPaymentOrder?.currencySymbol}
+                isLoading={isSubmitting}
+                onSelectLiqPay={handleLiqPaySelect}
+                gpayConfig={pendingPaymentOrder ? {
+                    merchantName: pendingPaymentOrder.siteTitle,
+                    totalPrice: pendingPaymentOrder.totalAmount,
+                    onSuccess: handleGooglePaySuccess
+                } : null}
             />
         </>
     );

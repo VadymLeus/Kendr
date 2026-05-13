@@ -35,11 +35,10 @@ exports.processUpgrade = async (req, res) => {
     if (!PLATFORM_LIQPAY_PUBLIC || !PLATFORM_LIQPAY_PRIVATE) {
         return res.status(500).json({ message: "Ключі LiqPay платформи не налаштовані в системі." });
     }
-
     try {
         const [users] = await db.query('SELECT plan FROM users WHERE id = ?', [userId]);
-        if (users[0] && users[0].plan === 'PLUS') {
-            return res.status(400).json({ message: 'У вас вже активовано тариф PLUS.' });
+        if (users[0] && (users[0].plan === 'PLUS' || users[0].plan === 'ADMIN')) {
+            return res.status(400).json({ message: 'У вас вже активовано преміум тариф.' });
         }
         await db.query(
             `INSERT INTO transactions (id, user_id, amount, currency, status, description) VALUES (?, ?, ?, 'UAH', 'pending', ?)`,
@@ -53,6 +52,40 @@ exports.processUpgrade = async (req, res) => {
     }
 };
 
+exports.processGooglePayUpgrade = async (req, res) => {
+    const userId = req.user.id;
+    const { paymentData } = req.body;
+    const amount = 299.00;
+    const description = `Оплата довічного тарифу Kendr PLUS для користувача #${userId} (Google Pay)`;
+    const transactionId = crypto.randomUUID();
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+        const [users] = await connection.query('SELECT plan FROM users WHERE id = ? FOR UPDATE', [userId]);
+        if (users[0] && (users[0].plan === 'PLUS' || users[0].plan === 'ADMIN')) {
+            await connection.rollback();
+            return res.status(400).json({ message: 'У вас вже активовано преміум тариф.' });
+        }
+
+        const providerId = paymentData?.paymentMethodData?.tokenizationData?.token 
+            ? 'gpay_' + paymentData.paymentMethodData.tokenizationData.token.substring(0, 20) 
+            : 'gpay_test_' + Date.now();
+        await connection.query(
+            `INSERT INTO transactions (id, user_id, amount, currency, status, provider_id, description) VALUES (?, ?, ?, 'UAH', 'success', ?, ?)`,
+            [transactionId, userId, amount, providerId, description]
+        );
+        await connection.query(`UPDATE users SET plan = 'PLUS' WHERE id = ?`, [userId]);
+        await connection.commit();
+        res.status(200).json({ success: true, message: 'Тариф Kendr PLUS успішно активовано!' });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Помилка при обробці Google Pay для тарифу:', error);
+        res.status(500).json({ message: 'Помилка сервера при створенні транзакції.' });
+    } finally {
+        connection.release();
+    }
+};
+
 exports.liqpayWebhook = async (req, res) => {
     const { data, signature } = req.body;
     if (!data || !signature) {
@@ -63,7 +96,6 @@ exports.liqpayWebhook = async (req, res) => {
         if (signature !== expectedSignature) {
             return res.status(403).send('Invalid signature');
         }
-
         const decodedData = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
         const { order_id: transactionId, status, payment_id } = decodedData;
         if (status === 'success' || status === 'sandbox' || status === 'wait_accept') {
@@ -72,7 +104,6 @@ exports.liqpayWebhook = async (req, res) => {
             if (transaction && transaction.status === 'pending') {
                 await db.query(`UPDATE transactions SET status = 'success', provider_id = ? WHERE id = ?`, [payment_id, transactionId]);
                 await db.query(`UPDATE users SET plan = 'PLUS' WHERE id = ?`, [transaction.user_id]);
-                console.log(`[Billing] Користувач ${transaction.user_id} успішно оплатив тариф PLUS.`);
             }
         }
         res.status(200).send('OK');
@@ -143,7 +174,6 @@ exports.getAdminTransactions = async (req, res) => {
             },
             summary
         });
-
     } catch (error) {
         console.error('Error fetching transactions:', error);
         res.status(500).json({ message: 'Помилка сервера при завантаженні транзакцій' });
@@ -214,7 +244,6 @@ exports.getAdminOrders = async (req, res) => {
                 pendingCount: summaryResult[0].totalOrders
             }
         });
-
     } catch (error) {
         console.error('Error fetching admin orders:', error);
         res.status(500).json({ message: 'Помилка сервера при завантаженні замовлень' });

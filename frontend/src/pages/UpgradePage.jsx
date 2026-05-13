@@ -4,12 +4,14 @@ import { AuthContext } from '../app/providers/AuthContext';
 import { Button } from '../shared/ui/elements';
 import apiClient from '../shared/api/api';
 import { toast } from 'react-toastify';
+import PaymentMethodModal from '../shared/ui/complex/PaymentMethodModal';
 import { Check, Zap, Star, Loader2 } from 'lucide-react';
 
 const UpgradePage = () => {
     const { user } = useContext(AuthContext);
     const [isLoading, setIsLoading] = useState(false);
-    const handleUpgradeClick = async () => {
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const handleLiqPaySelect = async () => {
         setIsLoading(true);
         try {
             const res = await apiClient.post('/transactions/upgrade');
@@ -30,7 +32,28 @@ const UpgradePage = () => {
             form.submit();
         } catch (error) {
             console.error("Помилка генерації платежу:", error);
-            toast.error(error.response?.data?.message || 'Не вдалося створити платіж. Спробуйте пізніше.');
+            toast.error(error.response?.data?.message || 'Не вдалося створити платіж LiqPay.');
+            setIsLoading(false);
+        }
+    };
+
+    const handleGooglePaySuccess = async (paymentRequest) => {
+        setIsLoading(true);
+        try {
+            const res = await apiClient.post('/transactions/upgrade/gpay', {
+                paymentData: paymentRequest
+            });
+            
+            setIsPaymentModalOpen(false);
+            toast.success(res.data.message || 'Вітаємо! Тариф Kendr PLUS успішно активовано.');
+            
+            setTimeout(() => {
+                window.location.href = '/settings';
+            }, 1500);
+
+        } catch (error) {
+            console.error("Помилка генерації платежу:", error);
+            toast.error(error.response?.data?.message || 'Не вдалося активувати тариф через Google Pay.');
             setIsLoading(false);
         }
     };
@@ -74,7 +97,7 @@ const UpgradePage = () => {
                     <h3 className="text-2xl font-bold text-(--platform-accent) mb-2">PLUS</h3>
                     <div className="flex items-end gap-1 mb-6 pb-6 border-b border-(--platform-border-color)">
                         <span className="text-4xl font-extrabold text-(--platform-text-primary)">299</span>
-                        <span className="text-(--platform-text-secondary) font-medium mb-1">грн</span>
+                        <span className="text-(--platform-text-secondary) font-medium mb-1">грн <span className="text-xs">/ назавжди</span></span>
                     </div>
                     <div className="flex-1 space-y-4 mb-8">
                         <FeatureItem text={<>До <strong>8</strong> активних сайтів</>} active />
@@ -84,15 +107,26 @@ const UpgradePage = () => {
                     </div>
                     <Button 
                         size="lg" 
-                        className="w-full text-lg font-bold bg-(--platform-accent) text-white hover:opacity-90 min-h-14 border-none shadow-md"
-                        onClick={handleUpgradeClick}
-                        disabled={isLoading || isPremium}
+                        className={`w-full text-lg font-bold min-h-14 border-none shadow-md ${isPremium ? 'bg-(--platform-border-color) text-(--platform-text-secondary)' : 'bg-(--platform-accent) text-white hover:opacity-90'}`}
+                        onClick={() => setIsPaymentModalOpen(true)}
+                        disabled={isPremium || isLoading}
                     >
-                        {isLoading ? <><Loader2 className="animate-spin mr-2" /> Підготовка платежу...</> : 
-                         isPremium ? 'Ви вже маєте цей тариф' : 'Оплатити доступ'}
+                        {isPremium ? 'Ви вже маєте цей тариф' : 'Оплатити доступ'}
                     </Button>
                 </div>
             </div>
+            <PaymentMethodModal 
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                amount="299.00"
+                isLoading={isLoading}
+                onSelectLiqPay={handleLiqPaySelect}
+                gpayConfig={{
+                    merchantName: 'Kendr Platform',
+                    totalPrice: '299.00',
+                    onSuccess: handleGooglePaySuccess
+                }}
+            />
         </div>
     );
 };

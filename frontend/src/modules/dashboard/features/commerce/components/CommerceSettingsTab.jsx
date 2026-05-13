@@ -20,7 +20,6 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
         isOnlineEnabled: siteData?.is_online_payment_enabled ?? true,
         isCodEnabled: siteData?.is_cod_enabled ?? true
     });
-
     const [savedPayment, setSavedPayment] = useState({
         public: siteData?.liqpay_public_key || '',
         private: siteData?.liqpay_private_key || '',
@@ -90,6 +89,7 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
         localPayment.private !== savedPayment.private ||
         localPayment.isOnlineEnabled !== savedPayment.isOnlineEnabled ||
         localPayment.isCodEnabled !== savedPayment.isCodEnabled;
+
     return (
         <div className="h-full overflow-y-auto custom-scrollbar p-1 flex flex-col gap-6">
             <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-8 shadow-sm w-full max-w-3xl mx-auto">
@@ -148,8 +148,10 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
                                     <CreditCard size={20} />
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-(--platform-text-primary) text-sm m-0">Онлайн оплата (LiqPay)</h4>
-                                    <p className="text-xs text-(--platform-text-secondary) m-0 mt-0.5">Прийом платежів карткою прямо на сайті.</p>
+                                    <h4 className="font-semibold text-(--platform-text-primary) text-sm m-0">Онлайн оплата (Картка / GPay)</h4>
+                                    <p className="text-xs text-(--platform-text-secondary) m-0 mt-0.5">
+                                        Прийом платежів через LiqPay та Google Pay на сайті.
+                                    </p>
                                 </div>
                             </div>
                             <Switch 
@@ -161,7 +163,7 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
                             <div className="p-4 border-t border-blue-500/20 flex flex-col gap-4 bg-(--platform-bg) rounded-b-xl">
                                 <div>
                                     <Input
-                                        label="Public Key"
+                                        label="LiqPay Public Key"
                                         value={localPayment.public}
                                         onChange={(e) => setLocalPayment(prev => ({ ...prev, public: e.target.value }))}
                                         placeholder="sandbox_..."
@@ -170,7 +172,7 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
                                 </div>
                                 <div>
                                     <Input
-                                        label="Private Key"
+                                        label="LiqPay Private Key"
                                         value={localPayment.private}
                                         onChange={(e) => setLocalPayment(prev => ({ ...prev, private: e.target.value }))}
                                         placeholder="sandbox_..."
@@ -178,6 +180,7 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
                                         type="password"
                                     />
                                 </div>
+                                
                                 {(!savedPayment.public || !savedPayment.private) && (
                                     <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-500 flex gap-2 items-center justify-center text-center">
                                         <AlertCircle size={16} className="shrink-0" />
@@ -187,16 +190,16 @@ const CommerceSettingsTab = ({ siteData, onSavingChange }) => {
                             </div>
                         )}
                     </div>
-                    <div className="flex justify-center mt-2">
-                        <Button 
-                            type="button" 
-                            onClick={handlePaymentSave}
-                            disabled={!isPaymentDirty}
-                            className="px-8"
-                        >
-                            Зберегти налаштування оплати
-                        </Button>
-                    </div>
+                </div>
+                <div className="flex justify-center mt-6">
+                    <Button 
+                        type="button" 
+                        onClick={handlePaymentSave}
+                        disabled={!isPaymentDirty}
+                        className="px-8"
+                    >
+                        Зберегти налаштування оплати
+                    </Button>
                 </div>
             </div>
             

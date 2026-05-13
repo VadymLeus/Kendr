@@ -257,7 +257,6 @@ exports.getSiteByPath = async (req, res, next) => {
             site.author_email = ownerInfo[0].email;
             site.author_avatar = ownerInfo[0].avatar_url;
         }
-        
         let isStaff = false;
         let isCollaborator = false;
         let myPermissions = [];
@@ -271,7 +270,6 @@ exports.getSiteByPath = async (req, res, next) => {
                 myPermissions = typeof perms === 'string' ? JSON.parse(perms) : (perms || []);
             }
         }
-        
         const isOwner = req.user && req.user.id === site.user_id;
         if (site.status === 'suspended') {
             if (!isStaff) return res.status(403).json({ message: 'Цей сайт заблоковано за порушення правил платформи.', isSuspended: true });
@@ -287,6 +285,12 @@ exports.getSiteByPath = async (req, res, next) => {
         else page = await Page.findHomepageBySiteId(site.id);
         if (!page) return res.status(200).json(null);
         const [tags] = await db.query(`SELECT t.id, t.name FROM tags t JOIN site_tags st ON t.id = st.tag_id WHERE st.site_id = ?`, [site.id]);
+        if (site.liqpay_private_key) {
+            site.liqpay_private_key = '********';
+        } else {
+            site.liqpay_private_key = '';
+        }
+
         res.json({ 
             ...site, 
             is_collaborator: isCollaborator,
@@ -378,6 +382,18 @@ exports.updateSiteSettings = async (req, res, next) => {
                 });
             }
         }
+
+        let finalPrivateKey = site.liqpay_private_key;
+        if (liqpay_private_key !== undefined) {
+            if (liqpay_private_key === '********') {
+                finalPrivateKey = site.liqpay_private_key;
+            } else if (liqpay_private_key.trim() === '') {
+                finalPrivateKey = null;
+            } else {
+                finalPrivateKey = encrypt(liqpay_private_key);
+            }
+        }
+
         let finalStatus = (status !== undefined) ? status : site.status;
         if (site.status === 'suspended' || site.status === 'probation') finalStatus = site.status;
         const updateData = { 
@@ -396,7 +412,7 @@ exports.updateSiteSettings = async (req, res, next) => {
             cover_logo_radius: cover_logo_radius !== undefined ? parseInt(cover_logo_radius) : site.cover_logo_radius,
             cover_title_size: cover_title_size !== undefined ? parseInt(cover_title_size) : site.cover_title_size,
             liqpay_public_key: liqpay_public_key !== undefined ? liqpay_public_key : site.liqpay_public_key,
-            liqpay_private_key: liqpay_private_key !== undefined ? encrypt(liqpay_private_key) : site.liqpay_private_key,
+            liqpay_private_key: finalPrivateKey,
             is_online_payment_enabled: is_online_payment_enabled !== undefined ? is_online_payment_enabled : site.is_online_payment_enabled,
             is_cod_enabled: is_cod_enabled !== undefined ? is_cod_enabled : site.is_cod_enabled,
             currency: currency !== undefined ? currency : site.currency,
