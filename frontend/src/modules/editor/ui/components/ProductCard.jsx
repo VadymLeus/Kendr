@@ -5,7 +5,8 @@ import { CartContext } from '../../../../app/providers/CartContext';
 import { AuthContext } from '../../../../app/providers/AuthContext';
 import { BASE_URL } from '../../../../shared/config';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
-import { ShoppingCart, User, Settings, Shield, Download } from 'lucide-react';
+import { ShoppingCart, Settings, Download } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
     const cartContext = useContext(CartContext);
@@ -39,8 +40,17 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
         }
         return ['https://placehold.co/400?text=No+Image'];
     }, [product.image_gallery]);
-    const isOwner = user && siteData && user.id === siteData.user_id;
+    const isOwner = user && siteData && String(user.id) === String(siteData.user_id);
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
+    const isCollaborator = user && siteData && (
+        siteData.is_collaborator === true || 
+        siteData.role === 'collaborator' || 
+        siteData.role === 'editor' || 
+        (Array.isArray(siteData.collaborators) && siteData.collaborators.some(c => String(c.id) === String(user.id) || String(c.user_id) === String(user.id))) ||
+        (Array.isArray(siteData.team) && siteData.team.some(c => String(c.id) === String(user.id) || String(c.user_id) === String(user.id)))
+    );
+    
+    const isForbiddenToBuy = isOwner || isStaff || isCollaborator;
     const hasDiscount = product.sale_percentage > 0;
     const finalPrice = product.price ? (hasDiscount 
         ? Math.round(product.price * (1 - product.sale_percentage / 100)) 
@@ -68,6 +78,7 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             setActiveImgIndex(prev => (prev + 1) % images.length);
         }, 1200);
     };
+    
     const handleMouseLeave = () => {
         setIsHovered(false);
         if (intervalRef.current) {
@@ -85,7 +96,10 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
             navigate(productLink);
             return;
         }
-        if (isStaff) return;
+        if (isForbiddenToBuy) {
+            toast.error("Не можна додавати власні товари в кошик.");
+            return;
+        }
         if (!user) {
             const isConfirmed = await confirm({
                 title: 'Потрібна авторизація',
@@ -94,7 +108,6 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                 cancelLabel: 'Скасувати',
                 type: 'warning'
             });
-            
             if (isConfirmed) {
                 navigate('/login', { state: { from: location.pathname + location.search } });
             }
@@ -218,27 +231,19 @@ const ProductCard = ({ product, isEditorPreview, siteData, fontStyles }) => {
                         </div>
                         <button
                             onClick={handleAction}
-                            disabled={isSoldOut || ((isOwner || isStaff) && !hasVariants)}
+                            disabled={isSoldOut}
                             className={`
                                 h-10 w-10 flex items-center justify-center rounded-xl ml-3 shrink-0 transition-all duration-300 shadow-sm
-                                ${isSoldOut || (isOwner || isStaff) ? 'cursor-default opacity-50' : 'cursor-pointer hover:scale-105 active:scale-95'}
+                                ${isSoldOut ? 'cursor-default opacity-50' : 'cursor-pointer hover:scale-105 active:scale-95'}
                             `}
                             style={{
-                                background: (isOwner || isStaff) ? 'transparent' : 'var(--site-accent)',
-                                color: (isOwner || isStaff) ? 'var(--site-text-secondary)' : 'var(--site-accent-text)',
-                                border: (isOwner || isStaff) ? '1px solid var(--site-border-color)' : 'none',
+                                background: 'var(--site-accent)',
+                                color: 'var(--site-accent-text)',
+                                border: 'none',
                             }}
-                            title={isStaff ? 'Купівля недоступна для персоналу' : isOwner ? 'Ви власник цього товару' : 'Додати в кошик'}
+                            title={hasVariants ? "Вибрати опції" : "Додати в кошик"}
                         >
-                            {isOwner ? (
-                                <User size={18} />
-                            ) : isStaff ? (
-                                <Shield size={18} />
-                            ) : hasVariants ? (
-                                <Settings size={18} />
-                            ) : (
-                                <ShoppingCart size={18} />
-                            )}
+                            {hasVariants ? <Settings size={18} /> : <ShoppingCart size={18} />}
                         </button>
                     </div>
                 </div>

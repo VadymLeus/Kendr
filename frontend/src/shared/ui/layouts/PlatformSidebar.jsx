@@ -4,7 +4,7 @@ import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { CartContext } from '../../../app/providers/CartContext';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import UserMenu from './UserMenu';
-import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, Plus, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders, Package, Shield, CreditCard } from 'lucide-react';
+import { Store, Layout, FileText, ShoppingCart, HelpCircle, ChevronLeft, ChevronRight, LogIn, PlusCircle, LayoutDashboard, AlertTriangle, Users, Globe, MessageSquare, Palette, Sliders, Package, Shield, CreditCard } from 'lucide-react';
 
 const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen, onMobileOpen, onMobileClose }) => {
     const { cartItems } = useContext(CartContext);
@@ -19,7 +19,6 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
             navigate('/login', { state: { from: path } });
         }
     };
-    
     const renderLink = ({ to, icon: Icon, label, protectedLink, count, isCreateButton }) => {
         const baseClass = `sidebar-link ${isCreateButton ? 'create-btn' : ''}`;
         return (
@@ -35,7 +34,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
                 end={to === '/admin' || to === '/admin/dashboard'}
             >
                 <div className="shrink-0 flex items-center justify-center w-6 h-6">
-                    {isCreateButton && isCollapsed && !isMobileOpen ? <Plus size={24} /> : <Icon size={20} />}
+                    <Icon size={20} />
                 </div>
                 {(!isCollapsed || isMobileOpen) && (
                     <span className="truncate flex-1">{label} {count !== undefined && `(${count})`}</span>
@@ -85,7 +84,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
                 <div className="sidebar-nav custom-scrollbar">
                     {isAdminView ? (
                         <>
-                            {renderLink({ to: "/create-site", icon: FileText, label: "Створити сайт", isCreateButton: true })}
+                            {renderLink({ to: "/create-site", icon: PlusCircle, label: "Створити сайт", isCreateButton: true })}
                             <div className="nav-separator" />
                             {renderLink({ to: "/my-sites", icon: Layout, label: "Мої сайти" })}
                             {renderLink({ to: "/admin/templates", icon: Palette, label: "Шаблони" })}
@@ -104,7 +103,7 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
                         </>
                     ) : (
                         <>
-                            {renderLink({ to: "/create-site", icon: FileText, label: "Створити сайт", protectedLink: true, isCreateButton: true })}
+                            {renderLink({ to: "/create-site", icon: PlusCircle, label: "Створити сайт", protectedLink: true, isCreateButton: true })}
                             <div className="nav-separator" />
                             {user && (
                                 <>
@@ -133,11 +132,13 @@ const PlatformSidebar = ({ isCollapsed, onToggle, variant = 'user', isMobileOpen
                     {!user ? (
                         <Link 
                             to="/login" 
-                            className={`sidebar-link ${!isCollapsed || isMobileOpen ? 'justify-center bg-blue-50/10 text-(--platform-accent)' : 'justify-center'}`}
+                            className="sidebar-link justify-center bg-(--platform-hover-bg) text-(--platform-text-secondary) hover:text-(--platform-accent)"
                             title="Увійти"
                             onClick={onMobileClose}
                         >
-                            <LogIn size={20} />
+                            <div className="shrink-0 flex items-center justify-center w-6 h-6">
+                                <LogIn size={20} />
+                            </div>
                             {(!isCollapsed || isMobileOpen) && <span>Увійти</span>}
                         </Link>
                     ) : (

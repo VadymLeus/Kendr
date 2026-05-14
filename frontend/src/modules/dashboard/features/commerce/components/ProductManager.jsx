@@ -470,7 +470,7 @@ const ProductEditorPanel = ({
     return (
         <div className={`
             flex flex-col h-full bg-(--platform-card-bg) border border-(--platform-border-color) overflow-hidden
-            ${isMobile ? 'border-0' : 'rounded-2xl'}
+            ${isMobile ? 'rounded-xl' : 'rounded-2xl'}
         `}>
             <MediaPickerModal
                 isOpen={showMediaPicker} onClose={() => setShowMediaPicker(false)}
@@ -531,7 +531,6 @@ const ProductEditorPanel = ({
                             </button>
                         </div>
                     </div>
-
                     <InputWithCounter 
                         label="Назва" 
                         value={formData.name} 
@@ -752,7 +751,6 @@ const ProductManager = ({ siteId, onSavingChange, maxProducts }) => {
             setProductToDelete(null);
         }
     }, [productToDelete, handleDelete, activeProduct, handleClosePanel]);
-    
     return (
         <>
             <SplitViewLayout

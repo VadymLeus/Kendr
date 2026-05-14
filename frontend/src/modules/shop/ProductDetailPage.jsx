@@ -17,6 +17,7 @@ import LoadingState from '../../shared/ui/complex/LoadingState';
 import { getDefaultBlockData } from '../editor/core/editorConfig';
 import { resolveAccentColor } from '../../shared/utils/themeUtils';
 import { BASE_URL } from '../../shared/config';
+import { toast } from 'react-toastify';
 import { Folder, Grid, Tag, ShoppingBag, Package, Star, Heart, Home, Gift, Truck, Zap, Camera, Music, Smartphone, Coffee, Briefcase, MapPin, Image as ImageIcon, Video, User, MessageSquare, Trash2 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -121,16 +122,22 @@ const ProductDetailPage = () => {
     if (hex.length === 6) {
         siteIsolationStyles['--site-accent-rgb'] = `${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)}`;
     }
-    const isOwner = user && siteData && user.id === siteData.user_id;
+    const isOwner = user && siteData && String(user.id) === String(siteData.user_id);
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
-    const isSiteHidden = siteData && siteData.status === 'maintenance' && !isOwner;
+    const isCollaborator = user && siteData && (
+        siteData.is_collaborator === true || 
+        siteData.role === 'collaborator' || 
+        siteData.role === 'editor'
+    );
+    const isForbiddenToBuy = isOwner || isStaff || isCollaborator;
+    const isSiteHidden = siteData && siteData.status === 'maintenance' && !isOwner && !isCollaborator && !isStaff;
     const isSoldOut = product ? product.stock_quantity === 0 : false;
     const currencyMap = { 'UAH': '₴', 'USD': '$', 'EUR': '€' };
     const siteCurrency = siteData?.currency || 'UAH';
     const currencySymbol = currencyMap[siteCurrency] || '₴';
     const currentCartItemId = product ? `${product.id}-${JSON.stringify(selectedOptions, Object.keys(selectedOptions).sort())}` : null;
     const isInCart = cartItems?.some(item => item.cartItemId === currentCartItemId);
-    const canReview = user && !isOwner && !isStaff && purchaseStatus.hasPurchased && !purchaseStatus.hasReviewed;
+    const canReview = user && !isForbiddenToBuy && purchaseStatus.hasPurchased && !purchaseStatus.hasReviewed;
     useEffect(() => {
         if (isSiteHidden) {
             setLoading(false);
@@ -183,7 +190,7 @@ const ProductDetailPage = () => {
                 const revRes = await apiClient.get(`/products/${productId}/reviews`);
                 setReviews(revRes.data);
                 
-                if (user && !isOwner && !isStaff) {
+                if (user && !isForbiddenToBuy) {
                     const statusRes = await apiClient.get(`/products/${productId}/purchase-status`);
                     setPurchaseStatus(statusRes.data);
                 }
@@ -194,7 +201,7 @@ const ProductDetailPage = () => {
             }
         };
         fetchReviewsData();
-    }, [productId, user, isSiteHidden, isRestricted, isSiteLoading, isOwner, isStaff]);
+    }, [productId, user, isSiteHidden, isRestricted, isSiteLoading, isForbiddenToBuy]);
 
     const fetchRecommendations = async (siteId, categoryId, currentId) => {
         try {
@@ -296,7 +303,10 @@ const ProductDetailPage = () => {
     };
 
     const handlePrimaryAction = () => {
-        if (isStaff) return;
+        if (isForbiddenToBuy) {
+            toast.error("Не можна додавати власні товари в кошик.");
+            return;
+        }
         if (isInCart) { navigate('/cart'); return; }
         if (!user) {
             if (window.confirm("Щоб додати товар до кошика, необхідно увійти. Перейти на сторінку входу?")) {
@@ -340,7 +350,6 @@ const ProductDetailPage = () => {
             alert(err.response?.data?.message || "Помилка при видаленні відгуку");
         }
     };
-
     if (loading || isSiteLoading) return (
         <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] p-12 w-full">
             <LoadingState title="Завантаження товару..." />
@@ -366,7 +375,6 @@ const ProductDetailPage = () => {
         color: 'var(--site-text-secondary)', width: '100%', boxSizing: 'border-box',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
     };
-
     return (
         <div 
             className="@container site-root relative site-theme-context site-theme-preview min-h-screen flex flex-col"
@@ -390,7 +398,6 @@ const ProductDetailPage = () => {
             {siteData && siteData.theme_settings && (
                 <FontLoader fontHeading={siteData.theme_settings.font_heading} fontBody={siteData.theme_settings.font_body} />
             )}
-            
             {hasHeader && headerBlocks.length > 0 && (
                 <div className="w-full shrink-0 z-50">
                     <BlockRenderer blocks={headerBlocks} siteData={siteData} isEditorPreview={false} />
@@ -510,10 +517,10 @@ const ProductDetailPage = () => {
                         <div className="mt-4">
                             <button
                                 onClick={handlePrimaryAction}
-                                disabled={isOwner || (isSoldOut && !isInCart) || isStaff}
-                                className={`site-btn w-full py-4 text-lg uppercase rounded-xl ${isOwner || (isSoldOut && !isInCart) || isStaff ? 'bg-(--site-text-secondary) text-(--site-bg)' : 'site-btn-primary'}`}
+                                disabled={isSoldOut && !isInCart}
+                                className={`site-btn w-full py-4 text-lg uppercase rounded-xl ${(isSoldOut && !isInCart) ? 'bg-(--site-text-secondary) text-(--site-bg)' : 'site-btn-primary'}`}
                             >
-                                {isStaff ? 'Недоступно для персоналу' : isOwner ? 'Ваш товар' : isInCart ? 'Перейти до кошику' : isSoldOut ? 'Немає в наявності' : 'Додати в кошик'}
+                                {isInCart ? 'Перейти до кошику' : isSoldOut ? 'Немає в наявності' : 'Додати в кошик'}
                             </button>
                         </div>
                     </div>
@@ -677,7 +684,6 @@ const ProductDetailPage = () => {
                 position={siteData?.cookie_banner_position}
                 blur={siteData?.cookie_banner_blur}
             />
-            
             <ReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} siteId={siteData?.id} />
         </div>
     );

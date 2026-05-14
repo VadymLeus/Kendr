@@ -20,7 +20,6 @@ const AppealPage = () => {
             })
             .finally(() => setLoading(false));
     }, []);
-
     const getAppealStatusBadge = (appealStatus, ticketStatus) => {
         if (ticketStatus === 'closed' && appealStatus !== 'approved') {
             return (
@@ -64,8 +63,8 @@ const AppealPage = () => {
                 <Helmet>
                     <title>Оскарження блокування | Kendr</title>
                 </Helmet>
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-[color-mix(in_srgb,var(--platform-success),transparent_90%)] rounded-full flex items-center justify-center mb-5 sm:mb-6 shadow-sm">
-                    <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 text-(--platform-success)" />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)] rounded-full flex items-center justify-center mb-5 sm:mb-6 shadow-sm">
+                    <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 text-(--platform-accent)" />
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-(--platform-text-primary) mb-2 sm:mb-3 m-0">
                     Усе чудово!
@@ -79,7 +78,6 @@ const AppealPage = () => {
             </div>
         );
     }
-
     return (
         <div className="p-4 sm:p-6 md:p-8 max-w-4xl mx-auto w-full h-full flex flex-col">
             <Helmet>

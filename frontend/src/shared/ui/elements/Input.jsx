@@ -35,7 +35,6 @@ export const Input = ({
     useEffect(() => {
         setLocalValue(value || '');
     }, [value]);
-
     useEffect(() => {
         if (!effectiveDebounce || localValue === (value || '')) return;
         const handler = setTimeout(() => {
@@ -45,6 +44,7 @@ export const Input = ({
         }, effectiveDebounce);
         return () => clearTimeout(handler);
     }, [localValue, effectiveDebounce, onChange, name, value]);
+
     const handleChange = (e) => {
         setLocalValue(e.target.value);
         if (!effectiveDebounce && onChange) {
@@ -65,12 +65,16 @@ export const Input = ({
         }
         inputRef.current?.focus();
     };
+
     const paddingLeft = leftIcon ? '40px' : '12px';
+    let rightElementsCount = 0;
+    if (rightIcon) rightElementsCount++;
+    if (showClear) rightElementsCount++;
+    if (isPassword) rightElementsCount++;
     let paddingRight = '12px';
-    const hasRightElement = rightIcon || showClear || isPassword;
-    if (hasRightElement) {
-        paddingRight = '40px'; 
-    }
+    if (rightElementsCount === 1) paddingRight = '40px';
+    if (rightElementsCount === 2) paddingRight = '72px';
+    if (rightElementsCount === 3) paddingRight = '104px';
     return (
         <div className={`form-group mb-4 ${className}`} style={wrapperStyle}>
             <style>{`
@@ -120,7 +124,6 @@ export const Input = ({
                             <X size={16} />
                         </button>
                     )}
-
                     {isPassword && (
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="p-1 text-(--platform-text-secondary) hover:text-(--platform-text-primary) transition-colors rounded">
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

@@ -5,6 +5,7 @@ const transactionController = require('../controllers/transactionController');
 const verifyToken = require('../middleware/verifyToken');
 
 router.post('/upgrade', verifyToken, transactionController.processUpgrade);
+router.post('/upgrade/gpay', verifyToken, transactionController.processGooglePayUpgrade);
 router.post('/liqpay-callback', transactionController.liqpayWebhook);
 
 module.exports = router;

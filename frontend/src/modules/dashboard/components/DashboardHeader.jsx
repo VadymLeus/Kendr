@@ -22,6 +22,7 @@ const DashboardHeader = ({
     isReadOnly 
 }) => {
     const { user } = useContext(AuthContext);
+    const isOwner = user?.id === siteData?.user_id;
     const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef(null);
@@ -35,7 +36,6 @@ const DashboardHeader = ({
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
     const allTabs = [
         { key: 'editor', icon: <Edit />, text: 'Редактор', unhideable: true },
         { key: 'theme', icon: <Palette />, text: 'Стилі' },
@@ -46,6 +46,13 @@ const DashboardHeader = ({
 
     const tabs = allTabs.filter(tab => {
         if (!tab.unhideable && hiddenTabs.includes(tab.key)) return false;
+        if (!isOwner && !isStaff) {
+            const myPermissions = siteData?.my_permissions;
+            if (myPermissions && Array.isArray(myPermissions)) {
+                if (!myPermissions.includes(tab.key)) return false;
+            }
+        }
+        
         return true;
     });
 
@@ -83,36 +90,40 @@ const DashboardHeader = ({
             </div>
             <div className="header-center">
                 <div className="flex items-center gap-2 relative" ref={menuRef}>
-                    <button 
-                        className={`visibility-btn ${isMenuOpen ? 'active' : ''}`}
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        title="Налаштувати видимість вкладок"
-                    >
-                        <Eye size={18} />
-                    </button>
-                    {isMenuOpen && (
-                        <div className="visibility-menu animate-in fade-in zoom-in-95 duration-200">
-                            <div className="p-3 border-b border-(--platform-border-color)">
-                                <h4 className="m-0 text-sm font-semibold text-(--platform-text-primary)">Видимість вкладок</h4>
-                            </div>
-                            <div className="p-2 flex flex-col gap-1 max-h-96 overflow-y-auto">
-                                {allTabs.map(tab => {
-                                    if (tab.unhideable) return null;
-                                    return (
-                                        <div key={tab.key} className="flex items-center justify-between p-2 hover:bg-(--platform-hover-bg) rounded-lg transition-colors">
-                                            <div className="flex items-center gap-2 text-sm text-(--platform-text-primary)">
-                                                <span className="opacity-70 flex items-center justify-center w-4 h-4">{tab.icon}</span>
-                                                {tab.text}
-                                            </div>
-                                            <Switch 
-                                                checked={!hiddenTabs.includes(tab.key)} 
-                                                onChange={() => handleToggleTab(tab.key)} 
-                                            />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                    {(isOwner || isStaff) && (
+                        <>
+                            <button 
+                                className={`visibility-btn ${isMenuOpen ? 'active' : ''}`}
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                title="Налаштувати видимість вкладок"
+                            >
+                                <Eye size={18} />
+                            </button>
+                            {isMenuOpen && (
+                                <div className="visibility-menu animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="p-3 border-b border-(--platform-border-color)">
+                                        <h4 className="m-0 text-sm font-semibold text-(--platform-text-primary)">Видимість вкладок</h4>
+                                    </div>
+                                    <div className="p-2 flex flex-col gap-1 max-h-96 overflow-y-auto">
+                                        {allTabs.map(tab => {
+                                            if (tab.unhideable) return null;
+                                            return (
+                                                <div key={tab.key} className="flex items-center justify-between p-2 hover:bg-(--platform-hover-bg) rounded-lg transition-colors">
+                                                    <div className="flex items-center gap-2 text-sm text-(--platform-text-primary)">
+                                                        <span className="opacity-70 flex items-center justify-center w-4 h-4">{tab.icon}</span>
+                                                        {tab.text}
+                                                    </div>
+                                                    <Switch 
+                                                        checked={!hiddenTabs.includes(tab.key)} 
+                                                        onChange={() => handleToggleTab(tab.key)} 
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                     <nav className="main-header-tabs">
                         {tabs.map(tab => (

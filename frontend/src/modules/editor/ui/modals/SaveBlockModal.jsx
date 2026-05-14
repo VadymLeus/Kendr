@@ -1,5 +1,6 @@
 // frontend/src/modules/editor/ui/modals/SaveBlockModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../../../../shared/api/api';
 import { useConfirm } from '../../../../shared/hooks/useConfirm';
@@ -46,7 +47,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
             toast.warning("Введіть назву блоку");
             return;
         }
-
         const duplicate = existingBlocks.find(b => b.name.toLowerCase() === trimmedName.toLowerCase());
         if (duplicate) {
             const isConfirmed = await confirm({
@@ -55,7 +55,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                 confirmLabel: "Замінити",
                 type: "warning"
             });
-
             if (isConfirmed) {
                 onSave(null, 'overwrite', duplicate.id);
                 onClose();
@@ -65,7 +64,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
             onClose();
         }
     };
-
     const handleOverwriteOriginal = async () => {
         const isConfirmed = await confirm({
             title: "Оновлення блоку",
@@ -73,17 +71,15 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
             confirmLabel: "Оновити",
             type: "info"
         });
-
         if (isConfirmed) {
             onSave(null, 'overwrite', originBlockInfo.id);
             onClose();
         }
     };
-
-    return (
+    return createPortal(
         <div 
             ref={overlayRef} 
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999 backdrop-blur-xs animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-30000 backdrop-blur-xs animate-in fade-in duration-200"
             onMouseDown={handleMouseDown} 
             onMouseUp={handleMouseUp}
         >
@@ -108,7 +104,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                             </p>
                         </div>
                     </div>
-
                     {originBlockInfo && (
                         <div className="mt-4 p-2.5 rounded-lg bg-(--platform-bg) border border-(--platform-border-color) flex items-center gap-2.5 text-sm">
                             <Package size={16} className="text-(--platform-text-secondary)" />
@@ -116,7 +111,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                             <span className="text-(--platform-accent) font-semibold">{originBlockInfo.name}</span>
                         </div>
                     )}
-
                     <div className="mt-5">
                         <Input 
                             label={originBlockInfo ? "Назва нового варіанту (опціонально)" : "Назва блоку"}
@@ -131,12 +125,10 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                         />
                     </div>
                 </div>
-
                 <div className="p-4 px-6 flex justify-end items-center gap-3 bg-(--platform-bg) border-t border-(--platform-border-color) mt-4">
                     <Button variant="outline" onClick={onClose}>
                         Скасувати
                     </Button>
-                    
                     {originBlockInfo && (
                         <Button 
                             variant="secondary" 
@@ -146,7 +138,6 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                             <Save size={16} /> Оновити оригінал
                         </Button>
                     )}
-
                     <Button 
                         variant="primary" 
                         onClick={handleSaveAsNew}
@@ -157,7 +148,8 @@ const SaveBlockModal = ({ isOpen, onClose, onSave, originBlockInfo }) => {
                     </Button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

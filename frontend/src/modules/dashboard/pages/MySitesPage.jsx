@@ -46,7 +46,6 @@ const MySitesPage = () => {
             .then(res => setLimits(res.data))
             .catch(console.error);
     }, [user, navigate]);
-
     const fetchMySites = async () => {
         try {
             setLoading(true);
@@ -65,19 +64,16 @@ const MySitesPage = () => {
             setLoading(false); 
         }
     };
-
     useEffect(() => {
         if (!user) return;
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
         searchTimeoutRef.current = setTimeout(() => { fetchMySites(); }, 500);
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm, selectedTag, sortOption, user]);
-
     const handleSearchSubmit = () => { 
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); 
         fetchMySites(); 
     };
-    
     const handleLoadMore = () => setVisibleCount(prev => prev + ITEMS_PER_PAGE);
     const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const handleDeleteSite = async (e, sitePath, siteTitle) => {
@@ -90,6 +86,7 @@ const MySitesPage = () => {
             toast.error('Помилка при видаленні'); 
         }
     };
+
     const handleStatusChange = async (site, requestedStatus) => {
         try {
             const newStatus = requestedStatus || (site.status === 'published' ? 'maintenance' : 'published');
@@ -107,7 +104,6 @@ const MySitesPage = () => {
             }
         }
     };
-
     const handleTogglePin = async (siteId) => {
         try {
             const res = await apiClient.patch(`/sites/${siteId}/pin`);
@@ -198,15 +194,22 @@ const MySitesPage = () => {
                 ) : (
                     <>
                         <div className="grid gap-4 sm:gap-5 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
-                            {visibleSites.map(site => (
-                                <SiteGridCard 
-                                    key={site.id} site={site} variant="owner"
-                                    onTagClick={setSelectedTag} formatDate={formatDate}
-                                    onDelete={handleDeleteSite} 
-                                    onToggleStatus={handleStatusChange}
-                                    onTogglePin={handleTogglePin}
-                                />
-                            ))}
+                            {visibleSites.map(site => {
+                                const isSiteOwner = site.user_id === user?.id;
+
+                                return (
+                                    <SiteGridCard 
+                                        key={site.id} 
+                                        site={site} 
+                                        variant={isSiteOwner ? 'owner' : 'collaborator'} 
+                                        onTagClick={setSelectedTag} 
+                                        formatDate={formatDate}
+                                        onDelete={handleDeleteSite} 
+                                        onToggleStatus={handleStatusChange}
+                                        onTogglePin={handleTogglePin}
+                                    />
+                                );
+                            })}
                         </div>
                         {filteredSites.length > visibleCount && (
                             <div className="text-center mt-8 pb-6">

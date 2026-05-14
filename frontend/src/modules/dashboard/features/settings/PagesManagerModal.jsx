@@ -278,7 +278,7 @@ const PagesManagerModal = ({ isOpen, onClose, siteId, onEditPage, onPageUpdate, 
     return (
         <div 
             ref={overlayRef}
-            className="fixed inset-0 bg-black/60 flex items-center justify-center z-2000 p-2 md:p-4 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-30000 p-2 md:p-4 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
             onMouseDown={(e) => { overlayRef.current.isSelfClick = (e.target === overlayRef.current); }}
             onMouseUp={(e) => { if (e.target === overlayRef.current && overlayRef.current.isSelfClick) onClose(); }}
         >

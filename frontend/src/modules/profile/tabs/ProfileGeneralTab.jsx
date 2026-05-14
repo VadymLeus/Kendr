@@ -1,5 +1,5 @@
 // frontend/src/modules/profile/tabs/ProfileGeneralTab.jsx
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../app/providers/AuthContext';
 import apiClient from '../../../shared/api/api';
@@ -10,7 +10,7 @@ import ImageUploadTrigger from '../../../shared/ui/complex/ImageUploadTrigger';
 import ConfirmModal from '../../../shared/ui/complex/ConfirmModal';
 import { TEXT_LIMITS } from '../../../shared/config/limits';
 import { useCooldown } from '../../../shared/hooks/useCooldown';
-import { User, Mail, Phone, Trash2, Camera, LogOut, Check, BarChart2, Zap, LayoutTemplate, HardDrive, Timer, Eye, ShieldAlert, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, Trash2, Camera, LogOut, Check, BarChart2, Zap, LayoutTemplate, HardDrive, Timer, Eye, ShieldAlert, Loader2, ArrowUpRight } from 'lucide-react';
 
 const ProfileGeneralTab = () => {
     const { user, updateUser, logout, refreshUserToken } = useContext(AuthContext);
@@ -23,6 +23,7 @@ const ProfileGeneralTab = () => {
     const [isAvatarUploading, setIsAvatarUploading] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [updateCooldown, startUpdateCooldown] = useCooldown('kendr_profile_update_cooldown');
+    const hasNotifiedUpgrade = useRef(false);
     const [statsData, setStatsData] = useState({
         siteCount: 0,
         mediaCount: 0,
@@ -45,8 +46,11 @@ const ProfileGeneralTab = () => {
                         apiClient.get(`/users/${user.slug || user.username}`)
                     ]);
                     if (profileRes.data && profileRes.data.plan && profileRes.data.plan !== user.plan) {
-                        await refreshUserToken();
-                        toast.success('Ваш тариф успішно оновлено до PLUS! 🚀');
+                        if (!hasNotifiedUpgrade.current) {
+                            hasNotifiedUpgrade.current = true;
+                            await refreshUserToken();
+                            toast.success('Ваш тариф успішно оновлено до PLUS!');
+                        }
                     }
                     const sites = Array.isArray(sitesRes.data) ? sitesRes.data : [];
                     const calculatedViews = sites.reduce((sum, site) => sum + (site.view_count || 0), 0);
@@ -271,61 +275,60 @@ const ProfileGeneralTab = () => {
                         </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                        <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
-                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
-                                <Zap className={`w-4 h-4 sm:w-5 sm:h-5 ${isPremium ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'}`} />
-                                Поточний тариф
+                        <div className="flex items-center justify-between gap-2 p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl overflow-hidden">
+                            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-(--platform-text-primary) min-w-0">
+                                <Zap className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${isPremium ? 'text-(--platform-accent)' : 'text-(--platform-text-secondary)'}`} />
+                                <span className="truncate">Тариф</span>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${isPremium ? 'bg-(--platform-accent) text-white' : 'bg-(--platform-border-color) text-(--platform-text-primary)'}`}>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <span className={`px-2 py-1 rounded-lg text-xs font-bold tracking-wide ${isPremium ? 'bg-(--platform-accent) text-white' : 'bg-(--platform-border-color) text-(--platform-text-primary)'}`}>
                                     {user.plan || 'FREE'}
                                 </span>
                                 {!isPremium && (
-                                    <Button 
+                                    <button 
                                         type="button" 
-                                        variant="ghost" 
-                                        size="sm" 
                                         onClick={() => navigate('/upgrade')}
-                                        className="text-(--platform-accent) hover:bg-(--platform-accent)/10 h-auto py-1 px-3 text-xs border border-(--platform-accent)/30"
+                                        className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-(--platform-accent) text-white hover:opacity-90 transition-all shadow-sm shrink-0 focus:outline-none focus:ring-2 focus:ring-(--platform-accent)/50"
+                                        title="Покращити тариф"
                                     >
-                                        Покращити
-                                    </Button>
+                                        <ArrowUpRight size={18} strokeWidth={2.5} />
+                                    </button>
                                 )}
                             </div>
                         </div>
-                        <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
-                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
-                                <LayoutTemplate className="w-4 h-4 sm:w-5 sm:h-5 text-(--platform-text-secondary)" />
-                                Створено сайтів
+                        <div className="flex items-center justify-between gap-2 p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl overflow-hidden">
+                            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-(--platform-text-primary) min-w-0">
+                                <LayoutTemplate className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-(--platform-text-secondary)" />
+                                <span className="truncate">Створено сайтів</span>
                             </div>
-                            <div className={`font-semibold text-sm sm:text-base ${isSiteLimitReached ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
+                            <div className={`font-semibold text-sm sm:text-base shrink-0 ${isSiteLimitReached ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
                                 {statsData.siteCount} / {maxSitesDisplay}
                             </div>
                         </div>
-                        <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
-                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
-                                <HardDrive className="w-4 h-4 sm:w-5 sm:h-5 text-(--platform-text-secondary)" />
-                                Завантажено файлів
+                        <div className="flex items-center justify-between gap-2 p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl overflow-hidden">
+                            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-(--platform-text-primary) min-w-0">
+                                <HardDrive className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-(--platform-text-secondary)" />
+                                <span className="truncate">Медіафайли</span>
                             </div>
-                            <div className={`font-semibold text-sm sm:text-base ${isMediaLimitReached ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
+                            <div className={`font-semibold text-sm sm:text-base shrink-0 ${isMediaLimitReached ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
                                 {statsData.mediaCount} / {maxMediaDisplay}
                             </div>
                         </div>
-                        <div className="flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
-                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
-                                <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-(--platform-text-secondary)" />
-                                Всього переглядів
+                        <div className="flex items-center justify-between gap-2 p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl overflow-hidden">
+                            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-(--platform-text-primary) min-w-0">
+                                <Eye className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-(--platform-text-secondary)" />
+                                <span className="truncate">Всього переглядів</span>
                             </div>
-                            <div className="font-semibold text-sm sm:text-base text-(--platform-text-primary)">
+                            <div className="font-semibold text-sm sm:text-base text-(--platform-text-primary) shrink-0">
                                 {statsData.totalViews}
                             </div>
                         </div>
-                        <div className="md:col-span-2 flex items-center justify-between p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl">
-                            <div className="flex items-center gap-2.5 text-sm sm:text-base font-medium text-(--platform-text-primary)">
-                                <ShieldAlert className={`w-4 h-4 sm:w-5 sm:h-5 ${statsData.warningCount > 0 ? 'text-(--platform-danger)' : 'text-(--platform-text-secondary)'}`} />
-                                Активні страйки
+                        <div className="md:col-span-2 flex items-center justify-between gap-2 p-3 sm:p-4 bg-(--platform-bg) border border-(--platform-border-color) rounded-xl overflow-hidden">
+                            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-(--platform-text-primary) min-w-0">
+                                <ShieldAlert className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${statsData.warningCount > 0 ? 'text-(--platform-danger)' : 'text-(--platform-text-secondary)'}`} />
+                                <span className="truncate">Активні страйки</span>
                             </div>
-                            <div className={`font-semibold text-sm sm:text-base ${statsData.warningCount > 0 ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
+                            <div className={`font-semibold text-sm sm:text-base shrink-0 ${statsData.warningCount > 0 ? 'text-(--platform-danger)' : 'text-(--platform-text-primary)'}`}>
                                 {statsData.warningCount} / 3
                             </div>
                         </div>
@@ -346,7 +349,7 @@ const ProfileGeneralTab = () => {
                             variant="secondary" 
                             onClick={() => setIsLogoutModalOpen(true)} 
                             icon={<LogOut size={18} />}
-                            className="w-full sm:w-auto text-(--platform-danger) hover:bg-red-50 border-red-200 min-h-11"
+                            className="w-full sm:w-auto text-(--platform-danger) hover:bg-red-50 border-red-200 min-h-11 shrink-0"
                         >
                             Вийти з системи
                         </Button>

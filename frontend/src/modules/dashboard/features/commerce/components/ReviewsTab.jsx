@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { Input } from '../../../../../shared/ui/elements/Input';
 import CustomSelect from '../../../../../shared/ui/elements/CustomSelect';
 import LoadingState from '../../../../../shared/ui/complex/LoadingState';
+import EmptyState from '../../../../../shared/ui/complex/EmptyState';
 import { Star, MessageSquare, Trash, Grid, Search, Clock, User, ExternalLink, Filter } from 'lucide-react';
 
 const DangerButton = ({ onClick, children }) => {
@@ -58,6 +59,7 @@ const ReviewsTab = ({ siteData }) => {
         };
         fetchData();
     }, [siteData.id]);
+
     useEffect(() => {
         const idFromUrl = searchParams.get('productId');
         if (idFromUrl && productsWithReviews.length > 0 && (!selectedProduct || selectedProduct.id.toString() !== idFromUrl)) {
@@ -161,10 +163,10 @@ const ReviewsTab = ({ siteData }) => {
             if (filters.rating === 'good') matchesRating = avg >= 3.5;
             if (filters.rating === 'neutral') matchesRating = avg >= 2.5 && avg < 3.5;
             if (filters.rating === 'bad') matchesRating = avg < 2.5;
-
             return matchesSearch && matchesCategory && matchesRating;
         });
     }, [productsWithReviews, filters]);
+
     const filteredReviews = useMemo(() => {
         return reviews.filter(r => reviewFilter === 'all' || r.rating.toString() === reviewFilter);
     }, [reviews, reviewFilter]);
@@ -203,16 +205,12 @@ const ReviewsTab = ({ siteData }) => {
                     </div>
                     <div className="flex-1 overflow-y-auto p-2.5 bg-(--platform-card-bg) custom-scrollbar">
                         {filteredProducts.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full min-h-40 p-5 text-center text-(--platform-text-secondary)">
-                                <div className="w-14 h-14 rounded-full bg-(--platform-bg) flex items-center justify-center mb-4 border border-(--platform-border-color) shadow-sm">
-                                    <Filter size={24} className="text-(--platform-accent) opacity-90" />
-                                </div>
-                                <h3 className="text-[0.95rem] font-semibold text-(--platform-text-primary) mb-1.5">
-                                    Нічого не знайдено
-                                </h3>
-                                <p className="text-[0.8rem] max-w-50 leading-relaxed m-0 opacity-80">
-                                    Змініть критерії пошуку або фільтри.
-                                </p>
+                            <div className="flex flex-col items-center justify-center h-full py-10">
+                                <EmptyState 
+                                    title="Нічого не знайдено"
+                                    description="Змініть критерії пошуку або фільтри."
+                                    icon={Filter}
+                                />
                             </div>
                         ) : (
                             filteredProducts.map(product => {
@@ -303,8 +301,12 @@ const ReviewsTab = ({ siteData }) => {
                                         <LoadingState title="Завантаження відгуків..." />
                                     </div>
                                 ) : filteredReviews.length === 0 ? (
-                                    <div className="text-center p-8 text-(--platform-text-secondary) border border-dashed border-(--platform-border-color) rounded-lg">
-                                        {reviewFilter !== 'all' ? 'Відгуків з такою оцінкою не знайдено.' : 'Відгуків для цього товару не знайдено.'}
+                                    <div className="flex flex-col items-center justify-center h-full py-10">
+                                        <EmptyState 
+                                            title={reviewFilter !== 'all' ? 'Нічого не знайдено' : 'Відгуків немає'}
+                                            description={reviewFilter !== 'all' ? 'Відгуків з такою оцінкою не знайдено.' : 'Відгуків для цього товару не знайдено.'}
+                                            icon={MessageSquare}
+                                        />
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-4">

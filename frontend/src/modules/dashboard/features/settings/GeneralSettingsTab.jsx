@@ -13,6 +13,7 @@ import { Button } from '../../../../shared/ui/elements';
 import GeneralIdentitySection from './components/GeneralIdentitySection';
 import GeneralVisualsSection from './components/GeneralVisualsSection';
 import GeneralTemplatesSection from './components/GeneralTemplatesSection';
+import TeamSettingsSection from './components/TeamSettingsSection';
 import { Settings, AlertCircle, Trash, Download, Loader, FileDown } from 'lucide-react';
 
 const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
@@ -20,6 +21,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
     const { user } = useContext(AuthContext);
     const { confirm } = useConfirm();
     const isAdmin = user?.role === 'admin';
+    const isOwner = user?.id === siteData?.user_id;
     const isLocked = siteData?.status === 'suspended' || siteData?.status === 'probation';
     const [identityData, setIdentityData] = useState({ title: '', slug: '' });
     const [isSavingIdentity, setIsSavingIdentity] = useState(false);
@@ -217,6 +219,7 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                     isSavingIdentity={isSavingIdentity} titleError={titleError} slugError={slugError}
                     slugStatus={slugStatus} hasIdentityChanges={hasIdentityChanges} onUpdate={onUpdate}
                     getImageUrl={getImageUrl} isAdmin={isAdmin} isLocked={isLocked}
+                    isOwner={isOwner}
                 />
                 <GeneralVisualsSection 
                     data={data} handleChange={handleChange} availableTags={availableTags}
@@ -229,7 +232,12 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                 <GeneralTemplatesSection siteData={siteData} isAdmin={isAdmin} />
             </div>
             <div className="max-w-4xl mx-auto w-full flex flex-col gap-5 sm:gap-6">
-                {!isAdmin && (
+                <TeamSettingsSection 
+                    siteData={siteData} 
+                    isAdmin={isAdmin} 
+                    isLocked={isLocked} 
+                />
+                {isOwner && !isAdmin && (
                     <div className="hidden sm:block bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 shadow-sm">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
@@ -251,19 +259,19 @@ const GeneralSettingsTab = ({ siteData, onUpdate, onSavingChange }) => {
                         </div>
                     </div>
                 )}
-                {(!isLocked || isAdmin) && (
-                    <div className="rounded-2xl border border-(--platform-danger) p-5 sm:p-8 shadow-sm" style={{ background: 'color-mix(in srgb, var(--platform-danger), transparent 95%)' }}>
+                {(isOwner || isAdmin) && (!isLocked || isAdmin) && (
+                    <div className="rounded-2xl border border-(--platform-accent) p-5 sm:p-8 shadow-sm" style={{ background: 'color-mix(in srgb, var(--platform-accent), transparent 95%)' }}>
                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div className="flex-1">
-                                <h3 className="text-lg sm:text-xl font-semibold text-(--platform-danger) m-0 mb-1 flex items-center gap-2.5">
-                                    <AlertCircle size={20} /> ВИДАЛЕННЯ САЙТУ
+                                <h3 className="text-lg sm:text-xl font-semibold text-(--platform-accent) m-0 mb-1 flex items-center gap-2.5 uppercase tracking-wide">
+                                    <AlertCircle size={20} /> Видалення сайту
                                 </h3>
-                                <p className="text-sm text-(--platform-danger) m-0 opacity-80">
+                                <p className="text-sm text-(--platform-accent) m-0 opacity-80">
                                     Видалення сайту є <strong>незворотним</strong>. Всі дані будуть втрачені.
                                 </p>
                             </div>
                             <Button 
-                                variant="danger" 
+                                variant="primary" 
                                 onClick={handleDeleteSite} 
                                 className="w-full sm:w-auto h-11.5 flex items-center justify-center gap-2 shrink-0"
                             >

@@ -39,7 +39,15 @@ const blockMap = {
     header: HeaderBlock,
 };
 
-const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) => {
+const BlockRenderer = ({ 
+    blocks, 
+    siteData, 
+    isEditorPreview = false, 
+    emptyTitle = "Ця сторінка порожня", 
+    emptyDescription = "Додайте блоки для створення контенту",
+    isLayoutColumn = false,
+    ...props 
+}) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const bg = 'var(--site-bg)';
     const cardBg = 'var(--site-card-bg)';
@@ -52,28 +60,33 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
     if (!Array.isArray(blocks) || blocks.length === 0) {
         return (
             <div
-                className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-lg my-4 font-sans min-h-[60vh] w-full"
+                className={`flex flex-col items-center justify-center text-center font-sans w-full transition-all duration-300
+                    ${isLayoutColumn 
+                        ? 'py-6 px-4 my-2 min-h-30 rounded-2xl' 
+                        : 'py-12 px-6 rounded-lg my-4 min-h-[60vh]'
+                    }
+                `}
                 style={{ 
                     color: textSecondary,
-                    background: bg,
+                    background: isLayoutColumn ? 'color-mix(in srgb, var(--site-text-primary) 3%, transparent)' : bg,
                     border: isEditorPreview ? `1px dashed ${borderColor}` : 'none',
                 }}
             >
-                <div className="mb-4 opacity-70 flex justify-center">
-                    <Construction size={48} />
+                <div className={`${isLayoutColumn ? 'mb-2' : 'mb-4'} opacity-50 flex justify-center`}>
+                    <Construction size={isLayoutColumn ? 28 : 48} />
                 </div>
-                <h3 className="mb-2 font-medium font-inherit" style={{ color: textPrimary }}>
-                    Ця сторінка порожня
+                <h3 className={`font-medium font-inherit ${isLayoutColumn ? 'text-[0.95rem] mb-1' : 'text-lg mb-2'}`} style={{ color: textPrimary }}>
+                    {emptyTitle}
                 </h3>
-                <p className="m-0 text-[0.95rem] font-inherit">
-                    Додайте блоки для створення контенту
+                <p className={`m-0 font-inherit ${isLayoutColumn ? 'text-xs opacity-70' : 'text-[0.95rem]'}`}>
+                    {emptyDescription}
                 </p>
             </div>
         );
     }
 
     return (
-        <div className="relative w-full">
+        <div className="relative w-full h-full flex flex-col">
             {blocks.map((block, index) => {
                 const Component = blockMap[block.type];
                 const elementId = block.data?.anchorId || undefined;
@@ -153,7 +166,6 @@ const BlockRenderer = ({ blocks, siteData, isEditorPreview = false, ...props }) 
                     </div>
                 );
             })}
-            
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 z-10000 flex justify-end">
                     <div 

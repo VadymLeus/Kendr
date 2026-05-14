@@ -38,7 +38,6 @@ exports.createPage = async (req, res, next) => {
             block_content: initialBlocks,
             is_homepage: 0
         });
-        
         res.status(201).json(newPage);
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
@@ -52,11 +51,14 @@ exports.getPageById = async (req, res, next) => {
     try {
         const { pageId } = req.params;
         const userId = req.user.id;
-        const [rows] = await db.query(
-            'SELECT s.user_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
-            [pageId]
-        );
-        if (!rows[0] || rows[0].user_id !== userId) {
+        const [rows] = await db.query(`
+            SELECT s.user_id 
+            FROM sites s 
+            JOIN pages p ON s.id = p.site_id 
+            LEFT JOIN site_collaborators sc ON s.id = sc.site_id
+            WHERE p.id = ? AND (s.user_id = ? OR sc.user_id = ?)
+        `, [pageId, userId, userId]);
+        if (!rows[0]) {
             return res.status(403).json({ message: 'У вас немає прав на редагування цієї сторінки.' });
         }
         const page = await Page.findById(pageId);
@@ -74,13 +76,18 @@ exports.updatePageContent = async (req, res, next) => {
     const { block_content } = req.body;
     const userId = req.user.id;
     try {
-        const [rows] = await db.query(
-            'SELECT s.user_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
-            [pageId]
-        );
-        if (!rows[0] || rows[0].user_id !== userId) {
+        const [rows] = await db.query(`
+            SELECT s.user_id 
+            FROM sites s 
+            JOIN pages p ON s.id = p.site_id 
+            LEFT JOIN site_collaborators sc ON s.id = sc.site_id
+            WHERE p.id = ? AND (s.user_id = ? OR sc.user_id = ?)
+        `, [pageId, userId, userId]);
+        
+        if (!rows[0]) {
             return res.status(403).json({ message: 'У вас немає прав на редагування цієї сторінки.' });
         }
+        
         await Page.updateContent(pageId, block_content || []);
         res.json({ message: 'Контент сторінки успішно оновлено.' });
     } catch (error) {
@@ -96,13 +103,18 @@ exports.updatePageSettings = async (req, res, next) => {
         if (!name || !slug) {
             return res.status(400).json({ message: 'Назва (name) та шлях (slug) є обов\'язковими.' });
         }
-        const [rows] = await db.query(
-            'SELECT s.user_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
-            [pageId]
-        );
-        if (!rows[0] || rows[0].user_id !== userId) {
+        const [rows] = await db.query(`
+            SELECT s.user_id 
+            FROM sites s 
+            JOIN pages p ON s.id = p.site_id 
+            LEFT JOIN site_collaborators sc ON s.id = sc.site_id
+            WHERE p.id = ? AND (s.user_id = ? OR sc.user_id = ?)
+        `, [pageId, userId, userId]);
+        
+        if (!rows[0]) {
             return res.status(403).json({ message: 'Доступ заборонено.' });
         }
+        
         await Page.updateSettings(pageId, { name, slug, seo_title, seo_description, seo_keywords });
         res.json({ message: 'Налаштування сторінки оновлено.' });
     } catch (error) {
@@ -117,17 +129,22 @@ exports.deletePage = async (req, res, next) => {
     try {
         const { pageId } = req.params;
         const userId = req.user.id;
-        const [rows] = await db.query(
-            'SELECT s.user_id, p.is_homepage, p.site_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
-            [pageId]
-        );
-        if (!rows[0] || rows[0].user_id !== userId) {
+        const [rows] = await db.query(`
+            SELECT s.user_id, p.is_homepage, p.site_id 
+            FROM sites s 
+            JOIN pages p ON s.id = p.site_id 
+            LEFT JOIN site_collaborators sc ON s.id = sc.site_id
+            WHERE p.id = ? AND (s.user_id = ? OR sc.user_id = ?)
+        `, [pageId, userId, userId]);
+        if (!rows[0]) {
             return res.status(403).json({ message: 'Доступ заборонено.' });
         }
+        
         const { is_homepage, site_id } = rows[0];
         if (is_homepage) {
             return res.status(400).json({ message: 'Неможливо видалити головну сторінку.' });
         }
+        
         const [countRows] = await db.query('SELECT COUNT(id) as count FROM pages WHERE site_id = ?', [site_id]);
         if (countRows[0].count <= 1) {
             return res.status(400).json({ message: 'Неможливо видалити останню сторінку сайту.' });
@@ -143,11 +160,14 @@ exports.setHomePage = async (req, res, next) => {
     try {
         const { pageId } = req.params;
         const userId = req.user.id;
-        const [rows] = await db.query(
-            'SELECT s.user_id, p.site_id FROM sites s JOIN pages p ON s.id = p.site_id WHERE p.id = ?',
-            [pageId]
-        );
-        if (!rows[0] || rows[0].user_id !== userId) {
+        const [rows] = await db.query(`
+            SELECT s.user_id, p.site_id 
+            FROM sites s 
+            JOIN pages p ON s.id = p.site_id 
+            LEFT JOIN site_collaborators sc ON s.id = sc.site_id
+            WHERE p.id = ? AND (s.user_id = ? OR sc.user_id = ?)
+        `, [pageId, userId, userId]);
+        if (!rows[0]) {
             return res.status(403).json({ message: 'Доступ заборонено.' });
         }
         const { site_id } = rows[0];

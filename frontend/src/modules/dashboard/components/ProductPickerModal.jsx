@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import CustomSelect from '../../../shared/ui/elements/CustomSelect';
 import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { BASE_URL } from '../../../shared/config';
-import { Search, X, Check, ArrowUp, ArrowDown, ArrowUpDown, Trash, Filter, PackageOpen } from 'lucide-react';
+import { Search, X, Check, ArrowUp, ArrowDown, ArrowUpDown, Trash, Filter, PackageOpen, Image } from 'lucide-react';
 
 const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], siteId }) => {
     const [products, setProducts] = useState([]);
@@ -65,7 +65,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
             toast.warning('Ліміт у 20 товарів вже досягнуто');
             return;
         }
-
         for (const p of filteredProducts) {
             if (!newSelected.has(p.id)) {
                 if (newSelected.size < limit) {
@@ -77,7 +76,6 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                 }
             }
         }
-        
         if (addedCount > 0) {
             setSelectedIds(newSelected);
             toast.success(`Додано ${addedCount} товарів`);
@@ -127,11 +125,10 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
         if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
         return 0;
     });
-
     if (!isOpen) return null;
     const overlayStyle = {
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.6)', zIndex: 3000,
+        background: 'rgba(0,0,0,0.6)', zIndex: 30000,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '1rem', backdropFilter: 'blur(4px)'
     };
@@ -411,7 +408,7 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                     ) : (
                         sortedProducts.map(product => {
                             const isSelected = selectedIds.has(product.id);
-                            let imgUrl = 'https://placehold.co/50x50/EFEFEF/31343C?text=📷';
+                            let imgUrl = null;
                             if (product.image_gallery) {
                                 let gallery = [];
                                 if (typeof product.image_gallery === 'string') {
@@ -434,18 +431,35 @@ const ProductPickerModal = ({ isOpen, onClose, onSave, initialSelectedIds = [], 
                                     <div style={isSelected ? checkedStyle : checkboxStyle}>
                                         {isSelected && <Check size={14} />}
                                     </div>
-                                    <img 
-                                        src={imgUrl} 
-                                        alt="" 
-                                        style={{
+                                    {imgUrl ? (
+                                        <img 
+                                            src={imgUrl} 
+                                            alt="" 
+                                            style={{
+                                                width: '48px', 
+                                                height: '48px', 
+                                                objectFit: 'cover', 
+                                                borderRadius: '6px',
+                                                border: '1px solid var(--platform-border-color)',
+                                                background: 'var(--platform-bg)',
+                                                flexShrink: 0
+                                            }} 
+                                        />
+                                    ) : (
+                                        <div style={{
                                             width: '48px', 
                                             height: '48px', 
-                                            objectFit: 'cover', 
                                             borderRadius: '6px',
                                             border: '1px solid var(--platform-border-color)',
-                                            background: 'var(--platform-bg)'
-                                        }} 
-                                    />
+                                            background: 'var(--platform-hover-bg)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            flexShrink: 0
+                                        }}>
+                                            <Image size={24} style={{opacity: 0.3, color: 'var(--platform-text-secondary)'}} />
+                                        </div>
+                                    )}
                                     <div style={{flex: 1, minWidth: 0}}>
                                         <div style={{
                                             fontWeight: '500', 

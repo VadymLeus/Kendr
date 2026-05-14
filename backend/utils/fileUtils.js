@@ -12,17 +12,29 @@ const ensureDirExists = async (dirPath) => {
     }
 };
 
-const deleteFile = async (relativePath) => {
-    if (!relativePath || relativePath.includes('/default/')) {
+const deleteFile = async (filePath) => {
+    if (!filePath || filePath.includes('/default/')) {
         return;
     }
-    const normalizedPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
-    const fullPath = path.join(__dirname, '..', normalizedPath);
+    const projectRoot = path.resolve(__dirname, '..'); 
+    let fullPath;
+    
+    if (path.isAbsolute(filePath)) {
+        fullPath = path.normalize(filePath);
+    } else {
+        const cleanPath = filePath.replace(/^[\/\\]+/, '');
+        fullPath = path.join(projectRoot, cleanPath);
+    }
+    if (!fullPath.startsWith(projectRoot)) {
+        console.warn(`[SECURITY WARNING] Блокирована попытка выхода за пределы директории (Path Traversal): ${filePath}`);
+        return;
+    }
+
     try {
         await fs.unlink(fullPath);
     } catch (error) {
         if (error.code !== 'ENOENT') {
-            console.error(`КРИТИЧНА ПОМИЛКА під час видалення файлу ${fullPath}:`, error);
+            console.error(`Критическая ошибка при удалении файла ${fullPath}:`, error);
         }
     }
 };

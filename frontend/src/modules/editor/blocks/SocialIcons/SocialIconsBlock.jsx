@@ -9,10 +9,21 @@ const IconsMap = {
     youtube: Youtube,
     tiktok: Music
 };
+const sanitizeUrl = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    const trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('mailto:')) {
+        return trimmed;
+    }
+    if (!trimmed.startsWith('javascript:') && !trimmed.startsWith('data:')) {
+        return `https://${trimmed}`;
+    }
+    return null;
+};
 
 const IconWrapper = ({ children, href, isEditorPreview, baseColor }) => (
     <a
-        href={href}
+        href={sanitizeUrl(href)}
         target="_blank"
         rel="noopener noreferrer"
         onClick={isEditorPreview ? (e) => e.preventDefault() : undefined}
@@ -41,14 +52,13 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
     let baseColor = 'var(--site-text-primary)';
     if (theme_mode === 'light') baseColor = '#1a202c';
     if (theme_mode === 'dark') baseColor = '#ffffff';
-    
     const socialLinks = [
         { key: 'facebook', href: facebook },
         { key: 'instagram', href: instagram },
         { key: 'telegram', href: telegram },
         { key: 'youtube', href: youtube },
         { key: 'tiktok', href: tiktok },
-    ].filter(item => item.href); 
+    ].filter(item => item.href && item.href.trim() !== ''); 
     
     const heightClasses = {
         small: 'min-h-[150px] @2xl:min-h-[250px]',
@@ -81,7 +91,6 @@ const SocialIconsBlock = ({ blockData, isEditorPreview, style }) => {
             </div>
         );
     }
-
     return (
         <div 
             className={`

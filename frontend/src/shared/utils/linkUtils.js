@@ -1,21 +1,23 @@
-// frontend/src/shared/lib/utils/linkUtils.js
+// frontend/src/shared/utils/linkUtils.js
 export const resolveSiteLink = (link, sitePath) => {
-    if (!link) return '#';
-    
-    if (link.startsWith('#') || 
-        link.startsWith('http') || 
-        link.startsWith('//') || 
-        link.startsWith('mailto:') || 
-        link.startsWith('tel:')) {
-        return link;
+    if (!link || typeof link !== 'string') return '#';
+    const trimmedLink = link.trim();
+    if (/^(javascript|data|vbscript):/i.test(trimmedLink)) {
+        console.warn('[SECURITY] Заблокирована попытка XSS через URI:', trimmedLink);
+        return '#';
     }
-
-    if (link.startsWith('/site/')) {
-        return link;
+    if (trimmedLink.startsWith('#') || 
+        trimmedLink.startsWith('http://') || 
+        trimmedLink.startsWith('https://') || 
+        trimmedLink.startsWith('//') || 
+        trimmedLink.startsWith('mailto:') || 
+        trimmedLink.startsWith('tel:')) {
+        return trimmedLink;
     }
-
-    const cleanSlug = link.startsWith('/') ? link.substring(1) : link;
-
+    if (trimmedLink.startsWith('/site/')) {
+        return trimmedLink;
+    }
+    const cleanSlug = trimmedLink.startsWith('/') ? trimmedLink.substring(1) : trimmedLink;
     if (!cleanSlug) {
         return `/site/${sitePath}`;
     }

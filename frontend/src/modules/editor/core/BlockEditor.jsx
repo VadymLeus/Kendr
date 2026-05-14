@@ -99,7 +99,6 @@ const BlockEditor = ({
             onAddBlock([blocks.length], item.blockType, item.presetData); 
         },
     }), [blocks.length, onAddBlock]);
-    
     const handleContextMenu = (e, path, blockId) => {
         if (viewMode !== 'editor') return; 
         e.preventDefault(); e.stopPropagation();
@@ -135,13 +134,18 @@ const BlockEditor = ({
             default: break;
         }
     };
-    
-    let containerClass = viewMode === 'mobile' 
-        ? '@container flex flex-col flex-1 h-full overflow-hidden' 
-        : '@container pb-8 pt-3 flex flex-col flex-1 h-full overflow-hidden';
-        
+    let containerClass = '@container flex flex-col flex-1 h-full overflow-hidden';
     const isEmptyPreview = blocks.length === 0 && viewMode !== 'editor';
-    const blocksContainerClass = `blocks-container w-full flex-1 overflow-y-auto site-scrollbar ${viewMode === 'mobile' ? 'px-[2px]' : 'px-8'} ${isEmptyPreview ? 'flex flex-col' : 'flow-root'}`;
+    let scrollbarClass = '';
+    if (viewMode === 'mobile') {
+        scrollbarClass = 'px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]';
+    } else if (viewMode === 'desktop') {
+        scrollbarClass = 'px-0 site-scrollbar';
+    } else {
+        scrollbarClass = 'px-8';
+    }
+
+    const blocksContainerClass = `blocks-container w-full flex-1 overflow-y-auto ${scrollbarClass} ${isEmptyPreview ? 'flex flex-col' : 'flow-root'}`;
     return (
         <div className={containerClass}>
             {blocks.length === 0 && viewMode === 'editor' ? (

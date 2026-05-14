@@ -10,10 +10,15 @@ export const checkeredStyle = {
     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
     backgroundColor: '#ffffff'
 };
+
 export const getMediaUrl = (file, useThumb = false) => {
     if (!file) return '';
     const targetPath = useThumb && file.path_thumb ? file.path_thumb : (file.path_full || file.file_path);
-    if (!targetPath) return '';
+    if (!targetPath || typeof targetPath !== 'string') return '';
+    if (/^(javascript|vbscript):/i.test(targetPath.trim())) {
+        return '';
+    }
+
     if (targetPath.startsWith('http') || targetPath.startsWith('data:')) {
         return targetPath;
     }
