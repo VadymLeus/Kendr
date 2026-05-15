@@ -17,10 +17,15 @@ const MediaGridItem = memo(({ file, selected, onSelect, onToggleFavorite, isChec
         >
             <button 
                 className={`
-                    absolute top-1.5 left-1.5 sm:top-2 sm:left-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border-none z-20 backdrop-blur-sm transition-all duration-200
-                    ${file.is_favorite ? 'bg-black/60 text-yellow-400 opacity-100' : 'bg-black/40 text-white/90 opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-black/60'}
+                    absolute top-1.5 left-1.5 sm:top-2 sm:left-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border z-20 backdrop-blur-sm transition-all duration-200 cursor-pointer p-0
+                    ${file.is_favorite ? 'bg-black/60 opacity-100' : 'bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-black/60'}
                 `}
+                style={{ 
+                    color: file.is_favorite ? 'var(--platform-accent)' : 'white',
+                    borderColor: file.is_favorite ? 'var(--platform-accent)' : 'rgba(255,255,255,0.1)'
+                }}
                 onClick={(e) => { e.stopPropagation(); onToggleFavorite(file); }}
+                title="В обране"
             >
                 <Star size={14} fill={file.is_favorite ? "currentColor" : "none"} className="shrink-0" />
             </button>

@@ -88,7 +88,7 @@ const GeneralVisualsSection = ({
                     </div>
                 </div>
             </div>
-            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-6 shadow-sm">
+            <div className="bg-(--platform-card-bg) rounded-2xl border border-(--platform-border-color) p-5 sm:p-8 mb-6 mt-6 shadow-sm">
                 <div className="mb-6">
                     <div>
                         <h3 className="text-lg sm:text-xl font-semibold text-(--platform-text-primary) m-0 mb-1 flex items-center gap-2.5">
@@ -102,11 +102,10 @@ const GeneralVisualsSection = ({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                     <div className="flex items-center justify-center bg-(--platform-bg) border border-(--platform-border-color) rounded-xl p-4 sm:p-8 bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat overflow-hidden min-h-62.5 sm:min-h-75">
                         <div className="relative group w-full max-w-110 mx-auto flex justify-center">
-                            <div style={{ width: '100%', aspectRatio: '16 / 11', transition: 'all 0.3s' }} className="shadow-2xl rounded-lg overflow-hidden border border-(--platform-border-color) shrink-0">
+                            <div style={{ width: '100%', aspectRatio: '16 / 11', transition: 'all 0.3s' }} className="shadow-2xl rounded-lg overflow-hidden border border-(--platform-border-color) shrink-0 bg-(--platform-bg) bg-[url('https://transparenttextures.com/patterns/cubes.png')] bg-repeat">
                                 <UniversalMediaInput 
                                     type="image"
                                     value={data.cover_image} 
-                                    aspect={1.6} 
                                     onChange={(val) => {
                                         const newVal = val && val.target ? val.target.value : val;
                                         handleChange('cover_image', newVal);

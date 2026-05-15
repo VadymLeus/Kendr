@@ -49,8 +49,7 @@ const UniversalMediaInput = ({
         const fullPath = getMediaUrl(file);
         const relativePath = file.path_full;
         setIsPickerOpen(false);
-        
-        if (type === 'image' && aspect !== null) {
+        if (type === 'image') {
             setCropImageSrc(fullPath);
             setIsCropperOpen(true);
         } else {
@@ -91,17 +90,20 @@ const UniversalMediaInput = ({
         const name = getFileName(safeValue);
         if (type === 'image' || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
             return (
-                <img 
-                    src={url} 
-                    alt="Preview" 
-                    className="w-full h-full object-contain block relative z-10"
-                    onError={(e) => { 
-                        e.target.onerror = null; 
-                        e.target.src = "https://placehold.co/400x300?text=Error"; 
-                    }}
-                />
+                <div className="w-full h-full p-3 flex items-center justify-center relative z-10">
+                    <img 
+                        src={url} 
+                        alt="Preview" 
+                        className="max-w-full max-h-full object-contain block drop-shadow-sm"
+                        onError={(e) => { 
+                            e.target.onerror = null; 
+                            e.target.src = "https://placehold.co/400x300?text=Error"; 
+                        }}
+                    />
+                </div>
             );
         }
+        
         if (type === 'video' || ['mp4', 'webm', 'mov'].includes(ext)) {
             return (
                 <div className="w-full h-full relative bg-black flex items-center justify-center z-10">
@@ -150,7 +152,7 @@ const UniversalMediaInput = ({
                     onClose={() => setIsCropperOpen(false)}
                     imageSrc={cropImageSrc}
                     onCropComplete={handleCropComplete}
-                    aspect={aspect}
+                    aspect={aspect === null ? undefined : aspect}
                     circularCrop={circularCrop}
                 />
             </>
@@ -222,7 +224,7 @@ const UniversalMediaInput = ({
                 onClose={() => setIsCropperOpen(false)}
                 imageSrc={cropImageSrc}
                 onCropComplete={handleCropComplete}
-                aspect={aspect}
+                aspect={aspect === null ? undefined : aspect} // Дозволяє вільні пропорції
                 circularCrop={circularCrop}
             />
         </div>

@@ -93,14 +93,14 @@ const CardMenu = ({ site, isOwner, isCollaborator, canEdit, isAdmin, onToggleSta
             <button 
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(!isOpen); }}
                 className={`
-                    absolute top-2.5 right-2.5 z-20 bg-black/40 backdrop-blur-xs rounded-full w-8 h-8 
-                    flex items-center justify-center cursor-pointer border border-white/10 transition-colors p-0
-                    hover:bg-(--platform-accent) hover:border-(--platform-accent)
-                    ${isOpen ? 'bg-(--platform-accent) border-(--platform-accent)' : ''}
+                    absolute top-2.5 right-2.5 z-20 bg-(--platform-card-bg) shadow-md rounded-full w-8 h-8 
+                    flex items-center justify-center cursor-pointer border transition-colors p-0
+                    hover:text-(--platform-accent) hover:border-(--platform-accent)
+                    ${isOpen ? 'text-(--platform-accent) border-(--platform-accent)' : 'text-(--platform-text-secondary) border-(--platform-border-color)'}
                 `}
                 title="Меню"
             >
-                <MoreVertical size={16} color="white" />
+                <MoreVertical size={16} />
             </button>
             {isOpen && (
                 <div 
@@ -275,6 +275,7 @@ const SiteGridCard = ({
             }
         });
     };
+
     return (
         <>
             <div className={`
@@ -283,7 +284,7 @@ const SiteGridCard = ({
             `}>
                 <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-2">
                     <button 
-                        className="bg-black/40 backdrop-blur-xs rounded-full w-8 h-8 flex items-center justify-center cursor-pointer border border-white/10 transition-colors p-0 hover:bg-black/60 shrink-0"
+                        className="bg-(--platform-card-bg) shadow-md rounded-full w-8 h-8 flex items-center justify-center cursor-pointer border transition-colors p-0 hover:border-(--platform-accent) hover:text-(--platform-accent) shrink-0"
                         onClick={(e) => {
                             e.preventDefault(); e.stopPropagation();
                             if (canEdit && onTogglePin) onTogglePin(site.id);
@@ -291,15 +292,15 @@ const SiteGridCard = ({
                         }}
                         title={canEdit ? "Закріпити" : "В обране"}
                         style={{ 
-                            color: isPinnedOrFav ? 'var(--platform-accent)' : 'white',
-                            borderColor: isPinnedOrFav ? 'var(--platform-accent)' : 'rgba(255,255,255,0.1)'
+                            color: isPinnedOrFav ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                            borderColor: isPinnedOrFav ? 'var(--platform-accent)' : 'var(--platform-border-color)'
                         }}
                     >
                         <Star size={16} fill={isPinnedOrFav ? "currentColor" : "none"} />
                     </button>
                     {isCollaborator && (
                         <span 
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-xs rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-sm shrink-0 whitespace-nowrap"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-(--platform-card-bg) shadow-md rounded-full text-[10px] font-bold uppercase tracking-wider border shrink-0 whitespace-nowrap"
                             style={{ 
                                 color: 'var(--platform-accent)',
                                 borderColor: 'var(--platform-accent)'
@@ -342,10 +343,10 @@ const SiteGridCard = ({
                         style={{ filter: isSuspended ? 'grayscale(1)' : (isMaintenance ? 'blur(1px) grayscale(0.3)' : 'none') }} 
                     />
                     {isMaintenance && (
-                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-amber-400 backdrop-blur-[2px] text-center p-4 z-10 transition-opacity duration-200 group-hover:bg-black/75">
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-(--platform-accent) backdrop-blur-[2px] text-center p-4 z-10 transition-opacity duration-200 group-hover:bg-black/75">
                             <Construction size={40} className="mb-2 shrink-0" />
-                            <div className="font-bold text-lg uppercase tracking-widest">Технічні роботи</div>
-                            <div className="text-xs opacity-90 mt-1">Сайт оновлюється</div>
+                            <div className="font-bold text-lg uppercase tracking-widest text-white">Технічні роботи</div>
+                            <div className="text-xs text-white opacity-90 mt-1">Сайт оновлюється</div>
                         </div>
                     )}
                 </Link>
@@ -389,13 +390,13 @@ const SiteGridCard = ({
                         {site.tags && site.tags.length > 0 ? site.tags.slice(0, 4).map(tag => (
                             <span 
                                 key={tag.id}
-                                className="text-xs px-2 py-0.5 rounded-xl bg-(--platform-bg) text-(--platform-text-secondary) border border-(--platform-border-color) cursor-pointer transition-all hover:bg-(--platform-accent) hover:text-white hover:border-(--platform-accent) whitespace-nowrap"
+                                className="h-7 px-3 rounded-full border text-xs font-medium whitespace-nowrap transition-colors flex items-center shrink-0 cursor-pointer border-(--platform-border-color) text-(--platform-text-secondary) bg-(--platform-card-bg) hover:border-(--platform-accent) hover:text-(--platform-accent)"
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onTagClick && onTagClick(tag.id); }}
                             >
                                 #{tag.name}
                             </span>
                         )) : (
-                            <span className="text-xs text-(--platform-text-secondary) opacity-50 whitespace-nowrap">Без тегів</span>
+                            <span className="text-xs text-(--platform-text-secondary) opacity-50 whitespace-nowrap flex items-center h-7">Без тегів</span>
                         )}
                     </div>
                     <div className="mt-auto pt-3">

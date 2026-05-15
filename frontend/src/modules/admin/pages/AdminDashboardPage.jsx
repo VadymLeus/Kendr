@@ -296,10 +296,10 @@ const AdminDashboardPage = () => {
                 params: { period, type: graphType }
             });
             setData(response.data);
-            if (isRefresh) toast.success('Дані оновлено');
+            if (isRefresh) toast.success('Дані оновлено', { toastId: 'stats-update-success' });
         } catch (err) {
             console.error("Помилка завантаження статистики:", err);
-            toast.error('Не вдалося завантажити статистику');
+            toast.error('Не вдалося завантажити статистику', { toastId: 'stats-load-error' });
         } finally {
             setLoading(false);
         }
@@ -308,7 +308,6 @@ const AdminDashboardPage = () => {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
-    
     const stats = data?.stats || { users: 0, usersGrowth: 0, sites: 0, reports: 0, tickets: 0 };
     const processedLogs = useMemo(() => {
         if (!data?.activityLog) return [];
@@ -360,7 +359,6 @@ const AdminDashboardPage = () => {
                     </button>
                 </div>
             )}
-            
             <div className="flex-1 relative overflow-hidden flex flex-col h-full w-full">
                 {activeTab === 'overview' ? (
                     <div className="flex flex-col gap-4 w-full h-full overflow-y-auto pb-6 custom-scrollbar pr-1 sm:pr-2">
@@ -395,7 +393,6 @@ const AdminDashboardPage = () => {
                                 )}
                             </div>
                             <div className="xl:col-span-1 bg-(--platform-card-bg) rounded-2xl p-4 sm:p-5 border border-(--platform-border-color) flex flex-col overflow-hidden min-h-87.5">
-                                
                                 <div className="flex flex-col sm:flex-row xl:flex-col 2xl:flex-row justify-between items-start sm:items-center xl:items-start 2xl:items-center gap-3 mb-4">
                                     <div className="text-[16px] font-bold flex items-center gap-2 text-(--platform-text-primary) shrink-0">
                                         <TrendingUp size={18} color="var(--platform-accent)" className="shrink-0" />

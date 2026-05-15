@@ -46,6 +46,7 @@ const MySitesPage = () => {
             .then(res => setLimits(res.data))
             .catch(console.error);
     }, [user, navigate]);
+    
     const fetchMySites = async () => {
         try {
             setLoading(true);
@@ -64,16 +65,19 @@ const MySitesPage = () => {
             setLoading(false); 
         }
     };
+    
     useEffect(() => {
         if (!user) return;
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
         searchTimeoutRef.current = setTimeout(() => { fetchMySites(); }, 500);
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm, selectedTag, sortOption, user]);
+    
     const handleSearchSubmit = () => { 
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); 
         fetchMySites(); 
     };
+    
     const handleLoadMore = () => setVisibleCount(prev => prev + ITEMS_PER_PAGE);
     const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const handleDeleteSite = async (e, sitePath, siteTitle) => {
@@ -104,12 +108,14 @@ const MySitesPage = () => {
             }
         }
     };
+    
     const handleTogglePin = async (siteId) => {
         try {
             const res = await apiClient.patch(`/sites/${siteId}/pin`);
             setSites(prev => prev.map(s => s.id === siteId ? { ...s, is_pinned: res.data.is_pinned } : s));
         } catch (error) { toast.error('Помилка'); }
     };
+    
     const safeSites = Array.isArray(sites) ? sites : [];
     const filteredSites = safeSites.filter(s => onlyPinned ? s.is_pinned : true)
         .sort((a, b) => (a.is_pinned === b.is_pinned ? 0 : a.is_pinned ? -1 : 1));
@@ -125,7 +131,7 @@ const MySitesPage = () => {
                         <div 
                             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors
                                 ${isLimitReached 
-                                    ? 'bg-[color-mix(in_srgb,var(--platform-danger),transparent_90%)] text-(--platform-danger) border-[color-mix(in_srgb,var(--platform-danger),transparent_70%)]' 
+                                    ? 'bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)] text-(--platform-accent) border-[color-mix(in_srgb,var(--platform-accent),transparent_70%)]' 
                                     : 'bg-(--platform-card-bg) text-(--platform-text-secondary) border-(--platform-border-color)'
                                 }
                             `}
@@ -196,7 +202,6 @@ const MySitesPage = () => {
                         <div className="grid gap-4 sm:gap-5 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                             {visibleSites.map(site => {
                                 const isSiteOwner = site.user_id === user?.id;
-
                                 return (
                                     <SiteGridCard 
                                         key={site.id} 

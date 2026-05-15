@@ -42,17 +42,18 @@ const CustomSelect = ({
             const rect = triggerRef.current.getBoundingClientRect();
             const spaceBelow = window.innerHeight - rect.bottom;
             const spaceAbove = rect.top;
-            const idealMaxHeight = 260;
+            const idealMaxHeight = 300;
             let maxHeight, topStyle, bottomStyle;
             if (spaceBelow >= idealMaxHeight || spaceBelow > spaceAbove) {
-                maxHeight = Math.min(idealMaxHeight, spaceBelow - 16);
+                maxHeight = Math.max(150, spaceBelow - 16);
                 topStyle = `${rect.bottom + 4}px`;
                 bottomStyle = 'auto';
             } else {
-                maxHeight = Math.min(idealMaxHeight, spaceAbove - 16);
+                maxHeight = Math.max(150, spaceAbove - 16);
                 topStyle = 'auto';
                 bottomStyle = `${window.innerHeight - rect.top + 4}px`;
             }
+            
             setMenuStyle({
                 position: 'fixed',
                 top: topStyle,
@@ -60,8 +61,15 @@ const CustomSelect = ({
                 left: `${rect.left}px`,
                 width: `${rect.width}px`,
                 maxHeight: `${maxHeight}px`,
-                zIndex: 9999,
-                overflowY: 'auto'
+                zIndex: 999999,
+                overflowY: 'auto',
+                backgroundColor: 'var(--platform-card-bg, #ffffff)',
+                border: '1px solid var(--platform-border-color, #e5e7eb)',
+                borderRadius: '8px',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)',
+                padding: '6px 0',
+                display: 'flex',
+                flexDirection: 'column'
             });
         }
     }, [isOpen, flatOptions.length]);
@@ -108,11 +116,22 @@ const CustomSelect = ({
                 ref={triggerRef}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={`select-trigger ${error ? 'border-(--platform-danger)' : ''} ${isOpen ? 'open' : ''} ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
-                style={style}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    backgroundColor: 'var(--platform-bg)',
+                    border: `1px solid ${error ? 'var(--platform-danger)' : 'var(--platform-border-color)'}`,
+                    borderRadius: '8px',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    userSelect: 'none',
+                    ...style
+                }}
             >
                 <div className="flex items-center gap-2 overflow-hidden flex-1">
                     {!multiple && SingleIcon && <SingleIcon size={18} className="opacity-80 shrink-0" />}
-                    <span className={`truncate ${displayLabel === placeholder ? 'text-(--platform-text-secondary)' : ''}`}>
+                    <span className={`truncate text-sm font-medium ${displayLabel === placeholder ? 'text-(--platform-text-secondary)' : 'text-(--platform-text-primary)'}`}>
                         {displayLabel}
                     </span>
                 </div>
@@ -121,7 +140,7 @@ const CustomSelect = ({
             {isOpen && createPortal(
                 <div 
                     ref={menuRef} 
-                    className={`select-dropdown-menu custom-scrollbar ${dropdownClassName}`} 
+                    className={`custom-scrollbar ${dropdownClassName}`} 
                     style={{...menuStyle, ...dropdownStyle}}
                 >
                     {flatOptions.length ? flatOptions.map((opt, i) => {
@@ -135,15 +154,32 @@ const CustomSelect = ({
                             <div 
                                 key={opt.value} 
                                 onClick={() => handleSelect(opt.value)}
-                                className={`select-option ${isSelected && !multiple ? 'selected' : ''}`}
-                                style={{ paddingLeft: opt.isGroupChild ? '24px' : '12px' }}
+                                style={{ 
+                                    padding: `10px ${opt.isGroupChild ? '24px' : '14px'}`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    cursor: 'pointer',
+                                    color: isSelected && !multiple ? 'var(--platform-accent)' : 'var(--platform-text-primary)',
+                                    backgroundColor: isSelected && !multiple ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent',
+                                    fontSize: '14px',
+                                    fontWeight: isSelected ? '600' : '500',
+                                    transition: 'background 0.2s',
+                                    userSelect: 'none'
+                                }}
+                                onMouseOver={(e) => {
+                                    if (!isSelected || multiple) e.currentTarget.style.backgroundColor = 'var(--platform-bg)';
+                                }}
+                                onMouseOut={(e) => {
+                                    if (!isSelected || multiple) e.currentTarget.style.backgroundColor = 'transparent';
+                                }}
                             >
                                 {multiple && (
                                     <div className={`w-4 h-4 mr-2 rounded border flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'bg-(--platform-accent) border-(--platform-accent) text-white' : 'border-(--platform-border-color)'}`}>
                                         {isSelected && <Check size={12} strokeWidth={3} />}
                                     </div>
                                 )}
-                                {!multiple && opt.icon && <opt.icon size={16} className={isSelected ? 'opacity-100' : 'opacity-70'} />}
+                                {!multiple && opt.icon && <opt.icon size={16} className={isSelected ? 'opacity-100' : 'opacity-60'} />}
                                 <span className="flex-1 truncate">{opt.label}</span>
                                 {!multiple && isSelected && <Check size={16} />}
                             </div>

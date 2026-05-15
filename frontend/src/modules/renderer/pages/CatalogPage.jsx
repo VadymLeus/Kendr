@@ -104,8 +104,8 @@ const CatalogPage = () => {
                             title={hideMySites ? "Показати мої сайти" : "Приховати мої сайти"} 
                             className={`h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border transition-all cursor-pointer shadow-sm ${
                                 hideMySites 
-                                    ? 'border-red-500 text-red-500 bg-red-500/10' 
-                                    : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary) hover:border-red-500 hover:text-red-500'
+                                    ? 'border-(--platform-accent) text-(--platform-accent) bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)]' 
+                                    : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-accent)'
                             }`}
                         >
                             <UserX size={20} strokeWidth={2.5} />

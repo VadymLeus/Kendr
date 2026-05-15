@@ -109,7 +109,7 @@ const SiteFilters = ({
                             className={`h-10 w-10 shrink-0 flex items-center justify-center rounded-lg border transition-colors shadow-sm
                                 ${isStarActive 
                                     ? 'border-(--platform-accent) bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)] text-(--platform-accent)' 
-                                    : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary) hover:border-(--platform-text-secondary)'
+                                    : 'border-(--platform-border-color) bg-(--platform-card-bg) text-(--platform-text-secondary) hover:border-(--platform-accent) hover:text-(--platform-accent)'
                                 }
                             `}
                         >
@@ -128,10 +128,10 @@ const SiteFilters = ({
                         </span>
                         <button
                             type="button"
-                            className={`h-8 px-3.5 rounded-full border text-xs font-medium whitespace-nowrap transition-colors flex items-center shrink-0 cursor-pointer 
+                            className={`h-7 px-3 rounded-full border text-xs font-medium whitespace-nowrap transition-colors flex items-center shrink-0 cursor-pointer 
                                 ${!selectedTag 
-                                    ? 'border-(--platform-accent) text-(--platform-accent) bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)]' 
-                                    : 'border-(--platform-border-color) text-(--platform-text-secondary) bg-transparent hover:bg-(--platform-hover-bg)'
+                                    ? 'border-(--platform-accent) text-white bg-(--platform-accent)' 
+                                    : 'border-(--platform-border-color) text-(--platform-text-secondary) bg-(--platform-card-bg) hover:border-(--platform-accent) hover:text-(--platform-accent)'
                                 }
                             `}
                             onClick={() => onTagSelect(null)}
@@ -144,15 +144,15 @@ const SiteFilters = ({
                                 <button
                                     key={tag.id}
                                     type="button"
-                                    className={`h-8 px-3.5 rounded-full border text-xs font-medium whitespace-nowrap transition-colors flex items-center shrink-0 cursor-pointer 
+                                    className={`h-7 px-3 rounded-full border text-xs font-medium whitespace-nowrap transition-colors flex items-center shrink-0 cursor-pointer 
                                         ${isActive 
-                                            ? 'border-(--platform-accent) text-(--platform-accent) bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)]' 
-                                            : 'border-(--platform-border-color) text-(--platform-text-secondary) bg-transparent hover:bg-(--platform-hover-bg)'
+                                            ? 'border-(--platform-accent) text-white bg-(--platform-accent)' 
+                                            : 'border-(--platform-border-color) text-(--platform-text-secondary) bg-(--platform-card-bg) hover:border-(--platform-accent) hover:text-(--platform-accent)'
                                         }
                                     `}
                                     onClick={() => onTagSelect(isActive ? null : tag.id)}
                                 >
-                                    {tag.name || tag.label}
+                                    #{tag.name || tag.label}
                                 </button>
                             );
                         })}

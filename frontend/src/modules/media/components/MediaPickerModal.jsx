@@ -7,7 +7,7 @@ import MediaFilePreview from '../../../shared/ui/complex/MediaFilePreview';
 import { getMediaUrl } from '../../../shared/utils/mediaUtils';
 import ImageCropperModal from '../../../shared/ui/complex/ImageCropperModal';
 import DragDropWrapper from '../../../shared/ui/complex/DragDropWrapper';
-import LoadingState from '../../../shared/ui/complex/LoadingState'; // <-- Додано імпорт
+import LoadingState from '../../../shared/ui/complex/LoadingState';
 import { Button } from '../../../shared/ui/elements/Button';
 import { Search, X, Upload, Check, Image, Calendar, FileText, Clock, HardDrive } from 'lucide-react';
 
@@ -104,13 +104,11 @@ const MediaPickerModal = ({
                 });
             }
         }
-        
         toast.dismiss(toastId);
         if (successCount > 0) {
             toast.success(`Успішно завантажено: ${successCount} файлів`);
             await fetchMedia(); 
         }
-        
         if (failedFiles.length > 0) {
             const limit = 3; 
             const errorList = failedFiles.slice(0, limit)
@@ -201,7 +199,6 @@ const MediaPickerModal = ({
                 toast.error(res.data.message);
                 return;
             }
-            
             const uploadedFile = res.data;
             setFiles(prev => [uploadedFile, ...prev]);
             onSelect(uploadedFile);
@@ -232,7 +229,7 @@ const MediaPickerModal = ({
     const isCropMode = aspect && !multiple && selectedIds.size === 1 && activeFile?.file_type === 'image';
     return ReactDOM.createPortal(
         <>
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-3000 p-4 sm:p-6">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30000 p-4 sm:p-6">
                 <DragDropWrapper 
                     onDropFiles={handleUpload}
                     isError={isLimitReached}
@@ -248,7 +245,7 @@ const MediaPickerModal = ({
                             {limits && (
                                 <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all
                                     ${(!limits.isUnlimited && limits.percentageUsed >= 90) 
-                                        ? 'text-(--platform-danger) border-[color-mix(in_srgb,var(--platform-danger),transparent_70%)] bg-[color-mix(in_srgb,var(--platform-danger),transparent_90%)]' 
+                                        ? 'bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)] text-(--platform-accent) border-[color-mix(in_srgb,var(--platform-accent),transparent_70%)]' 
                                         : 'text-(--platform-text-secondary) bg-(--platform-hover-bg) border-(--platform-border-color)'
                                     }
                                 `}>

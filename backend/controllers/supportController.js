@@ -41,16 +41,18 @@ exports.createTicket = async (req, res, next) => {
         const attachmentsJSON = JSON.stringify(attachmentUrls);
         await connection.beginTransaction();
         const [ticketResult] = await connection.query(
-            'INSERT INTO support_tickets (user_id, subject, body, type, status, attachments) VALUES (?, ?, ?, ?, "open", ?)',
-            [userId, subject, body, ticketType, attachmentsJSON]
+            'INSERT INTO support_tickets (user_id, subject, body, type, status, attachments) VALUES (?, ?, ?, ?, ?, ?)',
+            [userId, subject, body, ticketType, 'open', attachmentsJSON]
         );
         const ticketId = ticketResult.insertId;
+        
         if (siteId) {
             await connection.query(
-                'INSERT INTO site_appeals (site_id, user_id, ticket_id, status, created_at) VALUES (?, ?, ?, "pending", NOW())',
-                [siteId, userId, ticketId]
+                'INSERT INTO site_appeals (site_id, user_id, ticket_id, status, created_at) VALUES (?, ?, ?, ?, NOW())',
+                [siteId, userId, ticketId, 'pending']
             );
         }
+        
         await connection.commit();
         res.status(201).json({ 
             id: ticketId, 

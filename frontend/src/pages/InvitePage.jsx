@@ -24,6 +24,7 @@ const InvitePage = () => {
         hasRequested.current = true;
         acceptInvite();
     }, [isAuthenticated, isAuthLoading, token]);
+    
     const acceptInvite = async () => {
         setStatus('loading');
         try {
@@ -38,10 +39,12 @@ const InvitePage = () => {
             setErrorMessage(error.response?.data?.message || 'Помилка прийняття запрошення');
         }
     };
+    
     const handleAuthRedirect = () => {
         localStorage.setItem('redirectAfterAuth', `/invite/${token}`);
-        navigate('/auth');
+        navigate('/login');
     };
+    
     if (isAuthLoading) {
         return (
             <div className="min-h-screen bg-(--platform-bg) flex items-center justify-center">

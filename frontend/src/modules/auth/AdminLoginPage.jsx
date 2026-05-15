@@ -74,7 +74,14 @@ const AdminLoginPage = () => {
             <Helmet><title>Admin Gateway | Kendr</title></Helmet>
             <div className="w-full max-w-105 bg-(--platform-card-bg) p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border border-(--platform-border-color) shadow-[0_10px_40px_rgba(0,0,0,0.08)] relative transition-colors duration-300 mt-12 sm:mt-0">
                 <div className="flex flex-col items-center mb-6 sm:mb-8">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 bg-red-100/50 text-red-600 dark:bg-red-500/10 dark:text-red-500 border border-red-500/20 shadow-sm">
+                    <div 
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 border shadow-sm transition-colors duration-300"
+                        style={{
+                            color: 'var(--platform-accent)',
+                            backgroundColor: 'color-mix(in srgb, var(--platform-accent), transparent 90%)',
+                            borderColor: 'color-mix(in srgb, var(--platform-accent), transparent 80%)'
+                        }}
+                    >
                         {view === 'login' ? <ShieldAlert size={28} className="sm:w-8 sm:h-8" /> : <ShieldCheck size={28} className="sm:w-8 sm:h-8" />}
                     </div>
                     <h1 className="text-xl sm:text-2xl font-bold text-(--platform-text-primary) text-center">

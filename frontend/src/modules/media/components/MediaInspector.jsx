@@ -1,5 +1,5 @@
 // frontend/src/modules/media/components/MediaInspector.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../../../shared/ui/elements/Button';
 import apiClient from '../../../shared/api/api';
 import { toast } from 'react-toastify';
@@ -13,7 +13,8 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         alt_text: '',
         description: ''
     });
-
+    const [isSaving, setIsSaving] = useState(false);
+    const isSavingRef = useRef(false);
     const getValidUrl = (path) => {
         if (!path) return '';
         return path.startsWith('http') ? path : `${API_URL}${path}`;
@@ -31,6 +32,7 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
             const fontUrl = getValidUrl(file.path_full);
             const fontName = `PreviewFont-${file.id}`;
             const fontFace = new FontFace(fontName, `url(${fontUrl})`);
+            
             fontFace.load().then((loadedFace) => {
                 document.fonts.add(loadedFace);
                 const previewEl = document.getElementById(`font-preview-${file.id}`);
@@ -55,7 +57,9 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
 
     if (!file) return null;
     const saveChanges = async () => {
-        if (!hasChanges) return;
+        if (!hasChanges || isSavingRef.current) return;
+        isSavingRef.current = true;
+        setIsSaving(true);
         try {
             const res = await apiClient.put(`/media/${file.id}`, formData);
             onUpdate(res.data);
@@ -63,6 +67,9 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
         } catch (error) {
             console.error(error);
             toast.error('Помилка збереження');
+        } finally {
+            isSavingRef.current = false;
+            setIsSaving(false);
         }
     };
 
@@ -210,10 +217,10 @@ const MediaInspector = ({ file, onUpdate, onDelete, onClose }) => {
                 <Button 
                     variant="primary" 
                     onClick={handleSaveClick}
-                    disabled={!hasChanges}
+                    disabled={!hasChanges || isSaving}
                     className="w-full mt-2 min-h-11 sm:min-h-10 shadow-sm"
                 >
-                    <Save size={16} className="mr-2 shrink-0" /> Зберегти зміни
+                    <Save size={16} className="mr-2 shrink-0" /> {isSaving ? 'Збереження...' : 'Зберегти зміни'}
                 </Button>
                 <div className="grid grid-cols-2 gap-2.5 mt-3 pt-5 border-t border-(--platform-border-color) pb-6">
                     <Button 

@@ -379,7 +379,7 @@ const MediaLibraryPage = () => {
                 <div className="h-auto sm:h-16 px-4 py-4 sm:px-8 lg:px-10 sm:py-0 border-b border-(--platform-border-color) flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
                     <div className="w-full sm:w-1/3 flex justify-center sm:justify-start shrink-0">
                         {limits && (
-                            <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-sm transition-colors ${(!limits.isUnlimited && limits.percentageUsed >= 90) ? 'text-(--platform-danger) border-[color-mix(in_srgb,var(--platform-danger),transparent_70%)] bg-[color-mix(in_srgb,var(--platform-danger),transparent_90%)]' : 'text-(--platform-text-secondary) bg-(--platform-card-bg) border-(--platform-border-color)'}`}>
+                            <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-sm transition-colors ${(!limits.isUnlimited && limits.percentageUsed >= 90) ? 'bg-[color-mix(in_srgb,var(--platform-accent),transparent_90%)] text-(--platform-accent) border-[color-mix(in_srgb,var(--platform-accent),transparent_70%)]' : 'text-(--platform-text-secondary) bg-(--platform-card-bg) border-(--platform-border-color)'}`}>
                                 <HardDrive size={16} className="shrink-0" />
                                 <span>Сховище: {limits.isUnlimited ? `${limits.currentFiles} / ∞` : `${limits.currentFiles} / ${limits.maxFiles}`}</span>
                             </div>

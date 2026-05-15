@@ -299,3 +299,7 @@ textarea {
     margin-left: 0 !important;
   }
 }
+
+.Toastify__toast-container {
+  z-index: 99999 !important;
+}

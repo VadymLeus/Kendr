@@ -4,7 +4,7 @@ import apiClient from '../../../../shared/api/api';
 import { useBlockFonts } from '../../../../shared/hooks/useBlockFonts';
 import CustomSelect from '../../../../shared/ui/elements/CustomSelect';
 import ProductCard from '../../ui/components/ProductCard';
-import { Search, X, ArrowUpAZ, ArrowDownAZ, ShoppingBag } from 'lucide-react';
+import { Search, X, ArrowUp, ArrowDown, ShoppingBag } from 'lucide-react';
 
 const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
     const [products, setProducts] = useState([]);
@@ -25,7 +25,6 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         height = 'auto',
         styles = {} 
     } = blockData;
-
     const heightClasses = {
         small: 'min-h-[300px]',
         medium: 'min-h-[400px] @3xl:min-h-[500px]',
@@ -60,11 +59,8 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                     params.category = root_category_id;
                 }
                 const prodRes = await apiClient.get('/products', { params });
-                
                 const enrichedProducts = prodRes.data.map(p => ({
                     ...p,
-                    site_path: siteData?.site_path,
-                    site_name: siteData?.title,
                     category_ids: Array.isArray(p.categories) ? p.categories.map(c => c.id.toString()) : []
                 }));
                 setProducts(enrichedProducts);
@@ -75,7 +71,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             }
         };
         fetchData();
-    }, [siteData?.id, siteData?.site_path, siteData?.title, source_type, root_category_id]);
+    }, [siteData?.id, source_type, root_category_id]);
 
     const toggleSortOrder = () => {
         setFilters(prev => ({ ...prev, sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' }));
@@ -133,32 +129,17 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
             if(blockEl && !isEditorPreview) blockEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
-    
     const uniqueClass = `catalog-block-${blockData.block_id || 'preview'}`;
     const showFilters = show_search || show_category_filter || show_sorting;
-    const paginationBtnClass = "h-[44px] min-w-[44px] px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 text-sm transition-all duration-200 hover:opacity-80 border-none";
+    const paginationBtnClass = "h-[40px] min-w-[40px] px-4 rounded-lg cursor-pointer flex items-center justify-center gap-2 text-sm transition-all duration-200 hover:opacity-80 border-none";
     const categoryOptions = useMemo(() => [
         { label: "Всі категорії", value: "all" },
         ...availableCategories.map(cat => ({ label: cat.name, value: cat.id }))
     ], [availableCategories]);
-    
     const sortOptions = [
         { label: "За назвою", value: "name" },
         { label: "За ціною", value: "price" }
     ];
-    
-    const panelStyle = {
-        backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 3%, transparent)',
-        border: '1px solid color-mix(in srgb, var(--site-text-primary) 8%, transparent)'
-    };
-    
-    const inputElementStyle = {
-        backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 5%, transparent)',
-        border: 'none',
-        color: 'var(--site-text-primary)',
-        fontFamily: 'inherit'
-    };
-
     const selectThemeOverrides = {
         '--platform-bg': 'var(--site-bg, transparent)',
         '--platform-card-bg': 'var(--site-card-bg, #ffffff)',
@@ -167,14 +148,17 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
         '--platform-text-secondary': 'color-mix(in srgb, var(--site-text-primary) 60%, transparent)',
         '--platform-accent': 'var(--site-accent)',
         '--platform-hover-bg': 'color-mix(in srgb, var(--site-text-primary) 5%, transparent)',
-        '--platform-danger': '#ef4444',
     };
 
     const selectStyle = { 
-        height: '44px', 
-        borderRadius: '0.75rem',
+        height: '100%', 
+        margin: 0,
+        borderRadius: '0.5rem',
         fontSize: '0.875rem',
-        ...inputElementStyle,
+        backgroundColor: 'var(--site-card-bg, var(--site-bg, transparent))',
+        border: '1px solid color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
+        color: 'var(--site-text-primary)',
+        fontFamily: 'inherit',
         ...selectThemeOverrides
     };
 
@@ -221,80 +205,90 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                 )}
                 {showFilters && (
                     <div 
-                        className="z-10 mb-10 w-full rounded-2xl shadow-sm p-2 flex flex-col @5xl:flex-row items-stretch @5xl:items-center gap-2"
-                        style={panelStyle}
+                        className="z-10 mb-10 w-full flex flex-col gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl border shrink-0"
+                        style={{
+                            backgroundColor: 'color-mix(in srgb, var(--site-text-primary) 2%, transparent)',
+                            borderColor: 'color-mix(in srgb, var(--site-text-primary) 8%, transparent)'
+                        }}
                     >
-                        {show_search && (
-                            <div 
-                                className="w-full @5xl:flex-1 relative flex items-center rounded-xl px-4 h-11 shrink-0 transition-colors focus-within:ring-1 focus-within:ring-(--site-accent)"
-                                style={inputElementStyle}
-                            >
-                                <Search size={18} style={{ color: 'var(--site-text-secondary)' }} className="shrink-0" />
-                                <input 
-                                    type="text"
-                                    placeholder="Пошук товарів..." 
-                                    value={filters.searchQuery} 
-                                    onChange={(e) => {
-                                        setFilters(prev => ({ ...prev, searchQuery: e.target.value }));
-                                        setCurrentPage(1);
-                                    }}
-                                    className="w-full h-full pl-3 pr-2 bg-transparent border-none text-sm focus:outline-none focus:ring-0"
-                                    style={{ fontFamily: 'inherit', color: 'var(--site-text-primary)' }}
-                                />
-                            </div>
-                        )}
-                        <div className="flex flex-col @2xl:flex-row items-stretch @2xl:items-center gap-2 shrink-0 w-full @5xl:w-auto">
-                            {show_category_filter && availableCategories.length > 0 && (
-                                <div className="relative w-full @2xl:w-auto @2xl:min-w-45 flex-1 @2xl:flex-none">
-                                    <CustomSelect
-                                        name="categoryFilter"
-                                        value={filters.selectedCategoryId}
-                                        options={categoryOptions}
-                                        onChange={(e) => {
-                                            setFilters(prev => ({ ...prev, selectedCategoryId: e.target.value }));
-                                            setCurrentPage(1);
+                        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 w-full">
+                            {show_search && (
+                                <div className="flex-1 w-full h-10 min-w-50">
+                                    <div 
+                                        className="w-full h-full relative flex items-center rounded-lg px-3 transition-colors border"
+                                        style={{
+                                            backgroundColor: 'var(--site-card-bg, var(--site-bg, transparent))',
+                                            borderColor: 'color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
                                         }}
-                                        style={selectStyle} 
-                                        dropdownStyle={selectDropdownStyle} 
-                                    />
-                                </div>
-                            )}
-                            {show_sorting && (
-                                <div className="flex items-center gap-2 w-full @2xl:w-auto flex-1 @2xl:flex-none">
-                                    <div className="relative flex-1 @2xl:min-w-40">
-                                        <CustomSelect
-                                            name="sortBy"
-                                            value={filters.sortBy}
-                                            options={sortOptions}
-                                            onChange={(e) => handleSortFieldChange(e.target.value)}
-                                            style={selectStyle}
-                                            dropdownStyle={selectDropdownStyle}
-                                        />
-                                    </div>
-                                    <button 
-                                        onClick={toggleSortOrder}
-                                        className="h-11 w-11 shrink-0 rounded-xl cursor-pointer flex items-center justify-center transition-all duration-200 border-none hover:opacity-80"
-                                        title={filters.sortOrder === 'desc' ? "За спаданням" : "За зростанням"}
-                                        style={{ ...inputElementStyle, ...selectThemeOverrides }}
                                     >
-                                        {filters.sortOrder === 'asc' ? <ArrowUpAZ size={18}/> : <ArrowDownAZ size={18}/>}
-                                    </button>
+                                        <Search size={18} style={{ color: 'color-mix(in srgb, var(--site-text-primary) 50%, transparent)' }} className="shrink-0 mr-2" />
+                                        <input 
+                                            type="text"
+                                            placeholder="Пошук товарів..." 
+                                            value={filters.searchQuery} 
+                                            onChange={(e) => {
+                                                setFilters(prev => ({ ...prev, searchQuery: e.target.value }));
+                                                setCurrentPage(1);
+                                            }}
+                                            className="w-full h-full bg-transparent border-none text-sm focus:outline-none focus:ring-0"
+                                            style={{ fontFamily: 'inherit', color: 'var(--site-text-primary)' }}
+                                        />
+                                        {filters.searchQuery && (
+                                            <X 
+                                                size={16} 
+                                                onClick={() => { setFilters(prev => ({ ...prev, searchQuery: '' })); setCurrentPage(1); }}
+                                                className="cursor-pointer transition-colors shrink-0 ml-2 hover:opacity-70"
+                                                style={{ color: 'color-mix(in srgb, var(--site-text-primary) 50%, transparent)' }} 
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                             )}
-                            {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
-                                <button 
-                                    onClick={handleClearAll}
-                                    className="h-11 px-4 shrink-0 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 border-none w-full @2xl:w-auto hover:opacity-80"
-                                    title="Очистити фільтри"
-                                    style={{ 
-                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                        color: '#ef4444',
-                                        fontFamily: 'inherit' 
-                                    }}
-                                >
-                                    <X size={16} />
-                                    <span className="text-sm font-medium @2xl:hidden @7xl:inline">Очистити</span>
-                                </button>
+                            
+                            {(show_category_filter || show_sorting) && (
+                                <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 h-10">
+                                    {show_category_filter && availableCategories.length > 0 && (
+                                        <div className="flex-1 sm:flex-none sm:w-48 h-full">
+                                            <CustomSelect
+                                                name="categoryFilter"
+                                                value={filters.selectedCategoryId}
+                                                options={categoryOptions}
+                                                onChange={(e) => {
+                                                    setFilters(prev => ({ ...prev, selectedCategoryId: e.target.value }));
+                                                    setCurrentPage(1);
+                                                }}
+                                                style={selectStyle} 
+                                                dropdownStyle={selectDropdownStyle} 
+                                            />
+                                        </div>
+                                    )}
+                                    {show_sorting && (
+                                        <>
+                                            <div className="flex-1 sm:flex-none sm:w-48 h-full">
+                                                <CustomSelect
+                                                    name="sortBy"
+                                                    value={filters.sortBy}
+                                                    options={sortOptions}
+                                                    onChange={(e) => handleSortFieldChange(e.target.value)}
+                                                    style={selectStyle}
+                                                    dropdownStyle={selectDropdownStyle}
+                                                />
+                                            </div>
+                                            <button 
+                                                onClick={toggleSortOrder}
+                                                className="h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border transition-colors shadow-sm cursor-pointer hover:opacity-80"
+                                                title={filters.sortOrder === 'desc' ? "За спаданням" : "За зростанням"}
+                                                style={{
+                                                    backgroundColor: 'var(--site-card-bg, var(--site-bg, transparent))',
+                                                    borderColor: 'color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
+                                                    color: 'color-mix(in srgb, var(--site-text-primary) 70%, transparent)'
+                                                }}
+                                            >
+                                                {filters.sortOrder === 'asc' ? <ArrowUp size={20} strokeWidth={2.5}/> : <ArrowDown size={20} strokeWidth={2.5}/>}
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -321,7 +315,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                         <h4 className="m-0 mb-2 font-medium text-xl" style={{ fontFamily: 'inherit', color: 'var(--site-text-primary)' }}>
                             {products.length === 0 ? "Каталог товарів" : "Товарів не знайдено"}
                         </h4>
-                        <p className="m-0 max-w-md text-base leading-relaxed" style={{ fontFamily: 'inherit', color: 'var(--site-text-secondary)' }}>
+                        <p className="m-0 max-w-md text-base leading-relaxed" style={{ fontFamily: 'inherit', color: 'color-mix(in srgb, var(--site-text-primary) 60%, transparent)' }}>
                             {products.length === 0 
                                 ? "Тут будуть відображатись ваші товари." 
                                 : "За вибраними фільтрами немає результатів. Спробуйте змінити критерії пошуку."}
@@ -329,7 +323,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                         {(filters.searchQuery || filters.selectedCategoryId !== 'all') && (
                             <button 
                                 onClick={handleClearAll}
-                                className="mt-6 h-11 px-6 rounded-xl cursor-pointer font-medium transition-all hover:opacity-80 border-none"
+                                className="mt-6 h-10 px-6 rounded-lg cursor-pointer font-medium transition-all hover:opacity-80 border-none"
                                 style={{ 
                                     backgroundColor: 'var(--site-accent)', 
                                     color: 'var(--site-accent-text, #fff)',
@@ -362,7 +356,11 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                 ${paginationBtnClass} px-5 font-medium
                                 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}
                             `}
-                            style={inputElementStyle}
+                            style={{
+                                backgroundColor: 'var(--site-card-bg, var(--site-bg, transparent))',
+                                border: '1px solid color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
+                                color: 'var(--site-text-primary)',
+                            }}
                         >
                             Назад
                         </button>
@@ -375,12 +373,16 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                         key={page}
                                         onClick={() => handlePageChange(page)}
                                         className={`
-                                            ${paginationBtnClass} p-0! w-11! font-medium
+                                            ${paginationBtnClass} p-0! w-10! font-medium
                                         `}
                                         style={
                                             isActive 
                                             ? { backgroundColor: 'var(--site-accent)', color: 'var(--site-accent-text, #fff)', border: 'none' }
-                                            : inputElementStyle
+                                            : {
+                                                backgroundColor: 'var(--site-card-bg, var(--site-bg, transparent))',
+                                                border: '1px solid color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
+                                                color: 'var(--site-text-primary)',
+                                            }
                                         }
                                     >
                                         {page}
@@ -388,7 +390,7 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                 );
                             } else if (showEllipsis) {
                                 if (page === currentPage - 2 || page === currentPage + 2) {
-                                    return <span key={page} className="px-2 py-2 font-medium" style={{ fontFamily: 'inherit', color: 'var(--site-text-secondary)' }}>...</span>;
+                                    return <span key={page} className="px-2 py-2 font-medium" style={{ fontFamily: 'inherit', color: 'color-mix(in srgb, var(--site-text-primary) 60%, transparent)' }}>...</span>;
                                 }
                             }
                             return null;
@@ -400,7 +402,11 @@ const CatalogBlock = ({ blockData, siteData, isEditorPreview, style }) => {
                                 ${paginationBtnClass} px-5 font-medium
                                 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}
                             `}
-                            style={inputElementStyle}
+                            style={{
+                                backgroundColor: 'var(--site-card-bg, var(--site-bg, transparent))',
+                                border: '1px solid color-mix(in srgb, var(--site-text-primary) 15%, transparent)',
+                                color: 'var(--site-text-primary)',
+                            }}
                         >
                             Далі
                         </button>

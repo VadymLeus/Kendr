@@ -41,11 +41,11 @@ const PLAN_OPTIONS = [
 ];
 
 const STATUS_CONFIG = {
-    published: { bg: 'rgba(56, 161, 105, 0.1)', color: '#38a169', label: 'Опубліковано', icon: Globe },
-    private: { bg: 'rgba(128, 90, 213, 0.1)', color: '#805ad5', label: 'Прихований', icon: Lock },
-    suspended: { bg: 'rgba(229, 62, 62, 0.1)', color: '#e53e3e', label: 'Призупинено', icon: Pause },
-    probation: { bg: 'rgba(214, 158, 46, 0.1)', color: '#d69e2e', label: 'На модерації', icon: AlertTriangle },
-    maintenance: { bg: 'rgba(214, 158, 46, 0.1)', color: '#d69e2e', label: 'Тех. Роботи', icon: Construction }
+    published: { bg: 'color-mix(in srgb, var(--platform-accent) 15%, transparent)', color: 'var(--platform-accent)', label: 'Опубліковано', icon: Globe },
+    private: { bg: 'color-mix(in srgb, var(--platform-accent) 15%, transparent)', color: 'var(--platform-accent)', label: 'Прихований', icon: Lock },
+    suspended: { bg: 'color-mix(in srgb, #4f46e5 15%, transparent)', color: '#4f46e5', label: 'Призупинено', icon: Pause },
+    probation: { bg: 'color-mix(in srgb, var(--platform-accent) 15%, transparent)', color: 'var(--platform-accent)', label: 'На модерації', icon: AlertTriangle },
+    maintenance: { bg: 'color-mix(in srgb, var(--platform-accent) 15%, transparent)', color: 'var(--platform-accent)', label: 'Тех. Роботи', icon: Construction }
 };
 
 const getCurrentUser = () => {
@@ -336,11 +336,24 @@ const AdminUsersSitesPage = () => {
                                 type="button"
                                 onClick={() => setHideSuspendedUsers(!hideSuspendedUsers)} 
                                 title={hideSuspendedUsers ? "Показати заблоковані акаунти" : "Приховати заблоковані акаунти"} 
-                                className={`h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border transition-all cursor-pointer ${
-                                    hideSuspendedUsers 
-                                        ? 'border-red-500 text-red-500 bg-red-500/10' 
-                                        : 'border-(--platform-border-color) bg-transparent text-(--platform-text-secondary) hover:border-red-500 hover:text-red-500'
-                                }`}
+                                className={`h-10 w-10 flex items-center justify-center shrink-0 rounded-lg border transition-all cursor-pointer`}
+                                style={{
+                                    borderColor: hideSuspendedUsers ? 'var(--platform-accent)' : 'var(--platform-border-color)',
+                                    color: hideSuspendedUsers ? 'var(--platform-accent)' : 'var(--platform-text-secondary)',
+                                    backgroundColor: hideSuspendedUsers ? 'color-mix(in srgb, var(--platform-accent), transparent 90%)' : 'transparent'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!hideSuspendedUsers) {
+                                        e.currentTarget.style.borderColor = 'var(--platform-accent)';
+                                        e.currentTarget.style.color = 'var(--platform-accent)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!hideSuspendedUsers) {
+                                        e.currentTarget.style.borderColor = 'var(--platform-border-color)';
+                                        e.currentTarget.style.color = 'var(--platform-text-secondary)';
+                                    }
+                                }}
                             >
                                 <UserX size={20} strokeWidth={2.5} />
                             </button>
@@ -410,8 +423,8 @@ const AdminUsersSitesPage = () => {
                                                             onMouseLeave={e => { if(isClickable) e.currentTarget.style.color = 'var(--platform-text-primary)' }}
                                                         >
                                                             {u.username}
-                                                            {u.role === 'admin' && <span style={{marginLeft:'4px', color:'var(--platform-danger)'}} title="Адміністратор">★</span>}
-                                                            {u.role === 'moderator' && <span style={{marginLeft:'4px', color:'var(--platform-warning)'}} title="Модератор">✦</span>}
+                                                            {u.role === 'admin' && <span style={{marginLeft:'4px', color:'var(--platform-accent)'}} title="Адміністратор">★</span>}
+                                                            {u.role === 'moderator' && <span style={{marginLeft:'4px', color:'var(--platform-accent)'}} title="Модератор">✦</span>}
                                                         </div>
                                                         {u.status === 'suspended' && <span style={{marginLeft: '8px', fontSize: '10px', background: 'var(--platform-danger)', color: 'white', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle', fontWeight: 'bold'}}>BLOCKED</span>}
                                                     </div>
@@ -420,7 +433,7 @@ const AdminUsersSitesPage = () => {
                                             <AdminCell>
                                                 <div style={{
                                                     fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', 
-                                                    color: u.role === 'admin' ? 'var(--platform-danger)' : u.role === 'moderator' ? 'var(--platform-warning)' : 'var(--platform-text-secondary)'
+                                                    color: u.role === 'admin' || u.role === 'moderator' ? 'var(--platform-accent)' : 'var(--platform-text-secondary)'
                                                 }}>
                                                     {u.role === 'admin' ? 'Адмін' : u.role === 'moderator' ? 'Модератор' : 'Користувач'}
                                                 </div>
@@ -566,8 +579,8 @@ const AdminUsersSitesPage = () => {
                                                             onMouseLeave={e => { if(isAuthorClickable) e.currentTarget.style.color = 'var(--platform-text-primary)' }}
                                                         >
                                                             {site.author}
-                                                            {site.owner_role === 'admin' && <span style={{marginLeft:'4px', color:'var(--platform-danger)'}} title="Адміністратор">★</span>}
-                                                            {site.owner_role === 'moderator' && <span style={{marginLeft:'4px', color:'var(--platform-warning)'}} title="Модератор">✦</span>}
+                                                            {site.owner_role === 'admin' && <span style={{marginLeft:'4px', color:'var(--platform-accent)'}} title="Адміністратор">★</span>}
+                                                            {site.owner_role === 'moderator' && <span style={{marginLeft:'4px', color:'var(--platform-accent)'}} title="Модератор">✦</span>}
                                                         </div>
                                                         <div style={{fontSize: '12px', opacity: 0.6}} className="truncate">{site.author_email}</div>
                                                         {site.warning_count > 0 && <div style={{display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--platform-danger)', fontWeight: '600'}}><AlertTriangle size={10} /> {site.warning_count} страйк(ів)</div>}

@@ -36,20 +36,18 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-
 const allowedOrigins = [
     'http://localhost:5173',
     'https://kendr.vercel.app',
     'https://kendr-backend.onrender.com',
     process.env.CLIENT_URL
 ].filter(Boolean);
-
 app.use(cors({
     origin: allowedOrigins,
     credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(passport.initialize());
 app.use(verifyTokenOptional);
 app.use(checkMaintenance);

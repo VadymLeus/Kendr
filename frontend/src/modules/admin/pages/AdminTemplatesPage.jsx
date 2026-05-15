@@ -23,7 +23,6 @@ const AdminTemplatesPage = () => {
         await manager.actions.handleAction(actionType, template);
         manager.modals.setConfirmModal({ isOpen: false, template: null, actionType: null });
     };
-    
     const previewData = useMemo(() => getTemplatePreviewData(manager.selectedTemplate), [manager.selectedTemplate]);
     let modalTitle = "", modalMessage = "", confirmLabel = "", modalType = "primary";
     if (manager.modals.confirmModal.actionType === 'togglePublish') {
@@ -70,7 +69,6 @@ const AdminTemplatesPage = () => {
                 onClose={() => { manager.modals.setIsEditModalOpen(false); manager.modals.setEditingTemplate(null); }} 
                 onSave={manager.actions.handleSaveTemplateChanges} 
             />
-
             <ConfirmModal 
                 isOpen={manager.modals.confirmModal.isOpen} 
                 title={modalTitle} 
@@ -80,7 +78,6 @@ const AdminTemplatesPage = () => {
                 confirmLabel={confirmLabel} 
                 type={modalType} 
             />
-            
             <div 
                 className={`
                     flex flex-col h-full bg-(--platform-card-bg) z-40 shrink-0 overflow-hidden
@@ -118,11 +115,11 @@ const AdminTemplatesPage = () => {
                                             onClick={() => manager.setSelectedTemplateId(tpl.id)}
                                             badge={<TemplateBadge template={tpl} user={user} isAdmin={true} sourceTab="system" />}
                                             actions={
-                                                <div className="flex flex-wrap gap-2 w-full justify-end mt-2 pt-2 border-t border-(--platform-border-color)">
+                                                <>
                                                     {isDraft ? (
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'markReady' }); }} 
-                                                            className="p-1.5 text-(--platform-text-secondary) hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 rounded-md transition-colors border border-transparent hover:border-orange-500/30"
+                                                            className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-[color-mix(in_srgb,var(--platform-accent),transparent_10%)] rounded-md transition-colors"
                                                             title="Відправити на перевірку"
                                                         >
                                                             <ArrowUpCircle size={14} />
@@ -132,11 +129,7 @@ const AdminTemplatesPage = () => {
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'togglePublish' }); }} 
                                                                 disabled={manager.actions.isToggling === tpl.id}
-                                                                className={`p-1.5 rounded-md transition-colors border border-transparent ${
-                                                                    isPublic 
-                                                                    ? 'text-(--platform-text-secondary) hover:text-(--platform-success) hover:bg-(--platform-success)/10 hover:border-(--platform-success)/30' 
-                                                                    : 'text-(--platform-text-secondary) hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 hover:border-emerald-500/30'
-                                                                }`}
+                                                                className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-text-primary) hover:bg-(--platform-hover-bg) rounded-md transition-colors"
                                                                 title={isPublic ? "Приховати шаблон" : "Опублікувати шаблон"}
                                                             >
                                                                 {manager.actions.isToggling === tpl.id ? <Loader size={14} className="animate-spin" /> : (
@@ -146,7 +139,7 @@ const AdminTemplatesPage = () => {
                                                             {!isPublic && (
                                                                 <button 
                                                                     onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'revertDraft' }); }} 
-                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 rounded-md transition-colors border border-transparent hover:border-orange-500/30"
+                                                                    className="p-1.5 text-(--platform-text-secondary) hover:text-orange-500 hover:bg-orange-500/10 rounded-md transition-colors"
                                                                     title="Повернути в чернетки"
                                                                 >
                                                                     <Construction size={14} />
@@ -156,26 +149,26 @@ const AdminTemplatesPage = () => {
                                                     )}
                                                     <button 
                                                         onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'copy' }); }} 
-                                                        className="p-1.5 text-(--platform-text-secondary) hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 rounded-md transition-colors border border-transparent hover:border-indigo-500/30"
+                                                        className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-text-primary) hover:bg-(--platform-hover-bg) rounded-md transition-colors"
                                                         title="Скопіювати як чернетку"
                                                     >
                                                         <Copy size={14} />
                                                     </button>
                                                     <button 
                                                         onClick={(e) => { e.stopPropagation(); manager.modals.setEditingTemplate(tpl); manager.modals.setIsEditModalOpen(true); }} 
-                                                        className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-(--platform-bg) rounded-md transition-colors border border-transparent hover:border-(--platform-accent)/30" 
+                                                        className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-text-primary) hover:bg-(--platform-hover-bg) rounded-md transition-colors" 
                                                         title="Редагувати шаблон"
                                                     >
                                                         <Edit size={14} />
                                                     </button>
                                                     <button 
                                                         onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'delete' }); }} 
-                                                        className="p-1.5 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors border border-transparent hover:border-red-500/30" 
+                                                        className="p-1.5 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors" 
                                                         title="Видалити шаблон"
                                                     >
                                                         <Trash size={14} />
                                                     </button>
-                                                </div>
+                                                </>
                                             }
                                         />
                                     );

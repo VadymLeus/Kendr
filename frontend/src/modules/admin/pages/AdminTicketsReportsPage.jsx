@@ -39,6 +39,13 @@ const REPORT_STATUS_CONFIG = {
     resolved: { bg: 'color-mix(in srgb, var(--platform-success), transparent 90%)', color: 'var(--platform-success)', label: 'Вирішено', icon: CheckCircle }
 };
 
+const REPORT_STATUS_OPTIONS = [
+    { value: 'new', label: 'Нові', icon: AlertTriangle },
+    { value: 'dismissed', label: 'Відхилені', icon: X },
+    { value: 'banned', label: 'Заблоковані', icon: Ban },
+    { value: 'all', label: 'Всі', icon: Inbox }
+];
+
 const AdminTicketsReportsPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -108,6 +115,7 @@ const AdminTicketsReportsPage = () => {
             updated: new Date(t.updated_at).toLocaleString('uk-UA')
         })), { id: 'ID', subject: 'Тема', category: 'Категорія', user: 'Користувач', email: 'Email', status: 'Статус', updated: 'Оновлено' }, `tickets_${new Date().toLocaleDateString('uk-UA')}`);
     };
+
     const [reportStatus, setReportStatus] = useState('new');
     const [reportReason, setReportReason] = useState('all');
     const [reportStartDate, setReportStartDate] = useState('');
@@ -200,7 +208,6 @@ const AdminTicketsReportsPage = () => {
                     <ShieldAlert size={16} /> Скарги
                 </button>
             </div>
-
             {activeTab === 'tickets' && (
                 <>
                     <div className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
@@ -309,20 +316,24 @@ const AdminTicketsReportsPage = () => {
                 <>
                     <div className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                         <FilterBar className="w-full xl:w-auto grid grid-cols-1 sm:flex gap-3">
-                            <div className="flex overflow-x-auto hide-scrollbar bg-(--platform-card-bg) p-0.5 rounded-lg border border-(--platform-border-color) w-full sm:w-auto shrink-0">
-                                {[{ id: 'new', l: 'Нові' }, { id: 'dismissed', l: 'Відхилені' }, { id: 'banned', l: 'Заблоковані' }, { id: 'all', l: 'Всі' }].map(f => (
-                                    <Button 
-                                        key={f.id} 
-                                        variant="ghost" 
-                                        onClick={() => setReportStatus(f.id)} 
-                                        className={`flex-1 sm:flex-none whitespace-nowrap px-3 sm:px-4 h-9 text-[13px] rounded-md transition-all ${reportStatus === f.id ? 'bg-(--platform-bg) text-(--platform-text-primary) shadow-sm' : 'text-(--platform-text-secondary)'}`}
-                                    >
-                                        {f.l}
-                                    </Button>
-                                ))}
+                            <div className="w-full sm:w-44 shrink-0">
+                                <CustomSelect 
+                                    value={reportStatus} 
+                                    onChange={(e) => setReportStatus(e.target.value)} 
+                                    options={REPORT_STATUS_OPTIONS} 
+                                    variant="minimal" 
+                                    placeholder="Статус" 
+                                    style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
+                                />
                             </div>
                             <div className="w-full sm:w-44 shrink-0">
-                                <CustomSelect value={reportReason} onChange={(e) => setReportReason(e.target.value)} options={REASON_OPTIONS} variant="minimal" style={{ height: '40px', background: 'var(--platform-card-bg)' }} />
+                                <CustomSelect 
+                                    value={reportReason} 
+                                    onChange={(e) => setReportReason(e.target.value)} 
+                                    options={REASON_OPTIONS} 
+                                    variant="minimal" 
+                                    style={{ height: '40px', background: 'var(--platform-card-bg)' }} 
+                                />
                             </div>
                             <div className="w-full sm:w-auto overflow-x-auto hide-scrollbar">
                                 <DateRangePicker 

@@ -19,7 +19,7 @@ import { BASE_URL } from '../../../shared/config';
 import { validateSiteSlug, validateSiteTitle } from '../../../shared/utils/validationUtils';
 import { useTemplateManager } from '../../../shared/hooks/useTemplateManager';
 import { getTemplatePreviewData } from '../../../shared/utils/templateUtils';
-import { Layout, Check, Loader, AlertCircle, Trash, Info, Palette, Sparkles, Globe, Image, ChevronLeft, ChevronRight, Copy, Edit, ArrowLeft, Eye } from 'lucide-react';
+import { Layout, Check, Loader, AlertCircle, Trash, Info, Palette, Sparkles, Globe, Image, ChevronLeft, ChevronRight, Copy, Edit, ArrowLeft } from 'lucide-react';
 
 const logosModules = import.meta.glob('../../../shared/assets/CreateLogos/*.{png,jpg,jpeg,webp,svg}', { 
     eager: true, 
@@ -311,14 +311,26 @@ const CreateSitePage = () => {
                                                         {isAdmin && manager.filters.templateSourceTab === 'system' && (
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'copy' }); }} 
-                                                                className="p-1.5 text-(--platform-text-secondary) hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 rounded-md transition-colors border border-transparent hover:border-indigo-500/30" 
+                                                                className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-text-primary) hover:bg-(--platform-hover-bg) rounded-md transition-colors" 
                                                                 title="Скопіювати як чернетку"
                                                             >
                                                                 <Copy size={14}/>
                                                             </button>
                                                         )}
-                                                        <button onClick={(e) => { e.stopPropagation(); manager.modals.setEditingTemplate(tpl); manager.modals.setIsEditModalOpen(true); }} className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-accent) hover:bg-(--platform-bg) rounded-md transition-colors border border-transparent hover:border-(--platform-accent)/30" title="Редагувати шаблон"><Edit size={14}/></button>
-                                                        <button onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'delete' }); }} className="p-1.5 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors border border-transparent hover:border-red-500/30" title="Видалити шаблон"><Trash size={14}/></button>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); manager.modals.setEditingTemplate(tpl); manager.modals.setIsEditModalOpen(true); }} 
+                                                            className="p-1.5 text-(--platform-text-secondary) hover:text-(--platform-text-primary) hover:bg-(--platform-hover-bg) rounded-md transition-colors" 
+                                                            title="Редагувати шаблон"
+                                                        >
+                                                            <Edit size={14}/>
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); manager.modals.setConfirmModal({ isOpen: true, template: tpl, actionType: 'delete' }); }} 
+                                                            className="p-1.5 text-(--platform-text-secondary) hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors" 
+                                                            title="Видалити шаблон"
+                                                        >
+                                                            <Trash size={14}/>
+                                                        </button>
                                                     </>
                                                 )}
                                             />
